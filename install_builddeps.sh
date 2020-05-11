@@ -11,7 +11,7 @@ source ./git_url.cfg
 export NGIC_DIR=$PWD
 
 SERVICE_NAME="Collocated CP and DP"
-SERVICES=3
+SERVICE=3
 SUDO=''
 [[ $EUID -ne 0 ]] && SUDO=sudo
 
@@ -70,7 +70,7 @@ download_hyperscan()
     [ -d $DEPS_DIR/hyperscan-4.1.0 ] && echo "Hyperscan already exists at $DEPS_DIR/hyperscan-4.1.0" && return
 
 
-    $SUDO apt-get install -y ragel
+    $SUDO apt-get -y install ragel
     cd $DEPS_DIR
     source /etc/os-release
     cd $DEPS_DIR
@@ -79,13 +79,13 @@ download_hyperscan()
         wget http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz
         tar -xf boost_1_58_0.tar.gz
         pushd boost_1_58_0
-        $SUDO apt-get install g++
+        $SUDO apt-get -y install g++
         ./bootstrap.sh --prefix=/usr/local
         ./b2
         ./b2 install
         popd
     else
-        $SUDO apt-get install libboost-all-dev
+        $SUDO apt-get -y install libboost-all-dev
     fi
 
         echo "Downloading HS and dependent libraries"
@@ -245,6 +245,6 @@ set -o pipefail
 set -o nounset
 
 install_build_deps
-build_ngic()
+build_ngic
 echo "Dependency install complete"
 
