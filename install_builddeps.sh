@@ -67,9 +67,26 @@ install_dpdk() {
 
 download_hyperscan()
 {
-        [ -d $DEPS_DIR/hyperscan-4.1.0 ] && echo "Hyperscan already exists at $DEPS_DIR/hyperscan-4.1.0" && return
+    [ -d $DEPS_DIR/hyperscan-4.1.0 ] && echo "Hyperscan already exists at $DEPS_DIR/hyperscan-4.1.0" && return
 
-        cd $DEPS_DIR
+
+    $SUDO apt-get install -y ragel
+    cd $DEPS_DIR
+    source /etc/os-release
+    cd $DEPS_DIR
+    if [[ $VERSION_ID != "16.04" ]] ; then
+        echo "Download boost manually "$VERSION_ID
+        wget http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz
+        tar -xf boost_1_58_0.tar.gz
+        pushd boost_1_58_0
+        $SUDO apt-get install g++
+        ./bootstrap.sh --prefix=/usr/local
+        ./b2
+        ./b2 install
+        popd
+    else
+        $SUDO apt-get install libboost-all-dev
+    fi
 
         echo "Downloading HS and dependent libraries"
         wget $HYPERSCAN_GIT_LINK
@@ -179,7 +196,7 @@ install_build_deps()
        install_oss_util
        install_dpdk
        download_hyperscan
-	   download_freediameter
+       download_freediameter
 }
 
 build_ngic()
