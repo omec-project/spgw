@@ -191,14 +191,44 @@ install_oss_util()
    popd
 }
 
-install_build_deps()
+build_ngic()
 {
-       install_pkg_deps
-       install_oss_util
-       install_dpdk
-       download_hyperscan
-       download_freediameter
+	pushd $NGIC_DIR
+	source setenv.sh
+
+	echo "Building PFCP Libs ..."
+	build_pfcp_lib
+
+	if [ $SERVICE == 2 ] || [ $SERVICE == 3 ] ; then
+		make clean-lib
+		make clean-dp
+		echo "Building Libs..."
+		make build-lib || { echo -e "\nNG-CORE: Make lib failed\n"; }
+		echo "Building DP..."
+		make build-dp || { echo -e "\nDP: Make failed\n"; }
+	fi
+	if [ $SERVICE == 1 ] || [ $SERVICE == 3 ] ; then
+		echo "Building libgtpv2c..."
+		pushd $NGIC_DIR/libgtpv2c
+			make clean
+			make
+			if [ $? -ne 0 ] ; then
+				echo "Failed to build libgtpv2, please check the errors."
+				return
+			fi
+		popd
+
+		echo "Building FD and GxApp..."
+		build_fd_gxapp
+
+		echo "Building CP..."
+		make clean-cp
+		make -j 10 build-cp || { echo -e "\nCP: Make failed\n"; }
+
+	fi
+	popd
 }
+
 
 (return 2>/dev/null) && echo "Sourced" && return
 
@@ -206,6 +236,6 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-install_build_deps
-echo "Dependency install complete"
+build_ngic
+echo "NGIC build complete "
 

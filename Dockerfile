@@ -14,4 +14,4 @@ SHELL ["/bin/bash", "-c"]
 COPY . ./
 RUN ./install_builddeps.sh
 
-RUN source ./install_builddeps.sh && make -j $CPUS clean && make -j $CPUS RTE_MACHINE=$RTE_MACHINE EXTRA_CFLAGS="$EXTRA_CFLAGS"
+RUN ./build_ngic.sh
