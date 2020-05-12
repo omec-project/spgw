@@ -5,7 +5,6 @@
 source ./git_url.cfg
 THIRD_PARTY_SW_PATH="third_party"
 
-source ./git_url.cfg
 export NGIC_DIR=$PWD
 
 SERVICE_NAME="CP"

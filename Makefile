@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DIRS-y =  libgtpv2c libpfcp cp dp test
+DIRS-y =  lib libgtpv2c libpfcp cp dp test
 
 #define targets
 CLEANDIRS-y = $(DIRS-y:%=clean-%)
@@ -61,7 +61,7 @@ DOCKER_LABEL_VCS_URL     ?= $(shell git remote get-url $(shell git remote))
 DOCKER_LABEL_VCS_REF     ?= $(shell git diff-index --quiet HEAD -- && git rev-parse HEAD || echo "unknown")
 DOCKER_LABEL_COMMIT_DATE ?= $(shell git diff-index --quiet HEAD -- && git show -s --format=%cd --date=iso-strict HEAD || echo "unknown" )
 DOCKER_LABEL_BUILD_DATE  ?= $(shell date -u "+%Y-%m-%dT%H:%M:%SZ")
-DOCKER_TARGETS           ?= basepkg dpdkbuild freediambuild hyperscanbuild ossutil
+DOCKER_TARGETS           ?= cp 
 
 # https://docs.docker.com/engine/reference/commandline/build/#specifying-target-build-stage---target
 docker-build:

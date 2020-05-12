@@ -4,10 +4,7 @@
 
 source ./git_url.cfg
 THIRD_PARTY_SW_PATH="third_party"
-OSS_UTIL_DIR="oss-util"
-C3PO_OSS_DIR="oss_adapter/c3po_oss"
 
-source ./git_url.cfg
 export NGIC_DIR=$PWD
 
 SERVICE_NAME="CP"
@@ -28,6 +25,7 @@ DEPS_DIR=${DEPS_DIR:-"$PWD/$THIRD_PARTY_SW_PATH"}
 
 install_hyperscan()
 {
+        cd $DEPS_DIR
         echo "Downloading HS and dependent libraries"
         wget $HYPERSCAN_GIT_LINK
         tar -xvf v4.1.0.tar.gz

@@ -7,7 +7,6 @@ THIRD_PARTY_SW_PATH="third_party"
 OSS_UTIL_DIR="oss-util"
 C3PO_OSS_DIR="oss_adapter/c3po_oss"
 
-source ./git_url.cfg
 export NGIC_DIR=$PWD
 
 SERVICE_NAME="CP"

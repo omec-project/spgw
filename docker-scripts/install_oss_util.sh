@@ -7,7 +7,6 @@ THIRD_PARTY_SW_PATH="third_party"
 OSS_UTIL_DIR="oss-util"
 C3PO_OSS_DIR="oss_adapter/c3po_oss"
 
-source ./git_url.cfg
 export NGIC_DIR=$PWD
 
 SERVICE_NAME="CP"
@@ -127,11 +126,12 @@ init_oss_util_submodules()
   $SUDO ldconfig
 }
 
-#build_c3po_util()
-#{
-#  make clean
-#  $SUDO make install
-#}
+build_c3po_util()
+{
+  make clean
+  make
+  $SUDO make install
+}
 
 install_oss_util()
 {
@@ -151,7 +151,4 @@ install_oss_util()
 set -o errexit
 set -o pipefail
 set -o nounset
-
-install_build_deps
-echo "Dependency install complete"
 

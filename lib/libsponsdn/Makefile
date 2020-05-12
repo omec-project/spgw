@@ -20,6 +20,8 @@ ifeq ($(HYPERSCANDIR),)
 $(error "Please define HYPERSCANDIR environment variable")
 endif
 
+$(info $$HYPERSCANDIR is [${HYPERSCANDIR}])
+
 include $(RTE_SDK)/mk/rte.vars.mk
 
 # library name
