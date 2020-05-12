@@ -252,6 +252,7 @@ main(int argc, char **argv)
 {
 	int ret;
 
+	printf("CP: Control-Plane start \n");
 	//set_signal_mask();
 
 	start_time = current_ntp_timestamp();

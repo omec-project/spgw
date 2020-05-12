@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DIRS-y =  lib libgtpv2c libpfcp cp dp test
+DIRS-y =  libgtpv2c libpfcp cp dp test
 
 #define targets
 CLEANDIRS-y = $(DIRS-y:%=clean-%)
@@ -61,7 +61,7 @@ DOCKER_LABEL_VCS_URL     ?= $(shell git remote get-url $(shell git remote))
 DOCKER_LABEL_VCS_REF     ?= $(shell git diff-index --quiet HEAD -- && git rev-parse HEAD || echo "unknown")
 DOCKER_LABEL_COMMIT_DATE ?= $(shell git diff-index --quiet HEAD -- && git show -s --format=%cd --date=iso-strict HEAD || echo "unknown" )
 DOCKER_LABEL_BUILD_DATE  ?= $(shell date -u "+%Y-%m-%dT%H:%M:%SZ")
-DOCKER_TARGETS           ?= pfcpbuild
+DOCKER_TARGETS           ?= basepkg dpdkbuild freediambuild hyperscanbuild ossutil
 
 # https://docs.docker.com/engine/reference/commandline/build/#specifying-target-build-stage---target
 docker-build:
@@ -71,19 +71,6 @@ docker-build:
 			--tag ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}ngic-$$target:${DOCKER_TAG} \
 			--label "org.label-schema.schema-version=1.0" \
 			--label "org.label-schema.name=ngic-$$target" \
-			--label "org.label-schema.version=${VERSION}" \
-			--label "org.label-schema.vcs-url=${DOCKER_LABEL_VCS_URL}" \
-			--label "org.label-schema.vcs-ref=${DOCKER_LABEL_VCS_REF}" \
-			--label "org.label-schema.build-date=${DOCKER_LABEL_BUILD_DATE}" \
-			--label "org.opencord.vcs-commit-date=${DOCKER_LABEL_COMMIT_DATE}" \
-			.; \
-		docker build $(DOCKER_BUILD_ARGS) \
-			--target $$target \
-			--tag ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}ngic-$$target:${DOCKER_DEBUG_TAG} \
-			--build-arg RUN_BASE="runtime-utils" \
-			--build-arg EXTRA_CFLAGS="-DUSE_AF_PACKET -UPERF_TEST -ggdb -O2" \
-			--label "org.label-schema.schema-version=1.0" \
-			--label "org.label-schema.name=ngic-$$target-af-packet" \
 			--label "org.label-schema.version=${VERSION}" \
 			--label "org.label-schema.vcs-url=${DOCKER_LABEL_VCS_URL}" \
 			--label "org.label-schema.vcs-ref=${DOCKER_LABEL_VCS_REF}" \

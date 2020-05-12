@@ -2,32 +2,32 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2019 Intel Corporation
 
+source ./git_url.cfg
+THIRD_PARTY_SW_PATH="third_party"
+OSS_UTIL_DIR="oss-util"
+C3PO_OSS_DIR="oss_adapter/c3po_oss"
+
+source ./git_url.cfg
+export NGIC_DIR=$PWD
+
+SERVICE_NAME="CP"
+SERVICE=1
+
 SUDO=''
 [[ $EUID -ne 0 ]] && SUDO=sudo
 
-OSDIST=`lsb_release -is`
-OSVER=`lsb_release -rs`
+CUR_DIR=$PWD
 
-
-install_build_deps()
+function finish() 
 {
-    $SUDO apt-get -y install g++ make cmake libuv-dev libssl-dev autotools-dev libtool-bin m4 automake libmemcached-dev memcached cmake-curses-gui gcc bison flex libsctp-dev libgnutls-dev libgcrypt-dev libidn11-dev nettle-dev
+	cd $CUR_DIR
 }
+trap finish EXIT
 
-init_submodules()
-{
-  git submodule init
-  git submodule update
+#OSDIST=`lsb_release -is`
+#OSVER=`lsb_release -rs`
 
-  build_c_ares
-  build_cpp_driver
-  build_pistache
-  build_rapidjson
-  build_spdlog
-  build_cli 
- 
-  $SUDO ldconfig
-}
+DEPS_DIR=${DEPS_DIR:-"$PWD/$THIRD_PARTY_SW_PATH"}
 
 build_c_ares()
 {
@@ -103,26 +103,49 @@ build_cli()
   $SUDO apt-get -y install python-pip
   $SUDO pip install -r requirements.txt
   $SUDO apt-get -y install python-virtualenv
-  echo "step1 ***"
   virtualenv -p python3.5 venv
-  echo "step2 ***"
   set +u
   source venv/bin/activate
   set -u
-  echo "step3 ***"
   $SUDO pip install -r requirements.txt
-  echo "step4 ***"
   deactivate
-  echo "step5 ***"
   popd
 }
 
-build_c3po_util()
+init_oss_util_submodules()
 {
-  make clean
-  $SUDO make install
-}
+  git submodule init
+  git submodule update
+
+  build_c_ares
+  build_cpp_driver
+  build_pistache
+  build_rapidjson
+  build_spdlog
+  build_cli 
  
+  $SUDO ldconfig
+}
+
+#build_c3po_util()
+#{
+#  make clean
+#  $SUDO make install
+#}
+
+install_oss_util()
+{
+   mkdir -p $NGIC_DIR/$C3PO_OSS_DIR
+   pushd $NGIC_DIR/$C3PO_OSS_DIR
+   git clone $OSS_UTIL_GIT_LINK
+   pushd oss-util
+   init_oss_util_submodules
+   #build_c3po_util
+   popd
+   popd
+}
+
+
 (return 2>/dev/null) && echo "Sourced" && return
 
 set -o errexit
@@ -130,8 +153,5 @@ set -o pipefail
 set -o nounset
 
 install_build_deps
-init_submodules
-build_c3po_util
-
 echo "Dependency install complete"
 
