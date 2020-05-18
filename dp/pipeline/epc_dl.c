@@ -96,6 +96,7 @@ static inline void check_activity(uint32_t srcIp)
  */
 static inline void epc_dl_set_port_id(struct rte_mbuf *m)
 {
+	printf("%s %d \n",__FUNCTION__,__LINE__);
 	uint8_t *m_data = rte_pktmbuf_mtod(m, uint8_t *);
 	struct epc_meta_data *meta_data =
 	    (struct epc_meta_data *)RTE_MBUF_METADATA_UINT8_PTR(m,
@@ -121,9 +122,10 @@ static inline void epc_dl_set_port_id(struct rte_mbuf *m)
 	*port_id_offset = 1;
 
 	/* Flag ARP pkt for linux handling */
-	if (eh->ether_type == rte_cpu_to_be_16(ETHER_TYPE_ARP) ||
-			ipv4_hdr->next_proto_id == IPPROTO_ICMP)
+	if (eh->ether_type == rte_cpu_to_be_16(ETHER_TYPE_ARP)) // || // AJAY : check this carefully 
+//			ipv4_hdr->next_proto_id == IPPROTO_ICMP)
 	{
+		printf("%s %d \n",__FUNCTION__,__LINE__);
 		clLog(clSystemLog, eCLSeverityDebug, "epc_dl.c:%s::"
 				"\n\t@SGI:eh->ether_type==ETHER_TYPE_ARP= 0x%X\n",
 				__func__, eh->ether_type);
@@ -134,6 +136,7 @@ static inline void epc_dl_set_port_id(struct rte_mbuf *m)
 	/* Flag pkt destined to SGI_IP for linux handling */
 	if (app.sgi_ip == ho_addr)
 	{
+		printf("%s %d \n",__FUNCTION__,__LINE__);
 		clLog(clSystemLog, eCLSeverityDebug, "epc_dl.c:%s::"
 				"\n\t@SGI:app.sgi_ip==ipv4_hdr->dst_addr= %s\n",
 				__func__,
@@ -164,9 +167,9 @@ static inline void epc_dl_set_port_id(struct rte_mbuf *m)
 
 	/* Flag all other pkts for epc_dl proc handling */
 	if (likely
-			(ipv4_packet &&
-			((ipv4_hdr->next_proto_id == IPPROTO_UDP) ||
-			(ipv4_hdr->next_proto_id == IPPROTO_TCP)))) {
+			(ipv4_packet) ) // &&
+			/*((ipv4_hdr->next_proto_id == IPPROTO_UDP) ||
+			(ipv4_hdr->next_proto_id == IPPROTO_TCP)))) */{
 			clLog(clSystemLog, eCLSeverityDebug, "SGI packet\n");
 #ifdef USE_REST
 			if (app.spgw_cfg == SGWU) {
@@ -188,6 +191,9 @@ static inline void epc_dl_set_port_id(struct rte_mbuf *m)
 			dl_sgi_pkt = 1;
 			dl_arp_pkt = 0;
 	} //GCC_Security flag
+	else 
+		printf("%s %d \n",__FUNCTION__,__LINE__);
+
 }
 
 /**
@@ -206,6 +212,7 @@ static int epc_dl_port_in_ah(struct rte_pipeline *p,
 	TIMER_GET_CURRENT_TP(_init_time);
 #endif /* TIMER_STATS */
 
+	printf("%s %d \n",__FUNCTION__,__LINE__);
 	static uint32_t i;
 	RTE_SET_USED(arg);
 	RTE_SET_USED(p);
@@ -230,8 +237,12 @@ static int epc_dl_port_in_ah(struct rte_pipeline *p,
 
 	if (dl_nkni_pkts) {
 		RTE_LOG(DEBUG, DP, "KNI: DL send pkts to kni\n");
+#ifdef USE_AF_PACKET
+		kern_packet_ingress(SGI_PORT_ID, kni_pkts_burst, dl_nkni_pkts);
+#else
 		kni_ingress(kni_port_params_array[SGI_PORT_ID],
 				kni_pkts_burst, dl_nkni_pkts);
+#endif
 
 	}
 #ifdef STATS
@@ -259,6 +270,7 @@ static epc_dl_handler epc_dl_worker_func[NUM_SPGW_PORTS];
 static inline int epc_dl_port_out_ah(struct rte_pipeline *p, struct rte_mbuf **pkts,
 		uint64_t pkts_mask, void *arg)
 {
+	printf("%s %d \n",__FUNCTION__,__LINE__);
 	int worker_index = 0;
 	RTE_SET_USED(p);
 	int portno = (uintptr_t) arg;
@@ -473,7 +485,11 @@ void epc_dl(void *args)
 	 *  Then analyzes it and calls the specific actions for the specific requests.
 	 *  Finally constructs the response mbuf and puts it back to the resp_q.
 	 */
+#ifdef USE_AF_PACKET
+	kern_packet_egress(S1U_PORT_ID);
+#else /* KNI MODE */
 	rte_kni_handle_request(kni_port_params_array[SGI_PORT_ID]->kni[0]);
+#endif
 
 	uint32_t queued_cnt = rte_ring_count(shared_ring[S1U_PORT_ID]);
 	if (queued_cnt) {

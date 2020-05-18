@@ -26,7 +26,7 @@ install_pkg_deps()
 	$SUDO apt-get update && $SUDO apt-get -y install \
 		curl build-essential \
 		linux-headers-$(uname -r) git \
-        	unzip libpcap0.8-dev gcc libjson0-dev make \
+        	unzip libpcap0.8-dev gcc make \
         	libc6 libc6-dev \
         	g++-multilib libcurl4-openssl-dev \
 		libssl-dev \
@@ -41,7 +41,7 @@ install_pkg_deps()
         	memcached \
         	cmake-curses-gui \
         	gcc\
-        	bison flex libsctp-dev libgnutls-dev libgcrypt-dev libidn11-dev \
+        	bison flex libsctp-dev libgcrypt-dev libidn11-dev \
 		nettle-dev \
 		ragel \
 		libmnl-dev

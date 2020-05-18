@@ -38,6 +38,7 @@ extern pcap_dumper_t *pcap_dumper_east;
 extern pcap_dumper_t *pcap_dumper_west;
 #endif /* PCAP_GEN */
 
+/* Ajay - not sure when this is called. Need more understanidng */
 int
 notification_handler(struct rte_mbuf **pkts,
 	uint32_t n)
@@ -56,6 +57,7 @@ notification_handler(struct rte_mbuf **pkts,
 	pfcp_session_datat_t *sess_data[MAX_BURST_SZ] = {NULL};
 
 	clLog(clSystemLog, eCLSeverityDebug, "Notification handler resolving the buffer packets, count:%u\n", n);
+	printf("%d %s \n",__LINE__,__FUNCTION__);
 
 	for (i = 0; i < n; ++i) {
 		buf_pkt = pkts[i];
@@ -293,6 +295,7 @@ s1u_pkt_handler(struct rte_pipeline *p, struct rte_mbuf **pkts, uint32_t n,
 
 	uint64_t pkts_mask;
 	pkts_mask = (~0LLU) >> (64 - n);
+	printf("%s %d - Uplink packet received on S1u \n",__FUNCTION__,__LINE__);
 
 
 	switch(app.spgw_cfg) {
@@ -458,6 +461,7 @@ sgi_pkt_handler(struct rte_pipeline *p, struct rte_mbuf **pkts, uint32_t n,
 	pdr_info_t *pdr[MAX_BURST_SZ] = {NULL};
 	pfcp_session_datat_t *sess_data[MAX_BURST_SZ] = {NULL};
 
+	printf("%s %d - downlink packet received on SGi \n",__FUNCTION__,__LINE__);
 	pkts_mask = (~0LLU) >> (64 - n);
 
 	/**

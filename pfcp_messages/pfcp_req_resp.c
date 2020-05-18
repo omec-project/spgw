@@ -187,6 +187,7 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	msg_info msg = {0};
 	if(pfcp_header->message_type == PFCP_HEARTBEAT_REQUEST){
 
+		printf("Heartbit request received from UP %s \n",inet_ntoa(peer_addr->sin_addr));
 		update_cli_stats(peer_addr->sin_addr.s_addr,
 				pfcp_header->message_type,RCVD,SX);
 
@@ -197,6 +198,7 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		}
 		return 0;
 	}else if(pfcp_header->message_type == PFCP_HEARTBEAT_RESPONSE){
+		printf("Heartbit response received from UP %s \n",inet_ntoa(peer_addr->sin_addr));
 		ret = process_heartbeat_response(buf_rx, peer_addr);
 		if(ret != 0){
 			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat response\n", __func__);
@@ -209,6 +211,8 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		}
 		return 0;
 	}else {
+		// ajay - why this is called as response ? it could be request mesage as well 
+		printf("PFCP message %d  received from UP %s \n",pfcp_header->message_type, inet_ntoa(peer_addr->sin_addr));
 		/*Reset periodic timers*/
 		process_response(peer_addr->sin_addr.s_addr);
 
@@ -228,6 +232,7 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 							pfcp_header->message_type, ACC,SX);
 
 
+		printf("[%s] - %d - Procedure - %d state - %d event - %d. Invoke FSM now  \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
 		if ((msg.proc < END_PROC) && (msg.state < END_STATE) && (msg.event < END_EVNT)) {
 			if (SGWC == pfcp_config.cp_type) {
 			    ret = (*state_machine_sgwc[msg.proc][msg.state][msg.event])(&msg, peer_addr);
@@ -249,6 +254,7 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 				return -1;
 			}
 		} else {
+			printf("[%s] - %d - Invalid Procedure - %d state - %d event - %d. \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
 			clLog(s11logger, eCLSeverityCritical, "%s : "
 						"Invalid Procedure or State or Event \n",
 						__func__);

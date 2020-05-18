@@ -248,7 +248,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		/* Stop Timer periodic timer for specific Peer Node */
 		stopTimer( &md->pt );
 		/* VS: Restet Periodic Timer */
-		if ( startTimer( &md->pt ) < 0)
+		if ( startTimer( &md->pt ) == false)
 			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to start...\n");
 		return;
 	}
@@ -270,7 +270,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		}
 		/* TODO: */
 		if (ti == &md->pt) {
-			if ( startTimer( &md->tt ) < 0)
+			if ( startTimer( &md->tt ) == false)
 				clLog(clSystemLog, eCLSeverityCritical, "Transmit Timer failed to start..\n");
 
 			/* Stop periodic timer for specific Peer Node */
@@ -362,7 +362,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 	}
 	/* TODO: */
 	if (ti == &md->pt) {
-		if ( startTimer( &md->tt ) < 0)
+		if ( startTimer( &md->tt ) == false)
 			clLog(clSystemLog, eCLSeverityCritical, "Transmit Timer failed to start..\n");
 
 		/* Stop periodic timer for specific Peer Node */
@@ -565,7 +565,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint64_t sess_id, uint8_t portId)
 		add_cli_peer(dstIp,it);
 		update_peer_status(dstIp,TRUE);
 
-		if ( startTimer( &conn_data->pt ) < 0)
+		if ( startTimer( &conn_data->pt ) ==false)
 			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to start...\n");
 
 		conn_cnt++;

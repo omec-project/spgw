@@ -1780,7 +1780,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	  fill that seid in response and if not then seid =0 */
 
 	int ret = 0;
-	uint8_t bearer_id = 0;
 	eps_bearer *bearer = NULL;
 	upf_context_t *upf_ctx = NULL;
 
@@ -1790,6 +1789,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 				__LINE__, ret);
 		return;
 	}
+	assert(upf_ctx != NULL);
 
 	memset(pfcp_sess_est_req,0,sizeof(pfcp_sess_estab_req_t));
 
@@ -1810,11 +1810,12 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	if ((pfcp_config.cp_type == PGWC) ||
 		(SAEGWC == pfcp_config.cp_type))
 	{
+		printf("[%s]-%d. Num Rules in pdn policy  = %d \n",__FUNCTION__,__LINE__,pdn->policy.num_charg_rule_install);
 		pfcp_sess_est_req->create_pdr_count = pdn->policy.num_charg_rule_install * 2;
 		/*
 		 * For pgw create pdf, far and qer while handling pfcp messages
 		 */
-
+#ifdef GX_BUILD // moving this code undet GX 
 		for (int idx=0; idx <  pdn->policy.num_charg_rule_install; idx++)
 		{
 			bearer = NULL;
@@ -1828,6 +1829,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			}
 			else
 			{
+				uint8_t bearer_id = 0;
 				/*
 				 * dedicated bearer
 				 */
@@ -1858,11 +1860,9 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 					set_s5s8_pgw_gtpu_teid_using_pdn(bearer, pdn);
 					fill_dedicated_bearer_info(bearer, pdn->context, pdn);
 					memcpy(&(bearer->qos), &(pdn->policy.pcc_rule[idx].dyn_rule.qos), sizeof(bearer_qos_ie));
-
 				}
 
 			}
-
 			if (pfcp_config.cp_type == SGWC) {
 				set_s1u_sgw_gtpu_teid(bearer, bearer->pdn->context);
 				update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, bearer->s1u_sgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
@@ -1910,6 +1910,25 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
 			bearer->num_dynamic_filters++;
 		}
+#else
+		if(pdn->policy.num_charg_rule_install == 0) 
+		{
+			pfcp_sess_est_req->create_pdr_count = 2;
+			bearer = get_default_bearer(pdn);
+			if (pfcp_config.cp_type == SGWC) {
+				set_s1u_sgw_gtpu_teid(bearer, bearer->pdn->context);
+				update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, bearer->s1u_sgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
+				set_s5s8_sgw_gtpu_teid(bearer, bearer->pdn->context);
+				update_pdr_teid(bearer, bearer->s5s8_sgw_gtpu_teid, bearer->s5s8_sgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_CORE);
+			} else if (pfcp_config.cp_type == SAEGWC) {
+				set_s1u_sgw_gtpu_teid(bearer, bearer->pdn->context);
+				update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, bearer->s1u_sgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
+			} else if (pfcp_config.cp_type == PGWC){
+				set_s5s8_pgw_gtpu_teid(bearer, bearer->pdn->context);
+				update_pdr_teid(bearer, bearer->s5s8_pgw_gtpu_teid, bearer->s5s8_pgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
+			}
+		}
+#endif
 
 		if (pfcp_config.cp_type == SAEGWC) {
 			update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid,
@@ -1931,8 +1950,10 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		for(uint8_t i = 0; i < MAX_BEARERS; i++)
 		{
 			bearer = pdn->eps_bearers[i];
+			printf("%s %d - i= %d bearer = %p \n",__FUNCTION__,__LINE__,i,bearer);
 			if(bearer != NULL)
 			{
+				assert(bearer->pdr_count != 0);
 				for(uint8_t idx = 0; idx < bearer->pdr_count; idx++)
 				{
 					pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count = 1;
@@ -1956,10 +1977,12 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		for(uint8_t i = 0; i < MAX_BEARERS; i++)
 		{
 			bearer = pdn->eps_bearers[i];
+			printf("%s %d i= %d bearer = %p \n",__FUNCTION__,__LINE__, i, bearer);
 			if(bearer != NULL)
 			{
 				for(uint8_t idx = 0; idx < MAX_PDR_PER_RULE; idx++)
 				{
+					assert(bearer->pdrs[idx] != NULL);
 					pfcp_sess_est_req->create_pdr[pdr_idx].pdr_id.rule_id  =
 						bearer->pdrs[idx]->rule_id;
 					pfcp_sess_est_req->create_pdr[pdr_idx].precedence.prcdnc_val =
@@ -2616,8 +2639,24 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer *bearer,
 	}
 #endif /* GX_BUILD*/
 #endif /* CP_BUILD */
-#endif
+#else 
+	if (pfcp_config.cp_type == SAEGWC){
 
+		bearer->pdr_count = NUMBER_OF_PDR_PER_BEARER;
+		for(uint8_t itr=0; itr < bearer->pdr_count; itr++){
+			switch(itr){
+				case SOURCE_INTERFACE_VALUE_ACCESS:
+					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, itr);
+					break;
+				case SOURCE_INTERFACE_VALUE_CORE:
+					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, itr);
+					break;
+				default:
+					break;
+			}
+		}
+	}
+#endif
 	/*SP: As per discussion Per bearer two pdrs and fars will be there*/
 	/************************************************
 	 *  cp_type  count      FTEID_1        FTEID_2 *
@@ -3296,6 +3335,7 @@ ccru_req_for_bear_termination(pdn_connection *pdn, eps_bearer *bearer)
 }
 #endif /* GX_BUILD */
 
+/* Ajay - new CSReq handler */
 int
 process_create_sess_req(create_sess_req_t *csr,
 		ue_context **_context, struct in_addr *upf_ipv4)
@@ -3321,6 +3361,7 @@ process_create_sess_req(create_sess_req_t *csr,
 	if (ret)
 		return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
 
+	printf("[%s] : %d -  Acquire ip = %s \n", __FUNCTION__, __LINE__, inet_ntoa(ue_ip));
 	/* set s11_sgw_gtpc_teid= key->ue_context_by_fteid_hash */
 	ret = create_ue_context(&csr->imsi.imsi_number_digits, csr->imsi.header.len,
 			csr->bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi, &context, apn_requested,
@@ -3415,9 +3456,11 @@ process_create_sess_req(create_sess_req_t *csr,
 	/* SGW Handover Storage */
 	if (csr->indctn_flgs.header.len != 0)
 	{
-		memcpy(&(pdn->ipv4.s_addr) ,&(csr->paa.pdn_addr_and_pfx), IPV4_SIZE);
+		/* AJAY - changed below code - paa was set to 0.0.0.0 and also address was not set to correct order */
+		//memcpy(&(pdn->ipv4.s_addr) ,&(csr->paa.pdn_addr_and_pfx), IPV4_SIZE);
+		//pdn->ipv4.s_addr = ntohl(pdn->ipv4.s_addr);
 		/*TODO:ntohl is done as in csr response there is htonl*/
-		pdn->ipv4.s_addr = ntohl(pdn->ipv4.s_addr);
+		pdn->ipv4.s_addr = pdn->ipv4.s_addr;
 		context->indication_flag.oi = csr->indctn_flgs.indication_oi;
 		pdn->s5s8_pgw_gtpc_teid = csr->pgw_s5s8_addr_ctl_plane_or_pmip.teid_gre_key;
 		bearer->s5s8_pgw_gtpu_ipv4.s_addr = csr->bearer_contexts_to_be_created.s5s8_u_pgw_fteid.ipv4_address;
@@ -3734,6 +3777,7 @@ process_pfcp_sess_est_resp(pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, gtpv2c_head
 	uint64_t sess_id = pfcp_sess_est_rsp->header.seid_seqno.has_seid.seid;
 	uint64_t dp_sess_id = pfcp_sess_est_rsp->up_fseid.seid;
 	uint32_t teid = UE_SESS_ID(sess_id);
+	printf("%s %d - sess_id %lu teid = %u \n", __FUNCTION__, __LINE__, sess_id, teid);
 
 	/* Retrive the session information based on session id. */
 	if (get_sess_entry(sess_id, &resp) != 0){
@@ -3899,6 +3943,7 @@ process_pfcp_sess_est_resp(pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, gtpv2c_head
 	pdn = context->eps_bearers[ebi_index]->pdn;
 	bearer = context->eps_bearers[ebi_index];
 	pdn->dp_seid = dp_sess_id;
+	printf("\n %s %d DP session id %lu. UE address = %s  \n", __FUNCTION__, __LINE__, dp_sess_id, inet_ntoa(pdn->ipv4));
 
 	/* Update the UE state */
 	pdn->state = PFCP_SESS_EST_RESP_RCVD_STATE;

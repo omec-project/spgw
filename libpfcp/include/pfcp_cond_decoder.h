@@ -18,6 +18,8 @@
 #define __PFCP_COND_DECODER_H__
 
 #include "pfcp_enum.h"
+#include "stdlib.h"
+#include "string.h"
 
 /* Inside pfcp_fteid_ie_t */
 /* TODO: Revisit this for change in yang */

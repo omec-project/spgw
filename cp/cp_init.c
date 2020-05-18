@@ -349,6 +349,8 @@ init_pfcp(void)
 				strerror(errno));
 	}
 
+// ajay : we need support to take hostname instead of UPF name.... also we
+// need to make sure getaddr info work is good enough...
 #ifndef USE_DNS_QUERY
 	/* Initialize peer UPF inteface for sendto(.., dest_addr), If DNS is Disable */
 	upf_pfcp_port =  htons(pfcp_config.upf_pfcp_port);
@@ -502,6 +504,7 @@ init_cp(void)
 
 	init_pfcp();
 
+	/* AJAY : passing correct spgw service config in container image */
 	switch (spgw_cfg) {
 	case SGWC:
 		init_s11();

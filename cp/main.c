@@ -149,7 +149,7 @@ parse_arg(int argc, char **argv)
 	const struct option long_options[] = {
 	  {"pcap_file_in", required_argument, NULL, 'x'},
 	  {"pcap_file_out", required_argument, NULL, 'y'},
-	  {"log_level",   required_argument, NULL, 'z'},
+	  {"log_level",   required_argument, NULL, 'l'},
 	  {0, 0, 0, 0}
 	};
 
@@ -171,12 +171,14 @@ parse_arg(int argc, char **argv)
 			pcap_dumper = pcap_dump_open(pcap, optarg);
 			s11_pcap_fd = pcap_fileno(pcap);
 			break;
-		case 'z':
+		case 'l':
+			// ajay - changed log option 
 			set_log_level((uint8_t)atoi(optarg));
 			args_set |= LOG_LEVEL_SET;
 			break;
 		default:
-			rte_panic("Unknown argument - %s.", argv[optind]);
+			// ajay - no crash for unknown args 
+			printf("\nUnknown argument %c - %s.", c, argv[optind]);
 			break;
 		}
 	} while (c != -1);
@@ -189,7 +191,9 @@ parse_arg(int argc, char **argv)
 					long_options[c].val,
 					long_options[c].name);
 		}
-		rte_panic("\n");
+		// ajay - instead of crash we should have default option  
+		printf("\nPanic ?? \n"); 
+		//rte_panic("\n");
 	}
 }
 

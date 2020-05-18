@@ -350,6 +350,26 @@ extern uint32_t nb_ports;
 
 extern struct kni_port_params *kni_port_params_array[RTE_MAX_ETHPORTS];
 
+#ifdef USE_AF_PACKET
+/**
+ * Initialize libmnl netlink subsystem
+ */
+void
+init_mnl(void);
+
+/**
+ * Interface to burst rx and enqueue in to kernel
+ */
+void
+kern_packet_ingress(int portid, struct rte_mbuf *pkts_burst[PKT_BURST_SZ], unsigned nb_rx);
+
+/**
+ * Interface to relay tx traffic out of the kernel and into the outgoing NIC
+ */
+void
+kern_packet_egress(int portid);
+#endif
+
 /**
  * @brief  : Interface to burst rx and enqueue mbufs into rx_q
  * @param  : p, kni parameters
@@ -516,6 +536,18 @@ struct app_params app;
 
 /** ethernet addresses of ports */
 struct ether_addr ports_eth_addr[RTE_MAX_ETHPORTS];
+
+#ifdef USE_AF_PACKET
+typedef struct dp_port_info {
+        struct ether_addr *eth_addr;
+        uint8_t ifup_state;
+        uint16_t mtu_size;
+        uint8_t promisc_state;
+} dp_port_info;
+
+struct dp_port_info dp_ports[RTE_MAX_ETHPORTS];
+extern struct mnl_socket *mnl_sock;
+#endif
 
 /** ethernet addresses of ports */
 extern struct ether_addr ports_eth_addr[];

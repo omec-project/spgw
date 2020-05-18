@@ -61,9 +61,10 @@ DOCKER_LABEL_VCS_URL     ?= $(shell git remote get-url $(shell git remote))
 DOCKER_LABEL_VCS_REF     ?= $(shell git diff-index --quiet HEAD -- && git rev-parse HEAD || echo "unknown")
 DOCKER_LABEL_COMMIT_DATE ?= $(shell git diff-index --quiet HEAD -- && git show -s --format=%cd --date=iso-strict HEAD || echo "unknown" )
 DOCKER_LABEL_BUILD_DATE  ?= $(shell date -u "+%Y-%m-%dT%H:%M:%SZ")
-DOCKER_TARGETS           ?= cp 
+DOCKER_TARGETS           ?= cp dp 
 
 # https://docs.docker.com/engine/reference/commandline/build/#specifying-target-build-stage---target
+#ajay - need to get clean image with appripriate tags 
 docker-build:
 	for target in $(DOCKER_TARGETS); do \
 		docker build $(DOCKER_BUILD_ARGS) \
@@ -77,6 +78,19 @@ docker-build:
 			--label "org.label-schema.build-date=${DOCKER_LABEL_BUILD_DATE}" \
 			--label "org.opencord.vcs-commit-date=${DOCKER_LABEL_COMMIT_DATE}" \
 			.; \
+                docker build $(DOCKER_BUILD_ARGS) \
+                        --target $$target \
+                        --tag ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}ngic-$$target:${DOCKER_DEBUG_TAG} \
+                        --build-arg RUN_BASE="runtime-utils" \
+                        --build-arg EXTRA_CFLAGS="-DUSE_AF_PACKET -UPERF_TEST -ggdb " \
+                        --label "org.label-schema.schema-version=1.0" \
+                        --label "org.label-schema.name=ngic-$$target-af-packet" \
+                        --label "org.label-schema.version=${VERSION}" \
+                        --label "org.label-schema.vcs-url=${DOCKER_LABEL_VCS_URL}" \
+                        --label "org.label-schema.vcs-ref=${DOCKER_LABEL_VCS_REF}" \
+                        --label "org.label-schema.build-date=${DOCKER_LABEL_BUILD_DATE}" \
+                        --label "org.opencord.vcs-commit-date=${DOCKER_LABEL_COMMIT_DATE}" \
+                        .; \
 	done
 
 docker-push:

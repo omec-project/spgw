@@ -192,6 +192,7 @@ void iface_process_ipc_msgs(void)
 	 *  ready to be recv()d (timeout 10.5 secs)
 	 */
 #ifdef NGCORE_SHRINK
+	/* NGCORE is defined by default */
 	tv.tv_sec = 1;
 	tv.tv_usec = 500000;
 #else
@@ -205,8 +206,11 @@ void iface_process_ipc_msgs(void)
 	} else if (rv > 0) {
 		/* one or both of the descriptors have data */
 		if (FD_ISSET(my_sock.sock_fd, &readfds))
+		{
 				process_pfcp_msg(pfcp_rx, &peer_addr);
+		}
 #ifdef CP_BUILD
+		/* ajay - CP_BUILD defined for CP build and not defined in case DP BUILD. cp/Makefile has this flag defined  */
 		if ((spgw_cfg  == SGWC) || (spgw_cfg == SAEGWC)) {
 			if (FD_ISSET(my_sock.sock_fd_s11, &readfds)) {
 					msg_handler_s11();
@@ -220,6 +224,7 @@ void iface_process_ipc_msgs(void)
 		}
 
 #ifdef GX_BUILD
+		/* Refer - cp/Makefile. For now this is disabled. */
 		if ((spgw_cfg == PGWC) || (spgw_cfg == SAEGWC)) {
 			if (FD_ISSET(gx_app_sock, &readfds)) {
 					msg_handler_gx();

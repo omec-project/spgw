@@ -27,6 +27,11 @@
 #include <rte_mempool.h>
 #include <rte_mbuf.h>
 #include <rte_arp.h>
+#ifdef USE_AF_PACKET
+#include <fcntl.h>
+#include <libmnl/libmnl.h>
+#include <linux/rtnetlink.h>
+#endif
 
 /* KNI specific headers */
 #include <rte_kni.h>
@@ -53,9 +58,41 @@ extern struct rte_mempool *kni_mpool;
 
 extern struct rte_eth_conf port_conf_default;
 
+#ifndef USE_AF_PACKET
 static int kni_change_mtu(uint16_t port_id, unsigned int new_mtu);
 static int kni_config_network_interface(uint16_t port_id, uint8_t if_up);
 static int kni_config_mac_address(uint16_t port_id, uint8_t mac_addr[]);
+#else
+
+int kni_change_mtu(uint16_t port_id, unsigned int new_mtu);
+int kni_config_mac_address(uint16_t port_id, uint8_t mac_addr[]);
+
+static const char *port_str[] = {
+	"S1U_PORT_ID", "SGI_PORT_ID",
+	"S1U_PORT_VETH_ID", "SGI_PORT_VETH_ID"
+};
+
+/* for mnl communication */
+struct mnl_socket *mnl_sock = 0;
+/**
+ * Sibling function of kni_config_network_interface() that initializes
+ * a socket that DP uses for ARP resolution at run time (works only for
+ * sockets bound to veth ifaces). This is its *more "cleaned-up" version.
+ */
+void
+af_config_network_monitor_interface(uint16_t port_id)
+{
+	/* Create udp socket */
+	int client_fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+	if (client_fd < 0) {
+		fprintf(stderr, "cannot create socket\n");
+		exit(EXIT_FAILURE);
+	}
+
+	fd_array[port_id - NUM_SPGW_PORTS] = client_fd;
+}
+#endif
 
 void
 kni_burst_free_mbufs(struct rte_mbuf **pkts, unsigned num)
@@ -105,6 +142,33 @@ validate_parameters(uint32_t portmask)
 
 	return 0;
 }
+
+#ifdef USE_AF_PACKET
+void
+init_mnl(void)
+{
+	int fd;
+	mnl_sock = mnl_socket_open(NETLINK_ROUTE);
+	if (mnl_sock == NULL) {
+		perror("mnl_socket_open");
+		rte_exit(EXIT_FAILURE, "Failed to open mnl socket!\n");
+	}
+
+	/* get socket descriptor */
+	fd = mnl_socket_get_fd(mnl_sock);
+
+	/* convert it to non-blocking */
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
+		perror("fcntl");
+		rte_exit(EXIT_FAILURE, "fcntl() non-blocking request failed!\n");
+	}
+
+	if (mnl_socket_bind(mnl_sock, RTMGRP_LINK, MNL_SOCKET_AUTOPID) < 0) {
+		perror("mnl_socket_bind");
+		rte_exit(EXIT_FAILURE, "Failed to bind mnl socket!\n");
+	}
+}
+#else
 
 /**
  * Burst rx from dpdk interface and transmit burst to kni interface.
@@ -195,7 +259,7 @@ void init_kni(void) {
 	/* Invoke rte KNI init to preallocate the ports */
 	rte_kni_init(num_of_kni_ports);
 }
-
+#endif
 
 /* Check the link status of all ports in up to 9s, and print them finally */
 void check_all_ports_link_status(uint16_t port_num, uint32_t port_mask) {
@@ -217,11 +281,19 @@ void check_all_ports_link_status(uint16_t port_num, uint32_t port_mask) {
 			/* print link status if flag set */
 			if (print_flag == 1) {
 				if (link.link_status)
+#ifdef USE_AF_PACKET
+				{
+					dp_ports[portid].ifup_state = 1;
+#endif
 					printf(
 					"Port%d Link Up - speed %uMbps - %s\n",
 						portid, link.link_speed,
 				(link.link_duplex == ETH_LINK_FULL_DUPLEX) ?
 					("full-duplex") : ("half-duplex\n"));
+
+#ifdef USE_AF_PACKET
+				}
+#endif
 				else
 					clLog(clSystemLog, eCLSeverityDebug,"Port %d Link Down\n", portid);
 				continue;
@@ -256,7 +328,11 @@ void check_all_ports_link_status(uint16_t port_num, uint32_t port_mask) {
  * @param  : new_mtu, new mtu value
  * @return : Returns 0 in case of success , -1 otherwise
  */
-static int
+#ifndef USE_AF_PACKET
+/* Callback for request of changing MTU */
+static
+#endif
+int
 kni_change_mtu(uint16_t port_id, unsigned int new_mtu)
 {
 	int ret;
@@ -430,7 +506,10 @@ print_ethaddr(const char *name, struct ether_addr *mac_addr)
  * @param  : mac_addr, ethernet address
  * @return : Returns 0 in case of success , -1 otherwise
  */
-static int
+#ifndef USE_AF_PACKET
+static
+#endif
+int
 kni_config_mac_address(uint16_t port_id, uint8_t mac_addr[])
 {
 	int ret = 0;
@@ -550,3 +629,60 @@ free_kni_ports(void) {
 		}
 	}
 }
+
+#ifdef USE_AF_PACKET
+#define VETH_TX_RETRIES_LIMIT		5
+
+inline void
+kern_packet_ingress(int portid,
+		   struct rte_mbuf *pkts_burst[PKT_BURST_SZ],
+		   unsigned nb_rx)
+{
+	/* Send e.g. ARP packets to the kernel */
+	uint32_t pkt_indx = 0, retries = 0, i;
+	while (nb_rx && retries < VETH_TX_RETRIES_LIMIT) {
+
+		uint16_t tx_cnt = rte_eth_tx_burst(portid + NUM_SPGW_PORTS,
+						   0, &pkts_burst[pkt_indx], nb_rx);
+		nb_rx -= tx_cnt;
+		pkt_indx += tx_cnt;
+		retries++;
+	}
+
+	/* free those mbufs that failed to get transmitted */
+	for (i = 0; i < nb_rx; i++, pkt_indx++) {
+		RTE_LOG_DP(ERR, DP, "Failed to transmit pkt from %s --> %s\n",
+			   port_str[portid], port_str[portid + NUM_SPGW_PORTS]);
+		rte_pktmbuf_free(pkts_burst[pkt_indx]);
+	}
+}
+
+inline void
+kern_packet_egress(int portid)
+{
+	uint32_t rx_cnt, pkt_indx, retries, i;
+	struct rte_mbuf *pkts_burst[PKT_BURST_SZ];
+
+	pkt_indx = retries = 0;
+
+	/* Fetch packets from kernel */
+	rx_cnt = rte_eth_rx_burst(portid + NUM_SPGW_PORTS, 0,
+				  pkts_burst, PKT_BURST_SZ);
+
+	/* Send the packets out of the physical port */
+	while (rx_cnt && retries < VETH_TX_RETRIES_LIMIT) {
+		uint16_t tx_cnt = rte_eth_tx_burst(portid,
+						   0, &pkts_burst[pkt_indx], rx_cnt);
+		rx_cnt -= tx_cnt;
+		pkt_indx += tx_cnt;
+		retries++;
+	}
+
+	/* free those mbufs that failed to get transmitted */
+	for (i = 0; i < rx_cnt; i++, pkt_indx++) {
+		RTE_LOG_DP(ERR, DP, "Failed to transmit pkt from %s --> %s\n",
+			   port_str[portid], port_str[portid + NUM_SPGW_PORTS]);
+		rte_pktmbuf_free(pkts_burst[pkt_indx]);
+	}
+}
+#endif /* !USE_AF_PACKET */

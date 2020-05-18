@@ -336,7 +336,7 @@ uint8_t process_response(uint32_t dstIp)
 		/* Stop periodic timer for specific peer node */
 		stopTimer( &conn_data->pt );
 		/* Reset Periodic Timer */
-		if ( startTimer( &conn_data->pt ) < 0)
+		if ( startTimer( &conn_data->pt ) == false ) /* Changed - Ajay */
 			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to start...\n");
 
 	}

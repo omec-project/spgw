@@ -107,7 +107,8 @@ build_cli()
   source venv/bin/activate
   set -u
   $SUDO pip install -r requirements.txt
-  deactivate
+  #ajay : should i check with GSlab ??
+  #deactivate
   popd
 }
 

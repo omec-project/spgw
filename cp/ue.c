@@ -49,7 +49,7 @@ static uint32_t pgw_gtpu_base_teid = 0x00000001;
 
 uint32_t base_s1u_sgw_gtpu_teid = 0xf0000000;
 
-// AJAY
+// AJAY : Lets understand how this teid range works
 void
 set_base_teid(uint8_t val)
 {

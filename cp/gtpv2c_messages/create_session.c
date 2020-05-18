@@ -74,6 +74,7 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 	}
 
 	pdn->ipv4.s_addr = htonl(pdn->ipv4.s_addr);
+	printf("\n%s %d - UE address %s, pdn = %p ",__FUNCTION__,__LINE__,inet_ntoa(pdn->ipv4), pdn);
 	set_ipv4_paa(&cs_resp.paa, IE_INSTANCE_ZERO, pdn->ipv4);
 
 	set_apn_restriction(&cs_resp.apn_restriction, IE_INSTANCE_ZERO,
@@ -256,6 +257,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 	uint8_t ebi_index = csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
 
+	printf("\n acquire ip %d %s",__LINE__,__FUNCTION__);
 	ret = acquire_ip(&ue_ip);
 	if (ret)
 		return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
@@ -349,6 +351,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		return ret;
 	}
 
+	printf("\n ******* call set_create_session_response from %d %s \n",__LINE__,__FUNCTION__);
 	set_create_session_response(
 			gtpv2c_s11_tx, csr.header.teid.has_teid.seq,
 			context, pdn, bearer);

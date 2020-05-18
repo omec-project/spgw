@@ -139,11 +139,12 @@ association_setup_handler(void *data, void *unused_param)
 }
 
 int
-process_assoc_resp_handler(void *data, void *addr)
+process_assoc_resp_handler(void *data, void *addr) // ajay
 {
 	msg_info *msg = (msg_info *)data;
 	struct sockaddr_in *peer_addr = (struct sockaddr_in *)addr;
 
+	printf(" %s %d - Received PFCP association response from %s  \n",__FUNCTION__,__LINE__, inet_ntoa(peer_addr->sin_addr));
 	ret = process_pfcp_ass_resp(msg, peer_addr);
 	if(ret){
 		if(ret != -1){

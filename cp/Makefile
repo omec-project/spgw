@@ -195,7 +195,8 @@ endif
 #CFLAGS += -DDEL_SESS_REQ
 
 # Comment below line to read UPF ip from cp.cfg instead of DNS query.
-CFLAGS += -DUSE_DNS_QUERY
+#ajay - add ticket to support DNS in SPGW 
+#CFLAGS += -DUSE_DNS_QUERY
 
 #ifneq (,$(findstring USE_DNS_QUERY, $(CFLAGS)))
 	LIBDNSCLIENT_ROOT = $(SRCDIR)/../oss_adapter/c3po_oss/oss-util
@@ -205,7 +206,8 @@ CFLAGS += -DUSE_DNS_QUERY
 #endif
 
 # Comment below line to build cp without GxApp.
-CFLAGS += -DGX_BUILD
+# ajay ; add ticket to support Gx 
+#CFLAGS += -DGX_BUILD
 
 ifneq (,$(findstring GX_BUILD, $(CFLAGS)))
 	SRCS-y += cp_app.c

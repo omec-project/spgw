@@ -56,6 +56,9 @@
 #include "ipc_api.h"
 #endif /* CP_BULID */
 
+#ifdef USE_AF_PACKET
+#include <libmnl/libmnl.h>
+#endif
 #ifdef SGX_CDR
 	#define DEALERIN_IP "dealer_in_ip"
 	#define DEALERIN_PORT "dealer_in_port"
@@ -981,7 +984,8 @@ void iface_module_constructor(void)
 #endif  /* SDN_ODL_BUILD  */
 #else   /* CP_BUILD */
 #ifndef SDN_ODL_BUILD
-
+		/* User Plane is starting UDP socket to received PFCP packets */
+		printf("Opening up socket at dp\n");
 		clLog(clSystemLog, eCLSeverityMajor, "IFACE: DP Initialization\n");
 		create_udp_socket(dp_comm_ip, dp_comm_port, &my_sock);
 
@@ -1029,6 +1033,9 @@ void sig_handler(int signo)
 
 #ifndef CP_BUILD
 			close(route_sock);
+#ifdef USE_AF_PACKET
+         		mnl_socket_close(mnl_sock);
+#endif /* USE_AF_PACKET */
 #endif
 #ifdef TIMER_STATS
 #ifdef AUTO_ANALYSIS

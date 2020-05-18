@@ -45,6 +45,10 @@ extern uint64_t num_dns_processed;
 /**
  * S1U port id.
  */
+
+#ifdef USE_AF_PACKET
+#define	S1U_PORT_VETH_ID	S1U_PORT_ID + NUM_SPGW_PORTS
+#endif
 #define S1U_PORT_ID   0
 #define WEST_PORT_ID   0
 
@@ -52,6 +56,9 @@ extern uint64_t num_dns_processed;
  * SGI port id.
  */
 
+#ifdef USE_AF_PACKET
+#define	SGI_PORT_VETH_ID	SGI_PORT_ID + NUM_SPGW_PORTS
+#endif
 #define SGI_PORT_ID   1
 #define EAST_PORT_ID   1
 
