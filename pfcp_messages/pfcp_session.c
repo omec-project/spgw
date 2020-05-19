@@ -3454,10 +3454,11 @@ process_create_sess_req(create_sess_req_t *csr,
 		return -1;
 
 	/* SGW Handover Storage */
+	// Ajay- indication does not mean its handover..we should have other way to check it 
 	if (csr->indctn_flgs.header.len != 0)
 	{
 		/* AJAY - changed below code - paa was set to 0.0.0.0 and also address was not set to correct order */
-		//memcpy(&(pdn->ipv4.s_addr) ,&(csr->paa.pdn_addr_and_pfx), IPV4_SIZE);
+		// memcpy(&(pdn->ipv4.s_addr) ,&(csr->paa.pdn_addr_and_pfx), IPV4_SIZE);
 		//pdn->ipv4.s_addr = ntohl(pdn->ipv4.s_addr);
 		/*TODO:ntohl is done as in csr response there is htonl*/
 		pdn->ipv4.s_addr = pdn->ipv4.s_addr;
