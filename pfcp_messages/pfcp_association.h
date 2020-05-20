@@ -145,6 +145,16 @@ int
 buffer_csr_request(ue_context *context,
 		upf_context_t *upf_context, uint8_t ebi);
 
+
+/**
+ * @brief  : fills default rule and qos values
+ * @param  : pdn
+ * @return : Returns nothing
+ */
+void
+fill_rule_and_qos_inform_in_pdn(pdn_connection *pdn);
+
+
 /**
  * @brief  : This function processes incoming create session request
  * @param  : teid

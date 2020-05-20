@@ -154,7 +154,6 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 				clLog(clSystemLog, eCLSeverityDebug, "%s::arp_queue_unresolved_packet::"
 						"\n\treturn -1; arp_key.ip= 0x%X\n",
 						__func__, tmp_arp_key.ip);
-				printf("\n %s %d dynamic arp\n",__FUNCTION__,__LINE__);
 				return -1;
 			}
 		}

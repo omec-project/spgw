@@ -1653,7 +1653,6 @@ fill_pdr_entry(ue_context *context, pdn_connection *pdn,
 	 * }
 	 */
 
-#ifdef GX_BUILD
 	if (pfcp_config.cp_type == PGWC || pfcp_config.cp_type == SAEGWC){
 		/* TODO Hardcode 1 set because one PDR contain only 1 QER entry
 		 * Revist again in case of multiple rule support
@@ -1667,7 +1666,6 @@ fill_pdr_entry(ue_context *context, pdn_connection *pdn,
 			pdr_ctxt->qer_id[0].qer_id = bearer->qer_id[QER_INDEX_FOR_CORE_INTERFACE].qer_id;
 		}
 	}
-#endif
 
 	pdr_ctxt->pdi.ue_addr.ipv4_address = pdn->ipv4.s_addr;
 
@@ -1815,12 +1813,12 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		/*
 		 * For pgw create pdf, far and qer while handling pfcp messages
 		 */
-#ifdef GX_BUILD // moving this code undet GX 
 		for (int idx=0; idx <  pdn->policy.num_charg_rule_install; idx++)
 		{
 			bearer = NULL;
 			if(compare_default_bearer_qos(&pdn->policy.default_bearer_qos, &pdn->policy.pcc_rule[idx].dyn_rule.qos) == 0)
 			{
+				printf("[%s]-%d. default bearer \n",__FUNCTION__,__LINE__);
 				/*
 				 * This means this Dynamic rule going to install in default bearer
 				 */
@@ -1910,25 +1908,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
 			bearer->num_dynamic_filters++;
 		}
-#else
-		if(pdn->policy.num_charg_rule_install == 0) 
-		{
-			pfcp_sess_est_req->create_pdr_count = 2;
-			bearer = get_default_bearer(pdn);
-			if (pfcp_config.cp_type == SGWC) {
-				set_s1u_sgw_gtpu_teid(bearer, bearer->pdn->context);
-				update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, bearer->s1u_sgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
-				set_s5s8_sgw_gtpu_teid(bearer, bearer->pdn->context);
-				update_pdr_teid(bearer, bearer->s5s8_sgw_gtpu_teid, bearer->s5s8_sgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_CORE);
-			} else if (pfcp_config.cp_type == SAEGWC) {
-				set_s1u_sgw_gtpu_teid(bearer, bearer->pdn->context);
-				update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, bearer->s1u_sgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
-			} else if (pfcp_config.cp_type == PGWC){
-				set_s5s8_pgw_gtpu_teid(bearer, bearer->pdn->context);
-				update_pdr_teid(bearer, bearer->s5s8_pgw_gtpu_teid, bearer->s5s8_pgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
-			}
-		}
-#endif
 
 		if (pfcp_config.cp_type == SAEGWC) {
 			update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid,
@@ -1950,7 +1929,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		for(uint8_t i = 0; i < MAX_BEARERS; i++)
 		{
 			bearer = pdn->eps_bearers[i];
-			printf("%s %d - i= %d bearer = %p \n",__FUNCTION__,__LINE__,i,bearer);
 			if(bearer != NULL)
 			{
 				assert(bearer->pdr_count != 0);
@@ -1977,7 +1955,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		for(uint8_t i = 0; i < MAX_BEARERS; i++)
 		{
 			bearer = pdn->eps_bearers[i];
-			printf("%s %d i= %d bearer = %p \n",__FUNCTION__,__LINE__, i, bearer);
 			if(bearer != NULL)
 			{
 				for(uint8_t idx = 0; idx < MAX_PDR_PER_RULE; idx++)
@@ -2076,7 +2053,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 								DESTINATION_INTERFACE_VALUE_CORE;
 						}
 					}
-#ifdef GX_BUILD
 					if (pfcp_config.cp_type == PGWC || pfcp_config.cp_type == SAEGWC){
 						pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count =
 							bearer->pdrs[idx]->qer_id_count;
@@ -2086,7 +2062,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 								bearer->qer_id[idx].qer_id;
 						}
 					}
-#endif
 
 					if ((pfcp_config.cp_type == PGWC) || (SAEGWC == pfcp_config.cp_type)) {
 						pfcp_sess_est_req->create_far[pdr_idx].apply_action.forw = PRESENT;
@@ -2129,7 +2104,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		}
 	} /*for loop*/
 
-#ifdef GX_BUILD
 	{
 		uint8_t qer_idx = 0;
 		qer_t *qer_context;
@@ -2147,7 +2121,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 							pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value  =
 								bearer->qer_id[qer_idx].qer_id;
 							qer_context = get_qer_entry(pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value);
-							qer_idx++;
 							/* Assign the value from the PDR */
 							if(qer_context){
 								//pfcp_sess_est_req->create_pdr[qer_idx].qer_id[0].qer_id_value =
@@ -2161,6 +2134,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 								pfcp_sess_est_req->create_qer[qer_idx].guaranteed_bitrate.dl_gbr  =
 									qer_context->guaranteed_bitrate.dl_gbr;
 							}
+							qer_idx++;
 						}
 				}
 			}
@@ -2184,7 +2158,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 
 		}
 
-#endif /* GX_BUILD */
 
 	/* VS: Set the pdn connection type */
 	set_pdn_type(&(pfcp_sess_est_req->pdn_type), &(pdn->pdn_type));
@@ -2363,11 +2336,13 @@ fill_uli_info(gtp_user_loc_info_ie_t *uli, ue_context *context)
 static int
 fill_context_info(create_sess_req_t *csr, ue_context *context)
 {
-	/* Check ntohl case */
-	//context->s11_sgw_gtpc_ipv4.s_addr = ntohl(pfcp_config.s11_ip.s_addr);
-	context->s11_sgw_gtpc_ipv4.s_addr = pfcp_config.s11_ip.s_addr;
-	context->s11_mme_gtpc_teid = csr->sender_fteid_ctl_plane.teid_gre_key;
-	context->s11_mme_gtpc_ipv4.s_addr = csr->sender_fteid_ctl_plane.ipv4_address;
+ 	if ((pfcp_config.cp_type == SGWC) || (pfcp_config.cp_type == SAEGWC)) {
+	    /* Check ntohl case */
+	    //context->s11_sgw_gtpc_ipv4.s_addr = ntohl(pfcp_config.s11_ip.s_addr);
+	    context->s11_sgw_gtpc_ipv4.s_addr = pfcp_config.s11_ip.s_addr;
+	    context->s11_mme_gtpc_teid = csr->sender_fteid_ctl_plane.teid_gre_key;
+	    context->s11_mme_gtpc_ipv4.s_addr = csr->sender_fteid_ctl_plane.ipv4_address;
+	}
 
 
 	/* VS: Stored the serving network information in UE context */
@@ -2378,12 +2353,14 @@ fill_context_info(create_sess_req_t *csr, ue_context *context)
 	context->serving_nw.mcc_digit_2 = csr->serving_network.mcc_digit_2;
 	context->serving_nw.mcc_digit_3 = csr->serving_network.mcc_digit_3;
 
-	if(csr->indctn_flgs.header.len != 0) {
-		context->indication_flag.oi = csr->indctn_flgs.indication_oi;
-	}
+ 	if ((pfcp_config.cp_type == SGWC) || (pfcp_config.cp_type == SAEGWC)) {
+	  if(csr->indctn_flgs.header.len != 0) {
+	  	context->indication_flag.oi = csr->indctn_flgs.indication_oi;
+	  }
 
-	s11_mme_sockaddr.sin_addr.s_addr =
-					htonl(csr->sender_fteid_ctl_plane.ipv4_address);
+	  s11_mme_sockaddr.sin_addr.s_addr =
+	  				htonl(csr->sender_fteid_ctl_plane.ipv4_address);
+	}
 
 	return 0;
 }
@@ -2626,7 +2603,6 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer *bearer,
 		bearer->s5s8_sgw_gtpu_teid = csr->bearer_contexts_to_be_created.s5s8_u_sgw_fteid.teid_gre_key;
 	}
 
-#if 0
 #ifdef CP_BUILD
 #ifdef GX_BUILD
 	/* TODO: Revisit this for change in yang*/
@@ -2639,24 +2615,6 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer *bearer,
 	}
 #endif /* GX_BUILD*/
 #endif /* CP_BUILD */
-#else 
-	if (pfcp_config.cp_type == SAEGWC){
-
-		bearer->pdr_count = NUMBER_OF_PDR_PER_BEARER;
-		for(uint8_t itr=0; itr < bearer->pdr_count; itr++){
-			switch(itr){
-				case SOURCE_INTERFACE_VALUE_ACCESS:
-					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, itr);
-					break;
-				case SOURCE_INTERFACE_VALUE_CORE:
-					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, itr);
-					break;
-				default:
-					break;
-			}
-		}
-	}
-#endif
 	/*SP: As per discussion Per bearer two pdrs and fars will be there*/
 	/************************************************
 	 *  cp_type  count      FTEID_1        FTEID_2 *
@@ -3335,6 +3293,65 @@ ccru_req_for_bear_termination(pdn_connection *pdn, eps_bearer *bearer)
 }
 #endif /* GX_BUILD */
 
+#ifndef GX_BUILD
+void
+fill_rule_and_qos_inform_in_pdn(pdn_connection *pdn)
+{
+	dynamic_rule_t *dynamic_rule = dynamic_rule = &pdn->policy.pcc_rule[0].dyn_rule;
+	uint8_t ebi_index = pdn->default_bearer_id - 5;
+	eps_bearer *bearer = pdn->eps_bearers[ebi_index];
+
+	pdn->policy.default_bearer_qos_valid = TRUE;
+	bearer_qos_ie *def_qos = &pdn->policy.default_bearer_qos;
+
+	pdn->policy.num_charg_rule_install = DEFAULT_RULE_COUNT;
+	def_qos->qci = QCI_VALUE;
+	def_qos->arp.priority_level = GX_PRIORITY_LEVEL;
+	def_qos->arp.preemption_capability = PREEMPTION_CAPABILITY_DISABLED;
+	def_qos->arp.preemption_vulnerability = PREEMPTION_VALNERABILITY_ENABLED;
+
+	bearer->qos.qci = QCI_VALUE;
+	bearer->qos.arp.priority_level = GX_PRIORITY_LEVEL;
+	bearer->qos.arp.preemption_capability = PREEMPTION_CAPABILITY_DISABLED;
+	bearer->qos.arp.preemption_vulnerability = PREEMPTION_VALNERABILITY_ENABLED;
+
+	memset(dynamic_rule->rule_name, '\0', sizeof(dynamic_rule->rule_name));
+	strncpy(dynamic_rule->rule_name, RULE_NAME, RULE_LENGTH );
+
+	dynamic_rule->online = ENABLE_ONLINE;
+	dynamic_rule->offline = DISABLE_OFFLINE;
+	dynamic_rule->flow_status = GX_ENABLE;
+	dynamic_rule->precedence = PRECEDENCE;
+	dynamic_rule->service_id = SERVICE_INDENTIFIRE;
+	dynamic_rule->rating_group = RATING_GROUP;
+	dynamic_rule->num_flw_desc = GX_FLOW_COUNT;
+
+	for(uint8_t idx = 0; idx < GX_FLOW_COUNT; idx++) {
+		dynamic_rule->flow_desc[idx].flow_direction = BIDIRECTIONAL;
+		dynamic_rule->flow_desc[idx].sdf_flw_desc.proto_id = PROTO_ID;
+		dynamic_rule->flow_desc[idx].sdf_flw_desc.local_ip_mask = LOCAL_IP_MASK;
+		dynamic_rule->flow_desc[idx].sdf_flw_desc.local_ip_addr.s_addr = LOCAL_IP_ADDR;
+		dynamic_rule->flow_desc[idx].sdf_flw_desc.local_port_low = PORT_LOW;
+		dynamic_rule->flow_desc[idx].sdf_flw_desc.local_port_high = PORT_HIGH;
+		dynamic_rule->flow_desc[idx].sdf_flw_desc.remote_ip_mask = REMOTE_IP_MASK;
+		dynamic_rule->flow_desc[idx].sdf_flw_desc.remote_ip_addr.s_addr = REMOTE_IP_ADDR;
+		dynamic_rule->flow_desc[idx].sdf_flw_desc.remote_port_low = PORT_LOW;
+		dynamic_rule->flow_desc[idx].sdf_flw_desc.remote_port_high = PORT_HIGH;
+		dynamic_rule->flow_desc[idx].sdf_flw_desc.direction = TFT_DIRECTION_BIDIRECTIONAL;
+	}
+
+	dynamic_rule->qos.qci = QCI_VALUE;
+	dynamic_rule->qos.arp.priority_level = GX_PRIORITY_LEVEL;
+	dynamic_rule->qos.arp.preemption_capability = PREEMPTION_CAPABILITY_DISABLED;
+	dynamic_rule->qos.arp.preemption_vulnerability = PREEMPTION_VALNERABILITY_ENABLED;
+	dynamic_rule->qos.ul_mbr =  REQUESTED_BANDWIDTH_UL;
+	dynamic_rule->qos.dl_mbr =  REQUESTED_BANDWIDTH_DL;
+	dynamic_rule->qos.ul_gbr =  GURATEED_BITRATE_UL;
+	dynamic_rule->qos.dl_gbr =  GURATEED_BITRATE_DL;
+
+}
+#endif
+
 /* Ajay - new CSReq handler */
 int
 process_create_sess_req(create_sess_req_t *csr,
@@ -3375,12 +3392,11 @@ process_create_sess_req(create_sess_req_t *csr,
 
 	memcpy(&context->msisdn, &csr->msisdn.msisdn_number_digits, csr->msisdn.header.len);
 
-	if ((pfcp_config.cp_type == SGWC) || (pfcp_config.cp_type == SAEGWC)) {
-		if (fill_context_info(csr, context) != 0)
+	if (fill_context_info(csr, context) != 0)
 			return -1;
-	}else{
+
+	if (pfcp_config.cp_type == PGWC)
 		context->s11_mme_gtpc_teid = csr->sender_fteid_ctl_plane.teid_gre_key;
-	}
 
 	/* Retrive procedure of CSR */
 	pdn = context->eps_bearers[ebi_index]->pdn;
@@ -3455,7 +3471,8 @@ process_create_sess_req(create_sess_req_t *csr,
 
 	/* SGW Handover Storage */
 	// Ajay- indication does not mean its handover..we should have other way to check it 
-	if (csr->indctn_flgs.header.len != 0)
+	if (csr->indctn_flgs.header.len != 0 && 
+		csr->indctn_flgs.indication_oi == 1)
 	{
 		/* AJAY - changed below code - paa was set to 0.0.0.0 and also address was not set to correct order */
 		// memcpy(&(pdn->ipv4.s_addr) ,&(csr->paa.pdn_addr_and_pfx), IPV4_SIZE);
@@ -3472,16 +3489,17 @@ process_create_sess_req(create_sess_req_t *csr,
 	}
 	context->pdns[ebi_index]->dp_seid = 0;
 
-#ifdef GX_BUILD
 	if ((pfcp_config.cp_type == PGWC) || (pfcp_config.cp_type == SAEGWC)) {
-
+#ifdef GX_BUILD
 		if (gen_ccr_request(context, ebi_index, csr)) {
 			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
 					strerror(errno));
 			return -1;
 		}
-	}
+#else
+ 		fill_rule_and_qos_inform_in_pdn(pdn);
 #endif /* GX_BUILD */
+	}
 
 #ifdef USE_CSID
 	/* Parse and stored MME and SGW FQ-CSID in the context */
