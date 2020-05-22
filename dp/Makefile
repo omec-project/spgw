@@ -23,7 +23,7 @@ RTE_TARGET ?= x86_64-native-linuxapp-gcc
 OSS_UTIL_ROOT = $(NG_CORE)/oss_adapter/c3po_oss/oss-util
 
 include $(RTE_SDK)/mk/rte.vars.mk
-include $(NG_CORE)/config/ng-core_cfg.mk
+include $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/*.mk
 
 LIBPFCP_ROOT = $(SRCDIR)/../libpfcp
 
