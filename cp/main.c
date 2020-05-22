@@ -30,6 +30,7 @@
 #include "dp_ipc_api.h"
 #include "pfcp_set_ie.h"
 #include "../pfcp_messages/pfcp.h"
+#include <sys/stat.h>
 
 
 #ifdef USE_REST
@@ -279,6 +280,12 @@ main(int argc, char **argv)
 		rte_panic("Cannot init EAL\n");
 
 	parse_arg(argc - ret, argv + ret);
+
+	int state = mkdir(DEFAULT_STATS_PATH, S_IRWXU);
+	if (state && errno != EEXIST) {
+		rte_exit(EXIT_FAILURE, "Failed to create directory %s: %s\n",
+		DEFAULT_STATS_PATH, strerror(errno));
+	}
 
 	config_cp_ip_port(&pfcp_config);
 	/* TODO: REMOVE spgw_cfg */

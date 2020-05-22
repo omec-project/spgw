@@ -211,6 +211,7 @@
 #define PCC_TABLE_SIZE               (1025)
 #define METER_PROFILE_SDF_TABLE_SIZE (2048)
 
+#define LOGS_DIR "logs/"
 #ifdef PCAP_GEN
 /**
  * pcap filename length.
@@ -218,16 +219,16 @@
 #define PCAP_FILENAME_LEN 256
 
 /**
- * pcap filenames.
+ * pcap filenames. : ajay should we change filenames ?
  */
-#define SPGW_S1U_PCAP_FILE "logs/saegw_uplnk.pcap"
-#define SPGW_SGI_PCAP_FILE "logs/saegw_dwlnk.pcap"
+#define SPGW_S1U_PCAP_FILE LOGS_DIR "saegw_uplnk.pcap"
+#define SPGW_SGI_PCAP_FILE LOGS_DIR "saegw_dwlnk.pcap"
 
-#define SGW_S1U_PCAP_FILE "logs/sgwu_uplnk.pcap"
-#define SGW_S5S8_PCAP_FILE "logs/sgwu_dwlnk.pcap"
+#define SGW_S1U_PCAP_FILE LOGS_DIR "sgwu_uplnk.pcap"
+#define SGW_S5S8_PCAP_FILE LOGS_DIR "sgwu_dwlnk.pcap"
 
-#define PGW_S5S8_PCAP_FILE "logs/pgwu_uplnk.pcap"
-#define PGW_SGI_PCAP_FILE "logs/pgwu_dwlnk.pcap"
+#define PGW_S5S8_PCAP_FILE LOGS_DIR "pgwu_uplnk.pcap"
+#define PGW_SGI_PCAP_FILE LOGS_DIR  "pgwu_dwlnk.pcap"
 
 #endif /* PCAP_GEN */
 

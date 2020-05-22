@@ -57,9 +57,9 @@
 #endif
 #endif /* PERF_TEST */
 
+#define DEFAULT_STATS_PATH  "./logs/"
 #ifdef SYNC_STATS
 #include <time.h>
-#define DEFAULT_STATS_PATH  "./logs/"
 #define STATS_HASH_SIZE     (1 << 21)
 #define ACK       1
 #define RESPONSE  2
