@@ -523,6 +523,9 @@ init_cp(void)
 	if (signal(SIGINT, sig_handler) == SIG_ERR)
 		rte_exit(EXIT_FAILURE, "Error:can't catch SIGINT\n");
 
+	if (signal(SIGSEGV, sig_handler) == SIG_ERR)
+		rte_exit(EXIT_FAILURE, "Error:can't catch SIGSEGV\n");
+
 	create_ue_hash();
 
 	create_upf_context_hash();

@@ -31,6 +31,7 @@
 #include <rte_malloc.h>
 #include <rte_jhash.h>
 #include <rte_cfgfile.h>
+#include <rte_debug.h>
 
 #include "util.h"
 #include "interface.h"
@@ -1044,5 +1045,7 @@ void sig_handler(int signo)
 #endif /* TIMER_STATS */
 			rte_exit(EXIT_SUCCESS, "received SIGINT\n");
 		}
+	else if (signo == SIGSEGV)
+		rte_panic("received SIGSEGV\n");
 }
 
