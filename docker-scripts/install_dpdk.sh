@@ -44,7 +44,7 @@ install_dpdk()
 	tar -xvf dpdk-${DPDK_VER}.tar.xz -C ${RTE_SDK} --strip-components 1
 
 	echo "Applying AVX not supported patch for resolved dpdk-18.02 i40e driver issue.."
-	patch $RTE_SDK/drivers/net/i40e/i40e_rxtx.c $RTE_SDK/../../patches/avx_not_suported.patch
+	patch -d ${RTE_SDK} -p1 < $RTE_SDK/../../patches/v2-net-i40e-fix-avx2-driver-check-for-rx-rearm.diff
 	if [ $? -ne 0 ] ; then
 		echo "Failed to apply AVX patch, please check the errors."
 		return
@@ -54,7 +54,7 @@ install_dpdk()
 	#cp $NGIC_CORECUR_DIR/dpdk-18.02_common_linuxapp config/common_linuxapp
 	cp $NGIC_DIR/dpdk-18.02_common_linuxapp config/common_linuxapp
 #	sed -ri 's,(KNI_KMOD=).*,\1n,' config/common_linuxapp
-	make -j $CPUS install T=${RTE_TARGET} RTE_MACHINE RTE_MACHINE=${RTE_MACHINE} 
+	make -j $CPUS install T=${RTE_TARGET} RTE_MACHINE=${RTE_MACHINE} 
 	echo "Installed DPDK at $RTE_SDK"
 
 }
