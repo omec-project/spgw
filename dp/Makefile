@@ -129,13 +129,13 @@ LDFLAGS += -L$(LIBPFCP_ROOT)/lib -lpfcp
 # ngic-dp application options CFLAGS
 # #############################################################
 # ASR- Shrink pipeline COREs for Run to Completion (rtc) model
-ifneq (,$(findstring NGCORE_SHRINK, $(CFLAGS)))
+ifneq (,$(findstring NGCORE_SHRINK, $(CFLAGS), $(EXTRA_CFLAGS)))
         SRCS-y += up_ddn.c
         SRCS-y += pipeline/epc_ul.o
         SRCS-y += pipeline/epc_dl.o
 endif
 
-ifneq (,$(findstring SDN_ODL_BUILD, $(CFLAGS)))
+ifneq (,$(findstring SDN_ODL_BUILD, $(CFLAGS), $(EXTRA_CFLAGS)))
 	SRCS-y += $(SRCDIR)/../interface/zmq/zmqsub.o
 	SRCS-y += $(SRCDIR)/../interface/zmq/zmqpub.o
 	LDFLAGS += -L/usr/local/lib -lzmq
@@ -175,7 +175,7 @@ CFLAGS += -DPCAP_GEN
 #CFLAGS += -DDEL_SESS_REQ
 
 # VS- Used CP counters for maintain simulator stats.
-ifneq (,$(findstring SIMU_CP, $(CFLAGS)))
+ifneq (,$(findstring SIMU_CP, $(CFLAGS), $(EXTRA_CFLAGS)))
         SRCS-y += $(SRCDIR)/../cp/cp_stats.o
 endif
 
@@ -227,7 +227,7 @@ CFLAGS += -DDEFAULT_ACL_TABLE
 #un-comment below line to enable check peer node heartbeat.
 CFLAGS += -DUSE_REST
 
-ifneq (,$(findstring USE_REST, $(CFLAGS)))
+ifneq (,$(findstring USE_REST, $(CFLAGS), $(EXTRA_CFLAGS)))
 	CFLAGS += -I$(SRCDIR)/../restoration
 	SRCS-y += $(SRCDIR)/../restoration/restoration_timer.o
 	SRCS-y += restoration_peer.c
@@ -237,7 +237,7 @@ endif
 #un-comment below line to enable FQ-CSID support in the control-plane
 CFLAGS += -DUSE_CSID
 
-ifneq (,$(findstring USE_CSID, $(CFLAGS)))
+ifneq (,$(findstring USE_CSID, $(CFLAGS), $(EXTRA_CFLAGS)))
 	#VS:Support partial failure FQ-CSID m/c
 	SRCS-y += $(SRCDIR)/../pfcp_messages/csid_init.o
 	SRCS-y += $(SRCDIR)/../pfcp_messages/csid_api.o

@@ -126,7 +126,7 @@ LDLIBS += -lpcap
 # #############################################################
 
 #For SDN NB interface enable SDN_ODL_BUILD OR SDN_ONOS_BUILD not both
-ifneq (,$(findstring SDN_ODL_BUILD, $(CFLAGS)))
+ifneq (,$(findstring SDN_ODL_BUILD, $(CFLAGS), $(EXTRA_CFLAGS)))
 	SRCS-y += nb.c
 	LDLIBS += -ljson-c
 	LDLIBS += -lcurl
@@ -162,14 +162,14 @@ CFLAGS_config.o := -D_GNU_SOURCE
 #Note: Req and Resp timer stats is not supported for CP <--> DP direct comm over UDP.
 #CFLAGS += -DSYNC_STATS
 
-ifneq (,$(findstring SYNC_STATS, $(CFLAGS)))
+ifneq (,$(findstring SYNC_STATS, $(CFLAGS), $(EXTRA_CFLAGS)))
 	SRCS-y += stats_sync.c
 endif
 
 #un-comment below line to enable check peer node heartbeat.
 CFLAGS += -DUSE_REST
 
-ifneq (,$(findstring USE_REST, $(CFLAGS)))
+ifneq (,$(findstring USE_REST, $(CFLAGS), $(EXTRA_CFLAGS)))
 	#VS: ECHO FILES
 	CFLAGS += -I$(SRCDIR)/../restoration
 	SRCS-y += $(SRCDIR)/../restoration/restoration_timer.o
@@ -180,7 +180,7 @@ endif
 #un-comment below line to enable FQ-CSID support in the control-plane
 CFLAGS += -DUSE_CSID
 
-ifneq (,$(findstring USE_CSID, $(CFLAGS)))
+ifneq (,$(findstring USE_CSID, $(CFLAGS), $(EXTRA_CFLAGS)))
  #VS:Support partial failure FQ-CSID m/c
  SRCS-y += $(SRCDIR)/../pfcp_messages/csid_init.o
  SRCS-y += $(SRCDIR)/../pfcp_messages/csid_api.o
@@ -209,7 +209,7 @@ endif
 # ajay ; add ticket to support Gx 
 #CFLAGS += -DGX_BUILD
 
-ifneq (,$(findstring GX_BUILD, $(CFLAGS)))
+ifneq (,$(findstring GX_BUILD, $(CFLAGS), $(EXTRA_CFLAGS)))
 	SRCS-y += cp_app.c
 	SRCS-y += ipc_api.c
 	SRCS-y += state_machine/sm_gx_pcnd.o
