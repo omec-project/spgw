@@ -115,7 +115,10 @@ build_ngic()
 		echo "Building Libs..."
 		make build-lib || { echo -e "\nNG-CORE: Make lib failed\n"; }
 		echo "Building DP..."
-		make build-dp || { echo -e "\nDP: Make failed\n"; }
+		### USE_AF_PACKET for deploying in k8s
+		### ggdb must be made standard to help debugging
+		### O2 because O3 causes DP crash https://github.com/omec-project/ngic-rtc/issues/55
+		make build-dp EXTRA_CFLAGS='-DUSE_AF_PACKET -ggdb -O2' || { echo -e "\nDP: Make failed\n"; }
 	fi
 	if [ $SERVICE == 1 ] || [ $SERVICE == 3 ] ; then
 		echo "Building libgtpv2c..."

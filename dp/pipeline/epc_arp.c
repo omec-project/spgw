@@ -1091,7 +1091,7 @@ pkt_work_arp_key(
 	{
 		if (app.spgw_cfg == SGWU || app.spgw_cfg == SAEGWU){
 			it = S1U;
-		} else if (app.spgw_cfg == PGWU)
+		} else // if (app.spgw_cfg == PGWU)
 		{
 			it = S5S8;
 		}

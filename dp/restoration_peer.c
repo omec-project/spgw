@@ -474,7 +474,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint64_t sess_id, uint8_t portId)
 	struct arp_entry_data *ret_conn_data = NULL;
 	peerData *conn_data = NULL;
 
-	CLIinterface it;
+	CLIinterface it = SGI;
 
 	ret = rte_hash_lookup_data(conn_hash_handle,
 				&dstIp, (void **)&conn_data);

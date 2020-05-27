@@ -892,7 +892,7 @@ init_up_hash_tables(void)
 		},
 		{	.name = "FAR_ENTRY_HASH",
 			.entries = MAX_HASH_SIZE,
-			.key_len = sizeof(uint32_t),
+			.key_len = sizeof(uint16_t),
 			.hash_func = rte_hash_crc,
 			.hash_func_init_val = 0,
 			.socket_id = rte_socket_id()

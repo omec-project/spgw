@@ -574,10 +574,12 @@ retrieve_arp_entry(struct arp_ipv4_key arp_key,
 		printf("%s::"
 				"\n\tretrieve_arp_entry for ip 0x%x\n",
 				__func__, arp_key.ip);
+	printf("%s %d - IP 0x%x \n",__FUNCTION__,__LINE__,arp_key.ip);
 
 	ret = rte_hash_lookup_data(arp_hash_handle[portid],
 					&arp_key, (void **)&ret_arp_data);
 	if (ret < 0) {
+		printf("%s %d - IP 0x%x not found \n",__FUNCTION__,__LINE__,arp_key.ip);
 		/* No arp entry for arp_key.ip
 		 * Add arp_data for arp_key.ip at
 		 * arp_hash_handle[portid]
@@ -602,6 +604,7 @@ retrieve_arp_entry(struct arp_ipv4_key arp_key,
 				rte_socket_id(), 0);
 
 		if (ret_arp_data->queue == NULL) {
+			printf("%s %d - IP 0x%x arp ring create failed \n",__FUNCTION__,__LINE__,arp_key.ip);
 			printf("%s::"
 					"\n\tARP ring create error"
 					"\n\tarp_key.ip= %s; portid= %d"
@@ -612,10 +615,12 @@ retrieve_arp_entry(struct arp_ipv4_key arp_key,
 					rte_strerror(abs(rte_errno)), rte_errno);
 			print_arp_table();
 			if (rte_errno == EEXIST) {
+				printf("%s %d - IP 0x%x failed \n",__FUNCTION__,__LINE__,arp_key.ip);
 				rte_free(ret_arp_data);
 				ret_arp_data = NULL;
 			}
 		}
+		printf("%s %d - IP 0x%x send request \n",__FUNCTION__,__LINE__,arp_key.ip);
 		send_arp_req(portid, arp_key.ip);
 	}
 	return ret_arp_data;

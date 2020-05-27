@@ -111,6 +111,7 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 	ret_arp_data = retrieve_arp_entry(tmp_arp_key, portid);
 
 	if (ret_arp_data == NULL) {
+		printf("\n Get arp for 0x%x failed \n",tmp_arp_key.ip);
 		clLog(clSystemLog, eCLSeverityDebug, "%s::"
 				"\n\tretrieve_arp_entry failed for ip 0x%x\n",
 				__func__, tmp_arp_key.ip);
@@ -119,6 +120,7 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 
 
 	if (ret_arp_data->status == INCOMPLETE)	{
+		printf("\n Get arp for 0x%x incomplete  \n",tmp_arp_key.ip);
 
 #ifndef STATIC_ARP
 		/* AJAY: TODO WE have this code STATIC_ARP is not defined. */
@@ -133,6 +135,7 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 		char *data = (char *)((char *)(m)->buf_addr + (m)->data_off);
 		if ((sendto(fd_array[portid], data, m->data_len, 0, (struct sockaddr *)
 					&dest_addr[portid], sizeof(struct sockaddr_in))) < 0) {
+			printf("\n Get arp for 0x%x sendto failed \n",tmp_arp_key.ip);
 			perror("send failed");
 			return -1;
 		}
@@ -154,6 +157,7 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 				clLog(clSystemLog, eCLSeverityDebug, "%s::arp_queue_unresolved_packet::"
 						"\n\treturn -1; arp_key.ip= 0x%X\n",
 						__func__, tmp_arp_key.ip);
+				printf("arp q unresolved failed %d %s\n",__LINE__,__FUNCTION__);
 				return -1;
 			}
 		}
@@ -174,6 +178,7 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 
 	ether_addr_copy(&ret_arp_data->eth_addr, &eth_hdr->d_addr);
 	ether_addr_copy(&ports_eth_addr[portid], &eth_hdr->s_addr);
+	printf("mac found %d %s\n",__LINE__,__FUNCTION__);
 
 #ifdef NGCORE_SHRINK
 #ifdef STATS
