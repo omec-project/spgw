@@ -1971,6 +1971,7 @@ init_netlink_socket(void)
 
 	addr_t.nl_family = PF_NETLINK;
 	addr_t.nl_pad = 0;
+	/* avoid address re-bind errors (with mnl_sock) by setting nl_pid value to 0 */
 	addr_t.nl_pid = 0; /* AJAY-change taken from central-cp-multi-upf branch*/
 	addr_t.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_ROUTE;
 

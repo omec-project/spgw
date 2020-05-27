@@ -53,6 +53,8 @@ unsigned int fd_array[2];
 extern struct kni_port_params *kni_port_params_array[RTE_MAX_ETHPORTS];
 
 extern struct rte_mempool *kni_mpool;
+extern struct rte_mempool *s1u_mempool;
+extern struct rte_mempool *sgi_mempool;
 
 #define NB_RXD                  1024
 
@@ -63,7 +65,6 @@ static int kni_change_mtu(uint16_t port_id, unsigned int new_mtu);
 static int kni_config_network_interface(uint16_t port_id, uint8_t if_up);
 static int kni_config_mac_address(uint16_t port_id, uint8_t mac_addr[]);
 #else
-
 int kni_change_mtu(uint16_t port_id, unsigned int new_mtu);
 int kni_config_mac_address(uint16_t port_id, uint8_t mac_addr[]);
 
@@ -376,7 +377,7 @@ kni_change_mtu(uint16_t port_id, unsigned int new_mtu)
 	rte_eth_dev_info_get(port_id, &dev_info);
 	rxq_conf = dev_info.default_rxconf;
 	rxq_conf.offloads = conf.rxmode.offloads;
-	struct rte_mempool *mbuf_pool = kni_mpool;
+	struct rte_mempool *mbuf_pool = (port_id == S1U_PORT_ID) ? s1u_mempool : sgi_mempool;
 
 	ret = rte_eth_rx_queue_setup(port_id, 0, nb_rxd,
 		rte_eth_dev_socket_id(port_id), &rxq_conf, mbuf_pool);

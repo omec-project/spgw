@@ -473,15 +473,18 @@ sgi_pkt_handler(struct rte_pipeline *p, struct rte_mbuf **pkts, uint32_t n,
 		case SAEGWU:
 			/* Filter Downlink traffic. Apply sdf*/
 			pkts_mask = filter_dl_traffic(p, pkts, n, wk_index, &sess_data[0], &pdr[0]);
+			printf("%s %d - downlink packet received on SGi Pkts mask after filter dl_traffic = %lu  \n",__FUNCTION__,__LINE__,pkts_mask);
 
 			/* Encap GTPU header*/
 			gtpu_encap(&pdr[0], &sess_data[0], pkts, n, &pkts_mask, &pkts_queue_mask);
+			printf("%s %d - downlink packet received on SGi Pkts mask after gtpu encap dl_traffic = %lu  \n",__FUNCTION__,__LINE__,pkts_mask);
 
 			/*Next port is S1U for SPGW*/
 			next_port = app.s1u_port;
 
 			/* En-queue DL pkts */
 			if (pkts_queue_mask) {
+				printf("%s %d - downlink packet received on SGi queue pkt ..pkts_queue_mask = %lu  \n",__FUNCTION__,__LINE__,pkts_queue_mask);
 				rte_pipeline_ah_packet_hijack(p, pkts_queue_mask);
 				enqueue_dl_pkts(&pdr[0], &sess_data[0], pkts, pkts_queue_mask);
 			}

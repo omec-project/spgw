@@ -706,6 +706,7 @@ update_nexthop_info(struct rte_mbuf **pkts, uint32_t n,
 		pdr_info_t **pdr)
 {
 	uint32_t i;
+	printf("%s %d : pkts_mask = %lu \n",__FUNCTION__,__LINE__, *pkts_mask);
 	for (i = 0; i < n; i++) {
 		if (ISSET_BIT(*pkts_mask, i)) {
 			if (construct_ether_hdr(pkts[i], portid, &pdr[i]) < 0)
