@@ -73,7 +73,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			memcpy(&msg->upf_ipv4.s_addr,
 					&msg->pfcp_msg.pfcp_ass_resp.node_id.node_id_value,
 					IPV4_SIZE);
-			if(pfcp_config.cp_type != SGWC) {
+			if(cp_config->cp_type != SGWC) {
 				/* Init rule tables of user-plane */
 				upf_pfcp_sockaddr.sin_addr.s_addr = msg->upf_ipv4.s_addr;
 				init_dp_rule_tables();
@@ -103,7 +103,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 				 * for each buffered CSR */
 				cs_error_response(msg,
 								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				process_error_occured_handler(&msg, NULL);
 				return -1;
 			}
@@ -117,7 +117,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			} else {
 				cs_error_response(msg,
 								  GTPV2C_CAUSE_INVALID_PEER,
-								  spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 
 				process_error_occured_handler(&msg, NULL);
 				clLog(clSystemLog, eCLSeverityCritical, "%s: Entry not Found Msg_Type:%u, UPF IP:%u, Error_no:%d\n",
@@ -171,7 +171,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			if (get_sess_entry(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid, &resp) != 0) {
 				cs_error_response(msg,
 						  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-						  spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				process_error_occured_handler(&msg, NULL);
 				clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u, Sess ID:%lu, Error_no:%d\n",
 						__func__, msg->msg_type,
@@ -187,7 +187,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 				msg->proc = INITIAL_PDN_ATTACH_PROC;
 				cs_error_response(msg,
 								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				process_error_occured_handler(&msg, NULL);
 				clLog(sxlogger, eCLSeverityDebug, "Cause received Est response is %d\n",
 						msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value);
@@ -229,7 +229,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 						msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value);
 				mbr_error_response(msg,
 								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				return -1;
 			}
 
@@ -238,7 +238,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 						&resp) != 0) {
 				mbr_error_response(msg,
 								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u,"
 						"Sess ID:%lu, Error_no:%d\n",
 						__func__, msg->msg_type,
@@ -280,7 +280,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 						msg->pfcp_msg.pfcp_sess_del_resp.cause.cause_value);
 				ds_error_response(msg,
 								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				return -1;
 			}
 
@@ -293,7 +293,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 						msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid, ret);
 				ds_error_response(msg,
 								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				return -1;
 			}
 
@@ -394,7 +394,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			/* Retrive the session information based on session id */
 			if ((get_sess_entry(pfcp_header->seid_seqno.has_seid.seid, &resp)) != 0 ) {
 				msg->proc = NONE_PROC;
-				if( SGWC == pfcp_config.cp_type )
+				if( SGWC == cp_config->cp_type )
 					msg->state = SGWC_NONE_STATE;
 				else
 					msg->state = PGWC_NONE_STATE;
@@ -408,7 +408,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			clLog(clSystemLog, eCLSeverityCritical, "%s::process_msgs-"
 					"\n\tcase: spgw_cfg= %d;"
 					"\n\tReceived unprocessed PFCP Message_Type:%u"
-					"... Discarding\n", __func__, spgw_cfg, msg->msg_type);
+					"... Discarding\n", __func__, cp_config->cp_type, msg->msg_type);
 			return -1;
 	}
 

@@ -57,10 +57,10 @@ set_base_teid(uint8_t val)
 
 	/* set base teid value */
 	/* teid will start from index 1 instead of index 0*/
-	if(pfcp_config.cp_type == SGWC || pfcp_config.cp_type == SAEGWC){
+	if(cp_config->cp_type == SGWC || cp_config->cp_type == SAEGWC){
 		sgw_gtpc_base_teid = (teid_range << 24);
 		sgw_gtpc_base_teid++;
-	}else if(pfcp_config.cp_type == PGWC){
+	}else if(cp_config->cp_type == PGWC){
 		pgw_gtpc_base_teid = (teid_range << 24);
 		pgw_gtpc_base_teid++;
 	}
@@ -71,7 +71,7 @@ void
 set_s1u_sgw_gtpu_teid(eps_bearer *bearer, ue_context *context)
 {
 	uint8_t index = __builtin_ffs(~(context->teid_bitmap)) - 1;
-	if ((spgw_cfg == SGWC) || (spgw_cfg == SAEGWC)) {
+	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
 		sgw_gtpu_base_teid = sgw_gtpc_base_teid + sgw_gtpc_teid_offset;
 		++sgw_gtpc_teid_offset;
 	}
@@ -96,7 +96,7 @@ set_s5s8_sgw_gtpu_teid(eps_bearer *bearer, ue_context *context)
 void
 set_s5s8_pgw_gtpu_teid(eps_bearer *bearer, ue_context *context){
 	uint8_t index = __builtin_ffs(~(context->teid_bitmap)) - 1;
-	if (spgw_cfg == PGWC){
+	if (cp_config->cp_type == PGWC){
 		pgw_gtpu_base_teid = pgw_gtpc_base_teid + pgw_gtpc_teid_offset;
 		++pgw_gtpc_teid_offset;
 	}
@@ -176,18 +176,18 @@ create_ue_hash(void)
 void
 set_ip_pool_ip(const char *ip_str)
 {
-	if (!inet_aton(ip_str, &pfcp_config.ip_pool_ip))
+	if (!inet_aton(ip_str, &cp_config->ip_pool_ip))
 		rte_panic("Invalid argument - %s - Exiting.", ip_str);
-	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_ip:  %s\n", inet_ntoa(pfcp_config.ip_pool_ip));
+	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_ip:  %s\n", inet_ntoa(cp_config->ip_pool_ip));
 }
 
 
 void
 set_ip_pool_mask(const char *ip_str)
 {
-	if (!inet_aton(ip_str, &pfcp_config.ip_pool_mask))
+	if (!inet_aton(ip_str, &cp_config->ip_pool_mask))
 		rte_panic("Invalid argument - %s - Exiting.", ip_str);
-	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_mask: %s\n", inet_ntoa(pfcp_config.ip_pool_mask));
+	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_mask: %s\n", inet_ntoa(cp_config->ip_pool_mask));
 }
 
 
@@ -347,16 +347,16 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		}*/
 	}
 	if (if_ue_present == 0){
-		if ((spgw_cfg == SGWC) || (spgw_cfg == SAEGWC)) {
+		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
 			(*context)->s11_sgw_gtpc_teid = s11_sgw_gtpc_base_teid
 			    + s11_sgw_gtpc_teid_offset;
 			++s11_sgw_gtpc_teid_offset;
 
-		} else if (spgw_cfg == PGWC){
+		} else if (cp_config->cp_type == PGWC){
 			(*context)->s11_sgw_gtpc_teid = s5s8_pgw_gtpc_base_teid
 				+ s5s8_pgw_gtpc_teid_offset;
 		}
-	}else if (spgw_cfg == PGWC){
+	}else if (cp_config->cp_type == PGWC){
 		(*context)->s11_sgw_gtpc_teid = s5s8_pgw_gtpc_base_teid
 			+ s5s8_pgw_gtpc_teid_offset;
 	}

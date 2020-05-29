@@ -213,7 +213,7 @@ get_upf_list(pdn_connection *pdn)
 	/* VS: Need to revist this */
 	memcpy(apn_name, (pdn->apn_in_use)->apn_name_label + 1, (pdn->apn_in_use)->apn_name_length -1);
 
-	if (pfcp_config.cp_type == SAEGWC || pfcp_config.cp_type == SGWC) {
+	if (cp_config->cp_type == SAEGWC || cp_config->cp_type == SGWC) {
 
 		void *sgwupf_node_sel = init_enbupf_node_selector(enodeb, mnc, mcc);
 
@@ -317,7 +317,7 @@ get_upf_list(pdn_connection *pdn)
 
 		deinit_node_selector(sgwupf_node_sel);
 
-	} else if (pfcp_config.cp_type == PGWC) {
+	} else if (cp_config->cp_type == PGWC) {
 
 		uint16_t pgwu_count = 0;
 		dns_query_result_t pgwu_list[QUERY_RESULT_COUNT] = {0};
@@ -397,7 +397,7 @@ pfcp_recv(void *msg_payload, uint32_t size,
 	uint32_t bytes;
 	bytes = recvfrom(pfcp_fd, msg_payload, size, 0,
 			(struct sockaddr *)peer_addr, &addr_len);
-	//if(pfcp_config.cp_type == SGWC || pfcp_config.cp_type == SAEGWC)
+	//if(cp_config->cp_type == SGWC || cp_config->cp_type == SAEGWC)
 	//	bytes = recvfrom(pfcp_sgwc_fd_arr[0], msg_payload, size, 0,
 	//			(struct sockaddr *)peer_addr, &addr_len);
 	//else

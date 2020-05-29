@@ -185,7 +185,7 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 		}
 
 		/* Set the PGW FQ-CSID */
-		if (spgw_cfg != SAEGWC) {
+		if (cp_config->cp_type != SAEGWC) {
 			if ((context->pgw_fqcsid)->num_csid) {
 				set_gtpc_fqcsid_t(&cs_resp.pgw_fqcsid, IE_INSTANCE_ZERO,
 						context->pgw_fqcsid);
@@ -335,7 +335,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		bearer->pdn = pdn;
 	}
 
-	if (spgw_cfg == SGWC) {
+	if (cp_config->cp_type == SGWC) {
 		char sgwu_fqdn[MAX_HOSTNAME_LENGTH] = {0};
 		ret =
 			gen_sgwc_s5s8_create_session_request(gtpv2c_rx,
@@ -346,7 +346,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 				"\n\tprocess_create_session_request::case= %d;"
 				"\n\tprocess_sgwc_s5s8_cs_req_cnt= %u;"
 				"\n\tgen_create_s5s8_session_request= %d\n",
-				spgw_cfg, process_sgwc_s5s8_cs_req_cnt++,
+				cp_config->cp_type, process_sgwc_s5s8_cs_req_cnt++,
 				ret);
 		return ret;
 	}
@@ -360,7 +360,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 			"\n\tprocess_create_session_request::case= %d;"
 			"\n\tprocess_spgwc_s11_cs_res_cnt= %u;"
 			"\n\tset_create_session_response::done...\n",
-			spgw_cfg, process_spgwc_s11_cs_res_cnt++);
+			cp_config->cp_type, process_spgwc_s11_cs_res_cnt++);
 
 	/* using the s1u_sgw_gtpu_teid as unique identifier to the session */
 	struct session_info session;

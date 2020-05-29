@@ -48,9 +48,9 @@ int s11_pcap_fd = -1;
 pcap_t *pcap_reader;
 pcap_dumper_t *pcap_dumper;
 
-enum cp_config spgw_cfg;
 struct cp_stats_t cp_stats;
 extern pfcp_config_t pfcp_config;
+cp_config_t *cp_config;
 
 /* MME */
 struct sockaddr_in s11_mme_sockaddr;
@@ -119,7 +119,7 @@ init_stats_hash(void)
 void
 stats_update(uint8_t msg_type)
 {
-	switch (pfcp_config.cp_type) {
+	switch (cp_config->cp_type) {
 		case SGWC:
 		case SAEGWC:
 			switch (msg_type) {
@@ -164,7 +164,7 @@ stats_update(uint8_t msg_type)
 			break;
 	default:
 			rte_panic("main.c::control_plane::cp_stats-"
-					"Unknown spgw_cfg= %d.", pfcp_config.cp_type);
+					"Unknown spgw_cfg= %d.", cp_config->cp_type);
 			break;
 		}
 }
@@ -506,7 +506,7 @@ init_cp(void)
 	init_pfcp();
 
 	/* AJAY : passing correct spgw service config in container image */
-	switch (spgw_cfg) {
+	switch (cp_config->cp_type) {
 	case SGWC:
 		init_s11();
 	case PGWC:
@@ -517,7 +517,7 @@ init_cp(void)
 		break;
 	default:
 		rte_panic("main.c::init_cp()-"
-				"Unknown spgw_cfg= %u\n", spgw_cfg);
+				"Unknown spgw_cfg= %u\n", cp_config->cp_type);
 		break;
 	}
 

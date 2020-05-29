@@ -185,7 +185,7 @@ set_cause_error_value(gtp_cause_ie_t *cause,
 	cause->pce = 0;
 	cause->bce = 0;
 	cause->spareinstance = 0;
-	if(spgw_cfg != SGWC)
+	if(cp_config->cp_type != SGWC)
 	   cause->cs = 1;
 	else
 	   cause->cs = 0;
@@ -787,7 +787,7 @@ decode_check_csr(gtpv2c_header_t *gtpv2c_rx,
 		return GTPV2C_CAUSE_IMSI_NOT_KNOWN;
 	}
 
-	if ((pfcp_config.cp_type == SGWC) &&
+	if ((cp_config->cp_type == SGWC) &&
 			(!csr->pgw_s5s8_addr_ctl_plane_or_pmip.header.len)) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Mandatory IE missing. Dropping packet len:%u\n",
 				__file__, __func__, __LINE__,

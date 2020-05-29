@@ -105,19 +105,6 @@ typedef long long int _timer_t;
  * Control Plane specific declarations
  */
 
-/*
- * Define type of Control Plane (CP)
- * SGWC - Serving GW Control Plane
- * PGWC - PDN GW Control Plane
- * SAEGWC - Combined SAEGW Control Plane
- */
-enum cp_config {
-	SGWC = 01,
-	PGWC = 02,
-	SAEGWC = 03,
-};
-extern enum cp_config spgw_cfg;
-
 #ifdef SYNC_STATS
 /**
  * @brief  : statstics struct of control plane

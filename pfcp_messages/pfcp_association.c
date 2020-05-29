@@ -29,6 +29,7 @@
 #include "pfcp.h"
 #include "cp_stats.h"
 #include "cp_config.h"
+#include "cp_config_new.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_timer.h"
 #else
@@ -635,7 +636,7 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 	upf_context->up_supp_features =
 			msg->pfcp_msg.pfcp_ass_resp.up_func_feat.sup_feat;
 
-	switch (pfcp_config.cp_type)
+	switch (cp_config->cp_type)
 	{
 		case SGWC :
 			if (msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
@@ -691,7 +692,7 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 #ifdef CP_BUILD
 					if(ret != -1) {
 						cs_error_response(msg, ret,
-								spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 						process_error_occured_handler(&msg, NULL);
 					}
 #endif /* CP_BUILD */

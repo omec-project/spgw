@@ -66,7 +66,7 @@ gx_setup_handler(void *data, void *unused_param)
 		if (ret != -1){
 
 			cs_error_response(msg, ret,
-								spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 			process_error_occured_handler(data, unused_param);
 		}
 		clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Error: %d \n",
@@ -95,7 +95,7 @@ association_setup_handler(void *data, void *unused_param)
 			if(ret == -2 )
 				return ret;
 			cs_error_response(msg, ret,
-								spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 			process_error_occured_handler(data, unused_param);
 		}
 		clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Error: %d \n",
@@ -108,7 +108,7 @@ association_setup_handler(void *data, void *unused_param)
 	if(ret){
 		if(ret != -1){
 			cs_error_response(msg, ret,
-								spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 			process_error_occured_handler(data, unused_param);
 		}
 		clLog(sxlogger, eCLSeverityCritical, "%s:%s:%d Error: %d \n",
@@ -149,7 +149,7 @@ process_assoc_resp_handler(void *data, void *addr) // ajay
 	if(ret){
 		if(ret != -1){
 			cs_error_response(msg, ret,
-							spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+							cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 			process_error_occured_handler(data, addr);
 		}
 		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
@@ -198,7 +198,7 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 	if (ret) {
 		if(ret != -1){
 			cs_error_response(msg, ret,
-								spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 			process_error_occured_handler(data, unused_param);
 		}
 		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
@@ -208,7 +208,7 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-	if ((pfcp_config.cp_type == SGWC) || (pfcp_config.cp_type == PGWC)) {
+	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == PGWC)) {
 		gtpv2c_send(s5s8_fd, tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
 				s5s8_sockaddr_len);
@@ -217,7 +217,7 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
 							gtpv2c_tx->gtpc.message_type,SENT,S5S8);
 
-		if (SGWC == pfcp_config.cp_type) {
+		if (SGWC == cp_config->cp_type) {
 			add_gtpv2c_if_timer_entry(
 				UE_SESS_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid),
 				&s5s8_recv_sockaddr, tx_buf, payload_length,
@@ -249,7 +249,7 @@ process_mb_req_handler(void *data, void *unused_param)
 	if (ret != 0) {
 		if(ret != -1)
 			mbr_error_response(msg, ret,
-					spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+					cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 		clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
 		return ret;
@@ -275,7 +275,7 @@ process_sess_mod_resp_handler(void *data, void *unused_param)
 	if (ret != 0) {
 		if(ret != -1)
 			mbr_error_response(msg, ret,
-								spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
 		return ret;
@@ -316,7 +316,7 @@ int
 process_ds_req_handler(void *data, void *unused_param)
 {
 	msg_info *msg = (msg_info *)data;
-	if (pfcp_config.cp_type == SGWC && msg->gtpc_msg.dsr.indctn_flgs.indication_oi == 1) {
+	if (cp_config->cp_type == SGWC && msg->gtpc_msg.dsr.indctn_flgs.indication_oi == 1) {
 		/* Indication flag 1 mean dsr needs to be sent to PGW otherwise dont send it to PGW */
 		ret = process_sgwc_delete_session_request(&msg->gtpc_msg.dsr);
 	} else {
@@ -326,7 +326,7 @@ process_ds_req_handler(void *data, void *unused_param)
 	if (ret){
 		if(ret != -1)
 			ds_error_response(msg, ret,
-								spgw_cfg != PGWC ? S11_IFACE :S5S8_IFACE);
+								cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
 		return ret;
 	}
 
@@ -349,7 +349,7 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 	bzero(&tx_buf, sizeof(tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)tx_buf;
 
-	if( pfcp_config.cp_type != SGWC ) {
+	if( cp_config->cp_type != SGWC ) {
 		/* Lookup value in hash using session id and fill pfcp response and delete entry from hash*/
 #ifdef GX_BUILD
 
@@ -390,7 +390,7 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 
 	if (ret) {
 		ds_error_response(msg, ret,
-				spgw_cfg != PGWC ? S11_IFACE :S5S8_IFACE);
+				cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
 		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
 		return -1;
@@ -399,7 +399,7 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-	if ((pfcp_config.cp_type == PGWC) ) {
+	if ((cp_config->cp_type == PGWC) ) {
 		/* Forward s11 delete_session_request on s5s8 */
 		gtpv2c_send(s5s8_fd, tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
@@ -425,7 +425,7 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 	}
 #ifdef GX_BUILD
 	/* VS: Write or Send CCR -T msg to Gx_App */
-	if ( pfcp_config.cp_type != SGWC) {
+	if ( cp_config->cp_type != SGWC) {
 		send_to_ipc_channel(gx_app_sock, buffer,
 				msglen + sizeof(ccr_request.msg_type));
 	}
@@ -445,12 +445,12 @@ process_ds_resp_handler(void *data, void *unused_param)
 {
 	msg_info *msg = (msg_info *)data;
 
-	if (pfcp_config.cp_type == SGWC) {
+	if (cp_config->cp_type == SGWC) {
 		ret = process_sgwc_s5s8_delete_session_request(&msg->gtpc_msg.ds_rsp);
 		if (ret) {
 			if(ret  != -1)
 				ds_error_response(msg, ret,
-						           spgw_cfg != PGWC ? S11_IFACE :S5S8_IFACE);
+						           cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
 			/* Error handling not implemented */
 			clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
 			return -1;
@@ -531,7 +531,7 @@ process_sess_est_resp_sgw_reloc_handler(void *data, void *unused_param)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-//	if ((pfcp_config.cp_type == SGWC) || (pfcp_config.cp_type == PGWC)) {
+//	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == PGWC)) {
 
 	gtpv2c_send(s5s8_fd, tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
@@ -540,7 +540,7 @@ process_sess_est_resp_sgw_reloc_handler(void *data, void *unused_param)
 	update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
 						gtpv2c_tx->gtpc.message_type, SENT,S5S8);
 
-	if (SGWC == pfcp_config.cp_type) {
+	if (SGWC == cp_config->cp_type) {
 		add_gtpv2c_if_timer_entry(
 			UE_SESS_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid),
 			&s5s8_recv_sockaddr, tx_buf, payload_length,
@@ -703,7 +703,7 @@ cca_msg_handler(void *data, void *unused_param)
 	ret = process_pfcp_assoication_request(pdn, ebi_index);
 	if (ret) {
 		if(ret != -1){
-			cs_error_response(msg, ret, spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+			cs_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 			process_error_occured_handler(data, unused_param);
 		}
 		clLog(sxlogger, eCLSeverityCritical, "%s:%s:%d Error: %d \n",
@@ -716,19 +716,19 @@ cca_msg_handler(void *data, void *unused_param)
 	                 (void **) &(upf_context));
 	if(upf_context->state != PFCP_ASSOC_RESP_RCVD_STATE) {
 	       if (ret >= 0) {
-			if(pfcp_config.cp_type == PGWC) {
+			if(cp_config->cp_type == PGWC) {
 	                        upf_context->csr.sender_fteid_ctl_plane.teid_gre_key = pdn->s5s8_sgw_gtpc_teid;
 	                }
-	                if(pfcp_config.cp_type == SAEGWC) {
+	                if(cp_config->cp_type == SAEGWC) {
 	                        upf_context->csr.sender_fteid_ctl_plane.teid_gre_key = pdn->context->s11_mme_gtpc_teid;
 	                }
 	                upf_context->csr.header.teid.has_teid.seq = pdn->context->sequence;
 	                upf_context->csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi = ebi_index + 5;
-	                if (pfcp_config.cp_type == PGWC) {
+	                if (cp_config->cp_type == PGWC) {
 	                        /* : we need teid for send ccr-T to GX  */
 	                        upf_context->csr.header.teid.has_teid.teid = pdn->s5s8_pgw_gtpc_teid;
 	                }
-	                if(pfcp_config.cp_type == SAEGWC) {
+	                if(cp_config->cp_type == SAEGWC) {
 	                         upf_context->csr.header.teid.has_teid.teid = pdn->context->s11_sgw_gtpc_teid;
 	                }
 
@@ -738,19 +738,19 @@ cca_msg_handler(void *data, void *unused_param)
 	if(upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
                 ret = get_sess_entry(pdn->seid, &resp);
                 if(ret != -1 && resp != NULL){
-                        if(pfcp_config.cp_type == PGWC) {
+                        if(cp_config->cp_type == PGWC) {
                                 resp->gtpc_msg.csr.sender_fteid_ctl_plane.teid_gre_key = pdn->s5s8_sgw_gtpc_teid;
                         }
-                        if(pfcp_config.cp_type == SAEGWC) {
+                        if(cp_config->cp_type == SAEGWC) {
                                 resp->gtpc_msg.csr.sender_fteid_ctl_plane.teid_gre_key = pdn->context->s11_mme_gtpc_teid;
                         }
                         resp->gtpc_msg.csr.header.teid.has_teid.seq = pdn->context->sequence;
                         resp->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi = ebi_index + 5;
-                        if (pfcp_config.cp_type == PGWC) {
+                        if (cp_config->cp_type == PGWC) {
                                 /* : we need teid for send ccr-T to PCRF  */
                                 resp->gtpc_msg.csr.header.teid.has_teid.teid = pdn->s5s8_pgw_gtpc_teid;
                         }
-                        if(pfcp_config.cp_type == SAEGWC) {
+                        if(cp_config->cp_type == SAEGWC) {
                                  resp->gtpc_msg.csr.header.teid.has_teid.teid = pdn->context->s11_sgw_gtpc_teid;
                         }
                 }
@@ -799,7 +799,7 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 			gtpv2c_tx);
 	if (ret) {
 		if(ret != -1)
-			mbr_error_response(msg, ret, spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+			mbr_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
 		return ret;
 	}
@@ -815,7 +815,7 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 						gtpv2c_tx->gtpc.message_type, SENT,S5S8);
 
 
-	if (SGWC == pfcp_config.cp_type) {
+	if (SGWC == cp_config->cp_type) {
 		add_gtpv2c_if_timer_entry(
 			UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
 			&s5s8_recv_sockaddr, tx_buf, payload_length,
@@ -846,7 +846,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *unused_param)
 		if(ret != -1)
 			/* TODO for cbr
 			 * mbr_error_response(&msg->gtpc_msg.mbr, ret,
-								spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE); */
+								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE); */
 		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
 		return ret;
@@ -862,7 +862,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *unused_param)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
-	if ((SAEGWC != pfcp_config.cp_type) && ((resp->msg_type == GTP_CREATE_BEARER_RSP) ||
+	if ((SAEGWC != cp_config->cp_type) && ((resp->msg_type == GTP_CREATE_BEARER_RSP) ||
 			(resp->msg_type == GX_RAR_MSG))){
 	    gtpv2c_send(s5s8_fd, tx_buf, payload_length,
 	            (struct sockaddr *) &s5s8_recv_sockaddr,
@@ -932,7 +932,7 @@ int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 	ret = process_sgwc_s5s8_modify_bearer_response(&(msg->gtpc_msg.mb_rsp) ,gtpv2c_tx);
 
 	if (ret) {
-		mbr_error_response(msg, ret, spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+		mbr_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
 		return ret;
 	}
@@ -1051,7 +1051,7 @@ process_mod_resp_delete_handler(void *data, void *unused_param)
 			msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 			gtpv2c_tx);
 	if (ret) {
-		mbr_error_response(msg, ret, spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+		mbr_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
 		return ret;
 	}
@@ -1059,7 +1059,7 @@ process_mod_resp_delete_handler(void *data, void *unused_param)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-	if (pfcp_config.cp_type == SGWC) {
+	if (cp_config->cp_type == SGWC) {
 		/* Forward s11 delete_session_request on s5s8 */
 		gtpv2c_send(s5s8_fd, tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
@@ -1119,7 +1119,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
-	if ((SAEGWC != pfcp_config.cp_type) &&
+	if ((SAEGWC != cp_config->cp_type) &&
 		((resp->msg_type == GTP_DELETE_BEARER_RSP) ||
 		(resp->msg_type == GX_RAR_MSG))) {
 		gtpv2c_send(s5s8_fd, tx_buf, payload_length,
@@ -1231,7 +1231,7 @@ process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
-	if ((SAEGWC != pfcp_config.cp_type) &&
+	if ((SAEGWC != cp_config->cp_type) &&
 		((resp->msg_type == GTP_DELETE_BEARER_RSP))) {
 			gtpv2c_send(s5s8_fd, tx_buf, payload_length,
 		            (struct sockaddr *) &s5s8_recv_sockaddr,
@@ -1253,7 +1253,7 @@ int process_update_bearer_response_handler(void *data, void *unused_param)
 {
 	int ret = 0;
 	msg_info *msg = (msg_info *)data;
-	if (SGWC == pfcp_config.cp_type) {
+	if (SGWC == cp_config->cp_type) {
 
 		ret = process_s11_upd_bearer_response(&msg->gtpc_msg.ub_rsp);
 		if(ret && ret != -1)
@@ -1315,7 +1315,7 @@ process_delete_bearer_command_handler(void *data, void *unused_param)
 	clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
 	}
 
-	if (SGWC == pfcp_config.cp_type ) {
+	if (SGWC == cp_config->cp_type ) {
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
@@ -1426,15 +1426,15 @@ del_bearer_cmd_mbr_resp_handler(void *data, void *unused_param)
 		+ sizeof(gtpv2c_tx->gtpc);
 
 
-	if (PGWC == pfcp_config.cp_type ) {
+	if (PGWC == cp_config->cp_type ) {
 		gtpv2c_send(s5s8_fd, tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
 				s5s8_sockaddr_len);
 		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
 				gtpv2c_tx->gtpc.message_type, SENT,
 				S5S8);
-	} else if ((SGWC == pfcp_config.cp_type) ||
-				(SAEGWC == pfcp_config.cp_type)) {
+	} else if ((SGWC == cp_config->cp_type) ||
+				(SAEGWC == cp_config->cp_type)) {
 
 		gtpv2c_send(s11_fd, tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
@@ -1556,7 +1556,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 
 	if (msg->gtpc_msg.del_pdn_req.mme_fqcsid.number_of_csids) {
 		/* Send the delete PDN set request to PGW */
-		if (pfcp_config.cp_type == SGWC ) {
+		if (cp_config->cp_type == SGWC ) {
 			gtpv2c_send(s5s8_fd, tx_buf, payload_length,
 					(struct sockaddr *) &s5s8_recv_sockaddr,
 					s5s8_sockaddr_len);
@@ -1621,7 +1621,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 //		+ sizeof(gtpv2c_tx->gtpc);
 //
 //	/* Send the delete PDN set request to MME */
-//	if (pfcp_config.cp_type == SGWC ) {
+//	if (cp_config->cp_type == SGWC ) {
 //		gtpv2c_send(s11_fd, tx_buf, payload_length,
 //				(struct sockaddr *) &s11_mme_sockaddr,
 //				s11_mme_sockaddr_len);

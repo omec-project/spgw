@@ -93,7 +93,7 @@ fill_peer_node_info(pdn_connection *pdn,
 		peer_info.sgwc_ip = ((pdn->context)->sgw_fqcsid)->node_addr;
 	} else {
 		/* IF SGWC not support partial failure */
-		if ((pfcp_config.cp_type == SGWC) || (pfcp_config.cp_type == SAEGWC)) {
+		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
 			peer_info.sgwc_ip = (pdn->context)->s11_sgw_gtpc_ipv4.s_addr;
 		} else {
 			peer_info.sgwc_ip = pdn->s5s8_sgw_gtpc_ipv4.s_addr;
@@ -104,19 +104,19 @@ fill_peer_node_info(pdn_connection *pdn,
 	peer_info.enodeb_id = ((pdn->context)->uli.ecgi2.eci >> 8);
 
 	/* SGW and PGW peer node info */
-	if (pfcp_config.cp_type == SGWC) {
+	if (cp_config->cp_type == SGWC) {
 		peer_info.pgwc_ip = pdn->s5s8_pgw_gtpc_ipv4.s_addr;
-	} else if (pfcp_config.cp_type == PGWC) {
+	} else if (cp_config->cp_type == PGWC) {
 		peer_info.pgwc_ip = pdn->s5s8_pgw_gtpc_ipv4.s_addr;
 	}
 
 	/* SGWU and PGWU peer node info */
-	if (pfcp_config.cp_type == SAEGWC) {
+	if (cp_config->cp_type == SAEGWC) {
 		peer_info.sgwu_ip = pdn->upf_ipv4.s_addr;
-	} else if (pfcp_config.cp_type == SGWC) {
+	} else if (cp_config->cp_type == SGWC) {
 		peer_info.sgwu_ip = pdn->upf_ipv4.s_addr;
 		peer_info.pgwu_ip = bearer->s5s8_pgw_gtpu_ipv4.s_addr;
-	} else if (pfcp_config.cp_type == PGWC) {
+	} else if (cp_config->cp_type == PGWC) {
 		peer_info.sgwu_ip = bearer->s5s8_sgw_gtpu_ipv4.s_addr;
 		peer_info.pgwu_ip = pdn->upf_ipv4.s_addr;
 	}
@@ -130,7 +130,7 @@ fill_peer_node_info(pdn_connection *pdn,
 
 	/* Update the local csid into the UE context */
 	uint8_t match = 0;
-	if ((pfcp_config.cp_type == SGWC) || (pfcp_config.cp_type == SAEGWC)) {
+	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
 		for(uint8_t itr = 0; itr < ((pdn->context)->sgw_fqcsid)->num_csid; itr++) {
 			if (((pdn->context)->sgw_fqcsid)->local_csid[itr] == local_csid)
 				match = 1;
@@ -175,7 +175,7 @@ fill_peer_node_info(pdn_connection *pdn,
 		}
 
 		/* Update the Node Addr */
-		if (pfcp_config.cp_type != PGWC)
+		if (cp_config->cp_type != PGWC)
 			tmp->node_addr = ((pdn->context)->sgw_fqcsid)->node_addr;
 		else
 			tmp->node_addr = ((pdn->context)->pgw_fqcsid)->node_addr;
@@ -186,7 +186,7 @@ fill_peer_node_info(pdn_connection *pdn,
 	//if (((pdn->context)->sgw_fqcsid)->num_csid) {
 	//	csid_t *tmp1 = NULL;
 	//	/* Need to think on it*/
-	//	if ((pfcp_config.cp_type == SGWC) || (pfcp_config.cp_type == SAEGWC)) {
+	//	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
 	//		tmp1 = get_peer_csid_entry(
 	//				&((pdn->context)->sgw_fqcsid)->local_csid[((pdn->context)->sgw_fqcsid)->num_csid - 1],
 	//				S11_SGW_PORT_ID);
@@ -213,7 +213,7 @@ fill_peer_node_info(pdn_connection *pdn,
 	/* PGW Link local CSID with SGW CSID */
 	if (((pdn->context)->sgw_fqcsid)->num_csid) {
 		csid_t *tmp1 = NULL;
-		if (pfcp_config.cp_type == PGWC) {
+		if (cp_config->cp_type == PGWC) {
 			tmp1 = get_peer_csid_entry(
 					&((pdn->context)->sgw_fqcsid)->local_csid[((pdn->context)->sgw_fqcsid)->num_csid - 1],
 					S5S8_PGWC_PORT_ID);
@@ -329,7 +329,7 @@ fill_fqcsid_sess_est_req(pfcp_sess_estab_req_t *pfcp_sess_est_req, ue_context *c
 	//	set_fq_csid_t(&pfcp_sess_est_req->mme_fqcsid, context->mme_fqcsid);
 	//}
 
-	if (pfcp_config.cp_type != PGWC) {
+	if (cp_config->cp_type != PGWC) {
 		/* Set SGW FQ-CSID */
 		if ((context->sgw_fqcsid)->num_csid) {
 			set_fq_csid_t(&pfcp_sess_est_req->sgw_c_fqcsid, context->sgw_fqcsid);

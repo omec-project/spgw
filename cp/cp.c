@@ -34,6 +34,7 @@
 #include "sm_arr.h"
 #include "sm_pcnd.h"
 #include "sm_struct.h"
+#include "cp_config_new.h"
 
 #ifdef USE_REST
 #include "../restoration/restoration_timer.h"
@@ -48,7 +49,6 @@ extern socklen_t s11_mme_sockaddr_len;
 extern pfcp_config_t pfcp_config;
 
 uint32_t start_time;
-enum cp_config spgw_cfg;
 
 /* S5S8 */
 extern int s5s8_fd;
@@ -248,16 +248,16 @@ msg_handler_s11(void)
 
 		printf("[%s] - %d - Procedure - %d state - %d event - %d. Invoke FSM now  \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
 		if ((msg.proc < END_PROC) && (msg.state < END_STATE) && (msg.event < END_EVNT)) {
-			if (SGWC == pfcp_config.cp_type) {
+			if (SGWC == cp_config->cp_type) {
 			    ret = (*state_machine_sgwc[msg.proc][msg.state][msg.event])(&msg, NULL);
-			} else if (PGWC == pfcp_config.cp_type) {
+			} else if (PGWC == cp_config->cp_type) {
 			    ret = (*state_machine_pgwc[msg.proc][msg.state][msg.event])(&msg, NULL);
-			} else if (SAEGWC == pfcp_config.cp_type) {
+			} else if (SAEGWC == cp_config->cp_type) {
 			    ret = (*state_machine_saegwc[msg.proc][msg.state][msg.event])(&msg, NULL);
 			} else {
 				clLog(s11logger, eCLSeverityCritical, "%s : "
 						"Invalid Control Plane Type: %d \n",
-						__func__, pfcp_config.cp_type);
+						__func__, cp_config->cp_type);
 				return;
 			}
 
@@ -289,7 +289,7 @@ msg_handler_s11(void)
 
 #if 0
 	if (bytes_s11_rx > 0) {
-		if ((spgw_cfg == SGWC) || (spgw_cfg == SAEGWC)) {
+		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
 			switch (gtpv2c_s11_rx->gtpc.type) {
 			case GTP_BEARER_RESOURCE_CMD:
 				ret = process_bearer_resource_command(
@@ -354,7 +354,7 @@ msg_handler_s11(void)
 				//		"\n\tcase: SAEGWC::spgw_cfg= %d;"
 				//		"\n\tReceived unprocessed s11 GTPv2c Message Type: "
 				//		"%s (%u 0x%x)... Discarding\n",
-				//		spgw_cfg, gtp_type_str(gtpv2c_s11_rx->gtpc.type),
+				//		cp_config->cp_type, gtp_type_str(gtpv2c_s11_rx->gtpc.type),
 				//		gtpv2c_s11_rx->gtpc.type,
 				//		gtpv2c_s11_rx->gtpc.type);
 				//return;
@@ -364,7 +364,7 @@ msg_handler_s11(void)
 	}
 #endif
 
-	switch (spgw_cfg) {
+	switch (cp_config->cp_type) {
 	case SGWC:
 	case SAEGWC:
 		if (bytes_s11_rx > 0) {
@@ -400,7 +400,7 @@ msg_handler_s11(void)
 		break;
 	default:
 		rte_panic("main.c::control_plane::cp_stats-"
-				"Unknown spgw_cfg= %u.", spgw_cfg);
+				"Unknown spgw_cfg= %u.", cp_config->cp_type);
 		break;
 	}
 
@@ -445,7 +445,7 @@ msg_handler_s5s8(void)
 	}
 
 #if 0
-	if ((spgw_cfg == SGWC) || (spgw_cfg == PGWC)) {
+	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == PGWC)) {
 		if ((bytes_s5s8_rx > 0) &&
 			 (unsigned)bytes_s5s8_rx != (
 			 ntohs(gtpv2c_s5s8_rx->gtpc.message_len)
@@ -472,18 +472,18 @@ msg_handler_s5s8(void)
 	/* Reset periodic timers */
 	process_response(s5s8_recv_sockaddr.sin_addr.s_addr);
 
-	if (spgw_cfg == PGWC)
+	if (cp_config->cp_type == PGWC)
 		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
 					gtpv2c_s5s8_rx->gtpc.message_type,RCVD,S5S8);
 
-	if (spgw_cfg == SGWC && (gtpv2c_s5s8_rx->gtpc.message_type == GTP_ECHO_REQ ||
+	if (cp_config->cp_type == SGWC && (gtpv2c_s5s8_rx->gtpc.message_type == GTP_ECHO_REQ ||
 		gtpv2c_s5s8_rx->gtpc.message_type == GTP_ECHO_RSP ||
 		gtpv2c_s5s8_rx->gtpc.message_type == GTP_CREATE_BEARER_REQ))
 
 		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
 					gtpv2c_s5s8_rx->gtpc.message_type,RCVD,S5S8);
 #if 0
-	if (((spgw_cfg == PGWC) && (bytes_s5s8_rx > 0)) &&
+	if (((cp_config->cp_type == PGWC) && (bytes_s5s8_rx > 0)) &&
 		  (gtpv2c_s5s8_rx->gtpc.version != GTP_VERSION_GTPV2C)
 		) {
 		clLog(clSystemLog, eCLSeverityCritical, "PFCP Discarding packet from %s:%u - "
@@ -521,17 +521,17 @@ msg_handler_s5s8(void)
 		if ((ret = gtpc_pcnd_check(gtpv2c_s5s8_rx, &msg, bytes_s5s8_rx)) != 0)
 		{
 			/*CLI: update csr, dsr, mbr rej response*/
-			if(spgw_cfg == SGWC)
+			if(cp_config->cp_type == SGWC)
 				update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
 							gtpv2c_s5s8_rx->gtpc.message_type,REJ,S5S8);
 			return;
 		}
 
-	if (spgw_cfg == SGWC)
+	if (cp_config->cp_type == SGWC)
 		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
 					gtpv2c_s5s8_rx->gtpc.message_type,ACC,S5S8);
 
-	if (spgw_cfg == SGWC)
+	if (cp_config->cp_type == SGWC)
 	{
 		if (gtpv2c_s5s8_rx->gtpc.message_type == GTP_CREATE_SESSION_RSP )
 		{
@@ -544,16 +544,16 @@ msg_handler_s5s8(void)
 	}
 
 		if ((msg.proc < END_PROC) && (msg.state < END_STATE) && (msg.event < END_EVNT)) {
-			if (SGWC == pfcp_config.cp_type) {
+			if (SGWC == cp_config->cp_type) {
 			    ret = (*state_machine_sgwc[msg.proc][msg.state][msg.event])(&msg, NULL);
-			} else if (PGWC == pfcp_config.cp_type) {
+			} else if (PGWC == cp_config->cp_type) {
 			    ret = (*state_machine_pgwc[msg.proc][msg.state][msg.event])(&msg, NULL);
-			} else if (SAEGWC == pfcp_config.cp_type) {
+			} else if (SAEGWC == cp_config->cp_type) {
 			    ret = (*state_machine_saegwc[msg.proc][msg.state][msg.event])(&msg, NULL);
 			} else {
 				clLog(s5s8logger, eCLSeverityCritical, "%s : "
 						"Invalid Control Plane Type: %d \n",
-						__func__, pfcp_config.cp_type);
+						__func__, cp_config->cp_type);
 				return;
 			}
 			if(ret == -2) {
@@ -580,7 +580,7 @@ msg_handler_s5s8(void)
 	if (bytes_s5s8_rx > 0)
 		++cp_stats.tx;
 
-	switch (spgw_cfg) {
+	switch (cp_config->cp_type) {
 	case SGWC:
 			break; //do not update console stats for SGWC
 	case PGWC:
@@ -600,7 +600,7 @@ msg_handler_s5s8(void)
 		break;
 	default:
 		rte_panic("main.c::control_plane::cp_stats-"
-				"Unknown spgw_cfg= %u.", spgw_cfg);
+				"Unknown spgw_cfg= %u.", cp_config->cp_type);
 		break;
 	}
 }

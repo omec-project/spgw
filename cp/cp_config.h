@@ -19,23 +19,6 @@
 #include "cp_config_new.h"
 
 /**
- * Used to hold registered UPF context.
- * Also becomes a part of the TAILQ list node
- */
-typedef struct cfg_upf_context {
-	char zmq_pull_ifconnect[128];
-	char zmq_push_ifconnect[128];
-	void *zmqpull_sockctxt;
-	void *zmqpull_sockcet;
-	void *zmqpush_sockctxt;
-	void *zmqpush_sockcet;
-	uint16_t cp_comm_port;
-	uint32_t dpId;
-
-	TAILQ_ENTRY(cfg_upf_context) entries;
-} cfg_upf_context;
-
-/**
  * @brief  : parse the SGWU/PGWU/SAEGWU IP from config file
  * @param  : pfcp_config, config file path
  * @return : Returns nothing
@@ -62,53 +45,8 @@ int
 check_cp_req_tries_config(char *value);
 
 
-#define DP_SITE_NAME_MAX		256
-#include <stdint.h>
-#include <sys/queue.h>
-#include "stdbool.h"
-
-#define CP_CONFIG_OPT_PATH		"../config/app_config.cfg"
-#define CP_CONFIG_FOLDER		"../config/"
-
 extern struct app_config *appl_config;
 struct cfg_upf_context;
-
-struct mcc_mnc_key
-{
-	uint8_t mcc_digit_1 :4;
-	uint8_t mcc_digit_2 :4;
-	uint8_t mcc_digit_3 :4;
-	uint8_t mnc_digit_3 :4;
-	uint8_t mnc_digit_1 :4;
-	uint8_t mnc_digit_2 :4;
-};
-
-
-struct dp_key
-{
-	struct mcc_mnc_key mcc_mnc;
-	uint16_t tac;
-};
-
-#define  CONFIG_DNS_PRIMARY  	0x00000001
-#define  CONFIG_DNS_SECONDARY   0x00000002
-
-#define DEFAULT_IPV4_MTU        (1450)
-
-struct dp_info
-{
-	uint32_t  flags;
-	struct dp_key key;
-	char dpName[DP_SITE_NAME_MAX];
-	uint32_t dpId;
-	struct in_addr s1u_sgw_ip;
-	struct cfg_upf_context *upf;
-	struct in_addr dns_p, dns_s; 
-	struct ip_table *static_pool_tree;
-	char   *static_pool;
-	uint16_t ip_mtu;
-	LIST_ENTRY(dp_info) dpentries;
-};
 
 /*
  * Set flag that Primary DNS config is available at Edge Site level. This should be called 
@@ -117,19 +55,6 @@ struct dp_info
 void set_dp_dns_primary(struct dp_info *dp); 
 void set_dp_dns_secondary(struct dp_info *dp); 
 
-struct app_config 
-{
-	uint32_t  flags;
-	/* Dataplane selection rules. */
-	LIST_HEAD(dplisthead, dp_info) dpList;
-
-	/* add any other dynamic config for spgw control app
-	 * Common : various interfaces timeout intervals,  admin state etc.., logging enable/disable
-	 * SGW : DDN profile, APN (optional) etc..
-	 * PGW : APN, IP Pool etc..
-	 */
-	struct in_addr dns_p, dns_s; 
-};
 
 /*
  * Set flag that primary DNS config is available at App level. This should be called 

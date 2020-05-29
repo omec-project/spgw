@@ -113,7 +113,7 @@ set_pfcp_seid_header(pfcp_header_t *pfcp, uint8_t type, bool flag,uint32_t seq)
 	if(flag == HAS_SEID){
 
 #ifdef CP_BUILD
-		if (pfcp_config.cp_type == SGWC){
+		if (cp_config->cp_type == SGWC){
 			pfcp->seid_seqno.has_seid.seid  =
 						pfcp_sgwc_base_seid + pfcp_sgwc_seid_offset;
 			pfcp_sgwc_seid_offset++;
@@ -447,11 +447,11 @@ creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value)
 	size += set_precedence(&(create_pdr->precedence));
 	size += set_pdi(&(create_pdr->pdi));
 #ifdef CP_BUILD
-	if (pfcp_config.cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
+	if (cp_config->cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
 		size += set_outer_hdr_removal(&(create_pdr->outer_hdr_removal));
 	size += set_far_id(&(create_pdr->far_id));
 	/* TODO: Revisit this for change in yang*/
-	if (pfcp_config.cp_type != SGWC){
+	if (cp_config->cp_type != SGWC){
 		for(int i=0; i < create_pdr->qer_id_count; i++ ) {
 			size += set_qer_id(&(create_pdr->qer_id[i]));
 		}
@@ -496,12 +496,12 @@ updating_pdr(pfcp_update_pdr_ie_t *create_pdr, int source_iface_value)
 	size += set_precedence(&(create_pdr->precedence));
 	size += set_pdi(&(create_pdr->pdi));
 #ifdef CP_BUILD
-	if (pfcp_config.cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
+	if (cp_config->cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
 		size += set_outer_hdr_removal(&(create_pdr->outer_hdr_removal));
 	size += set_far_id(&(create_pdr->far_id));
 #ifdef _GX_BUILD
 	/*TODO : need to check this durinf UT */
-	if (pfcp_config.cp_type != SGWC){
+	if (cp_config->cp_type != SGWC){
 		for(int i=0; i < create_pdr->qer_id_count; i++ ) {
 			size += set_qer_id(&(create_pdr->qer_id[i]));
 		}

@@ -131,36 +131,36 @@ void iface_process_ipc_msgs(void)
 	int max = 0;
 
 	/* Add S11_FD in the set */
-	if ((spgw_cfg  == SGWC) || (spgw_cfg == SAEGWC)) {
+	if ((cp_config->cp_type  == SGWC) || (cp_config->cp_type == SAEGWC)) {
 		FD_SET(my_sock.sock_fd_s11, &readfds);
 	}
 
 	/* Add S5S8_FD in the set */
-	if (spgw_cfg != SAEGWC) {
+	if (cp_config->cp_type != SAEGWC) {
 		FD_SET(my_sock.sock_fd_s5s8, &readfds);
 	}
 
 #ifdef GX_BUILD
 	/* Add GX_FD in the set */
-	if ((spgw_cfg == PGWC ) || (spgw_cfg == SAEGWC)) {
+	if ((cp_config->cp_type == PGWC ) || (cp_config->cp_type == SAEGWC)) {
 		FD_SET(gx_app_sock, &readfds);
 	}
 #endif /* GX_BUILD */
 
 	/* Set the MAX FD's stored into the set */
-	if (spgw_cfg == SGWC) {
+	if (cp_config->cp_type == SGWC) {
 		max = (my_sock.sock_fd > my_sock.sock_fd_s11 ?
 				my_sock.sock_fd : my_sock.sock_fd_s11);
 		max = (max > my_sock.sock_fd_s5s8 ? max : my_sock.sock_fd_s5s8);
 	}
-	if (spgw_cfg == SAEGWC) {
+	if (cp_config->cp_type == SAEGWC) {
 		max = (my_sock.sock_fd > my_sock.sock_fd_s11 ?
 				my_sock.sock_fd : my_sock.sock_fd_s11);
 #ifdef GX_BUILD
 		max = (gx_app_sock > max ? gx_app_sock : max);
 #endif /* GX_BUILD */
 	}
-	if (spgw_cfg == PGWC) {
+	if (cp_config->cp_type == PGWC) {
 		max = (my_sock.sock_fd > my_sock.sock_fd_s5s8 ?
 				my_sock.sock_fd : my_sock.sock_fd_s5s8);
 #ifdef GX_BUILD
@@ -197,13 +197,13 @@ void iface_process_ipc_msgs(void)
 		}
 #ifdef CP_BUILD
 		/* ajay - CP_BUILD defined for CP build and not defined in case DP BUILD. cp/Makefile has this flag defined  */
-		if ((spgw_cfg  == SGWC) || (spgw_cfg == SAEGWC)) {
+		if ((cp_config->cp_type  == SGWC) || (cp_config->cp_type == SAEGWC)) {
 			if (FD_ISSET(my_sock.sock_fd_s11, &readfds)) {
 					msg_handler_s11();
 			}
 		}
 
-		if (spgw_cfg != SAEGWC) {
+		if (cp_config->cp_type != SAEGWC) {
 			if (FD_ISSET(my_sock.sock_fd_s5s8, &readfds)) {
 					msg_handler_s5s8();
 			}
@@ -211,7 +211,7 @@ void iface_process_ipc_msgs(void)
 
 #ifdef GX_BUILD
 		/* Refer - cp/Makefile. For now this is disabled. */
-		if ((spgw_cfg == PGWC) || (spgw_cfg == SAEGWC)) {
+		if ((cp_config->cp_type == PGWC) || (cp_config->cp_type == SAEGWC)) {
 			if (FD_ISSET(gx_app_sock, &readfds)) {
 					msg_handler_gx();
 			}

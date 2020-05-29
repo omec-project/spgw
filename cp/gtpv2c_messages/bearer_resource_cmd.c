@@ -412,7 +412,7 @@ set_create_bearer_request(gtpv2c_header_t *gtpv2c_tx, uint32_t sequence,
 	cb_req.bearer_contexts.header.len += sizeof(gtp_bearer_qlty_of_svc_ie_t);
 
 	/* TODO TFT is pending */
-	if (SGWC == pfcp_config.cp_type) {
+	if (SGWC == cp_config->cp_type) {
 		memset(cb_req.bearer_contexts.tft.eps_bearer_lvl_tft, 0, 257);
 		memcpy(cb_req.bearer_contexts.tft.eps_bearer_lvl_tft, eps_bearer_lvl_tft, 257);
 
@@ -429,7 +429,7 @@ set_create_bearer_request(gtpv2c_header_t *gtpv2c_tx, uint32_t sequence,
 			IE_INSTANCE_ZERO, 1);//bearer->charging_id);
 	cb_req.bearer_contexts.header.len += sizeof(gtp_charging_id_ie_t);
 
-	if (PGWC == pfcp_config.cp_type) {
+	if (PGWC == cp_config->cp_type) {
 		set_ipv4_fteid(&cb_req.bearer_contexts.s58_u_pgw_fteid,
 			GTPV2C_IFTYPE_S5S8_PGW_GTPU, IE_INSTANCE_ONE, bearer->s5s8_pgw_gtpu_ipv4,
 			bearer->s5s8_pgw_gtpu_teid);
@@ -439,7 +439,7 @@ set_create_bearer_request(gtpv2c_header_t *gtpv2c_tx, uint32_t sequence,
 			GTPV2C_IFTYPE_S1U_SGW_GTPU, IE_INSTANCE_ZERO, bearer->s1u_sgw_gtpu_ipv4,
 			bearer->s1u_sgw_gtpu_teid);
 
-		if (SGWC == pfcp_config.cp_type) {
+		if (SGWC == cp_config->cp_type) {
 			set_ipv4_fteid(&cb_req.bearer_contexts.s58_u_pgw_fteid,
 				GTPV2C_IFTYPE_S5S8_PGW_GTPU, IE_INSTANCE_ONE, bearer->s5s8_pgw_gtpu_ipv4,
 				bearer->s5s8_pgw_gtpu_teid);

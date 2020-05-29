@@ -63,13 +63,11 @@
 #define REQUEST_TIMEOUT 		"REQUEST_TIMEOUT"
 #define REQUEST_TRIES			"REQUEST_TRIES"
 
-extern struct app_config *appl_config;
 extern char* config_update_base_folder; 
 extern bool native_config_folder;
 
 const char *primary_dns = "8.8.8.8";
 const char *secondary_dns = "8.8.8.4";	
-
 
 void
 config_cp_ip_port(pfcp_config_t *pfcp_config)
@@ -120,12 +118,12 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 
 		/* Parse SGWC, PGWC and SAEGWC values from cp.cfg */
 		if(strncmp(CP_TYPE, global_entries[i].name, strlen(CP_TYPE)) == 0) {
-			pfcp_config->cp_type = (uint8_t)atoi(global_entries[i].value);
+			cp_config->cp_type = (uint8_t)atoi(global_entries[i].value);
 
 			fprintf(stderr, "CP: CP_TYPE     : %s\n",
-					pfcp_config->cp_type == SGWC ? "SGW-C" :
-					pfcp_config->cp_type == PGWC ? "PGW-C" :
-					pfcp_config->cp_type == SAEGWC ? "SAEGW-C" : "UNKNOWN");
+					cp_config->cp_type == SGWC ? "SGW-C" :
+					cp_config->cp_type == PGWC ? "PGW-C" :
+					cp_config->cp_type == SAEGWC ? "SAEGW-C" : "UNKNOWN");
 
 		}else if (strncmp(S11_IPS, global_entries[i].name,
 					strlen(S11_IPS)) == 0) {
@@ -219,9 +217,9 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 					pfcp_config->upf_pfcp_port);
 
 		 } else if (strncmp(CP_LOGGER, global_entries[i].name, strlen(CP_LOGGER)) == 0) {
-			 pfcp_config->cp_logger = (uint8_t)atoi(global_entries[i].value);
+			 cp_config->cp_logger = (uint8_t)atoi(global_entries[i].value);
 			 fprintf(stderr, "CP: CP_LOGGER: %d\n",
-					pfcp_config->cp_logger);
+					cp_config->cp_logger);
 		 }
 
 		/* Parse timer and counter values from cp.cfg */
@@ -526,12 +524,12 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 					ip_pool_entries[i].name,
 					strlen(IP_POOL_IP)) == 0) {
 			inet_aton(ip_pool_entries[i].value,
-					&(pfcp_config->ip_pool_ip));
+					&(cp_config->ip_pool_ip));
 		} else if (strncmp
 				(IP_POOL_MASK, ip_pool_entries[i].name,
 				 strlen(IP_POOL_MASK)) == 0) {
 			inet_aton(ip_pool_entries[i].value,
-					&(pfcp_config->ip_pool_mask));
+					&(cp_config->ip_pool_mask));
 		}
 	}
 
@@ -678,21 +676,21 @@ config_change_cbk(char *config_file, uint32_t flags)
 	 *  
 	 * For now I am just going to switch to new config. Anyway its just selection of DPs 
 	 */
-	struct app_config *old_config = appl_config;
+	struct app_config *old_config = cp_config->appl_config;
     /* Copy resource pointers from old config to new config */
 	struct dp_info *dpNew; 
 	struct dp_info *dpOld; 
 	LIST_FOREACH(dpNew, &new_cfg->dpList, dpentries) {
 		LIST_FOREACH(dpOld, &old_config->dpList, dpentries) {
 			if(dpOld->dpId == dpNew->dpId) {
-                dpNew->s1u_sgw_ip = dpOld->s1u_sgw_ip;
+                		dpNew->s1u_sgw_ip = dpOld->s1u_sgw_ip;
 				dpNew->upf = dpOld->upf;
 				break;
 			}
 		}	
 	}
 
-	appl_config = new_cfg; /* switch to new config */ 
+	cp_config->appl_config = new_cfg; /* switch to new config */ 
 	struct dp_info *np; 
 	np = LIST_FIRST(&old_config->dpList);
 	while (np != NULL) {
@@ -797,7 +795,7 @@ init_spgwc_dynamic_config(struct app_config *cfg )
 		RTE_LOG_DP(ERR, CP, "DPNAME %s configured \n", dpInfo->dpName);
 
 		struct dp_info *dpOld = NULL;
-		LIST_FOREACH(dpOld, &appl_config->dpList, dpentries) {
+		LIST_FOREACH(dpOld, &cp_config->appl_config->dpList, dpentries) {
 			if ((dpOld->dpId == dpInfo->dpId)) {
 				break;
 			}
@@ -926,7 +924,7 @@ select_dp_for_key(struct dp_key *key)
 		   key->mcc_mnc.mnc_digit_2, key->mcc_mnc.mnc_digit_3, key->tac);
 
 	struct dp_info *np;
-	LIST_FOREACH(np, &appl_config->dpList, dpentries) {
+	LIST_FOREACH(np, &cp_config->appl_config->dpList, dpentries) {
 	RTE_LOG_DP(INFO, CP, "dp Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", np->key.mcc_mnc.mcc_digit_1,
 		   np->key.mcc_mnc.mcc_digit_2, np->key.mcc_mnc.mcc_digit_3, np->key.mcc_mnc.mnc_digit_1,
 		   np->key.mcc_mnc.mnc_digit_2, np->key.mcc_mnc.mnc_digit_3, np->key.tac);
@@ -943,7 +941,7 @@ uint8_t
 resolve_upf_context_to_dpInfo(struct cfg_upf_context *upf, char *hostname, struct in_addr s1u_sgw_ip)
 {
 	struct dp_info *dp;
-	LIST_FOREACH(dp, &appl_config->dpList, dpentries) {
+	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
 		if (!strcmp(hostname, dp->dpName)) {
 			dp->upf = upf;
 			dp->s1u_sgw_ip = s1u_sgw_ip;
@@ -959,7 +957,7 @@ fetch_s1u_sgw_ip(uint32_t dpId)
 {
 	struct dp_info *dp;
 	struct in_addr a = { .s_addr = 0 };
-	LIST_FOREACH(dp, &appl_config->dpList, dpentries) {
+	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
 		if (dpId == dp->dpId) {
 			return dp->s1u_sgw_ip;
 		}
@@ -976,7 +974,7 @@ struct dp_info *
 fetch_dp_context(uint32_t dpId)
 {
 	struct dp_info *dp;
-	LIST_FOREACH(dp, &appl_config->dpList, dpentries) {
+	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
 		if (dpId == dp->dpId) {
 			return dp;
 		}
@@ -990,7 +988,7 @@ struct cfg_upf_context *
 fetch_upf_context(uint32_t dpId)
 {
 	struct dp_info *dp;
-	LIST_FOREACH(dp, &appl_config->dpList, dpentries) {
+	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
 		if (dpId == dp->dpId) {
 			return dp->upf;
 		}
@@ -1006,13 +1004,13 @@ fetch_dns_primary_ip(uint32_t dpId, bool *present)
 {
 	struct dp_info *dp;
 	struct in_addr dns_p = { .s_addr = 0 };
-	LIST_FOREACH(dp, &appl_config->dpList, dpentries) {
+	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
 		if ((dpId == dp->dpId) && (dp->flags & CONFIG_DNS_PRIMARY)) {
 			*present = true;
 			return dp->dns_p;
 		}
 	}
-	*present = get_app_primary_dns(appl_config, &dns_p);
+	*present = get_app_primary_dns(cp_config->appl_config, &dns_p);
 	return dns_p;
 }
 
@@ -1021,13 +1019,13 @@ fetch_dns_secondary_ip(uint32_t dpId, bool *present)
 {
 	struct dp_info *dp;
 	struct in_addr dns_s = { .s_addr = 0 };
-	LIST_FOREACH(dp, &appl_config->dpList, dpentries) {
+	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
 		if ((dpId == dp->dpId) && (dp->flags & CONFIG_DNS_SECONDARY)) {
 			*present = true;
 			return dp->dns_s;
 		}
 	}
-	*present = get_app_secondary_dns(appl_config, &dns_s);
+	*present = get_app_secondary_dns(cp_config->appl_config, &dns_s);
 	return dns_s;
 }
 
@@ -1035,7 +1033,7 @@ uint16_t
 fetch_dp_ip_mtu(uint32_t dpId)
 {
        struct dp_info *dp;
-       LIST_FOREACH(dp, &appl_config->dpList, dpentries) {
+       LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
                if ((dpId == dp->dpId)) {
                        return dp->ip_mtu;
                }

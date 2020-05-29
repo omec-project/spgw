@@ -405,16 +405,16 @@ msg_handler_gx( void )
 		return -1;
 
 	if ((msg.proc < END_PROC) && (msg.state < END_STATE) && (msg.event < END_EVNT)) {
-		if (SGWC == pfcp_config.cp_type) {
+		if (SGWC == cp_config->cp_type) {
 		    ret = (*state_machine_sgwc[msg.proc][msg.state][msg.event])(&msg, gxmsg);
-		} else if (PGWC == pfcp_config.cp_type) {
+		} else if (PGWC == cp_config->cp_type) {
 		    ret = (*state_machine_pgwc[msg.proc][msg.state][msg.event])(&msg, gxmsg);
-		} else if (SAEGWC == pfcp_config.cp_type) {
+		} else if (SAEGWC == cp_config->cp_type) {
 		    ret = (*state_machine_saegwc[msg.proc][msg.state][msg.event])(&msg, gxmsg);
 		} else {
 			/* clLog(s11logger, eCLSeverityCritical, "%s : "
 					"Invalid Control Plane Type: %d \n",
-					__func__, pfcp_config.cp_type); */
+					__func__, cp_config->cp_type); */
 			return -1;
 		}
 

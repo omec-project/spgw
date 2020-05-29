@@ -32,6 +32,7 @@
 #include "cp_stats.h"
 #include "sm_struct.h"
 #include "cp_config.h"
+#include "cp_config_new.h"
 #else
 #include "up_main.h"
 #include "pfcp_up_sess.h"
@@ -234,16 +235,16 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 
 		printf("[%s] - %d - Procedure - %d state - %d event - %d. Invoke FSM now  \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
 		if ((msg.proc < END_PROC) && (msg.state < END_STATE) && (msg.event < END_EVNT)) {
-			if (SGWC == pfcp_config.cp_type) {
+			if (SGWC == cp_config->cp_type) {
 			    ret = (*state_machine_sgwc[msg.proc][msg.state][msg.event])(&msg, peer_addr);
-			} else if (PGWC == pfcp_config.cp_type) {
+			} else if (PGWC == cp_config->cp_type) {
 			    ret = (*state_machine_pgwc[msg.proc][msg.state][msg.event])(&msg, peer_addr);
-			} else if (SAEGWC == pfcp_config.cp_type) {
+			} else if (SAEGWC == cp_config->cp_type) {
 			    ret = (*state_machine_saegwc[msg.proc][msg.state][msg.event])(&msg, peer_addr);
 			} else {
 				clLog(sxlogger, eCLSeverityCritical, "%s : "
 						"Invalid Control Plane Type: %d \n",
-						__func__, pfcp_config.cp_type);
+						__func__, cp_config->cp_type);
 				return -1;
 			}
 

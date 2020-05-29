@@ -62,14 +62,14 @@ gtpc_s5s8_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 		switch(msg->msg_type){
 
 			case GTP_CREATE_SESSION_REQ:
-				cs_error_response(msg, ret, spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+				cs_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				break;
 
 			case GTP_DELETE_SESSION_REQ:
-				ds_error_response(msg, ret, spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+				ds_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 			    break;
 			case GTP_MODIFY_BEARER_REQ:
-				mbr_error_response(msg, ret, spgw_cfg != PGWC? S11_IFACE : S5S8_IFACE);
+				mbr_error_response(msg, ret, cp_config->cp_type != PGWC? S11_IFACE : S5S8_IFACE);
 				break;
 		}
 		return ret;
@@ -284,7 +284,7 @@ gtpc_s5s8_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 					"\n\tcase: SAEGWC::spgw_cfg= %d;"
 					"\n\tReceived unprocessed GTPv2c Message Type: "
 					"%s (%u 0x%x)... Discarding\n", __func__,
-					spgw_cfg, gtp_type_str(gtpv2c_rx->gtpc.message_type),
+					cp_config->cp_type, gtp_type_str(gtpv2c_rx->gtpc.message_type),
 					gtpv2c_rx->gtpc.message_type,
 					gtpv2c_rx->gtpc.message_type);
 			return -1;

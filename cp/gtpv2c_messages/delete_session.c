@@ -100,7 +100,7 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
 
-	if (pfcp_config.cp_type == SGWC) {
+	if (cp_config->cp_type == SGWC) {
 		/*VS: Fill teid and ip address */
 		*s5s8_pgw_gtpc_teid = htonl(pdn->s5s8_pgw_gtpc_teid);
 		*s5s8_pgw_gtpc_ipv4 = htonl(pdn->s5s8_pgw_gtpc_ipv4.s_addr);
@@ -149,7 +149,7 @@ process_delete_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 	decode_del_sess_req((uint8_t *) gtpv2c_rx, &ds_req);
 
-	if (spgw_cfg == SGWC) {
+	if (cp_config->cp_type == SGWC) {
 		pdn_connection *pdn = NULL;
 		uint32_t s5s8_pgw_gtpc_del_teid;
 		static uint32_t process_sgwc_s5s8_ds_req_cnt;
@@ -181,7 +181,7 @@ process_delete_session_request(gtpv2c_header_t *gtpv2c_rx,
 				"\n\tpdn->s5s8_pgw_gtpc_ipv4= %s;"
 				"\n\tpdn->s5s8_pgw_gtpc_teid= %X;"
 				"\n\tgen_delete_s5s8_session_request= %d\n",
-				spgw_cfg, process_sgwc_s5s8_ds_req_cnt++,
+				cp_config->cp_type, process_sgwc_s5s8_ds_req_cnt++,
 				inet_ntoa(pdn->ipv4),
 				inet_ntoa(pdn->s5s8_sgw_gtpc_ipv4),
 				pdn->s5s8_sgw_gtpc_teid,

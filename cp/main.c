@@ -59,15 +59,13 @@
 uint32_t start_time;
 extern pfcp_config_t pfcp_config;
 
-enum cp_config spgw_cfg;
-
 char *config_update_base_folder = NULL;
 bool native_config_folder = false;
 
 /* We should move all the config inside this structure eventually
  * config is scattered all across the place as of now
  */
-struct app_config *appl_config = NULL;
+cp_config_t *cp_config = NULL;
 
 #ifdef USE_REST
 uint32_t up_time = 0;
@@ -336,14 +334,21 @@ main(int argc, char **argv)
 		DEFAULT_STATS_PATH, strerror(errno));
 	}
 
+	/*Global config holder for cp */
+	cp_config = (cp_config_t *) calloc(1, sizeof(cp_config_t));
+
+        if (cp_config == NULL) {
+                rte_exit(EXIT_FAILURE, "Can't allocate memory for cp_config!\n");
+        }
+
 	/* start - dynamic config */
-	appl_config = (struct app_config *) calloc(1, sizeof(struct app_config));
-        if (appl_config == NULL) {
+	cp_config->appl_config = (struct app_config *) calloc(1, sizeof(struct app_config));
+        if (cp_config->appl_config == NULL) {
                 rte_exit(EXIT_FAILURE, "Can't allocate memory for appl_config!\n");
         }
 
         /* Parse initial configuration file */
-        init_spgwc_dynamic_config(appl_config);
+        init_spgwc_dynamic_config(cp_config->appl_config);
 
         /* Lets register config change hook */
         char file[128] = {'\0'};
@@ -354,13 +359,11 @@ main(int argc, char **argv)
 	/* end - dynamic config */
 
 	config_cp_ip_port(&pfcp_config);
-	/* TODO: REMOVE spgw_cfg */
-	spgw_cfg = pfcp_config.cp_type;
 
 	init_cp();
 	init_cp_params();
 
-	init_cli_module(pfcp_config.cp_logger);
+	init_cli_module(cp_config->cp_logger);
 
 	/* TODO: Need to Re-arrange the hash initialize */
 	create_heartbeat_hash_table();
@@ -368,7 +371,7 @@ main(int argc, char **argv)
 
 	/* Make a connection between control-plane and gx_app */
 #ifdef GX_BUILD
-	if(pfcp_config.cp_type != SGWC)
+	if(cp_config->cp_type != SGWC)
 		start_cp_app();
 #endif
 

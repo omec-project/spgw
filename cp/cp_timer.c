@@ -92,7 +92,7 @@ timer_callback(gstimerinfo_t *ti, const void *data_t )
 					/*msg.msg_type = GTP_CREATE_SESSION_REQ;
 					msg.gtpc_msg.csr = upf_context->csr;
 					cs_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
-						spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);*/
+						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);*/
 				       for(uint8_t idx = 0; idx < upf_context->csr_cnt; idx++) {
 						msg.msg_type = GTP_CREATE_SESSION_REQ;
 						key = (context_key *) upf_context->pending_csr_teid[idx];
@@ -102,7 +102,7 @@ timer_callback(gstimerinfo_t *ti, const void *data_t )
 										key->ebi_index + 5;
 						msg.gtpc_msg.csr.header.teid.has_teid.teid = key->teid;
 						cs_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
-        		                                spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+        		                                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 					}
 				}
 			} else {
@@ -110,18 +110,18 @@ timer_callback(gstimerinfo_t *ti, const void *data_t )
 				msg.gtpc_msg.mbr = resp->gtpc_msg.mbr;
 				msg.msg_type = resp->msg_type;
 				mbr_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
-					spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+					cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 			} else if (GTP_CREATE_SESSION_REQ == resp->msg_type) {
 				msg.gtpc_msg.csr = resp->gtpc_msg.csr;
 				msg.msg_type = resp->msg_type;
 				cs_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
-					spgw_cfg != PGWC ? S11_IFACE : S5S8_IFACE);
+					cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 			} else if (GTP_DELETE_SESSION_REQ == resp->msg_type) {
 				msg.gtpc_msg.dsr = resp->gtpc_msg.dsr;
 				msg.msg_type = resp->msg_type;
 				ds_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
-					spgw_cfg != PGWC ? S11_IFACE :S5S8_IFACE);
-			} else if ((pfcp_config.cp_type == PGWC ||  pfcp_config.cp_type ==  SAEGWC )
+					cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
+			} else if ((cp_config->cp_type == PGWC ||  cp_config->cp_type ==  SAEGWC )
 				 && (resp->msg_type == GX_RAR_MSG || resp->state == CREATE_BER_REQ_SNT_STATE)) {
 #ifdef GX_BUILD
 				gen_reauth_error_response(pdn, DIAMETER_PCC_RULE_EVENT);
@@ -318,7 +318,7 @@ add_gtpv2c_if_timer_entry(uint32_t teid, struct sockaddr_in *peer_addr,
 				__FILE__, __func__, __LINE__);
 	}
 
-	if(SGWC == pfcp_config.cp_type) {
+	if(SGWC == cp_config->cp_type) {
 			/* if we get s5s8 fteid we will retrive bearer , if we get sgw s11 fteid we will retrive ue contex */
 		ret = get_bearer_by_teid(teid, &bearer);
 		if ( ret < 0) {

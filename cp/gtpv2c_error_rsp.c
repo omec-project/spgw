@@ -58,7 +58,7 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 				pdn = context->eps_bearers[ebi_index]->pdn;
 				if (pdn){
 					if (get_sess_entry(pdn->seid, &resp) == 0) {
-						if (spgw_cfg == SGWC){
+						if (cp_config->cp_type == SGWC){
 							if(resp->state == PFCP_SESS_DEL_REQ_SNT_STATE) {
 								goto del_ue_cntx_imsi;
 							}
@@ -443,7 +443,7 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface){
 
 				//Sending CCR-T in case of failure
 #ifdef GX_BUILD
-		if (pfcp_config.cp_type != SGWC){
+		if (cp_config->cp_type != SGWC){
 			send_ccr_t_req(msg, rsp_info.ebi_index, rsp_info.teid);
             		struct sockaddr_in saddr_in;
             		saddr_in.sin_family = AF_INET;
@@ -475,7 +475,7 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface){
 		   cs_resp.cause.pce = 0;
 		   cs_resp.cause.bce = 0;
 		   cs_resp.cause.spareinstance = 0;
-		   if(pfcp_config.cp_type != SGWC || pfcp_config.cp_type !=SAEGWC )
+		   if(cp_config->cp_type != SGWC || cp_config->cp_type !=SAEGWC )
 		         cs_resp.cause.cs = 1;
 		   else
 		         cs_resp.cause.cs = 0;
@@ -615,7 +615,7 @@ void ds_error_response(msg_info *msg, uint8_t cause_value, int iface){
 	}
 
 #ifdef GX_BUILD
-	if (pfcp_config.cp_type != SGWC) {
+	if (cp_config->cp_type != SGWC) {
 		send_ccr_t_req(msg, eps_bearer_id, rsp_info.teid);
 		struct sockaddr_in saddr_in;
 		saddr_in.sin_family = AF_INET;

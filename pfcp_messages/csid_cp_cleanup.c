@@ -67,7 +67,7 @@ fill_pgw_restart_notification(gtpv2c_header_t *gtpv2c_tx,
 			GTP_IE_IP_ADDRESS, IE_INSTANCE_ZERO,
 			sizeof(uint32_t));
 
-	if (pfcp_config.cp_type == SAEGWC) {
+	if (cp_config->cp_type == SAEGWC) {
 		pgw_rstrt_notif.pgw_s5s8_ip_addr_ctl_plane_or_pmip.ipv4_ipv6_addr = s11_sgw;
 	} else {
 		pgw_rstrt_notif.pgw_s5s8_ip_addr_ctl_plane_or_pmip.ipv4_ipv6_addr = s5s8_pgw;
@@ -99,7 +99,7 @@ fill_gtpc_del_set_pdn_conn_req(gtpv2c_header_t *gtpv2c_tx, fqcsid_t *local_csids
 			(iface == SX_PORT_ID) ||
 			(iface == S5S8_SGWC_PORT_ID)) {
 			/* Set the SGW FQ-CSID */
-			if (pfcp_config.cp_type != PGWC) {
+			if (cp_config->cp_type != PGWC) {
 				if (local_csids->num_csid) {
 					set_gtpc_fqcsid_t(&del_pdn_conn_req.sgw_fqcsid, IE_INSTANCE_ONE,
 							local_csids);
@@ -252,11 +252,11 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 		if (pdn == NULL)
 			continue;
 
-		if ((pfcp_config.cp_type == SGWC) || (pfcp_config.cp_type == PGWC))
+		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == PGWC))
 			s5s8_node_addr = pdn->s5s8_pgw_gtpc_ipv4.s_addr;
 
 #ifdef GX_BUILD
-		if ( pfcp_config.cp_type != SGWC) {
+		if ( cp_config->cp_type != SGWC) {
 			/* TODO: Need to remove in real enviorment*/
 			if (iface != S11_SGW_PORT_ID) {
 				fill_ccr_t_request(pdn, ebi_index);
@@ -384,7 +384,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 		//return -1;
 	}
 
-	if (pfcp_config.cp_type != PGWC) {
+	if (cp_config->cp_type != PGWC) {
 		if (iface != S11_SGW_PORT_ID) {
 			//fqcsid_t *csid_t = NULL;
 			//csid_t = get_peer_addr_csids_entry(s11_mme_sockaddr.sin_addr.s_addr,
@@ -400,7 +400,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 
 				/* TODO: NEED TO HANDLE THIS */
 				/* Send the PGW Restart notification */
-				if (pfcp_config.cp_type == SAEGWC) {
+				if (cp_config->cp_type == SAEGWC) {
 					gtpv2c_send(s11_fd, tx_buf, payload_length,
 							(struct sockaddr *) &s11_mme_sockaddr,
 							s11_mme_sockaddr_len);
@@ -410,7 +410,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 
 				}
 
-				if ((pfcp_config.cp_type == SGWC) && (iface == S5S8_SGWC_PORT_ID)) {
+				if ((cp_config->cp_type == SGWC) && (iface == S5S8_SGWC_PORT_ID)) {
 					gtpv2c_send(s11_fd, tx_buf, payload_length,
 							(struct sockaddr *) &s11_mme_sockaddr,
 							s11_mme_sockaddr_len);
@@ -434,7 +434,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 		+ sizeof(gtpv2c_tx->gtpc);
 
 	//fqcsid_t *csid = NULL;
-	if (pfcp_config.cp_type == PGWC) {
+	if (cp_config->cp_type == PGWC) {
 		if (iface != S5S8_PGWC_PORT_ID) {
 			/* Get peer CSID associated with node */
 			//csid = get_peer_addr_csids_entry(s5s8_recv_sockaddr.sin_addr.s_addr,
@@ -456,7 +456,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 						s11_mme_sockaddr_len);
 			//}
 		}
-		if (pfcp_config.cp_type == SGWC) {
+		if (cp_config->cp_type == SGWC) {
 			/* Get peer CSID associated with node */
 			//csid = get_peer_addr_csids_entry(s5s8_recv_sockaddr.sin_addr.s_addr,
 			//		MOD);
@@ -524,7 +524,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 		}
 
 		/* Send the delete PDN set request to PGW */
-		if (pfcp_config.cp_type == SGWC ) {
+		if (cp_config->cp_type == SGWC ) {
 			/* TODO: UPDATE THE NODE ADDRESS */
 			csids.node_addr = pfcp_config.s5s8_ip.s_addr;
 
@@ -592,13 +592,13 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 	/* PGW FQ-CSID */
 	if (del_pdn_req->pgw_fqcsid.header.len) {
 		/* Send the delete PDN set request to MME */
-		if (pfcp_config.cp_type == SGWC ) {
+		if (cp_config->cp_type == SGWC ) {
 			csids.node_addr = ntohl(pfcp_config.s11_ip.s_addr);
 
 			fill_gtpc_del_set_pdn_conn_req(gtpv2c_tx, &csids,
 					S11_SGW_PORT_ID);
 		}
-		if (pfcp_config.cp_type == SGWC) {
+		if (cp_config->cp_type == SGWC) {
 			bzero(&s11_tx_buf, sizeof(s11_tx_buf));
 			gtpv2c_header_t *gtpv2c_tx_t = (gtpv2c_header_t *)s11_tx_buf;
 			//fqcsid_t *csid_t = NULL;
@@ -628,7 +628,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 	/* MME FQ-CSID */
 	if (del_pdn_req->mme_fqcsid.header.len) {
 		/* Send the delete PDN set request to PGW */
-		if (pfcp_config.cp_type == SGWC ) {
+		if (cp_config->cp_type == SGWC ) {
 			csids.node_addr = ntohl(pfcp_config.s5s8_ip.s_addr);
 
 			fill_gtpc_del_set_pdn_conn_req(gtpv2c_tx, &csids,
@@ -643,7 +643,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 	pfcp_sess_set_del_req_t del_set_req_t = {0};
 
 	/* TODO: Need To think on it iface*/
-	if (pfcp_config.cp_type == PGWC) {
+	if (cp_config->cp_type == PGWC) {
 		fill_pfcp_sess_set_del_req_t(&del_set_req_t, &csids, S5S8_PGWC_PORT_ID);
 	} else {
 		fill_pfcp_sess_set_del_req_t(&del_set_req_t, &csids, S11_SGW_PORT_ID);

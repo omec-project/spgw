@@ -33,6 +33,7 @@
 
 #include "../../cp/cp_stats.h"
 #include "../../cp/cp.h"
+#include "../../cp/cp_config_new.h"
 
 #include "../../interface/interface.h"
 #include "../../cp/gtpv2c.h"
@@ -456,9 +457,9 @@ bool is_last_activity_update(uint8_t msg_type, CLIinterface it)
         else
             it_cli = itSxaSxb;
 #else
-        if(pfcp_config.cp_type == SGWC)
+        if(cp_config->cp_type == SGWC)
             it_cli = itSxa;
-        else if(pfcp_config.cp_type == PGWC)
+        else if(cp_config->cp_type == PGWC)
             it_cli = itSxb;
         else
             it_cli = itSxaSxb;
@@ -627,9 +628,9 @@ void add_cli_peer(uint32_t ip_addr,CLIinterface it)
 			it_cli = itSxaSxb;
 		}
 #else
-		if (pfcp_config.cp_type == SGWC){
+		if (cp_config->cp_type == SGWC){
 			it_cli = itSxa;
-		} else if (pfcp_config.cp_type == PGWC){
+		} else if (cp_config->cp_type == PGWC){
 			it_cli = itSxb;
 		} else{
 			it_cli = itSxaSxb;
@@ -1021,7 +1022,7 @@ void init_cli_module(uint8_t gw_logger)
 	clSetOption(eCLOptStatFileName, "logs/cp_stat.log");
 	clSetOption(eCLOptAuditFileName, "logs/cp_sys.log");
 
-	    switch(pfcp_config.cp_type) {
+	    switch(cp_config->cp_type) {
         case SGWC:
             cli_node.gw_type = OSS_SGWC;
 			clInit("sgwc", gw_logger);
@@ -1036,12 +1037,12 @@ void init_cli_module(uint8_t gw_logger)
             break;
     }
 
-	if (spgw_cfg == SGWC || spgw_cfg == SAEGWC) {
+	if (cp_config->cp_type == SGWC || cp_config->cp_type == SAEGWC) {
 		s11logger = clAddLogger("s11", gw_logger);
 	}
-	if (spgw_cfg == SGWC || spgw_cfg == PGWC)
+	if (cp_config->cp_type == SGWC || cp_config->cp_type == PGWC)
 		s5s8logger = clAddLogger("s5s8", gw_logger);
-	if (spgw_cfg == SAEGWC || spgw_cfg == PGWC)
+	if (cp_config->cp_type == SAEGWC || cp_config->cp_type == PGWC)
 		gxlogger = clAddLogger("Gx", gw_logger);
 
 	sxlogger = clAddLogger("sx", gw_logger);

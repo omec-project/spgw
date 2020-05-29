@@ -168,7 +168,7 @@ gx_pcnd_check(gx_msg *gx_rx, msg_info *msg)
 					"\n\tcase: SAEGWC::spgw_cfg= %d;"
 					"\n\tReceived Gx Message : "
 					"%d not supported... Discarding\n", __func__,
-					spgw_cfg, gx_rx->msg_type);
+					cp_config->cp_type, gx_rx->msg_type);
 			return -1;
 	}
 

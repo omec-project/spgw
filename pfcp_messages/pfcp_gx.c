@@ -827,7 +827,7 @@ gx_update_bearer_req(pdn_connection *pdn){
 		gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
 
 		payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
-		if(SAEGWC != pfcp_config.cp_type){
+		if(SAEGWC != cp_config->cp_type){
 			//send S5S8 or on S11  interface update bearer request.
 			gtpv2c_send(s5s8_fd, tx_buf, payload_length,
 	    		      		(struct sockaddr *) &s5s8_recv_sockaddr,
@@ -905,11 +905,11 @@ parse_gx_rar_msg(GxRAR *rar)
 	} else {
 		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
 					pfcp_sess_mod_req.header.message_type,SENT,SX);
-		if(pfcp_config.cp_type == PGWC){
+		if(cp_config->cp_type == PGWC){
                                add_pfcp_if_timer_entry(pdn_cntxt->s5s8_pgw_gtpc_teid, &upf_pfcp_sockaddr,
                                        pfcp_msg, encoded, pdn_cntxt->default_bearer_id - 5);
                        }
-               if(pfcp_config.cp_type == SAEGWC)
+               if(cp_config->cp_type == SAEGWC)
                {
                        add_pfcp_if_timer_entry(pdn_cntxt->context->s11_sgw_gtpc_teid, &upf_pfcp_sockaddr,
                                pfcp_msg, encoded, pdn_cntxt->default_bearer_id - 5);
