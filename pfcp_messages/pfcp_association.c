@@ -389,7 +389,7 @@ assoication_setup_request(ue_context *context, uint8_t ebi_index)
 	pfcp_assn_setup_req_t pfcp_ass_setup_req = {0};
 	struct in_addr test; test.s_addr = (context->pdns[ebi_index])->upf_ipv4.s_addr;
 	printf("\n Initiate PFCP setup to peer address = %s \n", inet_ntoa(test));
-	upf_ip = (context->pdns[ebi_index])->upf_ipv4.s_addr;
+	upf_ip = (context->pdns[ebi_index])->upf_ipv4.s_addr; // ajay
 	upf_context  = rte_zmalloc_socket(NULL, sizeof(upf_context_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 
@@ -527,6 +527,7 @@ process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index)
 		upf_ipv4.s_addr = *upf_ip;
 #else
 #if 1
+		// select the edge and use service name 
 		/* TODO : ajay Need to get this from the config. Helm Chart changes ? */
 		const char *upf_name="spgwu-headless";
 		uint32_t upf_addr = native_linux_name_resolve(upf_name);
@@ -534,12 +535,13 @@ process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index)
 		upf_ipv4.s_addr = upf_addr;
 #else
 		pdn->upf_ipv4.s_addr = pfcp_config.upf_pfcp_ip.s_addr;
-		upf_ipv4.s_addr = pfcp_config.upf_pfcp_ip.s_addr;
+		upf_ipv4.s_addr =      pfcp_config.upf_pfcp_ip.s_addr;
 #endif
 #endif /* USE_DNS_QUERY */
 
 	}
 
+	// ajay : we should keep upf_context reference in the pdn 
 	/* VS: Retrive association state based on UPF IP. */
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 			(const void*) &(upf_ipv4.s_addr), (void **) &(upf_context));

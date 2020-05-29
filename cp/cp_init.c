@@ -29,8 +29,9 @@
 #include "pfcp_association.h"
 #include "restoration_timer.h"
 #include "sm_struct.h"
+#include "cp_config_new.h"
 #include "cp_timer.h"
-#include"cp_config.h"
+#include "cp_config.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -358,7 +359,7 @@ init_pfcp(void)
 			sizeof(upf_pfcp_sockaddr.sin_zero));
 	upf_pfcp_sockaddr.sin_family = AF_INET;
 	upf_pfcp_sockaddr.sin_port = upf_pfcp_port;
-	upf_pfcp_sockaddr.sin_addr = pfcp_config.upf_pfcp_ip;
+	upf_pfcp_sockaddr.sin_addr = pfcp_config.upf_pfcp_ip; // ajay - why the hell we are having this kind of variable ?
 #endif  /* USE_DNS_QUERY */
 }
 

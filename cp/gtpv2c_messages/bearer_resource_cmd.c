@@ -18,6 +18,7 @@
 
 #include "gtpv2c_set_ie.h"
 #include "clogger.h"
+#include "cp_config_new.h"
 
 #define DEFAULT_BEARER_QOS_PRIORITY (15)
 

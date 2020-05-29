@@ -21,6 +21,7 @@
 /* TODO: Verify */
 #ifdef CP_BUILD
 #include "cp.h"
+#include "cp_config_new.h"
 #endif /* CP_BUILD */
 
 #define REST_SUCESSS  200

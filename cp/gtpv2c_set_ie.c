@@ -19,6 +19,7 @@
 #include "gtpv2c_set_ie.h"
 #include "packet_filters.h"
 #include "clogger.h"
+#include "cp_config_new.h"
 
 /**
  * @brief  : helper function to get the location of the next information element '*ie'

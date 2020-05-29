@@ -39,6 +39,7 @@ SRCS-y += cp.c
 SRCS-y += gtpv2c.c
 SRCS-y += cp_init.c
 SRCS-y += cp_stats.c
+SRCS-y += monitor_config.c
 SRCS-y += cp_config.c
 SRCS-y += debug_str.c
 SRCS-y += gtpv2c_set_ie.c

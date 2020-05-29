@@ -18,15 +18,13 @@
 #include "cp.h"
 #include "interface.h"
 #include "clogger.h"
+#include "cp_config.h"
 
 extern pfcp_config_t pfcp_config;
 struct rte_hash *ue_context_by_imsi_hash;
 struct rte_hash *ue_context_by_fteid_hash;
 struct rte_hash *pdn_by_fteid_hash;
 struct rte_hash *bearer_by_fteid_hash;
-
-static struct in_addr ip_pool_ip;
-static struct in_addr ip_pool_mask;
 
 apn apn_list[MAX_NB_DPN];
 
@@ -178,18 +176,18 @@ create_ue_hash(void)
 void
 set_ip_pool_ip(const char *ip_str)
 {
-	if (!inet_aton(ip_str, &ip_pool_ip))
+	if (!inet_aton(ip_str, &pfcp_config.ip_pool_ip))
 		rte_panic("Invalid argument - %s - Exiting.", ip_str);
-	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_ip:  %s\n", inet_ntoa(ip_pool_ip));
+	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_ip:  %s\n", inet_ntoa(pfcp_config.ip_pool_ip));
 }
 
 
 void
 set_ip_pool_mask(const char *ip_str)
 {
-	if (!inet_aton(ip_str, &ip_pool_mask))
+	if (!inet_aton(ip_str, &pfcp_config.ip_pool_mask))
 		rte_panic("Invalid argument - %s - Exiting.", ip_str);
-	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_mask: %s\n", inet_ntoa(ip_pool_mask));
+	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_mask: %s\n", inet_ntoa(pfcp_config.ip_pool_mask));
 }
 
 

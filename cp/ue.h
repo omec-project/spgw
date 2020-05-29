@@ -65,6 +65,7 @@
 #define MAX_APN_LEN               (64)
 
 
+/* ajay - only 1 ip pool is supported */
 #define GET_UE_IP(ue_index) \
 			(((pfcp_config.ip_pool_ip.s_addr | (~pfcp_config.ip_pool_mask.s_addr)) \
 			  - htonl(ue_index)) - 0x01000000)

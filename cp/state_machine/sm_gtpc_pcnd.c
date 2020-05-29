@@ -21,6 +21,7 @@
 #include "pfcp_util.h"
 #include "gtp_messages_decoder.h"
 #include "gtpv2c_error_rsp.h"
+#include "cp_config_new.h"
 #include "cp_timer.h"
 
 #ifdef USE_REST

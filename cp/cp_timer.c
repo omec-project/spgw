@@ -2,6 +2,7 @@
 #include "pfcp_util.h"
 #include "sm_struct.h"
 #include "rte_common.h"
+#include "cp_config_new.h"
 #include "cp_timer.h"
 #include "gtpv2c_error_rsp.h"
 #include "clogger.h"
