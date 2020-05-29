@@ -160,7 +160,7 @@ send_dp_msg(struct dp_id dp_id, struct msgbuf *msg_payload)
 	}
 	else {
 		update_cli_stats(upf_pfcp_sockaddr.sin_addr.s_addr,
-								PFCP_PFD_MGMT_REQ,SENT,SX);
+								PFCP_PFD_MGMT_REQUEST,SENT,SX);
 	}
 	free(pfd_mgmt_req.app_ids_pfds[0].pfd_context[0].pfd_contents[0].cstm_pfd_cntnt);
 	return 0;

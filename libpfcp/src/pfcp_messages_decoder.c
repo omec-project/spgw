@@ -51,17 +51,17 @@ int decode_pfcp_sess_rpt_req_t(uint8_t *buf,
 
       if (ie_type == PFCP_IE_REPORT_TYPE) {
             count += decode_pfcp_report_type_ie_t(buf + count, &value->report_type);
-      }  else if (ie_type == IE_DNLNK_DATA_RPT) {
+      }  else if (ie_type == PFCP_IE_DNLNK_DATA_RPT) {
             count += decode_pfcp_dnlnk_data_rpt_ie_t(buf + count, &value->dnlnk_data_rpt);
-      }  else if (ie_type == IE_ERR_INDCTN_RPT) {
+      }  else if (ie_type == PFCP_IE_ERR_INDCTN_RPT) {
             count += decode_pfcp_err_indctn_rpt_ie_t(buf + count, &value->err_indctn_rpt);
-      }  else if (ie_type == IE_LOAD_CTL_INFO) {
+      }  else if (ie_type == PFCP_IE_LOAD_CTL_INFO) {
             count += decode_pfcp_load_ctl_info_ie_t(buf + count, &value->load_ctl_info);
-      }  else if (ie_type == IE_OVRLD_CTL_INFO) {
+      }  else if (ie_type == PFCP_IE_OVRLD_CTL_INFO) {
             count += decode_pfcp_ovrld_ctl_info_ie_t(buf + count, &value->ovrld_ctl_info);
       }  else if (ie_type == PFCP_IE_ADD_USAGE_RPTS_INFO) {
             count += decode_pfcp_add_usage_rpts_info_ie_t(buf + count, &value->add_usage_rpts_info);
-      }  else if (ie_type == IE_USAGE_RPT_SESS_RPT_REQ) {
+      }  else if (ie_type == PFCP_IE_USAGE_RPT_SESS_RPT_REQ) {
             count += decode_pfcp_usage_rpt_sess_rpt_req_ie_t(buf + count, &value->usage_report[value->usage_report_count++]);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -101,7 +101,7 @@ int decode_pfcp_pfd_mgmt_req_t(uint8_t *buf,
 
           uint16_t ie_type = ntohs(ie_header->type);
 
-      if (ie_type == IE_APP_IDS_PFDS) {
+      if (ie_type == PFCP_IE_APP_IDS_PFDS) {
             count += decode_pfcp_app_ids_pfds_ie_t(buf + count, &value->app_ids_pfds[value->app_ids_pfds_count++]);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -270,9 +270,9 @@ int decode_pfcp_create_urr_ie_t(uint8_t *buf,
             count += decode_pfcp_eth_inact_timer_ie_t(buf + count, &value->eth_inact_timer);
       }  else if (ie_type == PFCP_IE_LINKED_URR_ID) {
             count += decode_pfcp_linked_urr_id_ie_t(buf + count, &value->linked_urr_id[value->linked_urr_id_count++]);
-      }  else if (ie_type == IE_AGGREGATED_URRS) {
+      }  else if (ie_type == PFCP_IE_AGGREGATED_URRS) {
             count += decode_pfcp_aggregated_urrs_ie_t(buf + count, &value->aggregated_urrs[value->aggregated_urrs_count++]);
-      }  else if (ie_type == IE_ADD_MNTRNG_TIME) {
+      }  else if (ie_type == PFCP_IE_ADD_MNTRNG_TIME) {
             count += decode_pfcp_add_mntrng_time_ie_t(buf + count, &value->add_mntrng_time[value->add_mntrng_time_count++]);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -429,11 +429,11 @@ int decode_pfcp_create_far_ie_t(uint8_t *buf,
 			count += decode_pfcp_far_id_ie_t(buf + count, &value->far_id);
 		}  else if (ie_type == PFCP_IE_APPLY_ACTION) {
 			count += decode_pfcp_apply_action_ie_t(buf + count, &value->apply_action);
-		}  else if (ie_type == IE_FRWDNG_PARMS) {
+		}  else if (ie_type == PFCP_IE_FRWDNG_PARMS) {
 			count += decode_pfcp_frwdng_parms_ie_t(buf + count, &value->frwdng_parms);
 		}  else if (ie_type == PFCP_IE_BAR_ID) {
 			count += decode_pfcp_bar_id_ie_t(buf + count, &value->bar_id);
-		}  else if (ie_type == IE_DUPNG_PARMS) {
+		}  else if (ie_type == PFCP_IE_DUPNG_PARMS) {
 			count += decode_pfcp_dupng_parms_ie_t(buf + count, &value->dupng_parms[value->dupng_parms_count++]);
 		}  else
 			count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -698,17 +698,17 @@ int decode_pfcp_sess_mod_req_t(uint8_t *buf,
 
 		if (ie_type == PFCP_IE_FSEID) {
 			count += decode_pfcp_fseid_ie_t(buf + count, &value->cp_fseid);
-		}  else if (ie_type == IE_REMOVE_BAR) {
+		}  else if (ie_type == PFCP_IE_REMOVE_BAR) {
 			count += decode_pfcp_remove_bar_ie_t(buf + count, &value->remove_bar);
-		}  else if (ie_type == IE_RMV_TRAFFIC_ENDPT) {
+		}  else if (ie_type == PFCP_IE_RMV_TRAFFIC_ENDPT) {
 			count += decode_pfcp_rmv_traffic_endpt_ie_t(buf + count, &value->rmv_traffic_endpt);
-		}  else if (ie_type == IE_CREATE_BAR) {
+		}  else if (ie_type == PFCP_IE_CREATE_BAR) {
 			count += decode_pfcp_create_bar_ie_t(buf + count, &value->create_bar);
-		}  else if (ie_type == IE_CREATE_TRAFFIC_ENDPT) {
+		}  else if (ie_type == PFCP_IE_CREATE_TRAFFIC_ENDPT) {
 			count += decode_pfcp_create_traffic_endpt_ie_t(buf + count, &value->create_traffic_endpt);
-		}  else if (ie_type == IE_UPD_BAR_SESS_MOD_REQ) {
+		}  else if (ie_type == PFCP_IE_UPD_BAR_SESS_MOD_REQ) {
 			count += decode_pfcp_upd_bar_sess_mod_req_ie_t(buf + count, &value->update_bar);
-		}  else if (ie_type == IE_UPD_TRAFFIC_ENDPT) {
+		}  else if (ie_type == PFCP_IE_UPD_TRAFFIC_ENDPT) {
 			count += decode_pfcp_upd_traffic_endpt_ie_t(buf + count, &value->upd_traffic_endpt);
 		}  else if (ie_type == PFCP_IE_PFCPSMREQ_FLAGS) {
 			count += decode_pfcp_pfcpsmreq_flags_ie_t(buf + count, &value->pfcpsmreq_flags);
@@ -728,31 +728,31 @@ int decode_pfcp_sess_mod_req_t(uint8_t *buf,
 			count += decode_pfcp_query_urr_ref_ie_t(buf + count, &value->query_urr_ref);
 		}  else if (ie_type == PFCP_IE_TRC_INFO) {
 			count += decode_pfcp_trc_info_ie_t(buf + count, &value->trc_info);
-		}  else if (ie_type == IE_REMOVE_PDR) {
+		}  else if (ie_type == PFCP_IE_REMOVE_PDR) {
 			count += decode_pfcp_remove_pdr_ie_t(buf + count, &value->remove_pdr[value->remove_pdr_count++]);
-		}  else if (ie_type == IE_REMOVE_FAR) {
+		}  else if (ie_type == PFCP_IE_REMOVE_FAR) {
 			count += decode_pfcp_remove_far_ie_t(buf + count, &value->remove_far[value->remove_far_count++]);
-		}  else if (ie_type == IE_REMOVE_URR) {
+		}  else if (ie_type == PFCP_IE_REMOVE_URR) {
 			count += decode_pfcp_remove_urr_ie_t(buf + count, &value->remove_urr[value->remove_urr_count++]);
-		}  else if (ie_type == IE_REMOVE_QER) {
+		}  else if (ie_type == PFCP_IE_REMOVE_QER) {
 			count += decode_pfcp_remove_qer_ie_t(buf + count, &value->remove_qer[value->remove_qer_count++]);
-		}  else if (ie_type == IE_CREATE_PDR) {
+		}  else if (ie_type == PFCP_IE_CREATE_PDR) {
 			count += decode_pfcp_create_pdr_ie_t(buf + count, &value->create_pdr[value->create_pdr_count++]);
-		}  else if (ie_type == IE_CREATE_FAR) {
+		}  else if (ie_type == PFCP_IE_CREATE_FAR) {
 			count += decode_pfcp_create_far_ie_t(buf + count, &value->create_far[value->create_far_count++]);
-		}  else if (ie_type == IE_CREATE_URR) {
+		}  else if (ie_type == PFCP_IE_CREATE_URR) {
 			count += decode_pfcp_create_urr_ie_t(buf + count, &value->create_urr[value->create_urr_count++]);
-		}  else if (ie_type == IE_CREATE_QER) {
+		}  else if (ie_type == PFCP_IE_CREATE_QER) {
 			count += decode_pfcp_create_qer_ie_t(buf + count, &value->create_qer[value->create_qer_count++]);
-		}  else if (ie_type == IE_UPDATE_PDR) {
+		}  else if (ie_type == PFCP_IE_UPDATE_PDR) {
 			count += decode_pfcp_update_pdr_ie_t(buf + count, &value->update_pdr[value->update_pdr_count++]);
-		}  else if (ie_type == IE_UPDATE_FAR) {
+		}  else if (ie_type == PFCP_IE_UPDATE_FAR) {
 			count += decode_pfcp_update_far_ie_t(buf + count, &value->update_far[value->update_far_count++]);
-		}  else if (ie_type == IE_UPDATE_URR) {
+		}  else if (ie_type == PFCP_IE_UPDATE_URR) {
 			count += decode_pfcp_update_urr_ie_t(buf + count, &value->update_urr[value->update_urr_count++]);
-		}  else if (ie_type == IE_UPDATE_QER) {
+		}  else if (ie_type == PFCP_IE_UPDATE_QER) {
 			count += decode_pfcp_update_qer_ie_t(buf + count, &value->update_qer[value->update_qer_count++]);
-		}  else if (ie_type == IE_QUERY_URR) {
+		}  else if (ie_type == PFCP_IE_QUERY_URR) {
 			count += decode_pfcp_query_urr_ie_t(buf + count, &value->query_urr[value->query_urr_count++]);
 		}  else
 			count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -805,7 +805,7 @@ int decode_pfcp_usage_rpt_sess_mod_rsp_ie_t(uint8_t *buf,
             count += decode_pfcp_usage_info_ie_t(buf + count, &value->usage_info);
       }  else if (ie_type == PFCP_IE_QUERY_URR_REF) {
             count += decode_pfcp_query_urr_ref_ie_t(buf + count, &value->query_urr_ref);
-      }  else if (ie_type == IE_ETH_TRAFFIC_INFO) {
+      }  else if (ie_type == PFCP_IE_ETH_TRAFFIC_INFO) {
             count += decode_pfcp_eth_traffic_info_ie_t(buf + count, &value->eth_traffic_info);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -881,7 +881,7 @@ int decode_pfcp_sess_rpt_rsp_t(uint8_t *buf,
             count += decode_pfcp_cause_ie_t(buf + count, &value->cause);
       }  else if (ie_type == PFCP_IE_OFFENDING_IE) {
             count += decode_pfcp_offending_ie_ie_t(buf + count, &value->offending_ie);
-      }  else if (ie_type == IE_UPD_BAR_SESS_RPT_RSP) {
+      }  else if (ie_type == PFCP_IE_UPD_BAR_SESS_RPT_RSP) {
             count += decode_pfcp_upd_bar_sess_rpt_rsp_ie_t(buf + count, &value->update_bar);
       }  else if (ie_type == PFCP_IE_PFCPSRRSP_FLAGS) {
             count += decode_pfcp_pfcpsrrsp_flags_ie_t(buf + count, &value->sxsrrsp_flags);
@@ -934,7 +934,7 @@ int decode_pfcp_usage_rpt_sess_del_rsp_ie_t(uint8_t *buf,
             count += decode_pfcp_time_of_lst_pckt_ie_t(buf + count, &value->time_of_lst_pckt);
       }  else if (ie_type == PFCP_IE_USAGE_INFO) {
             count += decode_pfcp_usage_info_ie_t(buf + count, &value->usage_info);
-      }  else if (ie_type == IE_ETH_TRAFFIC_INFO) {
+      }  else if (ie_type == PFCP_IE_ETH_TRAFFIC_INFO) {
             count += decode_pfcp_eth_traffic_info_ie_t(buf + count, &value->eth_traffic_info);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -1066,7 +1066,7 @@ int decode_pfcp_usage_rpt_sess_rpt_req_ie_t(uint8_t *buf,
             count += decode_pfcp_vol_meas_ie_t(buf + count, &value->vol_meas);
       }  else if (ie_type == PFCP_IE_DUR_MEAS) {
             count += decode_pfcp_dur_meas_ie_t(buf + count, &value->dur_meas);
-      }  else if (ie_type == IE_APP_DET_INFO) {
+      }  else if (ie_type == PFCP_IE_APP_DET_INFO) {
             count += decode_pfcp_app_det_info_ie_t(buf + count, &value->app_det_info);
       }  else if (ie_type == PFCP_IE_UE_IP_ADDRESS) {
             count += decode_pfcp_ue_ip_address_ie_t(buf + count, &value->ue_ip_address);
@@ -1080,7 +1080,7 @@ int decode_pfcp_usage_rpt_sess_rpt_req_ie_t(uint8_t *buf,
             count += decode_pfcp_usage_info_ie_t(buf + count, &value->usage_info);
       }  else if (ie_type == PFCP_IE_QUERY_URR_REF) {
             count += decode_pfcp_query_urr_ref_ie_t(buf + count, &value->query_urr_ref);
-      }  else if (ie_type == IE_ETH_TRAFFIC_INFO) {
+      }  else if (ie_type == PFCP_IE_ETH_TRAFFIC_INFO) {
             count += decode_pfcp_eth_traffic_info_ie_t(buf + count, &value->eth_traffic_info);
       }  else if (ie_type == PFCP_IE_EVNT_TIME_STMP) {
             count += decode_pfcp_evnt_time_stmp_ie_t(buf + count, &value->evnt_time_stmp[value->evnt_time_stmp_count++]);
@@ -1126,11 +1126,11 @@ int decode_pfcp_sess_del_rsp_t(uint8_t *buf,
             count += decode_pfcp_cause_ie_t(buf + count, &value->cause);
       }  else if (ie_type == PFCP_IE_OFFENDING_IE) {
             count += decode_pfcp_offending_ie_ie_t(buf + count, &value->offending_ie);
-      }  else if (ie_type == IE_LOAD_CTL_INFO) {
+      }  else if (ie_type == PFCP_IE_LOAD_CTL_INFO) {
             count += decode_pfcp_load_ctl_info_ie_t(buf + count, &value->load_ctl_info);
-      }  else if (ie_type == IE_OVRLD_CTL_INFO) {
+      }  else if (ie_type == PFCP_IE_OVRLD_CTL_INFO) {
             count += decode_pfcp_ovrld_ctl_info_ie_t(buf + count, &value->ovrld_ctl_info);
-      }  else if (ie_type == IE_USAGE_RPT_SESS_DEL_RSP) {
+      }  else if (ie_type == PFCP_IE_USAGE_RPT_SESS_DEL_RSP) {
             count += decode_pfcp_usage_rpt_sess_del_rsp_ie_t(buf + count, &value->usage_report[value->usage_report_count++]);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -1336,19 +1336,19 @@ int decode_pfcp_sess_mod_rsp_t(uint8_t *buf,
             count += decode_pfcp_cause_ie_t(buf + count, &value->cause);
       }  else if (ie_type == PFCP_IE_OFFENDING_IE) {
             count += decode_pfcp_offending_ie_ie_t(buf + count, &value->offending_ie);
-      }  else if (ie_type == IE_CREATED_PDR) {
+      }  else if (ie_type == PFCP_IE_CREATED_PDR) {
             count += decode_pfcp_created_pdr_ie_t(buf + count, &value->created_pdr);
-      }  else if (ie_type == IE_LOAD_CTL_INFO) {
+      }  else if (ie_type == PFCP_IE_LOAD_CTL_INFO) {
             count += decode_pfcp_load_ctl_info_ie_t(buf + count, &value->load_ctl_info);
-      }  else if (ie_type == IE_OVRLD_CTL_INFO) {
+      }  else if (ie_type == PFCP_IE_OVRLD_CTL_INFO) {
             count += decode_pfcp_ovrld_ctl_info_ie_t(buf + count, &value->ovrld_ctl_info);
       }  else if (ie_type == PFCP_IE_FAILED_RULE_ID) {
             count += decode_pfcp_failed_rule_id_ie_t(buf + count, &value->failed_rule_id);
       }  else if (ie_type == PFCP_IE_ADD_USAGE_RPTS_INFO) {
             count += decode_pfcp_add_usage_rpts_info_ie_t(buf + count, &value->add_usage_rpts_info);
-      }  else if (ie_type == IE_CREATED_TRAFFIC_ENDPT) {
+      }  else if (ie_type == PFCP_IE_CREATED_TRAFFIC_ENDPT) {
             count += decode_pfcp_created_traffic_endpt_ie_t(buf + count, &value->createdupdated_traffic_endpt);
-      }  else if (ie_type == IE_USAGE_RPT_SESS_MOD_RSP) {
+      }  else if (ie_type == PFCP_IE_USAGE_RPT_SESS_MOD_RSP) {
             count += decode_pfcp_usage_rpt_sess_mod_rsp_ie_t(buf + count, &value->usage_report[value->usage_report_count++]);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -1641,7 +1641,7 @@ int decode_pfcp_update_pdr_ie_t(uint8_t *buf,
             count += decode_pfcp_outer_hdr_removal_ie_t(buf + count, &value->outer_hdr_removal);
       }  else if (ie_type == PFCP_IE_PRECEDENCE) {
             count += decode_pfcp_precedence_ie_t(buf + count, &value->precedence);
-      }  else if (ie_type == IE_PDI) {
+      }  else if (ie_type == PFCP_IE_PDI) {
             count += decode_pfcp_pdi_ie_t(buf + count, &value->pdi);
       }  else if (ie_type == PFCP_IE_FAR_ID) {
             count += decode_pfcp_far_id_ie_t(buf + count, &value->far_id);
@@ -1862,7 +1862,7 @@ int decode_pfcp_node_rpt_req_t(uint8_t *buf,
             count += decode_pfcp_node_id_ie_t(buf + count, &value->node_id);
       }  else if (ie_type == PFCP_IE_NODE_RPT_TYPE) {
             count += decode_pfcp_node_rpt_type_ie_t(buf + count, &value->node_rpt_type);
-      }  else if (ie_type == IE_USER_PLANE_PATH_FAIL_RPT) {
+      }  else if (ie_type == PFCP_IE_USER_PLANE_PATH_FAIL_RPT) {
             count += decode_pfcp_user_plane_path_fail_rpt_ie_t(buf + count, &value->user_plane_path_fail_rpt);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -1958,7 +1958,7 @@ int decode_pfcp_pdi_ie_t(uint8_t *buf,
 			count += decode_pfcp_framed_routing_ie_t(buf + count, &value->framed_routing);
 		}  else if (ie_type == PFCP_IE_SDF_FILTER) {
 			count += decode_pfcp_sdf_filter_ie_t(buf + count, &value->sdf_filter[value->sdf_filter_count++]);
-		}  else if (ie_type == IE_ETH_PCKT_FLTR) {
+		}  else if (ie_type == PFCP_IE_ETH_PCKT_FLTR) {
 			count += decode_pfcp_eth_pckt_fltr_ie_t(buf + count, &value->eth_pckt_fltr[value->eth_pckt_fltr_count++]);
 		}  else if (ie_type == PFCP_IE_QFI) {
 			count += decode_pfcp_qfi_ie_t(buf + count, &value->qfi[value->qfi_count++]);
@@ -2137,7 +2137,7 @@ int decode_pfcp_sess_estab_req_t(uint8_t *buf,
 			count += decode_pfcp_node_id_ie_t(buf + count, &value->node_id);
 		}  else if (ie_type == PFCP_IE_FSEID) {
 			count += decode_pfcp_fseid_ie_t(buf + count, &value->cp_fseid);
-		}  else if (ie_type == IE_CREATE_BAR) {
+		}  else if (ie_type == PFCP_IE_CREATE_BAR) {
 			count += decode_pfcp_create_bar_ie_t(buf + count, &value->create_bar);
 		}  else if (ie_type == PFCP_IE_PDN_TYPE) {
 			count += decode_pfcp_pdn_type_ie_t(buf + count, &value->pdn_type);
@@ -2157,15 +2157,15 @@ int decode_pfcp_sess_estab_req_t(uint8_t *buf,
 			count += decode_pfcp_user_id_ie_t(buf + count, &value->user_id);
 		}  else if (ie_type == PFCP_IE_TRC_INFO) {
 			count += decode_pfcp_trc_info_ie_t(buf + count, &value->trc_info);
-		}  else if (ie_type == IE_CREATE_PDR) {
+		}  else if (ie_type == PFCP_IE_CREATE_PDR) {
 			count += decode_pfcp_create_pdr_ie_t(buf + count, &value->create_pdr[value->create_pdr_count++]);
-		}  else if (ie_type == IE_CREATE_FAR) {
+		}  else if (ie_type == PFCP_IE_CREATE_FAR) {
 			count += decode_pfcp_create_far_ie_t(buf + count, &value->create_far[value->create_far_count++]);
-		}  else if (ie_type == IE_CREATE_URR) {
+		}  else if (ie_type == PFCP_IE_CREATE_URR) {
 			count += decode_pfcp_create_urr_ie_t(buf + count, &value->create_urr[value->create_urr_count++]);
-		}  else if (ie_type == IE_CREATE_QER) {
+		}  else if (ie_type == PFCP_IE_CREATE_QER) {
 			count += decode_pfcp_create_qer_ie_t(buf + count, &value->create_qer[value->create_qer_count++]);
-		}  else if (ie_type == IE_CREATE_TRAFFIC_ENDPT) {
+		}  else if (ie_type == PFCP_IE_CREATE_TRAFFIC_ENDPT) {
 			count += decode_pfcp_create_traffic_endpt_ie_t(buf + count, &value->create_traffic_endpt[value->create_traffic_endpt_count++]);
 		}  else
 			count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -2265,7 +2265,7 @@ int decode_pfcp_app_ids_pfds_ie_t(uint8_t *buf,
 
       if (ie_type == PFCP_IE_APPLICATION_ID) {
             count += decode_pfcp_application_id_ie_t(buf + count, &value->application_id);
-      }  else if (ie_type == IE_PFD_CONTEXT) {
+      }  else if (ie_type == PFCP_IE_PFD_CONTEXT) {
             count += decode_pfcp_pfd_context_ie_t(buf + count, &value->pfd_context[value->pfd_context_count++]);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -2468,11 +2468,11 @@ int decode_pfcp_update_urr_ie_t(uint8_t *buf,
             count += decode_pfcp_far_id_ie_t(buf + count, &value->far_id_for_quota_act);
       }  else if (ie_type == PFCP_IE_ETH_INACT_TIMER) {
             count += decode_pfcp_eth_inact_timer_ie_t(buf + count, &value->eth_inact_timer);
-      }  else if (ie_type == IE_ADD_MNTRNG_TIME) {
+      }  else if (ie_type == PFCP_IE_ADD_MNTRNG_TIME) {
             count += decode_pfcp_add_mntrng_time_ie_t(buf + count, &value->add_mntrng_time);
       }  else if (ie_type == PFCP_IE_LINKED_URR_ID) {
             count += decode_pfcp_linked_urr_id_ie_t(buf + count, &value->linked_urr_id[value->linked_urr_id_count++]);
-      }  else if (ie_type == IE_AGGREGATED_URRS) {
+      }  else if (ie_type == PFCP_IE_AGGREGATED_URRS) {
             count += decode_pfcp_aggregated_urrs_ie_t(buf + count, &value->aggregated_urrs[value->aggregated_urrs_count++]);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -2510,11 +2510,11 @@ int decode_pfcp_update_far_ie_t(uint8_t *buf,
             count += decode_pfcp_far_id_ie_t(buf + count, &value->far_id);
       }  else if (ie_type == PFCP_IE_APPLY_ACTION) {
             count += decode_pfcp_apply_action_ie_t(buf + count, &value->apply_action);
-      }  else if (ie_type == IE_UPD_FRWDNG_PARMS) {
+      }  else if (ie_type == PFCP_IE_UPD_FRWDNG_PARMS) {
             count += decode_pfcp_upd_frwdng_parms_ie_t(buf + count, &value->upd_frwdng_parms);
       }  else if (ie_type == PFCP_IE_BAR_ID) {
             count += decode_pfcp_bar_id_ie_t(buf + count, &value->bar_id);
-      }  else if (ie_type == IE_UPD_DUPNG_PARMS) {
+      }  else if (ie_type == PFCP_IE_UPD_DUPNG_PARMS) {
             count += decode_pfcp_upd_dupng_parms_ie_t(buf + count, &value->upd_dupng_parms[value->upd_dupng_parms_count++]);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -2723,11 +2723,11 @@ int decode_pfcp_sess_estab_rsp_t(uint8_t *buf,
             count += decode_pfcp_offending_ie_ie_t(buf + count, &value->offending_ie);
       }  else if (ie_type == PFCP_IE_FSEID) {
             count += decode_pfcp_fseid_ie_t(buf + count, &value->up_fseid);
-      }  else if (ie_type == IE_CREATED_PDR) {
+      }  else if (ie_type == PFCP_IE_CREATED_PDR) {
             count += decode_pfcp_created_pdr_ie_t(buf + count, &value->created_pdr);
-      }  else if (ie_type == IE_LOAD_CTL_INFO) {
+      }  else if (ie_type == PFCP_IE_LOAD_CTL_INFO) {
             count += decode_pfcp_load_ctl_info_ie_t(buf + count, &value->load_ctl_info);
-      }  else if (ie_type == IE_OVRLD_CTL_INFO) {
+      }  else if (ie_type == PFCP_IE_OVRLD_CTL_INFO) {
             count += decode_pfcp_ovrld_ctl_info_ie_t(buf + count, &value->ovrld_ctl_info);
       }  else if (ie_type == PFCP_IE_FQCSID) {
             count += decode_pfcp_fqcsid_ie_t(buf + count, &value->sgw_u_fqcsid);
@@ -2735,7 +2735,7 @@ int decode_pfcp_sess_estab_rsp_t(uint8_t *buf,
             count += decode_pfcp_fqcsid_ie_t(buf + count, &value->pgw_u_fqcsid);
       }  else if (ie_type == PFCP_IE_FAILED_RULE_ID) {
             count += decode_pfcp_failed_rule_id_ie_t(buf + count, &value->failed_rule_id);
-      }  else if (ie_type == IE_CREATED_TRAFFIC_ENDPT) {
+      }  else if (ie_type == PFCP_IE_CREATED_TRAFFIC_ENDPT) {
             count += decode_pfcp_created_traffic_endpt_ie_t(buf + count, &value->created_traffic_endpt);
       }  else
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
@@ -2852,7 +2852,7 @@ int decode_pfcp_create_pdr_ie_t(uint8_t *buf,
 			count += decode_pfcp_pdr_id_ie_t(buf + count, &value->pdr_id);
 		}  else if (ie_type == PFCP_IE_PRECEDENCE) {
 			count += decode_pfcp_precedence_ie_t(buf + count, &value->precedence);
-		}  else if (ie_type == IE_PDI) {
+		}  else if (ie_type == PFCP_IE_PDI) {
 			count += decode_pfcp_pdi_ie_t(buf + count, &value->pdi);
 		}  else if (ie_type == PFCP_IE_OUTER_HDR_REMOVAL) {
 			count += decode_pfcp_outer_hdr_removal_ie_t(buf + count, &value->outer_hdr_removal);

@@ -119,8 +119,8 @@ static void
 set_dldr_ie(pfcp_dnlnk_data_rpt_ie_t *dl)
 {
 	dl->pdr_id_count = 1;
-	//pfcp_set_ie_header(&(dl->header), IE_DNLNK_DATA_RPT, 13);
-	pfcp_set_ie_header(&(dl->header), IE_DNLNK_DATA_RPT, 6);
+	//pfcp_set_ie_header(&(dl->header), PFCP_IE_DNLNK_DATA_RPT, 13);
+	pfcp_set_ie_header(&(dl->header), PFCP_IE_DNLNK_DATA_RPT, 6);
 			/*((sizeof(pfcp_dnlnk_data_rpt_ie_t) - ((MAX_LIST_SIZE - dl->pdr_id_count) * sizeof(dl->pdr_id) - 5))));*/
 
 	set_pdr_id(dl->pdr_id);

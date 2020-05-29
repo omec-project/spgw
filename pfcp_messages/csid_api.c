@@ -484,7 +484,7 @@ fill_pfcp_sess_set_del_resp(pfcp_sess_set_del_rsp_t *pfcp_del_resp,
 {
 	memset(pfcp_del_resp, 0, sizeof(pfcp_sess_set_del_rsp_t));
 
-	set_pfcp_header(&pfcp_del_resp->header, PFCP_SESS_SET_DEL_RSP, 0);
+	set_pfcp_header(&pfcp_del_resp->header, PFCP_SESSION_SET_DELETION_RESPONSE, 0);
 #ifdef CP_BUILD
 	set_node_id(&(pfcp_del_resp->node_id), pfcp_config.pfcp_ip.s_addr);
 #else

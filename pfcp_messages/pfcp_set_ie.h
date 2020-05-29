@@ -19,7 +19,6 @@
 
 #include <stdbool.h>
 #include <rte_hash_crc.h>
-
 #include "pfcp_messages.h"
 
 #ifdef CP_BUILD
@@ -42,34 +41,6 @@
 
 #define OFFSET 2208988800ULL
 
-/* PFCP Message Type Values */
-/*NODE RELATED MESSAGED*/
-#define PFCP_HEARTBEAT_REQUEST                      (1)
-#define PFCP_HEARTBEAT_RESPONSE                     (2)
-#define PFCP_PFD_MGMT_REQUEST                       (3)
-#define PFCP_PFD_MANAGEMENT_RESPONSE                (4)
-#define PFCP_ASSOCIATION_SETUP_REQUEST              (5)
-#define PFCP_ASSOCIATION_SETUP_RESPONSE             (6)
-#define PFCP_ASSOCIATION_UPDATE_REQUEST             (7)
-#define PFCP_ASSOCIATION_UPDATE_RESPONSE            (8)
-#define PFCP_ASSOCIATION_RELEASE_REQUEST            (9)
-#define PFCP_ASSOCIATION_RELEASE_RESPONSE           (10)
-#define PFCP_NODE_REPORT_REQUEST                    (12)
-#define PFCP_NODE_REPORT_RESPONSE                   (13)
-#define PFCP_SESSION_SET_DELETION_REQUEST           (14)
-#define PFCP_SESSION_SET_DELETION_RESPONSE          (15)
-
-/*SESSION RELATED MESSAGES*/
-#define PFCP_SESSION_ESTABLISHMENT_REQUEST          (50)
-#define PFCP_SESSION_ESTABLISHMENT_RESPONSE         (51)
-#define PFCP_SESSION_MODIFICATION_REQUEST           (52)
-#define PFCP_SESSION_MODIFICATION_RESPONSE          (53)
-#define PFCP_SESSION_DELETION_REQUEST               (54)
-#define PFCP_SESSION_DELETION_RESPONSE              (55)
-
-/* SESSION REPORT RELATED MESSAGES*/
-#define PFCP_SESSION_REPORT_REQUEST                 (56)
-#define PFCP_SESSION_REPORT_RESPONSE                (57)
 
 /* TODO: Move above lines to another file */
 

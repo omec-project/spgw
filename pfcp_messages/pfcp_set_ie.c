@@ -425,7 +425,7 @@ set_pdi(pfcp_pdi_ie_t *pdi)
 	size += set_framed_routing(&(pdi->framed_routing)); */
 
 	/* TODO: Revisit this for change in yang */
-	pfcp_set_ie_header(&(pdi->header), IE_PDI, size);
+	pfcp_set_ie_header(&(pdi->header), PFCP_IE_PDI, size);
 
 	return (size + sizeof(pfcp_ie_header_t));
 }
@@ -469,7 +469,7 @@ creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value)
 		set_activate_predefined_rules(&(create_pdr->actvt_predef_rules[i]));
 	} */
 
-	pfcp_set_ie_header(&(create_pdr->header), IE_CREATE_PDR, size);
+	pfcp_set_ie_header(&(create_pdr->header), PFCP_IE_CREATE_PDR, size);
 
 	return size;
 }
@@ -484,7 +484,7 @@ creating_far(pfcp_create_far_ie_t *create_far)
 	/* Currently take as hardcoded value */
 	len += 4; /* Header Size of set_apply action ie */
 
-	pfcp_set_ie_header(&(create_far->header), IE_CREATE_FAR, len);
+	pfcp_set_ie_header(&(create_far->header), PFCP_IE_CREATE_FAR, len);
 }
 
 int
@@ -520,7 +520,7 @@ updating_pdr(pfcp_update_pdr_ie_t *create_pdr, int source_iface_value)
 		set_activate_predefined_rules(&(create_pdr->actvt_predef_rules[i]));
 	} */
 
-	pfcp_set_ie_header(&(create_pdr->header), IE_CREATE_PDR, size);
+	pfcp_set_ie_header(&(create_pdr->header), PFCP_IE_CREATE_PDR, size);
 
 	return size;
 }
@@ -528,7 +528,7 @@ updating_pdr(pfcp_update_pdr_ie_t *create_pdr, int source_iface_value)
 void
 creating_bar(pfcp_create_bar_ie_t *create_bar)
 {
-	pfcp_set_ie_header(&(create_bar->header), IE_CREATE_BAR,
+	pfcp_set_ie_header(&(create_bar->header), PFCP_IE_CREATE_BAR,
 			sizeof(pfcp_create_bar_ie_t) - sizeof(pfcp_ie_header_t));
 
 	set_bar_id(&(create_bar->bar_id));
@@ -539,7 +539,7 @@ creating_bar(pfcp_create_bar_ie_t *create_bar)
 uint16_t
 set_apply_action(pfcp_apply_action_ie_t *apply_action)
 {
-	pfcp_set_ie_header(&(apply_action->header), IE_APPLY_ACTION_ID, UINT8_SIZE);
+	pfcp_set_ie_header(&(apply_action->header), PFCP_IE_APPLY_ACTION_ID, UINT8_SIZE);
 	apply_action->apply_act_spare = 0;
 	apply_action->apply_act_spare2 = 0;
 	apply_action->apply_act_spare3 = 0;
@@ -562,7 +562,7 @@ set_forwarding_param(pfcp_frwdng_parms_ie_t *frwdng_parms)
 
 	/* Currently take as hardcoded value */
 	len += 8; /* Header Size of set_destination_interface and set_outer_header_creation ie */
-	pfcp_set_ie_header(&(frwdng_parms->header), IE_FRWDNG_PARMS, len);
+	pfcp_set_ie_header(&(frwdng_parms->header), PFCP_IE_FRWDNG_PARMS, len);
 
 	return len;
 }
@@ -578,7 +578,7 @@ set_upd_forwarding_param(pfcp_upd_frwdng_parms_ie_t *upd_frwdng_parms)
 	/* Currently take as hardcoded value */
 	len += 8; /* Header Size of set_destination_interface and set_outer_header_creation ie */
 
-	pfcp_set_ie_header(&(upd_frwdng_parms->header), IE_UPD_FRWDNG_PARMS, len);
+	pfcp_set_ie_header(&(upd_frwdng_parms->header), PFCP_IE_UPD_FRWDNG_PARMS, len);
 	return len;
 }
 
@@ -606,7 +606,7 @@ set_destination_interface(pfcp_dst_intfc_ie_t *dst_intfc)
 {
 	dst_intfc->dst_intfc_spare = 0;
 	dst_intfc->interface_value = 5;
-	pfcp_set_ie_header(&(dst_intfc->header), IE_DEST_INTRFACE_ID, UINT8_SIZE);
+	pfcp_set_ie_header(&(dst_intfc->header), PFCP_IE_DEST_INTRFACE_ID, UINT8_SIZE);
 	return UINT8_SIZE;
 }
 
@@ -730,14 +730,14 @@ set_cause(pfcp_cause_ie_t *cause, uint8_t cause_val)
 void
 removing_pdr(pfcp_remove_pdr_ie_t *remove_pdr)
 {
-	pfcp_set_ie_header(&(remove_pdr->header), IE_REMOVE_PDR, sizeof(pfcp_pdr_id_ie_t));
+	pfcp_set_ie_header(&(remove_pdr->header), PFCP_IE_REMOVE_PDR, sizeof(pfcp_pdr_id_ie_t));
 	set_pdr_id(&(remove_pdr->pdr_id));
 }
 
 void
 removing_bar( pfcp_remove_bar_ie_t *remove_bar)
 {
-	pfcp_set_ie_header(&(remove_bar->header), IE_REMOVE_BAR, sizeof(pfcp_bar_id_ie_t));
+	pfcp_set_ie_header(&(remove_bar->header), PFCP_IE_REMOVE_BAR, sizeof(pfcp_bar_id_ie_t));
 	set_bar_id(&(remove_bar->bar_id));
 }
 
@@ -752,7 +752,7 @@ void
 removing_traffic_endpoint(pfcp_rmv_traffic_endpt_ie_t *remove_traffic_endpoint)
 {
 	pfcp_set_ie_header(&(remove_traffic_endpoint->header),
-				IE_RMV_TRAFFIC_ENDPT, sizeof(pfcp_traffic_endpt_id_ie_t));
+				PFCP_IE_RMV_TRAFFIC_ENDPT, sizeof(pfcp_traffic_endpt_id_ie_t));
 
 	set_traffic_endpoint(&(remove_traffic_endpoint->traffic_endpt_id));
 
@@ -1041,7 +1041,7 @@ creating_qer(pfcp_create_qer_ie_t *qer)
 	//size += set_rqi(&(qer->reflective_qos));
 	//size = 79;
 	//sizeof(pfcp_update_qer_ie_t) - sizeof(pfcp_ie_header_t) - 12;
-	pfcp_set_ie_header(&(qer->header), IE_CREATE_QER, size);
+	pfcp_set_ie_header(&(qer->header), PFCP_IE_CREATE_QER, size);
 
 }
 
@@ -1077,7 +1077,7 @@ updating_qer(pfcp_update_qer_ie_t *up_qer)
 	size += set_rqi(&(up_qer->reflective_qos));
 	//size = 79;
 	//sizeof(pfcp_update_qer_ie_t) - sizeof(pfcp_ie_header_t) - 12;
-	pfcp_set_ie_header(&(up_qer->header), IE_UPDATE_QER, size);
+	pfcp_set_ie_header(&(up_qer->header), PFCP_IE_UPDATE_QER, size);
 }
 
 void
@@ -1108,7 +1108,7 @@ creating_traffic_endpoint(pfcp_create_traffic_endpt_ie_t  *create_traffic_endpoi
 	sizeof(pfcp_framed_routing_ie_t);
 	size = size - 18;
 	pfcp_set_ie_header(&(create_traffic_endpoint->header),
-							IE_CREATE_TRAFFIC_ENDPT, size);
+							PFCP_IE_CREATE_TRAFFIC_ENDPT, size);
 }
 void
 updating_bar( pfcp_upd_bar_sess_mod_req_ie_t *up_bar)
@@ -1119,7 +1119,7 @@ updating_bar( pfcp_upd_bar_sess_mod_req_ie_t *up_bar)
 
 	uint8_t size =  sizeof(pfcp_bar_id_ie_t) + sizeof(pfcp_dnlnk_data_notif_delay_ie_t)+
 	sizeof(pfcp_suggstd_buf_pckts_cnt_ie_t);
-	pfcp_set_ie_header(&(up_bar->header), IE_UPD_BAR_SESS_MOD_REQ, size);
+	pfcp_set_ie_header(&(up_bar->header), PFCP_IE_UPD_BAR_SESS_MOD_REQ, size);
 }
 
 void
@@ -1132,7 +1132,7 @@ updating_far(pfcp_update_far_ie_t *up_far)
 	/* Currently take as hardcoded value */
 	len += 4; /* Header Size of set_apply_action */
 
-	pfcp_set_ie_header(&(up_far->header), IE_UPDATE_FAR, len);
+	pfcp_set_ie_header(&(up_far->header), PFCP_IE_UPDATE_FAR, len);
 }
 
 void
@@ -1149,7 +1149,7 @@ updating_traffic_endpoint(pfcp_upd_traffic_endpt_ie_t *up_traffic_endpoint)
 			sizeof(pfcp_framed_routing_ie_t);
 	size = size - (2*IPV6_SIZE) - 2;
 	pfcp_set_ie_header(&(up_traffic_endpoint->header),
-								IE_UPD_TRAFFIC_ENDPT, size);
+								PFCP_IE_UPD_TRAFFIC_ENDPT, size);
 
 }
 
@@ -1240,7 +1240,7 @@ set_offending_ie( pfcp_offending_ie_ie_t *offending_ie, int offend_val)
 void
 set_lci(pfcp_load_ctl_info_ie_t *lci)
 {
-	pfcp_set_ie_header(&(lci->header),IE_LOAD_CTL_INFO,
+	pfcp_set_ie_header(&(lci->header),PFCP_IE_LOAD_CTL_INFO,
 			sizeof(pfcp_sequence_number_ie_t) + sizeof(pfcp_metric_ie_t));
 	set_sequence_num(&(lci->load_ctl_seqn_nbr));
 	set_metric(&(lci->load_metric));
@@ -1249,7 +1249,7 @@ set_lci(pfcp_load_ctl_info_ie_t *lci)
 void
 set_olci(pfcp_ovrld_ctl_info_ie_t *olci)
 {
-	pfcp_set_ie_header(&(olci->header), IE_OVRLD_CTL_INFO,
+	pfcp_set_ie_header(&(olci->header), PFCP_IE_OVRLD_CTL_INFO,
 			sizeof(pfcp_sequence_number_ie_t) +
 			sizeof(pfcp_metric_ie_t)+sizeof(pfcp_timer_ie_t) + sizeof(pfcp_oci_flags_ie_t));
 
@@ -1296,7 +1296,7 @@ set_created_pdr_ie(pfcp_created_pdr_ie_t *pdr)
 	ie_length += set_pdr_id_ie(&(pdr->pdr_id));
 	ie_length += set_fteid(&(pdr->local_fteid));
 
-	pfcp_set_ie_header(&(pdr->header), IE_CREATED_PDR, ie_length);
+	pfcp_set_ie_header(&(pdr->header), PFCP_IE_CREATED_PDR, ie_length);
 
 	ie_length += PFCP_IE_HDR_SIZE;
 	return ie_length;
@@ -1305,7 +1305,7 @@ set_created_pdr_ie(pfcp_created_pdr_ie_t *pdr)
 void set_created_traffic_endpoint(pfcp_created_traffic_endpt_ie_t *cte)
 {
 	//pfcp_set_ie_header(&(cte->header),IE_CREATE_TRAFFIC_ENDPOINT,sizeof(pfcp_created_traffic_endpt_ie_t)-4);
-	pfcp_set_ie_header(&(cte->header), IE_CREATE_TRAFFIC_ENDPT, 18);
+	pfcp_set_ie_header(&(cte->header), PFCP_IE_CREATE_TRAFFIC_ENDPT, 18);
 	set_traffic_endpoint_id(&(cte->traffic_endpt_id));
 	set_fteid(&(cte->local_fteid));
 
@@ -1341,7 +1341,7 @@ set_remote_gtpu_peer_ip( pfcp_rmt_gtpu_peer_ie_t *remote_gtpu_peer)
 void
 set_user_plane_path_failure_report(pfcp_user_plane_path_fail_rpt_ie_t *uppfr)
 {
-	pfcp_set_ie_header(&(uppfr->header), IE_USER_PLANE_PATH_FAIL_RPT,
+	pfcp_set_ie_header(&(uppfr->header), PFCP_IE_USER_PLANE_PATH_FAIL_RPT,
 			sizeof(pfcp_rmt_gtpu_peer_ie_t));
 	//set remote gtpu peer
 	uppfr->rmt_gtpu_peer_count = 2;
@@ -1478,7 +1478,7 @@ void cause_check_sess_estab(pfcp_sess_estab_req_t *pfcp_session_request,
 
 			if(!pfcp_session_request->create_pdr[i].pdi.header.len){
 
-				*offend_id = IE_PDI;
+				*offend_id = PFCP_IE_PDI;
 				*cause_id = MANDATORYIEMISSING;
 				return;
 			}else{
@@ -1666,7 +1666,7 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 		if(!(pfcp_session_mod_req->rmv_traffic_endpt.header.len)) {
 
 			*cause_id = CONDITIONALIEMISSING;
-			*offend_id = IE_RMV_TRAFFIC_ENDPT;
+			*offend_id = PFCP_IE_RMV_TRAFFIC_ENDPT;
 		} else if(pfcp_session_mod_req->rmv_traffic_endpt.header.len !=
 				REMOVE_TRAFFIC_ENDPOINT_LEN) {
 
@@ -1677,7 +1677,7 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 		if(!(pfcp_session_mod_req->create_traffic_endpt.header.len)) {
 
 			*cause_id = CONDITIONALIEMISSING;
-			*offend_id = IE_CREATE_TRAFFIC_ENDPT ;
+			*offend_id = PFCP_IE_CREATE_TRAFFIC_ENDPT ;
 		} else if (pfcp_session_mod_req->create_traffic_endpt.header.len !=
 				CREATE_TRAFFIC_ENDPOINT_LEN){
 			//TODO:Consdiering IP4
@@ -1706,7 +1706,7 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 
 	/*if(!(pfcp_session_mod_req->update_qer.header.len)) {
 		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_UPDATE_QER;
+		*offend_id = PFCP_IE_UPDATE_QER;
 	} else if(pfcp_session_mod_req->update_qer.header.len != UPDATE_QER_LEN) {
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
 	}*/
@@ -1714,7 +1714,7 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 	/*
 	if(!(pfcp_session_mod_req->update_bar.header.len)) {
 		*cause_id = CONDITIONALIEMISSING;
-		*offend_id = IE_UPD_BAR_SESS_MOD_REQ;
+		*offend_id = PFCP_IE_UPD_BAR_SESS_MOD_REQ;
 
 	} else if(pfcp_session_mod_req->update_bar.header.len != UPDATE_BAR_LEN) {
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
@@ -1726,7 +1726,7 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 	/*if(!(pfcp_session_mod_req->update_traffic_endpt.header.len)) {
 
 		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_UPDATE_TRAFFIC_ENDPOINT;
+		*offend_id = PFCP_IE_UPDATE_TRAFFIC_ENDPOINT;
 	} else if (pfcp_session_mod_req->update_traffic_endpoint.header.len != UPDATE_TRAFFIC_ENDPOINT_LEN) {
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
 	}
@@ -1735,7 +1735,7 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 	if(!(pfcp_session_mod_req->pfcpsmreqflags.header.len)) {
 
 		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_PFCPSMREQ_FLAGS;
+		*offend_id = PFCP_IE_PFCPSMREQ_FLAGS;
 	} else if(pfcp_session_mod_req->pfcpsmreqflags.header.len != PFCP_SEMREQ_FLAG_LEN) {
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
 	}
@@ -1744,7 +1744,7 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 	if(!(pfcp_session_mod_req->query_urr_reference.header.len)) {
 
 		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_QUERY_URR_REFERENCE ;
+		*offend_id = PFCP_IE_QUERY_URR_REFERENCE ;
 	} else if(pfcp_session_mod_req->query_urr_reference.header.len != QUERY_URR_REFERENCE_LEN){
 
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
@@ -1752,7 +1752,7 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 	if(!(pfcp_session_mod_req->pgwc_fqcsid.header.len)) {
 
 		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_PFCP_FQ_CSID;
+		*offend_id = PFCP_IE_PFCP_FQ_CSID;
 	} else if(pfcp_session_mod_req->pgwc_fqcsid.header.len != PGWC_FQCSID_LEN) {
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
 	}
@@ -1760,14 +1760,14 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 	if(!(pfcp_session_mod_req->sgwc_fqcsid.header.len)) {
 
 		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id =IE_PFCP_FQ_CSID;
+		*offend_id =PFCP_IE_PFCP_FQ_CSID;
 	} else if(pfcp_session_mod_req->sgwc_fqcsid.header.len != SGWC_FQCSID_LEN) {
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
 	}
 	if(!(pfcp_session_mod_req->mme_fqcsid.header.len)) {
 
 		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_PFCP_FQ_CSID;
+		*offend_id = PFCP_IE_PFCP_FQ_CSID;
 	} else if(pfcp_session_mod_req->mme_fqcsid.header.len != MME_FQCSID_LEN) {
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
 	}
@@ -1775,7 +1775,7 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 	if(!(pfcp_session_mod_req->epdg_fqcsid.header.len)) {
 
 		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_PFCP_FQ_CSID;
+		*offend_id = PFCP_IE_PFCP_FQ_CSID;
 	} else if(pfcp_session_mod_req->epdg_fqcsid.header.len != EPDG_FQCSID_LEN ) {
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
 	}
@@ -1783,7 +1783,7 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 	if(!(pfcp_session_mod_req->twan_fqcsid.header.len)) {
 
 		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_PFCP_FQ_CSID;
+		*offend_id = PFCP_IE_PFCP_FQ_CSID;
 	} else if (pfcp_session_mod_req->twan_fqcsid.header.len != TWAN_FQCSID_LEN ) {
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
 	}
@@ -1791,7 +1791,7 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 	if(!(pfcp_session_mod_req->user_plane_inact_timer.header.len)) {
 
 		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_USER_PLANE_INACTIVITY_TIMER ;
+		*offend_id = PFCP_IE_USER_PLANE_INACTIVITY_TIMER ;
 	} else if(pfcp_session_mod_req->user_plane_inact_timer.header.len != USER_PLANE_INACTIV_TIMER_LEN) {
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
 	}*/

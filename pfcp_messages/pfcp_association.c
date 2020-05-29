@@ -268,7 +268,7 @@ static void
 set_pfd_context(pfcp_pfd_context_ie_t *pfd_conxt)
 {
 
-	pfcp_set_ie_header(&pfd_conxt->header, IE_PFD_CONTEXT,
+	pfcp_set_ie_header(&pfd_conxt->header, PFCP_IE_PFD_CONTEXT,
 			(pfd_conxt->pfd_contents[0].header.len + sizeof(pfcp_ie_header_t)));
 	pfd_conxt->pfd_contents_count = 1;
 
@@ -310,7 +310,7 @@ set_app_ids_pfds(pfcp_app_ids_pfds_ie_t *app_ids_pfds_t , uint16_t len)
 			+ sizeof(pfcp_ie_header_t);
 	}
 	/* set app id pfds header  */
-	pfcp_set_ie_header(&app_ids_pfds_t->header, IE_APP_IDS_PFDS, len);
+	pfcp_set_ie_header(&app_ids_pfds_t->header, PFCP_IE_APP_IDS_PFDS, len);
 }
 
 
@@ -319,9 +319,9 @@ fill_pfcp_pfd_mgmt_req(pfcp_pfd_mgmt_req_t *pfcp_pfd_req, uint16_t len)
 {
 
 	uint32_t seq  = 0;
-	seq = get_pfcp_sequence_number(PFCP_PFD_MGMT_REQ, seq);
+	seq = get_pfcp_sequence_number(PFCP_PFD_MGMT_REQUEST, seq);
 	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_pfd_req->header),
-			PFCP_PFD_MGMT_REQ, NO_SEID, seq);
+			PFCP_PFD_MGMT_REQUEST, NO_SEID, seq);
 	pfcp_pfd_req->app_ids_pfds_count = 1;
 
 	for(int i=0; i < pfcp_pfd_req->app_ids_pfds_count; ++i){
@@ -890,7 +890,7 @@ fill_pfcp_pfd_mgmt_resp(pfcp_pfd_mgmt_rsp_t *pfd_resp, uint8_t cause_val, int of
 {
 	memset(pfd_resp, 0, sizeof(pfcp_pfd_mgmt_rsp_t));
 
-	set_pfcp_header(&pfd_resp->header, PFCP_PFD_MGMT_RSP, 0);
+	set_pfcp_header(&pfd_resp->header, PFCP_PFD_MANAGEMENT_RESPONSE, 0);
 
 	pfcp_set_ie_header(&pfd_resp->cause.header, PFCP_IE_CAUSE,
 			sizeof(pfd_resp->cause.cause_value));

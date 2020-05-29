@@ -423,7 +423,7 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 		far->far_id.far_id_value = dyn_rule->pdr[i]->far.far_id_value;
 		set_destination_interface(&(far->frwdng_parms.dst_intfc));
 		pfcp_set_ie_header(&(far->frwdng_parms.header),
-				IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
+				PFCP_IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
 
 		far->frwdng_parms.header.len = sizeof(pfcp_dst_intfc_ie_t);
 
@@ -554,7 +554,7 @@ fill_update_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 		far->far_id.far_id_value = dyn_rule->pdr[i]->far.far_id_value;
 		set_destination_interface(&(far->upd_frwdng_parms.dst_intfc));
 		pfcp_set_ie_header(&(far->upd_frwdng_parms.header),
-				IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
+				PFCP_IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
 
 		far->upd_frwdng_parms.header.len = sizeof(pfcp_dst_intfc_ie_t);
 
@@ -692,7 +692,7 @@ fill_update_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer *bearer){
 
 		int itr = i - pfcp_sess_mod_req->update_pdr_count;
 
-		pfcp_set_ie_header(&(pfcp_sess_mod_req->update_pdr[i].header), IE_UPDATE_PDR, size1);
+		pfcp_set_ie_header(&(pfcp_sess_mod_req->update_pdr[i].header), PFCP_IE_UPDATE_PDR, size1);
 
 		pfcp_sess_mod_req->update_pdr[i].pdr_id.rule_id = bearer->pdrs[itr]->rule_id;
 
@@ -1105,7 +1105,7 @@ fill_pdr_far_qer_using_bearer(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 						 bearer->pdrs[itr]->pdi.src_intfc.interface_value)) {
 					set_destination_interface(&(pfcp_sess_mod_req->create_far[itr].frwdng_parms.dst_intfc));
 					pfcp_set_ie_header(&(pfcp_sess_mod_req->create_far[itr].frwdng_parms.header),
-							IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
+							PFCP_IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
 
 					pfcp_sess_mod_req->create_far[itr].frwdng_parms.header.len = sizeof(pfcp_dst_intfc_ie_t);
 
@@ -2072,7 +2072,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 									(SOURCE_INTERFACE_VALUE_ACCESS == bearer->pdrs[idx]->pdi.src_intfc.interface_value)) {
 								set_destination_interface(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc));
 								pfcp_set_ie_header(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.header),
-										IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
+										PFCP_IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
 
 								pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.header.len = sizeof(pfcp_dst_intfc_ie_t);
 
