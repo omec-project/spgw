@@ -40,10 +40,6 @@
 #include "master_cdr.h"
 #include "util.h"
 
-#ifdef SDN_ODL_BUILD
-#include "zmqsub.h"
-#endif
-
 #ifdef SGX_CDR
 #include "ssl_client.h"
 #endif /* SGX_CDR */
@@ -734,22 +730,12 @@ get_cdr_filename(char *filename) {
 	if (ret == 0)
 		rte_panic("Failed to generate CDR timestamp\n");
 
-#ifdef SDN_ODL_BUILD
-#ifdef SGX_CDR
-	ret = snprintf(filename, PATH_MAX, "%s_%s"CDR_CSV_EXTENSION, node_id,
-			timestamp);
-#else
-	ret = snprintf(filename, PATH_MAX, "%s%s_%s"CDR_CUR_EXTENSION, cdr_path,
-			node_id, timestamp);
-#endif /* SGX_CDR */
-#else
 #ifdef SGX_CDR
 	ret = snprintf(filename, PATH_MAX, "%s"CDR_CSV_EXTENSION, timestamp);
 #else
 	ret = snprintf(filename, PATH_MAX, "%s%s"CDR_CUR_EXTENSION, cdr_path,
 			timestamp);
 #endif /* SGX_CDR */
-#endif  /* SDN_ODL_BUILD */
 
 	if (ret < 0)
 		rte_panic("output error during cdr filename creation\n");

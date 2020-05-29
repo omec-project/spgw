@@ -56,16 +56,6 @@ export_stats_report(struct sync_stats stats_info)
 {
 
 #if DEBUG_STATS
-#ifdef SDN_ODL_BUILD
-	fprintf(stats_file, "%"PRIu64", %"PRIu16", %"PRIu64
-						", %"PRIu64", %"PRIu64", %"PRIu64
-						", %"PRIu64", %"PRIu64"\n",
-						stats_cnt, stats_info.type,
-						stats_info.op_id, stats_info.session_id,
-						stats_info.req_init_time, stats_info.ack_rcv_time,
-						stats_info.resp_recv_time,
-						((stats_info.resp_recv_time) - (stats_info.req_init_time)));
-#else
 
 	fprintf(stats_file, "%"PRIu64", %"PRIu16", %"PRIu64
 						", %"PRIu64", %"PRIu64
@@ -76,7 +66,6 @@ export_stats_report(struct sync_stats stats_info)
 						stats_info.resp_recv_time,
 						((stats_info.resp_recv_time) - (stats_info.req_init_time)));
 
-#endif  /* SDN_ODL_BUILD */
 #else
 
 	fprintf(stats_file, "%"PRIu64", %"PRIu64"\n",
@@ -123,20 +112,6 @@ stats_init(void)
 #if DEBUG_STATS
 	fprintf(stats_file, "#Session Type:\n#\t1:CREATE\n#\t2:UPDATE\n#\t3:DELETE\n");
 
-#ifdef SDN_ODL_BUILD
-	if (fprintf(stats_file, "#%s, %s, %s, %s, %s, %s, %s, %s\n",
-				"record",
-				"Session type",
-				"op_id",
-				"session_id",
-				"req_init_time(n/sec)",
-				"ack_rcv_time(n/sec)",
-				"resp_recv_time(n/sec)",
-				"req_resp_diff(m/sec)") < 0)
-		rte_panic("%s [%d] fprintf(stats_file header failed - %s "
-				"(%d)\n",
-				__FILE__, __LINE__, strerror(errno), errno);
-#else
 	if (fprintf(stats_file, "#%s, %s, %s, %s, %s, %s, %s\n",
 				"record",
 				"Session type",
@@ -149,7 +124,6 @@ stats_init(void)
 				"(%d)\n",
 				__FILE__, __LINE__, strerror(errno), errno);
 
-#endif  /* SDN_ODL_BUILD */
 #else
 
 	if (fprintf(stats_file, "#%s, %s\n",

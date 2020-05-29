@@ -96,20 +96,6 @@ struct epc_app_params epc_app = {
 #endif	/* NGCORE_SHRINK */
 };
 
-#if defined(SDN_ODL_BUILD)
-/**
- * @brief  : Start zmq thread
- * @param  : arg, unused param
- * @return : Returns nothing
- */
-static void *dp_zmq_thread(__rte_unused void *arg)
-{
-	while (1)
-		iface_remove_que(COMM_ZMQ);
-	return NULL; //GCC_Security flag
-}
-#endif  /* DP:(SDN_ODL_BUILD */
-
 /**
  * @brief  : Creats ZMQ read thread , Polls message queue
  *           Populates hash table from que
@@ -132,17 +118,6 @@ static void epc_iface_core(__rte_unused void *args)
 	clLog(apilogger, eCLSeverityMajor, "RTE NOTICE enabled on lcore %d\n", lcore);
 	clLog(apilogger, eCLSeverityInfo, "RTE INFO enabled on lcore %d\n", lcore);
 	clLog(apilogger, eCLSeverityDebug, "RTE DEBUG enabled on lcore %d\n", lcore);
-
-#if defined(SDN_ODL_BUILD)
-	pthread_t t;
-	int err;
-
-	err = pthread_create(&t, NULL, &dp_zmq_thread, NULL);
-	if (err != 0)
-		clLog(apilogger, eCLSeverityInfo, "\ncan't create ZMQ read thread :[%s]", strerror(err));
-	else
-		clLog(apilogger, eCLSeverityInfo, "\n ZMQ read thread created successfully\n");
-#endif  /* DP:(SDN_ODL_BUILD */
 
 	/*
 	 * Poll message que. Populate hash table from que.

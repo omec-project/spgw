@@ -92,19 +92,6 @@ udp_recv(void *msg_payload, uint32_t size,
 int iface_remove_que(enum cp_dp_comm id)
 {
 
-#ifdef SDN_ODL_BUILD
-	if (id == COMM_ZMQ) {
-		int rc;
-		struct zmqbuf zbuf = {0};
-
-		rc = comm_node[id].recv((void *)&zbuf, sizeof(struct zmqbuf));
-
-		rc = dp_lifecycle_process(&zbuf, rc);
-		if (rc <= 0)
-			return rc;
-		return zmq_mbuf_process(&zbuf, rc);
-	}
-#else
 	RTE_SET_USED(id);
 	struct sockaddr_in peer_addr;
 	int bytes_rx = 0;
@@ -119,7 +106,6 @@ int iface_remove_que(enum cp_dp_comm id)
 		return -1;
 	}
 	process_pfcp_msg(pfcp_rx, &peer_addr);
-#endif /*SDN_ODL_BUILD*/
 
 	return 0;
 }

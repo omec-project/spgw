@@ -40,7 +40,6 @@
 
 #ifdef CP_BUILD
 #include "cp.h"
-#include "nb.h"
 #include "main.h"
 #include "cp_stats.h"
 #include "cp_config.h"
@@ -353,46 +352,7 @@ session_create(struct dp_id dp_id,
 
 #endif /* SYNC_STATS */
 
-#ifdef SDN_ODL_BUILD
-	switch(spgw_cfg) {
-	case SGWC :
-	case SAEGWC :
-		return send_nb_create_modify(
-				JSON_OBJ_OP_TYPE_CREATE,
-				JSON_OBJ_INSTR_3GPP_MOB_CREATE,
-				entry.sess_id,
-				htonl(entry.ue_addr.u.ipv4_addr),
-				htonl(entry.dl_s1_info.enb_addr.u.ipv4_addr),
-				htonl(entry.ul_s1_info.s5s8_pgwu_addr.u.ipv4_addr),
-				htonl(entry.ul_s1_info.sgw_addr.u.ipv4_addr),
-				htonl(entry.dl_s1_info.enb_teid),
-				htonl(entry.ul_s1_info.sgw_teid),
-				htonl(entry.ue_addr.u.ipv4_addr),
-				UE_BEAR_ID(entry.sess_id));
-		break;
-
-	case PGWC :
-		return send_nb_create_modify(
-				JSON_OBJ_OP_TYPE_CREATE,
-				JSON_OBJ_INSTR_3GPP_MOB_CREATE,
-				entry.sess_id,
-				htonl(entry.ue_addr.u.ipv4_addr),
-				htonl(entry.dl_s1_info.enb_addr.u.ipv4_addr),
-				htonl(entry.dl_s1_info.s5s8_sgwu_addr.u.ipv4_addr),
-				htonl(entry.ul_s1_info.sgw_addr.u.ipv4_addr),
-				htonl(entry.dl_s1_info.enb_teid),
-				htonl(entry.ul_s1_info.sgw_teid),
-				htonl(entry.ue_addr.u.ipv4_addr),
-				UE_BEAR_ID(entry.sess_id));
-		break;
-
-	default :
-		rte_panic("ERROR: INVALID DPN Type :%d\n", spgw_cfg);
-	}
-
-#else
 	return send_dp_msg(dp_id, &msg_payload);
-#endif		/* SDN_ODL_BUILD */
 #else
 	return dp_session_create(dp_id, &entry);
 #endif		/* CP_BUILD */
@@ -416,22 +376,7 @@ session_modify(struct dp_id dp_id,
 
 #endif /* SYNC_STATS */
 
-#ifdef SDN_ODL_BUILD
-	return send_nb_create_modify(
-			JSON_OBJ_OP_TYPE_UPDATE,
-			JSON_OBJ_INSTR_3GPP_MOB_MODIFY,
-			entry.sess_id,
-			htonl(entry.ue_addr.u.ipv4_addr),
-			htonl(entry.dl_s1_info.enb_addr.u.ipv4_addr),
-			htonl(entry.ul_s1_info.s5s8_pgwu_addr.u.ipv4_addr),
-			htonl(entry.ul_s1_info.sgw_addr.u.ipv4_addr),
-			htonl(entry.dl_s1_info.enb_teid),
-			htonl(entry.ul_s1_info.sgw_teid),
-			htonl(entry.ue_addr.u.ipv4_addr),
-			UE_BEAR_ID(entry.sess_id));
-#else
 	return send_dp_msg(dp_id, &msg_payload);
-#endif		/* SDN_ODL_BUILD */
 #else
 	return dp_session_modify(dp_id, &entry);
 #endif		/* CP_BUILD */
@@ -445,12 +390,7 @@ send_ddn_ack(struct dp_id dp_id,
 	struct msgbuf msg_payload;
 	build_dp_msg(MSG_DDN_ACK, dp_id, (void *)&entry, &msg_payload);
 
-#ifdef SDN_ODL_BUILD
-	return send_nb_ddn_ack(entry.dl_buff_cnt,
-				entry.dl_buff_duration);
-#else
 	return send_dp_msg(dp_id, &msg_payload);
-#endif		/* SDN_ODL_BUILD */
 }
 #endif		/* CP_BUILD */
 
@@ -480,11 +420,7 @@ session_delete(struct dp_id dp_id,
 
 #endif /* SYNC_STATS */
 
-#ifdef SDN_ODL_BUILD
-	return send_nb_delete(entry.sess_id);
-#else
 	return send_dp_msg(dp_id, &msg_payload);
-#endif		/* SDN_ODL_BUILD */
 #else
 	return dp_session_delete(dp_id, &entry);
 #endif		/* CP_BUILD */

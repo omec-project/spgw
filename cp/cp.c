@@ -43,10 +43,6 @@
 #include "cdnshelper.h"
 #endif /* USE_DNS_QUERY */
 
-#ifdef SDN_ODL_BUILD
-#include "nb.h"
-#endif
-
 extern int s11_fd;
 extern socklen_t s11_mme_sockaddr_len;
 extern pfcp_config_t pfcp_config;

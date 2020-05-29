@@ -22,9 +22,6 @@
 #include "packet_filters.h"
 #include "vepc_cp_dp_api.h"
 #include "clogger.h"
-#ifdef SDN_ODL_BUILD
-#include "nb.h"
-#endif
 
 const char *direction_str[] = {
 		[TFT_DIRECTION_DOWNLINK_ONLY] = "DOWNLINK_ONLY ",
@@ -213,12 +210,7 @@ install_sdf_rules(const pkt_fltr *new_packet_filter)
 	num_sdf_filters++;
 	sdf_filters[index] = filter;
 
-#ifdef SDN_ODL_BUILD
-	if (dpn_id)
-		push_sdf_rules(index);
-#else
 	push_sdf_rules(index);
-#endif
 	return index;
 }
 
@@ -255,14 +247,8 @@ install_pcc_rules(struct pcc_rules new_pcc_entry)
 	new_pcc_entry.rule_id = num_pcc_filter;
 	num_pcc_filter++;
 
-#ifdef SDN_ODL_BUILD
-	if (dpn_id)
-		if (pcc_entry_add(dp_id, new_pcc_entry) < 0 )
-			rte_exit(EXIT_FAILURE,"PCC entry add fail !!!");
-#else
 	if (pcc_entry_add(dp_id, new_pcc_entry) < 0 )
 		rte_exit(EXIT_FAILURE,"PCC entry add fail !!!");
-#endif
 	return num_pcc_filter;
 }
 
@@ -295,12 +281,7 @@ install_meter_profiles(struct dp_id dp_id, struct mtr_entry new_mtr_entry)
 	mtr_profiles[num_mtr_profiles] = mtr_profile;
 	num_mtr_profiles++;
 
-#ifdef SDN_ODL_BUILD
-	if (dpn_id)
-		meter_profile_entry_add(dp_id, new_mtr_entry);
-#else
 	meter_profile_entry_add(dp_id, new_mtr_entry);
-#endif
 	return num_mtr_profiles;
 }
 

@@ -26,10 +26,6 @@
 
 #include <rte_hash.h>
 
-#ifdef SDN_ODL_BUILD
-	#include "zmqsub.h"
-#endif		/* SDN_ODL_BUILD  */
-
 #include "vepc_cp_dp_api.h"
 #include "vepc_udp.h"
 
@@ -38,18 +34,6 @@
 extern int num_dp;
 
 uint8_t zmq_comm_switch;
-
-#ifdef SDN_ODL_BUILD
-char zmq_sub_ifconnect[128];
-char zmq_pub_ifconnect[128];
-
-extern struct in_addr fpc_ip;
-extern uint16_t fpc_port;
-extern uint16_t fpc_topology_port;
-extern struct in_addr cp_nb_ip;
-extern uint16_t cp_nb_port;
-
-#endif
 
 extern udp_sock_t my_sock;
 

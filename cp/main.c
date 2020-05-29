@@ -42,10 +42,6 @@
 #include "cdnshelper.h"
 #endif /* USE_DNS_QUERY */
 
-#ifdef SDN_ODL_BUILD
-#include "nb.h"
-#endif
-
 #ifdef USE_CSID
 #include "csid_struct.h"
 #endif /* USE_CSID */
@@ -253,7 +249,6 @@ parse_arg(int argc, char **argv)
 	}
 }
 
-#ifndef SDN_ODL_BUILD
 /**
  * @brief  : callback initated by nb listener thread
  * @param  : arg, unused
@@ -273,7 +268,6 @@ control_plane(void)
 	return 0;
 }
 
-#endif /* SDN_ODL_BUILD */
 
 /**
  * @brief  : initializes the core assignments for various control plane threads
@@ -389,11 +383,6 @@ main(int argc, char **argv)
 #ifdef SIMU_CP
 	if (cp_params.simu_core_id != RTE_MAX_LCORE)
 		rte_eal_remote_launch(simu_cp, NULL, cp_params.simu_core_id);
-#endif
-
-#ifdef SDN_ODL_BUILD
-	init_nb();
-	server();
 #endif
 
 #ifdef USE_REST

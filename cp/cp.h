@@ -175,9 +175,9 @@ extern int s5s8_pgwc_fd;
 extern int pfcp_sgwc_fd ;
 extern struct cp_params cp_params;
 
-#if defined (SYNC_STATS) || defined (SDN_ODL_BUILD)
+#if defined (SYNC_STATS)
 extern uint64_t op_id;
-#endif /* SDN_ODL_BUILD */
+#endif 
 /**
  * @brief  : creates and sends downlink data notification according to session
  *           identifier
