@@ -20,7 +20,7 @@
 #include "pfcp_messages.h"
 
 #ifdef CP_BUILD
-#include "sm_struct.h"
+#include "pfcp_cp_association.h"
 #endif /* CP_BUILD */
 
 /**
@@ -124,45 +124,4 @@ fill_pfcp_heartbeat_req(pfcp_hrtbeat_req_t *pfcp_heartbeat_req, uint32_t seq);
 void
 fill_pfcp_sess_report_resp(pfcp_sess_rpt_rsp_t *pfcp_sess_rep_resp, uint32_t seq);
 
-#ifdef CP_BUILD
-/**
- * @brief  : This function processes pfcp associatiuon response
- * @param  : msg hold the data from pfcp associatiuon response
- * @param  : peer_addr denotes address of peer node
- * @return : Returns 0 in case of success else negative value
- */
-uint8_t
-process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr);
-
-/**
- * @brief  : This function adds csr to list of buffrered csrs
- * @param  : context hold information about ue context
- * @param  : upf_context hold information about upf context
- * @param  : ebi indicates eps bearer id
- * @return : Returns 0 in case of success else negative value
- */
-int
-buffer_csr_request(ue_context *context,
-		upf_context_t *upf_context, uint8_t ebi);
-
-
-/**
- * @brief  : fills default rule and qos values
- * @param  : pdn
- * @return : Returns nothing
- */
-void
-fill_rule_and_qos_inform_in_pdn(pdn_connection *pdn);
-
-
-/**
- * @brief  : This function processes incoming create session request
- * @param  : teid
- * @param  : eps_bearer_id indicates eps bearer id
- * @return : Returns 0 in case of success else negative value
- */
-int
-process_create_sess_request(uint32_t teid, uint8_t eps_bearer_id);
-
-#endif /* CP_BUILD */
 #endif /* PFCP_ASSOC_H */

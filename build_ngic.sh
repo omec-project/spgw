@@ -71,7 +71,8 @@ build_pfcp_lib()
         popd
 }
 
-build_libgtpcv2c(){
+build_libgtpcv2c()
+{
 
         echo "Building libgtpv2c..."
         pushd $CUR_DIR/libgtpv2c
@@ -107,28 +108,26 @@ build_ngic()
 	pushd $NGIC_DIR
 	source setenv.sh
 
-    build_c3po_util
+    	build_c3po_util
 	build_pfcp_lib
 
 	if [ $SERVICE == 2 ] || [ $SERVICE == 3 ] ; then
-		make clean-dp
 		echo "Building Libs..."
 		make build-lib || { echo -e "\nNG-CORE: Make lib failed\n"; }
 		echo "Building DP..."
 		### USE_AF_PACKET for deploying in k8s
 		### ggdb must be made standard to help debugging
 		### O2 because O3 causes DP crash https://github.com/omec-project/ngic-rtc/issues/55
-		make build-dp EXTRA_CFLAGS='-DUSE_AF_PACKET -ggdb -O2' || { echo -e "\nDP: Make failed\n"; }
+		make build-dp -j 10 EXTRA_CFLAGS='-DUSE_AF_PACKET -ggdb -O2' || { echo -e "\nDP: Make failed\n"; }
 	fi
 	if [ $SERVICE == 1 ] || [ $SERVICE == 3 ] ; then
 		echo "Building libgtpv2c..."
 		pushd $NGIC_DIR/libgtpv2c
-			make clean
-			make
-			if [ $? -ne 0 ] ; then
-				echo "Failed to build libgtpv2, please check the errors."
-				return
-			fi
+		make 
+		if [ $? -ne 0 ] ; then
+			echo "Failed to build libgtpv2, please check the errors."
+			return
+		fi
 		popd
 
 		echo "Building FD and GxApp..."
@@ -149,6 +148,5 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-build_ngic
 echo "NGIC build complete "
 

@@ -21,6 +21,7 @@
 #include "cp.h"
 #include "gx_app/include/gx_struct.h"
 #include "pfcp_struct.h"
+#include "pfcp_cp_struct.h"
 
 
 struct rte_hash *pfcp_cntxt_hash;

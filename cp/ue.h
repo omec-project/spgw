@@ -36,7 +36,7 @@
 #include "gtpv2c_ie.h"
 #include "interface.h"
 #include "packet_filters.h"
-#include "pfcp_struct.h"
+#include "pfcp_cp_struct.h"
 #include "restoration_timer.h"
 
 #ifdef USE_CSID
@@ -69,10 +69,6 @@
 #define GET_UE_IP(ue_index) \
 			(((cp_config->ip_pool_ip.s_addr | (~cp_config->ip_pool_mask.s_addr)) \
 			  - htonl(ue_index)) - 0x01000000)
-
-#ifndef CP_BUILD
-#define FQDN_LEN 256
-#endif
 
 /* Need to handle case of multiple charging rule for signle bearer
  * this count will change once added handling
