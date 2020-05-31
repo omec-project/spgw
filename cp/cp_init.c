@@ -26,7 +26,7 @@
 #include "cp_stats.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
-#include "pfcp_association.h"
+#include "pfcp_cp_association.h"
 #include "restoration_timer.h"
 #include "sm_struct.h"
 #include "cp_config_new.h"

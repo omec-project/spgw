@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-#ifdef CP_BUILD
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_set_ie.h"
-#else
-#include "pfcp_up_util.h"
-#include "pfcp_up_set_ie.h"
-#endif
 #include "pfcp_enum.h"
-#ifdef CP_BUILD
 #include "pfcp_cp_session.h"
-#endif
-#include "pfcp_association.h"
+#include "pfcp_cp_association.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_messages_decoder.h"
 #include "../cp_dp_api/vepc_cp_dp_api.h"
 #include "clogger.h"
-#ifdef CP_BUILD
 #include "cp.h"
 #include "main.h"
 #include "pfcp.h"
@@ -39,22 +31,12 @@
 #include "cp_config_new.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_timer.h"
-#else
-#include "up_main.h"
-#include "gw_adapter.h"
-#endif /* CP_BUILD */
 
-#if defined(CP_BUILD) && defined(USE_DNS_QUERY)
+#if defined(USE_DNS_QUERY)
 #include "sm_pcnd.h"
 #include "cdnsutil.h"
-#endif /* CP_BUILD && USE_DNS_QUERY */
+#endif /* USE_DNS_QUERY */
 
-#ifdef DP_BUILD
-struct in_addr cp_comm_ip;
-uint16_t cp_comm_port;
-#endif /* DP_BUILD */
-
-#ifdef CP_BUILD
 extern int pfcp_fd;
 extern pfcp_config_t pfcp_config;
 
@@ -695,14 +677,12 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 
 		ret = process_pfcp_sess_est_request(key->teid, pdn, upf_context);
 		if (ret) {
-				clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
-#ifdef CP_BUILD
-					if(ret != -1) {
-						cs_error_response(msg, ret,
-								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-						process_error_occured_handler(&msg, NULL);
-					}
-#endif /* CP_BUILD */
+			clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+			if(ret != -1) {
+				cs_error_response(msg, ret,
+						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+				process_error_occured_handler(&msg, NULL);
+			}
 		} else {
 			/* Need to remove + 5 after adding ebi_index in upf_context */
 			if (get_sess_entry(SESS_ID(key->teid, key->ebi_index + 5), &resp) != 0) {
@@ -815,146 +795,6 @@ process_pfcp_report_req(pfcp_sess_rpt_req_t *pfcp_sess_rep_req)
 	return 0;
 }
 
-#endif /* CP_BUILD */
-
-#ifdef DP_BUILD
-void
-fill_pfcp_association_release_resp(pfcp_assn_rel_rsp_t *pfcp_ass_rel_resp)
-{
-	/*take seq no from assoc release request when it is implemented*/
-	uint32_t seq  = 1;
-	memset(pfcp_ass_rel_resp, 0, sizeof(pfcp_assn_rel_rsp_t)) ;
-
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_ass_rel_resp->header),
-			PFCP_ASSOCIATION_RELEASE_RESPONSE, NO_SEID, seq);
-
-	//TODO filling of node id
-	const char* pAddr = "192.168.0.10";
-	uint32_t node_value = inet_addr(pAddr);
-	set_node_id(&(pfcp_ass_rel_resp->node_id), node_value);
-
-	// TODO : REmove the CAUSE_VALUES_REQUESTACCEPTEDSUCCESS in set_cause
-	set_cause(&(pfcp_ass_rel_resp->cause), REQUESTACCEPTED);
-
-}
-
-void
-fill_pfcp_association_setup_resp(pfcp_assn_setup_rsp_t *pfcp_ass_setup_resp,
-				uint8_t cause )
-{
-	uint32_t seq  = 1;
-	uint32_t node_value = 0;
-
-	memset(pfcp_ass_setup_resp,0,sizeof(pfcp_assn_setup_rsp_t)) ;
-
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_ass_setup_resp->header),
-			PFCP_ASSOCIATION_SETUP_RESPONSE, NO_SEID, seq);
-
-	set_node_id(&(pfcp_ass_setup_resp->node_id), node_value);
-
-	set_cause(&(pfcp_ass_setup_resp->cause), cause);
-
-	set_recovery_time_stamp(&(pfcp_ass_setup_resp->rcvry_time_stmp));
-
-	/* As we are not supporting this feature
-	set_upf_features(&(pfcp_ass_setup_resp->up_func_feat)); */
-
-	if (app.spgw_cfg == SGWU) {
-		pfcp_ass_setup_resp->user_plane_ip_rsrc_info_count = 2; /*for s1u and s5s8 sgwc ips*/
-		/*UPF Features IE is added for the ENDMARKER feauture which is supported in SGWU only*/
-		set_upf_features(&(pfcp_ass_setup_resp->up_func_feat));
-		pfcp_ass_setup_resp->up_func_feat.sup_feat |=  EMPU ;
-		pfcp_ass_setup_resp->header.message_len += pfcp_ass_setup_resp->up_func_feat.header.len;
-
-
-	} else if ((app.spgw_cfg == PGWU) || (app.spgw_cfg == SAEGWU)) {
-		pfcp_ass_setup_resp->user_plane_ip_rsrc_info_count = 1; /*for s5s8 pgwc ip*/
-	}
-
-	for( int i=0; i < pfcp_ass_setup_resp->user_plane_ip_rsrc_info_count; i++ ){
-		set_up_ip_resource_info(&(pfcp_ass_setup_resp->user_plane_ip_rsrc_info[i]),i);
-		/* Copy same teid_range in all user plane IP rsrc IEs */
-		pfcp_ass_setup_resp->user_plane_ip_rsrc_info[i].teidri =
-					pfcp_ass_setup_resp->user_plane_ip_rsrc_info[0].teidri;
-		pfcp_ass_setup_resp->user_plane_ip_rsrc_info[i].teid_range =
-					pfcp_ass_setup_resp->user_plane_ip_rsrc_info[0].teid_range;
-		 pfcp_ass_setup_resp->header.message_len +=
-			        pfcp_ass_setup_resp->user_plane_ip_rsrc_info[i].header.len;
-	}
-
-	pfcp_ass_setup_resp->header.message_len = pfcp_ass_setup_resp->node_id.header.len +
-		pfcp_ass_setup_resp->rcvry_time_stmp.header.len +
-		pfcp_ass_setup_resp->cause.header.len;
-
-
-	pfcp_ass_setup_resp->header.message_len += sizeof(pfcp_ass_setup_resp->header.seid_seqno.no_seid);
-
-}
-
-/* Fill pfd mgmt response */
-void
-fill_pfcp_pfd_mgmt_resp(pfcp_pfd_mgmt_rsp_t *pfd_resp, uint8_t cause_val, int offending_id)
-{
-	memset(pfd_resp, 0, sizeof(pfcp_pfd_mgmt_rsp_t));
-
-	set_pfcp_header(&pfd_resp->header, PFCP_PFD_MANAGEMENT_RESPONSE, 0);
-
-	pfcp_set_ie_header(&pfd_resp->cause.header, PFCP_IE_CAUSE,
-			sizeof(pfd_resp->cause.cause_value));
-	pfd_resp->cause.cause_value = cause_val;
-
-	pfcp_set_ie_header(&pfd_resp->offending_ie.header, PFCP_IE_OFFENDING_IE,
-			sizeof(pfd_resp->offending_ie.type_of_the_offending_ie));
-	pfd_resp->offending_ie.type_of_the_offending_ie = (uint16_t)offending_id;
-}
-
-void
-fill_pfcp_association_update_resp(pfcp_assn_upd_rsp_t *pfcp_asso_update_resp)
-{
-	/*take seq no from assoc update request when it is implemented*/
-	uint32_t seq  = 1;
-	uint32_t node_value = 0;
-
-	memset(pfcp_asso_update_resp, 0, sizeof(pfcp_assn_upd_rsp_t)) ;
-
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_asso_update_resp->header),
-			PFCP_ASSOCIATION_UPDATE_RESPONSE, NO_SEID, seq);
-
-	set_node_id(&(pfcp_asso_update_resp->node_id),node_value);
-
-	// filling of cause
-	// TODO : REmove the CAUSE_VALUES_REQUESTACCEPTEDSUCCESS in set_cause
-	set_cause(&(pfcp_asso_update_resp->cause), REQUESTACCEPTED);
-
-	set_upf_features(&(pfcp_asso_update_resp->up_func_feat));
-
-}
-
-void
-fill_pfcp_node_report_resp(pfcp_node_rpt_rsp_t *pfcp_node_rep_resp)
-{
-	/*take seq no from node report request when it is implemented*/
-	uint32_t seq  = 1;
-	uint32_t node_value = 0;
-
-	memset(pfcp_node_rep_resp, 0, sizeof(pfcp_node_rpt_rsp_t)) ;
-
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_node_rep_resp->header),
-			PFCP_NODE_REPORT_RESPONSE, NO_SEID,seq);
-
-	set_node_id(&(pfcp_node_rep_resp->node_id), node_value);
-
-	//set cause
-	// TODO : REmove the CAUSE_VALUES_REQUESTACCEPTEDSUCCESS in set_cause
-	set_cause(&(pfcp_node_rep_resp->cause), REQUESTACCEPTED);
-
-	//set offending ie
-	//TODO: Remove NODE_ID with actual offend ID
-	set_offending_ie(&(pfcp_node_rep_resp->offending_ie), PFCP_IE_NODE_ID);
-
-}
-#endif /* DP_BUILD */
-
 void
 fill_pfcp_heartbeat_req(pfcp_hrtbeat_req_t *pfcp_heartbeat_req, uint32_t seq)
 {
@@ -997,22 +837,9 @@ int process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-#ifdef CP_BUILD
 	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, peer_addr) < 0 ) {
 				clLog(sxlogger, eCLSeverityDebug, "Error sending: %i\n", errno);
 	}
-#endif
-
-#ifdef DP_BUILD
-	if ( pfcp_send(my_sock.sock_fd, pfcp_msg, encoded, peer_addr) < 0 ) {
-					clLog(clSystemLog, eCLSeverityDebug, "Error sending: %i\n",errno);
-	}
-	else
-	{
-		update_cli_stats(peer_addr->sin_addr.s_addr,
-				PFCP_HEARTBEAT_REQUEST,SENT,SX);
-	}
-#endif
 
 	return 0;
 

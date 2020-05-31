@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef PFCP_ASSOC_H
-#define PFCP_ASSOC_H
+#ifndef PFCP_UP_ASSOC_H
+#define PFCP_UP_ASSOC_H
 
 #include "pfcp_messages.h"
-
-#ifdef CP_BUILD
-#include "pfcp_cp_association.h"
-#endif /* CP_BUILD */
 
 /**
  * @brief  : This is a function to fill pfcp association update response
@@ -134,4 +130,4 @@ int
 process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq);
 
 
-#endif /* PFCP_ASSOC_H */
+#endif /* PFCP_UP_ASSOC_H */

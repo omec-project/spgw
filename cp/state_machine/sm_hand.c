@@ -26,7 +26,7 @@
 #include "ipc_api.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
-#include "pfcp_association.h"
+#include "pfcp_cp_association.h"
 #include "gtpv2c_error_rsp.h"
 #include "gtpc_session.h"
 #include "cp_timer.h"

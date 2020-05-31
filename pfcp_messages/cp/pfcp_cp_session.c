@@ -19,7 +19,7 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_messages.h"
-#include "pfcp_association.h"
+#include "pfcp_cp_association.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_messages_decoder.h"
 

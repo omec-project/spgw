@@ -18,7 +18,7 @@
 #include "pfcp_enum.h"
 #include "pfcp_up_set_ie.h"
 #include "pfcp_up_llist.h"
-#include "pfcp_association.h"
+#include "pfcp_up_association.h"
 #include "clogger.h"
 #include "gw_adapter.h"
 

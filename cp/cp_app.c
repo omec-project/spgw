@@ -18,7 +18,7 @@
 #include "ipc_api.h"
 #include "sm_arr.h"
 #include "pfcp.h"
-#include "pfcp_association.h"
+#include "pfcp_cp_association.h"
 #include "sm_pcnd.h"
 #include "ue.h"
 #include "clogger.h"

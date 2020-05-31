@@ -53,17 +53,23 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 
 	if (app.spgw_cfg == SAEGWU) {
 		if (portid == app.s1u_port) {
-			if (app.s1u_gw_ip != 0 &&
-					(tmp_arp_key.ip & app.s1u_mask) != app.s1u_net)
+			if (app.s1u_gw_ip != 0 && (tmp_arp_key.ip & app.s1u_mask) != app.s1u_net)
+			{
 				tmp_arp_key.ip = app.s1u_gw_ip;
+				struct in_addr nxt;
+				nxt.s_addr = app.s1u_gw_ip;
 				/* ajay - who does routing when  s1u gw ip address is not configured */ 
-				printf("\n need mac for 0x%x\n",tmp_arp_key.ip);
+				printf("downlink need mac for %s\n",inet_ntoa(nxt));
+			}
 		} else if(portid == app.sgi_port) {
-			if (app.sgi_gw_ip != 0 &&
-					(tmp_arp_key.ip & app.sgi_mask) != app.sgi_net)
+			if (app.sgi_gw_ip != 0 && (tmp_arp_key.ip & app.sgi_mask) != app.sgi_net)
+			{
 				tmp_arp_key.ip = app.sgi_gw_ip;
+				struct in_addr nxt;
+				nxt.s_addr = app.sgi_gw_ip;
 				/* ajay - who does routing when  s1u gw ip address is not configured */ 
-				printf("\n need mac for 0x%x\n",tmp_arp_key.ip);
+				printf("uplink need mac for %s \n",inet_ntoa(nxt));
+			}
 		}
 	} else if (app.spgw_cfg == SGWU) {
 		if (portid == app.s1u_port) {
@@ -107,11 +113,11 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 		clLog(clSystemLog, eCLSeverityDebug,"%s::"
 				"\n\tretrieve_arp_entry for ip 0x%x\n",
 				__func__, tmp_arp_key.ip);
-	printf("\n Get arp for 0x%x\n",tmp_arp_key.ip);
+	printf("Get arp for 0x%x\n",tmp_arp_key.ip);
 	ret_arp_data = retrieve_arp_entry(tmp_arp_key, portid);
 
 	if (ret_arp_data == NULL) {
-		printf("\n Get arp for 0x%x failed \n",tmp_arp_key.ip);
+		printf("Get arp for 0x%x failed \n",tmp_arp_key.ip);
 		clLog(clSystemLog, eCLSeverityDebug, "%s::"
 				"\n\tretrieve_arp_entry failed for ip 0x%x\n",
 				__func__, tmp_arp_key.ip);
@@ -120,7 +126,7 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 
 
 	if (ret_arp_data->status == INCOMPLETE)	{
-		printf("\n Get arp for 0x%x incomplete  \n",tmp_arp_key.ip);
+		printf("Get arp for 0x%x incomplete  \n",tmp_arp_key.ip);
 
 #ifndef STATIC_ARP
 		/* AJAY: TODO WE have this code STATIC_ARP is not defined. */
@@ -135,7 +141,7 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 		char *data = (char *)((char *)(m)->buf_addr + (m)->data_off);
 		if ((sendto(fd_array[portid], data, m->data_len, 0, (struct sockaddr *)
 					&dest_addr[portid], sizeof(struct sockaddr_in))) < 0) {
-			printf("\n Get arp for 0x%x sendto failed \n",tmp_arp_key.ip);
+			printf("Get arp for 0x%x sendto failed \n",tmp_arp_key.ip);
 			perror("send failed");
 			return -1;
 		}

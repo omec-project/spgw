@@ -18,7 +18,7 @@
 
 #include "cp.h"
 #include "main.h"
-#include "pfcp_association.h"
+#include "pfcp_cp_association.h"
 #include "cp_stats.h"
 #include "cp_config.h"
 #include "gw_adapter.h"
