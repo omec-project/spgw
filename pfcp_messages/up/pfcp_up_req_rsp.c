@@ -16,11 +16,7 @@
 
 #include <byteswap.h>
 
-#ifdef CP_BUILD
-#include "pfcp_cp_util.h"
-#else
 #include "pfcp_up_util.h"
-#endif
 #include "dp_ipc_api.h"
 #include "pfcp_set_ie.h"
 #include "pfcp_association.h"
@@ -29,19 +25,9 @@
 #include "gw_adapter.h"
 #include "clogger.h"
 
-#ifdef CP_BUILD
-#include "pfcp.h"
-#include "sm_arr.h"
-#include "sm_pcnd.h"
-#include "cp_stats.h"
-#include "sm_struct.h"
-#include "cp_config.h"
-#include "cp_config_new.h"
-#else
 #include "up_main.h"
 #include "pfcp_up_sess.h"
 #include "pfcp_up_struct.h"
-#endif /* CP_BUILD */
 
 uint16_t dp_comm_port;
 uint16_t cp_comm_port;
@@ -57,17 +43,7 @@ extern struct rte_hash *heartbeat_recovery_hash;
 
 extern struct sockaddr_in upf_pfcp_sockaddr;
 
-#ifdef CP_BUILD
-extern pfcp_config_t pfcp_config;
-extern int s5s8_fd;
-extern socklen_t s5s8_sockaddr_len;
-extern socklen_t s11_mme_sockaddr_len;
-extern struct sockaddr_in s5s8_recv_sockaddr;
-#else
 extern struct rte_hash *node_id_hash;
-#endif /* CP_BUILD */
-
-#if defined(CP_BUILD) || defined(DP_BUILD)
 
 /**
  * @brief  : Process incoming heartbeat request and send response
@@ -100,17 +76,8 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	process_response((uint32_t)peer_addr->sin_addr.s_addr);
 #endif /* USE_REST */
 
-#ifdef CP_BUILD
-	if ( pfcp_send(my_sock.sock_fd, pfcp_msg, encoded, peer_addr) < 0 ) {
-		clLog(clSystemLog, eCLSeverityDebug, "Error sending in heartbeat request: %i\n",errno);
-	} else {
-		update_cli_stats(peer_addr->sin_addr.s_addr,
-						PFCP_HEARTBEAT_RESPONSE,SENT,SX);
-	}
-#endif /* CP_BUILD */
 	free(pfcp_heartbeat_req);
 
-#ifdef DP_BUILD
 	if (encoded != 0) {
 		if (sendto(my_sock.sock_fd,
 					(char *)pfcp_msg,
@@ -126,7 +93,6 @@ clLog(clSystemLog, eCLSeverityDebug, "Error sending: %i\n",errno);
 				PFCP_HEARTBEAT_RESPONSE,SENT,SX);
 		}
 	}
-#endif /* DP_BUILD */
 	return 0;
 }
 
@@ -179,94 +145,6 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 {
 	int ret = 0, bytes_rx = 0;
 	pfcp_header_t *pfcp_header = (pfcp_header_t *) buf_rx;
-
-#ifdef CP_BUILD
-
-	/* TODO: Move this rx */
-	if ((bytes_rx = pfcp_recv(pfcp_rx, 512,
-					peer_addr)) < 0) {
-		perror("msgrecv");
-		return -1;
-	}
-
-	msg_info msg = {0};
-	if(pfcp_header->message_type == PFCP_HEARTBEAT_REQUEST){
-
-		printf("Heartbit request received from UP %s \n",inet_ntoa(peer_addr->sin_addr));
-		update_cli_stats(peer_addr->sin_addr.s_addr,
-				pfcp_header->message_type,RCVD,SX);
-
-		ret = process_heartbeat_request(buf_rx, peer_addr);
-		if(ret != 0){
-			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat request\n", __func__);
-			return -1;
-		}
-		return 0;
-	}else if(pfcp_header->message_type == PFCP_HEARTBEAT_RESPONSE){
-		printf("Heartbit response received from UP %s \n",inet_ntoa(peer_addr->sin_addr));
-		ret = process_heartbeat_response(buf_rx, peer_addr);
-		if(ret != 0){
-			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat response\n", __func__);
-			return -1;
-		} else {
-
-			update_cli_stats(peer_addr->sin_addr.s_addr,
-					PFCP_HEARTBEAT_RESPONSE,RCVD,SX);
-
-		}
-		return 0;
-	}else {
-		// ajay - why this is called as response ? it could be request mesage as well 
-		printf("PFCP message %d  received from UP %s \n",pfcp_header->message_type, inet_ntoa(peer_addr->sin_addr));
-		/*Reset periodic timers*/
-		process_response(peer_addr->sin_addr.s_addr);
-
-		if ((ret = pfcp_pcnd_check(buf_rx, &msg, bytes_rx)) != 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp precondition check\n", __func__);
-
-			update_cli_stats(peer_addr->sin_addr.s_addr,
-							pfcp_header->message_type, REJ,SX);
-			return -1;
-		}
-
-		if(pfcp_header->message_type == PFCP_SESSION_REPORT_REQUEST)
-			update_cli_stats(peer_addr->sin_addr.s_addr,
-							pfcp_header->message_type, RCVD,SX);
-		else
-			update_cli_stats(peer_addr->sin_addr.s_addr,
-							pfcp_header->message_type, ACC,SX);
-
-
-		printf("[%s] - %d - Procedure - %d state - %d event - %d. Invoke FSM now  \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
-		if ((msg.proc < END_PROC) && (msg.state < END_STATE) && (msg.event < END_EVNT)) {
-			if (SGWC == cp_config->cp_type) {
-			    ret = (*state_machine_sgwc[msg.proc][msg.state][msg.event])(&msg, peer_addr);
-			} else if (PGWC == cp_config->cp_type) {
-			    ret = (*state_machine_pgwc[msg.proc][msg.state][msg.event])(&msg, peer_addr);
-			} else if (SAEGWC == cp_config->cp_type) {
-			    ret = (*state_machine_saegwc[msg.proc][msg.state][msg.event])(&msg, peer_addr);
-			} else {
-				clLog(sxlogger, eCLSeverityCritical, "%s : "
-						"Invalid Control Plane Type: %d \n",
-						__func__, cp_config->cp_type);
-				return -1;
-			}
-
-			if (ret) {
-				clLog(sxlogger, eCLSeverityCritical, "%s : "
-						"State_Machine Callback failed with Error: %d \n",
-						__func__, ret);
-				return -1;
-			}
-		} else {
-			printf("[%s] - %d - Invalid Procedure - %d state - %d event - %d. \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
-			clLog(s11logger, eCLSeverityCritical, "%s : "
-						"Invalid Procedure or State or Event \n",
-						__func__);
-			return -1;
-		}
-	}
-#else /* End CP_BUILD , Start DP_BUILD */
 
 	/* TODO: Move this rx */
 	if ((bytes_rx = udp_recv(pfcp_rx, 1024,
@@ -780,8 +658,6 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 			(cli_cause == REQUESTACCEPTED) ? ACC:REJ, SX);
 		}
 	}
-#endif /* DP_BUILD */
 	return 0;
 }
-#endif
 
