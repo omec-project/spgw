@@ -517,7 +517,8 @@ process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index)
 		upf_ipv4.s_addr = *upf_ip;
 #else
 #if 1
-		// select the edge and use service name 
+		// select the edge and use service name...if service name is already resolved then
+		// use the ip address found from cache..We dont want to do DNS per call  
 		/* TODO : ajay Need to get this from the config. Helm Chart changes ? */
 		const char *upf_name="spgwu-headless";
 		uint32_t upf_addr = native_linux_name_resolve(upf_name);
