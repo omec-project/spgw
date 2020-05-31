@@ -29,7 +29,7 @@
 #include "debug_str.h"
 #include "dp_ipc_api.h"
 #include "pfcp_set_ie.h"
-#include "../pfcp_messages/pfcp.h"
+#include "pfcp.h"
 #include <sys/stat.h>
 #include "cp_config_new.h"
 

@@ -106,6 +106,8 @@ CFLAGS += -I$(LIBPFCP_ROOT)/include
 
 CFLAGS += -I$(SRCDIR)/..
 CFLAGS += -I$(SRCDIR)/../pfcp_messages
+CFLAGS += -I$(SRCDIR)/../pfcp_messages/cp
+CFLAGS += -I$(SRCDIR)/../pfcp_messages/common
 CFLAGS += -I$(SRCDIR)/state_machine
 
 # Mandatory CFLAGS, LDFLAGS- DO NOT MODIFY
