@@ -58,7 +58,7 @@ SRCS-y := up_main.c\
 	$(SRCDIR)/../cp_dp_api/vepc_cp_dp_api.o\
 	$(SRCDIR)/../pfcp_messages/pfcp_util.o\
 	$(SRCDIR)/../pfcp_messages/pfcp_set_ie.o\
-	$(SRCDIR)/../pfcp_messages/pfcp_up_sess.o\
+	$(SRCDIR)/../pfcp_messages/up/pfcp_up_sess.o\
 	$(SRCDIR)/../pfcp_messages/pfcp_print_rule.o\
 	$(SRCDIR)/../pfcp_messages/pfcp_req_resp.o\
 	$(SRCDIR)/../pfcp_messages/pfcp_association.o\
@@ -244,7 +244,7 @@ ifneq (,$(findstring USE_CSID, $(CFLAGS), $(EXTRA_CFLAGS)))
 	SRCS-y += $(SRCDIR)/../pfcp_messages/csid_init.o
 	SRCS-y += $(SRCDIR)/../pfcp_messages/csid_api.o
 	SRCS-y += $(SRCDIR)/../pfcp_messages/csid_peer_init.o
-	SRCS-y += $(SRCDIR)/../pfcp_messages/csid_up_cleanup.o
+	SRCS-y += $(SRCDIR)/../pfcp_messages/up/csid_up_cleanup.o
 endif
 
 # ngic-dp  CFLAGS to be deprecated

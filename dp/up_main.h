@@ -37,7 +37,7 @@
 #include <rte_ethdev.h>
 #include <rte_version.h>
 
-#include "../pfcp_messages/pfcp_up_struct.h"
+#include "pfcp_up_struct.h"
 
 #include "structs.h"
 #include "interface.h"

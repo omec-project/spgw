@@ -188,7 +188,7 @@ ifneq (,$(findstring USE_CSID, $(CFLAGS), $(EXTRA_CFLAGS)))
  SRCS-y += $(SRCDIR)/../pfcp_messages/csid_init.o
  SRCS-y += $(SRCDIR)/../pfcp_messages/csid_api.o
  SRCS-y += $(SRCDIR)/../pfcp_messages/csid_peer_init.o
- SRCS-y += $(SRCDIR)/../pfcp_messages/csid_cp_cleanup.o
+ SRCS-y += $(SRCDIR)/../pfcp_messages/cp/csid_cp_cleanup.o
 endif
 
 # Un-comment below line to read fake cp config.
