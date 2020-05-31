@@ -1,5 +1,5 @@
 #include "gtpv2c.h"
-#include "pfcp_util.h"
+#include "pfcp_cp_util.h"
 #include "sm_struct.h"
 #include "rte_common.h"
 #include "cp_config_new.h"

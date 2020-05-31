@@ -69,7 +69,7 @@ SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_association.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_req_resp.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_session.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_set_ie.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_util.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_util.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_init.o
 
 
@@ -185,9 +185,9 @@ CFLAGS += -DUSE_CSID
 
 ifneq (,$(findstring USE_CSID, $(CFLAGS), $(EXTRA_CFLAGS)))
  #VS:Support partial failure FQ-CSID m/c
- SRCS-y += $(SRCDIR)/../pfcp_messages/csid_init.o
- SRCS-y += $(SRCDIR)/../pfcp_messages/csid_api.o
- SRCS-y += $(SRCDIR)/../pfcp_messages/csid_peer_init.o
+ SRCS-y += $(SRCDIR)/../pfcp_messages/common/csid_init.o
+ SRCS-y += $(SRCDIR)/../pfcp_messages/common/csid_api.o
+ SRCS-y += $(SRCDIR)/../pfcp_messages/common/csid_peer_init.o
  SRCS-y += $(SRCDIR)/../pfcp_messages/cp/csid_cp_cleanup.o
 endif
 

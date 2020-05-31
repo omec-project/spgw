@@ -24,7 +24,7 @@
 #include "pfcp.h"
 #include "gtpv2c.h"
 #include "pfcp_enum.h"
-#include "pfcp_util.h"
+#include "pfcp_cp_util.h" 
 #include "sm_struct.h"
 #include "../cp_stats.h"
 #include "pfcp_set_ie.h"

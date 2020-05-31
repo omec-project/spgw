@@ -27,7 +27,7 @@
 #include "sm_enum.h"
 #include "cp_stats.h"
 #include "sm_struct.h"
-#include "pfcp_util.h"
+#include "pfcp_cp_util.h"
 #include "cp_config.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_messages.h"

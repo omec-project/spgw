@@ -26,7 +26,7 @@
 #include <rte_branch_prediction.h>
 
 #include "up_main.h"
-#include "pfcp_util.h"
+#include "pfcp_up_util.h"
 #include "pfcp_set_ie.h"
 
 #include "gw_adapter.h"

@@ -24,7 +24,7 @@
 #include "cp_config.h"
 #include "debug_str.h"
 #include "dp_ipc_api.h"
-#include "pfcp_util.h"
+#include "pfcp_cp_util.h"
 #include "pfcp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_association.h"

@@ -49,7 +49,7 @@
 #endif /* use_rest */
 
 #ifdef USE_CSID
-#include "../pfcp_messages/csid_struct.h"
+#include "csid_struct.h"
 #endif /* USE_CSID */
 
 /**

@@ -124,4 +124,14 @@ fill_pfcp_heartbeat_req(pfcp_hrtbeat_req_t *pfcp_heartbeat_req, uint32_t seq);
 void
 fill_pfcp_sess_report_resp(pfcp_sess_rpt_rsp_t *pfcp_sess_rep_resp, uint32_t seq);
 
+/**
+ * @brief  : Process pfcp heartbeat request
+ * @param  : peer_addr, peer node address
+ * @param  : seq, sequence number
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+int
+process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq);
+
+
 #endif /* PFCP_ASSOC_H */

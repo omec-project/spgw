@@ -15,19 +15,14 @@
  */
 
 #include "ue.h"
-#include "pfcp.h"
 #include "cp_stats.h"
 #include "sm_struct.h"
-#include "pfcp_util.h"
 #include "debug_str.h"
 #include "dp_ipc_api.h"
 #include "gtpv2c_set_ie.h"
-#include "pfcp_association.h"
-#include "pfcp_messages_encoder.h"
 #include "../cp_dp_api/vepc_cp_dp_api.h"
 #include"cp_config.h"
 
-extern int pfcp_fd;
 extern struct cp_stats_t cp_stats;
 
 /* TODO remove if not necessary later */

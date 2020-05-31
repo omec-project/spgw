@@ -17,7 +17,7 @@
 #include "cp.h"
 #include "pfcp.h"
 #include "clogger.h"
-#include "pfcp_util.h"
+#include "pfcp_cp_util.h"
 #include "pfcp_enum.h"
 #include "gw_adapter.h"
 #include "csid_struct.h"

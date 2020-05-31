@@ -20,7 +20,7 @@
 #include "sm_enum.h"
 #include "sm_hand.h"
 #include "cp_stats.h"
-#include "pfcp_util.h"
+#include "pfcp_cp_util.h"
 #include "debug_str.h"
 #include "sm_struct.h"
 #include "ipc_api.h"

@@ -212,15 +212,6 @@ set_pfcp_seid_header(pfcp_header_t *pfcp, uint8_t type, bool flag, uint32_t seq 
 void
 pfcp_set_ie_header(pfcp_ie_header_t *header, uint8_t type, uint16_t length);
 
-/**
- * @brief  : Process pfcp heartbeat request
- * @param  : peer_addr, peer node address
- * @param  : seq, sequence number
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq);
-
 
 #ifdef CP_BUILD
 /**

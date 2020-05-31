@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-#include "pfcp_util.h"
+#ifdef CP_BUILD
+#include "pfcp_cp_util.h"
+#else
+#include "pfcp_up_util.h"
+#endif
 #include "pfcp_enum.h"
 #include "csid_struct.h"
 #include "pfcp_set_ie.h"

@@ -19,7 +19,7 @@
 #include "sm_pcnd.h"
 #include "cp_stats.h"
 #include "debug_str.h"
-#include "pfcp_util.h"
+#include "pfcp_cp_util.h"
 #include "pfcp_messages_decoder.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_config_new.h"

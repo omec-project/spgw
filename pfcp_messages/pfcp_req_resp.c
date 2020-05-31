@@ -16,7 +16,11 @@
 
 #include <byteswap.h>
 
-#include "pfcp_util.h"
+#ifdef CP_BUILD
+#include "pfcp_cp_util.h"
+#else
+#include "pfcp_up_util.h"
+#endif
 #include "dp_ipc_api.h"
 #include "pfcp_set_ie.h"
 #include "pfcp_association.h"

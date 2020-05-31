@@ -23,7 +23,7 @@
 #include "main.h"
 #include "cp_app.h"
 #include "cp_stats.h"
-#include "pfcp_util.h"
+#include "pfcp_cp_util.h"
 #include "sm_struct.h"
 #include "cp_config.h"
 #include "debug_str.h"

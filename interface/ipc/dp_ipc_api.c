@@ -32,9 +32,9 @@
 #include "interface.h"
 #include "dp_ipc_api.h"
 #include "udp/vepc_udp.h"
-#include "../../pfcp_messages/pfcp_util.h"
 
 #ifdef CP_BUILD
+#include "pfcp_cp_util.h"
 #include "../cp/cp.h"
 #include "../cp/cp_app.h"
 #include "../cp/cp_stats.h"
@@ -45,6 +45,8 @@
 extern int gx_app_sock;
 #endif /* GX_BUILD */
 
+#else 
+#include "pfcp_up_util.h"
 #endif /* CP_BUILD */
 
 //extern int errno;

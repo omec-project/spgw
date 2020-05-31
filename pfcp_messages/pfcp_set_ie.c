@@ -15,7 +15,11 @@
  */
 
 #include "pfcp_ies.h"
-#include "pfcp_util.h"
+#ifdef CP_BUILD
+#include "pfcp_cp_util.h"
+#else
+#include "pfcp_up_util.h"
+#endif
 #include "pfcp_set_ie.h"
 #include "pfcp_enum.h"
 #include "clogger.h"
