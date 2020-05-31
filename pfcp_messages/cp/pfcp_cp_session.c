@@ -23,7 +23,6 @@
 #include "pfcp_messages_encoder.h"
 #include "pfcp_messages_decoder.h"
 
-#ifdef CP_BUILD
 #include "ue.h"
 #include "cp.h"
 #include "main.h"
@@ -39,13 +38,6 @@
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
 static uint32_t s5s8_sgw_gtpc_teid_offset;
 
-#endif /* CP_BUILD */
-
-#ifdef DP_BUILD
-extern struct in_addr dp_comm_ip;
-#endif /* DP_BUILD */
-
-#ifdef CP_BUILD
 pfcp_config_t pfcp_config;
 
 extern int gx_app_sock;
@@ -2485,7 +2477,6 @@ fill_dedicated_bearer_info(eps_bearer *bearer,
 
 	bearer->s5s8_sgw_gtpu_ipv4.s_addr = context->eps_bearers[pdn->default_bearer_id - 5]->s5s8_sgw_gtpu_ipv4.s_addr;
 
-#ifdef CP_BUILD
 #ifdef GX_BUILD
 	/* TODO: Revisit this for change in yang*/
 	if (cp_config->cp_type != SGWC){
@@ -2496,7 +2487,6 @@ fill_dedicated_bearer_info(eps_bearer *bearer,
 		}
 	}
 #endif /* GX_BUILD*/
-#endif /* CP_BUILD */
 
 	/*SP: As per discussion Per bearer two pdrs and fars will be there*/
 	/************************************************
@@ -2603,7 +2593,6 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer *bearer,
 		bearer->s5s8_sgw_gtpu_teid = csr->bearer_contexts_to_be_created.s5s8_u_sgw_fteid.teid_gre_key;
 	}
 
-#ifdef CP_BUILD
 #ifdef GX_BUILD
 	/* TODO: Revisit this for change in yang*/
 	if (cp_config->cp_type != SGWC){
@@ -2614,7 +2603,6 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer *bearer,
 		}
 	}
 #endif /* GX_BUILD*/
-#endif /* CP_BUILD */
 	/*SP: As per discussion Per bearer two pdrs and fars will be there*/
 	/************************************************
 	 *  cp_type  count      FTEID_1        FTEID_2 *
@@ -3771,10 +3759,8 @@ process_pfcp_sess_est_request(uint32_t teid, pdn_connection *pdn, upf_context_t 
 		/*pfcp-session-estab-req-sent*/
 		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
 				pfcp_sess_est_req.header.message_type,SENT,SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(teid,
 			&upf_pfcp_sockaddr, pfcp_msg, encoded, pdn->default_bearer_id - 5);
-#endif /* CP_BUILD */
 	}
 
 	if (add_sess_entry(context->pdns[pdn->default_bearer_id - 5]->seid, resp) != 0) {
@@ -4154,10 +4140,8 @@ int send_pfcp_sess_mod_req_handover(pdn_connection *pdn, eps_bearer *bearer,
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 	update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
 						pfcp_sess_mod_req.header.message_type,SENT,SX);
-#ifdef CP_BUILD
 	add_pfcp_if_timer_entry(mb_req->header.teid.has_teid.teid,
 			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 
 	/*Retrive the session information based on session id. */
 	//if (get_sess_entry(context->pdns[ebi_index]->seid, &resp) != 0){
@@ -4600,10 +4584,8 @@ process_sess_mod_req_del_cmd(pdn_connection *pdn)
 		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
 
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
 			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 
 	}
 
@@ -4815,10 +4797,8 @@ process_pfcp_sess_mod_request(mod_bearer_req_t *mb_req)
 	} else {
 		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(mb_req->header.teid.has_teid.teid,
 			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 	}
 
 	/* Update the Sequence number for the request */
@@ -5307,10 +5287,8 @@ process_sgwc_delete_session_request(del_sess_req_t *del_req)
 	} else {
 		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
 			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 	}
 
 	/* Update UE State */
@@ -5373,10 +5351,8 @@ process_pfcp_sess_del_request(del_sess_req_t *ds_req)
 
 				update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
 				pfcp_sess_del_req.header.message_type,SENT,SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
 			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 	}
 
 	/* Update the sequence number */
@@ -5440,10 +5416,8 @@ process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
 
 		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
 				pfcp_sess_del_req.header.message_type, SENT, SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(db_rsp->header.teid.has_teid.teid,
 			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 	}
 
 	/* Update the sequence number */
@@ -6226,153 +6200,3 @@ get_new_bearer_id(pdn_connection *pdn_cntxt)
 	return pdn_cntxt->num_bearer;
 }
 
-#endif /* CP_BUILD */
-
-#ifdef DP_BUILD
-void
-fill_pfcp_sess_set_del_resp(pfcp_sess_set_del_rsp_t *pfcp_sess_set_del_resp)
-{
-
-	/*take seq no from set del request when it is implemented*/
-	uint32_t seq  = 1;
-	uint32_t node_value = 0 ;
-
-	memset(pfcp_sess_set_del_resp, 0, sizeof(pfcp_sess_set_del_rsp_t));
-
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_sess_set_del_resp->header),
-		PFCP_SESSION_SET_DELETION_RESPONSE, NO_SEID, seq);
-
-	set_node_id(&(pfcp_sess_set_del_resp->node_id), node_value);
-	// TODO : REmove the CAUSE_VALUES_REQUESTACCEPTEDSUCCESS in set_cause
-	set_cause(&(pfcp_sess_set_del_resp->cause), REQUESTACCEPTED);
-	//TODO Replace IE_NODE_ID with the  real offendID
-	set_offending_ie(&(pfcp_sess_set_del_resp->offending_ie), PFCP_IE_NODE_ID );
-
-}
-
-void
-fill_pfcp_sess_del_resp(pfcp_sess_del_rsp_t *
-		pfcp_sess_del_resp, uint8_t cause, int offend)
-{
-
-	uint32_t seq  = 1;
-	memset(pfcp_sess_del_resp, 0, sizeof(pfcp_sess_del_rsp_t));
-
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_sess_del_resp->header), PFCP_SESSION_DELETION_RESPONSE,
-			HAS_SEID, seq);
-
-	set_cause(&(pfcp_sess_del_resp->cause), cause);
-
-	if(cause == CONDITIONALIEMISSING ||
-			cause == MANDATORYIEMISSING) {
-
-		set_offending_ie(&(pfcp_sess_del_resp->offending_ie), offend);
-	}
-
-	if( pfcp_ctxt.cp_supported_features & CP_LOAD )
-		set_lci(&(pfcp_sess_del_resp->load_ctl_info));
-
-	if( pfcp_ctxt.cp_supported_features & CP_OVRL )
-		set_olci(&(pfcp_sess_del_resp->ovrld_ctl_info));
-}
-
-void
-fill_pfcp_session_modify_resp(pfcp_sess_mod_rsp_t *pfcp_sess_modify_resp,
-		pfcp_sess_mod_req_t *pfcp_session_mod_req, uint8_t cause, int offend)
-{
-	uint32_t seq  = 1;
-	memset(pfcp_sess_modify_resp, 0, sizeof(pfcp_sess_mod_rsp_t));
-
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_sess_modify_resp->header),
-			PFCP_SESSION_MODIFICATION_RESPONSE, HAS_SEID, seq);
-
-	set_cause(&(pfcp_sess_modify_resp->cause), cause);
-
-	if(cause == CONDITIONALIEMISSING
-			|| cause == MANDATORYIEMISSING) {
-		set_offending_ie(&(pfcp_sess_modify_resp->offending_ie), offend);
-	}
-
-	//created_bar
-	// Need to do
-	if(cause == REQUESTACCEPTED){
-		if(pfcp_session_mod_req->create_pdr_count > 0 &&
-				pfcp_session_mod_req->create_pdr[0].pdi.local_fteid.ch){
-			set_created_pdr_ie(&(pfcp_sess_modify_resp->created_pdr));
-		}
-	}
-
-	if( pfcp_ctxt.cp_supported_features & CP_LOAD )
-		set_lci(&(pfcp_sess_modify_resp->load_ctl_info));
-
-	if( pfcp_ctxt.cp_supported_features & CP_OVRL )
-		set_olci(&(pfcp_sess_modify_resp->ovrld_ctl_info));
-
-	if(cause == RULECREATION_MODIFICATIONFAILURE){
-		set_failed_rule_id(&(pfcp_sess_modify_resp->failed_rule_id));
-	}
-
-	// filling of ADURI
-	// Need to do
-	if(pfcp_session_mod_req->pfcpsmreq_flags.qaurr ||
-			pfcp_session_mod_req->query_urr_count){
-		set_additional_usage(&(pfcp_sess_modify_resp->add_usage_rpts_info));
-	}
-
-	// filling of CRTEP
-	// Need to do
-	if( pfcp_ctxt.up_supported_features & UP_PDIU )
-		set_created_traffic_endpoint(&(pfcp_sess_modify_resp->createdupdated_traffic_endpt));
-
-}
-
-void
-fill_pfcp_session_est_resp(pfcp_sess_estab_rsp_t *pfcp_sess_est_resp,
-			uint8_t cause, int offend, struct in_addr dp_comm_ip,
-			pfcp_sess_estab_req_t *pfcp_session_request)
-{
-	uint32_t seq  = 0;
-	uint32_t node_value = 0;
-
-	//memset(pfcp_sess_est_resp, 0, sizeof(pfcp_sess_estab_rsp_t)) ;
-
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_sess_est_resp->header),
-			PFCP_SESSION_ESTABLISHMENT_RESPONSE, HAS_SEID, seq);
-
-	set_node_id(&(pfcp_sess_est_resp->node_id), dp_comm_ip.s_addr);
-	set_cause(&(pfcp_sess_est_resp->cause), cause);
-
-	if(cause == CONDITIONALIEMISSING || cause == MANDATORYIEMISSING) {
-		set_offending_ie(&(pfcp_sess_est_resp->offending_ie), offend);
-	}
-
-	if(REQUESTACCEPTED == cause) {
-		uint64_t up_seid = pfcp_session_request->header.seid_seqno.has_seid.seid;;
-		set_fseid(&(pfcp_sess_est_resp->up_fseid), up_seid, node_value);
-	}
-
-	if(pfcp_ctxt.cp_supported_features & CP_LOAD) {
-		set_lci(&(pfcp_sess_est_resp->load_ctl_info));
-	}
-
-	if(pfcp_ctxt.cp_supported_features & CP_OVRL) {
-		set_olci(&(pfcp_sess_est_resp->ovrld_ctl_info));
-	}
-
-	/* TODO: Need to add condition for below
-	char sgwu_addr[INET_ADDRSTRLEN] ;
-	inet_ntop(AF_INET, &(dp_comm_ip), sgwu_addr, INET_ADDRSTRLEN);
-	unsigned long sgwu_value = inet_addr(sgwu_addr);
-	set_fq_csid( &(pfcp_sess_est_resp->sgw_u_fqcsid), sgwu_value);
-
-	char pgwu_addr[INET_ADDRSTRLEN] ;
-	inet_ntop(AF_INET, &(dp_comm_ip), pgwu_addr, INET_ADDRSTRLEN);
-	unsigned long pgwu_value = inet_addr(pgwu_addr);
-	set_fq_csid( &(pfcp_sess_est_resp->pgw_u_fqcsid), pgwu_value); */
-
-
-	if(RULECREATION_MODIFICATIONFAILURE == cause) {
-		set_failed_rule_id(&(pfcp_sess_est_resp->failed_rule_id));
-	}
-}
-#endif /* DP_BUILD */

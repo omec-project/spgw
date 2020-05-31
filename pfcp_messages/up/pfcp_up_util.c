@@ -27,20 +27,7 @@
 #include "pfcp_messages.h"
 #include "clogger.h"
 
-#ifdef CP_BUILD
-#include "cp_config.h"
-#include "sm_pcnd.h"
-#include "cp_timer.h"
-#include "cp_stats.h"
-#else
 #define LDB_ENTRIES_DEFAULT (1024 * 1024 * 4)
-#endif /* CP_BUILD */
-
-#if defined(CP_BUILD) && defined(USE_DNS_QUERY)
-#include "cdnshelper.h"
-
-#define FAILED_ENB_FILE "logs/failed_enb_queries.log"
-#endif
 
 #define QUERY_RESULT_COUNT 16
 
@@ -49,363 +36,6 @@ extern int pfcp_fd;
 struct rte_hash *node_id_hash;
 struct rte_hash *heartbeat_recovery_hash;
 struct rte_hash *associated_upf_hash;
-
-#if defined(CP_BUILD) && defined(USE_DNS_QUERY)
-extern pfcp_config_t pfcp_config;
-
-/**
- * @brief  : Add canonical result entry in upflist hash
- * @param  : res , result
- * @param  : res_count , total entries in result
- * @param  : imsi_val , imsi value
- * @param  : imsi_len , imsi length
- * @return : Returns upf count in case of success , 0 if could not get list , -1 otherwise
- */
-static int
-add_canonical_result_upflist_entry(canonical_result_t *res,
-		uint8_t res_count, uint64_t *imsi_val, uint16_t imsi_len)
-{
-	upfs_dnsres_t *upf_list = rte_zmalloc_socket(NULL,
-				sizeof(upfs_dnsres_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-	if (NULL == upf_list) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate memory for upf list "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
-		return -1;
-	}
-
-	uint8_t upf_count = 0;
-
-	for (int i = 0; i < res_count; i++) {
-		for (int j = 0; j < res[i].host2_info.ipv4host_count; j++) {
-			inet_aton(res[i].host2_info.ipv4_hosts[j],
-					&upf_list->upf_ip[upf_count]);
-			memcpy(upf_list->upf_fqdn[upf_count], res[i].cano_name2,
-					strlen((char *)res[i].cano_name2));
-			upf_count++;
-		}
-	}
-
-	if (upf_count == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Could not get collocated candidate list. \n");
-		return 0;
-	}
-
-	upf_list->upf_count = upf_count;
-
-	upflist_by_ue_hash_entry_add(imsi_val, imsi_len, upf_list);
-
-	return upf_count;
-}
-
-/**
- * @brief  : Add dns result in upflist hash
- * @param  : res , dns result
- * @param  : res_count , total entries in result
- * @param  : imsi_val , imsi value
- * @param  : imsi_len , imsi length
- * @return : Returns upf count in case of success , 0 if could not get list , -1 otherwise
- */
-static int
-add_dns_result_upflist_entry(dns_query_result_t *res,
-		uint8_t res_count, uint64_t *imsi_val, uint16_t imsi_len)
-{
-	upfs_dnsres_t *upf_list = rte_zmalloc_socket(NULL,
-				sizeof(upfs_dnsres_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-	if (NULL == upf_list) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate memeory for upf list "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
-		return -1;
-	}
-
-	uint8_t upf_count = 0;
-
-	for (int i = 0; i < res_count; i++) {
-		for (int j = 0; j < res[i].ipv4host_count; j++) {
-			inet_aton(res[i].ipv4_hosts[j],
-					&upf_list->upf_ip[upf_count]);
-			memcpy(upf_list->upf_fqdn[upf_count], res[i].hostname,
-					strlen(res[i].hostname));
-			upf_count++;
-		}
-	}
-
-	if (upf_count == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Could not get SGW-U list using DNS query \n");
-		return 0;
-	}
-
-	upf_list->upf_count = upf_count;
-
-	upflist_by_ue_hash_entry_add(imsi_val, imsi_len, upf_list);
-
-	return upf_count;
-}
-
-/**
- * @brief  : Record entries for failed enodeb
- * @param  : endid , enodeb id
- * @return : Returns 0 in case of success , -1 otherwise
- */
-static int
-record_failed_enbid(char *enbid)
-{
-	FILE *fp = fopen(FAILED_ENB_FILE, "a");
-
-	if (fp == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Could not open %s for writing failed "
-				"eNodeB query entry.\n", FAILED_ENB_FILE);
-		return 1;
-	}
-
-	fwrite(enbid, sizeof(char), strlen(enbid), fp);
-	fwrite("\n", sizeof(char), 1, fp);
-	fclose(fp);
-
-	return 0;
-}
-
-int
-get_upf_list(pdn_connection *pdn)
-{
-	int upf_count = 0;
-	ue_context *ctxt = NULL;
-	char apn_name[MAX_APN_LEN] = {0};
-
-	/* VS: Retrive the UE context */
-	ctxt = pdn->context;
-
-	/* Get enodeb id, mnc, mcc from Create Session Request */
-	uint32_t enbid = ctxt->uli.ecgi2.eci >> 8;
-	char enodeb[11] = {0};
-	char mnc[4] = {0};
-	char mcc[4] = {0};
-
-	sprintf(enodeb, "%u", enbid);
-
-	if (ctxt->uli.ecgi2.ecgi_mnc_digit_3 == 15)
-		sprintf(mnc, "%u%u", ctxt->uli.ecgi2.ecgi_mnc_digit_1,
-			ctxt->uli.ecgi2.ecgi_mnc_digit_2);
-	else
-		sprintf(mnc, "%u%u%u", ctxt->uli.ecgi2.ecgi_mnc_digit_1,
-			ctxt->uli.ecgi2.ecgi_mnc_digit_2,
-			ctxt->uli.ecgi2.ecgi_mnc_digit_3);
-
-	sprintf(mcc, "%u%u%u", ctxt->uli.ecgi2.ecgi_mcc_digit_1,
-				ctxt->uli.ecgi2.ecgi_mcc_digit_2,
-				ctxt->uli.ecgi2.ecgi_mcc_digit_3);
-
-	if (!pdn->apn_in_use) {
-		return 0;
-	}
-
-	/* Get network capabilities from apn configuration file */
-	apn *apn_requested = pdn->apn_in_use;
-
-	//memcpy(apn_name,(char *)ctxt->apn.apn + 1, apn_requested->apn_name_length -1);
-	/* VS: Need to revist this */
-	memcpy(apn_name, (pdn->apn_in_use)->apn_name_label + 1, (pdn->apn_in_use)->apn_name_length -1);
-
-	if (cp_config->cp_type == SAEGWC || cp_config->cp_type == SGWC) {
-
-		void *sgwupf_node_sel = init_enbupf_node_selector(enodeb, mnc, mcc);
-
-		set_desired_proto(sgwupf_node_sel, ENBUPFNODESELECTOR, UPF_X_SXA);
-		if(strlen(apn_requested->apn_net_cap) > 0) {
-			set_nwcapability(sgwupf_node_sel, apn_requested->apn_net_cap);
-		}
-
-		if (apn_requested->apn_usage_type != -1) {
-			set_ueusage_type(sgwupf_node_sel,
-				apn_requested->apn_usage_type);
-		}
-
-		uint16_t sgwu_count = 0;
-		dns_query_result_t sgwu_list[QUERY_RESULT_COUNT] = {0};
-		process_dnsreq(sgwupf_node_sel, sgwu_list, &sgwu_count);
-
-		if (!sgwu_count) {
-
-			record_failed_enbid(enodeb);
-			deinit_node_selector(sgwupf_node_sel);
-
-			/* Query DNS based on lb and hb of tac */
-			char lb[8] = {0};
-			char hb[8] = {0};
-
-			if (ctxt->uli.tai != 1) {
-				clLog(clSystemLog, eCLSeverityCritical, "Could not get SGW-U list using DNS"
-								"query. TAC missing in CSR.\n");
-				return 0;
-			}
-
-			sprintf(lb, "%u", ctxt->uli.tai2.tai_tac & 0xFF);
-			sprintf(hb, "%u", (ctxt->uli.tai2.tai_tac >> 8) & 0xFF);
-
-			sgwupf_node_sel = init_sgwupf_node_selector(lb, hb, mnc, mcc);
-
-			set_desired_proto(sgwupf_node_sel, SGWUPFNODESELECTOR, UPF_X_SXA);
-
-			if(strlen(apn_requested->apn_net_cap) > 0) {
-				set_nwcapability(sgwupf_node_sel, apn_requested->apn_net_cap);
-			}
-
-			if (apn_requested->apn_usage_type != -1) {
-				set_ueusage_type(sgwupf_node_sel,
-					apn_requested->apn_usage_type);
-			}
-
-			process_dnsreq(sgwupf_node_sel, sgwu_list, &sgwu_count);
-
-			if (!sgwu_count) {
-				clLog(clSystemLog, eCLSeverityCritical, "Could not get SGW-U list using DNS"
-					"query \n");
-				return 0;
-			}
-		}
-
-		/* SAEGW-C */
-		if (pdn->s5s8_pgw_gtpc_ipv4.s_addr == 0) {
-
-			uint16_t pgwu_count = 0;
-			dns_query_result_t pgwu_list[QUERY_RESULT_COUNT] = {0};
-
-			void *pwupf_node_sel = init_pgwupf_node_selector(apn_name,
-					mnc, mcc);
-
-			set_desired_proto(pwupf_node_sel, PGWUPFNODESELECTOR, UPF_X_SXB);
-
-			if(strlen(apn_requested->apn_net_cap) > 0) {
-				set_nwcapability(pwupf_node_sel, apn_requested->apn_net_cap);
-			}
-
-			if (apn_requested->apn_usage_type != -1) {
-				set_ueusage_type(pwupf_node_sel,
-					apn_requested->apn_usage_type);
-			}
-
-			process_dnsreq(pwupf_node_sel, pgwu_list, &pgwu_count);
-
-			/* Get colocated candidate list */
-			canonical_result_t result[QUERY_RESULT_COUNT] = {0};
-			int res_count = get_colocated_candlist(sgwupf_node_sel,
-						pwupf_node_sel, result);
-
-			if (!res_count) {
-				deinit_node_selector(pwupf_node_sel);
-				return 0;
-			}
-
-			/* VS: Need to check this */
-			upf_count = add_canonical_result_upflist_entry(result, res_count,
-							&ctxt->imsi, sizeof(ctxt->imsi));
-
-			deinit_node_selector(pwupf_node_sel);
-
-		} else { /* SGW-C */
-
-			upf_count = add_dns_result_upflist_entry(sgwu_list, sgwu_count,
-							&ctxt->imsi, sizeof(ctxt->imsi));
-		}
-
-		deinit_node_selector(sgwupf_node_sel);
-
-	} else if (cp_config->cp_type == PGWC) {
-
-		uint16_t pgwu_count = 0;
-		dns_query_result_t pgwu_list[QUERY_RESULT_COUNT] = {0};
-
-		void *pwupf_node_sel = init_pgwupf_node_selector(apn_name, mnc, mcc);
-
-		set_desired_proto(pwupf_node_sel, PGWUPFNODESELECTOR, UPF_X_SXB);
-		if(strlen(apn_requested->apn_net_cap) > 0) {
-			set_nwcapability(pwupf_node_sel, apn_requested->apn_net_cap);
-		}
-
-		if (apn_requested->apn_usage_type != -1) {
-			set_ueusage_type(pwupf_node_sel,
-				apn_requested->apn_usage_type);
-		}
-
-		process_dnsreq(pwupf_node_sel, pgwu_list, &pgwu_count);
-
-		/* VS: Need to check this */
-		/* Get collocated candidate list */
-		if (!strlen((char *)pdn->fqdn)) {
-			clLog(clSystemLog, eCLSeverityCritical, "SGW-U node name missing in CSR. \n");
-			deinit_node_selector(pwupf_node_sel);
-			return 0;
-		}
-
-		canonical_result_t result[QUERY_RESULT_COUNT] = {0};
-		int res_count = get_colocated_candlist_fqdn(
-				(char *)pdn->fqdn, pwupf_node_sel, result);
-
-		if (!res_count) {
-			clLog(clSystemLog, eCLSeverityCritical, "Could not get collocated candidate list. \n");
-			deinit_node_selector(pwupf_node_sel);
-			return 0;
-		}
-
-		upf_count = add_canonical_result_upflist_entry(result, res_count,
-							&ctxt->imsi, sizeof(ctxt->imsi));
-
-		deinit_node_selector(pwupf_node_sel);
-	}
-
-	return upf_count;
-}
-
-
-int
-dns_query_lookup(pdn_connection *pdn, uint32_t **upf_ip)
-{
-	upfs_dnsres_t *entry = NULL;
-
-	// Ajay : csreq leads us to here
-	if (get_upf_list(pdn) == 0){
-		 clLog(sxlogger, eCLSeverityCritical, "%s:%d Error:\n",
-			    __func__, __LINE__);
-		return GTPV2C_CAUSE_REQUEST_REJECTED;
-	}
-
-	/* Fill msg->upf_ipv4 address */
-	if ((get_upf_ip(pdn->context, &entry, upf_ip)) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failed to get upf ip address\n");
-		return GTPV2C_CAUSE_REQUEST_REJECTED;
-	}
-	memcpy(pdn->fqdn, entry->upf_fqdn[entry->current_upf],
-					strlen(entry->upf_fqdn[entry->current_upf]));
-	return 0;
-}
-
-#endif /* CP_BUILD && USE_DNS_QUERY */
-
-#ifdef CP_BUILD
-int
-pfcp_recv(void *msg_payload, uint32_t size,
-		struct sockaddr_in *peer_addr)
-{
-	socklen_t addr_len = sizeof(*peer_addr);
-	uint32_t bytes;
-	bytes = recvfrom(pfcp_fd, msg_payload, size, 0,
-			(struct sockaddr *)peer_addr, &addr_len);
-	//if(cp_config->cp_type == SGWC || cp_config->cp_type == SAEGWC)
-	//	bytes = recvfrom(pfcp_sgwc_fd_arr[0], msg_payload, size, 0,
-	//			(struct sockaddr *)peer_addr, &addr_len);
-	//else
-	//	bytes = recvfrom(pfcp_pgwc_fd_arr[0], msg_payload, size, 0,
-	//			(struct sockaddr *)peer_addr, &addr_len);
-	return bytes;
-}
-#endif /* CP_BUILD */
 
 int
 pfcp_send(int fd, void *msg_payload, uint32_t size,
@@ -427,9 +57,6 @@ uptime(void)
 	struct sysinfo s_info;
 	int error = sysinfo(&s_info);
 	if(error != 0) {
-#ifdef CP_BUILD
-		clLog(clSystemLog, eCLSeverityDebug, "Error in uptime\n");
-#endif /* CP_BUILD */
 	}
 	return s_info.uptime;
 }
@@ -474,7 +101,6 @@ create_heartbeat_hash_table(void)
 				rte_hash_params.name,
 				rte_strerror(rte_errno), rte_errno);
 	}
-
 }
 
 void
@@ -499,7 +125,8 @@ create_associated_upf_hash(void)
 }
 
 uint32_t
-current_ntp_timestamp(void) {
+current_ntp_timestamp(void) 
+{
 
 	struct timeval tim;
 	uint8_t ntp_time[8] = {0};
@@ -543,5 +170,4 @@ time_to_ntp(struct timeval *tv, uint8_t *ntp)
 		*--p = ntp_tim & 0xff;
 		ntp_tim >>= 8;
 	}
-
 }

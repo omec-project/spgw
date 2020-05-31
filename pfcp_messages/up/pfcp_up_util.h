@@ -14,41 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef PFCP_UTIL_H
-#define PFCP_UTIL_H
+#ifndef PFCP_UP_UTIL_H
+#define PFCP_UP_UTIL_H
 
 #include <sys/sysinfo.h>
 #include <stdint.h>
 #include <arpa/inet.h>
 
-#ifdef CP_BUILD
-#include "ue.h"
-#include "gtp_messages.h"
-#endif /* CP_BUILD */
-
 extern uint32_t start_time;
 extern struct rte_hash *node_id_hash;
 extern struct rte_hash *heartbeat_recovery_hash;
-
-#ifdef CP_BUILD
-/**
- * @brief  : Get upf list
- * @param  : pdn, pdn connection information
- * @return : Returns upf count in case of success , 0 if dn list not found, -1 otherwise
- */
-int
-get_upf_list(pdn_connection *pdn);
-
-/**
- * @brief  : Get upf ip
- * @param  : context, ue context information
- * @param  : eps_index, index of entry in array for particular bearer
- * @param  : upf_ip, param to store resulting ip
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-dns_query_lookup(pdn_connection *pdn, uint32_t **upf_ip);
-#endif /* CP_BUILD */
 
 /**
  * @brief  : Read data from peer node

@@ -23,8 +23,6 @@
 #include "pfcp_set_ie.h"
 #ifdef CP_BUILD
 #include "pfcp_cp_session.h"
-#else
-#include "pfcp_up_session.h"
 #endif
 #include "pfcp_association.h"
 #include "pfcp_messages_encoder.h"

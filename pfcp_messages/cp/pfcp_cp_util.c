@@ -27,16 +27,12 @@
 #include "pfcp_messages.h"
 #include "clogger.h"
 
-#ifdef CP_BUILD
 #include "cp_config.h"
 #include "sm_pcnd.h"
 #include "cp_timer.h"
 #include "cp_stats.h"
-#else
-#define LDB_ENTRIES_DEFAULT (1024 * 1024 * 4)
-#endif /* CP_BUILD */
 
-#if defined(CP_BUILD) && defined(USE_DNS_QUERY)
+#if defined(USE_DNS_QUERY)
 #include "cdnshelper.h"
 
 #define FAILED_ENB_FILE "logs/failed_enb_queries.log"
@@ -50,7 +46,7 @@ struct rte_hash *node_id_hash;
 struct rte_hash *heartbeat_recovery_hash;
 struct rte_hash *associated_upf_hash;
 
-#if defined(CP_BUILD) && defined(USE_DNS_QUERY)
+#if defined(USE_DNS_QUERY)
 extern pfcp_config_t pfcp_config;
 
 /**
@@ -386,9 +382,8 @@ dns_query_lookup(pdn_connection *pdn, uint32_t **upf_ip)
 	return 0;
 }
 
-#endif /* CP_BUILD && USE_DNS_QUERY */
+#endif /* USE_DNS_QUERY */
 
-#ifdef CP_BUILD
 int
 pfcp_recv(void *msg_payload, uint32_t size,
 		struct sockaddr_in *peer_addr)
@@ -405,7 +400,6 @@ pfcp_recv(void *msg_payload, uint32_t size,
 	//			(struct sockaddr *)peer_addr, &addr_len);
 	return bytes;
 }
-#endif /* CP_BUILD */
 
 int
 pfcp_send(int fd, void *msg_payload, uint32_t size,
@@ -427,9 +421,7 @@ uptime(void)
 	struct sysinfo s_info;
 	int error = sysinfo(&s_info);
 	if(error != 0) {
-#ifdef CP_BUILD
 		clLog(clSystemLog, eCLSeverityDebug, "Error in uptime\n");
-#endif /* CP_BUILD */
 	}
 	return s_info.uptime;
 }

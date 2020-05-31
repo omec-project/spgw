@@ -764,24 +764,24 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		default:
 				clLog(clSystemLog, eCLSeverityDebug, "No Data received\n");
 			break;
-		}
-		if (encoded != 0) {
-			if (sendto(my_sock.sock_fd,
-				(char *)pfcp_msg,
-				encoded,
-				MSG_DONTWAIT,
-				(struct sockaddr *)peer_addr,
-				sizeof(struct sockaddr_in)) < 0) {
-				clLog(clSystemLog, eCLSeverityDebug, "Error sending: %i\n",errno);
-			} else {
-				pfcp_header_t *pfcp_hdr = (pfcp_header_t *) pfcp_msg;
-				update_cli_stats(peer_addr->sin_addr.s_addr,
-						pfcp_hdr->message_type,
-				(cli_cause == REQUESTACCEPTED) ? ACC:REJ, SX);
-			}
-		}
-#endif /* DP_BUILD */
-		return 0;
 	}
+	if (encoded != 0) {
+		if (sendto(my_sock.sock_fd,
+			(char *)pfcp_msg,
+			encoded,
+			MSG_DONTWAIT,
+			(struct sockaddr *)peer_addr,
+			sizeof(struct sockaddr_in)) < 0) {
+			clLog(clSystemLog, eCLSeverityDebug, "Error sending: %i\n",errno);
+		} else {
+			pfcp_header_t *pfcp_hdr = (pfcp_header_t *) pfcp_msg;
+			update_cli_stats(peer_addr->sin_addr.s_addr,
+					pfcp_hdr->message_type,
+			(cli_cause == REQUESTACCEPTED) ? ACC:REJ, SX);
+		}
+	}
+#endif /* DP_BUILD */
+	return 0;
+}
 #endif
 

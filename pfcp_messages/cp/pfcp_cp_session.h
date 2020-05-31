@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef PFCP_SESSION_H
-#define PFCP_SESSION_H
+#ifndef PFCP_CP_SESSION_H
+#define PFCP_CP_SESSION_H
 
 #include "pfcp_messages.h"
 
-#ifdef CP_BUILD
 #include "gtpv2c.h"
 #include "sm_struct.h"
 #include "gtpv2c_ie.h"
 #include "pfcp_set_ie.h"
 #include "gtpv2c_set_ie.h"
 #include "gtp_messages.h"
-#endif
 
 #define NUM_UE 10000
 #define NUM_DP 100
@@ -88,7 +86,7 @@ fill_pfcp_sess_del_resp(pfcp_sess_del_rsp_t
 void
 fill_pfcp_session_modify_resp(pfcp_sess_mod_rsp_t *pfcp_sess_modify_resp,
 		pfcp_sess_mod_req_t *pfcp_session_mod_req, uint8_t cause, int offend);
-#ifdef CP_BUILD
+
 /**
  * @brief  : Fill pfcp session establishment request
  * @param  : pfcp_sess_est_req , structure to be filled
@@ -404,23 +402,6 @@ fill_remove_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer *bearer
 int8_t
 get_new_bearer_id(pdn_connection *pdn_cntxt);
 
-#else
-/**
- * @brief  : Fill pfcp session establishment request
- * @param  : pfcp_sess_est_req , structure to be filled
- * @return : Returns nothing
- */
-void
-fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req);
-
-/**
- * @brief  : Fill pfcp session modification request
- * @param  : pfcp_sess_mod_req , structure to be filled
- * @return : Returns nothing
- */
-void
-fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req);
-#endif /* CP_BUILD */
 
 /**
  * @brief  : Fill pfcp session delete request
@@ -437,7 +418,6 @@ fill_pfcp_sess_del_req( pfcp_sess_del_req_t *pfcp_sess_del_req);
 void
 fill_pfcp_sess_set_del_req( pfcp_sess_set_del_req_t *pfcp_sess_set_del_req);
 
-#ifdef CP_BUILD
 void
 fill_update_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer *bearer);
 
@@ -452,5 +432,4 @@ void sdf_pkt_filter_upd_bearer(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
     int flow_cnt,
     uint8_t direction);
 
-#endif /* CP_BUILD */
-#endif /* PFCP_SESSION_H */
+#endif /* PFCP_CP_SESSION_H */
