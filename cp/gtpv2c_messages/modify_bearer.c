@@ -18,7 +18,7 @@
 #include "gtp_messages.h"
 #include "gtpv2c_set_ie.h"
 #include "../cp_dp_api/vepc_cp_dp_api.h"
-#include "../pfcp_messages/pfcp_set_ie.h"
+#include "pfcp_cp_set_ie.h"
 #include "cp/cp_app.h"
 #include "clogger.h"
 /**

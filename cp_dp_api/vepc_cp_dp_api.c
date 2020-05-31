@@ -37,7 +37,11 @@
 #include "pfcp_up_util.h"
 #endif
 #include "interface.h"
-#include "pfcp_set_ie.h"
+#ifdef CP_BUILD
+#include "pfcp_cp_set_ie.h"
+#else
+#include "pfcp_up_set_ie.h"
+#endif
 #include "vepc_cp_dp_api.h"
 #include "pfcp_messages_encoder.h"
 

@@ -27,7 +27,7 @@
 #include "pfcp_cp_util.h" 
 #include "sm_struct.h"
 #include "../cp_stats.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_messages.h"
 #include "pfcp_messages_encoder.h"

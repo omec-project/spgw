@@ -21,7 +21,7 @@
 #include "pfcp_enum.h"
 #include "gw_adapter.h"
 #include "csid_struct.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_cp_set_ie.h"
 #include "pfcp_messages_encoder.h"
 #include "clogger.h"
 

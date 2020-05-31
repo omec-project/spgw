@@ -20,7 +20,7 @@
 #include "stdio.h"
 #include "sm_enum.h"
 #include "sm_hand.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_cp_set_ie.h"
 #include "pfcp_messages.h"
 #include "gtp_messages.h"
 

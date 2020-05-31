@@ -15,22 +15,14 @@
  */
 
 #include "pfcp_ies.h"
-#ifdef CP_BUILD
 #include "pfcp_cp_util.h"
-#else
-#include "pfcp_up_util.h"
-#endif
-#include "pfcp_set_ie.h"
+#include "pfcp_cp_set_ie.h"
 #include "pfcp_enum.h"
 #include "clogger.h"
 
-#ifdef CP_BUILD
 #include "cp.h"
 #include "main.h"
 #include "pfcp.h"
-#else
-#include "up_main.h"
-#endif /* CP_BUILD */
 
 #define RI_MAX 8
 
@@ -43,14 +35,9 @@ uint32_t start_time;
 const uint32_t pfcp_base_seq_no = 0x00000000;
 static uint32_t pfcp_seq_no_offset;
 
-#ifdef CP_BUILD
 #include "cp_config_new.h"
 extern pfcp_config_t pfcp_config;
 static uint32_t pfcp_sgwc_seid_offset;
-#else
-static int curr_teid_index[RI_MAX] = {0};
-static int MAX_TEID[RI_MAX] = {0,2,4,8,16,32,64,128};
-#endif /* CP_BUILD */
 
 //static uint16_t pdn_conn_set_id;
 extern struct rte_hash *node_id_hash;
@@ -116,14 +103,11 @@ set_pfcp_seid_header(pfcp_header_t *pfcp, uint8_t type, bool flag,uint32_t seq)
 
 	if(flag == HAS_SEID){
 
-#ifdef CP_BUILD
 		if (cp_config->cp_type == SGWC){
 			pfcp->seid_seqno.has_seid.seid  =
 						pfcp_sgwc_base_seid + pfcp_sgwc_seid_offset;
 			pfcp_sgwc_seid_offset++;
 		}
-#endif /* CP_BUILD */
-
 		pfcp->seid_seqno.has_seid.seq_no = seq;
 		pfcp->seid_seqno.has_seid.spare  = 0;
 		pfcp->seid_seqno.has_seid.message_prio = 0;
@@ -195,110 +179,6 @@ set_cpf_features(pfcp_cp_func_feat_ie_t *cpf_feat)
 	cpf_feat->sup_feat = 0;
 }
 
-#ifdef DP_BUILD
-/**
- * @brief  : checks next available teid range for give teidri index
- * @param  : val , teidri value , must be between 0 to 7
- * @return : Returns teid range in case of success, -1 otherwise
- */
-static uint8_t
-check_available_teid(uint8_t val){
-	uint8_t temp = 0;
-	temp = (curr_teid_index[val] << (8 -val));
-	//temp = (1 << (8 -val));
-	curr_teid_index[val]++;
-	if(curr_teid_index[val] >= MAX_TEID[val]){
-		curr_teid_index[val] = 0;
-	}
-	return temp;
-}
-
-/**
- * @brief  : Assign teid range from next available teid ranges
- * @param  : val , teidri value , must be between 0 to 7
- * @return : Returns teid range in case of success, -1 otherwise
- */
-static uint8_t
-assign_teid_range(uint8_t val){
-	if(val == 0){
-		return 0;
-	}else if (val > RI_MAX){
-		return -1;
-	}
-	return check_available_teid (val);
-}
-
-void
-set_up_ip_resource_info(pfcp_user_plane_ip_rsrc_info_ie_t *up_ip_resource_info,
-						uint8_t i)
-{
-	if(app.teidri_val == 0){
-		pfcp_set_ie_header(&(up_ip_resource_info->header),
-				PFCP_IE_USER_PLANE_IP_RSRC_INFO, SIZE_IF_TEIDRI_NOT_PRESENT);
-	}else{
-		pfcp_set_ie_header(&(up_ip_resource_info->header),
-				PFCP_IE_USER_PLANE_IP_RSRC_INFO, SIZE_IF_TEIDRI_PRESENT);
-	}
-
-	up_ip_resource_info->user_plane_ip_rsrc_info_spare  = 0;
-	up_ip_resource_info->assosi = 1;
-	up_ip_resource_info->assoni = 0;
-	up_ip_resource_info->v6     = 0;
-	up_ip_resource_info->v4     = 1;
-
-	if( up_ip_resource_info->assoni == 1)
-		up_ip_resource_info->ntwk_inst  = 1;
-
-	/* teid allocation logic */
-	up_ip_resource_info->teidri = app.teidri_val;
-	/* To ensure teid generated only once for one CP*/
-	if(i == 0){
-		up_ip_resource_info->teid_range  = assign_teid_range(up_ip_resource_info->teidri);
-	}
-
-	up_ip_resource_info->user_plane_ip_rsrc_info_spare2  = 0;
-	if( up_ip_resource_info->assosi ) {
-		switch (app.spgw_cfg) {
-			case SGWU :
-				if (i == 0 && up_ip_resource_info->v4 == 1 ) {
-					up_ip_resource_info->src_intfc  =
-									SOURCE_INTERFACE_VALUE_ACCESS; /*UL*/
-					/* TODO: Revisit this for change in yang */
-					up_ip_resource_info->ipv4_address = htonl(app.s1u_ip);
-				}
-				if (i == 1 && up_ip_resource_info->v4 == 1 ){
-					up_ip_resource_info->src_intfc  =
-									SOURCE_INTERFACE_VALUE_CORE; /*DL*/
-					/* TODO: Revisit this for change in yang */
-					up_ip_resource_info->ipv4_address =htonl (app.s5s8_sgwu_ip);
-				}
-				break;
-			case PGWU :
-				if (i == 0 && up_ip_resource_info->v4 == 1 ) {
-					up_ip_resource_info->src_intfc  =
-									SOURCE_INTERFACE_VALUE_ACCESS; /*DL*/
-
-					up_ip_resource_info->ipv4_address = htonl(app.s5s8_pgwu_ip);
-				}
-				break;
-
-			case SAEGWU :
-				if (i == 0 && up_ip_resource_info->v4 == 1 ) {
-					up_ip_resource_info->src_intfc  =
-									SOURCE_INTERFACE_VALUE_ACCESS; /*UL*/
-
-					/* TODO: Revisit this for change in yang */
-					up_ip_resource_info->ipv4_address = htonl(app.s1u_ip);
-				}
-				break;
-
-			default :
-				clLog(clSystemLog, eCLSeverityDebug,"default pfcp asso req\n");
-				break;
-		}
-	}
-}
-#endif /* DP_BUILD*/
 
 void
 set_bar_id(pfcp_bar_id_ie_t *bar_id)
@@ -450,7 +330,6 @@ creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value)
 	size += set_pdr_id(&(create_pdr->pdr_id));
 	size += set_precedence(&(create_pdr->precedence));
 	size += set_pdi(&(create_pdr->pdi));
-#ifdef CP_BUILD
 	if (cp_config->cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
 		size += set_outer_hdr_removal(&(create_pdr->outer_hdr_removal));
 	size += set_far_id(&(create_pdr->far_id));
@@ -460,7 +339,6 @@ creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value)
 			size += set_qer_id(&(create_pdr->qer_id[i]));
 		}
 	}
-#endif /* CP_BUILD */
 	/* TODO: Revisit this for change in yang
 	create_pdr->urr_id_count = 1;
 	for(int i=0; i < create_pdr->urr_id_count; i++ ) {
@@ -499,7 +377,6 @@ updating_pdr(pfcp_update_pdr_ie_t *create_pdr, int source_iface_value)
 	size += set_pdr_id(&(create_pdr->pdr_id));
 	size += set_precedence(&(create_pdr->precedence));
 	size += set_pdi(&(create_pdr->pdi));
-#ifdef CP_BUILD
 	if (cp_config->cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
 		size += set_outer_hdr_removal(&(create_pdr->outer_hdr_removal));
 	size += set_far_id(&(create_pdr->far_id));
@@ -511,7 +388,6 @@ updating_pdr(pfcp_update_pdr_ie_t *create_pdr, int source_iface_value)
 		}
 	}
 #endif /* GX_BUILD*/
-#endif /* CP_BUILD */
 	/* TODO: Revisit this for change in yang
 	create_pdr->urr_id_count = 1;
 	for(int i=0; i < create_pdr->urr_id_count; i++ ) {
@@ -1551,7 +1427,6 @@ void cause_check_sess_estab(pfcp_sess_estab_req_t *pfcp_session_request,
 
 }
 
-#ifdef CP_BUILD
 
 int
 gx_context_entry_add(char *sess_id, gx_context_t *entry)
@@ -1615,7 +1490,6 @@ upf_context_entry_lookup(uint32_t upf_ip, upf_context_t **entry)
 	return 0;
 }
 
-#endif /* CP_BUILD */
 
 uint8_t
 add_node_id_hash(uint32_t *nodeid, uint64_t *data )
@@ -1888,7 +1762,6 @@ void clear_heartbeat_hash_table(void)
 	rte_hash_free(heartbeat_recovery_hash);
 }
 
-#ifdef CP_BUILD
 void
 create_gx_context_hash(void)
 {
@@ -2033,7 +1906,6 @@ upflist_by_ue_hash_entry_delete(uint64_t *imsi_val, uint16_t imsi_len)
 
 	return 0;
 }
-#endif /*CP_BUILD */
 
 /*get msg type from cstm ie string */
 uint64_t

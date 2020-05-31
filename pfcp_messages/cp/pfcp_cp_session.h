@@ -22,7 +22,7 @@
 #include "gtpv2c.h"
 #include "sm_struct.h"
 #include "gtpv2c_ie.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_cp_set_ie.h"
 #include "gtpv2c_set_ie.h"
 #include "gtp_messages.h"
 

@@ -16,7 +16,7 @@
 #include "up_main.h"
 #include "epc_arp.h"
 #include "pfcp_enum.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_up_set_ie.h"
 #include "clogger.h"
 
 extern struct rte_hash *arp_hash_handle[NUM_SPGW_PORTS];

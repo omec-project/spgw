@@ -24,7 +24,7 @@
 #include "pfcp.h"
 #include "gtpv2c.h"
 #include "cp_stats.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_association.h"
 #include "restoration_timer.h"

@@ -23,7 +23,7 @@
 #include "pfcp_messages.h"
 #include "gtp_messages.h"
 #ifdef USE_DNS_QUERY
-#include "pfcp_set_ie.h"
+#include "pfcp_cp_set_ie.h"
 #endif /* USE_DNS_QUERY */
 
 /**

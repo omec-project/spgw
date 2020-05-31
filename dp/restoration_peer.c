@@ -30,7 +30,7 @@
 #include "up_main.h"
 #include "epc_arp.h"
 #include "pfcp_association.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_up_set_ie.h"
 #include "../restoration/restoration_timer.h"
 
 #include "gw_adapter.h"

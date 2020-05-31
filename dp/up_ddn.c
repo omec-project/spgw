@@ -18,7 +18,7 @@
 
 #include "up_main.h"
 #include "pfcp_up_util.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_up_set_ie.h"
 #include "pfcp_messages_encoder.h"
 #include "clogger.h"
 #include "gw_adapter.h"

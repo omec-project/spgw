@@ -23,7 +23,7 @@
 #include <rte_hash_crc.h>
 
 #include "pfcp_cp_util.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_cp_set_ie.h"
 #include "pfcp_messages.h"
 #include "clogger.h"
 

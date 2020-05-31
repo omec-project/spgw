@@ -57,7 +57,7 @@ SRCS-y := up_main.c\
 	$(SRCDIR)/../interface/ipc/dp_ipc_api.o\
 	$(SRCDIR)/../cp_dp_api/vepc_cp_dp_api.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_util.o\
-	$(SRCDIR)/../pfcp_messages/pfcp_set_ie.o\
+	$(SRCDIR)/../pfcp_messages/up/pfcp_up_set_ie.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_sess.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_print_rule.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_req_rsp.o\

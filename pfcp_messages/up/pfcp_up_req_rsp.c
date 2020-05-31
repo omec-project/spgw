@@ -18,7 +18,7 @@
 
 #include "pfcp_up_util.h"
 #include "dp_ipc_api.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_up_set_ie.h"
 #include "pfcp_association.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_messages_decoder.h"

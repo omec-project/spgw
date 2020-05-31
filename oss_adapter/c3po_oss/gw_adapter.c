@@ -51,7 +51,11 @@
 #include "clogger.h"
 #include "cstats.h"
 
-#include "../../pfcp_messages/pfcp_set_ie.h"
+#ifdef CP_BUILD
+#include "pfcp_cp_set_ie.h"
+#else
+#include "pfcp_up_set_ie.h"
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////
 

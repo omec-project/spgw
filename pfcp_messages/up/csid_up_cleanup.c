@@ -18,7 +18,7 @@
 #include "pfcp_up_util.h"
 #include "pfcp_enum.h"
 #include "csid_struct.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_up_set_ie.h"
 #include "pfcp_up_sess.h"
 #include "pfcp_messages_encoder.h"
 #include "clogger.h"

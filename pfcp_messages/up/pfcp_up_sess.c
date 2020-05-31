@@ -16,7 +16,7 @@
 
 #include "up_acl.h"
 #include "pfcp_enum.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_up_set_ie.h"
 #include "pfcp_up_llist.h"
 #include "pfcp_association.h"
 #include "clogger.h"

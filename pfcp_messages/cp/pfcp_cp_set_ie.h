@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef PFCP_SET_IE_H
-#define PFCP_SET_IE_H
+#ifndef PFCP_CP_SET_IE_H
+#define PFCP_CP_SET_IE_H
 
 #include <stdbool.h>
 #include <rte_hash_crc.h>
 #include "pfcp_messages.h"
 
-#ifdef CP_BUILD
 #include "ue.h"
 #include "cp.h"
 #include "gtp_ies.h"
@@ -29,7 +28,6 @@
 #include "gtp_messages.h"
 #include "../ipc/dp_ipc_api.h"
 #include "restoration_timer.h"
-#endif
 
 /* TODO: Move following lines to another file */
 #define HAS_SEID 1
@@ -99,7 +97,6 @@ typedef struct pfcp_context_t{
 
 pfcp_context_t pfcp_ctxt;
 
-#ifdef CP_BUILD
 
 typedef enum pfcp_assoc_status_en {
 	ASSOC_IN_PROGRESS = 0,
@@ -162,7 +159,6 @@ struct rte_hash *upf_context_by_ip_hash;
 
 struct rte_hash *gx_context_by_sess_id_hash;
 
-#endif /* CP_BUILD */
 
 /**
  * @brief  : Generates sequence number
@@ -213,7 +209,6 @@ void
 pfcp_set_ie_header(pfcp_ie_header_t *header, uint8_t type, uint16_t length);
 
 
-#ifdef CP_BUILD
 /**
  * @brief  : Process create session request, update ue context, bearer info
  * @param  : csr, holds information in csr
@@ -332,25 +327,6 @@ create_upf_by_ue_hash(void);
  */
 uint8_t
 process_pfcp_report_req(pfcp_sess_rpt_req_t *pfcp_sess_rep_req);
-#else
-/**
- * @brief  : Set values in pdn type ie
- * @param  : pdn, pdn type ie structure to be filled
- * @return : Returns nothing
- */
-void
-set_pdn_type(pfcp_pdn_type_ie_t *pdn);
-
-/**
- * @brief  : Set values in user plane ip resource info ie
- * @param  : up_ip_resource_info, ie structure to be filled
- * @param  : i, interface type access or core
- * @return : Returns nothing
- */
-void
-set_up_ip_resource_info(pfcp_user_plane_ip_rsrc_info_ie_t *up_ip_resource_info,
-					uint8_t i);
-#endif /* CP_BUILD */
 
 
 /**
@@ -1071,7 +1047,6 @@ set_source_intf(pfcp_src_intfc_ie_t *src_intf);
 void
 set_activate_predefined_rules(pfcp_actvt_predef_rules_ie_t *act_predef_rule);
 
-#ifdef CP_BUILD
 /**
  * @brief  : Set values in pfd contents ie
  * @param  : pfd_conts, ie structure to be filled
@@ -1188,7 +1163,6 @@ clear_s5s8_sgwc_hash_table(void);
  */
 int
 send_ccr_u_msg(mod_bearer_req_t *mb_req);
-#endif /* CP_BUILD */
 
 /**
  * @brief  : get msg type from cstm ie string
@@ -1199,4 +1173,4 @@ send_ccr_u_msg(mod_bearer_req_t *mb_req);
 uint64_t
 get_rule_type(pfcp_pfd_contents_ie_t *pfd_conts, uint16_t *idx);
 
-#endif /* PFCP_SET_IE_H */
+#endif /* PFCP_CP_SET_IE_H */

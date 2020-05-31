@@ -16,7 +16,7 @@
 
 #include "pfcp_cp_util.h"
 #include "pfcp_enum.h"
-#include "pfcp_set_ie.h"
+#include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_messages.h"
 #include "pfcp_association.h"
