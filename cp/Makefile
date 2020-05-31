@@ -70,7 +70,7 @@ SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_req_resp.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_session.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_set_ie.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_util.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_init.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_init.o
 
 
 SRCS-y += $(SRCDIR)/../test/simu_cp/simu_cp.o
@@ -217,7 +217,7 @@ ifneq (,$(findstring GX_BUILD, $(CFLAGS), $(EXTRA_CFLAGS)))
 	SRCS-y += ipc_api.c
 	SRCS-y += state_machine/sm_gx_pcnd.o
 	SRCS-y += $(SRCDIR)/gx_app/src/gx_pack.o
-	SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_gx.o
+	SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_gx.o
 	CFLAGS += -I$(SRCDIR)/../cp/gx_app/include
 endif
 
