@@ -62,8 +62,7 @@ SRCS-y := up_main.c\
 	$(SRCDIR)/../pfcp_messages/pfcp_print_rule.o\
 	$(SRCDIR)/../pfcp_messages/pfcp_req_resp.o\
 	$(SRCDIR)/../pfcp_messages/pfcp_association.o\
-	$(SRCDIR)/../pfcp_messages/pfcp_up_sess_rsp.o\
-	#$(SRCDIR)/../pfcp_messages/pfcp_session.o\
+	$(SRCDIR)/../pfcp_messages/up/pfcp_up_sess_rsp.o\
 
 SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/gw_adapter.o
 CFLAGS += -I$(SRCDIR)/../oss_adapter/c3po_oss

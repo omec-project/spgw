@@ -17,7 +17,11 @@
 #include "pfcp_util.h"
 #include "pfcp_enum.h"
 #include "pfcp_set_ie.h"
-#include "pfcp_session.h"
+#ifdef CP_BUILD
+#include "pfcp_cp_session.h"
+#else
+#include "pfcp_up_session.h"
+#endif
 #include "pfcp_association.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_messages_decoder.h"

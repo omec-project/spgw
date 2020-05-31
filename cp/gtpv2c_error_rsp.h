@@ -22,7 +22,7 @@
 #include "sm_struct.h"
 #include "gtpv2c_ie.h"
 #include "pfcp_util.h"
-#include "pfcp_session.h"
+#include "pfcp_cp_session.h" // ajay - why pfcp include files here ?
 #include "gtpv2c_set_ie.h"
 #include "pfcp_messages_encoder.h"
 #include "./gx_app/include/gx.h"

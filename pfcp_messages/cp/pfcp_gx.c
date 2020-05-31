@@ -29,7 +29,7 @@
 #include "sm_struct.h"
 #include "pfcp_util.h"
 #include "cp_config.h"
-#include "pfcp_session.h"
+#include "pfcp_cp_session.h"
 #include "pfcp_messages.h"
 #include "pfcp_messages_encoder.h"
 #include "cp_timer.h"
