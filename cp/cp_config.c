@@ -18,6 +18,10 @@
 #include "stdlib.h"
 #include "cp.h"
 #include <rte_log.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include "assert.h"
 
 
 //#define RTE_LOGTYPE_CP RTE_LOGTYPE_USER4
@@ -918,6 +922,82 @@ init_spgwc_dynamic_config(struct app_config *cfg )
 		}
  	}
 	return;
+}
+
+/* AJAY : for now I am using linux call to do the dns resolution...
+ * Need to use DNS lib from epc tools */
+static
+struct in_addr native_linux_name_resolve(const char *name)
+{
+        printf("Function [%s] - Line - %d \n",__FUNCTION__,__LINE__);
+        struct addrinfo hints;
+        struct addrinfo *result=NULL, *rp=NULL;
+        int err;
+
+        memset(&hints, 0, sizeof(struct addrinfo));
+        hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
+        hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+        hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+        hints.ai_protocol = 0;          /* Any protocol */
+        hints.ai_canonname = NULL;
+        hints.ai_addr = NULL;
+        hints.ai_next = NULL;
+        err = getaddrinfo(name, NULL, &hints, &result);
+        if (err != 0)
+        {
+                // Keep trying ...May be SGW is not yet deployed
+                // We shall be doing this once timer library is integrated
+                printf("getaddrinfo: %s\n", gai_strerror(err));
+        }
+        else
+        {
+                for (rp = result; rp != NULL; rp = rp->ai_next)
+                {
+                        if(rp->ai_family == AF_INET)
+                        {
+                                struct sockaddr_in *addrV4 = (struct sockaddr_in *)rp->ai_addr;
+                                printf("gw address received from DNS response %s\n", inet_ntoa(addrV4->sin_addr));
+                                return addrV4->sin_addr;
+                        }
+                }
+        }
+        assert(0); /* temporary */
+	struct in_addr ip = {0};
+        return ip;
+}
+
+struct in_addr 
+get_upf_ipaddr_for_key(struct dp_key *key)
+{
+	struct in_addr ip = {0};
+#if 0
+	RTE_LOG_DP(INFO, CP, "Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", key->mcc_mnc.mcc_digit_1,
+		   key->mcc_mnc.mcc_digit_2, key->mcc_mnc.mcc_digit_3, key->mcc_mnc.mnc_digit_1,
+		   key->mcc_mnc.mnc_digit_2, key->mcc_mnc.mnc_digit_3, key->tac);
+#else
+	printf("Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", key->mcc_mnc.mcc_digit_1,
+		   key->mcc_mnc.mcc_digit_2, key->mcc_mnc.mcc_digit_3, key->mcc_mnc.mnc_digit_1,
+		   key->mcc_mnc.mnc_digit_2, key->mcc_mnc.mnc_digit_3, key->tac);
+#endif
+
+	struct dp_info *np; // ajaytodo - add upf address 
+	LIST_FOREACH(np, &cp_config->appl_config->dpList, dpentries) {
+#if 0
+	RTE_LOG_DP(INFO, CP, "dp Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", np->key.mcc_mnc.mcc_digit_1,
+		   np->key.mcc_mnc.mcc_digit_2, np->key.mcc_mnc.mcc_digit_3, np->key.mcc_mnc.mnc_digit_1,
+		   np->key.mcc_mnc.mnc_digit_2, np->key.mcc_mnc.mnc_digit_3, np->key.tac);
+#else
+	printf("dp Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", np->key.mcc_mnc.mcc_digit_1,
+		   np->key.mcc_mnc.mcc_digit_2, np->key.mcc_mnc.mcc_digit_3, np->key.mcc_mnc.mnc_digit_1,
+		   np->key.mcc_mnc.mnc_digit_2, np->key.mcc_mnc.mnc_digit_3, np->key.tac);
+#endif
+		if(bcmp((void *)(&np->key.mcc_mnc), (void *)(&key->mcc_mnc), 3) != 0)
+			continue;
+		if(np->key.tac != key->tac)
+			continue;
+		return native_linux_name_resolve(np->dpName); 
+	}
+	return ip; 
 }
 
 /* Given key find the DP. Once DP is found then return its dpId */

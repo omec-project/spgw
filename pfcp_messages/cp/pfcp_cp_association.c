@@ -451,47 +451,6 @@ assoication_setup_request(ue_context *context, uint8_t ebi_index)
 	return 0;
 }
 
-/* AJAY : for now I am using linux call to do the dns resolution...
- * Need to use DNS lib from epc tools */
-static 
-uint32_t native_linux_name_resolve(const char *name)
-{
-	printf("Function [%s] - Line - %d \n",__FUNCTION__,__LINE__);
-  	struct addrinfo hints;
-  	struct addrinfo *result=NULL, *rp=NULL; 
-  	int err;
-
-  	memset(&hints, 0, sizeof(struct addrinfo));
-  	hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
-  	hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-  	hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-  	hints.ai_protocol = 0;          /* Any protocol */
-  	hints.ai_canonname = NULL;
-  	hints.ai_addr = NULL;
-  	hints.ai_next = NULL;
-  	err = getaddrinfo(name, NULL, &hints, &result);
-  	if (err != 0) 
-  	{
-  		// Keep trying ...May be SGW is not yet deployed 
-		// We shall be doing this once timer library is integrated 
-  		printf("getaddrinfo: %s\n", gai_strerror(err));
-  	}
-  	else 
-  	{
-  		for (rp = result; rp != NULL; rp = rp->ai_next) 
-  		{
-  			if(rp->ai_family == AF_INET)
-  			{
-  				struct sockaddr_in *addrV4 = (struct sockaddr_in *)rp->ai_addr;
-  				printf("gw address received from DNS response %s\n", inet_ntoa(addrV4->sin_addr));
-  				return addrV4->sin_addr.s_addr;
-  			}
-  		}
-  	}
-	assert(0); /* temporary */
-	return 0;
-}
-
 int
 process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index) // ajaytodo : pass ipv4 up4 as argument 
 {
@@ -516,20 +475,11 @@ process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index) // ajay
 		/* Need to think on it*/
 		upf_ipv4.s_addr = *upf_ip;
 #else
-#if 1
-		// select the edge and use service name...if service name is already resolved then
-		// use the ip address found from cache..We dont want to do DNS per call  
-		/* TODO : ajay Need to get this from the config. Helm Chart changes ? */
-		const char *upf_name="spgwu-headless";
-		uint32_t upf_addr = native_linux_name_resolve(upf_name);
-		pdn->upf_ipv4.s_addr = upf_addr;
-		upf_ipv4.s_addr = upf_addr;
-#else
+		// if name is nit already resolved and no DNS enabled then use the configured
+		// upf address 
 		pdn->upf_ipv4.s_addr = pfcp_config.upf_pfcp_ip.s_addr;
 		upf_ipv4.s_addr =      pfcp_config.upf_pfcp_ip.s_addr;
-#endif
 #endif /* USE_DNS_QUERY */
-
 	}
 
 	// ajay : we should keep upf_context reference in the pdn 

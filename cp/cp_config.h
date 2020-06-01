@@ -92,6 +92,11 @@ void init_spgwc_dynamic_config(struct app_config *cfg);
 */
 uint32_t select_dp_for_key(struct dp_key *);
 
+/* Application can pass the dp_key and get back one of the selected DPname in return.
+*/
+struct in_addr get_upf_ipaddr_for_key(struct dp_key *);
+
+
 /**
  * Whenever a upf registers with a CP, the entry is scanned through
  * a list of appl_config list of dp's. If the DP exists in the appl_config

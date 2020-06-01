@@ -3630,6 +3630,7 @@ process_create_sess_req(create_sess_req_t *csr,
 	/* VS: Return the UE context */
 	*_context = context;
 
+#ifndef USE_DNS_QUERY
     struct dp_key dpkey = {0};
     dpkey.tac = csr->uli.tai2.tai_tac;
     printf("csr uli mcc %d %d %d  mnc %d %d %d \n", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
@@ -3637,12 +3638,15 @@ process_create_sess_req(create_sess_req_t *csr,
     memcpy((void *)(&dpkey.mcc_mnc), (void *)(&csr->uli.tai2), 3);
 
 	/* TODO : more work if SGW call Vs PGW call */
-    uint32_t dataplane_id = select_dp_for_key(&dpkey); // ajaytodo : get upf address 
-    printf("dpid.%d imsi.%llu \n", dataplane_id, (long long unsigned int)context->imsi);
-    if(dataplane_id == 12345) 
+    struct in_addr upf_addr = get_upf_ipaddr_for_key(&dpkey); // ajaytodo : get upf address 
+    printf("UPF address  %s imsi.%llu \n", inet_ntoa(upf_addr), (long long unsigned int)context->imsi);
+    // no upf available 
+    if(upf_addr.s_addr == 0) 
     {
 	return GTPV2C_CAUSE_REQUEST_REJECTED;
     }
+    pdn->upf_ipv4 = upf_addr; 
+#endif
     return 0;
 }
 
