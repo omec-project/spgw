@@ -543,6 +543,7 @@ msg_handler_s5s8(void)
 		}
 	}
 
+		printf("[%s] - %d - Procedure - %d state - %d event - %d. Invoke FSM now  \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
 		if ((msg.proc < END_PROC) && (msg.state < END_STATE) && (msg.event < END_EVNT)) {
 			if (SGWC == cp_config->cp_type) {
 			    ret = (*state_machine_sgwc[msg.proc][msg.state][msg.event])(&msg, NULL);

@@ -3629,8 +3629,21 @@ process_create_sess_req(create_sess_req_t *csr,
 
 	/* VS: Return the UE context */
 	*_context = context;
-	return 0;
 
+    struct dp_key dpkey = {0};
+    dpkey.tac = csr->uli.tai2.tai_tac;
+    printf("csr uli mcc %d %d %d  mnc %d %d %d \n", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
+
+    memcpy((void *)(&dpkey.mcc_mnc), (void *)(&csr->uli.tai2), 3);
+
+	/* TODO : more work if SGW call Vs PGW call */
+    uint32_t dataplane_id = select_dp_for_key(&dpkey); // ajaytodo : get upf address 
+    printf("dpid.%d imsi.%llu \n", dataplane_id, (long long unsigned int)context->imsi);
+    if(dataplane_id == 12345) 
+    {
+	return GTPV2C_CAUSE_REQUEST_REJECTED;
+    }
+    return 0;
 }
 
 int
@@ -3948,7 +3961,7 @@ process_pfcp_sess_est_resp(pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, gtpv2c_head
 	pdn = context->eps_bearers[ebi_index]->pdn;
 	bearer = context->eps_bearers[ebi_index];
 	pdn->dp_seid = dp_sess_id;
-	printf("\n %s %d DP session id %lu. UE address = %s  \n", __FUNCTION__, __LINE__, dp_sess_id, inet_ntoa(pdn->ipv4));
+	printf("%s %d DP session id %lu. UE address = %s  \n", __FUNCTION__, __LINE__, dp_sess_id, inet_ntoa(pdn->ipv4));
 
 	/* Update the UE state */
 	pdn->state = PFCP_SESS_EST_RESP_RCVD_STATE;

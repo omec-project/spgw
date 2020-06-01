@@ -88,14 +88,15 @@ association_setup_handler(void *data, void *unused_param)
 	struct resp_info *resp = NULL;
 
 	/* VS: Populate the UE context, PDN and Bearer information */
+	printf("%s %d - UPF addr = %s \n", __FUNCTION__,__LINE__, inet_ntoa(msg->upf_ipv4));
 	ret = process_create_sess_req(&msg->gtpc_msg.csr,
 			&context, &msg->upf_ipv4);
 	if (ret) {
-		if(ret != -1){
+		if(ret != -1) {
 			if(ret == -2 )
 				return ret;
 			cs_error_response(msg, ret,
-								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+					cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 			process_error_occured_handler(data, unused_param);
 		}
 		clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Error: %d \n",
@@ -104,7 +105,7 @@ association_setup_handler(void *data, void *unused_param)
 	}
 
 	uint32_t ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
-	ret = process_pfcp_assoication_request(context->pdns[ebi_index], ebi_index);
+	ret = process_pfcp_assoication_request(context->pdns[ebi_index], ebi_index); // ajaytodo : - pass upf address to this function 
 	if(ret){
 		if(ret != -1){
 			cs_error_response(msg, ret,
@@ -144,7 +145,7 @@ process_assoc_resp_handler(void *data, void *addr) // ajay
 	msg_info *msg = (msg_info *)data;
 	struct sockaddr_in *peer_addr = (struct sockaddr_in *)addr;
 
-	printf(" %s %d - Received PFCP association response from %s  \n",__FUNCTION__,__LINE__, inet_ntoa(peer_addr->sin_addr));
+	printf("%s %d - Received PFCP association response from %s  \n",__FUNCTION__,__LINE__, inet_ntoa(peer_addr->sin_addr));
 	ret = process_pfcp_ass_resp(msg, peer_addr);
 	if(ret){
 		if(ret != -1){

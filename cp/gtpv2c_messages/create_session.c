@@ -74,7 +74,7 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 	}
 
 	pdn->ipv4.s_addr = htonl(pdn->ipv4.s_addr);
-	printf("\n%s %d - UE address %s, pdn = %p ",__FUNCTION__,__LINE__,inet_ntoa(pdn->ipv4), pdn);
+	printf("%s %d - UE address %s, pdn = %p\n",__FUNCTION__,__LINE__,inet_ntoa(pdn->ipv4), pdn);
 	set_ipv4_paa(&cs_resp.paa, IE_INSTANCE_ZERO, pdn->ipv4);
 
 	set_apn_restriction(&cs_resp.apn_restriction, IE_INSTANCE_ZERO,

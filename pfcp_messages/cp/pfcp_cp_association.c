@@ -378,7 +378,7 @@ assoication_setup_request(ue_context *context, uint8_t ebi_index)
 	//char sgwu_fqdn_res[MAX_HOSTNAME_LENGTH] = {0};
 	pfcp_assn_setup_req_t pfcp_ass_setup_req = {0};
 	struct in_addr test; test.s_addr = (context->pdns[ebi_index])->upf_ipv4.s_addr;
-	printf("\n Initiate PFCP setup to peer address = %s \n", inet_ntoa(test));
+	printf("Initiate PFCP setup to peer address = %s \n", inet_ntoa(test));
 	upf_ip = (context->pdns[ebi_index])->upf_ipv4.s_addr; // ajay
 	upf_context  = rte_zmalloc_socket(NULL, sizeof(upf_context_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
@@ -483,7 +483,7 @@ uint32_t native_linux_name_resolve(const char *name)
   			if(rp->ai_family == AF_INET)
   			{
   				struct sockaddr_in *addrV4 = (struct sockaddr_in *)rp->ai_addr;
-  				printf("\ngw address received from DNS response %s\n", inet_ntoa(addrV4->sin_addr));
+  				printf("gw address received from DNS response %s\n", inet_ntoa(addrV4->sin_addr));
   				return addrV4->sin_addr.s_addr;
   			}
   		}
@@ -493,7 +493,7 @@ uint32_t native_linux_name_resolve(const char *name)
 }
 
 int
-process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index)
+process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index) // ajaytodo : pass ipv4 up4 as argument 
 {
 	int ret = 0;
 	struct in_addr upf_ipv4 = {0};

@@ -114,12 +114,12 @@ typedef struct cfg_upf_context {
 
 struct mcc_mnc_key
 {
-	uint8_t mcc_digit_1 :4;
 	uint8_t mcc_digit_2 :4;
-	uint8_t mcc_digit_3 :4;
+	uint8_t mcc_digit_1 :4;
 	uint8_t mnc_digit_3 :4;
-	uint8_t mnc_digit_1 :4;
+	uint8_t mcc_digit_3 :4;
 	uint8_t mnc_digit_2 :4;
+	uint8_t mnc_digit_1 :4;
 };
 
 struct app_config 
