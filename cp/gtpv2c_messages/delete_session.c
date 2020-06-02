@@ -22,8 +22,7 @@
 #include "sm_struct.h"
 #include "cp_config.h"
 #include "cp_stats.h"
-
-pfcp_config_t pfcp_config;
+#include "cp_config_new.h"
 
 int
 delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,

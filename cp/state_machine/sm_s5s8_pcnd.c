@@ -26,7 +26,6 @@
 #include "main.h"
 #endif
 
-pfcp_config_t pfcp_config;
 extern struct cp_stats_t cp_stats;
 
 uint8_t

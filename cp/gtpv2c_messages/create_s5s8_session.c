@@ -42,7 +42,6 @@
 #endif /* USE_REST */
 
 
-extern pfcp_config_t pfcp_config;
 
 extern int pfcp_fd;
 extern struct sockaddr_in upf_pfcp_sockaddr;

@@ -27,7 +27,7 @@
 #include "sm_struct.h"
 #include "cp_config.h"
 #include "debug_str.h"
-#include "dp_ipc_api.h"
+#include "cp_io_poll.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp.h"
 #include <sys/stat.h>
@@ -57,8 +57,6 @@
 //#define RTE_LOGTYPE_CP RTE_LOGTYPE_USER4
 
 uint32_t start_time;
-extern pfcp_config_t pfcp_config;
-
 char *config_update_base_folder = NULL;
 bool native_config_folder = false;
 
@@ -66,6 +64,7 @@ bool native_config_folder = false;
  * config is scattered all across the place as of now
  */
 cp_config_t *cp_config = NULL;
+pfcp_config_t pfcp_config;
 
 #ifdef USE_REST
 uint32_t up_time = 0;

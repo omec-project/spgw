@@ -22,7 +22,7 @@
  * prototypes of dataplane meter config and handlers.
  */
 
-#include "../interface/ipc/dp_ipc_api.h"
+#include "up_io_poll.h"
 #include <rte_mbuf.h>
 #include <rte_meter.h>
 

@@ -40,7 +40,7 @@
 #include "pfcp_up_struct.h"
 
 #include "structs.h"
-#include "interface.h"
+#include "up_interface.h"
 #include "vepc_cp_dp_api.h"
 #include "epc_packet_framework.h"
 

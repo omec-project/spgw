@@ -942,6 +942,7 @@ struct in_addr native_linux_name_resolve(const char *name)
         hints.ai_canonname = NULL;
         hints.ai_addr = NULL;
         hints.ai_next = NULL;
+	/* ajaytodo : get address only once.. on error we can try to get the error again.. */
         err = getaddrinfo(name, NULL, &hints, &result);
         if (err != 0)
         {

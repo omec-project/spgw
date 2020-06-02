@@ -16,11 +16,10 @@
 
 #include "ue.h"
 #include "cp.h"
-#include "interface.h"
+#include "cp_interface.h"
 #include "clogger.h"
 #include "cp_config.h"
 
-extern pfcp_config_t pfcp_config;
 struct rte_hash *ue_context_by_imsi_hash;
 struct rte_hash *ue_context_by_fteid_hash;
 struct rte_hash *pdn_by_fteid_hash;
@@ -501,6 +500,7 @@ apn *
 get_apn(char *apn_label, uint16_t apn_length)
 {
 	int i;
+	printf("%s %d - APN %s length %d \n",__FUNCTION__,__LINE__, apn_label, apn_length);
 	for (i = 0; i < MAX_NB_DPN; i++)   {
 		if ((apn_length == apn_list[i].apn_name_length)
 			&& !memcmp(apn_label, apn_list[i].apn_name_label,
@@ -508,6 +508,7 @@ get_apn(char *apn_label, uint16_t apn_length)
 			break;
 	        }
 	}
+	printf("%s %d - APN found ? index = %d \n",__FUNCTION__,__LINE__, i);
 	if(i >= MAX_NB_DPN) {
 		/* when apn name of csr are not found in cp.cfg file */
 		/* BP : TODO : free apn_reruested and apn_name_label memory */
@@ -539,7 +540,7 @@ get_apn(char *apn_label, uint16_t apn_length)
 	}
 
 	apn_list[i].apn_idx = i;
-	return apn_list+i;
+	return apn_list+i; /* ajay - scary.... why do we want to do this ?*/
 }
 
 uint32_t

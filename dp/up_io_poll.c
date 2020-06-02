@@ -29,25 +29,11 @@
 #include <rte_errno.h>
 #include <errno.h>
 
-#include "interface.h"
-#include "dp_ipc_api.h"
-#include "udp/vepc_udp.h"
+#include "up_interface.h"
+#include "vepc_udp.h"
+#include "up_io_poll.h"
 
-#ifdef CP_BUILD
-#include "pfcp_cp_util.h"
-#include "../cp/cp.h"
-#include "../cp/cp_app.h"
-#include "../cp/cp_stats.h"
-#include "../cp/cp_config.h"
-#include "../cp/state_machine/sm_struct.h"
-
-#ifdef GX_BUILD
-extern int gx_app_sock;
-#endif /* GX_BUILD */
-
-#else 
 #include "pfcp_up_util.h"
-#endif /* CP_BUILD */
 
 //extern int errno;
 
@@ -70,7 +56,6 @@ void iface_init_ipc_node(void)
 		exit(0);
 }
 
-#ifndef CP_BUILD
 int
 udp_recv(void *msg_payload, uint32_t size,
 		struct sockaddr_in *peer_addr)
@@ -85,7 +70,6 @@ udp_recv(void *msg_payload, uint32_t size,
 	}*/
 	return bytes;
 }
-#endif /* CP_BUILD */
 
 /**
  * @brief Function to Process msgs.
@@ -97,13 +81,8 @@ int iface_remove_que(enum cp_dp_comm id)
 	RTE_SET_USED(id);
 	struct sockaddr_in peer_addr;
 	int bytes_rx = 0;
-#ifdef CP_BUILD
-	if ((bytes_rx = pfcp_recv(pfcp_rx, 512,
-			&peer_addr)) < 0) {
-#else
 	if ((bytes_rx = udp_recv(pfcp_rx, 512,
 			&peer_addr)) < 0) {
-#endif /* CP_BUILD*/
 		perror("msgrecv");
 		return -1;
 	}
@@ -128,54 +107,8 @@ void iface_process_ipc_msgs(void)
 	/* Add PFCP_FD in the set */
 	FD_SET(my_sock.sock_fd, &readfds);
 
-#ifdef CP_BUILD
-
-	int max = 0;
-
-	/* Add S11_FD in the set */
-	if ((cp_config->cp_type  == SGWC) || (cp_config->cp_type == SAEGWC)) {
-		FD_SET(my_sock.sock_fd_s11, &readfds);
-	}
-
-	/* Add S5S8_FD in the set */
-	if (cp_config->cp_type != SAEGWC) {
-		FD_SET(my_sock.sock_fd_s5s8, &readfds);
-	}
-
-#ifdef GX_BUILD
-	/* Add GX_FD in the set */
-	if ((cp_config->cp_type == PGWC ) || (cp_config->cp_type == SAEGWC)) {
-		FD_SET(gx_app_sock, &readfds);
-	}
-#endif /* GX_BUILD */
-
-	/* Set the MAX FD's stored into the set */
-	if (cp_config->cp_type == SGWC) {
-		max = (my_sock.sock_fd > my_sock.sock_fd_s11 ?
-				my_sock.sock_fd : my_sock.sock_fd_s11);
-		max = (max > my_sock.sock_fd_s5s8 ? max : my_sock.sock_fd_s5s8);
-	}
-	if (cp_config->cp_type == SAEGWC) {
-		max = (my_sock.sock_fd > my_sock.sock_fd_s11 ?
-				my_sock.sock_fd : my_sock.sock_fd_s11);
-#ifdef GX_BUILD
-		max = (gx_app_sock > max ? gx_app_sock : max);
-#endif /* GX_BUILD */
-	}
-	if (cp_config->cp_type == PGWC) {
-		max = (my_sock.sock_fd > my_sock.sock_fd_s5s8 ?
-				my_sock.sock_fd : my_sock.sock_fd_s5s8);
-#ifdef GX_BUILD
-		max = (gx_app_sock > max ? gx_app_sock : max);
-#endif /* GX_BUILD */
-	}
-
-	n = max + 1;
-#else
-
 	n = my_sock.sock_fd + 1;
 
-#endif
 	/* wait until either socket has data
 	 *  ready to be recv()d (timeout 10.5 secs)
 	 */
@@ -197,30 +130,6 @@ void iface_process_ipc_msgs(void)
 		{
 				process_pfcp_msg(pfcp_rx, &peer_addr);
 		}
-#ifdef CP_BUILD
-		/* ajay - CP_BUILD defined for CP build and not defined in case DP BUILD. cp/Makefile has this flag defined  */
-		if ((cp_config->cp_type  == SGWC) || (cp_config->cp_type == SAEGWC)) {
-			if (FD_ISSET(my_sock.sock_fd_s11, &readfds)) {
-					msg_handler_s11();
-			}
-		}
-
-		if (cp_config->cp_type != SAEGWC) {
-			if (FD_ISSET(my_sock.sock_fd_s5s8, &readfds)) {
-					msg_handler_s5s8();
-			}
-		}
-
-#ifdef GX_BUILD
-		/* Refer - cp/Makefile. For now this is disabled. */
-		if ((cp_config->cp_type == PGWC) || (cp_config->cp_type == SAEGWC)) {
-			if (FD_ISSET(gx_app_sock, &readfds)) {
-					msg_handler_gx();
-			}
-		}
-#endif  /* GX_BUILD */
-#endif
-
 	}
 }
 

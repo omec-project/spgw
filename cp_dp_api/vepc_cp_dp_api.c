@@ -36,10 +36,11 @@
 #else
 #include "pfcp_up_util.h"
 #endif
-#include "interface.h"
 #ifdef CP_BUILD
+#include "cp_interface.h"
 #include "pfcp_cp_set_ie.h"
 #else
+#include "up_interface.h"
 #include "pfcp_up_set_ie.h"
 #endif
 #include "vepc_cp_dp_api.h"
@@ -52,8 +53,7 @@
 #include "cp_stats.h"
 #include "cp_config.h"
 #include "sm_struct.h"
-
-//TODO:Remove it
+#else
 #include "cdr.h"
 #include "meter.h"
 #endif /* CP_BUILD */

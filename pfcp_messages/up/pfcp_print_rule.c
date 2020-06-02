@@ -26,8 +26,8 @@
 
 #include "up_main.h"
 #include "util.h"
-#include "interface.h"
-#include "dp_ipc_api.h"
+#include "up_interface.h"
+#include "up_io_poll.h"
 
 
 #ifdef PRINT_NEW_RULE_ENTRY

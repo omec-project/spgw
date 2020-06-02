@@ -26,7 +26,6 @@
 #include "cp_timer.h"
 #include "cp_config.h"
 
-extern pfcp_config_t pfcp_config;
 extern struct cp_stats_t cp_stats;
 extern struct sockaddr_in upf_pfcp_sockaddr;
 
@@ -70,9 +69,11 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 
 			clLog(sxlogger, eCLSeverityDebug, "Decoded bytes [%d]\n", decoded);
 
+            // TODO : PORT - node_id should come as name or ip address ??
 			memcpy(&msg->upf_ipv4.s_addr,
 					&msg->pfcp_msg.pfcp_ass_resp.node_id.node_id_value,
 					IPV4_SIZE);
+
 			if(cp_config->cp_type != SGWC) {
 				/* Init rule tables of user-plane */
 				upf_pfcp_sockaddr.sin_addr.s_addr = msg->upf_ipv4.s_addr;
@@ -84,14 +85,16 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			/*Retrive association state based on UPF IP. */
 			ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 					(const void*) &(msg->upf_ipv4.s_addr), (void **) &(upf_context));
+
+			// TODO : BUG - unsolicitated setup response will cause crash 	
 			if(upf_context->timer_entry->pt.ti_id != 0) {
 				stoptimer(&upf_context->timer_entry->pt.ti_id);
 				deinittimer(&upf_context->timer_entry->pt.ti_id);
 				/* free peer data when timer is de int */
 				rte_free(upf_context->timer_entry);
 			}
-			if(msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED){
 
+			if(msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED) {
 				msg->state = ERROR_OCCURED_STATE;
 				msg->event = ERROR_OCCURED_EVNT;
 				msg->proc = INITIAL_PDN_ATTACH_PROC;
@@ -100,18 +103,21 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 						msg->pfcp_msg.pfcp_ass_resp.cause.cause_value);
 
 				/* TODO: Add handling to send association to next upf
-				 * for each buffered CSR */
+				 * for each buffered CSR 
+                 * Cleanup should be done for each layer
+                 *   1. Cleanup GTPv2
+                 *   2. Cleanup IP-CAN if GX is enabled. 
+                 */
 				cs_error_response(msg,
 								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
 								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+                /* cleanup UE context */
 				process_error_occured_handler(&msg, NULL);
 				return -1;
 			}
 
-
 			if (ret >= 0) {
 				msg->state = upf_context->state;
-
 				/* Set Hard code value for temporary purpose as assoc is only in initial pdn */
 				msg->proc = INITIAL_PDN_ATTACH_PROC;
 			} else {

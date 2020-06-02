@@ -19,6 +19,16 @@
 
 #include "pfcp_messages.h"
 #include "sm_struct.h"
+
+/**
+ * @brief  : Process pfcp session association request
+ * @param  : context, ue context structure pointer
+ * @param  : ebi_index, index of ebi in array
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+int
+process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index);
+
 /**
  * @brief  : This function processes pfcp associatiuon response
  * @param  : msg hold the data from pfcp associatiuon response

@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef _DP_IPC_API_H_
-#define _DP_IPC_API_H_
+#ifndef _CP_IO_POLL_H_
+#define _CP_IO_POLL_H_ 
 /**
  * @file
  * This file contains macros, data structure definitions and function
  * prototypes of Interface message parsing.
  */
-#include "interface.h"
-#ifdef CP_BUILD
+#include "cp_interface.h"
 #include "cp.h"
 #include "main.h"
-#else
-#include "up_main.h"
-#endif  /* CP_BUILD */
 
 /* message types */
 enum dp_msg_type {
@@ -87,11 +83,7 @@ struct msgbuf {
 		struct cb_args_table msg_table;
 		struct msg_ue_cdr ue_cdr;
 
-#ifdef CP_BUILD
 		struct downlink_data_notification dl_ddn;	/** Downlink data notification info */
-#else
-		struct downlink_data_notification_ack_t dl_ddn; /** Downlink data notification info */
-#endif  /* CP_BUILD */
 	} msg_union;
 };
 struct msgbuf sbuf;
@@ -111,9 +103,6 @@ struct ipc_node *basenode;
  *
  * This function is not thread safe and should only be called once by DP.
  */
-//int iface_process_ipc_msgs(void);
-
-
 void iface_process_ipc_msgs(void);
 
 /**
@@ -155,7 +144,6 @@ int iface_remove_que(enum cp_dp_comm id);
 void msg_handler_s11(void);
 void msg_handler_s5s8(void);
 
-#ifdef CP_BUILD
 /**
  * @brief Functino to init rte hash tables.
  *
@@ -178,8 +166,5 @@ simu_cp(__rte_unused void *ptr);
 int
 cb_ddn(struct msgbuf *msg_payload);
 
-#else
-	int simu_cp(void);
-#endif /* CP_BUILD */
-#endif /* _DP_IPC_API_H_ */
+#endif /* _CP_IO_POLL_H_ */
 

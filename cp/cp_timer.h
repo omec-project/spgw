@@ -17,7 +17,6 @@
 #ifndef __CP_TIMER_H
 #define __CP_TIMER_H
 
-extern pfcp_config_t pfcp_config;
 
 /**
  * @brief  : Returns peer data struct address and fill data.

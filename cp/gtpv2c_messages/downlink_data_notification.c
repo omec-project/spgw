@@ -18,7 +18,7 @@
 #include "cp_stats.h"
 #include "sm_struct.h"
 #include "debug_str.h"
-#include "dp_ipc_api.h"
+#include "cp_io_poll.h"
 #include "gtpv2c_set_ie.h"
 #include "../cp_dp_api/vepc_cp_dp_api.h"
 #include"cp_config.h"

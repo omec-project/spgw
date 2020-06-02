@@ -193,4 +193,5 @@ typedef struct cp_config {
 }cp_config_t;
 
 extern cp_config_t *cp_config;
+extern pfcp_config_t pfcp_config;
 #endif

@@ -22,8 +22,8 @@
 #include "pfcp.h"
 #include "gtp_messages_decoder.h"
 #include "cp_config.h"
+#include "cp_config_new.h"
 
-pfcp_config_t pfcp_config;
 extern struct cp_stats_t cp_stats;
 
 uint8_t

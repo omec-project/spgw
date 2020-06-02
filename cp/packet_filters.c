@@ -22,6 +22,7 @@
 #include "packet_filters.h"
 #include "vepc_cp_dp_api.h"
 #include "clogger.h"
+#include "cp.h"
 
 const char *direction_str[] = {
 		[TFT_DIRECTION_DOWNLINK_ONLY] = "DOWNLINK_ONLY ",

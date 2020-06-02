@@ -29,8 +29,6 @@
 
 //#define RTE_LOGTYPE_CP RTE_LOGTYPE_USER4
 
-extern pfcp_config_t pfcp_config;
-
 extern uint32_t num_adc_rules;
 extern uint32_t adc_rule_id[];
 

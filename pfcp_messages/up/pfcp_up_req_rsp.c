@@ -17,7 +17,7 @@
 #include <byteswap.h>
 
 #include "pfcp_up_util.h"
-#include "dp_ipc_api.h"
+#include "up_io_poll.h"
 #include "pfcp_up_set_ie.h"
 #include "pfcp_up_association.h"
 #include "pfcp_messages_encoder.h"

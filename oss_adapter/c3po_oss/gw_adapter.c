@@ -35,7 +35,7 @@
 #include "../../cp/cp.h"
 #include "../../cp/cp_config_new.h"
 
-#include "../../interface/interface.h"
+#include "cp_interface.h"
 #include "../../cp/gtpv2c.h"
 #include "../../cp/ue.h"
 

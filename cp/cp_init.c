@@ -32,6 +32,7 @@
 #include "cp_config_new.h"
 #include "cp_timer.h"
 #include "cp_config.h"
+#include "cp_config_new.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -49,7 +50,6 @@ pcap_t *pcap_reader;
 pcap_dumper_t *pcap_dumper;
 
 struct cp_stats_t cp_stats;
-extern pfcp_config_t pfcp_config;
 cp_config_t *cp_config;
 
 /* MME */

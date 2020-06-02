@@ -23,7 +23,7 @@
 #include "cp_stats.h"
 #include "cp_config.h"
 #include "debug_str.h"
-#include "dp_ipc_api.h"
+#include "cp_io_poll.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
@@ -46,7 +46,6 @@
 
 extern int s11_fd;
 extern socklen_t s11_mme_sockaddr_len;
-extern pfcp_config_t pfcp_config;
 
 uint32_t start_time;
 
@@ -173,6 +172,7 @@ msg_handler_s11(void)
 {
 	int ret = 0, bytes_s11_rx = 0;
 	msg_info msg = {0};
+
 	bzero(&s11_rx_buf, sizeof(s11_rx_buf));
 	bzero(&s11_tx_buf, sizeof(s11_tx_buf));
 	gtpv2c_header_t *gtpv2c_s11_rx = (gtpv2c_header_t *) s11_rx_buf;

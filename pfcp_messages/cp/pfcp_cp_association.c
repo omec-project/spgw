@@ -38,7 +38,6 @@
 #endif /* USE_DNS_QUERY */
 
 extern int pfcp_fd;
-extern pfcp_config_t pfcp_config;
 
 uint32_t *g_gx_pending_csr[BUFFERED_ENTRIES_DEFAULT];
 uint32_t g_gx_pending_csr_cnt = 0;
@@ -333,7 +332,7 @@ buffer_csr_request(ue_context *context,
 	key->ebi_index = ebi;
 
 	upf_context->pending_csr_teid[upf_context->csr_cnt] = (uint32_t *)key;
-	upf_context->csr_cnt++;
+	upf_context->csr_cnt++; /* TODO - BUG .why array based pending list ? */
 
 	return 0;
 
@@ -379,7 +378,7 @@ assoication_setup_request(ue_context *context, uint8_t ebi_index)
 	pfcp_assn_setup_req_t pfcp_ass_setup_req = {0};
 	struct in_addr test; test.s_addr = (context->pdns[ebi_index])->upf_ipv4.s_addr;
 	printf("Initiate PFCP setup to peer address = %s \n", inet_ntoa(test));
-	upf_ip = (context->pdns[ebi_index])->upf_ipv4.s_addr; // ajay
+	upf_ip = (context->pdns[ebi_index])->upf_ipv4.s_addr; 
 	upf_context  = rte_zmalloc_socket(NULL, sizeof(upf_context_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 

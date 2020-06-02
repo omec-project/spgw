@@ -34,7 +34,6 @@ extern socklen_t s5s8_sockaddr_len;
 extern int s11_fd;
 extern int s5s8_fd;
 
-extern pfcp_config_t pfcp_config;
 extern uint8_t rstCnt;
 int32_t conn_cnt = 0;
 

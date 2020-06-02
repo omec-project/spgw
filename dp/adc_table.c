@@ -23,7 +23,7 @@
 #include "main.h"
 #include "util.h"
 #include "acl_dp.h"
-#include "interface.h"
+#include "up_interface.h"
 #include "meter.h"
 #include <sponsdn.h>
 

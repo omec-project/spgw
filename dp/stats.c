@@ -44,7 +44,7 @@
 #include "up_main.h"
 #include "stats.h"
 #include "epc_packet_framework.h"
-#include "interface.h"
+#include "up_interface.h"
 //#include "meter.h"
 //#include "acl_dp.h"
 #include "commands.h"

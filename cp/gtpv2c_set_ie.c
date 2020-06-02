@@ -765,7 +765,7 @@ set_fqdn_ie(gtpv2c_header_t *header, char *fqdn)
 }
 
 #ifdef CP_BUILD
-pfcp_config_t pfcp_config;
+extern pfcp_config_t pfcp_config;
 
 int
 decode_check_csr(gtpv2c_header_t *gtpv2c_rx,

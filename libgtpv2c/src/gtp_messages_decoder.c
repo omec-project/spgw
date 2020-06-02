@@ -3390,15 +3390,13 @@ int decode_create_sess_req(uint8_t *buf,
     count += decode_gtpv2c_header_t(buf + count, &value->header);
     if (value->header.gtpc.teid_flag)
       buf_len = value->header.gtpc.message_len - 8;
-      else
+    else
       buf_len = value->header.gtpc.message_len - 4;
-      buf = buf + count;
-      count = 0;
-            while (count < buf_len) {
-
-          ie_header_t *ie_header = (ie_header_t *) (buf + count);
-
-          if (ie_header->type == GTP_IE_IMSI && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+    buf = buf + count;
+    count = 0;
+     while (count < buf_len) {
+      ie_header_t *ie_header = (ie_header_t *) (buf + count);
+      if (ie_header->type == GTP_IE_IMSI && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_imsi_ie(buf + count, &value->imsi);
       }  else if (ie_header->type == GTP_IE_MSISDN && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_msisdn_ie(buf + count, &value->msisdn);

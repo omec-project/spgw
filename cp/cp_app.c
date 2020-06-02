@@ -25,7 +25,6 @@
 #include "gw_adapter.h"
 
 static uint32_t cc_request_number = 0;
-extern pfcp_config_t pfcp_config;
 int g_cp_sock ;
 int gx_app_sock  ;
 int ret ;

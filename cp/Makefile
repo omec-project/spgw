@@ -47,6 +47,9 @@ SRCS-y += cp_timer.c
 SRCS-y += packet_filters.c
 SRCS-y += gtpc_session.c
 SRCS-y += gtpv2c_error_rsp.c
+SRCS-y += cp_interface.c
+SRCS-y += vepc_udp.c
+SRCS-y += cp_io_poll.c
 
 SRCS-y += state_machine/sm_init.o
 SRCS-y += state_machine/sm_hand.o
@@ -74,10 +77,6 @@ SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_init.o
 
 
 SRCS-y += $(SRCDIR)/../test/simu_cp/simu_cp.o
-SRCS-y += $(SRCDIR)/../interface/ipc/dp_ipc_api.o
-SRCS-y += $(SRCDIR)/../interface/interface.o
-SRCS-y += $(SRCDIR)/../interface/udp/vepc_udp.o
-
 SRCS-y += $(SRCDIR)/../cp_dp_api/vepc_cp_dp_api.o
 
 SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/gw_adapter.o
@@ -93,8 +92,8 @@ CFLAGS += -Werror
 CFLAGS += -Wunused-variable
 
 CFLAGS += -I$(SRCDIR)/../cp
-CFLAGS += -I$(SRCDIR)/../dp
-CFLAGS += -I$(SRCDIR)/../dp/pipeline
+#CFLAGS += -I$(SRCDIR)/../dp
+#CFLAGS += -I$(SRCDIR)/../dp/pipeline
 CFLAGS += -I$(SRCDIR)/../cp_dp_api
 CFLAGS += -I$(SRCDIR)/../interface
 CFLAGS += -I$(SRCDIR)/../interface/ipc

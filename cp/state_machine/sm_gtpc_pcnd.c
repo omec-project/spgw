@@ -31,7 +31,6 @@
 #include "cp_config.h"
 #include "gw_adapter.h"
 
-pfcp_config_t pfcp_config; /* ajay - hell why we are defining this variable at multiple places */
 extern struct cp_stats_t cp_stats;
 
 uint8_t
@@ -83,7 +82,7 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 	int ebi_index = 0;
 	int i = 0;
 
-	if ((ret = gtpv2c_pcnd_check(gtpv2c_rx, bytes_rx)) != 0){
+	if ((ret = gtpv2c_pcnd_check(gtpv2c_rx, bytes_rx)) != 0) {
 
 		if(ret == GTPV2C_CAUSE_VERSION_NOT_SUPPORTED) {
 			return ret;

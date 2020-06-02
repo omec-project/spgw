@@ -17,7 +17,7 @@
 
 #include "ue.h"
 #include "gtpv2c.h"
-#include "interface.h"
+#include "cp_interface.h"
 #include "gtpv2c_ie.h"
 #include "gtpv2c_set_ie.h"
 

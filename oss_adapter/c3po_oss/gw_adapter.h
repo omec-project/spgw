@@ -237,9 +237,7 @@ extern char ossInterfaceProtocolStr[][10];
 extern char ossGatewayStr[][10];
 extern uint64_t oss_reset_time;
 
-#ifdef CP_BUILD
-extern pfcp_config_t pfcp_config;
-#else /* DP_BUILD */
+#ifndef CP_BUILD
 extern struct app_params app;
 #endif /* CP_BUILD */
 

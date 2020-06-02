@@ -24,7 +24,7 @@
 
 #include "main.h"
 #include "meter.h"
-#include "interface.h"
+#include "up_interface.h"
 
 #define APP_PKT_FLOW_POS                33
 #define APP_PKT_COLOR_DSCP              15

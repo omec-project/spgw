@@ -22,7 +22,6 @@
 
 #define DEFAULT_BEARER_QOS_PRIORITY (15)
 
-extern pfcp_config_t pfcp_config;
 
 /**
  * @brief  : The structure to contain required information from a parsed Bearer Resource

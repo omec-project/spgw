@@ -34,20 +34,16 @@
 #include <rte_debug.h>
 
 #include "util.h"
-#include "interface.h"
-#include "dp_ipc_api.h"
+#include "cp_interface.h"
+#include "cp_io_poll.h"
 #include "clogger.h"
 
 //#include "acl_dp.h"
 //#include "meter.h"
 //#include "gtpv2c_ie.h"
 
-#ifndef CP_BUILD
-#include "up_acl.h"
-#else
 #include "gtpv2c.h"
 #include "ipc_api.h"
-#endif /* CP_BULID */
 
 #ifdef USE_AF_PACKET
 #include <libmnl/libmnl.h>
@@ -62,11 +58,9 @@
 	#define DP_PKEY_PATH "dp_pkey_path"
 #endif /* SGX_CDR */
 
-#ifdef CP_BUILD
 #ifdef GX_BUILD
 extern int gx_app_sock;
 #endif /* GX_BUILD */
-#endif /* CP_BUILD */
 
 /*
  * UDP Setup
@@ -152,24 +146,6 @@ int process_comm_msg(void *buf)
 	return cb->msg_cb(rbuf);
 }
 
-#ifndef CP_BUILD
-/**
- * @brief  : Init listen socket.
- * @param  : No param
- * @return : Returns 0 in case of success , -1 otherwise
- */
-static int
-udp_init_dp_socket(void)
-{
-	if (__create_udp_socket(cp_comm_ip, cp_comm_port, dp_comm_port,
-				&my_sock) < 0)
-		rte_exit(EXIT_FAILURE, "Create DP UDP Socket "
-				"Failed for IP %s:%d!!!\n",
-				inet_ntoa(cp_comm_ip), cp_comm_port);
-	return 0;
-}
-
-#endif /* !CP_BUILD*/
 
 #define IFACE_FILE "../config/interface.cfg"
 #define SET_CONFIG_IP(ip, file, section, entry) \
@@ -239,22 +215,12 @@ void iface_module_constructor(void)
 		/* Read and store ip and port for socket communication between cp and
 		 * dp*/
 		read_interface_config();
-
-#ifdef CP_BUILD
 		clLog(clSystemLog, eCLSeverityDebug,"IFACE: CP Initialization\n");
-#else   /* CP_BUILD */
-		/* User Plane is starting UDP socket to received PFCP packets */
-		printf("Opening up socket at dp\n");
-		clLog(clSystemLog, eCLSeverityMajor, "IFACE: DP Initialization\n");
-		create_udp_socket(dp_comm_ip, dp_comm_port, &my_sock);
-
-#endif  /* !CP_BUILD */
 }
 
 void sig_handler(int signo)
 {
 		if (signo == SIGINT) {
-#ifdef CP_BUILD
 #ifdef GX_BUILD
 			if (gx_app_sock > 0)
 				close_ipc_channel(gx_app_sock);
@@ -263,18 +229,11 @@ void sig_handler(int signo)
 			retrive_stats_entry();
 			close_stats();
 #endif /* SYNC_STATS */
-#endif
 
 #ifdef USE_REST
 			gst_deinit();
 #endif /* USE_REST */
 
-#ifndef CP_BUILD
-			close(route_sock);
-#ifdef USE_AF_PACKET
-         		mnl_socket_close(mnl_sock);
-#endif /* USE_AF_PACKET */
-#endif
 #ifdef TIMER_STATS
 #ifdef AUTO_ANALYSIS
 			print_perf_statistics();

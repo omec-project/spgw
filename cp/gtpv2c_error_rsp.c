@@ -30,7 +30,6 @@ extern socklen_t s5s8_sockaddr_len;
 extern uint16_t payload_length;
 extern int s5s8_fd;
 extern int pfcp_fd;
-extern pfcp_config_t pfcp_config;
 
 #ifdef GX_BUILD
 #include "pfcp.h"
@@ -663,7 +662,8 @@ void ds_error_response(msg_info *msg, uint8_t cause_value, int iface){
 }
 
 #ifdef GX_BUILD
-void send_ccr_t_req(msg_info *msg, uint8_t ebi, uint32_t teid){
+void send_ccr_t_req(msg_info *msg, uint8_t ebi, uint32_t teid) 
+{
 
 	int ret = 0;
 	pdn_connection *pdn =  NULL;

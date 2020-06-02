@@ -37,12 +37,9 @@
 
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
 static uint32_t s5s8_sgw_gtpc_teid_offset;
-
-pfcp_config_t pfcp_config;
-
 extern int gx_app_sock;
 
-#define size sizeof(pfcp_sess_mod_req_t)
+#define size sizeof(pfcp_sess_mod_req_t) /* ajay - clean this */
 /* Header Size of set_upd_forwarding_param ie */
 #define UPD_PARAM_HEADER_SIZE 4
 extern int pfcp_fd;
@@ -3383,6 +3380,7 @@ process_create_sess_req(create_sess_req_t *csr,
 	if (fill_context_info(csr, context) != 0)
 			return -1;
 
+	// TODOFIX - does not seem to be correct 
 	if (cp_config->cp_type == PGWC)
 		context->s11_mme_gtpc_teid = csr->sender_fteid_ctl_plane.teid_gre_key;
 

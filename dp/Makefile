@@ -49,12 +49,12 @@ SRCS-y := up_main.c\
 	up_sess_table.c\
 	up_pkt_handler.c\
 	up_kni_pkt_handler.c\
+    up_interface.c\
+    vepc_udp.o \
+    up_io_poll.o \
 	pipeline/epc_arp.o\
 	pipeline/epc_spns_dns.o\
 	pipeline/epc_packet_framework.o\
-	$(SRCDIR)/../interface/interface.o\
-	$(SRCDIR)/../interface/udp/vepc_udp.o\
-	$(SRCDIR)/../interface/ipc/dp_ipc_api.o\
 	$(SRCDIR)/../cp_dp_api/vepc_cp_dp_api.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_util.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_set_ie.o\
@@ -74,7 +74,6 @@ CFLAGS += -I$(SRCDIR)/../interface
 CFLAGS += -I$(SRCDIR)/../interface/ipc
 CFLAGS += -I$(SRCDIR)/../interface/udp
 CFLAGS += -I$(SRCDIR)/../interface/sdn
-CFLAGS += -I$(SRCDIR)/../interface/zmq
 CFLAGS += -I$(SRCDIR)/../lib/libsponsdn
 CFLAGS += -I$(SRCDIR)/../pfcp_messages
 CFLAGS += -I$(SRCDIR)/../pfcp_messages/up
@@ -134,12 +133,6 @@ ifneq (,$(findstring NGCORE_SHRINK, $(CFLAGS), $(EXTRA_CFLAGS)))
         SRCS-y += up_ddn.c
         SRCS-y += pipeline/epc_ul.o
         SRCS-y += pipeline/epc_dl.o
-endif
-
-ifneq (,$(findstring SDN_ODL_BUILD, $(CFLAGS), $(EXTRA_CFLAGS)))
-	SRCS-y += $(SRCDIR)/../interface/zmq/zmqsub.o
-	SRCS-y += $(SRCDIR)/../interface/zmq/zmqpub.o
-	LDFLAGS += -L/usr/local/lib -lzmq
 endif
 
 ifeq ($(SGX_BUILD), 1)

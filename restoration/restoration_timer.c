@@ -320,6 +320,8 @@ uint8_t process_response(uint32_t dstIp)
 	int ret = 0;
 	peerData *conn_data = NULL;
 
+	// TODO : BUG COmmon peer table is not good..Currently conn_hash_handle is common for all peers
+	// e.g. gtp, pfcp, ....
 	ret = rte_hash_lookup_data(conn_hash_handle,
 			&dstIp, (void **)&conn_data);
 

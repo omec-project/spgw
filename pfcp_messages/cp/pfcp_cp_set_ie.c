@@ -36,7 +36,6 @@ const uint32_t pfcp_base_seq_no = 0x00000000;
 static uint32_t pfcp_seq_no_offset;
 
 #include "cp_config_new.h"
-extern pfcp_config_t pfcp_config;
 static uint32_t pfcp_sgwc_seid_offset;
 
 //static uint16_t pdn_conn_set_id;

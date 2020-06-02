@@ -32,7 +32,7 @@
 #include <rte_cfgfile.h>
 #include <math.h>
 
-#include "interface.h"
+#include "cp_interface.h"
 #include "main.h"
 #include "packet_filters.h"
 #include "util.h"

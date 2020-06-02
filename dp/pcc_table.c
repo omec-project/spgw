@@ -21,7 +21,7 @@
 #include "util.h"
 #include "acl_dp.h"
 #include "meter.h"
-#include "interface.h"
+#include "up_interface.h"
 #include "structs.h"
 
 struct rte_hash *rte_pcc_hash;

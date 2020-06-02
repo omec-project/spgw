@@ -17,7 +17,7 @@
 #include <byteswap.h>
 
 #include "pfcp_cp_util.h"
-#include "dp_ipc_api.h"
+#include "cp_io_poll.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_association.h"
 #include "pfcp_messages_encoder.h"
@@ -47,7 +47,6 @@ extern struct rte_hash *heartbeat_recovery_hash;
 
 extern struct sockaddr_in upf_pfcp_sockaddr;
 
-extern pfcp_config_t pfcp_config;
 extern int s5s8_fd;
 extern socklen_t s5s8_sockaddr_len;
 extern socklen_t s11_mme_sockaddr_len;
@@ -183,6 +182,7 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		/*Reset periodic timers*/
 		process_response(peer_addr->sin_addr.s_addr);
 
+        // TODO - PORT peer address should be copied to msg 
 		if ((ret = pfcp_pcnd_check(buf_rx, &msg, bytes_rx)) != 0) {
 			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp precondition check\n", __func__);
 
@@ -199,7 +199,7 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 							pfcp_header->message_type, ACC,SX);
 
 
-		printf("[%s] - %d - Procedure - %d state - %d event - %d. Invoke FSM now  \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
+        printf("[%s] - %d - Procedure - %d state - %d event - %d. Invoke FSM now  \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
 		if ((msg.proc < END_PROC) && (msg.state < END_STATE) && (msg.event < END_EVNT)) {
 			if (SGWC == cp_config->cp_type) {
 			    ret = (*state_machine_sgwc[msg.proc][msg.state][msg.event])(&msg, peer_addr);

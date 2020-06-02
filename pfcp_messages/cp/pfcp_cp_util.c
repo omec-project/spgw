@@ -47,7 +47,6 @@ struct rte_hash *heartbeat_recovery_hash;
 struct rte_hash *associated_upf_hash;
 
 #if defined(USE_DNS_QUERY)
-extern pfcp_config_t pfcp_config;
 
 /**
  * @brief  : Add canonical result entry in upflist hash

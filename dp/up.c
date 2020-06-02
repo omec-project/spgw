@@ -33,7 +33,7 @@
 #include "util.h"
 #include "up_acl.h"
 #include "up_ether.h"
-#include "interface.h"
+#include "up_interface.h"
 #include "epc_packet_framework.h"
 #include "clogger.h"
 

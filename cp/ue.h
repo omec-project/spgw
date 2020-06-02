@@ -34,7 +34,7 @@
 #include <rte_jhash.h>
 
 #include "gtpv2c_ie.h"
-#include "interface.h"
+#include "cp_interface.h"
 #include "packet_filters.h"
 #include "pfcp_cp_struct.h"
 #include "restoration_timer.h"

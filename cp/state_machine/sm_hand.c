@@ -39,9 +39,6 @@
 
 
 int ret = 0;
-
-pfcp_config_t pfcp_config;
-
 extern int s5s8_fd;
 extern socklen_t s5s8_sockaddr_len;
 extern socklen_t s11_mme_sockaddr_len;

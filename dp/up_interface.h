@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _INTERFACE_H_
-#define _INTERFACE_H_
+#ifndef _INTERFACE_DP_H_
+#define _INTERFACE_DP_H_
 /**
  * @file
  * This file contains macros, data structure definitions and function

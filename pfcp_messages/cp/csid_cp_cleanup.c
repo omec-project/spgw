@@ -41,8 +41,6 @@ extern int s5s8_fd;
 struct sockaddr_in s5s8_recv_sockaddr;
 extern socklen_t s5s8_sockaddr_len;
 
-extern pfcp_config_t pfcp_config;
-
 static uint16_t sequence = 0;
 
 int8_t
