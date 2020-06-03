@@ -23,6 +23,7 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_messages.h"
 #include "gtp_messages.h"
+#include <sys/queue.h>
 
 
 struct rte_hash *sm_hash;
@@ -41,7 +42,7 @@ enum source_interface {
 /**
  * @brief  : Maintains ue context Bearer identifier and tied
  */
-typedef struct ue_context_key {
+struct ue_context_key {
 	/* Bearer identifier */
 	uint8_t ebi_index;
 	/* UE Context key == teid */
@@ -50,7 +51,10 @@ typedef struct ue_context_key {
 	uint32_t sender_teid;
 	/* UE Context key == sequence number */
 	uint32_t sequence;
-} context_key;
+
+    LIST_ENTRY(ue_context_key) csrentries;
+};
+typedef struct ue_context_key context_key;
 
 /* TODO: Need to optimized generic structure. */
 /**

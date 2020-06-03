@@ -164,6 +164,7 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	clLog(clSystemLog, eCLSeverityDebug, "IPADDR [%u]\n", peer_addr->sin_addr.s_addr);
 
 
+    /* Why no statistics for session_report response ?*/
 	if( pfcp_header->message_type != PFCP_SESSION_REPORT_RESPONSE)
 	{
 		update_cli_stats(peer_addr->sin_addr.s_addr,

@@ -108,23 +108,19 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 								if ((upf_context_entry_lookup(pdn->upf_ipv4.s_addr,&upf_context)) ==  0) {
 									if(upf_context->state < PFCP_ASSOC_RESP_RCVD_STATE){
 										if(ret >= 0) {
-											for (uint8_t i = 0; i < upf_context->csr_cnt; i++) {
-												key = (context_key *) upf_context->pending_csr_teid[i];
-												if(key != NULL ) {
-													if(key->teid == context->s11_sgw_gtpc_teid ) {
-														rte_free(upf_context->pending_csr[i]);
-														rte_free(upf_context->pending_csr_teid[i]);
-														upf_context->pending_csr_teid[i] = NULL;
-														break;
-													}
-												}
-											}
-											if(upf_context->pending_csr_teid[upf_context->csr_cnt - 1]  == NULL) {
+                                            LIST_FOREACH(key, &upf_context->pendingCSRs, csrentries) {
+												if(key != NULL && key->teid == context->s11_sgw_gtpc_teid ) {
+                                                    LIST_REMOVE(key, csrentries);
+                                                    rte_free(key);
+                                                    break;
+                                                }
+                                            }
+                                            if(LIST_EMPTY(&upf_context->pendingCSRs)) {
 									        		ret = rte_hash_del_key(upf_context_by_ip_hash,
 												(const void *) &pdn->upf_ipv4.s_addr);
 												rte_free(upf_context);
 												upf_context  = NULL;
-											}
+                                            }
 										}
 									}
 								}
@@ -164,7 +160,8 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 	RTE_SET_USED(seq);
 }
 
-void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info, uint8_t index){
+void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info) 
+{
 
 	int ret = 0;
 	ue_context *context = NULL;
@@ -222,8 +219,10 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info, uint8_t index){
 				return;
 			}
 
-			context_key *key = (context_key *)upf_context->pending_csr_teid[index];
-
+	        RTE_SET_USED(index);
+            context_key *key = LIST_FIRST(&upf_context->pendingCSRs);
+            assert(key == NULL);
+            LIST_REMOVE(key, csrentries);
 			if (get_ue_context(key->teid, &context) != 0){
 				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 				return;
@@ -233,6 +232,7 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info, uint8_t index){
 			rsp_info->seq = context->sequence;
 			rsp_info->ebi_index = key->ebi_index + 5;
 			rsp_info->teid = key->teid;
+            // ajay - memleak .. Prio1.. Shopuld we not free the key ?
 			break;
 		}
 
@@ -424,22 +424,15 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info, uint8_t index){
 void cs_error_response(msg_info *msg, uint8_t cause_value, int iface) 
 {
 
-	uint8_t count = 1;
 	upf_context_t *upf_context = NULL;
 	int ret = 0;
 
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 					(const void*) &(msg->upf_ipv4.s_addr), (void **) &(upf_context));
 
-	if(ret >= 0 && (msg->msg_type == PFCP_ASSOCIATION_SETUP_RESPONSE)
-			&& (msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED)){
-		count = upf_context->csr_cnt;
-	}
-
-	for(uint8_t i = 0; i < count; i++){
-
+    while(true) {
 		err_rsp_info rsp_info = {0};
-		get_error_rsp_info(msg, &rsp_info, i);
+		get_error_rsp_info(msg, &rsp_info);
 
 				//Sending CCR-T in case of failure
 #ifdef GX_BUILD
@@ -504,9 +497,6 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface)
 		ret = clean_up_while_error(rsp_info.ebi_index,
 						rsp_info.teid,&msg->gtpc_msg.csr.imsi.imsi_number_digits,
 						msg->gtpc_msg.csr.imsi.header.len, rsp_info.seq);
-		if(ret < 0) {
-			return;
-		}
 		if(iface == S11_IFACE){
 			gtpv2c_send(s11_fd, tx_buf, payload_length,
 					(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
@@ -520,7 +510,18 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface)
 			update_cli_stats(s5s8_ip->sin_addr.s_addr,gtpv2c_tx->gtpc.type,REJ,S5S8);
 
 		}
+
+        printf("%s %d - msg type = %d \n",__FUNCTION__, __LINE__, msg->msg_type);
+        if(msg->msg_type != PFCP_ASSOCIATION_SETUP_RESPONSE)
+            break;
+
+	    if(upf_context != NULL && (msg->msg_type == PFCP_ASSOCIATION_SETUP_RESPONSE)
+	    	&& (msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED)){
+            if(LIST_EMPTY(&upf_context->pendingCSRs))
+                break;
+        }
 	}
+	RTE_SET_USED(ret);
 }
 
 
@@ -528,7 +529,7 @@ void mbr_error_response(msg_info *msg, uint8_t cause_value, int iface){
 
 	err_rsp_info rsp_info = {0};
 
-	get_error_rsp_info(msg, &rsp_info, 0);
+	get_error_rsp_info(msg, &rsp_info);
 
 	bzero(&tx_buf, sizeof(tx_buf));
 	gtpv2c_header *gtpv2c_tx = (gtpv2c_header *) tx_buf;
@@ -591,7 +592,7 @@ void ds_error_response(msg_info *msg, uint8_t cause_value, int iface){
 	ue_context *context = NULL;
 	err_rsp_info rsp_info = {0};
 
-	get_error_rsp_info(msg, &rsp_info, 0);
+	get_error_rsp_info(msg, &rsp_info);
 
 	if(get_ue_context_while_error(rsp_info.teid, &context) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
@@ -825,7 +826,7 @@ void ubr_error_response(msg_info *msg, uint8_t cause_value, int iface){
 	int ret = 0;
 	err_rsp_info rsp_info = {0};
 	int ebi_index = 0;
-	get_error_rsp_info(msg, &rsp_info, 0);
+	get_error_rsp_info(msg, &rsp_info);
 	bzero(&tx_buf, sizeof(tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)tx_buf;
 

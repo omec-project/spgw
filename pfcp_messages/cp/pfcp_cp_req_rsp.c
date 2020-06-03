@@ -176,7 +176,7 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 
 		}
 		return 0;
-	}else {
+	} else {
 		// ajay - why this is called as response ? it could be request mesage as well 
 		printf("PFCP message %d  received from UP %s \n",pfcp_header->message_type, inet_ntoa(peer_addr->sin_addr));
 		/*Reset periodic timers*/

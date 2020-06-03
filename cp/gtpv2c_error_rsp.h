@@ -86,7 +86,7 @@ void ds_error_response(msg_info *msg, uint8_t cause_value, int iface);
  * @param  : index, index of csr message in pending_csr array if parant message is csr
  * @return : Returns nothing
  */
-void get_error_rsp_info(msg_info *msg, err_rsp_info *err_rsp_info, uint8_t index);
+void get_error_rsp_info(msg_info *msg, err_rsp_info *err_rsp_info);
 
 /**
  * @brief  : Gets information related to error and fills error response structure
@@ -96,7 +96,7 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *err_rsp_info, uint8_t index
  * @param  : index, index of csr message in pending_csr array if parant message is csr
  * @return : Returns nothing
  */
-void get_info_filled(msg_info *msg, err_rsp_info *t2 , uint8_t index);
+void get_info_filled(msg_info *msg, err_rsp_info *t2);
 
 void ubr_error_response(msg_info *msg, uint8_t cause_value, int iface);
 

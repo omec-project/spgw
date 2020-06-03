@@ -122,7 +122,9 @@ association_setup_handler(void *data, void *unused_param)
 			(void **) &(upf_context));
 	if (upf_context->state != PFCP_ASSOC_RESP_RCVD_STATE) {
 		if (ret >= 0) {
+#ifndef DELETE_THIS
 			upf_context->csr = msg->gtpc_msg.csr;
+#endif
 		}
 	}
 	if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
@@ -714,23 +716,24 @@ cca_msg_handler(void *data, void *unused_param)
 	                 (void **) &(upf_context));
 	if(upf_context->state != PFCP_ASSOC_RESP_RCVD_STATE) {
 	       if (ret >= 0) {
+#ifndef DELETE_THIS
 			if(cp_config->cp_type == PGWC) {
 	                        upf_context->csr.sender_fteid_ctl_plane.teid_gre_key = pdn->s5s8_sgw_gtpc_teid;
 	                }
-	                if(cp_config->cp_type == SAEGWC) {
-	                        upf_context->csr.sender_fteid_ctl_plane.teid_gre_key = pdn->context->s11_mme_gtpc_teid;
-	                }
-	                upf_context->csr.header.teid.has_teid.seq = pdn->context->sequence;
-	                upf_context->csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi = ebi_index + 5;
-	                if (cp_config->cp_type == PGWC) {
-	                        /* : we need teid for send ccr-T to GX  */
-	                        upf_context->csr.header.teid.has_teid.teid = pdn->s5s8_pgw_gtpc_teid;
-	                }
-	                if(cp_config->cp_type == SAEGWC) {
-	                         upf_context->csr.header.teid.has_teid.teid = pdn->context->s11_sgw_gtpc_teid;
-	                }
-
-	       }
+	        if(cp_config->cp_type == SAEGWC) {
+	                upf_context->csr.sender_fteid_ctl_plane.teid_gre_key = pdn->context->s11_mme_gtpc_teid;
+	        }
+	        upf_context->csr.header.teid.has_teid.seq = pdn->context->sequence;
+	        upf_context->csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi = ebi_index + 5;
+	        if (cp_config->cp_type == PGWC) {
+	                /* : we need teid for send ccr-T to GX  */
+	                upf_context->csr.header.teid.has_teid.teid = pdn->s5s8_pgw_gtpc_teid;
+	        }
+	        if(cp_config->cp_type == SAEGWC) {
+	                 upf_context->csr.header.teid.has_teid.teid = pdn->context->s11_sgw_gtpc_teid;
+	        }
+#endif
+	    }
 	}
 	/* send error response in case of pfcp est. fail using this data */
 	if(upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
@@ -1460,7 +1463,7 @@ int process_delete_bearer_req_handler(void *data, void *unused_param)
 
 
 void
-get_info_filled(msg_info *msg, err_rsp_info *info_resp , uint8_t index)
+get_info_filled(msg_info *msg, err_rsp_info *info_resp)
 {
 	struct resp_info *resp = NULL;
 	//pdn_connection *pdn = NULL;
@@ -1481,10 +1484,12 @@ get_info_filled(msg_info *msg, err_rsp_info *info_resp , uint8_t index)
 					 __file__, __func__, __LINE__,msg->msg_type, msg->upf_ipv4.s_addr);
 				return;
 			}
-
-			context_key *key = (context_key *)upf_context->pending_csr_teid[index];
-			info_resp->ebi_index = key->ebi_index + 5;
-			info_resp->teid = key->teid;
+            context_key *key = LIST_FIRST(&upf_context->pendingCSRs);
+            assert(key != NULL);
+            LIST_REMOVE(key, csrentries);
+	        info_resp->ebi_index = key->ebi_index;
+	        info_resp->teid = key->teid;
+            // ajay - memleak .. Prio1.. Shopuld we not free the key ?
 			break;
 		}
 
@@ -1788,33 +1793,28 @@ process_error_occured_handler(void *data, void *unused_param)
 	ue_context *context = NULL;
 	pdn_connection *pdn = NULL;
 	struct resp_info *resp = NULL;
-	uint8_t count = 1;
 	upf_context_t *upf_ctx = NULL;
 
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 					(const void*) &(msg->upf_ipv4.s_addr), (void **) &(upf_ctx));
 
-	if(ret >= 0 && (msg->msg_type == PFCP_ASSOCIATION_SETUP_RESPONSE)
-			&& (msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED)){
-		count = upf_ctx->csr_cnt;
-	}
-	for (uint8_t i = 0; i < count; i++) {
-	get_info_filled(msg, &info_resp, i);
-	uint8_t ebi_index = info_resp.ebi_index;
-	uint32_t teid = info_resp.teid;
+	while (true) {
+	    get_info_filled(msg, &info_resp);
+	    uint8_t ebi_index = info_resp.ebi_index;
+	    uint32_t teid = info_resp.teid;
 
-
-		if (get_ue_context_while_error(teid, &context) == 0){
+		if (get_ue_context_while_error(teid, &context) == 0) {
 			pdn = GET_PDN(context ,ebi_index);
 			if ((upf_context_entry_lookup(pdn->upf_ipv4.s_addr,&upf_ctx)) ==  0) {
 				if(upf_ctx->state < PFCP_ASSOC_RESP_RCVD_STATE){
 					rte_hash_del_key(upf_context_by_ip_hash, (const void *) &pdn->upf_ipv4.s_addr);
-
-					for (i = 0; i < upf_ctx->csr_cnt; i++) {
-						rte_free(upf_ctx->pending_csr[i]);
-						rte_free(upf_ctx->pending_csr_teid[i]);
-						upf_ctx->csr_cnt--;
-					}
+                    context_key *key;
+                    key = LIST_FIRST(&upf_ctx->pendingCSRs);
+                    while (key != NULL) {
+                        LIST_REMOVE(key, csrentries);
+                        rte_free(key);
+                        key = LIST_FIRST(&upf_ctx->pendingCSRs);
+                    }
 					rte_free(upf_ctx);
 					upf_ctx = NULL;
 				}
@@ -1856,9 +1856,14 @@ process_error_occured_handler(void *data, void *unused_param)
 					rte_free(context);
 				context = NULL;
 			}
-
-
 		}
+        if(msg->msg_type != PFCP_ASSOCIATION_SETUP_RESPONSE)
+            break;
+	    if(upf_ctx != NULL && (msg->msg_type == PFCP_ASSOCIATION_SETUP_RESPONSE)
+	    	&& (msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED)){
+            if(LIST_EMPTY(&upf_ctx->pendingCSRs))
+                break;
+        }
 	}
 	clLog(clSystemLog, eCLSeverityCritical, "%s:%d:SM_ERROR: Error handler UE_Proc: %u UE_State: %u "
 			"%u and Message_Type:%s\n", __func__, __LINE__,
@@ -1866,6 +1871,7 @@ process_error_occured_handler(void *data, void *unused_param)
 			gtp_type_str(msg->msg_type));
 
 	RTE_SET_USED(unused_param);
+	RTE_SET_USED(ret);
 	return 0;
 }
 

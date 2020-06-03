@@ -3348,12 +3348,18 @@ process_create_sess_req(create_sess_req_t *csr,
 	eps_bearer *bearer = NULL;
 	pdn_connection *pdn = NULL;
 
+    /* TODO : Prio-1 Must fix. Handle unknown APN */
 	apn *apn_requested = get_apn((char *)csr->apn.apn, csr->apn.header.len);
+
+    if(apn_requested == NULL) {
+        return GTPV2C_CAUSE_MISSING_UNKNOWN_APN;
+    }
 
 	if(csr->mapped_ue_usage_type.header.len > 0) {
 		apn_requested->apn_usage_type = csr->mapped_ue_usage_type.mapped_ue_usage_type;
 	}
 
+    /* TODO - Prio-5. New networks support all the 15 EBIs  */
 	uint8_t ebi_index = csr->bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
 
 
@@ -3641,7 +3647,7 @@ process_create_sess_req(create_sess_req_t *csr,
     // no upf available 
     if(upf_addr.s_addr == 0) 
     {
-	return GTPV2C_CAUSE_REQUEST_REJECTED;
+	  return GTPV2C_CAUSE_REQUEST_REJECTED;
     }
     pdn->upf_ipv4 = upf_addr; 
 #endif

@@ -1,0 +1,83 @@
+rte_hash_create
+TEID Table (GTP)
+    name - ue_context_by_fteid_hash
+    key - teid
+    value - ue_context 
+
+PDN_TEID Table (GTP)
+    name - pdn_by_fteid_hash
+    key - teid
+    value - pdn_connection
+
+BEARER_TEID Table (GTP)
+    bearer_by_fteid_hash
+    key - teid
+    value - eps_bearer_t
+
+APN Table
+    name: 
+    Add:
+        - configuration adds APNs to this table.
+    Delete:
+        - 
+    Update:
+        - 
+    Search:
+        - CSReq processing. 
+        - If APN not found we are allowing the call to go thorugh and also allocating new APN. Seems Bug  
+
+
+IMSI Table
+    name: ue_context_by_imsi_hash. 
+    Key ; imsi
+    value: ue_context
+    Add: Create UE context when CSReq is received, 
+    Delete:
+    Update:
+    Search:
+
+Peer connection table (PFCP + GTP )
+    name - conn_hash_handle
+    key - dstIp
+    value: peerData
+
+SEID Table (PFCP):
+    name: sm_hash 
+    key: sess_id
+    value : struct resp_info
+
+    Add - add_sess_entry
+    search: get_sess_entry
+
+Gx context table (Gx)
+    name - gx_context_by_sess_id_hash
+    key - sess_id 
+    value - gx_context_t
+
+UPF Context table
+    name - upf_context_by_ip_hash
+    key - upf_ip
+    value: upf_context_t 
+
+IMSI to UPF DNS details
+    name - upflist_by_ue_hash_entry_lookup
+    key - IMSI
+    value - upfs_dnsres_t
+
+Nodeid to node data
+    - node_id_hash
+    - key : nodeid ( for now ipv4 address)
+    - value: data 
+    node_id_hash
+
+heartbeat hash table
+    name - heartbeat_recovery_hash
+    key - ip address
+    value - timestamp
+
+PFCP Specific:
+   - associated_upf_hash
+   - pdr_entry_hash
+   - qer_entry_hash 
+   - urr_entry_hash
+   - pdn_conn_hash

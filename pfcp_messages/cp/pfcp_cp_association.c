@@ -331,11 +331,8 @@ buffer_csr_request(ue_context *context,
 	key->sequence = context->sequence;
 	key->ebi_index = ebi;
 
-	upf_context->pending_csr_teid[upf_context->csr_cnt] = (uint32_t *)key;
-	upf_context->csr_cnt++; /* TODO - BUG .why array based pending list ? */
-
+    LIST_INSERT_HEAD(&upf_context->pendingCSRs, key, csrentries);
 	return 0;
-
 }
 
 #ifdef USE_DNS_QUERY
@@ -398,6 +395,7 @@ assoication_setup_request(ue_context *context, uint8_t ebi_index)
 		return -1;
 	}
 
+    LIST_INIT(&upf_context->pendingCSRs);
 
 	ret = buffer_csr_request(context, upf_context, ebi_index);
 	if (ret) {
@@ -616,10 +614,10 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 		set_base_teid(msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].teid_range);
 	}
 
-	for (uint8_t i = 0; i < upf_context->csr_cnt; i++) {
-
-		context_key *key = (context_key *)upf_context->pending_csr_teid[i];
-
+    context_key *key;
+    key = LIST_FIRST(&upf_context->pendingCSRs);
+    while (key != NULL) {
+        LIST_REMOVE(key, csrentries);
 		if (get_pdn(key->teid, &pdn) < 0){
 			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to get pdn for teid: %u\n",
 					__func__, __LINE__, key->teid);
@@ -644,9 +642,8 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 			resp->gtpc_msg.csr = upf_context->csr;
 		}
 
-		rte_free(upf_context->pending_csr[i]);
-		rte_free(upf_context->pending_csr_teid[i]);
-		upf_context->csr_cnt--;
+        rte_free(key);
+        key = LIST_FIRST(&upf_context->pendingCSRs);
 	}
 
 	/* Adding ip to cp  heartbeat when dp returns the association response*/

@@ -286,6 +286,7 @@ get_ue_context_while_error(uint32_t teid_key, ue_context **context)
 	return 0;
 }
 
+/* LOOKUP - TEID to session */
 int8_t
 get_ue_context(uint32_t teid_key, ue_context **context)
 {

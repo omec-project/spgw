@@ -20,6 +20,7 @@
 #include "clogger.h"
 #include "cp_config.h"
 
+/* LOOKUP TABLE */
 struct rte_hash *ue_context_by_imsi_hash;
 struct rte_hash *ue_context_by_fteid_hash;
 struct rte_hash *pdn_by_fteid_hash;
@@ -502,6 +503,7 @@ get_apn(char *apn_label, uint16_t apn_length)
 	int i;
 	printf("%s %d - APN %s length %d \n",__FUNCTION__,__LINE__, apn_label, apn_length);
 	for (i = 0; i < MAX_NB_DPN; i++)   {
+	    printf("%s %d - APN %s length %lu \n",__FUNCTION__,__LINE__, apn_list[i].apn_name_label, apn_list[i].apn_name_length);
 		if ((apn_length == apn_list[i].apn_name_length)
 			&& !memcmp(apn_label, apn_list[i].apn_name_label,
 			apn_length)) {
@@ -509,6 +511,11 @@ get_apn(char *apn_label, uint16_t apn_length)
 	        }
 	}
 	printf("%s %d - APN found ? index = %d \n",__FUNCTION__,__LINE__, i);
+
+    /* TODO : Return error code */
+    if(i>=MAX_NB_DPN)
+        return NULL;
+
 	if(i >= MAX_NB_DPN) {
 		/* when apn name of csr are not found in cp.cfg file */
 		/* BP : TODO : free apn_reruested and apn_name_label memory */
@@ -543,6 +550,7 @@ get_apn(char *apn_label, uint16_t apn_length)
 	return apn_list+i; /* ajay - scary.... why do we want to do this ?*/
 }
 
+/* TODO : Prio2 . Scaling needs change in this area. */
 uint32_t
 acquire_ip(struct in_addr *ipv4)
 {

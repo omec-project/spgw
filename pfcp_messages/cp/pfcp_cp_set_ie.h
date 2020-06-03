@@ -28,6 +28,7 @@
 #include "gtp_messages.h"
 #include "cp_io_poll.h"
 #include "restoration_timer.h"
+#include <sys/queue.h>
 
 /* TODO: Move following lines to another file */
 #define HAS_SEID 1
@@ -123,10 +124,6 @@ typedef struct gx_context_t {
  */
 typedef struct upf_context_t {
 	pfcp_assoc_status_en	assoc_status;
-
-	uint32_t	csr_cnt;
-	uint32_t	*pending_csr[BUFFERED_ENTRIES_DEFAULT];
-	uint32_t	*pending_csr_teid[BUFFERED_ENTRIES_DEFAULT];
 	char	fqdn[MAX_HOSTNAME_LENGTH];
 
 	uint16_t up_supp_features;
@@ -137,7 +134,10 @@ typedef struct upf_context_t {
 	uint8_t  state;
 	/* Add timer_entry for pfcp assoc req */
 	peerData *timer_entry;
+#ifndef DELETE_THIS
 	create_sess_req_t csr;
+#endif
+    LIST_HEAD(pendingcsrhead, ue_context_key) pendingCSRs;
 } upf_context_t;
 
 /**

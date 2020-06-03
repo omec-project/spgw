@@ -54,111 +54,115 @@ add_timer_entry(peerData *conn_data, uint32_t timeout_ms,
 void
 timer_callback(gstimerinfo_t *ti, const void *data_t )
 {
-	int ret = 0;
-	int64_t seid = 0;
-	msg_info msg;
-	ue_context *context = NULL;
-	pdn_connection *pdn = NULL;
-	struct resp_info *resp = NULL;
+        int ret = 0;
+        int64_t seid = 0;
+        msg_info msg;
+        ue_context *context = NULL;
+        pdn_connection *pdn = NULL;
+        struct resp_info *resp = NULL;
 
-	RTE_SET_USED(ti);
+        RTE_SET_USED(ti);
 
 #pragma GCC diagnostic push  /* require GCC 4.6 */
 #pragma GCC diagnostic ignored "-Wcast-qual"
-	peerData *data =  (peerData *) data_t;
+        peerData *data =  (peerData *) data_t;
 #pragma GCC diagnostic pop   /* require GCC 4.6 */
 
 
-	if (data->itr_cnt >= data->itr - 1) {
-	        ret = get_ue_context(data->teid, &context);
-		if ( ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, data->teid);
-			return;
-		}
-		if(context != NULL && context->eps_bearers[data->ebi_index] != NULL
-			&& context->eps_bearers[data->ebi_index]->pdn != NULL ) {
-			pdn = context->eps_bearers[data->ebi_index]->pdn;
-			seid = pdn->seid;
-			if (get_ses_entry(seid, &resp) != 0){
-				/* Assuming that session is not established or resp entry is not created */
-				upf_context_t *upf_context = NULL;
-				context_key *key = NULL;
+        if (data->itr_cnt >= data->itr - 1) {
+                ret = get_ue_context(data->teid, &context);
+                if ( ret < 0) {
+                        clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, data->teid);
+                        return;
+                }
+                if(context != NULL && context->eps_bearers[data->ebi_index] != NULL
+                                && context->eps_bearers[data->ebi_index]->pdn != NULL ) {
+                        pdn = context->eps_bearers[data->ebi_index]->pdn;
+                        seid = pdn->seid;
+                        if (get_ses_entry(seid, &resp) != 0){
+                                /* Assuming that session is not established or resp entry is not created */
+                                upf_context_t *upf_context = NULL;
+                                context_key *key = NULL;
 
-				ret = rte_hash_lookup_data(upf_context_by_ip_hash,
-					(const void*) &(context->eps_bearers[data->ebi_index]->pdn->upf_ipv4.s_addr),
-					(void **) &(upf_context));
+                                ret = rte_hash_lookup_data(upf_context_by_ip_hash,
+                                                (const void*) &(context->eps_bearers[data->ebi_index]->pdn->upf_ipv4.s_addr),
+                                                (void **) &(upf_context));
 
-				if (upf_context != NULL &&  ret >= 0) {
-					/*msg.msg_type = GTP_CREATE_SESSION_REQ;
-					msg.gtpc_msg.csr = upf_context->csr;
-					cs_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
-						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);*/
-				       for(uint8_t idx = 0; idx < upf_context->csr_cnt; idx++) {
-						msg.msg_type = GTP_CREATE_SESSION_REQ;
-						key = (context_key *) upf_context->pending_csr_teid[idx];
-						msg.gtpc_msg.csr.sender_fteid_ctl_plane.teid_gre_key = key->sender_teid;
-						msg.gtpc_msg.csr.header.teid.has_teid.seq = key->sequence;
-						msg.gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi =
-										key->ebi_index + 5;
-						msg.gtpc_msg.csr.header.teid.has_teid.teid = key->teid;
-						cs_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
-        		                                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-					}
-				}
-			} else {
-			if (GTP_MODIFY_BEARER_REQ == resp->msg_type) {
-				msg.gtpc_msg.mbr = resp->gtpc_msg.mbr;
-				msg.msg_type = resp->msg_type;
-				mbr_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
-					cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-			} else if (GTP_CREATE_SESSION_REQ == resp->msg_type) {
-				msg.gtpc_msg.csr = resp->gtpc_msg.csr;
-				msg.msg_type = resp->msg_type;
-				cs_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
-					cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-			} else if (GTP_DELETE_SESSION_REQ == resp->msg_type) {
-				msg.gtpc_msg.dsr = resp->gtpc_msg.dsr;
-				msg.msg_type = resp->msg_type;
-				ds_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
-					cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
-			} else if ((cp_config->cp_type == PGWC ||  cp_config->cp_type ==  SAEGWC )
-				 && (resp->msg_type == GX_RAR_MSG || resp->state == CREATE_BER_REQ_SNT_STATE)) {
+                                if (upf_context != NULL &&  ret >= 0) {
+                                        /*msg.msg_type = GTP_CREATE_SESSION_REQ;
+                                          msg.gtpc_msg.csr = upf_context->csr;
+                                          cs_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
+                                          cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);*/
+                                        key = LIST_FIRST(&upf_context->pendingCSRs);
+                                        while(key != NULL) {
+                                                LIST_REMOVE(key, csrentries);
+                                                msg.msg_type = GTP_CREATE_SESSION_REQ;
+                                                msg.gtpc_msg.csr.sender_fteid_ctl_plane.teid_gre_key = key->sender_teid;
+                                                msg.gtpc_msg.csr.header.teid.has_teid.seq = key->sequence;
+                                                msg.gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi =
+                                                        key->ebi_index + 5;
+                                                msg.gtpc_msg.csr.header.teid.has_teid.teid = key->teid;
+                                                cs_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
+                                                                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+                                                
+                                                rte_free(key);
+                                                key = LIST_FIRST(&upf_context->pendingCSRs);
+                                        }
+                                }
+                        } else {
+                                if (GTP_MODIFY_BEARER_REQ == resp->msg_type) {
+                                        msg.gtpc_msg.mbr = resp->gtpc_msg.mbr;
+                                        msg.msg_type = resp->msg_type;
+                                        mbr_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
+                                                        cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+                                } else if (GTP_CREATE_SESSION_REQ == resp->msg_type) {
+                                        msg.gtpc_msg.csr = resp->gtpc_msg.csr;
+                                        msg.msg_type = resp->msg_type;
+                                        cs_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
+                                                        cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+                                } else if (GTP_DELETE_SESSION_REQ == resp->msg_type) {
+                                        msg.gtpc_msg.dsr = resp->gtpc_msg.dsr;
+                                        msg.msg_type = resp->msg_type;
+                                        ds_error_response(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING,
+                                                        cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
+                                } else if ((cp_config->cp_type == PGWC ||  cp_config->cp_type ==  SAEGWC )
+                                                && (resp->msg_type == GX_RAR_MSG || resp->state == CREATE_BER_REQ_SNT_STATE)) {
 #ifdef GX_BUILD
-				gen_reauth_error_response(pdn, DIAMETER_PCC_RULE_EVENT);
+                                        gen_reauth_error_response(pdn, DIAMETER_PCC_RULE_EVENT);
 #endif
-				pdn->state = IDEL_STATE;
-			} else {
-				/* Need to handle for other request */
-			}
-			}
-		}
-		if(data->pt.ti_id != 0) {
-			stoptimer(&data->pt.ti_id);
-			deinittimer(&data->pt.ti_id);
-			/* free peer data when timer is de int */
-			rte_free(data);
-		}
-		return;
-	}
+                                        pdn->state = IDEL_STATE;
+                                } else {
+                                        /* Need to handle for other request */
+                                }
+                        }
+                }
+                if(data->pt.ti_id != 0) {
+                        stoptimer(&data->pt.ti_id);
+                        deinittimer(&data->pt.ti_id);
+                        /* free peer data when timer is de int */
+                        rte_free(data);
+                }
+                return;
+        }
 
-	/* timer retry handler */
-	switch(data->portId) {
-		case GX_IFACE:
-			break;
-		case S11_IFACE:
-			timer_retry_send(s11_fd, data);
-			break;
-		case S5S8_IFACE:
-			timer_retry_send(s5s8_fd, data);
-			break;
-		case PFCP_IFACE:
-			timer_retry_send(pfcp_fd, data);
-			break;
-		default:
-			break;
-	}
-	data->itr_cnt++;
-	return;
+        /* timer retry handler */
+        switch(data->portId) {
+                case GX_IFACE:
+                        break;
+                case S11_IFACE:
+                        timer_retry_send(s11_fd, data);
+                        break;
+                case S5S8_IFACE:
+                        timer_retry_send(s5s8_fd, data);
+                        break;
+                case PFCP_IFACE:
+                        timer_retry_send(pfcp_fd, data);
+                        break;
+                default:
+                        break;
+        }
+        data->itr_cnt++;
+        return;
 }
 
 peerData *

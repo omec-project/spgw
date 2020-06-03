@@ -77,6 +77,7 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 
 	set_apn_restriction(&cs_resp.apn_restriction, IE_INSTANCE_ZERO,
 			pdn->apn_restriction);
+    /* add PCO here */
 	{
 
 		set_ie_header(&cs_resp.bearer_contexts_created.header, GTP_IE_BEARER_CONTEXT,

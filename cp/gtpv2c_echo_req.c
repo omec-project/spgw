@@ -14,50 +14,10 @@
  * limitations under the License.
  */
 
-//#include "ipv4.h" ajay - remove this 
 #include "gtpv2c.h"
 #include "util.h"
 #include "gtp_messages.h"
 #include "gtpv2c_set_ie.h"
-
-
-#define GTPU_HDR_LEN   8
-#define IPV4_HDR_LEN   20
-#define ETH_HDR_LEN    14
-#define UDP_HDR_LEN    8
-#define IP_PROTO_UDP   17
-#define UDP_PORT_GTPU  2152
-#define GTPU_OFFSET    50
-
-#define GTPu_VERSION	0x20
-#define GTPu_PT_FLAG	0x10
-#define GTPu_E_FLAG		0x04
-#define GTPu_S_FLAG		0x02
-#define GTPu_PN_FLAG	0x01
-
-#define PKT_SIZE    54
-
-#define CONN_ENTRIY_FILE "../config/static_arp.cfg"
-
-/**
- * @brief  : Maintains gtpu header info
- */
-typedef struct gtpuHdr_s {
-	uint8_t version_flags;
-	uint8_t msg_type;
-	uint16_t tot_len;
-	uint32_t teid;
-	uint16_t seq_no;		/**< Optional fields if E, S or PN flags set */
-} __attribute__((__packed__)) gtpuHdr_t;
-
-
-/**
- * @brief  : Maintains GTPU-Recovery Information Element
- */
-typedef struct gtpu_recovery_ie_t {
-    uint8_t type;
-    uint8_t restart_cntr;
-} gtpu_recovery_ie;
 
 /**
  * @brief  : Set values in recovery ie
