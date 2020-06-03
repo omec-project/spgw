@@ -1,17 +1,9 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2019 Sprint
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: Apache-2.0
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 #include <unistd.h>
@@ -119,18 +111,10 @@ int main(int argc, char **argv)
 			/* Pipeline Init */
 			epc_init_packet_framework(app.s5s8_sgwu_port,
 					app.s1u_port);
-#ifdef NGCORE_SHRINK
 			/*S1U port handler*/
 			register_ul_worker(s1u_pkt_handler, app.s1u_port);
 			/*S5/8 port handler*/
 			register_dl_worker(sgw_s5_s8_pkt_handler, app.s5s8_sgwu_port);
-#else
-			/*S1U port handler*/
-			register_worker(s1u_pkt_handler, app.s1u_port);
-
-			/*S5/8 port handler*/
-			register_worker(sgw_s5_s8_pkt_handler, app.s5s8_sgwu_port);
-#endif	/* NGCORE_SHRINK */
 			break;
 
 		case PGWU:
@@ -141,18 +125,10 @@ int main(int argc, char **argv)
 					"\n\tWEST_PORT=S5/S8 <> EAST_PORT=SGi\n");
 			/* Pipeline Init */
 			epc_init_packet_framework(app.sgi_port, app.s5s8_pgwu_port);
-#ifdef NGCORE_SHRINK
 			/*S5/8 port handler*/
 			register_ul_worker(pgw_s5_s8_pkt_handler, app.s5s8_pgwu_port);
 			/*SGi port handler*/
 			register_dl_worker(sgi_pkt_handler, app.sgi_port);
-#else
-			/*S5/8 port handler*/
-			register_worker(pgw_s5_s8_pkt_handler, app.s5s8_pgwu_port);
-
-			/*SGi port handler*/
-			register_worker(sgi_pkt_handler, app.sgi_port);
-#endif	/* NGCORE_SHRINK */
 			break;
 
 		case SAEGWU:
@@ -163,18 +139,10 @@ int main(int argc, char **argv)
 					"\n\tWEST_PORT=S1U <> EAST_PORT=SGi\n");
 			/* Pipeline Init */
 			epc_init_packet_framework(app.sgi_port, app.s1u_port);
-#ifdef NGCORE_SHRINK
 			/*S1U port handler*/
 			register_ul_worker(s1u_pkt_handler, app.s1u_port);
 			/*SGi port handler*/
 			register_dl_worker(sgi_pkt_handler, app.sgi_port);
-#else
-			/*S1U port handler*/
-			register_worker(s1u_pkt_handler, app.s1u_port);
-
-			/*SGi port handler*/
-			register_worker(sgi_pkt_handler, app.sgi_port);
-#endif	/* NGCORE_SHRINK */
 			break;
 
 		default:

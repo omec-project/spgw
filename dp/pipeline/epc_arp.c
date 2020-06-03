@@ -1,18 +1,11 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2017 Intel Corporation
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: Apache-2.0
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -872,7 +865,6 @@ arp_send_buffered_pkts(struct rte_ring *queue,
 			++count;
 		}
 	}
-#ifdef NGCORE_SHRINK
 #ifdef STATS
 	if (portid == SGI_PORT_ID) {
 		epc_app.ul_params[S1U_PORT_ID].pkts_out +=  count;
@@ -880,7 +872,6 @@ arp_send_buffered_pkts(struct rte_ring *queue,
 		epc_app.dl_params[SGI_PORT_ID].pkts_out += count;
 	}
 #endif /* STATS */
-#endif /* NGCORE_SHRINK */
 
 	if (ARPICMP_DEBUG) {
 		clLog(clSystemLog, eCLSeverityDebug,"%s::"
@@ -2064,7 +2055,6 @@ epc_arp_init(void)
 
 	/* Output port configuration */
 	for (i = 0; i < epc_app.n_ports; i++) {
-#ifdef NGCORE_SHRINK
 		struct rte_port_ethdev_writer_nodrop_params
 					port_ethdev_params =
 			{
@@ -2080,18 +2070,6 @@ epc_arp_init(void)
 			.f_action = NULL,
 			.arg_ah = NULL,
 		};
-#else
-		struct rte_port_ring_writer_params port_ring_params = {
-			.ring = epc_app.ring_tx[epc_app.core_mct][i],
-			.tx_burst_sz = epc_app.burst_size_tx_write,
-		};
-
-		struct rte_pipeline_port_out_params port_params = {
-			.ops = &rte_port_ring_writer_ops,
-			.arg_create = (void *) &port_ring_params,
-		};
-#endif /*NGCORE_SHRINK*/
-
 		if (
 			rte_pipeline_port_out_create(p,
 					&port_params, &params->port_out_id[i])
@@ -2372,9 +2350,7 @@ void epc_arp(__rte_unused void *arg)
 #else
 		handle_kni_process(NULL);
 #endif
-#ifdef NGCORE_SHRINK
 #ifdef STATS
 	epc_stats_core();
-#endif
 #endif
 }

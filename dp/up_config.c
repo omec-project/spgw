@@ -1,17 +1,9 @@
 /*
- * Copyright (c) 2019 Sprint
+ * Copyright 2020-present Open Networking Foundation
+ * Copyright (c) 2017 Intel Corporation
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: Apache-2.0
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 /*
@@ -650,25 +642,8 @@ parse_config_args(struct app_params *app, int argc, char **argv)
 
 	set_unused_lcore(&epc_app.core_mct, &used_coremask);
 	set_unused_lcore(&epc_app.core_iface, &used_coremask);
-#ifdef NGCORE_SHRINK
 	set_unused_lcore(&epc_app.core_ul[S1U_PORT_ID], &used_coremask);
 	set_unused_lcore(&epc_app.core_dl[SGI_PORT_ID], &used_coremask);
-#else
-#ifdef STATS
-	set_unused_lcore(&epc_app.core_stats, &used_coremask);
-#endif
-	set_unused_lcore(&epc_app.core_spns_dns, &used_coremask);
-	set_unused_lcore(&epc_app.core_rx[S1U_PORT_ID], &used_coremask);
-	epc_app.core_tx[S1U_PORT_ID] = epc_app.core_rx[S1U_PORT_ID];
-	set_unused_lcore(&epc_app.core_rx[SGI_PORT_ID], &used_coremask);
-	epc_app.core_tx[SGI_PORT_ID] = epc_app.core_rx[SGI_PORT_ID];
-	set_unused_lcore(&epc_app.core_load_balance, &used_coremask);
-
-	for (i = 0; i < epc_app.num_workers; ++i) {
-		epc_app.worker_cores[i] = -1;
-		set_unused_lcore(&epc_app.worker_cores[i], &used_coremask);
-	}
-#endif	/* NGCORE_SHRINK */
 
 	app->s1u_net = app->s1u_ip & app->s1u_mask;
 	app->s1u_bcast_addr = app->s1u_ip | ~(app->s1u_mask);

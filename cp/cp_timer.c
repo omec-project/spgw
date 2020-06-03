@@ -1,3 +1,10 @@
+/*
+ * Copyright 2020-present Open Networking Foundation
+ * Copyright (c) 2019 Sprint
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ */
 #include "gtpv2c.h"
 #include "pfcp_cp_util.h"
 #include "sm_struct.h"
@@ -171,7 +178,7 @@ fill_timer_entry_data(enum source_interface iface, struct sockaddr_in *peer_addr
 {
 	peerData *timer_entry = NULL;
 
-	timer_entry = rte_zmalloc_socket(NULL, sizeof(upf_context_t),
+	timer_entry = rte_zmalloc_socket(NULL, sizeof(peerData),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if(timer_entry == NULL )
 	{

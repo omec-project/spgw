@@ -1,17 +1,9 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2017 Intel Corporation
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: Apache-2.0
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 #ifndef __EPC_PACKET_FRAMEWORK_H__
@@ -124,7 +116,6 @@ struct epc_meta_data {
 
 #define DP_MAX_LCORE RTE_PIPELINE_PORT_OUT_MAX
 
-#ifdef NGCORE_SHRINK
 /** UL pipeline parameters - Per input port */
 uint32_t dl_ndata_pkts;
 uint32_t ul_ndata_pkts;
@@ -232,120 +223,6 @@ struct epc_dl_params {
 } __rte_cache_aligned;
 typedef int (*epc_dl_handler) (struct rte_pipeline*, struct rte_mbuf **pkts,
 		uint32_t n, int wk_index);
-#else
-
-/**
- * @brief  : Maintains Rx pipeline parameters - Per input port
- */
-struct epc_rx_params {
-	/** Count since last flush */
-	int flush_count;
-	/** Number of pipeline runs between flush */
-	int flush_max;
-	/** RTE pipeline params */
-	struct rte_pipeline_params pipeline_params;
-	/** Input port id */
-	uint32_t port_in_id;
-	/** Output port IDs  [0]-> load balance, [1]-> master
-	  * control thr
-	  */
-	uint32_t port_out_id[2];
-	/** Table ID - ports connect to this table */
-	uint32_t table_id;
-	/** RTE pipeline */
-	struct rte_pipeline *pipeline;
-	/** pipeline name */
-	char name[PIPE_NAME_SIZE];
-} __rte_cache_aligned;
-
-/**
- * @brief  : Maintains Tx pipeline parameters - Per output port
- */
-struct epc_tx_params {
-	/** Count since last flush */
-	int flush_count;
-	/** Number of pipeline runs between flush */
-	int flush_max;
-	/** RTE pipeline params */
-	struct rte_pipeline_params pipeline_params;
-	/** Input port id */
-	uint32_t port_in_id[DP_MAX_LCORE];
-	/** Output port IDs */
-	uint32_t port_out_id;
-	/** Table ID - ports connect to this table */
-	uint32_t table_id;
-	/** RTE pipeline */
-	struct rte_pipeline *pipeline;
-	/** pipeline name */
-	char name[PIPE_NAME_SIZE];
-} __rte_cache_aligned;
-
-/**
- * @brief  : Maintains load Balance pipeline parameters - Per output port
- */
-struct epc_load_balance_params {
-	/** Count since last flush */
-	int flush_count;
-	/** Number of pipeline runs between flush */
-	int flush_max;
-	/** RTE pipeline params */
-	struct rte_pipeline_params pipeline_params;
-	/** Input port id */
-	uint32_t port_in_id[NUM_SPGW_PORTS];
-	/** Output port IDs */
-	uint32_t port_out_id[DP_MAX_LCORE][NUM_SPGW_PORTS];
-	/** Both input ports connect to this table, default entry uses metadata
-	  * to decide output port
-	  */
-	uint32_t table_id;
-	/** RTE pipeline */
-	struct rte_pipeline *pipeline;
-	/** pipeline name */
-	char name[PIPE_NAME_SIZE];
-} __rte_cache_aligned;
-
-/**
- * @brief  : Maintains worker pipeline parameters - Per output port
- */
-struct epc_worker_params {
-	/** Count since last flush */
-	int flush_count;
-	/** Number of pipeline runs between flush */
-	int flush_max;
-	/** RTE pipeline params */
-	struct rte_pipeline_params pipeline_params;
-	/** Input port id */
-	uint32_t port_in_id[NUM_SPGW_PORTS + 1];
-	/** Output port IDs */
-	uint32_t port_out_id[NUM_SPGW_PORTS];
-	/** Notify port id */
-	uint32_t notify_port;
-	/** Table per input port, each table has a single entry,
-	  * redirects the packet to the "other port", i.e.,
-	  * packet from port 0 is directed to port 1 and
-	  * vice/versa
-	  */
-	uint32_t table_id[NUM_SPGW_PORTS + 1];
-	/** RTE pipeline */
-	struct rte_pipeline *pipeline;
-	/** pipeline name */
-	char name[PIPE_NAME_SIZE];
-	/** Number of dns packets cloned by this worker */
-	uint64_t num_dns_packets;
-	/** Holds a set of rings to be used for downlink data buffering */
-	struct rte_ring *dl_ring_container;
-	/** Number of DL rings currently created */
-	uint32_t num_dl_rings;
-	/** For notification of modify_session so that buffered packets
-	 * can be dequeued*/
-	struct rte_ring *notify_ring;
-	/** Pool for notification msg pkts */
-	struct rte_mempool *notify_msg_pool;
-} __rte_cache_aligned;
-
-typedef int (*epc_packet_handler) (struct rte_pipeline*, struct rte_mbuf **pkts,
-		uint32_t n, int wk_index);
-#endif	/* NGCORE_SHRINK */
 
 /* defines max number of pipelines per core */
 #define EPC_PIPELINE_MAX	4
@@ -383,21 +260,12 @@ struct epc_app_params {
 	int core_iface;
 	int core_stats;
 	int core_spns_dns;
-#ifdef NGCORE_SHRINK
 	int core_ul[NUM_SPGW_PORTS];
 	int core_dl[NUM_SPGW_PORTS];
 	/* NGCORE_SHRINK::NUM_WORKER = 1 */
 	unsigned num_workers;
 	unsigned worker_cores[DP_MAX_LCORE];
 	unsigned worker_core_mapping[DP_MAX_LCORE];
-#else
-	int core_rx[NUM_SPGW_PORTS];
-	int core_tx[NUM_SPGW_PORTS];
-	int core_load_balance;
-	unsigned num_workers;
-	unsigned worker_cores[DP_MAX_LCORE];
-	unsigned worker_core_mapping[DP_MAX_LCORE];
-#endif	/* NGCORE_SHRINK */
 
 	/* Ports */
 	uint32_t ports[NUM_SPGW_PORTS];
@@ -426,15 +294,8 @@ struct epc_app_params {
 	uint32_t burst_size_tx_write;
 
 	/* Pipeline params */
-#ifdef NGCORE_SHRINK
 	struct epc_ul_params ul_params[NUM_SPGW_PORTS];
 	struct epc_dl_params dl_params[NUM_SPGW_PORTS];
-#else
-	struct epc_load_balance_params lb_params;
-	struct epc_tx_params tx_params[NUM_SPGW_PORTS];
-	struct epc_rx_params rx_params[NUM_SPGW_PORTS];
-	struct epc_worker_params worker[DP_MAX_LCORE];
-#endif	/* NGCORE_SHRINK */
 } __rte_cache_aligned;
 
 extern struct epc_app_params epc_app;
@@ -498,7 +359,6 @@ void epc_init_packet_framework(uint8_t east_port_id, uint8_t west_port_id);
  */
 void packet_framework_launch(void);
 
-#ifdef NGCORE_SHRINK
 /**
  * @brief  : Initializes UL pipeline
  * @param  : param, Pipeline parameters passed on to pipeline at runtime
@@ -552,82 +412,6 @@ void register_ul_worker(epc_ul_handler f, int port);
  */
 void register_dl_worker(epc_dl_handler f, int port);
 
-#else
-/**
- * @brief  : Initializes Rx pipeline
- * @param  : param, Pipeline parameters passed on to pipeline at runtime
- * @param  : core, Core to run Rx pipeline, used to warn if this core and the NIC port_id
- *           are in different NUMA domains
- * @param  : port_id, Rx Port ID
- * @return : Returns nothing
- */
-void epc_rx_init(struct epc_rx_params *param, int core, uint8_t port_id);
-
-/**
- * @brief  : Initializes Tx pipeline
- * @param  : param, Pipeline parameters passed on to pipeline at runtime
- * @param  : core, Core to run the Tx pipeline, used to warn if this core
- *           and the NIC port_id are in different NUMA domains
- * @param  : port_id, Tx Port ID
- * @return : Returns nothing
- */
-void epc_tx_init(struct epc_tx_params *param, int core, uint8_t port_id);
-
-/**
- * @brief  :  Initialize the load balance pipeline
- * @param  : param, Pipeline parameters passed on to pipeline at runtime
- * @return : Returns nothing
- */
-void epc_load_balance_init(struct epc_load_balance_params *param);
-
-/**
- * @brief  : Initializes a worker pipeline
- * @param  : worker_params, pipeline parameters
- * @param  : core, core to run the pipeline, this parameter is used to identify
- *           the input queue for the pipeline
- * @param  : wk_index, Identify which worker param instance this worker will deal with
- * @return : Returns nothing
- */
-void epc_worker_core_init(struct epc_worker_params *worker_params, int core,
-		int wk_index);
-
-/**
- * @brief  : Rx pipeline function
- * @param  : args, Pipeline parameters
- * @return : Returns nothing
- */
-void epc_rx(void *args);
-
-/**
- * @brief  : Tx pipeline function
- * @param  : args, pipeline parameters
- * @return : Returns nothing
- */
-void epc_tx(void *args);
-
-/**
- * @brief  : Load balance pipeline function
- * @param  : args, Pipeline parameters
- * @return : Returns nothing
- */
-void epc_load_balance(void *args);
-
-/**
- * @brief  : Worker core function
- * @param  : args, Pipeline parameters
- * @return : Returns nothing
- */
-void epc_worker_core(void *args);
-
-/**
- * @brief  : Registers a worker function that is executed from the pipeline
- * @param  : f, Function handler for packet processing
- * @param  : port, Port to register the worker function for
- * @return : Returns nothing
- */
-void register_worker(epc_packet_handler f, int port);
-
-#endif	/* NGCORE_SHRINK */
 
 /**
  * @brief  : Calculate hash value for given ue_ip

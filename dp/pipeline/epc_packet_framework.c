@@ -1,17 +1,9 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2017 Intel Corporation
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: Apache-2.0
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 #include <string.h>
@@ -76,7 +68,6 @@ struct epc_app_params epc_app = {
 	.core_iface = -1,
 	.core_stats = -1,
 	.core_spns_dns = -1,
-#ifdef NGCORE_SHRINK
 	.core_ul[S1U_PORT_ID] = -1,
 	.core_dl[SGI_PORT_ID] = -1,
 #ifdef STATS
@@ -87,13 +78,6 @@ struct epc_app_params epc_app = {
 	.dl_params[SGI_PORT_ID].ddn = 0,
 	.dl_params[SGI_PORT_ID].ddn_buf_pkts = 0,
 #endif
-#else
-	.core_rx[S1U_PORT_ID] = -1,
-	.core_tx[S1U_PORT_ID] = -1,
-	.core_rx[SGI_PORT_ID] = -1,
-	.core_tx[SGI_PORT_ID] = -1,
-	.core_load_balance = -1,
-#endif	/* NGCORE_SHRINK */
 };
 
 /**
@@ -124,9 +108,7 @@ static void epc_iface_core(__rte_unused void *args)
 	 */
 	while (1) {
 		iface_process_ipc_msgs();
-#ifdef NGCORE_SHRINK
 		scan_dns_ring();
-#endif
 	}
 #endif
 }
@@ -141,43 +123,10 @@ static void epc_init_lcores(void)
 	epc_alloc_lcore(epc_arp, NULL, epc_app.core_mct);
 	epc_alloc_lcore(epc_iface_core, NULL, epc_app.core_iface);
 
-#ifdef NGCORE_SHRINK
 	epc_alloc_lcore(epc_ul, &epc_app.ul_params[S1U_PORT_ID],
 						epc_app.core_ul[S1U_PORT_ID]);
 	epc_alloc_lcore(epc_dl, &epc_app.dl_params[SGI_PORT_ID],
 						epc_app.core_dl[SGI_PORT_ID]);
-#else
-#ifdef STATS
-	epc_alloc_lcore(epc_stats_core, NULL, epc_app.core_stats);
-#endif
-	epc_alloc_lcore(scan_dns_ring, NULL, epc_app.core_spns_dns);
-
-	epc_alloc_lcore(epc_rx, &epc_app.rx_params[WEST_PORT_ID],
-						epc_app.core_rx[WEST_PORT_ID]);
-	epc_alloc_lcore(epc_rx, &epc_app.rx_params[EAST_PORT_ID],
-						epc_app.core_rx[EAST_PORT_ID]);
-
-	epc_alloc_lcore(epc_load_balance, &epc_app.lb_params,
-						epc_app.core_load_balance);
-
-	unsigned i;
-	for (i = 0; i < epc_app.num_workers; i++) {
-		epc_alloc_lcore(epc_worker_core, &epc_app.worker[i],
-				epc_app.worker_cores[i]);
-	}
-
-	epc_alloc_lcore(epc_tx, &epc_app.tx_params[WEST_PORT_ID],
-						epc_app.core_tx[WEST_PORT_ID]);
-	epc_alloc_lcore(epc_tx, &epc_app.tx_params[EAST_PORT_ID],
-						epc_app.core_tx[EAST_PORT_ID]);
-
-	clLog(clSystemLog, eCLSeverityDebug, "LB_CORE= %d;"
-			"s1u_port= %d<>core = %d;"
-			"sgi_port= %d<>core =%d\n",
-			epc_app.core_load_balance, app.s1u_port,
-			epc_app.core_rx[app.s1u_port], app.sgi_port,
-			epc_app.core_tx[app.sgi_port]);
-#endif	/* NGCORE_SHRINK */
 }
 
 #define for_each_port(port) for (port = 0; port < epc_app.n_ports; port++)
@@ -341,14 +290,10 @@ void epc_init_packet_framework(uint8_t east_port_id, uint8_t west_port_id)
 	epc_app.ports[EAST_PORT_ID] = east_port_id;
 	printf("ARP-ICMP Core on:\t\t%d\n", epc_app.core_mct);
 	printf("CP-DP IFACE Core on:\t\t%d\n", epc_app.core_iface);
-#ifdef NGCORE_SHRINK
 	epc_app.core_spns_dns = epc_app.core_iface;
-#endif
 	printf("SPNS DNS Core on:\t\t%d\n", epc_app.core_spns_dns);
 #ifdef STATS
-#ifdef NGCORE_SHRINK
 	epc_app.core_stats = epc_app.core_mct;
-#endif
 	printf("STATS-Timer Core on:\t\t%d\n", epc_app.core_stats);
 #endif
 	/*
@@ -362,7 +307,6 @@ void epc_init_packet_framework(uint8_t east_port_id, uint8_t west_port_id)
 	epc_arp_init();
 	epc_spns_dns_init();
 
-#ifdef NGCORE_SHRINK
 	clLog(clSystemLog, eCLSeverityDebug,"Uplink Core on:\t\t\t%d\n", epc_app.core_ul[WEST_PORT_ID]);
 	clLog(clSystemLog, eCLSeverityInfo, "ASR- ng-core_shrink:%s::\n\t"
 		"epc_ul_init::epc_app.core_ul[WEST_PORT_ID]= %d\n\t"
@@ -385,48 +329,6 @@ void epc_init_packet_framework(uint8_t east_port_id, uint8_t west_port_id)
 				epc_app.core_dl[EAST_PORT_ID],
 				EAST_PORT_ID, WEST_PORT_ID);
 
-#else
-	clLog(clSystemLog, eCLSeverityDebug,"WEST PORT RX/TX Core on:\t%d\n",
-						epc_app.core_rx[WEST_PORT_ID]);
-	clLog(clSystemLog, eCLSeverityDebug,"EAST PORT RX/TX Core on:\t%d\n",
-						epc_app.core_rx[EAST_PORT_ID]);
-	clLog(clSystemLog, eCLSeverityDebug,"LOAD BALANCER Core on:\t\t%d\n",
-						epc_app.core_load_balance);
-	unsigned i;
-	for (i = 0; i < epc_app.num_workers; ++i) {
-		clLog(clSystemLog, eCLSeverityDebug,"WORKER Core[%u] on:\t\t%u\n",
-				i, epc_app.worker_cores[i]);
-	}
-
-	/*
-	 * Initialize pipelines
-	 */
-	clLog(clSystemLog, eCLSeverityDebug, "ASR- ng-core_shrink:%s::\n\t"
-		"epc_rx_init::epc_app.core_rx[WEST_PORT_ID]= %d\n\t"
-		"WEST_PORT_ID= %d\n",
-		__func__, epc_app.core_rx[WEST_PORT_ID], WEST_PORT_ID);
-
-	epc_rx_init(&epc_app.rx_params[WEST_PORT_ID],
-				epc_app.core_rx[WEST_PORT_ID], WEST_PORT_ID);
-
-	clLog(clSystemLog, eCLSeverityDebug, "ASR- ng-core_shrink:%s::\n\t"
-		"epc_rx_init::epc_app.core_rx[EAST_PORT_ID]= %d\n\t"
-		"EAST_PORT_ID= %d\n",
-		__func__, epc_app.core_rx[EAST_PORT_ID], EAST_PORT_ID);
-
-	epc_rx_init(&epc_app.rx_params[EAST_PORT_ID],
-				epc_app.core_rx[EAST_PORT_ID], EAST_PORT_ID);
-	epc_tx_init(&epc_app.tx_params[WEST_PORT_ID],
-				epc_app.core_rx[WEST_PORT_ID], WEST_PORT_ID);
-	epc_tx_init(&epc_app.tx_params[EAST_PORT_ID],
-				epc_app.core_rx[EAST_PORT_ID], EAST_PORT_ID);
-
-	epc_load_balance_init(&epc_app.lb_params);
-
-	for (i = 0; i < epc_app.num_workers; i++)
-		epc_worker_core_init(&epc_app.worker[i],
-				epc_app.worker_cores[i], i);
-#endif	/* NGCORE_SHRINK */
 
 	/*
 	 * Assign pipelines to cores

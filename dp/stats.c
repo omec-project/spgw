@@ -1,17 +1,9 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2017 Intel Corporation
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: Apache-2.0
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 #include <string.h>
@@ -92,7 +84,6 @@ void
 print_headers(void)
 {
 	printf("\n\n");
-#ifdef NGCORE_SHRINK
 	printf("%s\n", "##NGCORE_SHRINK(RTC)");
 
 #ifdef EXSTATS
@@ -113,19 +104,11 @@ print_headers(void)
 			"IfMisPKTS", "IfPKTS", "DL-RX", "DL-TX", "DL-DFF");
 #endif /* DEBUG_DDN */
 #endif /* EXSTATS */
-#else
-	printf("%s\n", "##NGCORE_SHRINK(PIPELINE)");
-	printf("%40s %33s %40s\n", "UPLINK", "||", "DOWNLINK");
-	printf("%9s %9s %9s %9s %9s %9s %9s %4s %9s %9s %9s %9s %9s %9s %9s \n",
-			"IfPKTS", "UL-RX", "iLBRNG", "oLBRNG", "iWKRNG", "iTXRNG", "UL-TX", "||",
-			"IfPKTS", "DL-RX", "iLBRNG", "oLBRNG", "iWKRNG", "iTXRNG", "DL-TX");
-#endif /* NGCORE_SHRINK */
 }
 
 void
 display_stats(void)
 {
-#ifdef NGCORE_SHRINK
 #ifdef EXSTATS
 	printf("%9lu %9lu %9lu %9lu %9lu %9lu %4s %9lu %9lu %9lu %9lu %9lu \n",
 			ul_param.IfMisPKTS, ul_param.IfPKTS, ul_param.ULRX, ul_param.ULTX,
@@ -147,11 +130,6 @@ display_stats(void)
 			(dl_param.DLRX - dl_param.DLTX));
 #endif  /* DEBUG_DDN */
 #endif /* EXSTATS */
-#else
-	printf("%9lu %9lu %9lu %9lu %9lu %9lu %9lu %4s %9lu %9lu %9lu %9lu %9lu %9lu %9lu\n",
-			ul_param.IfPKTS, ul_param.ULRX, ul_param.iLBRNG, ul_param.oLBRNG, ul_param.iWKRNG, ul_param.iTXRNG, ul_param.ULTX, "||",
-			dl_param.IfPKTS, dl_param.DLRX, dl_param.iLBRNG, dl_param.oLBRNG, dl_param.iWKRNG, dl_param.iTXRNG, dl_param.DLTX);
-#endif /* NGCORE_SHRINK */
 }
 
 void
@@ -172,8 +150,6 @@ pip_istats(struct rte_pipeline *p, char *name, uint8_t port_id, struct rte_pipel
 void
 pipeline_in_stats(void)
 {
-
-#ifdef NGCORE_SHRINK
 	ul_param.ULRX = epc_app.ul_params[S1U_PORT_ID].pkts_in;
 	dl_param.DLRX = epc_app.dl_params[SGI_PORT_ID].pkts_in;
 	dl_param.ddn_req = epc_app.dl_params[SGI_PORT_ID].ddn;
@@ -181,39 +157,6 @@ pipeline_in_stats(void)
 #ifdef EXSTATS
 	ul_param.GTP_ECHO = epc_app.ul_params[S1U_PORT_ID].pkts_echo;
 #endif /* EXSTATS */
-#else
-	struct rte_pipeline_port_in_stats istats;
-	uint32_t i = 0;
-	pip_istats(epc_app.rx_params[0].pipeline, epc_app.rx_params[0].name, 0, &istats);
-	ul_param.ULRX = istats.stats.n_pkts_in;
-	pip_istats(epc_app.rx_params[1].pipeline, epc_app.rx_params[1].name, 0, &istats);
-	dl_param.DLRX = istats.stats.n_pkts_in;
-
-	pip_istats(epc_app.lb_params.pipeline, epc_app.lb_params.name, 0, &istats);
-	ul_param.iLBRNG = istats.stats.n_pkts_in;
-	pip_istats(epc_app.lb_params.pipeline, epc_app.lb_params.name, 1, &istats);
-	dl_param.iLBRNG = istats.stats.n_pkts_in;
-
-	for (i = 0; i < epc_app.num_workers; i++) {
-		pip_istats(epc_app.worker[i].pipeline,
-				epc_app.worker[i].name, 0, &istats);
-		ul_param.iWKRNG = istats.stats.n_pkts_in;
-		pip_istats(epc_app.worker[i].pipeline,
-				epc_app.worker[i].name, 1, &istats);
-		dl_param.iWKRNG = istats.stats.n_pkts_in;
-		pip_istats(epc_app.worker[i].pipeline,
-			"ddn", epc_app.worker[i].port_in_id[NUM_SPGW_PORTS], &istats);
-	}
-
-	for (i = 0; i < epc_app.num_workers; i++) {
-		pip_istats(epc_app.tx_params[0].pipeline,
-				epc_app.tx_params[0].name, i, &istats);
-		dl_param.iTXRNG = istats.stats.n_pkts_in;
-		pip_istats(epc_app.tx_params[1].pipeline,
-				epc_app.tx_params[1].name, i, &istats);
-		ul_param.iTXRNG = istats.stats.n_pkts_in;
-	}
-#endif /* NGCORE_SHRINK*/
 }
 
 void
@@ -229,33 +172,8 @@ pip_ostats(struct rte_pipeline *p, char *name, uint8_t port_id, struct rte_pipel
 void
 pipeline_out_stats(void)
 {
-#ifdef NGCORE_SHRINK
 	ul_param.ULTX = epc_app.ul_params[S1U_PORT_ID].pkts_out;
 	dl_param.DLTX = epc_app.dl_params[SGI_PORT_ID].pkts_out;
-#else
-	struct rte_pipeline_port_out_stats ostats;
-	uint32_t i = 0;
-
-	pip_ostats(epc_app.rx_params[0].pipeline,
-			epc_app.rx_params[0].name, 0, &ostats);
-	ul_param.ULTX = ostats.stats.n_pkts_in;
-	pip_ostats(epc_app.rx_params[1].pipeline,
-			epc_app.rx_params[1].name, 0, &ostats);
-	dl_param.DLTX = ostats.stats.n_pkts_in;
-
-	for (i = 0; i < epc_app.num_workers; i++) {
-		unsigned core_id = epc_app.worker_cores[i];
-		pip_ostats(epc_app.lb_params.pipeline,
-				epc_app.lb_params.name,
-				epc_app.lb_params.port_out_id[core_id][0], &ostats);
-		ul_param.oLBRNG = ostats.stats.n_pkts_in;
-		pip_ostats(epc_app.lb_params.pipeline,
-				epc_app.lb_params.name,
-				epc_app.lb_params.port_out_id[core_id][1], &ostats);
-		dl_param.oLBRNG = ostats.stats.n_pkts_in;
-	}
-#endif /* NGCORE_SHRINK*/
-
 }
 
 void
@@ -362,11 +280,7 @@ static struct rte_timer timer0;
 uint64_t prev_tsc = 0, cur_tsc, diff_tsc;
 #endif
 
-#ifdef NGCORE_SHRINK
 void epc_stats_core(void)
-#else
-void epc_stats_core(__rte_unused void *args)
-#endif
 {
 
 #ifdef CMDLINE_STATS
@@ -391,7 +305,6 @@ void epc_stats_core(__rte_unused void *args)
 	}
 
 #else
-#ifdef NGCORE_SHRINK
 	/* init timer structures */
 	static uint8_t start_timer = 1;
 	/* For NGCORE_SHRINK version, this function would be invoked in an
@@ -412,24 +325,5 @@ void epc_stats_core(__rte_unused void *args)
 		rte_timer_manage();
 		prev_tsc = cur_tsc;
 	}
-#else
-	/* init timer structures */
-	rte_timer_init(&timer0);
-
-	/* load timer0, every second, on master lcore, reloaded automatically */
-	uint64_t hz = rte_get_timer_hz();
-	unsigned lcore_id = rte_lcore_id();
-	rte_timer_reset(&timer0, hz * TIMER_INTERVAL, PERIODICAL, lcore_id,
-			timer_cb, NULL);
-
-	while (1) {
-		cur_tsc = rte_rdtsc();
-		diff_tsc = cur_tsc - prev_tsc;
-		if (diff_tsc > TIMER_RESOLUTION_CYCLES) {
-			rte_timer_manage();
-			prev_tsc = cur_tsc;
-		}
-	}
-#endif /* NGCORE_SHRINK */
 #endif
 }

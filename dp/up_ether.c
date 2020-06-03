@@ -1,17 +1,9 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2019 Sprint
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: Apache-2.0
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 #include <arpa/inet.h>
@@ -186,7 +178,6 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 	ether_addr_copy(&ports_eth_addr[portid], &eth_hdr->s_addr);
 	printf("mac found %d %s\n",__LINE__,__FUNCTION__);
 
-#ifdef NGCORE_SHRINK
 #ifdef STATS
 	if(portid == SGI_PORT_ID) {
 		++epc_app.ul_params[S1U_PORT_ID].pkts_out;
@@ -194,6 +185,5 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 		++epc_app.dl_params[SGI_PORT_ID].pkts_out;
 	}
 #endif /* STATS */
-#endif /* NGCORE_SHRINK */
 	return 0;
 }

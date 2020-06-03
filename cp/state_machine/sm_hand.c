@@ -1,17 +1,9 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2019 Sprint
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: Apache-2.0
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 #include <stdio.h>
@@ -102,7 +94,7 @@ association_setup_handler(void *data, void *unused_param)
 	}
 
 	uint32_t ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
-	ret = process_pfcp_assoication_request(context->pdns[ebi_index], ebi_index); // ajaytodo : - pass upf address to this function 
+	ret = process_pfcp_assoication_request(context->pdns[ebi_index], ebi_index); 
 	if(ret){
 		if(ret != -1){
 			cs_error_response(msg, ret,
@@ -122,7 +114,7 @@ association_setup_handler(void *data, void *unused_param)
 			(void **) &(upf_context));
 	if (upf_context->state != PFCP_ASSOC_RESP_RCVD_STATE) {
 		if (ret >= 0) {
-#ifndef DELETE_THIS
+#ifdef DELETE_THIS
 			upf_context->csr = msg->gtpc_msg.csr;
 #endif
 		}
@@ -716,10 +708,10 @@ cca_msg_handler(void *data, void *unused_param)
 	                 (void **) &(upf_context));
 	if(upf_context->state != PFCP_ASSOC_RESP_RCVD_STATE) {
 	       if (ret >= 0) {
-#ifndef DELETE_THIS
+#ifdef DELETE_THIS
 			if(cp_config->cp_type == PGWC) {
 	                        upf_context->csr.sender_fteid_ctl_plane.teid_gre_key = pdn->s5s8_sgw_gtpc_teid;
-	                }
+	        }
 	        if(cp_config->cp_type == SAEGWC) {
 	                upf_context->csr.sender_fteid_ctl_plane.teid_gre_key = pdn->context->s11_mme_gtpc_teid;
 	        }

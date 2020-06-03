@@ -80,4 +80,9 @@ PFCP Specific:
    - pdr_entry_hash
    - qer_entry_hash 
    - urr_entry_hash
-   - pdn_conn_hash
+
+Gx:
+    - name - pdn_conn_hash
+    - key - callid 
+    - value - pdn_connection 
+ 

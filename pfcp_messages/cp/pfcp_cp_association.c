@@ -1,17 +1,9 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2019 Sprint
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: Apache-2.0
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 #include "pfcp_cp_util.h"
@@ -449,7 +441,7 @@ assoication_setup_request(ue_context *context, uint8_t ebi_index)
 }
 
 int
-process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index) // ajaytodo : pass ipv4 up4 as argument 
+process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index) 
 {
 	int ret = 0;
 	struct in_addr upf_ipv4 = {0};
@@ -555,7 +547,6 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 {
 	int ret = 0;
 	pdn_connection *pdn = NULL;
-	struct resp_info *resp = NULL;
 	upf_context_t *upf_context = NULL;
 
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
@@ -631,7 +622,10 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				process_error_occured_handler(&msg, NULL);
 			}
-		} else {
+		} 
+#ifdef DELETE_THIS 
+        else {
+	        struct resp_info *resp = NULL;
 			/* Need to remove + 5 after adding ebi_index in upf_context */
 			if (get_sess_entry(SESS_ID(key->teid, key->ebi_index + 5), &resp) != 0) {
 				clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
@@ -641,6 +635,7 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 			/* stored csr for error response */
 			resp->gtpc_msg.csr = upf_context->csr;
 		}
+#endif
 
         rte_free(key);
         key = LIST_FIRST(&upf_context->pendingCSRs);

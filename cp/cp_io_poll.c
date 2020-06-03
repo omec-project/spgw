@@ -1,17 +1,9 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2017 Intel Corporation
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * SPDX-License-Identifier: Apache-2.0
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 #include <stdint.h>
@@ -142,14 +134,8 @@ void iface_process_ipc_msgs(void)
 	/* wait until either socket has data
 	 *  ready to be recv()d (timeout 10.5 secs)
 	 */
-#ifdef NGCORE_SHRINK
-	/* NGCORE is defined by default */
 	tv.tv_sec = 1;
 	tv.tv_usec = 500000;
-#else
-	tv.tv_sec = 10;
-	tv.tv_usec = 500000;
-#endif
 	rv = select(n, &readfds, NULL, NULL, &tv);
 	if (rv == -1) {
 		/*TODO: Need to Fix*/
