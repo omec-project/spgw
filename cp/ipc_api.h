@@ -28,6 +28,8 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
+#define MULTIPLIER 50
+#define BUFFSIZE MULTIPLIER * 1024
 /**
  * @brief  : Performs Gx Interface Unix socket creation
  * @param  : No param

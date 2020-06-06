@@ -48,6 +48,7 @@ cleanup_sess_by_csid_entry(fqcsid_t *csids)
 			if (sess == NULL)
 				continue;
 
+            printf("%s %d calling up_delete_session_entry \n",__FUNCTION__,__LINE__);
 			if (up_delete_session_entry(sess))
 				continue;
 

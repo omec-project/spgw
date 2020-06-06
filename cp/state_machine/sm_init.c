@@ -1,5 +1,6 @@
 
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2019 Sprint
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -172,8 +173,8 @@ uint8_t
 update_ue_state(uint32_t teid_key, uint8_t state,  uint8_t ebi_index)
 {
 	int ret = 0;
-	ue_context *context = NULL;
-	pdn_connection *pdn = NULL;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
 	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
 				&teid_key, (void **)&context);
 
@@ -195,8 +196,8 @@ uint8_t
 get_ue_state(uint32_t teid_key, uint8_t ebi_index)
 {
 	int ret = 0;
-	ue_context *context = NULL;
-	pdn_connection *pdn = NULL;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
 	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
 				&teid_key, (void **)&context);
 
@@ -211,7 +212,7 @@ get_ue_state(uint32_t teid_key, uint8_t ebi_index)
 }
 
 int
-get_pdn(uint32_t teid_key, pdn_connection **pdn)
+get_pdn(uint32_t teid_key, pdn_connection_t **pdn)
 {
 	int ret = 0;
 	ret = rte_hash_lookup_data(pdn_by_fteid_hash,
@@ -229,7 +230,7 @@ get_pdn(uint32_t teid_key, pdn_connection **pdn)
 }
 
 int8_t
-get_bearer_by_teid(uint32_t teid_key, struct eps_bearer_t **bearer)
+get_bearer_by_teid(uint32_t teid_key, eps_bearer_t **bearer)
 {
 	int ret = 0;
         ret = rte_hash_lookup_data(bearer_by_fteid_hash,
@@ -248,10 +249,10 @@ get_bearer_by_teid(uint32_t teid_key, struct eps_bearer_t **bearer)
 }
 
 int8_t
-get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context **context)
+get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context_t **context)
 {
 	int ret = 0;
-	struct eps_bearer_t *bearer = NULL;
+	eps_bearer_t *bearer = NULL;
 
 	ret = get_bearer_by_teid(teid_key, &bearer);
 	if(ret < 0) {
@@ -266,10 +267,10 @@ get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context **context)
 }
 /* This function use only in clean up while error */
 int8_t
-get_ue_context_while_error(uint32_t teid_key, ue_context **context)
+get_ue_context_while_error(uint32_t teid_key, ue_context_t **context)
 {
 	int ret = 0;
-	struct eps_bearer_t *bearer = NULL;
+	eps_bearer_t *bearer = NULL;
 	/* If teid key is sgwc s11 */
 	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
                                         &teid_key, (void **)context);
@@ -288,7 +289,7 @@ get_ue_context_while_error(uint32_t teid_key, ue_context **context)
 
 /* LOOKUP - TEID to session */
 int8_t
-get_ue_context(uint32_t teid_key, ue_context **context)
+get_ue_context(uint32_t teid_key, ue_context_t **context)
 {
 
 	int ret = 0;
@@ -775,8 +776,8 @@ uint8_t
 update_ue_proc(uint32_t teid_key, uint8_t proc, uint8_t ebi_index)
 {
 	int ret = 0;
-	ue_context *context = NULL;
-	pdn_connection *pdn = NULL;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
 	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
 				&teid_key, (void **)&context);
 
@@ -804,3 +805,5 @@ update_ue_proc(uint32_t teid_key, uint8_t proc, uint8_t ebi_index)
 	return 0;
 
 }
+
+

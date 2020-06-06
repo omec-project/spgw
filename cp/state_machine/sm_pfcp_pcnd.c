@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
+#include "cp_global_defs.h"
 #include "cp.h"
 #include "gtpv2c.h"
 #include "sm_pcnd.h"
 #include "cp_stats.h"
-#include "debug_str.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_messages_decoder.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_config_new.h"
 #include "cp_timer.h"
 #include "cp_config.h"
+#include "pfcp_cp_set_ie.h"
 
 extern struct cp_stats_t cp_stats;
 extern struct sockaddr_in upf_pfcp_sockaddr;
@@ -77,7 +78,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			if(cp_config->cp_type != SGWC) {
 				/* Init rule tables of user-plane */
 				upf_pfcp_sockaddr.sin_addr.s_addr = msg->upf_ipv4.s_addr;
-				init_dp_rule_tables();
+				// init_dp_rule_tables();
 			}
 
 			upf_context_t *upf_context = NULL;

@@ -31,6 +31,7 @@
 #include "sm_pcnd.h"
 #include "cp_timer.h"
 #include "cp_stats.h"
+#include "cp_global_defs.h"
 
 #if defined(USE_DNS_QUERY)
 #include "cdnshelper.h"
@@ -168,10 +169,10 @@ record_failed_enbid(char *enbid)
 }
 
 int
-get_upf_list(pdn_connection *pdn)
+get_upf_list(pdn_connection_t *pdn)
 {
 	int upf_count = 0;
-	ue_context *ctxt = NULL;
+	ue_context_t *ctxt = NULL;
 	char apn_name[MAX_APN_LEN] = {0};
 
 	/* VS: Retrive the UE context */
@@ -202,7 +203,7 @@ get_upf_list(pdn_connection *pdn)
 	}
 
 	/* Get network capabilities from apn configuration file */
-	apn *apn_requested = pdn->apn_in_use;
+	apn_t *apn_requested = pdn->apn_in_use;
 
 	//memcpy(apn_name,(char *)ctxt->apn.apn + 1, apn_requested->apn_name_length -1);
 	/* VS: Need to revist this */
@@ -360,7 +361,7 @@ get_upf_list(pdn_connection *pdn)
 
 
 int
-dns_query_lookup(pdn_connection *pdn, uint32_t **upf_ip)
+dns_query_lookup(pdn_connection_t *pdn, uint32_t **upf_ip)
 {
 	upfs_dnsres_t *entry = NULL;
 

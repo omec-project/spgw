@@ -26,6 +26,7 @@
 #include "pfcp_messages_encoder.h"
 #include "clogger.h"
 #include "gw_adapter.h"
+#include "csid_api.h"
 
 #ifdef CP_BUILD
 #include "cp.h"
@@ -78,8 +79,8 @@ set_gtpc_fqcsid_t(gtp_fqcsid_ie_t *fqcsid,
 }
 
 int
-fill_peer_node_info(pdn_connection *pdn,
-				eps_bearer *bearer)
+fill_peer_node_info(pdn_connection_t *pdn,
+				eps_bearer_t *bearer)
 {
 	int16_t local_csid = 0;
 	csid_key peer_info = {0};
@@ -245,8 +246,8 @@ fill_peer_node_info(pdn_connection *pdn,
 
 
 int
-csrsp_fill_peer_node_info(create_sess_req_t *csr, pdn_connection *pdn,
-				eps_bearer *bearer)
+csrsp_fill_peer_node_info(create_sess_req_t *csr, pdn_connection_t *pdn,
+				eps_bearer_t *bearer)
 {
 	RTE_SET_USED(csr);
 	RTE_SET_USED(pdn);
@@ -325,7 +326,7 @@ update_peer_csid_link(fqcsid_t *fqcsid, fqcsid_t *fqcsid_t)
 }
 
 int8_t
-fill_fqcsid_sess_est_req(pfcp_sess_estab_req_t *pfcp_sess_est_req, ue_context *context)
+fill_fqcsid_sess_est_req(pfcp_sess_estab_req_t *pfcp_sess_est_req, ue_context_t *context)
 {
 	/* Spec don't have support to idetify */
 	/* Set MME FQ-CSID */

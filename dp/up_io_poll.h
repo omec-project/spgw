@@ -139,9 +139,6 @@ udp_recv(void *msg_payload, uint32_t size,
  * Return
  * 0 on success, -1 on failure
  */
-int iface_remove_que(enum cp_dp_comm id);
-void msg_handler_s11(void);
-void msg_handler_s5s8(void);
 
 int simu_cp(void);
 #endif /* _UP_IO_POLL_H_ */

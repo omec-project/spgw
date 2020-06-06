@@ -1020,6 +1020,7 @@ process_up_session_estab_req(pfcp_sess_estab_req_t *sess_req,
 						sess_req->create_pdr[itr].pdi.local_fteid.teid);
 				continue;
 			}
+            printf("%s %d - TEID %x added \n",__FUNCTION__, __LINE__, sess_req->create_pdr[itr].pdi.local_fteid.teid);
 		} else if (sess_req->create_pdr[itr].pdi.ue_ip_address.ipv4_address){
 			if ((app.spgw_cfg == PGWU) || (app.spgw_cfg == SAEGWU)) {
 				session = get_sess_by_ueip_entry(sess_req->create_pdr[itr].pdi.ue_ip_address.ipv4_address,
@@ -1030,6 +1031,7 @@ process_up_session_estab_req(pfcp_sess_estab_req_t *sess_req,
 						IPV4_ADDR_HOST_FORMAT(sess_req->create_pdr[itr].pdi.ue_ip_address.ipv4_address));
 					continue;
 				}
+                printf("%s %d - UE ip address %x added \n",__FUNCTION__, __LINE__, sess_req->create_pdr[itr].pdi.ue_ip_address.ipv4_address);
 			}
 		} else {
 			clLog(clSystemLog, eCLSeverityCritical, "%s: TIED and UE_IP_addr both are NULL \n",
@@ -1093,6 +1095,7 @@ process_up_session_estab_req(pfcp_sess_estab_req_t *sess_req,
 			}
 		}
 
+        printf(" adding bearer teid and incrementing count TEID - %x \n",sess_req->create_pdr[itr].pdi.local_fteid.teid); 
 		/* Maintain the teids in session level  */
 		if (sess_req->create_pdr[itr].pdi.local_fteid.teid) {
 			sess->teids[sess->ber_cnt] = sess_req->create_pdr[itr].pdi.local_fteid.teid;
@@ -1872,6 +1875,10 @@ up_delete_session_entry(pfcp_session_t *sess)
 			__func__, sess->cp_seid, sess->up_seid);
 	/* Flush the Session data info from the hash tables based on teid*/
 	pfcp_session_datat_t *session = sess->sessions;
+    if(session != NULL)
+        printf("%s %d - deleting session NOT NULL \n",__FUNCTION__,__LINE__);
+    else
+        printf("%s %d - deleting session NULL \n",__FUNCTION__,__LINE__);
 
 	/* Cleanup the session data form hash table and delete the node from linked list */
 	while (session != NULL) {
@@ -1934,6 +1941,7 @@ up_delete_session_entry(pfcp_session_t *sess)
 				/* Flush the far info from the hash table */
 				ret = rte_hash_del_key(far_by_id_hash, &far->far_id_value);
 				if ( ret < 0) {
+					printf("DP: Entry not found for FAR_ID:%u...\n", far->far_id_value);
 					clLog(clSystemLog, eCLSeverityCritical, "DP:"FORMAT"Entry not found for FAR_ID:%u...\n",
 								ERR_MSG, far->far_id_value);
 					return -1;
@@ -1955,6 +1963,7 @@ up_delete_session_entry(pfcp_session_t *sess)
 				/* Flush the QER info from the hash table */
 				ret = rte_hash_del_key(qer_by_id_hash, &qer_id);
 				if ( ret < 0) {
+					printf("DP: Entry not found for QER_ID:%u...\n", qer_id);
 					clLog(clSystemLog, eCLSeverityCritical, FORMAT"Entry not found for QER_ID:%u...\n",
 								ERR_MSG, qer_id);
 					return -1;
@@ -1992,6 +2001,7 @@ up_delete_session_entry(pfcp_session_t *sess)
 			if ( ret < 0) {
 				clLog(clSystemLog, eCLSeverityCritical, FORMAT"Entry not found for PDR_ID:%u...\n",
 							ERR_MSG, pdr_id);
+				printf("DP: Entry not found for PDR :%u...\n", pdr_id);
 				return -1;
 			}
 			clLog(clSystemLog, eCLSeverityDebug, "%s: PDR_ID:%u\n",
@@ -2006,7 +2016,12 @@ up_delete_session_entry(pfcp_session_t *sess)
 		//}
 
 		if (session->ue_ip_addr != 0)
+        {
+            printf("%s %d - deleting session. UE IP  %u \n",__FUNCTION__,__LINE__,session->ue_ip_addr);
 			ue_ip[inx++] = session->ue_ip_addr;
+        }
+        else
+            printf("%s %d - deleting session. UE IP  0 \n",__FUNCTION__,__LINE__);
 
 		/* Delete the Session data info node from the linked list */
 		sess->sessions = remove_sess_data_node(sess->sessions, session);
@@ -2016,13 +2031,16 @@ up_delete_session_entry(pfcp_session_t *sess)
 		session = sess->sessions;
 	}
 
+    printf("%s %d - deleting session. UE IP  - inx  = %d \n",__FUNCTION__,__LINE__, inx);
 	/* Flush the Session data info from the hash tables based on ue_ip */
 	if ((app.spgw_cfg == PGWU) || (app.spgw_cfg == SAEGWU)) {
 		for (int itr = 0; itr < inx; itr++) {
 			if (ue_ip[inx] != 0) {
+                printf("%s %d - deleting session for key ue_ip\n",__FUNCTION__,__LINE__);
 				/* Session Entry is present. Delete Session Entry */
 				ret = rte_hash_del_key(sess_by_ueip_hash, &ue_ip[inx]);
 				if ( ret < 0) {
+                    printf("%s %d - deleting session for key ue_ip failed \n",__FUNCTION__,__LINE__);
 					clLog(clSystemLog, eCLSeverityCritical, FORMAT"Entry not found for UE_IP:"IPV4_ADDR"...\n",
 								ERR_MSG, IPV4_ADDR_HOST_FORMAT(ue_ip[inx]));
 					return -1;
@@ -2037,19 +2055,26 @@ up_delete_session_entry(pfcp_session_t *sess)
 	for (int itr1 = 0; itr1 < sess->ber_cnt; itr1++) {
 		if(sess->teids[itr1] == 0)
 			continue;
-		else if (del_sess_by_teid_entry(sess->teids[itr1])) {
-			/* TODO : ERROR Handling */
-		}
+
+        printf("%s %d - delete session from bearer teid table = %x \n",__FUNCTION__, __LINE__,sess->teids[itr1]);
+		ret = del_sess_by_teid_entry(sess->teids[itr1]);
+        if(ret < 0) {
+	        /* TODO : ERROR Handling */
+            printf("%s %d - delete session from bearer teid table - failed  ret %d \n",__FUNCTION__, __LINE__, ret);
+        }
 	}
 
 	/* Session Entry is present. Delete Session Entry */
+    printf("%s %d - delete session from SEID table \n",__FUNCTION__, __LINE__);
 	ret = rte_hash_del_key(sess_ctx_by_sessid_hash, &sess->up_seid);
 	if (ret < 0) {
+        printf("%s %d - delete session from SEID table - failed  \n",__FUNCTION__, __LINE__);
 		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Entry not found for UP_SESS_ID:%lu...\n",
 					ERR_MSG, sess->up_seid);
 		return -1;
 	}
 
+    printf("%s %d - return 0\n",__FUNCTION__, __LINE__);
 	/*CLI:decrement active session count*/
 	update_sys_stat(number_of_active_session, DECREMENT);
 
@@ -2071,10 +2096,17 @@ process_up_session_deletion_req(pfcp_sess_del_req_t *sess_del_req,
 	}
 
 	if (sess == NULL)
+    {
+        printf("%s %d : session not found \n",__FUNCTION__,__LINE__);
 		return -1;
+    }
 
+    printf("%s %d calling up_delete_session_entry \n",__FUNCTION__,__LINE__);
 	if (up_delete_session_entry(sess))
+    {
+        printf("%s %d : session not found \n",__FUNCTION__,__LINE__);
 		return -1;
+    }
 
 	/* Update the CP seid in the response packet */
 	sess_del_rsp->header.seid_seqno.has_seid.seid =	sess->cp_seid;
@@ -2083,11 +2115,13 @@ process_up_session_deletion_req(pfcp_sess_del_req_t *sess_del_req,
 	if (app.spgw_cfg != PGWU) {
 		if (del_sess_by_csid_entry(sess->sgw_fqcsid, sess->sgwu_fqcsid,
 			sess_del_req->header.seid_seqno.has_seid.seid)) {
+            printf("%s %d return error \n",__FUNCTION__,__LINE__);
 			return -1;
 		}
 	} else {
 		if (del_sess_by_csid_entry(sess->pgw_fqcsid, sess->pgwu_fqcsid,
 			sess_del_req->header.seid_seqno.has_seid.seid)) {
+            printf("%s %d return error \n",__FUNCTION__,__LINE__);
 			return -1;
 		}
 	}

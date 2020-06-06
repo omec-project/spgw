@@ -114,7 +114,7 @@ init_hash_tables(void);
  * @return : Returns 0 on success , -1 otherwise
  */
 uint8_t
-add_pdn_conn_entry(uint32_t call_id, pdn_connection *pdn);
+add_pdn_conn_entry(uint32_t call_id, pdn_connection_t *pdn);
 
 /**
  * @brief  : Add Rule name and bearer information in the table.
@@ -166,7 +166,7 @@ add_urr_entry(uint32_t urr_id, urr_t *cntxt);
  * @param  : call id
  * @return : Returns pointer to pdn entry on success , NULL otherwise
  */
-pdn_connection *get_pdn_conn_entry(uint32_t call_id);
+pdn_connection_t *get_pdn_conn_entry(uint32_t call_id);
 
 /**
  * @brief  : Retrive Rule Name entry.
@@ -200,7 +200,7 @@ pdr_t *get_pdr_entry(uint16_t rule_id);
  * @return : Returns 0 on success , -1 otherwise
  */
 int
-update_pdr_teid(eps_bearer *bearer, uint32_t teid, uint32_t ip, uint8_t iface);
+update_pdr_teid(eps_bearer_t *bearer, uint32_t teid, uint32_t ip, uint8_t iface);
 
 /**
  * @brief  : Retrive QER entry.
@@ -346,14 +346,14 @@ gen_sess_id_for_ccr(char *sess_id, uint32_t call_id);
  * @return : Returns 0 on success, -1 otherwise
  */
 int8_t
-parse_gx_cca_msg(GxCCA *cca, pdn_connection **_pdn);
+parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn);
 
 /**
  * Updates the already existing bearer
  */
 
 int16_t
-gx_update_bearer_req(pdn_connection *pdn);
+gx_update_bearer_req(pdn_connection_t *pdn);
 
 /**
  * @brief  : Parse GX RAR message.
@@ -364,7 +364,7 @@ int8_t
 parse_gx_rar_msg(GxRAR *rar);
 
 void
-get_charging_rule_remove_bearer_info(pdn_connection *pdn,
+get_charging_rule_remove_bearer_info(pdn_connection_t *pdn,
 	uint8_t *lbi, uint8_t *ded_ebi, uint8_t *ber_cnt);
 
 /**
@@ -373,7 +373,7 @@ get_charging_rule_remove_bearer_info(pdn_connection *pdn,
  * @return : Returns new bearer id
  */
 int8_t
-get_bearer_info_install_rules(pdn_connection *pdn,
+get_bearer_info_install_rules(pdn_connection_t *pdn,
 	uint8_t *ebi);
 
 #endif /* GX_BUILD */

@@ -90,4 +90,14 @@ delete_pfcp_if_timer_entry(uint32_t teid, uint8_t ebi_index);
 void
 delete_gtpv2c_if_timer_entry(uint32_t teid);
 
+/**
+ * @brief  : Util to send or dump gtpv2c messages
+ * @param  : fd, interface indentifier
+ * @param  : t_tx, buffer to store data for peer node
+ * @return : Returns nothing
+ */
+void
+timer_retry_send(int fd, peerData *t_tx);
+
+
 #endif

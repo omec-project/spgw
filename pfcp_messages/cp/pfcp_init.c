@@ -56,15 +56,15 @@ static uint32_t rar_rule_id_offset;
  *
  * @param CALL ID
  * key.
- * @param pdn_connection pdn
+ * @param pdn_connection_t pdn
  * return 0 or 1.
  *
  */
 uint8_t
-add_pdn_conn_entry(uint32_t call_id, pdn_connection *pdn)
+add_pdn_conn_entry(uint32_t call_id, pdn_connection_t *pdn)
 {
 	int ret = 0;
-	pdn_connection *tmp = NULL;
+	pdn_connection_t *tmp = NULL;
 
 	/* Lookup for PDN Connection entry. */
 	ret = rte_hash_lookup_data(pdn_conn_hash,
@@ -82,7 +82,7 @@ add_pdn_conn_entry(uint32_t call_id, pdn_connection *pdn)
 			return -1;
 		}
 	} else {
-		memcpy(tmp, pdn, sizeof(pdn_connection));
+		memcpy(tmp, pdn, sizeof(pdn_connection_t));
 	}
 
 	clLog(clSystemLog, eCLSeverityDebug, "%s:%d PDN Connection entry add for CALL_ID:%u",
@@ -98,10 +98,10 @@ add_pdn_conn_entry(uint32_t call_id, pdn_connection *pdn)
  * return pdn_connection pdn or NULL
  *
  */
-pdn_connection *get_pdn_conn_entry(uint32_t call_id)
+pdn_connection_t *get_pdn_conn_entry(uint32_t call_id)
 {
 	int ret = 0;
-	pdn_connection *pdn = NULL;
+	pdn_connection_t *pdn = NULL;
 
 	/* Check PDN Conn entry is present or Not */
 	ret = rte_hash_lookup_data(pdn_conn_hash,
@@ -131,7 +131,7 @@ uint8_t
 del_pdn_conn_entry(uint32_t call_id)
 {
 	int ret = 0;
-	pdn_connection *pdn = NULL;
+	pdn_connection_t *pdn = NULL;
 
 	/* Check PDN Conn entry is present or Not */
 	ret = rte_hash_lookup_data(pdn_conn_hash,
@@ -443,7 +443,7 @@ pdr_t *get_pdr_entry(uint16_t rule_id)
  * update entry
  */
 int
-update_pdr_teid(eps_bearer *bearer, uint32_t teid, uint32_t ip, uint8_t iface){
+update_pdr_teid(eps_bearer_t *bearer, uint32_t teid, uint32_t ip, uint8_t iface){
 	int ret = -1;
 
 	for(uint8_t itr = 0; itr < bearer->pdr_count ; itr++) {

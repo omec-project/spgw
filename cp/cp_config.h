@@ -9,8 +9,6 @@
 #ifndef __CP_CONFIG_H__
 #define __CP_CONFIG_H__
 
-#include "cp.h"
-
 #include "gw_adapter.h"
 #include "clogger.h"
 #include "cstats.h"
@@ -94,7 +92,7 @@ uint32_t select_dp_for_key(struct dp_key *);
 
 /* Application can pass the dp_key and get back one of the selected DPname in return.
 */
-struct in_addr get_upf_ipaddr_for_key(struct dp_key *);
+struct in_addr get_upf_ipaddr_for_key(struct dp_key *, uint32_t *dpId);
 
 
 /**

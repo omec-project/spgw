@@ -11,18 +11,14 @@
 #include <stdint.h>
 #include <sys/queue.h>
 #include "stdbool.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <linux/limits.h>
+#include "apn_struct.h"
 
 /*PFCP Config file*/
 #define STATIC_CP_FILE "../config/cp.cfg"
 
-#define MAX_DP_SIZE   5
-#define MAX_CP_SIZE   1
-#define MAX_NUM_MME   5
-#define MAX_NUM_SGWC  5
-#define MAX_NUM_PGWC  5
-#define MAX_NUM_SGWU  5
-#define MAX_NUM_PGWU  5
-#define MAX_NUM_SAEGWU 5
 #define MAX_NUM_APN   16
 #define MAX_NUM_NAMESERVER 8
 #define SGWU_PFCP_PORT   8805
@@ -189,9 +185,46 @@ typedef struct cp_config {
 
 	/* APN */
 	uint32_t num_apn;
-	/* apn apn_list[MAX_NUM_APN]; */
 }cp_config_t;
 
 extern cp_config_t *cp_config;
 extern pfcp_config_t pfcp_config;
+
+/* Callback function which is received when config file is updated 
+ * may be through helm Charts or any other means. 
+ */
+void config_change_cbk(char *config_file, uint32_t flags);
+
+/**
+ * Register for the watcher for the config update
+ * @param file
+ * filename
+ *
+ * @return
+ * Void
+ */
+void register_config_updates(char *file);
+
+
+/**
+ * @brief  : assigns the ip pool variable from parsed c-string
+ * @param  : ip_str
+ *           ip address c-string from command line
+ * @return : Returns nothing
+ */
+void
+set_ip_pool_ip(const char *ip_str);
+
+
+/**
+ * @brief  : assigns the ip pool mask variable from parsed c-string
+ * @param  : ip_str
+ *           ip address c-string from command line
+ * @return : Returns nothing
+ */
+void
+set_ip_pool_mask(const char *ip_str);
+
+
+
 #endif

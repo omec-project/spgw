@@ -24,6 +24,14 @@
 FILE *stats_file;
 uint64_t stats_cnt;
 
+#define GET_CURRENT_TS(now)                                             \
+({                                                                            \
+	struct timespec ts;                                                          \
+	now = clock_gettime(CLOCK_REALTIME,&ts) ?                                    \
+		-1 : (((_timer_t)ts.tv_sec) * 1000000000) + ((_timer_t)ts.tv_nsec);   \
+	now;                                                                         \
+})
+
 void
 retrive_stats_entry(void)
 {

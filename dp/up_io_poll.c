@@ -63,25 +63,7 @@ udp_recv(void *msg_payload, uint32_t size,
 	return bytes;
 }
 
-/**
- * @brief Function to Process msgs.
- *
- */
-int iface_remove_que(enum cp_dp_comm id)
-{
 
-	RTE_SET_USED(id);
-	struct sockaddr_in peer_addr;
-	int bytes_rx = 0;
-	if ((bytes_rx = udp_recv(pfcp_rx, 512,
-			&peer_addr)) < 0) {
-		perror("msgrecv");
-		return -1;
-	}
-	process_pfcp_msg(pfcp_rx, &peer_addr);
-
-	return 0;
-}
 
 /**
  * @brief Function to Poll message que.

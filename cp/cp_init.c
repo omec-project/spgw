@@ -20,7 +20,6 @@
 #include <rte_hash_crc.h>
 #include <errno.h>
 
-#include "ue.h"
 #include "pfcp.h"
 #include "gtpv2c.h"
 #include "cp_stats.h"
@@ -52,6 +51,7 @@ pcap_dumper_t *pcap_dumper;
 struct cp_stats_t cp_stats;
 cp_config_t *cp_config;
 
+udp_sock_t my_sock;
 /* MME */
 struct sockaddr_in s11_mme_sockaddr;
 
@@ -247,36 +247,6 @@ timer_retry_send(int fd, peerData *t_tx)
 	}
 }
 
-/**
- * @brief  : Util to send or dump gtpv2c messages
- * @param  : gtpv2c_if_fd, interface indentifier
- * @param  : gtpv2c_tx_buf, buffer to store data for peer node
- * @param  : gtpv2c_pyld_len, data length
- * @param  : dest_addr, destination address
- * @param  : dest_addr_len, destination address length
- * @return : Void
- */
-void
-gtpv2c_send(int gtpv2c_if_fd, uint8_t *gtpv2c_tx_buf,
-		uint16_t gtpv2c_pyld_len, struct sockaddr *dest_addr,
-		socklen_t dest_addr_len)
-{
-	int bytes_tx;
-	if (pcap_dumper) {
-		dump_pcap(gtpv2c_pyld_len, gtpv2c_tx_buf);
-	} else {
-		bytes_tx = sendto(gtpv2c_if_fd, gtpv2c_tx_buf, gtpv2c_pyld_len, 0,
-			(struct sockaddr *) dest_addr, dest_addr_len);
-
-		clLog(clSystemLog, eCLSeverityDebug, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d\n", gtpv2c_if_fd);
-
-	if (bytes_tx != (int) gtpv2c_pyld_len) {
-			clLog(clSystemLog, eCLSeverityCritical, "Transmitted Incomplete GTPv2c Message:"
-					"%u of %d tx bytes\n",
-					gtpv2c_pyld_len, bytes_tx);
-		}
-	}
-}
 
 #ifdef USE_DNS_QUERY
 /**

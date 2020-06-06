@@ -8,12 +8,11 @@
 
 #include <stdio.h>
 #include "pfcp.h"
-#include "cp_app.h"
+#include "gx_app_interface.h"
 #include "sm_enum.h"
 #include "sm_hand.h"
 #include "cp_stats.h"
 #include "pfcp_cp_util.h"
-#include "debug_str.h"
 #include "sm_struct.h"
 #include "ipc_api.h"
 #include "pfcp_cp_set_ie.h"
@@ -24,6 +23,8 @@
 #include "cp_timer.h"
 #include "cp_config.h"
 #include "clogger.h"
+#include "csid_cp_cleanup.h"
+#include "gtpv2_interface.h"
 
 #ifdef USE_REST
 #include "main.h"
@@ -47,7 +48,7 @@ int
 gx_setup_handler(void *data, void *unused_param)
 {
 	msg_info *msg = (msg_info *)data;
-	ue_context *context = NULL;
+	ue_context_t *context = NULL;
 
 	ret = process_create_sess_req(&msg->gtpc_msg.csr,
 			&context, &msg->upf_ipv4);
@@ -71,8 +72,8 @@ int
 association_setup_handler(void *data, void *unused_param)
 {
 	msg_info *msg = (msg_info *)data;
-	ue_context *context = NULL;
-	pdn_connection *pdn = NULL;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
 	upf_context_t *upf_context = NULL;
 	struct resp_info *resp = NULL;
 
@@ -587,10 +588,10 @@ int cca_u_msg_handler_handover(void *data, void *unused)
 	msg_info *msg = (msg_info *)data;
 	int ret = 0;
 	uint32_t call_id = 0;
-	pdn_connection *pdn = NULL;
+	pdn_connection_t *pdn = NULL;
 	struct resp_info *resp = NULL;
 	uint8_t ebi_index = 0;
-	eps_bearer *bearer = NULL;
+	eps_bearer_t *bearer = NULL;
 
 	/* Extract the call id from session id */
 	ret = retrieve_call_id((char *)&msg->gx_msg.cca.session_id.val, &call_id);
@@ -663,7 +664,7 @@ cca_msg_handler(void *data, void *unused_param)
 {
 	int8_t ebi_index = 0;
 	upf_context_t *upf_context = NULL;
-	pdn_connection *pdn = NULL;
+	pdn_connection_t *pdn = NULL;
 	struct resp_info *resp = NULL;
 
 	msg_info *msg = (msg_info *)data;
@@ -990,7 +991,7 @@ process_rar_request_handler(void *data, void *unused_param)
 	if (ret) {
 		if(ret != -1){
 			uint32_t call_id = 0;
-			pdn_connection *pdn_cntxt = NULL;
+			pdn_connection_t *pdn_cntxt = NULL;
 			ret = retrieve_call_id((char *)&msg->gx_msg.rar.session_id.val, &call_id);
 			if (ret < 0) {
 	        		clLog(clSystemLog, eCLSeverityCritical, "%s:No Call Id found from session id:%s\n", __func__,
@@ -1336,7 +1337,7 @@ int del_bearer_cmd_ccau_handler(void *data, void *unused_param)
 	msg_info *msg = (msg_info *)data;
 	int ret = 0;
 	uint32_t call_id = 0;
-	pdn_connection *pdn = NULL;
+	pdn_connection_t *pdn = NULL;
 
 	/* Extract the call id from session id */
 	ret = retrieve_call_id((char *)&msg->gx_msg.cca.session_id.val, &call_id);
@@ -1458,7 +1459,7 @@ void
 get_info_filled(msg_info *msg, err_rsp_info *info_resp)
 {
 	struct resp_info *resp = NULL;
-	//pdn_connection *pdn = NULL;
+	//pdn_connection_t *pdn = NULL;
 
 	switch(msg->msg_type){
 		case GTP_CREATE_SESSION_REQ:
@@ -1782,8 +1783,8 @@ process_error_occured_handler(void *data, void *unused_param)
 	msg_info *msg = (msg_info *)data;
 
 	err_rsp_info info_resp = {0};
-	ue_context *context = NULL;
-	pdn_connection *pdn = NULL;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
 	struct resp_info *resp = NULL;
 	upf_context_t *upf_ctx = NULL;
 
@@ -1887,7 +1888,7 @@ int process_pfcp_sess_mod_resp_ubr_handler(void *data, void *unused_param)
 {
 	int ret = 0;
 	struct resp_info *resp = NULL;
-	ue_context *context = NULL;
+	ue_context_t *context = NULL;
 	uint8_t ebi_index = 0;
 
 	msg_info *msg = (msg_info *)data;

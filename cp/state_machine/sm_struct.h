@@ -20,10 +20,12 @@
 #include "stdio.h"
 #include "sm_enum.h"
 #include "sm_hand.h"
-#include "pfcp_cp_set_ie.h"
 #include "pfcp_messages.h"
 #include "gtp_messages.h"
 #include <sys/queue.h>
+#include "gx_struct.h"
+#include "gx_app_interface.h"
+#include "gtpv2c_msg_struct.h"
 
 
 struct rte_hash *sm_hash;
@@ -70,7 +72,7 @@ typedef struct msg_info{
 	uint8_t eps_bearer_id;
 	uint32_t teid;
 
-	char sgwu_fqdn[MAX_HOSTNAME_LENGTH];
+//	char sgwu_fqdn[MAX_HOSTNAME_LENGTH];
 	struct in_addr upf_ipv4;
 
 	//enum source_interface iface;
@@ -112,7 +114,8 @@ typedef struct msg_info{
 		GxCCA cca;
 		GxRAR rar;
 	}gx_msg;
-
+    ue_context_t *ue_context;
+    struct sockaddr_in *peer_addr;
 }msg_info;
 
 /**
@@ -225,13 +228,13 @@ get_ue_state(uint32_t teid_key ,uint8_t ebi_index);
  * Retrive Bearer entry from Bearer table.
  */
 int8_t
-get_bearer_by_teid(uint32_t teid_key, struct eps_bearer_t **bearer);
+get_bearer_by_teid(uint32_t teid_key, eps_bearer_t **bearer);
 
 /**
  * Retrive ue context entry from Bearer table,using sgwc s5s8 teid.
  */
 int8_t
-get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context **context);
+get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context_t **context);
 
 /**
  * @brief  : Retrive UE Context entry from UE Context table.
@@ -240,11 +243,11 @@ get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context **context);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int8_t
-get_ue_context(uint32_t teid_key, ue_context **context);
+get_ue_context(uint32_t teid_key, ue_context_t **context);
 
 /* This function use only in clean up while error */
 int8_t
-get_ue_context_while_error(uint32_t teid_key, ue_context **context);
+get_ue_context_while_error(uint32_t teid_key, ue_context_t **context);
 
 /**
  * @brief  : Retrive PDN entry from PDN table.
@@ -253,7 +256,7 @@ get_ue_context_while_error(uint32_t teid_key, ue_context **context);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-get_pdn(uint32_t teid_key, pdn_connection **pdn);
+get_pdn(uint32_t teid_key, pdn_connection_t **pdn);
 
 /**
  * @brief  : Get proc name from enum
@@ -293,7 +296,7 @@ update_ue_proc(uint32_t teid_key, uint8_t proc, uint8_t ebi_index);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int8_t
-get_ue_context(uint32_t teid_key, ue_context **context);
+get_ue_context(uint32_t teid_key, ue_context_t **context);
 
 /**
  * @brief  : Update Procedure according to indication flags
@@ -310,5 +313,7 @@ get_procedure(msg_info *msg);
  */
 uint8_t
 get_csr_proc(create_sess_req_t *csr);
+
+
 
 #endif

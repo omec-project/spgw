@@ -27,7 +27,7 @@
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index);
+process_pfcp_assoication_request(pdn_connection_t *pdn, uint8_t ebi_index);
 
 /**
  * @brief  : This function processes pfcp associatiuon response
@@ -46,7 +46,7 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr);
  * @return : Returns 0 in case of success else negative value
  */
 int
-buffer_csr_request(ue_context *context,
+buffer_csr_request(ue_context_t *context,
 		upf_context_t *upf_context, uint8_t ebi);
 
 
@@ -56,7 +56,7 @@ buffer_csr_request(ue_context *context,
  * @return : Returns nothing
  */
 void
-fill_rule_and_qos_inform_in_pdn(pdn_connection *pdn);
+fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn);
 
 
 /**

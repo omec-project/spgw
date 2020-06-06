@@ -86,60 +86,10 @@ struct rte_hash *node_id_hash;
 #define htonll(x) ((1==htonl(1)) ? (x) : ((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
 #define ntohll(x) ((1==ntohl(1)) ? (x) : ((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
 
-void register_comm_msg_cb(enum cp_dp_comm id,
-		int (*init)(void),
-		int (*send)(void *msg_payload, uint32_t size),
-		int (*recv)(void *msg_payload, uint32_t size),
-		int (*destroy)(void))
-{
-	struct comm_node *node;
 
-	node = &comm_node[id];
-	node->init = init;
-	node->send = send;
-	node->recv = recv;
-	node->destroy = destroy;
-	node->status = 0;
-	node->init();
-}
 
-int set_comm_type(enum cp_dp_comm id)
-{
-	if (comm_node[id].status == 0 && comm_node[id].init != NULL) {
-		active_comm_msg = &comm_node[id];
-		comm_node[id].status = 1;
-	} else {
-		clLog(clSystemLog, eCLSeverityCritical,"Error: Cannot set communication type\n");
-		return -1;
-	}
-	return 0;
-}
 
-int unset_comm_type(enum cp_dp_comm id)
-{
-	if (comm_node[id].status) {
-		active_comm_msg->destroy();
-		comm_node[id].status = 0;
-	} else {
-		clLog(clSystemLog, eCLSeverityCritical,"Error: Cannot unset communication type\n");
-		return -1;
-	}
-	return 0;
-}
 
-int process_comm_msg(void *buf)
-{
-	struct msgbuf *rbuf = (struct msgbuf *)buf;
-	struct ipc_node *cb;
-
-	if (rbuf->mtype >= MSG_END)
-		return -1;
-
-	/* Callback APIs */
-	cb = &basenode[rbuf->mtype];
-
-	return cb->msg_cb(rbuf);
-}
 
 /**
  * @brief  : Init listen socket.

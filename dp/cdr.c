@@ -39,6 +39,7 @@
 #include "cdr.h"
 #include "master_cdr.h"
 #include "util.h"
+#include "gen_utils.h"
 
 #ifdef SGX_CDR
 #include "ssl_client.h"

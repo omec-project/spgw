@@ -22,8 +22,8 @@
  * prototypes of Interface message parsing.
  */
 #include "cp_interface.h"
-#include "cp.h"
 #include "main.h"
+#include "gtpv2c_msg_struct.h"
 
 /* message types */
 enum dp_msg_type {
@@ -140,7 +140,6 @@ udp_recv(void *msg_payload, uint32_t size,
  * Return
  * 0 on success, -1 on failure
  */
-int iface_remove_que(enum cp_dp_comm id);
 void msg_handler_s11(void);
 void msg_handler_s5s8(void);
 
@@ -165,6 +164,7 @@ simu_cp(__rte_unused void *ptr);
  */
 int
 cb_ddn(struct msgbuf *msg_payload);
+
 
 #endif /* _CP_IO_POLL_H_ */
 

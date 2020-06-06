@@ -13,6 +13,8 @@
 #include "cp_timer.h"
 #include "gtpv2c_error_rsp.h"
 #include "clogger.h"
+#include "rte_hash_crc.h"
+#include "pfcp_cp_set_ie.h" // ajay - upf context should be part of differnt file 
 
 #define DIAMETER_PCC_RULE_EVENT (5142)
 
@@ -64,8 +66,8 @@ timer_callback(gstimerinfo_t *ti, const void *data_t )
         int ret = 0;
         int64_t seid = 0;
         msg_info msg;
-        ue_context *context = NULL;
-        pdn_connection *pdn = NULL;
+        ue_context_t *context = NULL;
+        pdn_connection_t *pdn = NULL;
         struct resp_info *resp = NULL;
 
         RTE_SET_USED(ti);
@@ -207,7 +209,7 @@ delete_pfcp_if_timer_entry(uint32_t teid, uint8_t ebi_index)
 {
 	int ret = 0;
         peerData *data = NULL;
-        ue_context *context = NULL;
+        ue_context_t *context = NULL;
 
 	ret = get_ue_context(teid, &context);
         if ( ret < 0) {
@@ -232,7 +234,7 @@ delete_gtpv2c_if_timer_entry(uint32_t teid)
 {
 	int ret = 0;
         peerData *data = NULL;
-       	eps_bearer *bearer = NULL;
+       	eps_bearer_t *bearer = NULL;
 
         ret = get_bearer_by_teid(teid, &bearer);
 
@@ -258,7 +260,7 @@ delete_timer_entry(uint32_t teid)
 {
 	int ret = 0;
 	peerData *data = NULL;
-       	eps_bearer *bearer = NULL;
+       	eps_bearer_t *bearer = NULL;
 
         ret = get_bearer_by_teid(teid, &bearer);
 	if ( ret < 0) {
@@ -285,7 +287,7 @@ add_pfcp_if_timer_entry(uint32_t teid, struct sockaddr_in *peer_addr,
 {
         int ret = 0;
         peerData *timer_entry = NULL;
-        ue_context *context = NULL;
+        ue_context_t *context = NULL;
 
         ret = get_ue_context(teid, &context);
         if ( ret < 0) {
@@ -317,8 +319,8 @@ add_gtpv2c_if_timer_entry(uint32_t teid, struct sockaddr_in *peer_addr,
 {
 	int ret = 0;
 	peerData *timer_entry = NULL;
-	eps_bearer *bearer = NULL;
-	ue_context *context = NULL;
+	eps_bearer_t *bearer = NULL;
+	ue_context_t *context = NULL;
 
 	/* fill and add timer entry */
 	timer_entry = fill_timer_entry_data(iface, peer_addr,

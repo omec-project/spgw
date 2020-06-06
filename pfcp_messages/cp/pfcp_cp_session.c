@@ -33,7 +33,12 @@
 #include "gtpc_session.h"
 #include "gtp_messages.h"
 #include "gtpv2c_set_ie.h"
+#include "gtpv2_interface.h"
 #include "cp_timer.h"
+#include "csid_api.h"
+#include "cp_global_defs.h"
+#include "ip_pool.h"
+#include "apn_apis.h"
 
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
 static uint32_t s5s8_sgw_gtpc_teid_offset;
@@ -122,13 +127,13 @@ fill_pfcp_sess_set_del_req( pfcp_sess_set_del_req_t *pfcp_sess_set_del_req)
 
 void
 fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
-		pdn_connection *pdn)
+		pdn_connection_t *pdn)
 {
 
 	int ret = 0;
 	uint8_t bearer_id = 0;
 	uint32_t seq = 0;
-	eps_bearer *bearer = NULL;
+	eps_bearer_t *bearer = NULL;
 	upf_context_t *upf_ctx = NULL;
 
 
@@ -170,7 +175,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 					/*
 					 * create dedicated bearer
 					 */
-					bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer),
+					bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
 							RTE_CACHE_LINE_SIZE, rte_socket_id());
 					if(bearer == NULL)
 					{
@@ -182,7 +187,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 						return;
 						/* return GTPV2C_CAUSE_SYSTEM_FAILURE; */
 					}
-					bzero(bearer,  sizeof(eps_bearer));
+					bzero(bearer,  sizeof(eps_bearer_t));
 					bearer->pdn = pdn;
 					bearer_id = get_new_bearer_id(pdn);
 					pdn->eps_bearers[bearer_id] = bearer;
@@ -574,7 +579,7 @@ fill_update_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 }
 
 int
-fill_remove_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer *bearer)
+fill_remove_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer_t *bearer)
 {
 	pfcp_update_far_ie_t *far = NULL;
 
@@ -592,7 +597,7 @@ fill_remove_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer *bearer
 }
 
 void sdf_pkt_filter_upd_bearer(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
-    eps_bearer* bearer,
+    eps_bearer_t* bearer,
     int pdr_counter,
     int sdf_filter_count,
     int dynamic_filter_cnt,
@@ -620,7 +625,7 @@ void sdf_pkt_filter_upd_bearer(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
 }
 
 int fill_upd_bearer_sdf_rule(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
-								eps_bearer* bearer,	int pdr_counter){
+								eps_bearer_t* bearer,	int pdr_counter){
     int ret = 0;
     int sdf_filter_count = 0;
     /*VG convert pkt_filter_strucutre to char string*/
@@ -666,7 +671,7 @@ int fill_upd_bearer_sdf_rule(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
 }
 
 void
-fill_update_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer *bearer){
+fill_update_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer_t *bearer){
 
 	int size1 = 0;
 
@@ -744,8 +749,8 @@ fill_update_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer *bearer){
 /* REVIEW: Context will remove after merging */
 void
 fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
-		gtpv2c_header_t *header, eps_bearer *bearer,
-		pdn_connection *pdn, pfcp_update_far_ie_t update_far[], uint8_t x2_handover_flag)
+		gtpv2c_header_t *header, eps_bearer_t *bearer,
+		pdn_connection_t *pdn, pfcp_update_far_ie_t update_far[], uint8_t x2_handover_flag)
 {
 	uint32_t seq = 0;
 	upf_context_t *upf_ctx = NULL;
@@ -1000,7 +1005,7 @@ sdf_pkt_filter_to_string(sdf_pkt_fltr *sdf_flow,
 
 void
 fill_pdr_far_qer_using_bearer(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
-		eps_bearer *bearer)
+		eps_bearer_t *bearer)
 {
 	pfcp_sess_mod_req->create_pdr_count = bearer->pdr_count;
 
@@ -1222,7 +1227,7 @@ void sdf_pkt_filter_add(pfcp_sess_estab_req_t* pfcp_sess_est_req,
 }
 
 void sdf_pkt_filter_mod(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
-		eps_bearer* bearer,
+		eps_bearer_t* bearer,
 		int pdr_counter,
 		int sdf_filter_count,
 		int dynamic_filter_cnt,
@@ -1270,7 +1275,7 @@ void sdf_pkt_filter_gx_mod(pfcp_create_pdr_ie_t *pdr, dynamic_rule_t *dyn_rule, 
 	pdr->header.len += (len + sizeof(pfcp_ie_header_t));
 }
 int fill_sdf_rules_modification(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
-	eps_bearer* bearer,
+	eps_bearer_t* bearer,
 	int pdr_counter)
 {
 	int ret = 0;
@@ -1364,7 +1369,7 @@ int fill_sdf_rules(pfcp_sess_estab_req_t* pfcp_sess_est_req,
 }
 
 int
-fill_qer_entry(pdn_connection *pdn, eps_bearer *bearer, uint8_t itr)
+fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr)
 {
 	int ret = -1;
 	qer_t *qer_ctxt = NULL;
@@ -1430,7 +1435,7 @@ add_qer_into_hash(qer_t *qer)
 	return ret;
 }
 
-int fill_pfcp_entry(eps_bearer *bearer, dynamic_rule_t *dyn_rule,
+int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 		enum rule_action_t rule_action)
 {
 	/*
@@ -1442,8 +1447,8 @@ int fill_pfcp_entry(eps_bearer *bearer, dynamic_rule_t *dyn_rule,
 	char mnc[4] = {0};
 	char mcc[4] = {0};
 	char nwinst[32] = {0};
-	ue_context *context = bearer->pdn->context;
-	pdn_connection *pdn = bearer->pdn;
+	ue_context_t *context = bearer->pdn->context;
+	pdn_connection_t *pdn = bearer->pdn;
 	pdr_t *pdr_ctxt = NULL;
 	int ret;
 	uint16_t flow_len = 0;
@@ -1591,8 +1596,8 @@ int fill_pfcp_entry(eps_bearer *bearer, dynamic_rule_t *dyn_rule,
 }
 
 pdr_t *
-fill_pdr_entry(ue_context *context, pdn_connection *pdn,
-		eps_bearer *bearer, uint8_t iface, uint8_t itr)
+fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
+		eps_bearer_t *bearer, uint8_t iface, uint8_t itr)
 {
 	char mnc[4] = {0};
 	char mcc[4] = {0};
@@ -1710,15 +1715,15 @@ fill_pdr_entry(ue_context *context, pdn_connection *pdn,
 	return pdr_ctxt;
 }
 
-eps_bearer* get_default_bearer(pdn_connection *pdn)
+eps_bearer_t* get_default_bearer(pdn_connection_t *pdn)
 {
 	return pdn->eps_bearers[pdn->default_bearer_id - 5];
 
 }
 
-eps_bearer* get_bearer(pdn_connection *pdn, bearer_qos_ie *qos)
+eps_bearer_t* get_bearer(pdn_connection_t *pdn, bearer_qos_ie *qos)
 {
-	eps_bearer *bearer = NULL;
+	eps_bearer_t *bearer = NULL;
 	for(uint8_t idx = 0; idx < MAX_BEARERS; idx++)
 	{
 		bearer = pdn->eps_bearers[idx];
@@ -1760,14 +1765,14 @@ compare_default_bearer_qos(bearer_qos_ie *default_bearer_qos,
 
 void
 fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
-		pdn_connection *pdn, uint32_t seq)
+		pdn_connection_t *pdn, uint32_t seq)
 {
 	/*TODO :generate seid value and store this in array
 	  to send response from cp/dp , first check seid is there in array or not if yes then
 	  fill that seid in response and if not then seid =0 */
 
 	int ret = 0;
-	eps_bearer *bearer = NULL;
+	eps_bearer_t *bearer = NULL;
 	upf_context_t *upf_ctx = NULL;
 
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
@@ -1826,7 +1831,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 					/*
 					 * create dedicated bearer
 					 */
-					bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer),
+					bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
 							RTE_CACHE_LINE_SIZE, rte_socket_id());
 					if(bearer == NULL)
 					{
@@ -1838,7 +1843,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 						return;
 						/* return GTPV2C_CAUSE_SYSTEM_FAILURE; */
 					}
-					bzero(bearer,  sizeof(eps_bearer));
+					bzero(bearer,  sizeof(eps_bearer_t));
 					bearer->pdn = pdn;
 					bearer_id = get_new_bearer_id(pdn);
 					pdn->eps_bearers[bearer_id] = bearer;
@@ -2196,7 +2201,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
  * @return : Returns 0 in case of success , -1 otherwise
  */
 static int
-fill_uli_info(gtp_user_loc_info_ie_t *uli, ue_context *context)
+fill_uli_info(gtp_user_loc_info_ie_t *uli, ue_context_t *context)
 {
 	if (uli->lai) {
 		context->uli.lai = uli->lai;
@@ -2323,7 +2328,7 @@ fill_uli_info(gtp_user_loc_info_ie_t *uli, ue_context *context)
  * @return : Returns 0 in case of success , -1 otherwise
  */
 static int
-fill_context_info(create_sess_req_t *csr, ue_context *context)
+fill_context_info(create_sess_req_t *csr, ue_context_t *context)
 {
  	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
 	    /* Check ntohl case */
@@ -2360,18 +2365,18 @@ fill_context_info(create_sess_req_t *csr, ue_context *context)
  * @return : Returns 0 in case of success , -1 otherwise
  */
 static int
-fill_pdn_info(create_sess_req_t *csr, pdn_connection *pdn)
+fill_pdn_info(create_sess_req_t *csr, pdn_connection_t *pdn)
 {
 
 	pdn->apn_ambr.ambr_downlink = csr->apn_ambr.apn_ambr_dnlnk;
 	pdn->apn_ambr.ambr_uplink = csr->apn_ambr.apn_ambr_uplnk;
 	pdn->apn_restriction = csr->max_apn_rstrct.rstrct_type_val;
 
-	if (csr->pdn_type.pdn_type_pdn_type == PDN_TYPE_IPV4)
+	if (csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4)
 		pdn->pdn_type.ipv4 = 1;
-	else if (csr->pdn_type.pdn_type_pdn_type == PDN_TYPE_IPV6)
+	else if (csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV6)
 		pdn->pdn_type.ipv6 = 1;
-	else if (csr->pdn_type.pdn_type_pdn_type == PDN_TYPE_IPV4_IPV6) {
+	else if (csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4V6) {
 		pdn->pdn_type.ipv4 = 1;
 		pdn->pdn_type.ipv6 = 1;
 	}
@@ -2466,8 +2471,8 @@ check_interface_type(uint8_t iface){
 }
 
 int
-fill_dedicated_bearer_info(eps_bearer *bearer,
-		ue_context *context, pdn_connection *pdn)
+fill_dedicated_bearer_info(eps_bearer_t *bearer,
+		ue_context_t *context, pdn_connection_t *pdn)
 {
 	int ret = 0;
 	upf_context_t *upf_ctx = NULL;
@@ -2554,8 +2559,8 @@ fill_dedicated_bearer_info(eps_bearer *bearer,
  * @return : Returns 0 in case of success , -1 otherwise
  */
 static int
-fill_bearer_info(create_sess_req_t *csr, eps_bearer *bearer,
-		ue_context *context, pdn_connection *pdn)
+fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
+		ue_context_t *context, pdn_connection_t *pdn)
 {
 
 	/* Need to re-vist this ARP[Allocation/Retention priority] handling portion */
@@ -2634,7 +2639,7 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer *bearer,
 
 #ifdef GX_BUILD
 static int
-gen_ccr_request(ue_context *context, uint8_t ebi_index, create_sess_req_t *csr)
+gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr)
 {
 	/* VS: Initialize the Gx Parameters */
 	uint16_t msg_len = 0;
@@ -2887,7 +2892,7 @@ fill_cgi(uint8_t *buf, cgi_field_t *cgi) {
 
 
 static int
-gen_ccru_request(pdn_connection *pdn, eps_bearer *bearer , mod_bearer_req_t *mb_req, uint8_t flag_check)
+gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t *mb_req, uint8_t flag_check)
 {
 	/*
 	 * TODO:
@@ -3106,7 +3111,7 @@ gen_ccru_request(pdn_connection *pdn, eps_bearer *bearer , mod_bearer_req_t *mb_
  * @return : Returns 0 in case of success , -1 otherwise
  */
 static int
-ccru_req_for_bear_termination(pdn_connection *pdn, eps_bearer *bearer)
+ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 {
 
 	/*
@@ -3280,11 +3285,11 @@ ccru_req_for_bear_termination(pdn_connection *pdn, eps_bearer *bearer)
 
 #ifndef GX_BUILD
 void
-fill_rule_and_qos_inform_in_pdn(pdn_connection *pdn)
+fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 {
 	dynamic_rule_t *dynamic_rule = dynamic_rule = &pdn->policy.pcc_rule[0].dyn_rule;
 	uint8_t ebi_index = pdn->default_bearer_id - 5;
-	eps_bearer *bearer = pdn->eps_bearers[ebi_index];
+	eps_bearer_t *bearer = pdn->eps_bearers[ebi_index];
 
 	pdn->policy.default_bearer_qos_valid = TRUE;
 	bearer_qos_ie *def_qos = &pdn->policy.default_bearer_qos;
@@ -3340,16 +3345,16 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection *pdn)
 /* Ajay - new CSReq handler */
 int
 process_create_sess_req(create_sess_req_t *csr,
-		ue_context **_context, struct in_addr *upf_ipv4)
+		ue_context_t **_context, struct in_addr *upf_ipv4)
 {
 	int ret = 0;
 	struct in_addr ue_ip = {0};
-	ue_context *context = NULL;
-	eps_bearer *bearer = NULL;
-	pdn_connection *pdn = NULL;
+	ue_context_t *context = NULL;
+	eps_bearer_t *bearer = NULL;
+	pdn_connection_t *pdn = NULL;
 
     /* TODO : Prio-1 Must fix. Handle unknown APN */
-	apn *apn_requested = get_apn((char *)csr->apn.apn, csr->apn.header.len);
+	apn_t *apn_requested = get_apn((char *)csr->apn.apn, csr->apn.header.len);
 
     if(apn_requested == NULL) {
         return GTPV2C_CAUSE_MISSING_UNKNOWN_APN;
@@ -3385,6 +3390,13 @@ process_create_sess_req(create_sess_req_t *csr,
 
 	if (fill_context_info(csr, context) != 0)
 			return -1;
+
+    if(csr->pco_new.header.len != 0)
+    {
+        printf("%s %d - PCO length = %d \n", __FUNCTION__, __LINE__, csr->pco.header.len);
+        context->pco = calloc(1, sizeof(pco_ie_t));
+        memcpy(context->pco, (void *)(&csr->pco_new), sizeof(pco_ie_t));
+    }
 
 	// TODOFIX - does not seem to be correct 
 	if (cp_config->cp_type == PGWC)
@@ -3642,7 +3654,7 @@ process_create_sess_req(create_sess_req_t *csr,
     memcpy((void *)(&dpkey.mcc_mnc), (void *)(&csr->uli.tai2), 3);
 
 	/* TODO : more work if SGW call Vs PGW call */
-    struct in_addr upf_addr = get_upf_ipaddr_for_key(&dpkey); // ajaytodo : get upf address 
+    struct in_addr upf_addr = get_upf_ipaddr_for_key(&dpkey, &context->dpId); 
     printf("UPF address  %s imsi.%llu \n", inet_ntoa(upf_addr), (long long unsigned int)context->imsi);
     // no upf available 
     if(upf_addr.s_addr == 0) 
@@ -3655,12 +3667,12 @@ process_create_sess_req(create_sess_req_t *csr,
 }
 
 int
-process_pfcp_sess_est_request(uint32_t teid, pdn_connection *pdn, upf_context_t *upf_ctx)
+process_pfcp_sess_est_request(uint32_t teid, pdn_connection_t *pdn, upf_context_t *upf_ctx)
 {
 	uint32_t sequence = 0;
-	eps_bearer *bearer = NULL;
+	eps_bearer_t *bearer = NULL;
 	struct resp_info *resp = NULL;
-	ue_context *context = pdn->context;
+	ue_context_t *context = pdn->context;
 	pfcp_sess_estab_req_t pfcp_sess_est_req = {0};
 
 	bearer = pdn->eps_bearers[pdn->default_bearer_id - 5];
@@ -3796,9 +3808,9 @@ int8_t
 process_pfcp_sess_est_resp(pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, gtpv2c_header_t *gtpv2c_tx)
 {
 	int ret = 0;
-	eps_bearer *bearer = NULL;
-	ue_context *context = NULL;
-	pdn_connection *pdn = NULL;
+	eps_bearer_t *bearer = NULL;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
 	struct resp_info *resp = NULL;
 	uint64_t sess_id = pfcp_sess_est_rsp->header.seid_seqno.has_seid.seid;
 	uint64_t dp_sess_id = pfcp_sess_est_rsp->up_fseid.seid;
@@ -4109,7 +4121,7 @@ process_pfcp_sess_est_resp(pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, gtpv2c_head
 }
 
 
-int send_pfcp_sess_mod_req_handover(pdn_connection *pdn, eps_bearer *bearer,
+int send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
 		mod_bearer_req_t *mb_req)
 {
 	struct resp_info *resp = NULL;
@@ -4369,9 +4381,9 @@ int process_pfcp_sess_mod_req_handover(mod_bearer_req_t *mb_req)
 {
 	int ret = 0;
 	uint8_t ebi_index = 0;
-	ue_context *context = NULL;
-	eps_bearer *bearer  = NULL;
-	pdn_connection *pdn =  NULL;
+	ue_context_t *context = NULL;
+	eps_bearer_t *bearer  = NULL;
+	pdn_connection_t *pdn =  NULL;
 	struct resp_info *resp = NULL;
 	//pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
@@ -4503,8 +4515,8 @@ process_pfcp_sess_mod_resp_del_cmd(uint64_t sess_id, gtpv2c_header_t *gtpv2c_rx 
 {
 	int ret = 0;
 	uint8_t ebi_index = 0;
-	eps_bearer *bearer  = NULL;
-	ue_context *context = NULL;
+	eps_bearer_t *bearer  = NULL;
+	ue_context_t *context = NULL;
 	struct resp_info *resp = NULL;
 	uint32_t teid = UE_SESS_ID(sess_id);
 
@@ -4558,11 +4570,11 @@ process_pfcp_sess_mod_resp_del_cmd(uint64_t sess_id, gtpv2c_header_t *gtpv2c_rx 
 
 
 int
-process_sess_mod_req_del_cmd(pdn_connection *pdn)
+process_sess_mod_req_del_cmd(pdn_connection_t *pdn)
 {
 	int ret = 0;
-	ue_context *context = NULL;
-	eps_bearer *bearers[MAX_BEARER];
+	ue_context_t *context = NULL;
+	eps_bearer_t *bearers[MAX_BEARER];
 	int ebi = 0;
 	struct resp_info *resp = NULL;
 	int teid = UE_SESS_ID(pdn->seid);
@@ -4634,9 +4646,9 @@ int
 process_delete_bearer_cmd_request(del_bearer_cmd_t *del_bearer_cmd, gtpv2c_header_t *gtpv2c_tx)
 {
 	int ret = 0;
-	ue_context *context = NULL;
-	eps_bearer *bearer = NULL;
-	pdn_connection *pdn = NULL;
+	ue_context_t *context = NULL;
+	eps_bearer_t *bearer = NULL;
+	pdn_connection_t *pdn = NULL;
 	int ebi_index = 0;
 	struct resp_info *resp = NULL;
 
@@ -4694,9 +4706,9 @@ process_pfcp_sess_mod_request(mod_bearer_req_t *mb_req)
 {
 	int ret = 0;
 	uint8_t ebi_index = 0;
-	ue_context *context = NULL;
-	eps_bearer *bearer  = NULL;
-	pdn_connection *pdn =  NULL;
+	ue_context_t *context = NULL;
+	eps_bearer_t *bearer  = NULL;
+	pdn_connection_t *pdn =  NULL;
 	struct resp_info *resp = NULL;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
@@ -4852,13 +4864,13 @@ process_pfcp_sess_mod_request(mod_bearer_req_t *mb_req)
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-gen_reauth_response(ue_context *context, uint8_t ebi_index)
+gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 {
 	/* VS: Initialize the Gx Parameters */
 	uint16_t msg_len = 0;
 	char *buffer = NULL;
 	gx_msg raa = {0};
-	pdn_connection *pdn = NULL;
+	pdn_connection_t *pdn = NULL;
 	gx_context_t *gx_context = NULL;
 	uint16_t msg_type_ofs = 0;
 	uint16_t msg_body_ofs = 0;
@@ -4948,7 +4960,7 @@ uint8_t
 process_delete_bearer_pfcp_sess_response(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 {
 	int ret = 0;
-	ue_context *context = NULL;
+	ue_context_t *context = NULL;
 	struct resp_info *resp = NULL;
 	uint32_t teid = UE_SESS_ID(sess_id);
 	uint8_t bearer_id = UE_BEAR_ID(sess_id) - 5;
@@ -5053,9 +5065,9 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 {
 	int ret = 0;
 	uint8_t ebi_index = 0;
-	eps_bearer *bearer  = NULL;
-	ue_context *context = NULL;
-	pdn_connection *pdn = NULL;
+	eps_bearer_t *bearer  = NULL;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
 	struct resp_info *resp = NULL;
 	uint32_t teid = UE_SESS_ID(sess_id);
 
@@ -5194,13 +5206,13 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 					(del_sess_req_t *)&(resp->gtpc_msg.dsr),
 					encoded_msg);
 
-			gtpv2c_header *header;
-			header =(gtpv2c_header*) encoded_msg;
+			gtpv2c_header_t *header;
+			header =(gtpv2c_header_t*) encoded_msg;
 
 			ret =
 				gen_sgwc_s5s8_delete_session_request((gtpv2c_header_t *)encoded_msg,
 						gtpv2c_tx, htonl(bearer->pdn->s5s8_pgw_gtpc_teid),
-						header->teid_u.has_teid.seq,
+						header->teid.has_teid.seq,
 						resp->eps_bearer_id);
 
 			s5s8_recv_sockaddr.sin_addr.s_addr =
@@ -5263,9 +5275,9 @@ process_sgwc_delete_session_request(del_sess_req_t *del_req)
 {
 	int ret = 0;
 	uint8_t ebi_index = 0;
-	ue_context *context = NULL;
-	eps_bearer *bearer  = NULL;
-	pdn_connection *pdn =  NULL;
+	ue_context_t *context = NULL;
+	eps_bearer_t *bearer  = NULL;
+	pdn_connection_t *pdn =  NULL;
 	struct resp_info *resp = NULL;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
@@ -5340,8 +5352,8 @@ process_pfcp_sess_del_request(del_sess_req_t *ds_req)
 {
 
 	int ret = 0;
-	ue_context *context = NULL;
-	pdn_connection *pdn = NULL;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
 	struct resp_info *resp = NULL;
 	uint32_t s5s8_pgw_gtpc_teid = 0;
 	uint32_t s5s8_pgw_gtpc_ipv4 = 0;
@@ -5406,7 +5418,7 @@ int
 process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
 {
 	int ret = 0;
-	ue_context *context = NULL;
+	ue_context_t *context = NULL;
 	struct resp_info *resp = NULL;
 	uint32_t s5s8_pgw_gtpc_teid = 0;
 	uint32_t s5s8_pgw_gtpc_ipv4 = 0;
@@ -5465,10 +5477,10 @@ process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
 }
 
 int
-delete_dedicated_bearers(pdn_connection *pdn,
+delete_dedicated_bearers(pdn_connection_t *pdn,
 		uint8_t bearer_ids[], uint8_t bearer_cntr)
 {
-	eps_bearer *ded_bearer = NULL;
+	eps_bearer_t *ded_bearer = NULL;
 
 	/* Delete multiple dedicated bearer of pdn */
 	for (int iCnt = 0; iCnt < bearer_cntr; ++iCnt) {
@@ -5510,7 +5522,7 @@ delete_dedicated_bearers(pdn_connection *pdn,
 }
 
 int
-del_rule_entries(ue_context *context, uint8_t ebi_index)
+del_rule_entries(ue_context_t *context, uint8_t ebi_index)
 {
 	int ret = 0;
 	pdr_t *pdr_ctx =  NULL;
@@ -5548,13 +5560,13 @@ process_pfcp_sess_del_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx,
 	int ret = 0;
 	uint8_t ebi_index = 0;
 	uint16_t msg_len = 0;
-	ue_context *context = NULL;
+	ue_context_t *context = NULL;
 	struct resp_info *resp = NULL;
 	del_sess_rsp_t del_resp = {0};
 	uint32_t teid = UE_SESS_ID(sess_id);
 
-	//eps_bearer *bearer  = NULL;
-	pdn_connection *pdn =  NULL;
+	//eps_bearer_t *bearer  = NULL;
+	pdn_connection_t *pdn =  NULL;
 	/* Lookup entry in hash table on the basis of session id*/
 	if (get_sess_entry(sess_id, &resp) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
@@ -5866,13 +5878,13 @@ process_pfcp_sess_del_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx,
 
 void
 fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
-		gtpv2c_header_t *header, ue_context *context, pdn_connection *pdn)
+		gtpv2c_header_t *header, ue_context_t *context, pdn_connection_t *pdn)
 {
 	uint32_t seq = 0;
 	upf_context_t *upf_ctx = NULL;
 	pdr_t *pdr_ctxt = NULL;
 	int ret = 0;
-	eps_bearer *bearer;
+	eps_bearer_t *bearer;
 
 	RTE_SET_USED(context);  /* NK:to be checked */
 
@@ -5944,13 +5956,13 @@ fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 
 void
 fill_pfcp_sess_mod_req_pgw_init_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
-		pdn_connection *pdn, eps_bearer *bearers[], uint8_t bearer_cntr)
+		pdn_connection_t *pdn, eps_bearer_t *bearers[], uint8_t bearer_cntr)
 {
 	uint32_t seq = 0;
 	upf_context_t *upf_ctx = NULL;
 	pdr_t *pdr_ctxt = NULL;
 	int ret = 0;
-	eps_bearer *bearer = NULL;
+	eps_bearer_t *bearer = NULL;
 
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 					&upf_ctx)) < 0) {
@@ -6023,11 +6035,11 @@ fill_pfcp_sess_mod_req_pgw_init_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 
 void
 fill_pfcp_sess_mod_req_pgw_init_remove_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
-		pdn_connection *pdn, eps_bearer *bearers[], uint8_t bearer_cntr)
+		pdn_connection_t *pdn, eps_bearer_t *bearers[], uint8_t bearer_cntr)
 {
 	int ret = 0;
 	uint32_t seq = 0;
-	eps_bearer *bearer;
+	eps_bearer_t *bearer;
 	pdr_t *pdr_ctxt = NULL;
 	upf_context_t *upf_ctx = NULL;
 
@@ -6073,13 +6085,13 @@ fill_pfcp_sess_mod_req_pgw_init_remove_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 
 void
 fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
-		pdn_connection *pdn, eps_bearer *bearers[], uint8_t bearer_cntr)
+		pdn_connection_t *pdn, eps_bearer_t *bearers[], uint8_t bearer_cntr)
 {
 	uint32_t seq = 0;
 	upf_context_t *upf_ctx = NULL;
 	pdr_t *pdr_ctxt = NULL;
 	int ret = 0;
-	eps_bearer *bearer = NULL;
+	eps_bearer_t *bearer = NULL;
 
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 					&upf_ctx)) < 0) {
@@ -6153,8 +6165,8 @@ process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx
 {
 	int ret = 0;
 	uint8_t ebi_index = 0;
-	eps_bearer *bearer  = NULL;
-	ue_context *context = NULL;
+	eps_bearer_t *bearer  = NULL;
+	ue_context_t *context = NULL;
 	struct resp_info *resp = NULL;
 	uint32_t teid = UE_SESS_ID(sess_id);
 
@@ -6216,7 +6228,7 @@ process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx
 }
 
 int8_t
-get_new_bearer_id(pdn_connection *pdn_cntxt)
+get_new_bearer_id(pdn_connection_t *pdn_cntxt)
 {
 	return pdn_cntxt->num_bearer;
 }

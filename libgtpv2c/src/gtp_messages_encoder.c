@@ -2106,8 +2106,13 @@ if (value->apn_ambr.header.len)
 if (value->linked_eps_bearer_id.header.len)
         encoded += encode_gtp_eps_bearer_id_ie(&(value->linked_eps_bearer_id), buf + encoded);
 
+#if 0
 if (value->pco.header.len)
         encoded += encode_gtp_prot_cfg_opts_ie(&(value->pco), buf + encoded);
+#else 
+if (value->pco_new.header.len)
+        encoded += encode_pco_ie_t(&(value->pco_new), buf + encoded);
+#endif
 
 if (value->bearer_contexts_created.header.len)
         encoded += encode_gtp_create_sess_response_bearer_ctxt_created_ie(&(value->bearer_contexts_created), buf + encoded);

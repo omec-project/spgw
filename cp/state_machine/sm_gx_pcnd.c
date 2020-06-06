@@ -17,7 +17,6 @@
 #include "gtpv2c.h"
 #include "sm_pcnd.h"
 #include "cp_stats.h"
-#include "debug_str.h"
 #include "pfcp_cp_util.h"
 #include "pfcp.h"
 #include "gtp_messages_decoder.h"
@@ -32,7 +31,7 @@ gx_pcnd_check(gx_msg *gx_rx, msg_info *msg)
 	int ret = 0;
 	uint32_t call_id = 0;
 	gx_context_t *gx_context = NULL;
-	pdn_connection *pdn_cntxt = NULL;
+	pdn_connection_t *pdn_cntxt = NULL;
 
 	struct sockaddr_in saddr_in;
 	saddr_in.sin_family = AF_INET;
@@ -124,7 +123,7 @@ gx_pcnd_check(gx_msg *gx_rx, msg_info *msg)
 	        	                msg->gx_msg.rar.session_id.val);
 	       	 	return -1;
 			}
-			pdn_connection *pdn_cntxt = NULL;
+			pdn_connection_t *pdn_cntxt = NULL;
 			/* Retrieve PDN context based on call id */
 			pdn_cntxt = get_pdn_conn_entry(call_id);
 			if (pdn_cntxt == NULL)

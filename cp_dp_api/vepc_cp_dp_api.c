@@ -33,13 +33,10 @@
 #include "util.h"
 #ifdef CP_BUILD
 #include "pfcp_cp_util.h"
-#else
-#include "pfcp_up_util.h"
-#endif
-#ifdef CP_BUILD
 #include "cp_interface.h"
 #include "pfcp_cp_set_ie.h"
 #else
+#include "pfcp_up_util.h"
 #include "up_interface.h"
 #include "pfcp_up_set_ie.h"
 #endif
@@ -180,6 +177,7 @@ sdf_filter_table_create(struct dp_id dp_id, uint32_t max_elements)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_SDF_CRE, dp_id, (void *)&max_elements, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -192,6 +190,7 @@ sdf_filter_table_delete(struct dp_id dp_id)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_SDF_DES, dp_id, (void *)NULL, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -204,6 +203,7 @@ sdf_filter_entry_add(struct dp_id dp_id, struct pkt_filter pkt_filter_entry)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_SDF_ADD, dp_id, (void *)&pkt_filter_entry, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -216,6 +216,7 @@ sdf_filter_entry_delete(struct dp_id dp_id, struct pkt_filter pkt_filter_entry)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_SDF_DEL, dp_id, (void *)&pkt_filter_entry, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -229,6 +230,7 @@ adc_table_create(struct dp_id dp_id, uint32_t max_elements)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_ADC_TBL_CRE, dp_id, (void *)&max_elements, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -240,6 +242,7 @@ int adc_table_delete(struct dp_id dp_id)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_ADC_TBL_DES, dp_id, (void *)NULL, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -251,6 +254,7 @@ int adc_entry_add(struct dp_id dp_id, struct adc_rules entry)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_ADC_TBL_ADD, dp_id, (void *)&entry, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -262,6 +266,7 @@ int adc_entry_delete(struct dp_id dp_id, struct adc_rules entry)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_ADC_TBL_DEL, dp_id, (void *)&entry, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -275,6 +280,7 @@ pcc_table_create(struct dp_id dp_id, uint32_t max_elements)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_PCC_TBL_CRE, dp_id, (void *)&max_elements, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -287,6 +293,7 @@ pcc_table_delete(struct dp_id dp_id)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_PCC_TBL_DES, dp_id, (void *)NULL, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -299,6 +306,7 @@ pcc_entry_add(struct dp_id dp_id, struct pcc_rules entry)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_PCC_TBL_ADD, dp_id, (void *)&entry, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -311,6 +319,7 @@ pcc_entry_delete(struct dp_id dp_id, struct pcc_rules entry)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_PCC_TBL_DEL, dp_id, (void *)&entry, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -324,6 +333,7 @@ session_table_create(struct dp_id dp_id, uint32_t max_elements)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_SESS_TBL_CRE, dp_id, (void *)&max_elements, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -336,6 +346,7 @@ session_table_delete(struct dp_id dp_id)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_SESS_TBL_DES, dp_id, (void *)NULL, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -349,6 +360,7 @@ session_create(struct dp_id dp_id,
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_SESS_CRE, dp_id, (void *)&entry, &msg_payload);
 
 #ifdef SYNC_STATS
@@ -373,6 +385,7 @@ session_modify(struct dp_id dp_id,
 #ifdef CP_BUILD
 
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_SESS_MOD, dp_id, (void *)&entry, &msg_payload);
 
 #ifdef SYNC_STATS
@@ -390,17 +403,20 @@ session_modify(struct dp_id dp_id,
 #endif		/* CP_BUILD */
 }
 
+#ifdef DELETE_THIS
 #ifdef CP_BUILD
 int
 send_ddn_ack(struct dp_id dp_id,
 				struct downlink_data_notification entry)
 {
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_DDN_ACK, dp_id, (void *)&entry, &msg_payload);
 
 	return send_dp_msg(dp_id, &msg_payload);
 }
 #endif		/* CP_BUILD */
+#endif
 
 #ifdef DP_BUILD
 int
@@ -417,6 +433,7 @@ session_delete(struct dp_id dp_id,
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_SESS_DEL, dp_id, (void *)&entry, &msg_payload);
 
 #ifdef SYNC_STATS
@@ -440,6 +457,7 @@ meter_profile_table_create(struct dp_id dp_id, uint32_t max_elements)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_MTR_CRE, dp_id, (void *)&max_elements, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -452,6 +470,7 @@ meter_profile_table_delete(struct dp_id dp_id)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_MTR_DES, dp_id, (void *)NULL, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -464,6 +483,7 @@ meter_profile_entry_add(struct dp_id dp_id, struct mtr_entry entry)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_MTR_ADD, dp_id, (void *)&entry, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -476,6 +496,7 @@ meter_profile_entry_delete(struct dp_id dp_id, struct mtr_entry entry)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_MTR_DEL, dp_id, (void *)&entry, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else
@@ -488,6 +509,7 @@ ue_cdr_flush(struct dp_id dp_id, struct msg_ue_cdr ue_cdr)
 {
 #ifdef CP_BUILD
 	struct msgbuf msg_payload;
+    printf("%s %d \n",__FUNCTION__,__LINE__);
 	build_dp_msg(MSG_EXP_CDR, dp_id, (void *)&ue_cdr, &msg_payload);
 	return send_dp_msg(dp_id, &msg_payload);
 #else

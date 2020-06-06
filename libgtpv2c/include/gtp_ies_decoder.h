@@ -174,6 +174,8 @@ int decode_gtp_indication_ie(uint8_t *buf,
 int decode_gtp_prot_cfg_opts_ie(uint8_t *buf,
     gtp_prot_cfg_opts_ie_t *value);
 
+int 
+decode_pco_ie_t(uint8_t *buf, pco_ie_t *val);
 /**
 * Decodes gtp_pdn_addr_alloc_ie_t to buffer.
 * @param value

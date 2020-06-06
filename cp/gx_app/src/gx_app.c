@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cp_app.h"
+#include "gx_app_interface.h"
 #include "ipc_api.h"
 #include "gx.h"
 

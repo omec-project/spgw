@@ -23,10 +23,11 @@
 
 #include "cp_interface.h"
 #include "cp_io_poll.h"
+#include "pfcp_cp_common.h"
 
 #include "pfcp_cp_util.h"
 #include "../cp/cp.h"
-#include "../cp/cp_app.h"
+#include "gx_app_interface.h"
 #include "../cp/cp_stats.h"
 #include "../cp/cp_config.h"
 #include "../cp/state_machine/sm_struct.h"
@@ -34,6 +35,7 @@
 #ifdef GX_BUILD
 extern int gx_app_sock;
 #endif /* GX_BUILD */
+udp_sock_t my_sock;
 
 void iface_ipc_register_msg_cb(int msg_id,
 				int (*msg_cb)(struct msgbuf *msg_payload))
@@ -52,26 +54,6 @@ void iface_init_ipc_node(void)
 			RTE_CACHE_LINE_SIZE);
 	if (basenode == NULL)
 		exit(0);
-}
-
-/**
- * @brief Function to Process msgs.
- *
- */
-int iface_remove_que(enum cp_dp_comm id)
-{
-
-	RTE_SET_USED(id);
-	struct sockaddr_in peer_addr;
-	int bytes_rx = 0;
-	if ((bytes_rx = pfcp_recv(pfcp_rx, 512,
-			&peer_addr)) < 0) {
-		perror("msgrecv");
-		return -1;
-	}
-	process_pfcp_msg(pfcp_rx, &peer_addr);
-
-	return 0;
 }
 
 /**

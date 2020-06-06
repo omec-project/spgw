@@ -16,7 +16,6 @@
 
 #include <stdio.h>
 #include "sm_enum.h"
-#include "cp_app.h"
 
 /* Function */
 /**

@@ -18,11 +18,15 @@
 
 #include "cp.h"
 #include "main.h"
+#include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_association.h"
 #include "cp_stats.h"
 #include "cp_config.h"
 #include "gw_adapter.h"
 #include "sm_struct.h"
+#include "csid_cp_cleanup.h"
+#include "csid_api.h"
+#include "gtpv2_interface.h"
 
 #include "../restoration/restoration_timer.h"
 

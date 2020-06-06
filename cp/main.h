@@ -179,5 +179,13 @@ echo_table_init(void);
 
 #endif /* USE_REST */
 
+/**
+ * @brief  : Functino to handle signals.
+ * @param  : signo
+ *           signal number signal to be handled
+ * @return : Returns nothing
+ */
+void sig_handler(int signo);
+
 #endif /* _MAIN_H_ */
 

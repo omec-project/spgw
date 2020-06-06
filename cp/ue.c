@@ -26,8 +26,6 @@ struct rte_hash *ue_context_by_fteid_hash;
 struct rte_hash *pdn_by_fteid_hash;
 struct rte_hash *bearer_by_fteid_hash;
 
-apn apn_list[MAX_NB_DPN];
-
 /* base value and offset for seid generation */
 const uint32_t s11_sgw_gtpc_base_teid = 0xC0FFEE;
 static uint32_t s11_sgw_gtpc_teid_offset;
@@ -68,7 +66,7 @@ set_base_teid(uint8_t val)
 }
 
 void
-set_s1u_sgw_gtpu_teid(eps_bearer *bearer, ue_context *context)
+set_s1u_sgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context)
 {
 	uint8_t index = __builtin_ffs(~(context->teid_bitmap)) - 1;
 	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
@@ -82,7 +80,7 @@ set_s1u_sgw_gtpu_teid(eps_bearer *bearer, ue_context *context)
 }
 
 void
-set_s5s8_sgw_gtpu_teid(eps_bearer *bearer, ue_context *context)
+set_s5s8_sgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context)
 {
 	uint8_t index = __builtin_ffs(~(context->teid_bitmap)) - 1;
 	/* Note: s5s8_sgw_gtpu_teid based s11_sgw_gtpc_teid
@@ -94,7 +92,7 @@ set_s5s8_sgw_gtpu_teid(eps_bearer *bearer, ue_context *context)
 }
 
 void
-set_s5s8_pgw_gtpu_teid(eps_bearer *bearer, ue_context *context){
+set_s5s8_pgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context){
 	uint8_t index = __builtin_ffs(~(context->teid_bitmap)) - 1;
 	if (cp_config->cp_type == PGWC){
 		pgw_gtpu_base_teid = pgw_gtpc_base_teid + pgw_gtpc_teid_offset;
@@ -106,7 +104,7 @@ set_s5s8_pgw_gtpu_teid(eps_bearer *bearer, ue_context *context){
 }
 
 void
-set_s5s8_pgw_gtpc_teid(pdn_connection *pdn)
+set_s5s8_pgw_gtpc_teid(pdn_connection_t *pdn)
 {
 	pdn->s5s8_pgw_gtpc_teid = s5s8_pgw_gtpc_base_teid
 		+ s5s8_pgw_gtpc_teid_offset;
@@ -114,7 +112,7 @@ set_s5s8_pgw_gtpc_teid(pdn_connection *pdn)
 }
 
 void
-set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer *bearer, pdn_connection *pdn)
+set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer_t *bearer, pdn_connection_t *pdn)
 {
 	uint8_t index = __builtin_ffs(~(pdn->context->teid_bitmap)) - 1;
 	/* Note: s5s8_sgw_gtpu_teid based s11_sgw_gtpc_teid
@@ -173,60 +171,9 @@ create_ue_hash(void)
 }
 
 
-void
-set_ip_pool_ip(const char *ip_str)
-{
-	if (!inet_aton(ip_str, &cp_config->ip_pool_ip))
-		rte_panic("Invalid argument - %s - Exiting.", ip_str);
-	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_ip:  %s\n", inet_ntoa(cp_config->ip_pool_ip));
-}
-
 
 void
-set_ip_pool_mask(const char *ip_str)
-{
-	if (!inet_aton(ip_str, &cp_config->ip_pool_mask))
-		rte_panic("Invalid argument - %s - Exiting.", ip_str);
-	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_mask: %s\n", inet_ntoa(cp_config->ip_pool_mask));
-}
-
-
-void
-set_apn_name(apn *an_apn, char *argstr)
-{
-	if (argstr == NULL)
-		rte_panic("APN Name argument not set\n");
-	an_apn->apn_name_length = strlen(argstr) + 1;
-	an_apn->apn_name_label = rte_zmalloc_socket(NULL, an_apn->apn_name_length,
-	    RTE_CACHE_LINE_SIZE, rte_socket_id());
-	if (an_apn->apn_name_label == NULL)
-		rte_panic("Failure to allocate apn_name_label buffer: "
-				"%s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
-	/* Don't copy NULL termination */
-	strncpy(an_apn->apn_name_label + 1, argstr, strlen(argstr));
-	char *ptr, *size;
-	size = an_apn->apn_name_label;
-	*size = 1;
-	ptr = an_apn->apn_name_label + strlen(argstr) - 1;
-	do {
-		if (ptr == size)
-			break;
-		if (*ptr == '.') {
-			*ptr = *size;
-			*size = 0;
-		} else {
-			(*size)++;
-		}
-		--ptr;
-	} while (ptr != an_apn->apn_name_label);
-}
-
-
-void
-print_ue_context_by(struct rte_hash *h, ue_context *context)
+print_ue_context_by(struct rte_hash *h, ue_context_t *context)
 {
 	uint64_t *key;
 	int32_t ret;
@@ -268,7 +215,7 @@ print_ue_context_by(struct rte_hash *h, ue_context *context)
 }
 
 int
-add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, struct eps_bearer_t **bearer)
+add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, eps_bearer_t **bearer)
 {
 	int8_t ret = 0;
 	ret = rte_hash_add_key_data(bearer_by_fteid_hash,
@@ -285,15 +232,15 @@ add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, struct eps_bearer_t **bear
 
 int
 create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
-		uint8_t ebi, ue_context **context, apn *apn_requested,
+		uint8_t ebi, ue_context_t **context, apn_t *apn_requested,
 	  	uint32_t sequence)
 {
 	int ret;
 	int i;
 	uint8_t ebi_index;
 	uint64_t imsi = UINT64_MAX;
-	pdn_connection *pdn = NULL;
-	eps_bearer *bearer = NULL;
+	pdn_connection_t *pdn = NULL;
+	eps_bearer_t *bearer = NULL;
 	int if_ue_present = 0;
 
 	memcpy(&imsi, imsi_val, imsi_len);
@@ -302,7 +249,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 	    (void **) &(*context));
 
 	if (ret == -ENOENT) {
-		(*context) = rte_zmalloc_socket(NULL, sizeof(ue_context),
+		(*context) = rte_zmalloc_socket(NULL, sizeof(ue_context_t),
 		    RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (*context == NULL) {
 			clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate ue context "
@@ -410,7 +357,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			bearer->pdn->eps_bearers[ebi_index] = NULL;
 			bzero(bearer, sizeof(*bearer));
 			pdn = rte_zmalloc_socket(NULL,
-				sizeof(struct pdn_connection_t),
+				sizeof(pdn_connection_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 			if (pdn == NULL) {
 				clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate PDN "
@@ -430,7 +377,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		/*
 		 * Allocate default bearer
 		 */
-		bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer),
+		bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (bearer == NULL) {
 			clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate bearer "
@@ -441,7 +388,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
 		}
 		bearer->eps_bearer_id = ebi;
-		pdn = rte_zmalloc_socket(NULL, sizeof(struct pdn_connection_t),
+		pdn = rte_zmalloc_socket(NULL, sizeof(pdn_connection_t),
 		    RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (pdn == NULL) {
 			clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate PDN "
@@ -497,69 +444,4 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 	return 0;
 }
 
-apn *
-get_apn(char *apn_label, uint16_t apn_length)
-{
-	int i;
-	printf("%s %d - APN %s length %d \n",__FUNCTION__,__LINE__, apn_label, apn_length);
-	for (i = 0; i < MAX_NB_DPN; i++)   {
-	    printf("%s %d - APN %s length %lu \n",__FUNCTION__,__LINE__, apn_list[i].apn_name_label, apn_list[i].apn_name_length);
-		if ((apn_length == apn_list[i].apn_name_length)
-			&& !memcmp(apn_label, apn_list[i].apn_name_label,
-			apn_length)) {
-			break;
-	        }
-	}
-	printf("%s %d - APN found ? index = %d \n",__FUNCTION__,__LINE__, i);
-
-    /* TODO : Return error code */
-    if(i>=MAX_NB_DPN)
-        return NULL;
-
-	if(i >= MAX_NB_DPN) {
-		/* when apn name of csr are not found in cp.cfg file */
-		/* BP : TODO : free apn_reruested and apn_name_label memory */
-		apn *apn_requested = rte_zmalloc_socket(NULL, sizeof(apn),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-		if (apn_requested == NULL) {
-			rte_panic("Failure to allocate apn_requested buffer: "
-					"%s (%s:%d)\n",
-					rte_strerror(rte_errno),
-					__FILE__,
-					__LINE__);
-			return NULL;
-		}
-
-		apn_requested->apn_name_label = rte_zmalloc_socket(NULL, apn_length,
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-
-		if (apn_requested->apn_name_label == NULL) {
-			rte_panic("Failure to allocate apn_name_label buffer: "
-					"%s (%s:%d)\n",
-					rte_strerror(rte_errno),
-					__FILE__,
-					__LINE__);
-			return NULL;
-		}
-		strncpy(apn_requested->apn_name_label, apn_label, apn_length);
-		apn_requested->apn_name_length = apn_length;
-		return apn_requested;
-	}
-
-	apn_list[i].apn_idx = i;
-	return apn_list+i; /* ajay - scary.... why do we want to do this ?*/
-}
-
-/* TODO : Prio2 . Scaling needs change in this area. */
-uint32_t
-acquire_ip(struct in_addr *ipv4)
-{
-	static uint32_t next_ip_index;
-	if (unlikely(next_ip_index == LDB_ENTRIES_DEFAULT)) {
-		clLog(clSystemLog, eCLSeverityCritical, "IP Pool depleted\n");
-		return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
-	}
-	ipv4->s_addr = GET_UE_IP(next_ip_index++);
-	return 0;
-}
 

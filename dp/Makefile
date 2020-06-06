@@ -60,7 +60,7 @@ SRCS-y := up_main.c\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_set_ie.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_sess.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_print_rule.o\
-	$(SRCDIR)/../pfcp_messages/up/pfcp_up_req_rsp.o\
+	$(SRCDIR)/../pfcp_messages/up/pfcp_up_rx_msg.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_association.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_sess_rsp.o\
 
@@ -229,7 +229,7 @@ ifneq (,$(findstring USE_REST, $(CFLAGS), $(EXTRA_CFLAGS)))
 endif
 
 #un-comment below line to enable FQ-CSID support in the control-plane
-CFLAGS += -DUSE_CSID
+#CFLAGS += -DUSE_CSID
 
 ifneq (,$(findstring USE_CSID, $(CFLAGS), $(EXTRA_CFLAGS)))
 	#VS:Support partial failure FQ-CSID m/c

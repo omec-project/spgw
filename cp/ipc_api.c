@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "cp_app.h"
 #include "ipc_api.h"
 
 int
@@ -40,7 +39,7 @@ connect_to_ipc_channel(int sock, struct sockaddr_un sock_addr, const char *path)
 {
 	int rc = 0;
 
-	socklen_t  len = LENGTH;
+	socklen_t  len = sizeof(struct sockaddr_un);
 	sock_addr.sun_family = AF_UNIX;
 
 	chmod( path, 755 );
@@ -72,7 +71,7 @@ bind_ipc_channel(int sock, struct sockaddr_un sock_addr,const char *path)
 	/* Remove the symbolic link of path names */
 	unlink(path);
 	/* Bind the new created socket to given PATH and verification */
-	rc =  bind( sock, (struct sockaddr *) &sock_addr, LENGTH);
+	rc =  bind( sock, (struct sockaddr *) &sock_addr, sizeof(struct sockaddr_un));
 	if( rc != 0 ){
 		close_ipc_channel(sock);
 		fprintf(stderr,"%s: Gx Socket Bind failed error: %s\n",
@@ -115,7 +114,7 @@ void
 listen_ipc_channel( int sock )
 {
 	/* Mark the socket as a passive socket to accept incomming connections */
-	if( listen(sock, BACKLOG) == -1){
+	if( listen(sock, 100) == -1){
 		close_ipc_channel(sock);
 		fprintf(stderr, "%s: Socket Listen failed error: %s\n",
 				__func__, strerror(errno));
@@ -128,7 +127,7 @@ listen_ipc_channel( int sock )
 void
 get_peer_name(int sock, struct sockaddr_un sock_addr)
 {
-	socklen_t  len = LENGTH;
+	socklen_t  len = sizeof(struct sockaddr_un);
 	if( getpeername( sock, (struct sockaddr *) &sock_addr, &len) == -1) {
 		if(errno != EINTR)
 		{

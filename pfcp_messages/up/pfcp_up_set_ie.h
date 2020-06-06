@@ -36,7 +36,7 @@
 
 #define MAX_HOSTNAME_LENGTH							(256)
 
-#define MAX_GTPV2C_LENGTH (MAX_GTPV2C_UDP_LEN-sizeof(struct gtpc_t))
+#define MAX_GTPV2C_LENGTH (MAX_GTPV2C_UDP_LEN-12) // sizeof(struct gtpc_t))
 
 #define ALL_CPF_FEATURES_SUPPORTED  (CP_LOAD | CP_OVRL)
 

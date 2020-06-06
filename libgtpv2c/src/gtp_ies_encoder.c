@@ -17,7 +17,7 @@
 #include "../include/gtp_ies_encoder.h"
 
 #include "../include/enc_dec_bits.h"
-
+#include <stdlib.h>
 /**
  * Encodes gtpv2c header to buffer.
  * @param val
@@ -313,6 +313,16 @@ int encode_gtp_prot_cfg_opts_ie(gtp_prot_cfg_opts_ie_t *value,
     return encoded/CHAR_SIZE;
 }
 
+int
+encode_pco_ie_t(pco_ie_t *val, uint8_t *buf)
+{
+    uint16_t enc_len = 0;
+    enc_len += encode_ie_header_t(&val->header, buf);
+	memcpy(buf+4, val->pco, val->pco_len);
+    enc_len += val->pco_len*CHAR_SIZE;
+    free(val->pco);
+    return enc_len/CHAR_SIZE;
+}
 
 /**
 * Encodes gtp_mdt_cfg_ie to buffer.

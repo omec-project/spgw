@@ -10,21 +10,23 @@
 #include <rte_debug.h>
 #include <rte_eal.h>
 #include <rte_cfgfile.h>
-#include "cp_config.h"
-#include "cp_stats.h"
-#include "monitor_config.h"
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
-#include "cp.h"
 #include <rte_log.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include "assert.h"
 
+#include "cp_global_defs.h"
+#include "monitor_config.h"
+#include "cp_config.h"
+#include "cp_stats.h"
+#include "cp.h"
+#include "apn_struct.h"
+#include "apn_apis.h"
 
-//#define RTE_LOGTYPE_CP RTE_LOGTYPE_USER4
 
 #define GLOBAL_ENTRIES			"GLOBAL"
 #define APN_ENTRIES				"APN_CONFIG"
@@ -314,6 +316,7 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 			APN_ENTRIES, apn_entries, num_apn_entries);
 
 	for (i = 0; i < num_apn_entries; ++i) {
+        apn_t local_apn={0};
 		fprintf(stderr, "CP: [%s] = %s\n",
 				apn_entries[i].name,
 				apn_entries[i].value);
@@ -324,19 +327,19 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 			if (i < MAX_NUM_APN) {
 				char *ptr[3];
 				/* Based on default value, set usage type */
-				apn_list[i].apn_usage_type = -1;
+				local_apn.apn_usage_type = -1;
 
 				parse_apn_args(apn_entries[i].value, ptr);
 
-				apn_list[i].apn_name_label = ptr[0];
+				local_apn.apn_name_label = ptr[0];
 
-			if (ptr[1] != NULL)
-				apn_list[i].apn_usage_type = atoi(ptr[1]);
+			    if (ptr[1] != NULL)
+				    local_apn.apn_usage_type = atoi(ptr[1]);
 
-		if (ptr[2] != NULL)
-			memcpy(apn_list[i].apn_net_cap, ptr[2], strlen(ptr[2]));
+		        if (ptr[2] != NULL)
+			        memcpy(local_apn.apn_net_cap, ptr[2], strlen(ptr[2]));
 
-			set_apn_name(&apn_list[i], apn_list[i].apn_name_label);
+			    set_apn_name(&local_apn, local_apn.apn_name_label);
 
 				int f = 0;
 				/* Free the memory allocated by malloc. */
@@ -968,7 +971,7 @@ struct in_addr native_linux_name_resolve(const char *name)
 }
 
 struct in_addr 
-get_upf_ipaddr_for_key(struct dp_key *key)
+get_upf_ipaddr_for_key(struct dp_key *key, uint32_t *dpId)
 {
 	struct in_addr ip = {0};
 #if 0
@@ -996,6 +999,7 @@ get_upf_ipaddr_for_key(struct dp_key *key)
 			continue;
 		if(np->key.tac != key->tac)
 			continue;
+        *dpId = np->dpId; 
 		return native_linux_name_resolve(np->dpName); 
 	}
 	return ip; 
@@ -1263,5 +1267,22 @@ bool get_app_secondary_dns(struct app_config *app, struct in_addr *dns_s)
 		return true;
 	}
 	return false;
+}
+
+void
+set_ip_pool_ip(const char *ip_str)
+{
+	if (!inet_aton(ip_str, &cp_config->ip_pool_ip))
+		rte_panic("Invalid argument - %s - Exiting.", ip_str);
+	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_ip:  %s\n", inet_ntoa(cp_config->ip_pool_ip));
+}
+
+
+void
+set_ip_pool_mask(const char *ip_str)
+{
+	if (!inet_aton(ip_str, &cp_config->ip_pool_mask))
+		rte_panic("Invalid argument - %s - Exiting.", ip_str);
+	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_mask: %s\n", inet_ntoa(cp_config->ip_pool_mask));
 }
 

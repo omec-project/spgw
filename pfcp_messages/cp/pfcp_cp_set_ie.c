@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "cp_global_defs.h"
 #include "pfcp_ies.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_set_ie.h"
@@ -23,6 +24,7 @@
 #include "cp.h"
 #include "main.h"
 #include "pfcp.h"
+#include "cp_global_defs.h"
 
 #define RI_MAX 8
 
@@ -1828,13 +1830,13 @@ set_pdn_type(pfcp_pdn_type_ie_t *pdn, pdn_type_ie *pdn_mme)
 	pdn->pdn_type_spare = 0;
 	//pdn->pdn_type = PFCP_PDN_TYPE_NON_IP;
 	/* VS: Need to check the following conditions*/
-	if (pdn_mme->ipv4 == PDN_TYPE_IPV4)
-		pdn->pdn_type = PDN_TYPE_IPV4;
-	else if (pdn_mme->ipv6 == PDN_TYPE_IPV6)
-		pdn->pdn_type = PDN_TYPE_IPV6;
-	else if ((pdn_mme->ipv4 == PDN_TYPE_IPV4) &&
-			(pdn_mme->ipv6 == PDN_TYPE_IPV6)){
-		pdn->pdn_type = PDN_TYPE_IPV4_IPV6;
+	if (pdn_mme->ipv4 == PDN_IP_TYPE_IPV4)
+		pdn->pdn_type = PDN_IP_TYPE_IPV4;
+	else if (pdn_mme->ipv6 == PDN_IP_TYPE_IPV6)
+		pdn->pdn_type = PDN_IP_TYPE_IPV6;
+	else if ((pdn_mme->ipv4 == PDN_IP_TYPE_IPV4) &&
+			(pdn_mme->ipv6 == PDN_IP_TYPE_IPV6)){
+		pdn->pdn_type = PDN_IP_TYPE_IPV4V6;
 	}
 }
 

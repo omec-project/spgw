@@ -3427,7 +3427,11 @@ int decode_create_sess_req(uint8_t *buf,
       }  else if (ie_header->type == GTP_IE_TRSTD_WLAN_MODE_INDCTN && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_trstd_wlan_mode_indctn_ie(buf + count, &value->trstd_wlan_mode_indctn);
       }  else if (ie_header->type == GTP_IE_PROT_CFG_OPTS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+#if 0
             count += decode_gtp_prot_cfg_opts_ie(buf + count, &value->pco);
+#else
+            count += decode_pco_ie_t(buf + count, &value->pco_new);
+#endif
       }  else if (ie_header->type == GTP_IE_CREATE_SESS_REQUEST_BEARER_CTXT_TO_BE_CREATED && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_create_sess_request_bearer_ctxt_to_be_created_ie(buf + count, &value->bearer_contexts_to_be_created);
       }  else if (ie_header->type == GTP_IE_CREATE_SESS_REQUEST_BEARER_CTXT_TO_BE_REMOVED && ie_header->instance == GTP_IE_INSTANCE_ONE) {

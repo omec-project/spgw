@@ -196,6 +196,7 @@ add_sess_by_teid_entry(uint32_t teid, pfcp_session_datat_t *sess_cntxt)
 		if (sess_cntxt != NULL)
 			memcpy(tmp, sess_cntxt, sizeof(pfcp_session_datat_t));
 
+        printf("%s %d - adding teid %x \n",__FUNCTION__,__LINE__,teid);
 		/* Session Entry not present. Add new session entry */
 		ret = rte_hash_add_key_data(sess_by_teid_hash,
 						&teid, tmp);
@@ -225,6 +226,7 @@ get_sess_by_teid_entry(uint32_t teid, pfcp_session_datat_t **head, uint8_t is_mo
 	int ret = 0;
 	pfcp_session_datat_t *sess_cntxt = NULL;
 
+    printf("%s %d - getting teid %x \n",__FUNCTION__,__LINE__,teid);
 	ret = rte_hash_lookup_data(sess_by_teid_hash,
 				&teid, (void **)&sess_cntxt);
 
@@ -235,6 +237,7 @@ get_sess_by_teid_entry(uint32_t teid, pfcp_session_datat_t **head, uint8_t is_mo
 			return NULL;
 		}
 
+        printf("%s %d - getting teid %x not found \n",__FUNCTION__,__LINE__,teid);
 		/* allocate memory for session info*/
 		sess_cntxt = rte_zmalloc("Sess_data_Info", sizeof(pfcp_session_datat_t),
 		        RTE_CACHE_LINE_SIZE);
@@ -255,6 +258,7 @@ get_sess_by_teid_entry(uint32_t teid, pfcp_session_datat_t **head, uint8_t is_mo
 			/* free allocated memory */
 			rte_free(sess_cntxt);
 			sess_cntxt = NULL;
+            printf("%s %d - getting teid %x not found  - add failed \n",__FUNCTION__,__LINE__,teid);
 			return NULL;
 		}
 
@@ -263,11 +267,13 @@ get_sess_by_teid_entry(uint32_t teid, pfcp_session_datat_t **head, uint8_t is_mo
 			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to add node entry in LL for TEID = %u"
 					"\n\tError= %s\n", ERR_MSG,
 					teid, rte_strerror(abs(ret)));
+            printf("%s %d - failed to add session in link list \n",__FUNCTION__,__LINE__);
 		}
 
 		if (*head == NULL)
 			*head = sess_cntxt;
 	}
+    printf("%s %d - TEID %x \n",__FUNCTION__,__LINE__, teid);
 
 	clLog(clSystemLog, eCLSeverityDebug, "%s:%s: TEID:%u\n",
 			__file__, __func__, teid);
@@ -282,6 +288,7 @@ del_sess_by_teid_entry(uint32_t teid)
 	pfcp_session_datat_t *sess_cntxt = NULL;
 
 	/* Check session entry is present or Not */
+    printf("%s %d - delete teid %x \n",__FUNCTION__,__LINE__,teid);
 	ret = rte_hash_lookup_data(sess_by_teid_hash,
 					&teid, (void **)&sess_cntxt);
 	if (ret) {
@@ -289,11 +296,14 @@ del_sess_by_teid_entry(uint32_t teid)
 		ret = rte_hash_del_key(sess_by_teid_hash, &teid);
 
 		if ( ret < 0) {
+            printf("%s %d - delete teid %x failed \n",__FUNCTION__,__LINE__,teid);
 			clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Entry not found for TEID:%u...\n",
 						__file__, __func__, __LINE__, ntohl(teid));
 			return -1;
 		}
+        printf("%s %d - delete teid %x success\n",__FUNCTION__,__LINE__,teid);
 	}
+    printf("%s %d - delete teid %x not found \n",__FUNCTION__,__LINE__,teid);
 
 	/* Free data from hash */
 	//if (sess_cntxt != NULL) {
@@ -313,6 +323,9 @@ add_sess_by_ueip_entry(uint32_t ue_ip, pfcp_session_datat_t **sess_cntxt)
 	int ret = 0;
 	pfcp_session_datat_t *tmp = NULL;
 
+    struct in_addr temp = {0};
+    temp.s_addr = ue_ip;
+    printf("%s %d IP = %s ",__FUNCTION__,__LINE__,inet_ntoa(temp));
 	/* Lookup for up session data entry. */
 	ret = rte_hash_lookup_data(sess_by_ueip_hash,
 				&ue_ip, (void **)&tmp);
@@ -355,6 +368,9 @@ get_sess_by_ueip_entry(uint32_t ue_ip, pfcp_session_datat_t **head, uint8_t is_m
 {
 	int ret = 0;
 	pfcp_session_datat_t *sess_cntxt = NULL;
+    struct in_addr temp = {0};
+    temp.s_addr = ue_ip;
+    printf("%s %d IP = %s \n",__FUNCTION__,__LINE__,inet_ntoa(temp));
 
 	ret = rte_hash_lookup_data(sess_by_ueip_hash,
 				&ue_ip, (void **)&sess_cntxt);
@@ -374,6 +390,8 @@ get_sess_by_ueip_entry(uint32_t ue_ip, pfcp_session_datat_t **head, uint8_t is_m
 		    return NULL;
 		}
 
+        printf("sess_cntxt %p \n",sess_cntxt);
+        sess_cntxt->ue_ip_addr = ue_ip; 
 		/* Session Entry not present. Add new session entry */
 		ret = rte_hash_add_key_data(sess_by_ueip_hash,
 						&ue_ip, sess_cntxt);
@@ -383,6 +401,7 @@ get_sess_by_ueip_entry(uint32_t ue_ip, pfcp_session_datat_t **head, uint8_t is_m
 					IPV4_ADDR_HOST_FORMAT(ue_ip),
 					rte_strerror(abs(ret)));
 
+            printf("%s %d failed  ",__FUNCTION__,__LINE__);
 			/* free allocated memory */
 			rte_free(sess_cntxt);
 			sess_cntxt = NULL;
@@ -412,6 +431,9 @@ del_sess_by_ueip_entry(uint32_t ue_ip)
 {
 	int ret = 0;
 	pfcp_session_datat_t *sess_cntxt = NULL;
+    struct in_addr temp = {0};
+    temp.s_addr = ue_ip;
+    printf("%s %d IP = %s ",__FUNCTION__,__LINE__,inet_ntoa(temp));
 
 	/* Check session entry is present or Not */
 	ret = rte_hash_lookup_data(sess_by_ueip_hash,

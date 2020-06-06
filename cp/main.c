@@ -1,17 +1,9 @@
+
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2017 Intel Corporation
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-License-Identifier: Apache-2.0
  */
 #include <stdio.h>
 #include <getopt.h>
@@ -21,17 +13,16 @@
 
 #include "cp.h"
 #include "main.h"
-#include "cp_app.h"
 #include "cp_stats.h"
 #include "pfcp_cp_util.h"
 #include "sm_struct.h"
 #include "cp_config.h"
-#include "debug_str.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp.h"
 #include <sys/stat.h>
 #include "cp_config_new.h"
+#include "apn_apis.h"
 
 
 #ifdef USE_REST
@@ -78,7 +69,6 @@ uint16_t local_csid = 0;
 struct cp_params cp_params;
 extern struct cp_stats_t cp_stats;
 
-int apnidx = 0;
 clock_t cp_stats_execution_time;
 _timer_t st_time;
 
@@ -152,7 +142,6 @@ parse_arg(int argc, char **argv)
 	int args_set = 0;
 	int c = 0;
 	pcap_t *pcap;
-	int apnidx = 0;
 
 	const struct option long_options[] = {
 	  {"pcap_file_in", required_argument, NULL, 'x'},
@@ -210,8 +199,9 @@ parse_arg(int argc, char **argv)
 			break;
 
 		case 'a':
-			if (apnidx < MAX_NB_DPN) {
-				set_apn_name(&apn_list[apnidx++], optarg);
+            {
+                apn_t local_apn={0};
+				set_apn_name(&local_apn, optarg);
 				args_set |= APN_NAME_SET;
 			}
 			break;
@@ -407,3 +397,31 @@ main(int argc, char **argv)
 	/* clear_heartbeat_hash_table(); */
 	return 0;
 }
+
+void sig_handler(int signo)
+{
+		if (signo == SIGINT) {
+#ifdef GX_BUILD
+			if (gx_app_sock > 0)
+				close_ipc_channel(gx_app_sock);
+#endif /* GX_BUILD */
+#ifdef SYNC_STATS
+			retrive_stats_entry();
+			close_stats();
+#endif /* SYNC_STATS */
+
+#ifdef USE_REST
+			gst_deinit();
+#endif /* USE_REST */
+
+#ifdef TIMER_STATS
+#ifdef AUTO_ANALYSIS
+			print_perf_statistics();
+#endif /* AUTO_ANALYSIS */
+#endif /* TIMER_STATS */
+			rte_exit(EXIT_SUCCESS, "received SIGINT\n");
+		}
+	else if (signo == SIGSEGV)
+		rte_panic("received SIGSEGV\n");
+}
+

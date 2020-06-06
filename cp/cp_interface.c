@@ -58,25 +58,6 @@
 	#define DP_PKEY_PATH "dp_pkey_path"
 #endif /* SGX_CDR */
 
-#ifdef GX_BUILD
-extern int gx_app_sock;
-#endif /* GX_BUILD */
-
-/*
- * UDP Setup
- */
-udp_sock_t my_sock;
-
-/* VS: ROUTE DISCOVERY */
-extern int route_sock;
-
-
-struct in_addr dp_comm_ip;
-struct in_addr cp_comm_ip;
-uint16_t dp_comm_port;
-uint16_t cp_comm_port;
-
-
 #ifdef TIMER_STATS
 #ifdef AUTO_ANALYSIS
 extern void print_perf_statistics(void);
@@ -87,65 +68,6 @@ extern struct ipc_node *basenode;
 extern struct rte_hash *heartbeat_recovery_hash;
 
 struct rte_hash *node_id_hash;
-
-#define htonll(x) ((1==htonl(1)) ? (x) : ((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
-#define ntohll(x) ((1==ntohl(1)) ? (x) : ((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
-
-void register_comm_msg_cb(enum cp_dp_comm id,
-		int (*init)(void),
-		int (*send)(void *msg_payload, uint32_t size),
-		int (*recv)(void *msg_payload, uint32_t size),
-		int (*destroy)(void))
-{
-	struct comm_node *node;
-
-	node = &comm_node[id];
-	node->init = init;
-	node->send = send;
-	node->recv = recv;
-	node->destroy = destroy;
-	node->status = 0;
-	node->init();
-}
-
-int set_comm_type(enum cp_dp_comm id)
-{
-	if (comm_node[id].status == 0 && comm_node[id].init != NULL) {
-		active_comm_msg = &comm_node[id];
-		comm_node[id].status = 1;
-	} else {
-		clLog(clSystemLog, eCLSeverityCritical,"Error: Cannot set communication type\n");
-		return -1;
-	}
-	return 0;
-}
-
-int unset_comm_type(enum cp_dp_comm id)
-{
-	if (comm_node[id].status) {
-		active_comm_msg->destroy();
-		comm_node[id].status = 0;
-	} else {
-		clLog(clSystemLog, eCLSeverityCritical,"Error: Cannot unset communication type\n");
-		return -1;
-	}
-	return 0;
-}
-
-int process_comm_msg(void *buf)
-{
-	struct msgbuf *rbuf = (struct msgbuf *)buf;
-	struct ipc_node *cb;
-
-	if (rbuf->mtype >= MSG_END)
-		return -1;
-
-	/* Callback APIs */
-	cb = &basenode[rbuf->mtype];
-
-	return cb->msg_cb(rbuf);
-}
-
 
 #define IFACE_FILE "../config/interface.cfg"
 #define SET_CONFIG_IP(ip, file, section, entry) \
@@ -165,83 +87,4 @@ do {\
 	rte_panic("Invalid %s in %s", #port, IFACE_FILE);\
 } while (0)
 
-/**
- * @brief  : Read interface configuration form config file
- * @param  : No param
- * @return : Returns nothing
- */
-static
-void read_interface_config(void)
-{
-		struct rte_cfgfile *file = rte_cfgfile_load(IFACE_FILE, 0);
-		const char *file_entry;
-
-		if (file == NULL)
-			rte_exit(EXIT_FAILURE, "Cannot load configuration profile %s\n",
-					IFACE_FILE);
-
-		SET_CONFIG_IP(dp_comm_ip, file, "0", file_entry);
-		SET_CONFIG_PORT(dp_comm_port, file, "0", file_entry);
-
-		SET_CONFIG_IP(cp_comm_ip, file, "0", file_entry);
-		SET_CONFIG_PORT(cp_comm_port, file, "0", file_entry);
-
-#ifdef SGX_CDR
-		app.dealer_in_ip = rte_cfgfile_get_entry(file, "0",
-				DEALERIN_IP);
-		app.dealer_in_port = rte_cfgfile_get_entry(file, "0",
-				DEALERIN_PORT);
-		app.dealer_in_mrenclave = rte_cfgfile_get_entry(file, "0",
-				DEALERIN_MRENCLAVE);
-		app.dealer_in_mrsigner = rte_cfgfile_get_entry(file, "0",
-				DEALERIN_MRSIGNER);
-		app.dealer_in_isvsvn = rte_cfgfile_get_entry(file, "0",
-				DEALERIN_ISVSVN);
-		app.dp_cert_path = rte_cfgfile_get_entry(file, "0",
-				DP_CERT_PATH);
-		app.dp_pkey_path = rte_cfgfile_get_entry(file, "0",
-				DP_PKEY_PATH);
-#endif /* SGX_CDR */
-}
-
-
-/**
- * @brief Initialize iface message passing
- *
- * This function is not thread safe and should only be called once by DP.
- */
-void iface_module_constructor(void)
-{
-		/* Read and store ip and port for socket communication between cp and
-		 * dp*/
-		read_interface_config();
-		clLog(clSystemLog, eCLSeverityDebug,"IFACE: CP Initialization\n");
-}
-
-void sig_handler(int signo)
-{
-		if (signo == SIGINT) {
-#ifdef GX_BUILD
-			if (gx_app_sock > 0)
-				close_ipc_channel(gx_app_sock);
-#endif /* GX_BUILD */
-#ifdef SYNC_STATS
-			retrive_stats_entry();
-			close_stats();
-#endif /* SYNC_STATS */
-
-#ifdef USE_REST
-			gst_deinit();
-#endif /* USE_REST */
-
-#ifdef TIMER_STATS
-#ifdef AUTO_ANALYSIS
-			print_perf_statistics();
-#endif /* AUTO_ANALYSIS */
-#endif /* TIMER_STATS */
-			rte_exit(EXIT_SUCCESS, "received SIGINT\n");
-		}
-	else if (signo == SIGSEGV)
-		rte_panic("received SIGSEGV\n");
-}
 

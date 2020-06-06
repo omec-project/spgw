@@ -17,10 +17,11 @@
 #include "gtpv2c.h"
 #include "sm_pcnd.h"
 #include "cp_stats.h"
-#include "debug_str.h"
 #include "pfcp_cp_util.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_config.h"
+#include "gtpv2_interface.h"
+#include "gtp_messages_decoder.h"
 
 #ifdef USE_REST
 #include "main.h"
@@ -32,7 +33,7 @@ uint8_t
 gtpc_s5s8_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 {
 	int ret = 0;
-	ue_context *context = NULL;
+	ue_context_t *context = NULL;
 	int ebi_index = 0;
 	msg->msg_type = gtpv2c_rx->gtpc.message_type;
 

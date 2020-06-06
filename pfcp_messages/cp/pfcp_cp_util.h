@@ -35,7 +35,7 @@ extern struct rte_hash *heartbeat_recovery_hash;
  * @return : Returns upf count in case of success , 0 if dn list not found, -1 otherwise
  */
 int
-get_upf_list(pdn_connection *pdn);
+get_upf_list(pdn_connection_t *pdn);
 
 /**
  * @brief  : Get upf ip
@@ -45,7 +45,7 @@ get_upf_list(pdn_connection *pdn);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-dns_query_lookup(pdn_connection *pdn, uint32_t **upf_ip);
+dns_query_lookup(pdn_connection_t *pdn, uint32_t **upf_ip);
 #endif
 
 /**

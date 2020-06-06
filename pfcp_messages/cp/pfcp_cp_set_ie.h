@@ -17,7 +17,6 @@
 #include "ue.h"
 #include "cp.h"
 #include "gtp_ies.h"
-#include "gtpv2c_set_ie.h"
 #include "gtp_messages.h"
 #include "cp_io_poll.h"
 #include "restoration_timer.h"
@@ -38,7 +37,7 @@
 
 #define MAX_HOSTNAME_LENGTH							(256)
 
-#define MAX_GTPV2C_LENGTH (MAX_GTPV2C_UDP_LEN-sizeof(struct gtpc_t))
+#define MAX_GTPV2C_LENGTH (MAX_GTPV2C_UDP_LEN-12) // ajay sizeof(struct gtpc_t))
 
 #define ALL_CPF_FEATURES_SUPPORTED  (CP_LOAD | CP_OVRL)
 
@@ -59,11 +58,6 @@
 #define TREU    (1 << 15)
 
 
-#define UINT8_SIZE sizeof(uint8_t)
-#define UINT32_SIZE sizeof(uint32_t)
-#define UINT16_SIZE sizeof(uint16_t)
-#define IPV4_SIZE 4
-#define IPV6_SIZE 8
 #define PFCP_IE_HDR_SIZE sizeof(pfcp_ie_header_t)
 #define BITRATE_SIZE 10
 
@@ -211,7 +205,7 @@ pfcp_set_ie_header(pfcp_ie_header_t *header, uint8_t type, uint16_t length);
  */
 int
 process_create_sess_req(create_sess_req_t *csr,
-					ue_context **context, struct in_addr *upf_ipv4);
+					ue_context_t **context, struct in_addr *upf_ipv4);
 
 
 
@@ -225,7 +219,7 @@ process_create_sess_req(create_sess_req_t *csr,
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-process_pfcp_sess_est_request(uint32_t teid, pdn_connection *pdn,  upf_context_t *upf_ctx);
+process_pfcp_sess_est_request(uint32_t teid, pdn_connection_t *pdn,  upf_context_t *upf_ctx);
 
 /**
  * @brief  : Process pfcp session modification request
@@ -250,7 +244,7 @@ process_pfcp_sess_mod_req_handover(mod_bearer_req_t *mbr);
  */
 
 int
-send_pfcp_sess_mod_req_handover(pdn_connection *pdn, eps_bearer *bearer,
+send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
 			mod_bearer_req_t *mbr);
 
 /**

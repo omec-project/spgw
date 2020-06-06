@@ -1001,6 +1001,7 @@ typedef struct create_sess_req_t {
   gtp_up_func_sel_indctn_flgs_ie_t up_func_sel_indctn_flgs;
   gtp_priv_ext_ie_t priv_ext;
   gtp_serving_network_ie_t serving_network;
+  pco_ie_t  pco_new;
 } create_sess_req_t;
 
 typedef struct create_sess_rsp_t {
@@ -1039,6 +1040,7 @@ typedef struct create_sess_rsp_t {
   gtp_charging_id_ie_t pdn_conn_chrgng_id;
   gtp_extnded_prot_cfg_opts_ie_t epco;
   gtp_priv_ext_ie_t priv_ext;
+  pco_ie_t  pco_new;
 } create_sess_rsp_t;
 
 typedef struct create_bearer_req_t {

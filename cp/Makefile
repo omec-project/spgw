@@ -35,18 +35,15 @@ APP = ngic_controlplane
 
 SRCS-y := main.c
 SRCS-y += ue.c
-SRCS-y += cp.c
-SRCS-y += gtpv2c.c
+SRCS-y += ip_pool.c
+SRCS-y += apn_apis.c
 SRCS-y += cp_init.c
 SRCS-y += cp_stats.c
 SRCS-y += monitor_config.c
 SRCS-y += cp_config.c
-SRCS-y += debug_str.c
-SRCS-y += gtpv2c_set_ie.c
 SRCS-y += cp_timer.c
 SRCS-y += packet_filters.c
-SRCS-y += gtpc_session.c
-SRCS-y += gtpv2c_error_rsp.c
+SRCS-y += gx_error_rsp.c
 SRCS-y += cp_interface.c
 SRCS-y += vepc_udp.c
 SRCS-y += cp_io_poll.c
@@ -57,28 +54,34 @@ SRCS-y += state_machine/sm_gtpc_pcnd.o
 SRCS-y += state_machine/sm_s5s8_pcnd.o
 SRCS-y += state_machine/sm_pfcp_pcnd.o
 
-SRCS-y += gtpv2c_messages/bearer_resource_cmd.o
-SRCS-y += gtpv2c_messages/create_bearer.o
-SRCS-y += gtpv2c_messages/create_session.o
-SRCS-y += gtpv2c_messages/create_s5s8_session.o
-SRCS-y += gtpv2c_messages/delete_bearer.o
-SRCS-y += gtpv2c_messages/delete_session.o
-SRCS-y += gtpv2c_messages/delete_s5s8_session.o
-SRCS-y += gtpv2c_messages/gtpv2c_echo.o
-SRCS-y += gtpv2c_messages/modify_bearer.o
-SRCS-y += gtpv2c_messages/downlink_data_notification.o
-SRCS-y += gtpv2c_messages/release_access_bearer.o
+SRCS-y += gtpv2/gtpc_session.c
+SRCS-y += gtpv2/gtpv2c_error_rsp.c
+SRCS-y += gtpv2/gtpv2_interface.c
+SRCS-y += gtpv2/gtpv2c_set_ie.c
+SRCS-y += gtpv2/gtpv2_msg_rx.c
+SRCS-y += gtpv2/gtpv2_evt_handler.c
+SRCS-y += gtpv2/gtpv2_msg_validate.c
+SRCS-y += gtpv2/gtpv2c.c
+SRCS-y += gtpv2/gtpv2c_messages/bearer_resource_cmd.o
+SRCS-y += gtpv2/gtpv2c_messages/create_bearer.o
+SRCS-y += gtpv2/gtpv2c_messages/create_session.o
+SRCS-y += gtpv2/gtpv2c_messages/create_s5s8_session.o
+SRCS-y += gtpv2/gtpv2c_messages/delete_bearer.o
+SRCS-y += gtpv2/gtpv2c_messages/delete_session.o
+SRCS-y += gtpv2/gtpv2c_messages/delete_s5s8_session.o
+SRCS-y += gtpv2/gtpv2c_messages/gtpv2c_echo.o
+SRCS-y += gtpv2/gtpv2c_messages/modify_bearer.o
+SRCS-y += gtpv2/gtpv2c_messages/downlink_data_notification.o
+SRCS-y += gtpv2/gtpv2c_messages/release_access_bearer.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_msg_validate.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_association.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_req_rsp.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_rx_msg.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_session.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_set_ie.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_util.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_init.o
-
-
 SRCS-y += $(SRCDIR)/../test/simu_cp/simu_cp.o
 SRCS-y += $(SRCDIR)/../cp_dp_api/vepc_cp_dp_api.o
-
 SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/gw_adapter.o
 CFLAGS += -I$(SRCDIR)/../oss_adapter/c3po_oss
 
@@ -107,7 +110,10 @@ CFLAGS += -I$(SRCDIR)/..
 CFLAGS += -I$(SRCDIR)/../pfcp_messages
 CFLAGS += -I$(SRCDIR)/../pfcp_messages/cp
 CFLAGS += -I$(SRCDIR)/../pfcp_messages/common
+CFLAGS += -I$(SRCDIR)/../libgtpv2c/include
+CFLAGS += -I$(SRCDIR)/gtpv2
 CFLAGS += -I$(SRCDIR)/state_machine
+CFLAGS += -I$(SRCDIR)/gx_app/include/
 
 # Mandatory CFLAGS, LDFLAGS- DO NOT MODIFY
 # #############################################################
@@ -176,11 +182,10 @@ ifneq (,$(findstring USE_REST, $(CFLAGS), $(EXTRA_CFLAGS)))
 	CFLAGS += -I$(SRCDIR)/../restoration
 	SRCS-y += $(SRCDIR)/../restoration/restoration_timer.o
 	SRCS-y += restoration_peer.c
-	SRCS-y += gtpv2c_echo_req.c
 endif
 
 #un-comment below line to enable FQ-CSID support in the control-plane
-CFLAGS += -DUSE_CSID
+#CFLAGS += -DUSE_CSID
 
 ifneq (,$(findstring USE_CSID, $(CFLAGS), $(EXTRA_CFLAGS)))
  #VS:Support partial failure FQ-CSID m/c
@@ -212,7 +217,7 @@ endif
 #CFLAGS += -DGX_BUILD
 
 ifneq (,$(findstring GX_BUILD, $(CFLAGS), $(EXTRA_CFLAGS)))
-	SRCS-y += cp_app.c
+	SRCS-y += gx_app_interface.c
 	SRCS-y += ipc_api.c
 	SRCS-y += state_machine/sm_gx_pcnd.o
 	SRCS-y += $(SRCDIR)/gx_app/src/gx_pack.o

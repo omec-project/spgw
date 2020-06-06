@@ -32,8 +32,10 @@ insert_sess_data_node(pfcp_session_datat_t *head,
 	//new_node = sess_data;
 	new_node->next = NULL;
 
+    printf("%s %d : link list elm %p \n",__FUNCTION__,__LINE__, new_node);
 	/* Check linked list is empty or not */
 	if (head == NULL) {
+        printf("%s %d : link list empty \n",__FUNCTION__,__LINE__);
 		head = new_node;
 	} else {
 		pfcp_session_datat_t *tmp = head;
@@ -43,6 +45,7 @@ insert_sess_data_node(pfcp_session_datat_t *head,
 			tmp = tmp->next;
 		}
 		tmp->next = new_node;
+        printf("%s %d : link list has some element \n",__FUNCTION__,__LINE__);
 	}
 	return 0;
 }

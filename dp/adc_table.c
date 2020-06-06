@@ -26,6 +26,7 @@
 #include "up_interface.h"
 #include "meter.h"
 #include <sponsdn.h>
+#include "gen_utils.h"
 
 #define IS_MAX_REACHED(table) \
 	((table.num_entries == table.max_entries) ? 1 : 0)

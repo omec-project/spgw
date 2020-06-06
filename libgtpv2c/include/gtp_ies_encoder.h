@@ -18,6 +18,7 @@
 
 
 #include "gtp_ies.h"
+#include "util.h"
 
 #define MBR_BUF_SIZE 5
 
@@ -177,6 +178,8 @@ int encode_gtp_indication_ie(gtp_indication_ie_t *value,
 int encode_gtp_prot_cfg_opts_ie(gtp_prot_cfg_opts_ie_t *value,
     uint8_t *buf);
 
+int
+encode_pco_ie_t(pco_ie_t *val, uint8_t *buf);
 /**
 * Encodes gtp_pdn_addr_alloc_ie_t to buffer.
 * @param value 

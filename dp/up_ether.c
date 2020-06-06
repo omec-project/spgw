@@ -105,11 +105,12 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 		clLog(clSystemLog, eCLSeverityDebug,"%s::"
 				"\n\tretrieve_arp_entry for ip 0x%x\n",
 				__func__, tmp_arp_key.ip);
-	printf("Get arp for 0x%x\n",tmp_arp_key.ip);
 	ret_arp_data = retrieve_arp_entry(tmp_arp_key, portid);
+    if(ret_arp_data != NULL)
+	    printf("Get arp for %s \n",inet_ntoa(*(struct in_addr *)&ret_arp_data->ip));
 
 	if (ret_arp_data == NULL) {
-		printf("Get arp for 0x%x failed \n",tmp_arp_key.ip);
+	    printf("Get arp for %s failed \n",inet_ntoa(*(struct in_addr *)&ret_arp_data->ip));
 		clLog(clSystemLog, eCLSeverityDebug, "%s::"
 				"\n\tretrieve_arp_entry failed for ip 0x%x\n",
 				__func__, tmp_arp_key.ip);
@@ -176,7 +177,7 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 
 	ether_addr_copy(&ret_arp_data->eth_addr, &eth_hdr->d_addr);
 	ether_addr_copy(&ports_eth_addr[portid], &eth_hdr->s_addr);
-	printf("mac found %d %s\n",__LINE__,__FUNCTION__);
+	printf("mac found %d %s - ip %s \n",__LINE__,__FUNCTION__, inet_ntoa(*(struct in_addr *)&tmp_arp_key.ip));
 
 #ifdef STATS
 	if(portid == SGI_PORT_ID) {

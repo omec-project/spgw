@@ -29,15 +29,16 @@
 
 #include <stdint.h>
 #include <arpa/inet.h>
-
 #include <rte_malloc.h>
 #include <rte_jhash.h>
+#include <rte_hash.h>
 
 #include "gtpv2c_ie.h"
 #include "cp_interface.h"
 #include "packet_filters.h"
 #include "pfcp_cp_struct.h"
 #include "restoration_timer.h"
+#include "apn_struct.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -60,15 +61,9 @@
 #define MAX_BEARERS                  (15)
 #define MAX_FILTERS_PER_UE           (16)
 
-#define MAX_NETCAP_LEN               (64)
 
 #define MAX_APN_LEN               (64)
 
-
-/* ajay - only 1 ip pool is supported. Need better pool management  */
-#define GET_UE_IP(ue_index) \
-			(((cp_config->ip_pool_ip.s_addr | (~cp_config->ip_pool_mask.s_addr)) \
-			  - htonl(ue_index)) - 0x01000000)
 
 /* Need to handle case of multiple charging rule for signle bearer
  * this count will change once added handling
@@ -108,8 +103,8 @@
 #define REMOTE_IP_ADDR                      0
 #define GX_FLOW_COUNT                       1
 
-struct eps_bearer_t;
-struct pdn_connection_t;
+struct eps_bearer;
+struct pdn_connection;
 
 /**
  * @brief  : Maintains CGI (Cell Global Identifier) data from user location information
@@ -266,16 +261,6 @@ typedef struct rat_type_t {
 	uint16_t len;
 }rat_type_t;
 
-/**
- * @brief  : Maintains apn related information
- */
-typedef struct apn_t {
-	char *apn_name_label;
-	int apn_usage_type;
-	char apn_net_cap[MAX_NETCAP_LEN];
-	size_t apn_name_length;
-	uint8_t apn_idx;
-} apn;
 
 /**
  * @brief  : Maintains eps bearer id
@@ -381,7 +366,7 @@ typedef struct indication_flag_t {
 /**
  * @brief  : Maintains ue related information
  */
-typedef struct ue_context_t {
+typedef struct ue_context {
 	uint64_t imsi;
 	uint8_t imsi_len;
 	uint8_t unathenticated_imsi;
@@ -422,17 +407,21 @@ typedef struct ue_context_t {
 	uint16_t teid_bitmap;
 	uint8_t num_pdns;
 
-	struct pdn_connection_t *pdns[MAX_BEARERS];
+	struct pdn_connection *pdns[MAX_BEARERS];
 
 	/*VS: TODO: Move bearer information in pdn structure and remove from UE context */
-	struct eps_bearer_t *eps_bearers[MAX_BEARERS]; /* index by ebi - 5 */
+	struct eps_bearer *eps_bearers[MAX_BEARERS]; /* index by ebi - 5 */
 
 	/* temporary bearer to be used during resource bearer cmd -
 	 * create/deletee bearer req - rsp */
-	struct eps_bearer_t *ded_bearer;
+	struct eps_bearer *ded_bearer;
 	uint64_t event_trigger;
 
-} ue_context;
+    /* Temp - need to find right place to put this */
+    void *pco; /* Received PCO from the UE during attach. Once CSRsp sent, release this */
+    uint32_t dpId;
+
+} ue_context_t;
 
 typedef struct ue_tz_t
 {
@@ -443,7 +432,7 @@ typedef struct ue_tz_t
 /**
  * @brief  : Maintains pdn connection information
  */
-typedef struct pdn_connection_t {
+typedef struct pdn_connection {
 	uint8_t proc;
 	uint8_t state;
 	uint8_t bearer_control_mode;
@@ -451,7 +440,7 @@ typedef struct pdn_connection_t {
 	/*VS : Call ID ref. to session id of CCR */
 	uint32_t call_id;
 
-	apn *apn_in_use;
+	apn_t *apn_in_use;
 	ambr_ie apn_ambr;
 	uint32_t apn_restriction;
 
@@ -504,12 +493,12 @@ typedef struct pdn_connection_t {
 	uint8_t num_bearer;
 
 	/* VS: Create a cyclic linking to access the data structures of UE */
-	ue_context *context;
+	ue_context_t *context;
 
 	uint8_t fqdn[FQDN_LEN];
-	struct eps_bearer_t *eps_bearers[MAX_BEARERS]; /* index by ebi - 1 */
+	struct eps_bearer *eps_bearers[MAX_BEARERS]; /* index by ebi - 1 */
 
-	struct eps_bearer_t *packet_filter_map[MAX_FILTERS_PER_UE];
+	struct eps_bearer *packet_filter_map[MAX_FILTERS_PER_UE];
 
 	char gx_sess_id[MAX_LEN];
 	dynamic_rule_t *dynamic_rules[16];
@@ -524,12 +513,12 @@ typedef struct pdn_connection_t {
 	/* CSR sequence number for identify CSR retransmission req. */
 	uint32_t csr_sequence;
 
-} pdn_connection;
+} pdn_connection_t;
 
 /**
  * @brief  : Maintains eps bearer related information
  */
-typedef struct eps_bearer_t {
+typedef struct eps_bearer {
 	uint8_t eps_bearer_id;
 	/* Packet Detection identifier/Rule_ID */
 	uint8_t pdr_count;
@@ -557,7 +546,7 @@ typedef struct eps_bearer_t {
 	struct in_addr s11u_mme_gtpu_ipv4;
 	uint32_t s11u_mme_gtpu_teid;
 
-	struct pdn_connection_t *pdn;
+	pdn_connection_t *pdn;
 
 	uint8_t num_packet_filters;
 	int packet_filter_map[MAX_FILTERS_PER_UE];
@@ -565,14 +554,11 @@ typedef struct eps_bearer_t {
 	uint8_t num_dynamic_filters;
 	dynamic_rule_t *dynamic_rules[16];
 
-} eps_bearer;
+} eps_bearer_t;
 
 extern struct rte_hash *ue_context_by_imsi_hash;
 extern struct rte_hash *ue_context_by_fteid_hash;
 extern struct rte_hash *pdn_by_fteid_hash;
-
-extern apn apn_list[MAX_NB_DPN];
-extern int apnidx;
 
 /**
  * @brief  : sets base teid value given range by DP
@@ -592,7 +578,7 @@ set_base_teid(uint8_t val);
  * @return : Returns nothing
  */
 void
-set_s1u_sgw_gtpu_teid(eps_bearer *bearer, ue_context *context);
+set_s1u_sgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context);
 
 
 /**
@@ -604,17 +590,17 @@ set_s1u_sgw_gtpu_teid(eps_bearer *bearer, ue_context *context);
  * @return : Returns nothing
  */
 void
-set_s5s8_sgw_gtpu_teid(eps_bearer *bearer, ue_context *context);
+set_s5s8_sgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context);
 
 
 /**
  * @brief  : sets the s5s8_pgw gtpc teid given the pdn_connection
  * @param  : pdn
- *           pdn_connection whose s5s8 tied is to be set
+ *           pdn_connection_t whose s5s8 tied is to be set
  * @return : Returns nothing
  */
 void
-set_s5s8_pgw_gtpc_teid(pdn_connection *pdn);
+set_s5s8_pgw_gtpc_teid(pdn_connection_t *pdn);
 
 /**
  * @brief  : Initializes UE hash table
@@ -633,7 +619,7 @@ create_ue_hash(void);
  * @return : Returns nothing
  */
 void
-set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer *bearer, pdn_connection *pdn);
+set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer_t *bearer, pdn_connection_t *pdn);
 
 /**
  * @brief  : sets the s5s8_pgw gtpu teid given the bearer
@@ -644,7 +630,7 @@ set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer *bearer, pdn_connection *pdn);
  * @return : Returns nothing
  */
 void
-set_s5s8_pgw_gtpu_teid(eps_bearer *bearer, ue_context *context);
+set_s5s8_pgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context);
 
 /**
  * @brief  : creates an UE Context (if needed), and pdn connection with a default bearer
@@ -664,7 +650,7 @@ set_s5s8_pgw_gtpu_teid(eps_bearer *bearer, ue_context *context);
  */
 int
 create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
-		uint8_t ebi, ue_context **context, apn *apn_requested,
+		uint8_t ebi, ue_context_t **context, apn_t *apn_requested,
 		uint32_t sequence);
 
 /**
@@ -680,65 +666,9 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
  *   \- < 0 for all other errors
 */
 int
-add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, struct eps_bearer_t **bearer);
+add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, eps_bearer_t **bearer);
 
 
-/**
- * @brief  : assigns the ip pool variable from parsed c-string
- * @param  : ip_str
- *           ip address c-string from command line
- * @return : Returns nothing
- */
-void
-set_ip_pool_ip(const char *ip_str);
-
-
-/**
- * @brief  : assigns the ip pool mask variable from parsed c-string
- * @param  : ip_str
- *           ip address c-string from command line
- * @return : Returns nothing
- */
-void
-set_ip_pool_mask(const char *ip_str);
-
-
-/**
- * @brief  : This function takes the c-string argstr describing a apn by url, for example
- *           label1.label2.label3 and populates the apn structure according 3gpp 23.003
- *           clause 9.1
- * @param  : an_apn
- *           apn to be initialized
- * @param  : argstr
- *           c-string containing the apn label
- * @return : Returns nothing
- */
-void
-set_apn_name(apn *an_apn, char *argstr);
-
-
-/**
- * @brief  : returns the apn strucutre of the apn referenced by create session message
- * @param  : apn_label
- *           apn_label within a create session message
- * @param  : apn_length
- *           the length as recorded by the apn information element
- * @return : the apn label configured for the CP
- */
-apn *
-get_apn(char *apn_label, uint16_t apn_length);
-
-
-/**
- * @brief  : Simple ip-pool
- * @param  : ipv4
- *           ip address to be used for a new UE connection
- * @return : - 0 if successful
- *           - > 0 if error occurs during packet filter parsing corresponds to
- *           3gpp specified cause error value
- */
-uint32_t
-acquire_ip(struct in_addr *ipv4);
 
 /* debug */
 
@@ -752,6 +682,6 @@ acquire_ip(struct in_addr *ipv4);
  * @return : Returns nothing
  */
 void
-print_ue_context_by(struct rte_hash *h, ue_context *context);
+print_ue_context_by(struct rte_hash *h, ue_context_t *context);
 
 #endif /* UE_H */

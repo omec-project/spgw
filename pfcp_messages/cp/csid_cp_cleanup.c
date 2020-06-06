@@ -24,9 +24,13 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_messages_encoder.h"
 #include "clogger.h"
+#include "csid_api.h"
+#include "csid_cp_cleanup.h"
+#include "gtpv2c_set_ie.h"
+#include "gtpv2_interface.h"
 
 #ifdef GX_BUILD
-#include "cp_app.h"
+#include "gx_app_interface.h"
 #include "sm_enum.h"
 #include "ipc_api.h"
 
@@ -132,7 +136,7 @@ uint32_t s5s8_node_addr = 0;
 
 #ifdef GX_BUILD
 static int8_t
-fill_ccr_t_request(pdn_connection *pdn, uint8_t ebi_index)
+fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 {
 	int ret = 0;
 	uint16_t msglen = 0;
@@ -209,7 +213,7 @@ fill_ccr_t_request(pdn_connection *pdn, uint8_t ebi_index)
 #endif /* GX_BUILD */
 
 static int8_t
-flush_pdr_entries(eps_bearer *bearer)
+flush_pdr_entries(eps_bearer_t *bearer)
 {
 	for (uint8_t itr = 0; itr < bearer->pdr_count; itr++) {
 		if (del_pdr_entry((bearer->pdrs[itr])->rule_id)) {
@@ -230,7 +234,7 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 {
 	int i = 0;
 	int ret = 0;
-	ue_context *context = NULL;
+	ue_context_t *context = NULL;
 
 	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
 	    (const void *) &teid,
@@ -242,11 +246,11 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 
 	for (uint8_t ebi_index = 0; ebi_index < MAX_BEARERS; ebi_index++) {
 
-		eps_bearer *bearer = context->eps_bearers[ebi_index];
+		eps_bearer_t *bearer = context->eps_bearers[ebi_index];
 		if (bearer == NULL)
 			continue;
 
-		pdn_connection *pdn = bearer->pdn;
+		pdn_connection_t *pdn = bearer->pdn;
 		if (pdn == NULL)
 			continue;
 

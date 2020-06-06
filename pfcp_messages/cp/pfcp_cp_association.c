@@ -22,6 +22,7 @@
 #include "cp_config.h"
 #include "cp_config_new.h"
 #include "gtpv2c_error_rsp.h"
+#include "gtpv2_interface.h"
 #include "cp_timer.h"
 
 #if defined(USE_DNS_QUERY)
@@ -311,7 +312,7 @@ fill_pfcp_pfd_mgmt_req(pfcp_pfd_mgmt_req_t *pfcp_pfd_req, uint16_t len)
 
 
 int
-buffer_csr_request(ue_context *context,
+buffer_csr_request(ue_context_t *context,
 		upf_context_t *upf_context, uint8_t ebi)
 {
 	context_key *key =
@@ -329,7 +330,7 @@ buffer_csr_request(ue_context *context,
 
 #ifdef USE_DNS_QUERY
 int
-get_upf_ip(ue_context *ctxt, upfs_dnsres_t **_entry,
+get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 		uint32_t **upf_ip)
 {
 	upfs_dnsres_t *entry = NULL;
@@ -358,7 +359,7 @@ get_upf_ip(ue_context *ctxt, upfs_dnsres_t **_entry,
  * @return : This function dose not return anything
  */
 static int
-assoication_setup_request(ue_context *context, uint8_t ebi_index)
+assoication_setup_request(ue_context_t *context, uint8_t ebi_index)
 {
 	int ret = 0;
 	uint32_t upf_ip = 0;
@@ -441,7 +442,7 @@ assoication_setup_request(ue_context *context, uint8_t ebi_index)
 }
 
 int
-process_pfcp_assoication_request(pdn_connection *pdn, uint8_t ebi_index) 
+process_pfcp_assoication_request(pdn_connection_t *pdn, uint8_t ebi_index) 
 {
 	int ret = 0;
 	struct in_addr upf_ipv4 = {0};
@@ -546,7 +547,7 @@ uint8_t
 process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 {
 	int ret = 0;
-	pdn_connection *pdn = NULL;
+	pdn_connection_t *pdn = NULL;
 	upf_context_t *upf_context = NULL;
 
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
@@ -664,8 +665,8 @@ process_pfcp_report_req(pfcp_sess_rpt_req_t *pfcp_sess_rep_req)
 	/*DDN Handling */
 	uint8_t ebi_index;
 	int ret = 0, encoded = 0;
-	ue_context *context = NULL;
-	pdn_connection *pdn = NULL;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
 	uint8_t pfcp_msg[250] = {0};
 	struct resp_info *resp = NULL;
 	pfcp_sess_rpt_rsp_t pfcp_sess_rep_resp = {0};

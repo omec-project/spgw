@@ -1,17 +1,8 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2019 Sprint
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "pfcp.h"
@@ -34,6 +25,8 @@
 #include "pfcp_messages_encoder.h"
 #include "cp_timer.h"
 #include "clogger.h"
+#include "gtpv2c_set_ie.h"
+#include "gtpv2_interface.h"
 
 #define PRESENT 1
 #define NUM_VALS 9
@@ -57,10 +50,10 @@ extern socklen_t s11_mme_sockaddr_len;
  * @return : Returns 0 in case of success , -1 otherwise
  * */
 static int
-store_default_bearer_qos_in_policy(pdn_connection *pdn, GxDefaultEpsBearerQos qos)
+store_default_bearer_qos_in_policy(pdn_connection_t *pdn, GxDefaultEpsBearerQos qos)
 {
 	int8_t ebi_index = 0;
-	eps_bearer *bearer = NULL;
+	eps_bearer_t *bearer = NULL;
 	if (pdn == NULL)
 		return -1;
 	ebi_index = pdn->default_bearer_id - 5;
@@ -102,7 +95,7 @@ store_default_bearer_qos_in_policy(pdn_connection *pdn, GxDefaultEpsBearerQos qo
  * @return : Returns nothing
  */
 static void
-fill_dedicated_bearer_qos(eps_bearer *bearer, GxChargingRuleDefinition *rule_definition)
+fill_dedicated_bearer_qos(eps_bearer_t *bearer, GxChargingRuleDefinition *rule_definition)
 {
 	GxQosInformation *qos = &(rule_definition->qos_information);
 
@@ -417,7 +410,7 @@ fill_charging_rule_definition(dynamic_rule_t *dynamic_rule,
  * @return : Returns 0 in case of success
  */
 static int
-store_event_trigger(pdn_connection *pdn, GxEventTriggerList *event_trigger)
+store_event_trigger(pdn_connection_t *pdn, GxEventTriggerList *event_trigger)
 {
 	if(event_trigger != NULL) {
 		for(uint8_t i = 0; i < event_trigger->count; i++) {
@@ -442,7 +435,7 @@ store_event_trigger(pdn_connection *pdn, GxEventTriggerList *event_trigger)
  * @return : Returns 0 in case of success , -1 otherwise
  */
 static int
-store_dynamic_rules_in_policy(pdn_connection *pdn, GxChargingRuleInstallList * charging_rule_install,
+store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList * charging_rule_install,
 		GxChargingRuleRemoveList * charging_rule_remove)
 {
 
@@ -555,7 +548,7 @@ store_dynamic_rules_in_policy(pdn_connection *pdn, GxChargingRuleInstallList * c
 }
 
 static int
-check_for_rules_on_default_bearer(pdn_connection *pdn)
+check_for_rules_on_default_bearer(pdn_connection_t *pdn)
 {
 	uint8_t idx;
 
@@ -596,7 +589,7 @@ check_for_rules_on_default_bearer(pdn_connection *pdn)
  * @return : Returns bearer id in case of success , -1 otherwise
  */
 static int8_t
-retrieve_bearer_id(pdn_connection *pdn, GxCCA *cca)
+retrieve_bearer_id(pdn_connection_t *pdn, GxCCA *cca)
 {
 	int32_t idx = 0, indx = 0;
 	int8_t ret = 0, id = 0;
@@ -638,12 +631,12 @@ retrieve_bearer_id(pdn_connection *pdn, GxCCA *cca)
 
 /* VS: TODO: Parse gx CCA response and fill UE context and pfcp context */
 int8_t
-parse_gx_cca_msg(GxCCA *cca, pdn_connection **_pdn)
+parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 {
 
 	int ret = 0;
 	uint32_t call_id = 0;
-	pdn_connection *pdn_cntxt = NULL;
+	pdn_connection_t *pdn_cntxt = NULL;
 
 	/* Extract the call id from session id */
 	ret = retrieve_call_id((char *)&cca->session_id.val, &call_id);
@@ -703,11 +696,11 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection **_pdn)
 }
 
 int16_t
-gx_update_bearer_req(pdn_connection *pdn){
+gx_update_bearer_req(pdn_connection_t *pdn){
 
 	int ret = 0;
-	eps_bearer *bearer = NULL;
-	ue_context *context = NULL;
+	eps_bearer_t *bearer = NULL;
+	ue_context_t *context = NULL;
 	struct resp_info *resp = NULL;
 	int update_require = 0, send_ubr = 0;
 	uint8_t len = 0;
@@ -849,7 +842,7 @@ parse_gx_rar_msg(GxRAR *rar)
 	int16_t ret = 0;
 	uint32_t call_id = 0;
 	uint8_t bearer_id = 0;
-	pdn_connection *pdn_cntxt = NULL;
+	pdn_connection_t *pdn_cntxt = NULL;
 
 	gx_context_t *gx_context = NULL;
 	struct resp_info *resp = NULL;
@@ -959,7 +952,7 @@ parse_gx_rar_msg(GxRAR *rar)
 }
 
 void
-get_charging_rule_remove_bearer_info(pdn_connection *pdn,
+get_charging_rule_remove_bearer_info(pdn_connection_t *pdn,
 	uint8_t *lbi, uint8_t *ded_ebi, uint8_t *ber_cnt)
 {
 	int8_t bearer_id;
@@ -1001,7 +994,7 @@ get_charging_rule_remove_bearer_info(pdn_connection *pdn,
 }
 
 int8_t
-get_bearer_info_install_rules(pdn_connection *pdn,
+get_bearer_info_install_rules(pdn_connection_t *pdn,
 	uint8_t *ebi)
 {
 	int8_t ret = 0;

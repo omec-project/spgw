@@ -22,9 +22,6 @@
 #include "sm_struct.h"
 #include "pfcp_messages.h"
 #include "gtp_messages.h"
-#ifdef USE_DNS_QUERY
-#include "pfcp_cp_set_ie.h"
-#endif /* USE_DNS_QUERY */
 
 /**
  * @brief  : Validate gtpv2c message
@@ -83,7 +80,7 @@ gx_pcnd_check(gx_msg *gx_rx, msg_info *msg);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-get_upf_ip(ue_context *ctxt, upfs_dnsres_t **_entry,
+get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 		uint32_t **upf_ip);
 
 #endif /* USE_DNS_QUERY */
