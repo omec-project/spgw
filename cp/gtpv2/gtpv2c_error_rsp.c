@@ -28,6 +28,7 @@
 #include "gtp_messages_encoder.h"
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
+#include "upf_struct.h"
 
 struct sockaddr_in upf_pfcp_sockaddr;
 extern socklen_t s11_mme_sockaddr_len;

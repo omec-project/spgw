@@ -25,6 +25,7 @@
 #include "clogger.h"
 #include "csid_cp_cleanup.h"
 #include "gtpv2_interface.h"
+#include "upf_struct.h"
 
 #ifdef USE_REST
 #include "main.h"

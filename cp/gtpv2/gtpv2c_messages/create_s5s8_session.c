@@ -39,6 +39,7 @@
 #include "cp_global_defs.h"
 #include "ip_pool.h"
 #include "apn_apis.h"
+#include "upf_struct.h"
 
 #ifdef USE_REST
 #include "main.h"

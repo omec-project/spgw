@@ -24,6 +24,7 @@
 #include "gtpv2c_error_rsp.h"
 #include "gtpv2_interface.h"
 #include "cp_timer.h"
+#include "upf_struct.h"
 
 #if defined(USE_DNS_QUERY)
 #include "sm_pcnd.h"

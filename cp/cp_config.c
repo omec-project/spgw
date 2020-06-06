@@ -26,6 +26,7 @@
 #include "cp.h"
 #include "apn_struct.h"
 #include "apn_apis.h"
+#include "upf_struct.h"
 
 
 #define GLOBAL_ENTRIES			"GLOBAL"

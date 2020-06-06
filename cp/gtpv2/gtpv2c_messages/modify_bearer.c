@@ -23,6 +23,7 @@
 #include "clogger.h"
 #include "gtpv2_internal.h"
 #include "gtpv2_interface.h"
+#include "upf_struct.h"
 /**
  * @brief  : Maintains parsed data from modify bearer request
  */

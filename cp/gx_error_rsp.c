@@ -9,6 +9,7 @@
 #ifdef GX_BUILD
 #include "pfcp.h"
 #include "gx_error_rsp.h"
+#include "upf_struct.h"
 extern int gx_app_sock;
 
 #if 0

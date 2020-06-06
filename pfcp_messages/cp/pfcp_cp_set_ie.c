@@ -25,6 +25,7 @@
 #include "main.h"
 #include "pfcp.h"
 #include "cp_global_defs.h"
+#include "upf_struct.h"
 
 #define RI_MAX 8
 

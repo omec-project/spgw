@@ -19,6 +19,7 @@
 
 #include "pfcp_messages.h"
 #include "sm_struct.h"
+#include "upf_struct.h"
 
 /**
  * @brief  : Process pfcp session association request

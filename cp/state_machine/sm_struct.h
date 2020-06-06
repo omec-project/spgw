@@ -41,22 +41,6 @@ enum source_interface {
 
 //extern enum source_interface iface;
 
-/**
- * @brief  : Maintains ue context Bearer identifier and tied
- */
-struct ue_context_key {
-	/* Bearer identifier */
-	uint8_t ebi_index;
-	/* UE Context key == teid */
-	uint32_t teid;
-	/* UE Context key == sender teid */
-	uint32_t sender_teid;
-	/* UE Context key == sequence number */
-	uint32_t sequence;
-
-    LIST_ENTRY(ue_context_key) csrentries;
-};
-typedef struct ue_context_key context_key;
 
 /* TODO: Need to optimized generic structure. */
 /**

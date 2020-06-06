@@ -33,6 +33,7 @@
 #include "gtpv2_interface.h"
 #include "ip_pool.h"
 #include "apn_apis.h"
+#include "upf_struct.h"
 
 extern uint32_t num_adc_rules;
 extern uint32_t adc_rule_id[];

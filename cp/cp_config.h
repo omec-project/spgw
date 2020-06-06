@@ -15,6 +15,7 @@
 /* for TAILQ */
 #include <sys/queue.h>
 #include "cp_config_new.h"
+#include "upf_struct.h"
 
 /**
  * @brief  : parse the SGWU/PGWU/SAEGWU IP from config file

@@ -21,6 +21,7 @@
 #include "cp_io_poll.h"
 #include "restoration_timer.h"
 #include <sys/queue.h>
+#include "upf_struct.h"
 
 /* TODO: Move following lines to another file */
 #define HAS_SEID 1
@@ -86,11 +87,6 @@ typedef struct pfcp_context_t{
 pfcp_context_t pfcp_ctxt;
 
 
-typedef enum pfcp_assoc_status_en {
-	ASSOC_IN_PROGRESS = 0,
-	ASSOC_ESTABLISHED = 1,
-} pfcp_assoc_status_en;
-
 
 /* Need to use this for upf_context */
 extern uint32_t	*g_gx_pending_csr[BUFFERED_ENTRIES_DEFAULT];
@@ -105,27 +101,6 @@ typedef struct gx_context_t {
 	char gx_sess_id[MAX_LEN];
 	unsigned long  rqst_ptr; /*In Case of RAA, need to store RAR pointer*/
 } gx_context_t;
-
-/**
- * @brief  : Maintains context of upf
- */
-typedef struct upf_context_t {
-	pfcp_assoc_status_en	assoc_status;
-	char	fqdn[MAX_HOSTNAME_LENGTH];
-
-	uint16_t up_supp_features;
-	uint8_t  cp_supp_features;
-	uint32_t s1u_ip;
-	uint32_t s5s8_sgwu_ip;
-	uint32_t s5s8_pgwu_ip;
-	uint8_t  state;
-	/* Add timer_entry for pfcp assoc req */
-	peerData *timer_entry;
-#ifdef DELETE_THIS
-	create_sess_req_t csr;
-#endif
-    LIST_HEAD(pendingcsrhead, ue_context_key) pendingCSRs;
-} upf_context_t;
 
 /**
  * @brief  : Maintains results returnd via dns for upf

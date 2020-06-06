@@ -15,6 +15,7 @@
 #include "clogger.h"
 #include "rte_hash_crc.h"
 #include "pfcp_cp_set_ie.h" // ajay - upf context should be part of differnt file 
+#include "upf_struct.h"
 
 #define DIAMETER_PCC_RULE_EVENT (5142)
 

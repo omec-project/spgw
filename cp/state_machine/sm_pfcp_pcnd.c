@@ -26,6 +26,7 @@
 #include "cp_timer.h"
 #include "cp_config.h"
 #include "pfcp_cp_set_ie.h"
+#include "upf_struct.h"
 
 extern struct cp_stats_t cp_stats;
 extern struct sockaddr_in upf_pfcp_sockaddr;
