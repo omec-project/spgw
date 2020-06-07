@@ -29,9 +29,11 @@
 #include "restoration_timer.h"
 #include "sm_struct.h"
 #include "cp_config_new.h"
-#include "cp_timer.h"
 #include "cp_config.h"
 #include "cp_config_new.h"
+#include "gtpc_timer.h"
+#include "pfcp_timer.h"
+#include "cp_apis.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -217,6 +219,34 @@ dump_pcap(uint16_t payload_length, uint8_t *tx_buf)
 			dump_buf);
 	fflush(pcap_dump_file(pcap_dumper));
 }
+/**
+ * @brief  : Util to send or dump gtpv2c messages
+ * @param  : fd, interface indentifier
+ * @param  : t_tx, buffer to store data for peer node
+ * @return : void
+ */
+void
+pfcp_timer_retry_send(int fd, peerData *t_tx)
+{
+	int bytes_tx;
+	struct sockaddr_in tx_sockaddr;
+	tx_sockaddr.sin_addr.s_addr = t_tx->dstIP;
+	tx_sockaddr.sin_port = t_tx->dstPort;
+	if (pcap_dumper) {
+		dump_pcap(t_tx->buf_len, t_tx->buf);
+	} else {
+		bytes_tx = sendto(fd, t_tx->buf, t_tx->buf_len, 0,
+			(struct sockaddr *)&tx_sockaddr, sizeof(struct sockaddr_in));
+
+		clLog(clSystemLog, eCLSeverityDebug, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d\n",fd);
+
+	if (bytes_tx != (int) t_tx->buf_len) {
+			clLog(clSystemLog, eCLSeverityCritical, "Transmitted Incomplete Timer Retry Message:"
+					"%u of %d tx bytes : %s\n",
+					t_tx->buf_len, bytes_tx, strerror(errno));
+		}
+	}
+}
 
 /**
  * @brief  : Util to send or dump gtpv2c messages
@@ -225,7 +255,7 @@ dump_pcap(uint16_t payload_length, uint8_t *tx_buf)
  * @return : void
  */
 void
-timer_retry_send(int fd, peerData *t_tx)
+gtpc_timer_retry_send(int fd, peerData *t_tx)
 {
 	int bytes_tx;
 	struct sockaddr_in tx_sockaddr;

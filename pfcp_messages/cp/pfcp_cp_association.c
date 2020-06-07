@@ -23,8 +23,8 @@
 #include "cp_config_new.h"
 #include "gtpv2c_error_rsp.h"
 #include "gtpv2_interface.h"
-#include "cp_timer.h"
 #include "upf_struct.h"
+#include "pfcp_timer.h"
 
 #if defined(USE_DNS_QUERY)
 #include "sm_pcnd.h"
@@ -418,10 +418,10 @@ assoication_setup_request(ue_context_t *context, uint8_t ebi_index)
 
 	/* fill and add timer entry */
 	peerData *timer_entry = NULL;
-	timer_entry =  fill_timer_entry_data(PFCP_IFACE, &upf_pfcp_sockaddr,
+	timer_entry =  pfcp_fill_timer_entry_data(PFCP_IFACE, &upf_pfcp_sockaddr,
 			pfcp_msg, encoded, pfcp_config.request_tries, context->s11_sgw_gtpc_teid, ebi_index);
 
-	if(!(add_timer_entry(timer_entry, pfcp_config.request_timeout, timer_callback))) {
+	if(!(pfcp_add_timer_entry(timer_entry, pfcp_config.request_timeout, pfcp_peer_timer_callback))) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Faild to add timer entry...\n",
 				__FILE__, __func__, __LINE__);
 	}

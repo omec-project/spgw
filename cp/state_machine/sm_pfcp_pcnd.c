@@ -23,7 +23,7 @@
 #include "pfcp_messages_decoder.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_config_new.h"
-#include "cp_timer.h"
+#include "pfcp_timer.h"
 #include "cp_config.h"
 #include "pfcp_cp_set_ie.h"
 #include "upf_struct.h"

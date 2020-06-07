@@ -34,12 +34,12 @@
 #include "gtp_messages.h"
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
-#include "cp_timer.h"
 #include "csid_api.h"
 #include "cp_global_defs.h"
 #include "ip_pool.h"
 #include "apn_apis.h"
 #include "upf_struct.h"
+#include "pfcp_timer.h"
 
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
 static uint32_t s5s8_sgw_gtpc_teid_offset;

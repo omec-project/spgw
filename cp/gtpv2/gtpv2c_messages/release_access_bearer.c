@@ -25,7 +25,8 @@
 #include "gtpv2c_set_ie.h"
 #include "pfcp_messages_encoder.h"
 #include "../cp_dp_api/vepc_cp_dp_api.h"
-#include "cp_timer.h"
+#include "gtpc_timer.h"
+#include "pfcp_timer.h"
 #include "pfcp_cp_util.h"
 #include "gtpv2_interface.h"
 

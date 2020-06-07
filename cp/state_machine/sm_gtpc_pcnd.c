@@ -21,7 +21,8 @@
 #include "gtp_messages_decoder.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_config_new.h"
-#include "cp_timer.h"
+#include "gtpc_timer.h"
+#include "pfcp_timer.h"
 #include "gtpv2_interface.h"
 
 #ifdef USE_REST
@@ -271,7 +272,7 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 			if(!ret)
 				return -1;
 
-			delete_timer_entry(msg->gtpc_msg.cs_rsp.header.teid.has_teid.teid);
+			gtpc_delete_timer_entry(msg->gtpc_msg.cs_rsp.header.teid.has_teid.teid);
 
 			if(msg->gtpc_msg.cs_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
 				cs_error_response(msg, msg->gtpc_msg.cs_rsp.cause.cause_value,
@@ -385,7 +386,7 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 			return -1;
 		}
 
-		delete_timer_entry(msg->gtpc_msg.mb_rsp.header.teid.has_teid.teid);
+		gtpc_delete_timer_entry(msg->gtpc_msg.mb_rsp.header.teid.has_teid.teid);
 
 		if(msg->gtpc_msg.mb_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
 			cs_error_response(msg, msg->gtpc_msg.mb_rsp.cause.cause_value,
@@ -458,7 +459,7 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 		if(ret == 0)
 			return -1;
 
-		delete_timer_entry(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid);
+		gtpc_delete_timer_entry(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid);
 
 		if(get_ue_context_by_sgw_s5s8_teid(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid, &context) != 0)
 		 {

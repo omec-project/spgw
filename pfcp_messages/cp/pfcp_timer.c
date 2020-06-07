@@ -10,17 +10,16 @@
 #include "sm_struct.h"
 #include "rte_common.h"
 #include "cp_config_new.h"
-#include "cp_timer.h"
+#include "pfcp_timer.h"
 #include "gtpv2c_error_rsp.h"
 #include "clogger.h"
 #include "rte_hash_crc.h"
 #include "pfcp_cp_set_ie.h" // ajay - upf context should be part of differnt file 
 #include "upf_struct.h"
+#include "cp_apis.h"
 
 #define DIAMETER_PCC_RULE_EVENT (5142)
 
-extern int s11_fd;
-extern int s5s8_fd;
 extern int pfcp_fd;
 
 
@@ -46,7 +45,7 @@ get_ses_entry(uint64_t sess_id, struct resp_info **resp)
 }
 
 bool
-add_timer_entry(peerData *conn_data, uint32_t timeout_ms,
+pfcp_add_timer_entry(peerData *conn_data, uint32_t timeout_ms,
 		gstimercallback cb)
 {
 
@@ -62,7 +61,7 @@ add_timer_entry(peerData *conn_data, uint32_t timeout_ms,
 }
 
 void
-timer_callback(gstimerinfo_t *ti, const void *data_t )
+pfcp_peer_timer_callback(gstimerinfo_t *ti, const void *data_t )
 {
         int ret = 0;
         int64_t seid = 0;
@@ -157,16 +156,8 @@ timer_callback(gstimerinfo_t *ti, const void *data_t )
 
         /* timer retry handler */
         switch(data->portId) {
-                case GX_IFACE:
-                        break;
-                case S11_IFACE:
-                        timer_retry_send(s11_fd, data);
-                        break;
-                case S5S8_IFACE:
-                        timer_retry_send(s5s8_fd, data);
-                        break;
                 case PFCP_IFACE:
-                        timer_retry_send(pfcp_fd, data);
+                        pfcp_timer_retry_send(pfcp_fd, data);
                         break;
                 default:
                         break;
@@ -176,7 +167,7 @@ timer_callback(gstimerinfo_t *ti, const void *data_t )
 }
 
 peerData *
-fill_timer_entry_data(enum source_interface iface, struct sockaddr_in *peer_addr,
+pfcp_fill_timer_entry_data(enum source_interface iface, struct sockaddr_in *peer_addr,
 		uint8_t *buf, uint16_t buf_len, uint8_t itr, uint32_t teid,  uint8_t ebi_index)
 {
 	peerData *timer_entry = NULL;
@@ -208,78 +199,53 @@ fill_timer_entry_data(enum source_interface iface, struct sockaddr_in *peer_addr
 void
 delete_pfcp_if_timer_entry(uint32_t teid, uint8_t ebi_index)
 {
-	int ret = 0;
+        int ret = 0;
         peerData *data = NULL;
         ue_context_t *context = NULL;
 
-	ret = get_ue_context(teid, &context);
+        ret = get_ue_context(teid, &context);
         if ( ret < 0) {
                 clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, teid);
                 return;
         }
-	if(context != NULL && context->eps_bearers[ebi_index] != NULL
-		&& context->eps_bearers[ebi_index]->pdn != NULL ) {
-		data = context->eps_bearers[ebi_index]->pdn->timer_entry;
-		if(data->pt.ti_id != 0) {
-			stoptimer(&data->pt.ti_id);
-			deinittimer(&data->pt.ti_id);
-			/* free peer data when timer is de int */
-			rte_free(data);
-		}
-	}
+        if(context != NULL && context->eps_bearers[ebi_index] != NULL
+                        && context->eps_bearers[ebi_index]->pdn != NULL ) {
+                data = context->eps_bearers[ebi_index]->pdn->timer_entry;
+                if(data->pt.ti_id != 0) {
+                        stoptimer(&data->pt.ti_id);
+                        deinittimer(&data->pt.ti_id);
+                        /* free peer data when timer is de int */
+                        rte_free(data);
+                }
+        }
         return;
 }
 
+
 void
-delete_gtpv2c_if_timer_entry(uint32_t teid)
+pfcp_delete_timer_entry(uint32_t teid)
 {
-	int ret = 0;
+        int ret = 0;
         peerData *data = NULL;
-       	eps_bearer_t *bearer = NULL;
+        eps_bearer_t *bearer = NULL;
 
         ret = get_bearer_by_teid(teid, &bearer);
-
         if ( ret < 0) {
                 clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, teid);
                 return;
         }
-	if(bearer != NULL && bearer->pdn != NULL &&
-		bearer->pdn->timer_entry != NULL ) {
-        	data = bearer->pdn->timer_entry;
-        	if(data->pt.ti_id != 0) {
-                	stoptimer(&data->pt.ti_id);
-                	deinittimer(&data->pt.ti_id);
-			/* free peer data when timer is de int */
-			rte_free(data);
-		}
-	}
+
+        if(bearer != NULL && bearer->pdn != NULL &&
+                        bearer->pdn->timer_entry != NULL ) {
+                data = bearer->pdn->timer_entry;
+                if(data->pt.ti_id != 0) {
+                        stoptimer(&data->pt.ti_id);
+                        deinittimer(&data->pt.ti_id);
+                        /* free peer data when timer is de int */
+                        rte_free(data);
+                }
+        }
         return;
-}
-
-void
-delete_timer_entry(uint32_t teid)
-{
-	int ret = 0;
-	peerData *data = NULL;
-       	eps_bearer_t *bearer = NULL;
-
-        ret = get_bearer_by_teid(teid, &bearer);
-	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, teid);
-		return;
-	}
-
-	if(bearer != NULL && bearer->pdn != NULL &&
-		bearer->pdn->timer_entry != NULL ) {
-		data = bearer->pdn->timer_entry;
-		if(data->pt.ti_id != 0) {
-			stoptimer(&data->pt.ti_id);
-			deinittimer(&data->pt.ti_id);
-			/* free peer data when timer is de int */
-			rte_free(data);
-		}
-	}
-	return;
 }
 
 void
@@ -296,78 +262,21 @@ add_pfcp_if_timer_entry(uint32_t teid, struct sockaddr_in *peer_addr,
                 return;
         }
         /* fill and add timer entry */
-        timer_entry = fill_timer_entry_data(PFCP_IFACE, peer_addr,
+        timer_entry = pfcp_fill_timer_entry_data(PFCP_IFACE, peer_addr,
                         buf, buf_len, pfcp_config.request_tries, teid, ebi_index);
 
-        if(!(add_timer_entry(timer_entry, pfcp_config.request_timeout, timer_callback))) {
+        if(!(pfcp_add_timer_entry(timer_entry, pfcp_config.request_timeout, pfcp_peer_timer_callback))) {
                 clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Faild to add timer entry...\n",
                                 __FILE__, __func__, __LINE__);
         }
-	if(context != NULL && context->eps_bearers[ebi_index] != NULL
-		&&  context->eps_bearers[ebi_index]->pdn != NULL ) {
-       		context->eps_bearers[ebi_index]->pdn->timer_entry = timer_entry;
+        if(context != NULL && context->eps_bearers[ebi_index] != NULL
+                        &&  context->eps_bearers[ebi_index]->pdn != NULL ) {
+                context->eps_bearers[ebi_index]->pdn->timer_entry = timer_entry;
 
-		if (starttimer(&timer_entry->pt) < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Periodic Timer failed to start...\n",
-				__FILE__, __func__, __LINE__);
-		}
-	}
+                if (starttimer(&timer_entry->pt) < 0) {
+                        clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Periodic Timer failed to start...\n",
+                                        __FILE__, __func__, __LINE__);
+                }
+        }
 }
 
-void
-add_gtpv2c_if_timer_entry(uint32_t teid, struct sockaddr_in *peer_addr,
-	uint8_t *buf, uint16_t buf_len, uint8_t ebi_index, enum source_interface iface)
-{
-	int ret = 0;
-	peerData *timer_entry = NULL;
-	eps_bearer_t *bearer = NULL;
-	ue_context_t *context = NULL;
-
-	/* fill and add timer entry */
-	timer_entry = fill_timer_entry_data(iface, peer_addr,
-			buf, buf_len, pfcp_config.request_tries, teid, ebi_index);
-
-	if(!(add_timer_entry(timer_entry, pfcp_config.request_timeout, timer_callback))) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Faild to add timer entry...\n",
-				__FILE__, __func__, __LINE__);
-	}
-
-	if(SGWC == cp_config->cp_type) {
-			/* if we get s5s8 fteid we will retrive bearer , if we get sgw s11 fteid we will retrive ue contex */
-		ret = get_bearer_by_teid(teid, &bearer);
-		if ( ret < 0) {
-			/*The teid might be of S11*/
-			ret = get_ue_context(teid, &context);
-			if ( ret < 0) {
-					clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, teid);
-					return;
-			}
-
-			if(context != NULL && context->eps_bearers[ebi_index] != NULL
-				&&  context->eps_bearers[ebi_index]->pdn != NULL ) {
-					context->eps_bearers[ebi_index]->pdn->timer_entry = timer_entry;
-			} else {
-				return;
-			}
-		}else {
-			bearer->pdn->timer_entry = timer_entry;
-		}
-	} else {
-		ret = get_ue_context(teid, &context);
-			if ( ret < 0) {
-					clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, teid);
-					return;
-			}
-
-		if(context != NULL && context->eps_bearers[ebi_index] != NULL
-			&&  context->eps_bearers[ebi_index]->pdn != NULL ) {
-					context->eps_bearers[ebi_index]->pdn->timer_entry = timer_entry;
-		} else {
-			return;
-		}
-	}
-	if (starttimer(&timer_entry->pt) < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Periodic Timer failed to start...\n",
-				__FILE__, __func__, __LINE__);
-	}
-}

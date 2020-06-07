@@ -18,7 +18,6 @@
 #include "gtp_messages_encoder.h"
 #include "gtpc_session.h"
 #include "gtpv2c_error_rsp.h"
-#include "cp_timer.h"
 #include "clogger.h"
 #include "main.h"
 #include "gtpv2_internal.h"
@@ -29,6 +28,8 @@
 #include "pfcp_cp_util.h" // ajay should be part of interface 
 #include "pfcp_cp_session.h"
 #include "gtpv2c_set_ie.h"
+#include "gtpc_timer.h"
+#include "pfcp_timer.h"
 
 extern int pfcp_fd;
 extern int s5s8_fd;

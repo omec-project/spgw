@@ -20,7 +20,7 @@
 #include "pfcp_cp_association.h"
 #include "gtpv2c_error_rsp.h"
 #include "gtpc_session.h"
-#include "cp_timer.h"
+#include "gtpc_timer.h"
 #include "cp_config.h"
 #include "clogger.h"
 #include "csid_cp_cleanup.h"

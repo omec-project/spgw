@@ -23,10 +23,10 @@
 #include "pfcp_cp_session.h"
 #include "pfcp_messages.h"
 #include "pfcp_messages_encoder.h"
-#include "cp_timer.h"
 #include "clogger.h"
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
+#include "pfcp_timer.h"
 
 #define PRESENT 1
 #define NUM_VALS 9

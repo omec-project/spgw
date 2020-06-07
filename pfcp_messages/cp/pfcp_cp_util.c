@@ -29,7 +29,6 @@
 
 #include "cp_config.h"
 #include "sm_pcnd.h"
-#include "cp_timer.h"
 #include "cp_stats.h"
 #include "cp_global_defs.h"
 
