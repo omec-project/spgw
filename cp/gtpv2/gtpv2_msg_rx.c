@@ -33,6 +33,7 @@
 #include "pfcp_messages_decoder.h"
 #include "pfcp_messages_encoder.h"
 #include "gtpv2_evt_handler.h"
+#include "cp_timers.h"
 
 #include "sm_arr.h"
 #include "sm_pcnd.h"
@@ -40,7 +41,7 @@
 #include "cp_config_new.h"
 
 #ifdef USE_REST
-#include "../restoration/restoration_timer.h"
+#include "timer.h"
 #endif /* USE_REST */
 
 #ifdef USE_DNS_QUERY

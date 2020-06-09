@@ -893,18 +893,18 @@ parse_gx_rar_msg(GxRAR *rar)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ){
+	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 					pfcp_sess_mod_req.header.message_type,SENT,SX);
 		if(cp_config->cp_type == PGWC){
-                               add_pfcp_if_timer_entry(pdn_cntxt->s5s8_pgw_gtpc_teid, &upf_pfcp_sockaddr,
+                               add_pfcp_if_timer_entry(pdn_cntxt->s5s8_pgw_gtpc_teid, &context->upf_ctxt->upf_sockaddr,
                                        pfcp_msg, encoded, pdn_cntxt->default_bearer_id - 5);
                        }
                if(cp_config->cp_type == SAEGWC)
                {
-                       add_pfcp_if_timer_entry(pdn_cntxt->context->s11_sgw_gtpc_teid, &upf_pfcp_sockaddr,
+                       add_pfcp_if_timer_entry(pdn_cntxt->context->s11_sgw_gtpc_teid, &context->upf_ctxt->upf_sockaddr,
                                pfcp_msg, encoded, pdn_cntxt->default_bearer_id - 5);
                }
         }

@@ -38,7 +38,6 @@ extern int gx_app_sock;
 #endif /* GX_BUILD */
 
 extern int pfcp_fd;
-extern struct sockaddr_in upf_pfcp_sockaddr;
 extern socklen_t s11_mme_sockaddr_len;
 
 extern int s5s8_fd;
@@ -388,11 +387,6 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 
 	if (cp_config->cp_type != PGWC) {
 		if (iface != S11_SGW_PORT_ID) {
-			//fqcsid_t *csid_t = NULL;
-			//csid_t = get_peer_addr_csids_entry(s11_mme_sockaddr.sin_addr.s_addr,
-			//		MOD);
-			//if (csid_t != NULL) {
-				/* Fill the PGW restart notification request */
 				fill_pgw_restart_notification(gtpv2c_tx, ntohl(pfcp_config.s11_ip.s_addr),
 						s5s8_node_addr);
 				/* Send the Delete PDN Request to peer node */
@@ -422,7 +416,6 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 				}
 
 				memset(gtpv2c_tx, 0, sizeof(gtpv2c_header_t));
-			//}
 		}
 	}
 
@@ -441,28 +434,23 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 			/* Get peer CSID associated with node */
 			//csid = get_peer_addr_csids_entry(s5s8_recv_sockaddr.sin_addr.s_addr,
 			//		MOD);
-			//if ((csid != NULL) && (csid->num_csid)) {
 				gtpv2c_send(s5s8_fd, tx_buf, payload_length,
 						(struct sockaddr *) &s5s8_recv_sockaddr,
 						s5s8_sockaddr_len);
-			//}
 		}
 	} else {
 		if (iface != S11_SGW_PORT_ID) {
 			/* Get peer CSID associated with node */
 			//csid = get_peer_addr_csids_entry(s11_mme_sockaddr.sin_addr.s_addr,
 			//		MOD);
-			//if ((csid != NULL) && (csid->num_csid)) {
 				gtpv2c_send(s11_fd, tx_buf, payload_length,
 						(struct sockaddr *) &s11_mme_sockaddr,
 						s11_mme_sockaddr_len);
-			//}
 		}
 		if (cp_config->cp_type == SGWC) {
 			/* Get peer CSID associated with node */
 			//csid = get_peer_addr_csids_entry(s5s8_recv_sockaddr.sin_addr.s_addr,
 			//		MOD);
-			//if ((csid != NULL) && (csid->num_csid)) {
 			if (iface != S5S8_SGWC_PORT_ID) {
 				gtpv2c_send(s5s8_fd, tx_buf, payload_length,
 						(struct sockaddr *) &s5s8_recv_sockaddr,
@@ -658,6 +646,8 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
+    struct sockaddr_in upf_pfcp_sockaddr;
+    assert(0); // Need handling 
 	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error sending: %i\n",
 				ERR_MSG, errno);

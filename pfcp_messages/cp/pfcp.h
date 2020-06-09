@@ -57,7 +57,6 @@ extern in_port_t pfcp_port;
 extern struct sockaddr_in pfcp_sockaddr;
 
 extern in_port_t upf_pfcp_port;
-extern struct sockaddr_in upf_pfcp_sockaddr;
 
 /**
  * @brief : Rule Name is key for Mapping of Rules and Bearer table.

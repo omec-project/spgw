@@ -1786,7 +1786,6 @@ process_error_occured_handler(void *data, void *unused_param)
 	err_rsp_info info_resp = {0};
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
-	struct resp_info *resp = NULL;
 	upf_context_t *upf_ctx = NULL;
 
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
@@ -1813,10 +1812,9 @@ process_error_occured_handler(void *data, void *unused_param)
 					upf_ctx = NULL;
 				}
 			}
-			if (get_sess_entry(pdn->seid, &resp) == 0) {
-				rte_hash_del_key(sm_hash, (const void *) &(pdn->seid));
-				rte_free(resp);
-			}
+
+			del_sess_entry(pdn->seid); 
+
 			for(int8_t idx = 0; idx < MAX_BEARERS; idx++) {
 				if(context->eps_bearers[idx] == NULL) {
 					continue;

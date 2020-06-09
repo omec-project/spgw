@@ -1,17 +1,8 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2019 Sprint
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <signal.h>
@@ -27,18 +18,18 @@
 #include "csid_cp_cleanup.h"
 #include "csid_api.h"
 #include "gtpv2_interface.h"
+#include "cp_timers.h"
 
-#include "../restoration/restoration_timer.h"
+#include "timer.h"
 
-char filename[256] = "../config/cp_rstCnt.txt";
 
 extern socklen_t s11_mme_sockaddr_len;
 extern socklen_t s5s8_sockaddr_len;
 
+extern struct rte_hash *conn_hash_handle;
 extern int s11_fd;
 extern int s5s8_fd;
 
-extern uint8_t rstCnt;
 int32_t conn_cnt = 0;
 
 /* Sequence number allocation for echo request */
@@ -55,8 +46,7 @@ static struct rte_hash_parameters
 			.name = "CONN_TABLE",
 			.entries = NUM_CONN,
 			.reserved = 0,
-			.key_len =
-					sizeof(uint32_t),
+			.key_len = sizeof(uint32_t),
 			.hash_func = rte_jhash,
 			.hash_func_init_val = 0
 };
@@ -68,43 +58,13 @@ static struct rte_hash_parameters
  */
 struct rte_hash *conn_hash_handle;
 
-uint8_t update_rstCnt(void)
-{
-	FILE *fp;
-	int tmp;
-
-	if ((fp = fopen(filename,"rw+")) == NULL){
-		if ((fp = fopen(filename,"w")) == NULL)
-			clLog(clSystemLog, eCLSeverityCritical,"Error! creating cp_rstCnt.txt file");
-	}
-
-	if (fscanf(fp,"%u", &tmp) < 0) {
-		/* Cur pos shift to initial pos */
-		fseek(fp, 0, SEEK_SET);
-		fprintf(fp, "%u\n", ++rstCnt);
-		fclose(fp);
-		return rstCnt;
-
-	}
-	/* Cur pos shift to initial pos */
-	fseek(fp, 0, SEEK_SET);
-
-	rstCnt = tmp;
-	fprintf(fp, "%d\n", ++rstCnt);
-
-	clLog(clSystemLog, eCLSeverityDebug, "Updated restart counter Value of rstcnt=%u\n", rstCnt);
-	fclose(fp);
-
-	return rstCnt;
-}
-
 void timerCallback( gstimerinfo_t *ti, const void *data_t )
 {
 	uint16_t payload_length;
 	struct sockaddr_in dest_addr;
 #pragma GCC diagnostic push  /* require GCC 4.6 */
 #pragma GCC diagnostic ignored "-Wcast-qual"
-	peerData *md = (peerData*)data_t;
+	peerData_t *md = (peerData_t*)data_t;
 #pragma GCC diagnostic pop   /* require GCC 4.6 */
 
 
@@ -197,7 +157,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 #endif /* USE_CSID */
 		}
 
-		del_entry_from_hash(md->dstIP);
+		del_entry_from_hash(md->dstIP); // ajay - what to do this ?
 
 		return;
 	}
@@ -301,10 +261,20 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 	return;
 }
 
+bool initpeerData( peerData_t *md, const char *name, int ptms, int ttms )
+{
+	md->name = name;
+
+	if ( !gst_timer_init( &md->pt, ttInterval, timerCallback, ptms, md ) )
+		return False;
+
+	return gst_timer_init( &md->tt, ttInterval, timerCallback, ttms, md );
+}
+
 uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 {
 	int ret;
-	peerData *conn_data = NULL;
+	peerData_t *conn_data = NULL;
 
 	ret = rte_hash_lookup_data(conn_hash_handle,
 				&dstIp, (void **)&conn_data);
@@ -320,7 +290,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 		 * */
 
 		conn_data = rte_malloc_socket(NULL,
-						sizeof(peerData),
+						sizeof(peerData_t),
 						RTE_CACHE_LINE_SIZE, rte_socket_id());
 
 		conn_data->portId = portId;
@@ -409,3 +379,57 @@ void rest_thread_init(void)
 	}
 	return;
 }
+
+uint8_t process_response(uint32_t dstIp)
+{
+	int ret = 0;
+	peerData_t *conn_data = NULL;
+
+	// TODO : BUG COmmon peer table is not good..Currently conn_hash_handle is common for all peers
+	// e.g. gtp, pfcp, ....
+	ret = rte_hash_lookup_data(conn_hash_handle,
+			&dstIp, (void **)&conn_data);
+
+	if ( ret < 0) {
+		clLog(clSystemLog, eCLSeverityDebug, " Entry not found for NODE :%s\n",
+				inet_ntoa(*(struct in_addr *)&dstIp));
+	} else {
+		conn_data->itr_cnt = 0;
+
+		update_peer_timeouts(conn_data->dstIP,0);
+
+		/* Stop transmit timer for specific peer node */
+		stopTimer( &conn_data->tt );
+		/* Stop periodic timer for specific peer node */
+		stopTimer( &conn_data->pt );
+		/* Reset Periodic Timer */
+		if ( startTimer( &conn_data->pt ) == false ) /* Changed - Ajay */
+			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to start...\n");
+
+	}
+	return 0;
+}
+
+void del_entry_from_hash(uint32_t ipAddr)
+{
+
+	int ret = 0;
+
+	clLog(clSystemLog, eCLSeverityDebug, " Delete entry from connection table of ip:%s\n",
+			inet_ntoa(*(struct in_addr *)&ipAddr));
+
+	/* Delete entry from connection hash table */
+	ret = rte_hash_del_key(conn_hash_handle,
+			&ipAddr);
+
+	if (ret == -ENOENT)
+		clLog(clSystemLog, eCLSeverityDebug, "key is not found\n");
+	if (ret == -EINVAL)
+		clLog(clSystemLog, eCLSeverityDebug, "Invalid Params: Failed to del from hash table\n");
+	if (ret < 0)
+		clLog(clSystemLog, eCLSeverityDebug, "VS: Failed to del entry from hash table\n");
+
+	//conn_cnt--; ajay
+
+}
+

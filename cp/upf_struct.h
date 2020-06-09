@@ -12,7 +12,10 @@
 #define __UPF_STRUCT_H
 #include <stdint.h>
 #include <sys/queue.h>
-#include "restoration_timer.h"
+#include <netinet/in.h>
+#include "timer.h"
+#include "cp_peer_struct.h"
+#include "trans_struct.h"
 
 #define MAX_HOSTNAME_LENGTH							(256)
 
@@ -42,7 +45,7 @@ typedef struct ue_context_key context_key;
 /**
  * @brief  : Maintains context of upf
  */
-typedef struct upf_context_t {
+typedef struct upf_context {
 	pfcp_assoc_status_en	assoc_status;
 	char	fqdn[MAX_HOSTNAME_LENGTH];
 
@@ -52,13 +55,16 @@ typedef struct upf_context_t {
 	uint32_t s5s8_sgwu_ip;
 	uint32_t s5s8_pgwu_ip;
 	uint8_t  state;
-	/* Add timer_entry for pfcp assoc req */
-	peerData *timer_entry;
 #ifdef DELETE_THIS
+	/* Add timer_entry for pfcp assoc req */
+	peerData_t *timer_entry;
 	create_sess_req_t csr;
+#else
+    transData_t *timer_entry;
 #endif
-    LIST_HEAD(pendingcsrhead, ue_context_key) pendingCSRs;
-} upf_context_t;
 
+    LIST_HEAD(pendingcsrhead, ue_context_key) pendingCSRs;
+    struct sockaddr_in upf_sockaddr;
+} upf_context_t;
 
 #endif

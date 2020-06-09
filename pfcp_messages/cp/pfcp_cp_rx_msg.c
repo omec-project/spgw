@@ -25,6 +25,7 @@
 #include "gw_adapter.h"
 #include "clogger.h"
 #include "pfcp_cp_common.h"
+#include "cp_timers.h"
 
 #include "pfcp.h"
 #include "sm_arr.h"
@@ -385,7 +386,8 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		// ajay - why this is called as response ? it could be request mesage as well 
 		printf("PFCP message %d  received from UP %s \n",pfcp_header->message_type, inet_ntoa(peer_addr->sin_addr));
 		/*Reset periodic timers*/
-		process_response(peer_addr->sin_addr.s_addr);
+        if(pfcp_header->message_type != PFCP_ASSOCIATION_SETUP_RESPONSE) 
+		    process_response(peer_addr->sin_addr.s_addr);
         msg.peer_addr = peer_addr;
 
         // TODO - PORT peer address should be copied to msg 

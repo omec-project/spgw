@@ -51,7 +51,7 @@
 #include "epc_packet_framework.h"
 #include "clogger.h"
 #ifdef USE_REST
-#include "../restoration/restoration_timer.h"
+#include "timer.h"
 #endif /* USE_REST */
 
 /* Borrowed from dpdk ip_frag_internal.c */
@@ -82,7 +82,7 @@ static inline void check_activity(uint32_t srcIp)
 {
 	/* VS: TODO */
 	int ret = 0;
-	peerData *conn_data = NULL;
+	peerData_t *conn_data = NULL;
 
 	ret = rte_hash_lookup_data(conn_hash_handle,
 				&srcIp, (void **)&conn_data);

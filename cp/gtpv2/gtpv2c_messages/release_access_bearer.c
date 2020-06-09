@@ -173,16 +173,16 @@ process_release_access_bearer_request(rel_acc_ber_req *rel_acc_ber_req_t, uint8_
 		pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 		header->message_len = htons(encoded - 4);
 
-		if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 )
+		if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &rel_acc_ber_req_t->context->upf_ctxt->upf_sockaddr) < 0 )
 			clLog(sxlogger, eCLSeverityCritical,"Error sending: %i\n",errno);
 		else {
-			update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+			update_cli_stats((uint32_t)rel_acc_ber_req_t->context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 							pfcp_sess_mod_req.header.message_type,SENT,SX);
 
 
 #ifdef CP_BUILD
 			add_pfcp_if_timer_entry((rel_acc_ber_req_t->context)->s11_sgw_gtpc_teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&rel_acc_ber_req_t->context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 #endif /* CP_BUILD */
 		}
 

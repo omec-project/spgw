@@ -46,7 +46,6 @@ SRCS-y += gx_error_rsp.c
 SRCS-y += cp_interface.c
 SRCS-y += vepc_udp.c
 SRCS-y += cp_io_poll.c
-
 SRCS-y += state_machine/sm_init.o
 SRCS-y += state_machine/sm_hand.o
 SRCS-y += state_machine/sm_gtpc_pcnd.o
@@ -74,6 +73,7 @@ SRCS-y += gtpv2/gtpv2c_messages/modify_bearer.o
 SRCS-y += gtpv2/gtpv2c_messages/downlink_data_notification.o
 SRCS-y += gtpv2/gtpv2c_messages/release_access_bearer.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_timer.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_transactions.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_msg_validate.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_association.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_rx_msg.o
@@ -108,6 +108,7 @@ CFLAGS += -I$(LIBGTPV2C_ROOT)/include
 CFLAGS += -I$(LIBPFCP_ROOT)/include
 
 CFLAGS += -I$(SRCDIR)/..
+CFLAGS += -I$(SRCDIR)/../common
 CFLAGS += -I$(SRCDIR)/../pfcp_messages
 CFLAGS += -I$(SRCDIR)/../pfcp_messages/cp
 CFLAGS += -I$(SRCDIR)/../pfcp_messages/common
@@ -181,8 +182,8 @@ CFLAGS += -DUSE_REST
 ifneq (,$(findstring USE_REST, $(CFLAGS), $(EXTRA_CFLAGS)))
 	#VS: ECHO FILES
 	CFLAGS += -I$(SRCDIR)/../restoration
-	SRCS-y += $(SRCDIR)/../restoration/restoration_timer.o
-	SRCS-y += restoration_peer.c
+	SRCS-y += $(SRCDIR)/../common/timer.o
+	SRCS-y += cp_timers.c
 endif
 
 #un-comment below line to enable FQ-CSID support in the control-plane

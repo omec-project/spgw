@@ -93,7 +93,7 @@ static __inline__ void encap_gtpu_hdr(struct rte_mbuf *m, uint16_t gtpu_seqnb, u
  * @param  : entry, peer node information
  * @return : Returns nothing
  */
-static __inline__ void create_udp_hdr(struct rte_mbuf *m, peerData *entry)
+static __inline__ void create_udp_hdr(struct rte_mbuf *m, peerData_t *entry)
 {
 	uint16_t len = rte_pktmbuf_data_len(m)- ETH_HDR_LEN - IPV4_HDR_LEN;
 
@@ -112,7 +112,7 @@ static __inline__ void create_udp_hdr(struct rte_mbuf *m, peerData *entry)
  * @param  : entry, peer node information
  * @return : Returns nothing
  */
-static __inline__ void create_ipv4_hdr(struct rte_mbuf *m, peerData *entry)
+static __inline__ void create_ipv4_hdr(struct rte_mbuf *m, peerData_t *entry)
 {
 	uint16_t len = rte_pktmbuf_data_len(m)- ETH_HDR_LEN;
 	struct ipv4_hdr *ipv4_hdr = (struct ipv4_hdr*)(rte_pktmbuf_mtod(m, unsigned char*) + ETH_HDR_LEN);
@@ -135,7 +135,7 @@ static __inline__ void create_ipv4_hdr(struct rte_mbuf *m, peerData *entry)
  * @param  : entry, peer node information
  * @return : Returns nothing
  */
-static __inline__ void create_ether_hdr(struct rte_mbuf *m, peerData *entry)
+static __inline__ void create_ether_hdr(struct rte_mbuf *m, peerData_t *entry)
 {
 	struct ether_hdr *eth_hdr = (struct ether_hdr*)rte_pktmbuf_mtod(m, void*);
 	ether_addr_copy(&entry->dst_eth_addr, &eth_hdr->d_addr);
@@ -144,7 +144,7 @@ static __inline__ void create_ether_hdr(struct rte_mbuf *m, peerData *entry)
 }
 
 
-void build_echo_request(struct rte_mbuf *echo_pkt, peerData *entry, uint16_t gtpu_seqnb)
+void build_echo_request(struct rte_mbuf *echo_pkt, peerData_t *entry, uint16_t gtpu_seqnb)
 {
 	echo_pkt->pkt_len = PKT_SIZE;
 	echo_pkt->data_len = PKT_SIZE;
@@ -163,7 +163,7 @@ void build_echo_request(struct rte_mbuf *echo_pkt, peerData *entry, uint16_t gtp
 void build_endmarker_and_send(struct sess_info_endmark *edmk)
 {
 	static uint16_t seq = 0;
-	peerData entry;
+	peerData_t entry;
 
 	entry.dstIP = edmk->dst_ip;
 	entry.srcIP = edmk->src_ip;

@@ -1,17 +1,8 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2019 Sprint
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef _UP_MAIN_H_
@@ -43,9 +34,10 @@
 #include "up_interface.h"
 #include "vepc_cp_dp_api.h"
 #include "epc_packet_framework.h"
+#include "up_peer_struct.h"
 
 #ifdef USE_REST
-#include "../restoration/restoration_timer.h"
+#include "timer.h"
 #endif /* use_rest */
 
 #ifdef USE_CSID
@@ -322,7 +314,7 @@ extern struct rte_hash *conn_hash_handle;
  * @return : Returns nothing
  */
 void
-flush_eNB_session(peerData *data_t);
+flush_eNB_session(peerData_t *data_t);
 
 /**
  * @brief  : Flush dp session
@@ -904,7 +896,7 @@ echo_table_init(void);
  * @return : Returns nothing
  */
 void
-build_echo_request(struct rte_mbuf *echo_pkt, peerData *entry, uint16_t gtpu_seqnb);
+build_echo_request(struct rte_mbuf *echo_pkt, peerData_t *entry, uint16_t gtpu_seqnb);
 #endif /* CP_BUILD*/
 
 #endif /* USE_REST */
@@ -1059,6 +1051,7 @@ parse_adc_buf(int sel_type, char *arm, struct adc_rules *adc);
 uint32_t
 get_sdf_indices(char *sdf_idx, uint32_t *out_sdf_idx);
 
+void recovery_time_into_file(uint32_t recov_time);
 /***********************ddn_utils.c functions end**********************/
 #endif /* _MAIN_H_ */
 

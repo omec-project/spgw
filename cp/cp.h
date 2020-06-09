@@ -19,7 +19,7 @@
 #include "gtpv2c.h"
 
 #ifdef USE_REST
-#include "../restoration/restoration_timer.h"
+#include "timer.h"
 #endif /* USE_REST */
 
 #include "gtp_messages.h"

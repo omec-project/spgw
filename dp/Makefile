@@ -67,6 +67,7 @@ SRCS-y := up_main.c\
 SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/gw_adapter.o
 CFLAGS += -I$(SRCDIR)/../oss_adapter/c3po_oss
 
+#ajay - cleanup 
 CFLAGS += -I$(SRCDIR)/
 CFLAGS += -I$(SRCDIR)/pipeline
 CFLAGS += -I$(SRCDIR)/../cp_dp_api
@@ -74,6 +75,7 @@ CFLAGS += -I$(SRCDIR)/../interface
 CFLAGS += -I$(SRCDIR)/../interface/ipc
 CFLAGS += -I$(SRCDIR)/../interface/udp
 CFLAGS += -I$(SRCDIR)/../interface/sdn
+CFLAGS += -I$(SRCDIR)/../common
 CFLAGS += -I$(SRCDIR)/../lib/libsponsdn
 CFLAGS += -I$(SRCDIR)/../pfcp_messages
 CFLAGS += -I$(SRCDIR)/../pfcp_messages/up
@@ -222,9 +224,8 @@ CFLAGS += -DDEFAULT_ACL_TABLE
 CFLAGS += -DUSE_REST
 
 ifneq (,$(findstring USE_REST, $(CFLAGS), $(EXTRA_CFLAGS)))
-	CFLAGS += -I$(SRCDIR)/../restoration
-	SRCS-y += $(SRCDIR)/../restoration/restoration_timer.o
-	SRCS-y += restoration_peer.c
+	SRCS-y += $(SRCDIR)/../common/timer.c
+	SRCS-y += up_timers.c
 	SRCS-y += gtpu_echo_req.c
 endif
 

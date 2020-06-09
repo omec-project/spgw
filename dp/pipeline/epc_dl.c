@@ -73,7 +73,7 @@ static inline void check_activity(uint32_t srcIp)
 {
 	/* VS: TODO */
 	int ret = 0;
-	peerData *conn_data = NULL;
+	peerData_t *conn_data = NULL;
 
 	ret = rte_hash_lookup_data(conn_hash_handle,
 				&srcIp, (void **)&conn_data);

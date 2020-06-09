@@ -28,6 +28,7 @@
 #include "up_main.h"
 #include "pfcp_up_sess.h"
 #include "pfcp_up_struct.h"
+#include "up_timers.h"
 
 uint16_t dp_comm_port;
 uint16_t cp_comm_port;
@@ -40,8 +41,6 @@ struct in_addr dp_comm_ip;
 extern udp_sock_t my_sock;
 
 extern struct rte_hash *heartbeat_recovery_hash;
-
-extern struct sockaddr_in upf_pfcp_sockaddr;
 
 extern struct rte_hash *node_id_hash;
 

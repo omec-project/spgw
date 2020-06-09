@@ -26,7 +26,7 @@
 
 
 #ifdef USE_REST
-#include "../restoration/restoration_timer.h"
+#include "timer.h"
 #endif /* USE_REST */
 
 #ifdef USE_DNS_QUERY
@@ -385,7 +385,7 @@ main(int argc, char **argv)
 #endif  /* USE_REST */
 
 	init_pfcp_tables();
-	init_sm_hash();
+	init_transaction_hash();
 
 #ifdef USE_CSID
 	init_fqcsid_hash_tables();

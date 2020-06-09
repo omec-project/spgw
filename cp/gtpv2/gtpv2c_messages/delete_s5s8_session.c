@@ -35,7 +35,6 @@
 #include "gtpv2_interface.h"
 
 extern int pfcp_fd;
-extern struct sockaddr_in upf_pfcp_sockaddr;
 
 /**
  * @brief  : Maintans gateway information
@@ -243,7 +242,7 @@ struct gw_info {
 //	header->message_len = htons(encoded - 4);
 //
 //	if (pfcp_send(pfcp_fd, pfcp_msg,encoded,
-//				&upf_pfcp_sockaddr) < 0 )
+//				&context->upf_ctxt.upf_sockaddr) < 0 )
 //		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 //	else {
 //		cp_stats.session_deletion_req_sent++;

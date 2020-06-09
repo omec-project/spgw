@@ -37,8 +37,10 @@
 #include "cp_interface.h"
 #include "packet_filters.h"
 #include "pfcp_cp_struct.h"
-#include "restoration_timer.h"
+#include "timer.h"
 #include "apn_struct.h"
+#include "cp_peer_struct.h"
+#include "upf_struct.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -417,6 +419,9 @@ typedef struct ue_context {
 	struct eps_bearer *ded_bearer;
 	uint64_t event_trigger;
 
+    /* UE association with UPF context */
+    upf_context_t  *upf_ctxt;
+
     /* Temp - need to find right place to put this */
     void *pco; /* Received PCO from the UE during attach. Once CSRsp sent, release this */
     uint32_t dpId;
@@ -508,7 +513,7 @@ typedef struct pdn_connection {
 	policy_t policy;
 
 	/* timer entry data for stop timer session */
-	peerData *timer_entry;
+	peerData_t *timer_entry; // ajay - is this GTP peer or pfcp peer ?
 
 	/* CSR sequence number for identify CSR retransmission req. */
 	uint32_t csr_sequence;

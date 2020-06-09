@@ -23,6 +23,7 @@
 #include "sm_struct.h"
 #include "cp_config.h"
 
+struct rte_hash *seid_session_hash=NULL;
 extern struct rte_hash *bearer_by_fteid_hash;
 
 #define SM_HASH_SIZE (1 << 18)
@@ -43,12 +44,12 @@ add_sess_entry(uint64_t sess_id, struct resp_info *resp)
 	int ret;
 	struct resp_info *tmp = NULL;
 	/* Lookup for session entry. */
-	ret = rte_hash_lookup_data(sm_hash,
+	ret = rte_hash_lookup_data(seid_session_hash,
 				&sess_id, (void **)&tmp);
 
 	if ( ret < 0) {
 		/* No session entry for sess_id
-		 * Add session entry for sess_id at sm_hash.
+		 * Add session entry for sess_id at seid_session_hash.
 		 */
 
 		tmp = rte_malloc_socket(NULL,
@@ -59,7 +60,7 @@ add_sess_entry(uint64_t sess_id, struct resp_info *resp)
 		memcpy(tmp, resp, sizeof(struct resp_info));
 
 		/* Session Entry not present. Add session Entry */
-		ret = rte_hash_add_key_data(sm_hash,
+		ret = rte_hash_add_key_data(seid_session_hash,
 						&sess_id, resp);
 		if (ret) {
 			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to add entry = %lu"
@@ -81,7 +82,7 @@ uint8_t
 get_sess_entry(uint64_t sess_id, struct resp_info **resp)
 {
 	int ret = 0;
-	ret = rte_hash_lookup_data(sm_hash,
+	ret = rte_hash_lookup_data(seid_session_hash,
 				&sess_id, (void **)resp);
 
 	if ( ret < 0) {
@@ -101,7 +102,7 @@ get_sess_state(uint64_t sess_id)
 {
 	int ret = 0;
 	struct resp_info *resp = NULL;
-	ret = rte_hash_lookup_data(sm_hash,
+	ret = rte_hash_lookup_data(seid_session_hash,
 				&sess_id, (void **)&resp);
 
 	if ( ret < 0) {
@@ -122,7 +123,7 @@ update_sess_state(uint64_t sess_id, uint8_t state)
 {
 	int ret = 0;
 	struct resp_info *resp = NULL;
-	ret = rte_hash_lookup_data(sm_hash,
+	ret = rte_hash_lookup_data(seid_session_hash,
 				&sess_id, (void **)&resp);
 
 	if ( ret < 0) {
@@ -147,11 +148,11 @@ del_sess_entry(uint64_t sess_id)
 	struct resp_info *resp = NULL;
 
 	/* Check Session Entry is present or Not */
-	ret = rte_hash_lookup_data(sm_hash,
+	ret = rte_hash_lookup_data(seid_session_hash,
 					&sess_id, (void **)resp);
 	if (ret) {
 		/* Session Entry is present. Delete Session Entry */
-		ret = rte_hash_del_key(sm_hash, &sess_id);
+		ret = rte_hash_del_key(seid_session_hash, &sess_id);
 
 		if ( ret < 0) {
 			clLog(clSystemLog, eCLSeverityCritical, "%s %s %d:Entry not found for sess_id:%lu...\n",
@@ -314,10 +315,10 @@ get_ue_context(uint32_t teid_key, ue_context_t **context)
  * @return : Returns nothing
  */
 void
-init_sm_hash(void)
+init_transaction_hash(void)
 {
 	struct rte_hash_parameters rte_hash_params = {
-			.name = "state_machine_hash",
+		.name = "state_machine_hash",
 	    .entries = SM_HASH_SIZE,
 	    .key_len = sizeof(uint64_t),
 	    .hash_func = rte_hash_crc,
@@ -325,8 +326,8 @@ init_sm_hash(void)
 	    .socket_id = rte_socket_id(),
 	};
 
-	sm_hash = rte_hash_create(&rte_hash_params);
-	if (!sm_hash) {
+	seid_session_hash = rte_hash_create(&rte_hash_params);
+	if (!seid_session_hash) {
 		rte_panic("%s hash create failed: %s (%u)\n",
 				rte_hash_params.name,
 		    rte_strerror(rte_errno), rte_errno);

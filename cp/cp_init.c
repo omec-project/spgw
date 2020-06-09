@@ -1,17 +1,8 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2019 Sprint
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <signal.h>
@@ -26,7 +17,7 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_cp_association.h"
-#include "restoration_timer.h"
+#include "timer.h"
 #include "sm_struct.h"
 #include "cp_config_new.h"
 #include "cp_config.h"
@@ -34,6 +25,7 @@
 #include "gtpc_timer.h"
 #include "pfcp_timer.h"
 #include "cp_apis.h"
+#include "pfcp_transactions.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -66,7 +58,6 @@ struct sockaddr_in pfcp_sockaddr;
 
 /* UPF PFCP */
 in_port_t upf_pfcp_port;
-struct sockaddr_in upf_pfcp_sockaddr;
 socklen_t s5s8_sockaddr_len = sizeof(s5s8_sockaddr);
 socklen_t s11_mme_sockaddr_len = sizeof(s11_mme_sockaddr);
 
@@ -226,8 +217,33 @@ dump_pcap(uint16_t payload_length, uint8_t *tx_buf)
  * @return : void
  */
 void
-pfcp_timer_retry_send(int fd, peerData *t_tx)
+pfcp_timer_retry_send(int fd, peerData_t *t_tx)
 {
+	int bytes_tx;
+	struct sockaddr_in tx_sockaddr;
+	tx_sockaddr.sin_addr.s_addr = t_tx->dstIP;
+	tx_sockaddr.sin_port = t_tx->dstPort;
+	if (pcap_dumper) {
+		dump_pcap(t_tx->buf_len, t_tx->buf);
+	} else {
+		bytes_tx = sendto(fd, t_tx->buf, t_tx->buf_len, 0,
+			(struct sockaddr *)&tx_sockaddr, sizeof(struct sockaddr_in));
+
+		clLog(clSystemLog, eCLSeverityDebug, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d\n",fd);
+
+	if (bytes_tx != (int) t_tx->buf_len) {
+			clLog(clSystemLog, eCLSeverityCritical, "Transmitted Incomplete Timer Retry Message:"
+					"%u of %d tx bytes : %s\n",
+					t_tx->buf_len, bytes_tx, strerror(errno));
+		}
+	}
+}
+
+// ajay - use this retry timer  for trans 
+void
+pfcp_timer_retry_send_new(int fd, transData_t *t_tx)
+{
+    assert(0);
 	int bytes_tx;
 	struct sockaddr_in tx_sockaddr;
 	tx_sockaddr.sin_addr.s_addr = t_tx->dstIP;
@@ -255,7 +271,7 @@ pfcp_timer_retry_send(int fd, peerData *t_tx)
  * @return : void
  */
 void
-gtpc_timer_retry_send(int fd, peerData *t_tx)
+gtpc_timer_retry_send(int fd, peerData_t *t_tx)
 {
 	int bytes_tx;
 	struct sockaddr_in tx_sockaddr;
@@ -321,7 +337,6 @@ void
 init_pfcp(void)
 {
 	int ret;
-	upf_pfcp_sockaddr.sin_port = htons(pfcp_config.upf_pfcp_port);
 	pfcp_port = htons(pfcp_config.pfcp_port);
 
 	pfcp_fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -349,18 +364,6 @@ init_pfcp(void)
 				ntohs(pfcp_sockaddr.sin_port),
 				strerror(errno));
 	}
-
-// ajay : we need support to take hostname instead of UPF name.... also we
-// need to make sure getaddr info work is good enough...
-#ifndef USE_DNS_QUERY
-	/* Initialize peer UPF inteface for sendto(.., dest_addr), If DNS is Disable */
-	upf_pfcp_port =  htons(pfcp_config.upf_pfcp_port);
-	bzero(upf_pfcp_sockaddr.sin_zero,
-			sizeof(upf_pfcp_sockaddr.sin_zero));
-	upf_pfcp_sockaddr.sin_family = AF_INET;
-	upf_pfcp_sockaddr.sin_port = upf_pfcp_port;
-	upf_pfcp_sockaddr.sin_addr = pfcp_config.upf_pfcp_ip; // ajay - why the hell we are having this kind of variable ?
-#endif  /* USE_DNS_QUERY */
 }
 
 
@@ -538,4 +541,51 @@ init_cp(void)
 #ifdef USE_DNS_QUERY
 	set_dns_config();
 #endif /* USE_DNS_QUERY */
+}
+
+char filename[256] = "../config/cp_rstCnt.txt";
+extern uint8_t rstCnt;
+uint8_t update_rstCnt(void)
+{
+	FILE *fp;
+	int tmp;
+
+	if ((fp = fopen(filename,"rw+")) == NULL){
+		if ((fp = fopen(filename,"w")) == NULL)
+			clLog(clSystemLog, eCLSeverityCritical,"Error! creating cp_rstCnt.txt file");
+	}
+
+	if (fscanf(fp,"%u", &tmp) < 0) {
+		/* Cur pos shift to initial pos */
+		fseek(fp, 0, SEEK_SET);
+		fprintf(fp, "%u\n", ++rstCnt);
+		fclose(fp);
+		return rstCnt;
+
+	}
+	/* Cur pos shift to initial pos */
+	fseek(fp, 0, SEEK_SET);
+
+	rstCnt = tmp;
+	fprintf(fp, "%d\n", ++rstCnt);
+
+	clLog(clSystemLog, eCLSeverityDebug, "Updated restart counter Value of rstcnt=%u\n", rstCnt);
+	fclose(fp);
+
+	return rstCnt;
+}
+
+char hbt_filename[256] = "../config/hrtbeat_recov_time.txt";
+void recovery_time_into_file(uint32_t recov_time)
+{
+	FILE *fp = NULL;
+
+	if ((fp = fopen(hbt_filename, "w+")) == NULL) {
+				clLog(clSystemLog, eCLSeverityCritical, "Unable to open heartbeat recovery file..\n");
+
+	} else {
+		fseek(fp, 0, SEEK_SET);
+		fprintf(fp, "%u\n", recov_time);
+		fclose(fp);
+	}
 }

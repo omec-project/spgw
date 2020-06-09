@@ -28,7 +28,6 @@
 #include "gtpv2c_msg_struct.h"
 
 
-struct rte_hash *sm_hash;
 extern char state_name[40];
 extern char event_name[40];
 
@@ -144,7 +143,7 @@ typedef int (*const EventHandler[END_PROC+1][END_STATE+1][END_EVNT+1])(void *t1,
  * @return : Returns nothing
  */
 void
-init_sm_hash(void);
+init_transaction_hash(void);
 
 /**
  * @brief  : Add session entry in session table.
@@ -163,6 +162,7 @@ add_sess_entry(uint64_t sess_id, struct resp_info *resp);
  */
 uint8_t
 get_sess_entry(uint64_t sess_id, struct resp_info **resp);
+
 
 /**
  * @brief  : Retrive session state from session table.

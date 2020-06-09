@@ -1,17 +1,8 @@
 /*
+ * Copyright 2020-present Open Networking Foundation
  * Copyright (c) 2019 Sprint
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #define _GNU_SOURCE
@@ -27,24 +18,16 @@
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <arpa/inet.h>
-
-#include "restoration_timer.h"
+#include "rte_hash.h"
+#include "rte_errno.h"
+#include "timer.h"
 #include "clogger.h"
+#include "errno.h"
 
-#ifdef CP_BUILD
-#include "main.h"
-#include "cp_stats.h"
-#else
-#include "up_main.h"
-#endif
-#include "gw_adapter.h"
-
-char hbt_filename[256] = "../config/hrtbeat_recov_time.txt";
 
 static pthread_t _gstimer_thread;
 static pid_t _gstimer_tid;
 
-extern struct rte_hash *conn_hash_handle;
 
 const char *getPrintableTime(void)
 {
@@ -107,6 +90,37 @@ static void *_gstimer_thread_func(void *arg)
 	return NULL;
 }
 
+
+//public
+bool gst_init(void)
+{
+	int status;
+	sem_t sem;
+
+	/*
+	 * start the timer thread and wait for _timer_tid to be populated
+	 */
+	sem_init( &sem, 0, 0 );
+	status = pthread_create( &_gstimer_thread, NULL, &_gstimer_thread_func, &sem );
+	if (status != 0)
+		return False;
+
+	sem_wait( &sem );
+	sem_destroy( &sem );
+
+	return true;
+}
+
+//public
+void gst_deinit(void)
+{
+	/*
+	 * stop the timer handler thread
+	 */
+	pthread_kill( _gstimer_thread, SIGUSR1 );
+	pthread_join( _gstimer_thread, NULL );
+}
+
 /**
  * @brief  : Initialize timer
  * @param  : timer_id, timer if
@@ -138,34 +152,7 @@ static bool _create_timer(timer_t *timer_id, const void *data)
 	return status == 0 ? true : false;
 }
 
-bool gst_init(void)
-{
-	int status;
-	sem_t sem;
-
-	/*
-	 * start the timer thread and wait for _timer_tid to be populated
-	 */
-	sem_init( &sem, 0, 0 );
-	status = pthread_create( &_gstimer_thread, NULL, &_gstimer_thread_func, &sem );
-	if (status != 0)
-		return False;
-
-	sem_wait( &sem );
-	sem_destroy( &sem );
-
-	return true;
-}
-
-void gst_deinit(void)
-{
-	/*
-	 * stop the timer handler thread
-	 */
-	pthread_kill( _gstimer_thread, SIGUSR1 );
-	pthread_join( _gstimer_thread, NULL );
-}
-
+// pub;ic 
 bool gst_timer_init( gstimerinfo_t *ti, gstimertype_t tt,
 				gstimercallback cb, int milliseconds, const void *data )
 {
@@ -230,15 +217,6 @@ void gst_timer_stop(gstimerinfo_t *ti)
 }
 
 
-bool initpeerData( peerData *md, const char *name, int ptms, int ttms )
-{
-	md->name = name;
-
-	if ( !gst_timer_init( &md->pt, ttInterval, timerCallback, ptms, md ) )
-		return False;
-
-	return gst_timer_init( &md->tt, ttInterval, timerCallback, ttms, md );
-}
 
 bool startTimer( gstimerinfo_t *ti )
 {
@@ -255,9 +233,9 @@ void deinitTimer( gstimerinfo_t *ti )
 	gst_timer_deinit( ti );
 }
 
-bool init_timer(peerData *md, int ptms, gstimercallback cb)
+bool init_timer(gstimerinfo_t *pt, int ptms, gstimercallback cb, void *data)
 {
-	return gst_timer_init(&md->pt, ttInterval, cb, ptms, md);
+	return gst_timer_init(pt, ttInterval, cb, ptms, data);
 }
 
 bool starttimer(gstimerinfo_t *ti)
@@ -286,75 +264,4 @@ void deinittimer(timer_t *tid)
 	timer_delete(*tid);
 }
 
-void _sleep( int seconds )
-{
-	sleep( seconds );
-}
 
-void del_entry_from_hash(uint32_t ipAddr)
-{
-
-	int ret = 0;
-
-	clLog(clSystemLog, eCLSeverityDebug, " Delete entry from connection table of ip:%s\n",
-			inet_ntoa(*(struct in_addr *)&ipAddr));
-
-	/* Delete entry from connection hash table */
-	ret = rte_hash_del_key(conn_hash_handle,
-			&ipAddr);
-
-	if (ret == -ENOENT)
-		clLog(clSystemLog, eCLSeverityDebug, "key is not found\n");
-	if (ret == -EINVAL)
-		clLog(clSystemLog, eCLSeverityDebug, "Invalid Params: Failed to del from hash table\n");
-	if (ret < 0)
-		clLog(clSystemLog, eCLSeverityDebug, "VS: Failed to del entry from hash table\n");
-
-	conn_cnt--;
-
-}
-
-
-uint8_t process_response(uint32_t dstIp)
-{
-	int ret = 0;
-	peerData *conn_data = NULL;
-
-	// TODO : BUG COmmon peer table is not good..Currently conn_hash_handle is common for all peers
-	// e.g. gtp, pfcp, ....
-	ret = rte_hash_lookup_data(conn_hash_handle,
-			&dstIp, (void **)&conn_data);
-
-	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityDebug, " Entry not found for NODE :%s\n",
-				inet_ntoa(*(struct in_addr *)&dstIp));
-	} else {
-		conn_data->itr_cnt = 0;
-
-		update_peer_timeouts(conn_data->dstIP,0);
-
-		/* Stop transmit timer for specific peer node */
-		stopTimer( &conn_data->tt );
-		/* Stop periodic timer for specific peer node */
-		stopTimer( &conn_data->pt );
-		/* Reset Periodic Timer */
-		if ( startTimer( &conn_data->pt ) == false ) /* Changed - Ajay */
-			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to start...\n");
-
-	}
-	return 0;
-}
-
-void recovery_time_into_file(uint32_t recov_time)
-{
-	FILE *fp = NULL;
-
-	if ((fp = fopen(hbt_filename, "w+")) == NULL) {
-				clLog(clSystemLog, eCLSeverityCritical, "Unable to open heartbeat recovery file..\n");
-
-	} else {
-		fseek(fp, 0, SEEK_SET);
-		fprintf(fp, "%u\n", recov_time);
-		fclose(fp);
-	}
-}

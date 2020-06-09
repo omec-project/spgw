@@ -29,7 +29,6 @@
 #include "upf_struct.h"
 
 extern struct cp_stats_t cp_stats;
-extern struct sockaddr_in upf_pfcp_sockaddr;
 
 /**
  * @brief  : Validate pfcp messages
@@ -76,25 +75,39 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 					&msg->pfcp_msg.pfcp_ass_resp.node_id.node_id_value,
 					IPV4_SIZE);
 
+#if 0
 			if(cp_config->cp_type != SGWC) {
 				/* Init rule tables of user-plane */
-				upf_pfcp_sockaddr.sin_addr.s_addr = msg->upf_ipv4.s_addr;
+				context->upf_ctxt->upf_sockaddr.sin_addr.s_addr = msg->upf_ipv4.s_addr;
 				// init_dp_rule_tables();
 			}
+#endif
 
 			upf_context_t *upf_context = NULL;
 
+            assert(msg->upf_ipv4.s_addr != 0);
 			/*Retrive association state based on UPF IP. */
 			ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 					(const void*) &(msg->upf_ipv4.s_addr), (void **) &(upf_context));
 
+            assert(upf_context != NULL);
 			// TODO : BUG - unsolicitated setup response will cause crash 	
+#ifdef DELETE_THIS
 			if(upf_context->timer_entry->pt.ti_id != 0) {
 				stoptimer(&upf_context->timer_entry->pt.ti_id);
 				deinittimer(&upf_context->timer_entry->pt.ti_id);
 				/* free peer data when timer is de int */
 				rte_free(upf_context->timer_entry);
 			}
+#else
+			if(upf_context->timer_entry->rt.ti_id != 0) {
+				stoptimer(&upf_context->timer_entry->rt.ti_id);
+				deinittimer(&upf_context->timer_entry->rt.ti_id);
+				/* free trans data when timer is deint */
+				rte_free(upf_context->timer_entry);
+                upf_context->timer_entry = NULL;
+			}
+#endif
 
 			if(msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED) {
 				msg->state = ERROR_OCCURED_STATE;

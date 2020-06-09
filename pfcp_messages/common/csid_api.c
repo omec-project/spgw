@@ -32,7 +32,6 @@
 #include "cp.h"
 
 extern int pfcp_fd;
-extern struct sockaddr_in upf_pfcp_sockaddr;
 #else
 #include "up_main.h"
 extern struct in_addr dp_comm_ip;
@@ -463,6 +462,8 @@ del_pfcp_peer_node_sess(uint32_t node_addr, uint8_t iface)
 	header->message_len = htons(encoded - 4);
 
 #ifdef CP_BUILD
+    struct sockaddr_in upf_pfcp_sockaddr;
+    assert(0); // Need handling 
 	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error sending: %i\n",
 				ERR_MSG, errno);

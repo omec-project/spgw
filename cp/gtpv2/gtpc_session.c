@@ -705,15 +705,15 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 	header->message_len = htons(encoded - 4);
 
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0)
+	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
 #ifdef CP_BUILD
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 #endif /* CP_BUILD */
 	}
 
@@ -804,16 +804,16 @@ process_sgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp)
 	header->message_len = htons(encoded - 4);
 
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0)
+	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
 
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
 #ifdef CP_BUILD
 		add_pfcp_if_timer_entry(cb_rsp->header.teid.has_teid.teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 #endif /* CP_BUILD */
 	}
 
@@ -1104,15 +1104,14 @@ process_sgwc_s5s8_delete_session_request(del_sess_rsp_t *ds_resp)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg,encoded,
-				&upf_pfcp_sockaddr) < 0 )
+	if (pfcp_send(pfcp_fd, pfcp_msg,encoded, &context->upf_ctxt->upf_sockaddr) < 0 )
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	else {
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_del_req.header.message_type,SENT,SX);
 #ifdef CP_BUILD
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 #endif /* CP_BUILD */
 	}
 	/* Update UE State */
@@ -1157,12 +1156,12 @@ process_pgwc_s5s8_delete_session_request(del_sess_req_t *ds_req)
 	header->message_len = htons(encoded - 4);
 
 	if (pfcp_send(pfcp_fd, pfcp_msg,encoded,
-				&upf_pfcp_sockaddr) < 0 ) {
+				&context->upf_ctxt->upf_sockaddr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	}else {
 #ifdef CP_BUILD
 		add_pfcp_if_timer_entry(ds_req->header.teid.has_teid.teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded,  _resp.eps_bearer_id - 5);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded,  _resp.eps_bearer_id - 5);
 #endif /* CP_BUILD */
 	}
 
@@ -1300,16 +1299,16 @@ process_pgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0)
+	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
 
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
 #ifdef CP_BUILD
 		add_pfcp_if_timer_entry(cb_rsp->header.teid.has_teid.teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 #endif /* CP_BUILD */
 	}
 
@@ -1502,15 +1501,15 @@ process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	pfcp_header_t *header = (pfcp_header_t *)pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0)
+	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
 #ifdef CP_BUILD
 		add_pfcp_if_timer_entry(ub_rsp->header.teid.has_teid.teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 #endif /* CP_BUILD */
 	}
 	/* Update UE State */

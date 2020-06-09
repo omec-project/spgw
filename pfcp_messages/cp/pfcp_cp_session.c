@@ -3784,17 +3784,17 @@ process_pfcp_sess_est_request(uint32_t teid, pdn_connection_t *pdn, upf_context_
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ){
+	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error sending: %i\n",
 				__func__, __LINE__, errno);
 		return -1;
 	} else {
 
 		/*pfcp-session-estab-req-sent*/
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_est_req.header.message_type,SENT,SX);
 		add_pfcp_if_timer_entry(teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, pdn->default_bearer_id - 5);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, pdn->default_bearer_id - 5);
 	}
 
 	if (add_sess_entry(context->pdns[pdn->default_bearer_id - 5]->seid, resp) != 0) {
@@ -4166,16 +4166,16 @@ int send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ){
+	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &pdn->context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	}
 
 	/* Update UE State */
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-	update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+	update_cli_stats((uint32_t)pdn->context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 						pfcp_sess_mod_req.header.message_type,SENT,SX);
 	add_pfcp_if_timer_entry(mb_req->header.teid.has_teid.teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&pdn->context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 
 	/*Retrive the session information based on session id. */
 	//if (get_sess_entry(context->pdns[ebi_index]->seid, &resp) != 0){
@@ -4611,15 +4611,15 @@ process_sess_mod_req_del_cmd(pdn_connection_t *pdn)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ){
+	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
 
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
 
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 
 	}
 
@@ -4826,13 +4826,13 @@ process_pfcp_sess_mod_request(mod_bearer_req_t *mb_req)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ){
+	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
 		add_pfcp_if_timer_entry(mb_req->header.teid.has_teid.teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 	}
 
 	/* Update the Sequence number for the request */
@@ -5316,13 +5316,13 @@ process_sgwc_delete_session_request(del_sess_req_t *del_req)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ){
+	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 	}
 
 	/* Update UE State */
@@ -5378,15 +5378,15 @@ process_pfcp_sess_del_request(del_sess_req_t *ds_req)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ){
+	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"%s:%d Error sending: %i\n", __func__, __LINE__, errno);
 		return -1;
 	} else  {
 
-				update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+				update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_del_req.header.message_type,SENT,SX);
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 	}
 
 	/* Update the sequence number */
@@ -5442,16 +5442,16 @@ process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ){
+	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(sxlogger, eCLSeverityCritical,
 			"%s:%d Error sending: %i\n", __func__, __LINE__, errno);
 		return -1;
 	} else  {
 
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_del_req.header.message_type, SENT, SX);
 		add_pfcp_if_timer_entry(db_rsp->header.teid.has_teid.teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 	}
 
 	/* Update the sequence number */

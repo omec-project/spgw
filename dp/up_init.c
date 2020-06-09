@@ -478,3 +478,18 @@ dp_ddn_init(void)
 	dest_addr_t.sin_port = htons(cp_comm_port);
 
 }
+
+char hbt_filename[256] = "../config/hrtbeat_recov_time.txt";
+void recovery_time_into_file(uint32_t recov_time)
+{
+	FILE *fp = NULL;
+
+	if ((fp = fopen(hbt_filename, "w+")) == NULL) {
+				clLog(clSystemLog, eCLSeverityCritical, "Unable to open heartbeat recovery file..\n");
+
+	} else {
+		fseek(fp, 0, SEEK_SET);
+		fprintf(fp, "%u\n", recov_time);
+		fclose(fp);
+	}
+}

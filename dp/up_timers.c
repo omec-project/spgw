@@ -31,7 +31,9 @@
 #include "epc_arp.h"
 #include "pfcp_up_set_ie.h"
 #include "pfcp_up_association.h"
-#include "../restoration/restoration_timer.h"
+#include "up_peer_struct.h"
+#include "timer.h"
+#include "up_timers.h"
 
 #include "gw_adapter.h"
 #include "gtpu.h"
@@ -142,7 +144,7 @@ print_eth(struct ether_addr *eth_h, uint8_t type)
  * @return : Returns 0 in case of success , -1 otherwise
  */
 static
-uint8_t arp_req_send(peerData *conn_data)
+uint8_t arp_req_send(peerData_t *conn_data)
 {
 
 	clLog(clSystemLog, eCLSeverityDebug, "Sendto:: ret_arp_data->ip= %s\n",
@@ -175,7 +177,7 @@ uint8_t arp_req_send(peerData *conn_data)
 
 void timerCallback( gstimerinfo_t *ti, const void *data_t )
 {
-	peerData *md = (peerData*)data_t;
+	peerData_t *md = (peerData_t*)data_t;
 	struct rte_mbuf *pkt = rte_pktmbuf_alloc(echo_mpool);
 	struct sockaddr_in dest_addr;
 
@@ -375,7 +377,7 @@ void
 dp_flush_session(uint32_t ip_addr, uint64_t sess_id)
 {
 	int ret = 0;
-	peerData *conn_data = NULL;
+	peerData_t *conn_data = NULL;
 
 	clLog(clSystemLog, eCLSeverityDebug, "Flush sess entry from connection table of ip:%s, sess_id:%lu\n",
 				inet_ntoa(*(struct in_addr *)&ip_addr), sess_id);
@@ -423,7 +425,7 @@ dp_flush_session(uint32_t ip_addr, uint64_t sess_id)
 }
 
 void
-flush_eNB_session(peerData *data_t)
+flush_eNB_session(peerData_t *data_t)
 {
 
 	/* VS: Flush DP session table */
@@ -443,7 +445,7 @@ flush_eNB_session(peerData *data_t)
 	}
 
 	/* VS: delete entry from connection hash table */
-	del_entry_from_hash(data_t->dstIP);
+	del_entry_from_hash(data_t->dstIP); // ajay - what to do for this ?
 	rte_free(data_t);
 	data_t = NULL;
 
@@ -456,7 +458,7 @@ flush_eNB_session(peerData *data_t)
  * @return : Returns 0 in case of success , -1 otherwise
  */
 static int
-check_sess_id_present(uint64_t sess_id, peerData *conn_data)
+check_sess_id_present(uint64_t sess_id, peerData_t *conn_data)
 {
 	int sess_exist = 0;
 	for(uint32_t cnt = 0; cnt < conn_data->sess_cnt; cnt++) {
@@ -467,12 +469,22 @@ check_sess_id_present(uint64_t sess_id, peerData *conn_data)
 	return sess_exist;
 }
 
+bool initpeerData( peerData_t *md, const char *name, int ptms, int ttms )
+{
+	md->name = name;
+
+	if ( !gst_timer_init( &md->pt, ttInterval, timerCallback, ptms, md ) )
+		return False;
+
+	return gst_timer_init( &md->tt, ttInterval, timerCallback, ttms, md );
+}
+
 uint8_t add_node_conn_entry(uint32_t dstIp, uint64_t sess_id, uint8_t portId)
 {
 
 	int ret;
 	struct arp_entry_data *ret_conn_data = NULL;
-	peerData *conn_data = NULL;
+	peerData_t *conn_data = NULL;
 
 	CLIinterface it = SGI;
 
@@ -489,7 +501,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint64_t sess_id, uint8_t portId)
 		 * */
 
 		conn_data = rte_malloc_socket(NULL,
-						sizeof(peerData),
+						sizeof(peerData_t),
 						RTE_CACHE_LINE_SIZE, rte_socket_id());
 
 		if (portId == S1U_PORT_ID) {
@@ -647,3 +659,57 @@ void rest_thread_init(void)
 	}
 
 }
+
+uint8_t process_response(uint32_t dstIp)
+{
+	int ret = 0;
+	peerData_t *conn_data = NULL;
+
+	// TODO : BUG COmmon peer table is not good..Currently conn_hash_handle is common for all peers
+	// e.g. gtp, pfcp, ....
+	ret = rte_hash_lookup_data(conn_hash_handle,
+			&dstIp, (void **)&conn_data);
+
+	if ( ret < 0) {
+		clLog(clSystemLog, eCLSeverityDebug, " Entry not found for NODE :%s\n",
+				inet_ntoa(*(struct in_addr *)&dstIp));
+	} else {
+		conn_data->itr_cnt = 0;
+
+		update_peer_timeouts(conn_data->dstIP,0);
+
+		/* Stop transmit timer for specific peer node */
+		stopTimer( &conn_data->tt );
+		/* Stop periodic timer for specific peer node */
+		stopTimer( &conn_data->pt );
+		/* Reset Periodic Timer */
+		if ( startTimer( &conn_data->pt ) == false ) /* Changed - Ajay */
+			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to start...\n");
+
+	}
+	return 0;
+}
+
+void del_entry_from_hash(uint32_t ipAddr)
+{
+
+	int ret = 0;
+
+	clLog(clSystemLog, eCLSeverityDebug, " Delete entry from connection table of ip:%s\n",
+			inet_ntoa(*(struct in_addr *)&ipAddr));
+
+	/* Delete entry from connection hash table */
+	ret = rte_hash_del_key(conn_hash_handle,
+			&ipAddr);
+
+	if (ret == -ENOENT)
+		clLog(clSystemLog, eCLSeverityDebug, "key is not found\n");
+	if (ret == -EINVAL)
+		clLog(clSystemLog, eCLSeverityDebug, "Invalid Params: Failed to del from hash table\n");
+	if (ret < 0)
+		clLog(clSystemLog, eCLSeverityDebug, "VS: Failed to del entry from hash table\n");
+
+	//conn_cnt--; ajay
+
+}
+

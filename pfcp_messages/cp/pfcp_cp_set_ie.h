@@ -19,7 +19,7 @@
 #include "gtp_ies.h"
 #include "gtp_messages.h"
 #include "cp_io_poll.h"
-#include "restoration_timer.h"
+#include "timer.h"
 #include <sys/queue.h>
 #include "upf_struct.h"
 

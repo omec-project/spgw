@@ -895,7 +895,7 @@ process_echo_response(struct rte_mbuf *echo_pkt)
 {
 
 	int ret = 0;
-	peerData *conn_data = NULL;
+	peerData_t *conn_data = NULL;
 
 	//uint8_t rest_cnt = 0;
 	//struct ether_hdr *eth_h = rte_pktmbuf_mtod(echo_pkt, struct ether_hdr *);

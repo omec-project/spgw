@@ -25,6 +25,7 @@
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
 #include "pfcp_timer.h"
+#include "pfcp_transactions.h"
 
 #if defined(USE_DNS_QUERY)
 #include "sm_pcnd.h"
@@ -360,16 +361,15 @@ get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
  * @return : This function dose not return anything
  */
 static int
-assoication_setup_request(ue_context_t *context, uint8_t ebi_index)
+assoication_setup_request(uint32_t upf_ip, upf_context_t **upf_ctxt)
 {
 	int ret = 0;
-	uint32_t upf_ip = 0;
 	upf_context_t *upf_context = NULL;
 	//char sgwu_fqdn_res[MAX_HOSTNAME_LENGTH] = {0};
 	pfcp_assn_setup_req_t pfcp_ass_setup_req = {0};
-	struct in_addr test; test.s_addr = (context->pdns[ebi_index])->upf_ipv4.s_addr;
+	struct in_addr test; test.s_addr = upf_ip;
 	printf("Initiate PFCP setup to peer address = %s \n", inet_ntoa(test));
-	upf_ip = (context->pdns[ebi_index])->upf_ipv4.s_addr; 
+
 	upf_context  = rte_zmalloc_socket(NULL, sizeof(upf_context_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 
@@ -382,6 +382,12 @@ assoication_setup_request(ue_context_t *context, uint8_t ebi_index)
 
 		return GTPV2C_CAUSE_NO_MEMORY_AVAILABLE;
 	}
+    *upf_ctxt = upf_context;
+
+	bzero(upf_context->upf_sockaddr.sin_zero, sizeof(upf_context->upf_sockaddr.sin_zero));
+	upf_context->upf_sockaddr.sin_family = AF_INET;
+	upf_context->upf_sockaddr.sin_port = htons(pfcp_config.upf_pfcp_port);
+	upf_context->upf_sockaddr.sin_addr.s_addr = upf_ip; 
 
 	ret = upf_context_entry_add(&upf_ip, upf_context);
 	if (ret) {
@@ -391,17 +397,8 @@ assoication_setup_request(ue_context_t *context, uint8_t ebi_index)
 
     LIST_INIT(&upf_context->pendingCSRs);
 
-	ret = buffer_csr_request(context, upf_context, ebi_index);
-	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
-				__func__, __LINE__, ret);
-		return -1;
-	}
-	//memcpy(upf_context->fqdn, sgwu_fqdn_res, strlen(sgwu_fqdn_res));
-
 	upf_context->assoc_status = ASSOC_IN_PROGRESS;
 	upf_context->state = PFCP_ASSOC_REQ_SNT_STATE;
-
 
 	fill_pfcp_association_setup_req(&pfcp_ass_setup_req);
 
@@ -411,14 +408,11 @@ assoication_setup_request(ue_context_t *context, uint8_t ebi_index)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	//ajaybug - why following code was under ifdef dns ?
-//#ifdef USE_DNS_QUERY
-	upf_pfcp_sockaddr.sin_addr.s_addr = upf_ip;
-//#endif /* USE_DNS_QUERY */
-
+    /* Let's have separate transaction and peer */
 	/* fill and add timer entry */
-	peerData *timer_entry = NULL;
-	timer_entry =  pfcp_fill_timer_entry_data(PFCP_IFACE, &upf_pfcp_sockaddr,
+#ifdef DELETE_THIS
+	peerData_t *timer_entry = NULL;
+	timer_entry =  pfcp_fill_timer_entry_data(PFCP_IFACE, &context->upf_ctxt->upf_sockaddr,
 			pfcp_msg, encoded, pfcp_config.request_tries, context->s11_sgw_gtpc_teid, ebi_index);
 
 	if(!(pfcp_add_timer_entry(timer_entry, pfcp_config.request_timeout, pfcp_peer_timer_callback))) {
@@ -426,11 +420,11 @@ assoication_setup_request(ue_context_t *context, uint8_t ebi_index)
 				__FILE__, __func__, __LINE__);
 	}
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ) {
+	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending\n\n");
-	}else {
+	} else {
 
-		update_cli_stats(upf_ip,pfcp_ass_setup_req.header.message_type,SENT,SX);
+		update_cli_stats(upf_ip, pfcp_ass_setup_req.header.message_type, SENT, SX);
 
 		upf_context->timer_entry = timer_entry;
 		if (starttimer(&timer_entry->pt) < 0) {
@@ -438,7 +432,28 @@ assoication_setup_request(ue_context_t *context, uint8_t ebi_index)
 					__FILE__, __func__, __LINE__);
 		}
 	}
+#else
+   	transData_t *trans_entry = NULL;
+	trans_entry =  create_transaction(upf_context, pfcp_msg, encoded); 
 
+	if(!(start_transaction_timer(trans_entry, pfcp_config.request_timeout, transaction_timeout_callback))) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Faild to add timer entry...\n",
+				__FILE__, __func__, __LINE__);
+	}
+
+	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_context->upf_sockaddr) < 0 ) {
+		clLog(clSystemLog, eCLSeverityDebug,"Error sending\n\n");
+	} else {
+
+		update_cli_stats(upf_ip, pfcp_ass_setup_req.header.message_type, SENT, SX);
+
+		if (starttimer(&trans_entry->rt) < 0) {
+			clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Periodic Timer failed to start...\n",
+					__FILE__, __func__, __LINE__);
+		}
+	}
+    upf_context->timer_entry = trans_entry;
+#endif
 	return 0;
 }
 
@@ -495,14 +510,25 @@ process_pfcp_assoication_request(pdn_connection_t *pdn, uint8_t ebi_index)
 		}
 	} else {
 		printf("[%s] - %d -  Initiate PFCP association setup line  %s \n",__FUNCTION__,__LINE__, inet_ntoa(pdn->ipv4));
-		ret = assoication_setup_request(pdn->context, ebi_index);
+        uint32_t upf_ip = pdn->upf_ipv4.s_addr;
+		ret = assoication_setup_request(upf_ip, &upf_context);
 		if (ret) {
 				clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
 						__func__, __LINE__, ret);
 				return ret;
 		}
+        /* We should keep track of UPF used for the UE 
+         * sometime this may be need to be PDN based but 
+         * currently we are far away from multiple PDN & 
+         */
+        pdn->context->upf_ctxt = upf_context;
+	    ret = buffer_csr_request(pdn->context, pdn->context->upf_ctxt, ebi_index);
+	    if (ret) {
+	    	clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
+	    			__func__, __LINE__, ret);
+	    	return -1;
+	    }
 	}
-
 	return 0;
 }
 
@@ -727,12 +753,12 @@ process_pfcp_report_req(pfcp_sess_rpt_req_t *pfcp_sess_rep_req)
 	pfcp_header_t *pfcp_hdr = (pfcp_header_t *) pfcp_msg;
 	pfcp_hdr->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ) {
+	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ) {
 		clLog(sxlogger, eCLSeverityCritical, "Error REPORT REPONSE message: %i\n", errno);
 		return -1;
 	}
 	else {
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_rep_resp.header.message_type,ACC,SX);
 	}
 

@@ -24,6 +24,7 @@ extern int s11_fd;
 extern int s5s8_fd;
 
 
+#ifdef DELETE_THIS
 /**
  * @brief  : Retrives session entry
  * @param  : sess_id, session id
@@ -44,13 +45,14 @@ get_ses_entry(uint64_t sess_id, struct resp_info **resp)
         return 0;
 
 }
+#endif
 
 bool
-gtpc_add_timer_entry(peerData *conn_data, uint32_t timeout_ms,
+gtpc_add_timer_entry(peerData_t *conn_data, uint32_t timeout_ms,
 		gstimercallback cb)
 {
 
-	if (!init_timer(conn_data, timeout_ms, cb))
+	if (!init_timer(&conn_data->pt, timeout_ms, cb, (void *)conn_data))
 	{
 		clLog(clSystemLog, eCLSeverityCritical,"%s:%s:%u =>%s - initialization of %s failed erro no %d\n",
 				__FILE__, __func__, __LINE__,
@@ -75,7 +77,7 @@ gtpc_peer_timer_callback(gstimerinfo_t *ti, const void *data_t )
 
 #pragma GCC diagnostic push  /* require GCC 4.6 */
 #pragma GCC diagnostic ignored "-Wcast-qual"
-        peerData *data =  (peerData *) data_t;
+        peerData_t *data =  (peerData_t *) data_t;
 #pragma GCC diagnostic pop   /* require GCC 4.6 */
 
 
@@ -89,7 +91,7 @@ gtpc_peer_timer_callback(gstimerinfo_t *ti, const void *data_t )
                                 && context->eps_bearers[data->ebi_index]->pdn != NULL ) {
                         pdn = context->eps_bearers[data->ebi_index]->pdn;
                         seid = pdn->seid;
-                        if (get_ses_entry(seid, &resp) != 0){
+                        if (get_sess_entry(seid, &resp) != 0){
                                 /* Assuming that session is not established or resp entry is not created */
                                 upf_context_t *upf_context = NULL;
                                 context_key *key = NULL;
@@ -172,13 +174,13 @@ gtpc_peer_timer_callback(gstimerinfo_t *ti, const void *data_t )
         return;
 }
 
-peerData *
+peerData_t *
 gtpc_fill_timer_entry_data(enum source_interface iface, struct sockaddr_in *peer_addr,
 		uint8_t *buf, uint16_t buf_len, uint8_t itr, uint32_t teid,  uint8_t ebi_index)
 {
-	peerData *timer_entry = NULL;
+	peerData_t *timer_entry = NULL;
 
-	timer_entry = rte_zmalloc_socket(NULL, sizeof(peerData),
+	timer_entry = rte_zmalloc_socket(NULL, sizeof(peerData_t),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if(timer_entry == NULL )
 	{
@@ -188,7 +190,7 @@ gtpc_fill_timer_entry_data(enum source_interface iface, struct sockaddr_in *peer
 				__FILE__, __LINE__);
 		return NULL;
 	}
-	memset(timer_entry, 0, sizeof(peerData));
+	memset(timer_entry, 0, sizeof(peerData_t));
 
 	timer_entry->portId = (uint8_t)iface;
 	timer_entry->dstIP = peer_addr->sin_addr.s_addr;
@@ -207,7 +209,7 @@ void
 delete_gtpv2c_if_timer_entry(uint32_t teid)
 {
 	int ret = 0;
-        peerData *data = NULL;
+        peerData_t *data = NULL;
        	eps_bearer_t *bearer = NULL;
 
         ret = get_bearer_by_teid(teid, &bearer);
@@ -233,7 +235,7 @@ void
 gtpc_delete_timer_entry(uint32_t teid)
 {
 	int ret = 0;
-	peerData *data = NULL;
+	peerData_t *data = NULL;
        	eps_bearer_t *bearer = NULL;
 
         ret = get_bearer_by_teid(teid, &bearer);
@@ -261,7 +263,7 @@ add_gtpv2c_if_timer_entry(uint32_t teid, struct sockaddr_in *peer_addr,
 	uint8_t *buf, uint16_t buf_len, uint8_t ebi_index, enum source_interface iface)
 {
 	int ret = 0;
-	peerData *timer_entry = NULL;
+	peerData_t *timer_entry = NULL;
 	eps_bearer_t *bearer = NULL;
 	ue_context_t *context = NULL;
 

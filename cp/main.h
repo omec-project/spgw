@@ -24,12 +24,13 @@
 #include <rte_meter.h>
 #include <rte_jhash.h>
 #include <rte_version.h>
+#include "cp_peer_struct.h"
 
 //#include "vepc_cp_dp_api.h"
 //#include "dp_ipc_api.h"
 
 #ifdef USE_REST
-#include "../restoration/restoration_timer.h"
+#include "timer.h"
 #endif /* use_rest */
 
 /**
@@ -150,12 +151,20 @@ uint8_t
 update_rstCnt(void);
 
 /**
+ * @brief  : Add entry for recovery time into heartbeat recovery file
+ * @param  : recov_time, recovery time
+ * @return : Returns nothing
+ */
+void recovery_time_into_file(uint32_t recov_time);
+
+
+/**
  * @brief  : flush enodeB session information
  * @param  : data_t, peer node connection information
  * @return : Returns nothing
  */
 void
-flush_eNB_session(peerData *data_t);
+flush_eNB_session(peerData_t *data_t);
 
 /**
  * @brief  : Flush sess entry from connection table of given ip

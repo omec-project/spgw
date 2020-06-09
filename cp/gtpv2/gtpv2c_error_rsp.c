@@ -31,7 +31,6 @@
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
 
-struct sockaddr_in upf_pfcp_sockaddr;
 extern socklen_t s11_mme_sockaddr_len;
 extern socklen_t s5s8_sockaddr_len;
 extern uint16_t payload_length;
@@ -71,13 +70,13 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 							pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 							header->message_len = htons(encoded - 4);
 
-							if(pfcp_send(pfcp_fd, pfcp_msg,encoded, &upf_pfcp_sockaddr) < 0) {
+							if(pfcp_send(pfcp_fd, pfcp_msg,encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
 								fprintf(stderr , " %s:%s:%u Error sending: %i\n",
 										__FILE__, __func__, __LINE__, errno);
 							}else {
 #ifdef CP_BUILD
 							add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
-								&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+								&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 #endif /* CP_BUILD */
 							}
 						} else {

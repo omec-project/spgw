@@ -49,7 +49,6 @@
 
 
 extern int pfcp_fd;
-extern struct sockaddr_in upf_pfcp_sockaddr;
 extern struct sockaddr_in s5s8_recv_sockaddr;
 
 /* PGWC S5S8 handlers:
@@ -450,17 +449,17 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	header->message_len = htons(encoded - 4);
 
 	/*Send the packet to PGWU*/
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0) {
+	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending CSR to PGW-U. err_no: %i\n", errno);
 	} else {
 
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_est_req.header.message_type,SENT,SX);
 
 
 #ifdef CP_BUILD
 		add_pfcp_if_timer_entry(pdn->s5s8_pgw_gtpc_teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 #endif /* CP_BUILD */
 	}
 
@@ -828,7 +827,7 @@ process_sgwc_s5s8_modify_bearer_response(mod_bearer_rsp_t *mb_rsp, gtpv2c_header
 //	header->message_len = htons(encoded - 4);
 //
 //
-//	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0)
+//	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 //		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 //	else
 //	{
@@ -926,16 +925,16 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0)
+	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
 
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
 #ifdef CP_BUILD
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, ebi_index);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
 #endif /* CP_BUILD */
 	}
 
@@ -1017,16 +1016,16 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0) {
+	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
 		clLog(sxlogger, eCLSeverityCritical,
 			"%s : Error in sending MBR to SGW-U. err_no: %i\n",
 			__func__, errno);
 	} else {
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type, SENT, SX);
 #ifdef CP_BUILD
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, pdn->default_bearer_id - 5);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, pdn->default_bearer_id - 5);
 #endif /* CP_BUILD */
 	}
 
@@ -1109,16 +1108,16 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0) {
+	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
 		clLog(sxlogger, eCLSeverityCritical,
 			"%s : Error in sending MBR to SGW-U. err_no: %i\n",
 			__func__, errno);
 	} else {
-		update_cli_stats((uint32_t)upf_pfcp_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type, SENT, SX);
 #ifdef CP_BUILD
 		add_pfcp_if_timer_entry(db_rsp->header.teid.has_teid.teid,
-			&upf_pfcp_sockaddr, pfcp_msg, encoded, pdn->default_bearer_id - 5);
+			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, pdn->default_bearer_id - 5);
 #endif /* CP_BUILD */
 	}
 

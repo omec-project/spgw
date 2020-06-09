@@ -58,8 +58,6 @@
 /******************** IPC msgs **********************/
 #ifdef CP_BUILD
 extern int pfcp_fd;
-extern struct sockaddr_in upf_pfcp_sockaddr;
-
 /**
  * @brief  : Pack the message which has to be sent to DataPlane.
  * @param  : mtype
@@ -158,6 +156,8 @@ send_dp_msg(struct dp_id dp_id, struct msgbuf *msg_payload)
 	pfcp_header_t *header=(pfcp_header_t *) pfd_msg;
 	header->message_len = htons(pfd_msg_len - 4);
 
+    struct sockaddr_in upf_pfcp_sockaddr;
+    assert(0); // Need handling 
 	if (pfcp_send(pfcp_fd, (char *)pfd_msg, pfd_msg_len, &upf_pfcp_sockaddr) < 0 ){
 		clLog(sxlogger, eCLSeverityCritical,"Error sending: %i\n",errno);
 		free(pfd_mgmt_req.app_ids_pfds[0].pfd_context[0].pfd_contents[0].cstm_pfd_cntnt);

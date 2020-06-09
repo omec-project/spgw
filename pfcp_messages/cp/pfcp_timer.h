@@ -28,7 +28,7 @@
  * @param  : teid, teid value
  * @return : Returns pointer to filled timer entry structure
  */
-peerData *
+peerData_t *
 pfcp_fill_timer_entry_data(enum source_interface iface, struct sockaddr_in *peer_addr,
 	uint8_t *buf, uint16_t buf_len, uint8_t itr, uint32_t teid,  uint8_t ebi_index);
 
@@ -40,7 +40,7 @@ pfcp_fill_timer_entry_data(enum source_interface iface, struct sockaddr_in *peer
  * @return : Returns true or false
  */
 bool
-pfcp_add_timer_entry(peerData *conn_data, uint32_t timeout_ms,
+pfcp_add_timer_entry(peerData_t *conn_data, uint32_t timeout_ms,
 				gstimercallback cb);
 
 /**
@@ -82,7 +82,7 @@ delete_pfcp_if_timer_entry(uint32_t teid, uint8_t ebi_index);
  * @return : Returns nothing
  */
 void
-timer_retry_send(int fd, peerData *t_tx);
+timer_retry_send(int fd, peerData_t *t_tx);
 
 
 #endif
