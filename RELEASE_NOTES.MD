@@ -1,3 +1,10 @@
+License & Copyright
+----
+
+SPDX-License-Identifier: Apache-2.0
+
+SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+
 Copyright (c) 2017 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
