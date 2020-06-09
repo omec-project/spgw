@@ -1,4 +1,10 @@
 #! /bin/bash
+
+# SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>
+#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+
 source ../config/dp_config.cfg
 NET_MASK="255.255.255.0"
 

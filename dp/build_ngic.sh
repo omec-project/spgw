@@ -1,4 +1,10 @@
 #! /bin/bash
+
+# SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>
+#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+
 echo "------------------------------------------------------------------------------"
 echo " Building and Clean CP, DP and DPDK "
 echo "------------------------------------------------------------------------------"
