@@ -1,3 +1,8 @@
+// SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+
 #ifndef __GTPv2_PARSING_HELPER
 #define __GTPv2_PARSING_HELPER
 /**

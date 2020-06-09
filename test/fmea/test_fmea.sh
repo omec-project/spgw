@@ -1,4 +1,10 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>
+#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+
 #Usage: ./ngicperf.sh
 #Ensure that all the values are filled correctly in host_config.cfg file in the current directory.
 #Please refer test.cfg file for the various test cases.

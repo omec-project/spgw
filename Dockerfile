@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>
+#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+
 # Multi-stage Dockerfile
 ARG BASE_OS=ubuntu:16.04
 ARG RUN_BASE=runtime
