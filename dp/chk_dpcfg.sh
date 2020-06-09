@@ -1,5 +1,10 @@
 #! /bin/bash
 
+# SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>
+#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+
 #Script to perform mandatory checks while executing run.sh.
 #Input: CFLAG values of DP Makefile which denotes whether DP runs in an optimized manner or on debug mode.
 #This script also verifies for sufficient MEMORY set in config/dp_config.cfg to be 4096 and prompts for user action

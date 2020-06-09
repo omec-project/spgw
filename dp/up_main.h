@@ -1,9 +1,8 @@
-/*
- * Copyright 2020-present Open Networking Foundation
- * Copyright (c) 2019 Sprint
- *
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #ifndef _UP_MAIN_H_
 #define _UP_MAIN_H_
