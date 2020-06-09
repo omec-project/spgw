@@ -1,10 +1,9 @@
+// Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2017 Intel Corporation
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
-/*
- * Copyright 2020-present Open Networking Foundation
- * Copyright (c) 2017 Intel Corporation
- *
- * SPDX-License-Identifier: Apache-2.0
- */
 #include <stdio.h>
 #include <getopt.h>
 #include <rte_ip.h>

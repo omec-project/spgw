@@ -1,9 +1,8 @@
-/*
- * Copyright 2020-present Open Networking Foundation
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- */
+// Copyright 2020-present Open Networking Foundation
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+
 #include "rte_malloc.h"
 #include "rte_lcore.h" 
 #include "trans_struct.h"

@@ -1,10 +1,7 @@
-/*
- * Copyright 2020-present Open Networking Foundation
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- */
-
+// Copyright 2020-present Open Networking Foundation
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 #ifndef __UP_RESTORATION_PEER__H
 #define __UP_RESTORATION_PEER__H
 

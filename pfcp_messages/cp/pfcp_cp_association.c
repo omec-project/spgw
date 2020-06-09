@@ -1,10 +1,8 @@
-/*
- * Copyright 2020-present Open Networking Foundation
- * Copyright (c) 2019 Sprint
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- */
+// Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_set_ie.h"
