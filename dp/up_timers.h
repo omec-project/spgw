@@ -25,4 +25,14 @@ bool initpeerData( peerData_t *md, const char *name, int t1ms, int t2ms );
  */
 void del_entry_from_hash(uint32_t ipAddr);
 
+/**
+ * @brief  : Add node entry
+ * @param  : dstIp, Ip address to be added
+ * @param  : sess_id, session id
+ * @param  : portId, port number
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+uint8_t
+add_node_conn_entry(uint32_t dstIp, uint64_t sess_id, uint8_t portId);
+
 #endif

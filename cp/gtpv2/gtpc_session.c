@@ -19,6 +19,7 @@
 #include "gtpv2c_set_ie.h"
 #include "gtpc_timer.h"
 #include "pfcp_timer.h"
+#include "cp_timers.h"
 
 extern int pfcp_fd;
 extern int s5s8_fd;

@@ -14,6 +14,7 @@
 #include "ue.h"
 #include "clogger.h"
 #include "gw_adapter.h"
+#include "gx_event_handlers.h"
 
 static uint32_t cc_request_number = 0;
 int g_cp_sock ;
@@ -394,34 +395,26 @@ msg_handler_gx( void )
 	if ((ret = gx_pcnd_check(gxmsg, &msg)) != 0)
 		return -1;
 
-	printf("[%s] - %d - Procedure - %d state - %d event - %d. Invoke FSM now  \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
-	if ((msg.proc < END_PROC) && (msg.state < END_STATE) && (msg.event < END_EVNT)) {
-		if (SGWC == cp_config->cp_type) {
-		    ret = (*state_machine_sgwc[msg.proc][msg.state][msg.event])(&msg, gxmsg);
-		} else if (PGWC == cp_config->cp_type) {
-		    ret = (*state_machine_pgwc[msg.proc][msg.state][msg.event])(&msg, gxmsg);
-		} else if (SAEGWC == cp_config->cp_type) {
-		    ret = (*state_machine_saegwc[msg.proc][msg.state][msg.event])(&msg, gxmsg);
-		} else {
-			/* clLog(s11logger, eCLSeverityCritical, "%s : "
-					"Invalid Control Plane Type: %d \n",
-					__func__, cp_config->cp_type); */
-			return -1;
-		}
+    // saegw - INITIAL_PDN_ATTACH_PROC, CCR_SNT_STATE, CCA_RCVD_EVNT - cca_msg_handler 
+    // saegw - DETACH_PROC CCR_SNT_STATE CCA_RCVD_EVNT - cca_t_msg_handler
+    // saegw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC CCRU_SNT_STATE CCA_RCVD_EVNT => del_bearer_cmd_ccau_handler
 
-		if (ret) {
-			/* clLog(s11logger, eCLSeverityCritical, "%s : "
-					"State_Machine Callback failed with Error: %d \n",
-					__func__, ret); */
-			return -1;
-		}
-	} else {
-		/* clLog(s11logger, eCLSeverityCritical, "%s : "
-					"Invalid Procedure or State or Event \n",
-					__func__); */
-		return -1;
-	}
+    // saegw - DED_BER_ACTIVATION_PROC CONNECTED_STATE RE_AUTH_REQ_RCVD_EVNT => process_rar_request_handler
+    // saegw - DED_BER_ACTIVATION_PROC IDEL_STATE RE_AUTH_REQ_RCVD_EVNT => process_rar_request_handler 
+    // saegw - PDN_GW_INIT_BEARER_DEACTIVATION CONNECTED_STATE RE_AUTH_REQ_RCVD_EVNT => process_rar_request_handler
+    // saegw - PDN_GW_INIT_BEARER_DEACTIVATION IDEL_STATE RE_AUTH_REQ_RCVD_EVNT => process_rar_request_handler 
 
+    // pgw - INITIAL_PDN_ATTACH_PROC CCR_SNT_STATE CCA_RCVD_EVNT => cca_msg_handler
+    // pgw - SGW_RELOCATION_PROC CCRU_SNT_STATE CCA_RCVD_EVNT => cca_u_msg_handler_handover
+    // pgw - DETACH_PROC CCR_SNT_STATE CCA_RCVD_EVNT => cca_t_msg_handler
+    // pgw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC CCRU_SNT_STATE CCA_RCVD_EVNT del_bearer_cmd_ccau_handler
+
+    // pgw - DED_BER_ACTIVATION_PROC CONNECTED_STATE RE_AUTH_REQ_RCVD_EVNT process_rar_request_handler
+    // pgw - DED_BER_ACTIVATION_PROC IDEL_STATE RE_AUTH_REQ_RCVD_EVNT process_rar_request_handler 
+    // pgw - PDN_GW_INIT_BEARER_DEACTIVATION CONNECTED_STATE RE_AUTH_REQ_RCVD_EVNT ==> process_rar_request_handler
+    // PGW - PDN_GW_INIT_BEARER_DEACTIVATION IDEL_STATE RE_AUTH_REQ_RCVD_EVNT ==> process_rar_request_handler
+    msg.rx_interface = PGW_GX;
+    process_gx_message(gxmsg, &msg);
 	return 0;
 }
 

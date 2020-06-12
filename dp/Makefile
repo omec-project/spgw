@@ -52,7 +52,7 @@ SRCS-y := up_main.c\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_set_ie.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_sess.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_print_rule.o\
-	$(SRCDIR)/../pfcp_messages/up/pfcp_up_rx_msg.o\
+	$(SRCDIR)/../pfcp_messages/up/pfcp_up_msg_rx.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_association.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_sess_rsp.o\
 

@@ -124,15 +124,6 @@ extern int32_t conn_cnt;
 void rest_thread_init(void);
 
 /**
- * @brief  : Adds node connection entry
- * @param  : dstIp, node ip address
- * @param  : portId, port number of node
- * @return : Returns nothing
- */
-uint8_t
-add_node_conn_entry(uint32_t dstIp, uint8_t portId);
-
-/**
  * @brief  : Updates restart counter Value
  * @param  : No param
  * @return : Returns nothing

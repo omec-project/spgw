@@ -11,7 +11,7 @@
 #include <rte_cfgfile.h>
 #include "gtpv2_common.h"
 #include "gtpv2_interface.h"
-
+#include "gtpv2_evt_handler.h"
 #include "cp.h"
 #include "cp_stats.h"
 #include "cp_config.h"
@@ -29,6 +29,7 @@
 #include "sm_pcnd.h"
 #include "sm_struct.h"
 #include "cp_config_new.h"
+#include "gtpv2c_error_rsp.h"
 
 #ifdef USE_REST
 #include "timer.h"
@@ -54,58 +55,7 @@ extern struct cp_stats_t cp_stats;
 
 uint16_t payload_length;
 
-/* Each message has different way of searching user context */
 
-static void 
-get_user_context_gtp_msg(msg_info *msg)
-{
-    switch(msg->msg_type) 
-    {
-        case GTP_CREATE_SESSION_REQ:  
-        {
-	        uint64_t imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
-            ue_context_t *context; 
-            rte_hash_lookup_data(ue_context_by_imsi_hash, &imsi, (void **) &(context));
-            msg->ue_context = context;
-            break;
-        }
-        default:
-            break;
-    } 
-}
-
-static 
-void process_gtp_message(msg_info *msg)
-{
-    /* fetch user context */
-    // find session context  
-    //      non-zero teid - find context from teid 
-    //      zero teid
-    //          Request     : IMSI from the message
-    //          Response    : transactions
-    // Once we have found/not-found context then get procedure...based on UE context and message content  
-
-    get_user_context_gtp_msg(msg);
-
-    switch(msg->msg_type)
-    {
-        case GTP_CREATE_SESSION_REQ:
-        {
-            handle_create_session_request_msg(msg);
-            break;
-        }
-        case GTP_MODIFY_BEARER_REQ:
-        {
-            handle_modify_bearer_request_msg(msg);
-            break;
-        }
-        default:
-        {
-            break;
-        }
-    }
-    return;
-}
 /**
  * @brief  : Process echo request
  * @param  : gtpv2c_rx, holds data from incoming request
@@ -287,7 +237,8 @@ msg_handler_s11(void)
         // So now we have context. procedure, event, call sm handler  
         // keep procedure/transaction in UE context...
 
-        // decode message
+        // decode message 
+        // currently setting proc and event type which we will move to event handler function later 
 		if ((ret = gtpc_pcnd_check(gtpv2c_s11_rx, &msg, bytes_s11_rx)) != 0)
         {
 			return;
@@ -295,8 +246,9 @@ msg_handler_s11(void)
 
         // validate message content - validate the presence of IEs
         ret = validate_gtpv2_message_content(&msg);
-        if(ret < 0) 
+        if(ret !=  0) 
         {
+            printf("Message validation failed \n");
             // validatation failed;
             return;
         }
@@ -306,54 +258,12 @@ msg_handler_s11(void)
 								gtpv2c_s11_rx->gtpc.message_type,ACC,S11);
 		}
 
-        /* Event figured out from msg. 
+        /* Event set depending on msg type 
          * Proc  found from user context and message content, message type 
          * State is on the pdn connection (for now)..Need some more attention here later   
          */
-        if((msg.msg_type == GTP_CREATE_SESSION_REQ) ||
-           (msg.msg_type == GTP_MODIFY_BEARER_REQ))
-        {
-            process_gtp_message(&msg);
-        }
-		else if ((msg.proc < END_PROC) && (msg.state < END_STATE) && (msg.event < END_EVNT)) {
-		    printf("[%s] - %d - Procedure - %d state - %d event - %d. Invoke FSM now  \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
-			if (SGWC == cp_config->cp_type) {
-			    ret = (*state_machine_sgwc[msg.proc][msg.state][msg.event])(&msg, NULL);
-			} else if (PGWC == cp_config->cp_type) {
-			    ret = (*state_machine_pgwc[msg.proc][msg.state][msg.event])(&msg, NULL);
-			} else if (SAEGWC == cp_config->cp_type) {
-			    ret = (*state_machine_saegwc[msg.proc][msg.state][msg.event])(&msg, NULL);
-			} else {
-				clLog(s11logger, eCLSeverityCritical, "%s : "
-						"Invalid Control Plane Type: %d \n",
-						__func__, cp_config->cp_type);
-				return;
-			}
-
-			if(ret == -2) {
-				clLog(s11logger, eCLSeverityCritical, "%s : "
-						"Discarding re-transmitted csr Error: %d \n",
-						__func__, ret);
-				return;
-			}
-			if (ret) {
-				clLog(s11logger, eCLSeverityCritical, "%s : "
-						"State_Machine Callback failed with Error: %d \n",
-						__func__, ret);
-				return;
-			}
-		} else {
-			if ((msg.proc == END_PROC) &&
-					(msg.state == END_STATE) &&
-					(msg.event == END_EVNT)) {
-				return;
-			}
-
-			clLog(s11logger, eCLSeverityCritical, "%s : "
-						"Invalid Procedure or State or Event \n",
-						__func__);
-			return;
-		}
+        msg.rx_interface = SGW_S11_S4; 
+        process_gtp_message(gtpv2c_s11_rx, &msg);
 	}
 
 #if 0
@@ -596,6 +506,15 @@ msg_handler_s5s8(void)
 			return;
 		}
 
+        // validate message content - validate the presence of IEs
+        ret = validate_gtpv2_message_content(&msg);
+        if(ret !=  0) 
+        {
+            printf("Message validation failed \n");
+            // validatation failed;
+            return;
+        }
+
 	if (cp_config->cp_type == SGWC)
 		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
 					gtpv2c_s5s8_rx->gtpc.message_type,ACC,S5S8);
@@ -611,40 +530,13 @@ msg_handler_s5s8(void)
 			add_node_conn_entry(s5s8_recv_sockaddr.sin_addr.s_addr, S5S8_SGWC_PORT_ID);
 		}
 	}
+        /* Event set depending on msg type 
+         * Proc  found from user context and message content, message type 
+         * State is on the pdn connection (for now)..Need some more attention here later   
+         */
+        msg.rx_interface = PGW_S5_S8; 
+        process_gtp_message(gtpv2c_s5s8_rx, &msg);
 
-		printf("[%s] - %d - Procedure - %d state - %d event - %d. Invoke FSM now  \n",__FUNCTION__, __LINE__,msg.proc, msg.state, msg.event);
-		if ((msg.proc < END_PROC) && (msg.state < END_STATE) && (msg.event < END_EVNT)) {
-			if (SGWC == cp_config->cp_type) {
-			    ret = (*state_machine_sgwc[msg.proc][msg.state][msg.event])(&msg, NULL);
-			} else if (PGWC == cp_config->cp_type) {
-			    ret = (*state_machine_pgwc[msg.proc][msg.state][msg.event])(&msg, NULL);
-			} else if (SAEGWC == cp_config->cp_type) {
-			    ret = (*state_machine_saegwc[msg.proc][msg.state][msg.event])(&msg, NULL);
-			} else {
-				clLog(s5s8logger, eCLSeverityCritical, "%s : "
-						"Invalid Control Plane Type: %d \n",
-						__func__, cp_config->cp_type);
-				return;
-			}
-			if(ret == -2) {
-				clLog(s11logger, eCLSeverityCritical, "%s : "
-						"Discarding re-transmitted csr Error: %d \n",
-						__func__, ret);
-				return;
-			}
-
-			if (ret) {
-				clLog(s5s8logger, eCLSeverityCritical, "%s : "
-						"State_Machine Callback failed with Error: %d \n",
-						__func__, ret);
-				return;
-			}
-		} else {
-			clLog(s11logger, eCLSeverityCritical, "%s : "
-						"Invalid Procedure or State or Event \n",
-						__func__);
-			return;
-		}
 	}
 
 	if (bytes_s5s8_rx > 0)
@@ -674,5 +566,3 @@ msg_handler_s5s8(void)
 		break;
 	}
 }
-
-

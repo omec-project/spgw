@@ -47,51 +47,6 @@ gx_pcnd_check(gx_msg *gx_rx, msg_info *msg)
 					break;
 			}
 
-			/* Retrive Gx_context based on Sess ID. */
-			ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
-					(const void*)(msg->gx_msg.cca.session_id.val),
-					(void **)&gx_context);
-			if (ret < 0) {
-			    clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
-						msg->gx_msg.cca.session_id.val);
-			    return -1;
-			}
-
-			if(msg->gx_msg.cca.presence.result_code &&
-					msg->gx_msg.cca.result_code != 2001){
-				clLog(clSystemLog, eCLSeverityCritical, "%s:Received CCA with DIAMETER Failure [%d]\n", __func__,
-						msg->gx_msg.cca.result_code);
-				return -1;
-			}
-
-			/* Extract the call id from session id */
-			ret = retrieve_call_id((char *)msg->gx_msg.cca.session_id.val, &call_id);
-			if (ret < 0) {
-			        clLog(clSystemLog, eCLSeverityCritical, "%s:No Call Id found from session id:%s\n", __func__,
-			                        msg->gx_msg.cca.session_id.val);
-			        return -1;
-			}
-
-			/* Retrieve PDN context based on call id */
-			pdn_cntxt = get_pdn_conn_entry(call_id);
-			if (pdn_cntxt == NULL)
-			{
-			      clLog(clSystemLog, eCLSeverityCritical, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
-			                          __func__, call_id);
-			      return -1;
-			}
-
-			/* Retrive the Session state and set the event */
-			msg->state = gx_context->state;
-			msg->event = CCA_RCVD_EVNT;
-			msg->proc = gx_context->proc;
-
-			clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-					"Msg_Type:%s[%u], Session Id:%s, "
-					"State:%s, Event:%s\n",
-					__func__, gx_type_str(msg->msg_type), msg->msg_type,
-					msg->gx_msg.cca.session_id.val,
-					get_state_string(msg->state), get_event_string(msg->event));
 			break;
 		}
 		case GX_RAR_MSG: {
@@ -106,49 +61,6 @@ gx_pcnd_check(gx_msg *gx_rx, msg_info *msg)
 			    return -1;
 			}
 
-			ret = retrieve_call_id((char *)&msg->gx_msg.rar.session_id.val, &call_id);
-			if (ret < 0) {
-	        	clLog(clSystemLog, eCLSeverityCritical, "%s:No Call Id found from session id:%s\n", __func__,
-	        	                msg->gx_msg.rar.session_id.val);
-	       	 	return -1;
-			}
-			pdn_connection_t *pdn_cntxt = NULL;
-			/* Retrieve PDN context based on call id */
-			pdn_cntxt = get_pdn_conn_entry(call_id);
-			if (pdn_cntxt == NULL)
-			{
-	     		 clLog(clSystemLog, eCLSeverityCritical, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
-	                								          __func__, call_id);
-	     		 return -1;
-			}
-			/* Retrive Gx_context based on Sess ID. */
-			ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
-					(const void*)(msg->gx_msg.rar.session_id.val),
-					(void **)&gx_context);
-			if (ret < 0) {
-			    clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
-						msg->gx_msg.rar.session_id.val);
-			    return -1;
-			}
-
-			/* Reteive the rqst ptr for RAA */
-			buflen = gx_rar_calc_length (&msg->gx_msg.rar);
-			//gx_context->rqst_ptr = (uint64_t *)(((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + buflen));
-			memcpy( &gx_context->rqst_ptr ,((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + buflen),
-					sizeof(unsigned long));
-
-			pdn_cntxt->rqst_ptr = gx_context->rqst_ptr;
-			/* Retrive the Session state and set the event */
-			msg->state = CONNECTED_STATE;
-			msg->event = RE_AUTH_REQ_RCVD_EVNT;
-			msg->proc = DED_BER_ACTIVATION_PROC;
-
-			clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-					"Msg_Type:%s[%u], Session Id:%s, "
-					"State:%s, Event:%s\n",
-					__func__, gx_type_str(msg->msg_type), msg->msg_type,
-					msg->gx_msg.cca.session_id.val,
-					get_state_string(msg->state), get_event_string(msg->event));
 			break;
 		}
 	default:

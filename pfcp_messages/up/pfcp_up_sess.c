@@ -10,6 +10,7 @@
 #include "pfcp_up_association.h"
 #include "clogger.h"
 #include "gw_adapter.h"
+#include "up_timers.h"
 
 extern struct in_addr dp_comm_ip;
 extern struct in_addr cp_comm_ip;

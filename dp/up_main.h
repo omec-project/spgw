@@ -269,43 +269,12 @@ extern int32_t conn_cnt;
  */
 void rest_thread_init(void);
 
-#ifdef CP_BUILD
-/**
- * @brief  : Add node entry
- * @param  : dstIp, Ip address to be added
- * @param  : portId, port number
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-add_node_conn_entry(uint32_t dstIp, uint8_t portId);
-
-/**
- * @brief  : Update rst count
- * @param  : No param
- * @return : Returns Updated restart counter Value
- */
-uint8_t
-update_rstCnt(void);
-
-#else
-/**
- * @brief  : Add node entry
- * @param  : dstIp, Ip address to be added
- * @param  : sess_id, session id
- * @param  : portId, port number
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-add_node_conn_entry(uint32_t dstIp, uint64_t sess_id, uint8_t portId);
-
 /**
  * rte hash handler.
  *
  * hash handles connections for S1U, SGI and PFCP
  */
 extern struct rte_hash *conn_hash_handle;
-
-#endif /* CP_BUILD */
 
 /**
  * @brief  : Flush enodeB session

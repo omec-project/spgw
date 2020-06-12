@@ -126,9 +126,9 @@ void iface_process_ipc_msgs(void)
 		/* one or both of the descriptors have data */
 		if (FD_ISSET(my_sock.sock_fd, &readfds))
 		{
-				process_pfcp_msg(pfcp_rx, &peer_addr);
+				msg_handler_sx_n4(pfcp_rx, &peer_addr);
 		}
-		/* ajay - CP_BUILD defined for CP build and not defined in case DP BUILD. cp/Makefile has this flag defined  */
+
 		if ((cp_config->cp_type  == SGWC) || (cp_config->cp_type == SAEGWC)) {
 			if (FD_ISSET(my_sock.sock_fd_s11, &readfds)) {
 					msg_handler_s11();

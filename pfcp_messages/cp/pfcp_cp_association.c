@@ -24,6 +24,7 @@
 #include "upf_struct.h"
 #include "pfcp_timer.h"
 #include "pfcp_transactions.h"
+#include "cp_timers.h"
 
 #if defined(USE_DNS_QUERY)
 #include "sm_pcnd.h"
@@ -452,6 +453,7 @@ assoication_setup_request(uint32_t upf_ip, upf_context_t **upf_ctxt)
 	}
     upf_context->timer_entry = trans_entry;
 #endif
+    printf("UPF context allocated \n");
 	return 0;
 }
 
@@ -491,7 +493,9 @@ process_pfcp_assoication_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 			(const void*) &(upf_ipv4.s_addr), (void **) &(upf_context));
 	if (ret >= 0) {
+        printf("UPF found \n");
 		if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
+            printf("UPF association already formed \n");
 			ret = process_pfcp_sess_est_request(pdn->context->s11_sgw_gtpc_teid, pdn, upf_context);
 			if (ret) {
 					clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
@@ -499,6 +503,7 @@ process_pfcp_assoication_request(pdn_connection_t *pdn, uint8_t ebi_index)
 					return ret;
 			}
 		} else {
+            printf("UPF association formation in progress \n");
 			ret = buffer_csr_request(pdn->context, upf_context, ebi_index);
 			if (ret) {
 				clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",

@@ -41,7 +41,6 @@ SRCS-y += cp_io_poll.c
 SRCS-y += state_machine/sm_init.o
 SRCS-y += state_machine/sm_hand.o
 SRCS-y += state_machine/sm_gtpc_pcnd.o
-SRCS-y += state_machine/sm_s5s8_pcnd.o
 SRCS-y += state_machine/sm_pfcp_pcnd.o
 
 SRCS-y += gtpv2/gtpc_session.c
@@ -68,7 +67,7 @@ SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_timer.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_transactions.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_msg_validate.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_association.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_rx_msg.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_msg_rx.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_session.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_set_ie.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_util.o
@@ -147,8 +146,8 @@ LDLIBS += -lm
 # ngic-cp debug/testing/profiling options CFLAGS
 # #############################################################
 #Enable'-g -O0' option for gdb
-CFLAGS += -O0
-#CFLAGS += -g -O0
+#CFLAGS += -O0
+CFLAGS += -g -O0
 
 #un-comment below line to remove all log level for testing.
 CFLAGS += -DPERF_TEST
@@ -211,6 +210,7 @@ endif
 #CFLAGS += -DGX_BUILD
 
 ifneq (,$(findstring GX_BUILD, $(CFLAGS), $(EXTRA_CFLAGS)))
+	SRCS-y += gx_evt_handlers.c
 	SRCS-y += gx_app_interface.c
 	SRCS-y += ipc_api.c
 	SRCS-y += state_machine/sm_gx_pcnd.o

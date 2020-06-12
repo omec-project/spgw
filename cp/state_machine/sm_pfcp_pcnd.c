@@ -60,91 +60,6 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 
 			clLog(sxlogger, eCLSeverityDebug, "Decoded bytes [%d]\n", decoded);
 
-            // TODO : PORT - node_id should come as name or ip address ??
-			memcpy(&msg->upf_ipv4.s_addr,
-					&msg->pfcp_msg.pfcp_ass_resp.node_id.node_id_value,
-					IPV4_SIZE);
-
-#if 0
-			if(cp_config->cp_type != SGWC) {
-				/* Init rule tables of user-plane */
-				context->upf_ctxt->upf_sockaddr.sin_addr.s_addr = msg->upf_ipv4.s_addr;
-				// init_dp_rule_tables();
-			}
-#endif
-
-			upf_context_t *upf_context = NULL;
-
-            assert(msg->upf_ipv4.s_addr != 0);
-			/*Retrive association state based on UPF IP. */
-			ret = rte_hash_lookup_data(upf_context_by_ip_hash,
-					(const void*) &(msg->upf_ipv4.s_addr), (void **) &(upf_context));
-
-            assert(upf_context != NULL);
-			// TODO : BUG - unsolicitated setup response will cause crash 	
-#ifdef DELETE_THIS
-			if(upf_context->timer_entry->pt.ti_id != 0) {
-				stoptimer(&upf_context->timer_entry->pt.ti_id);
-				deinittimer(&upf_context->timer_entry->pt.ti_id);
-				/* free peer data when timer is de int */
-				rte_free(upf_context->timer_entry);
-			}
-#else
-			if(upf_context->timer_entry->rt.ti_id != 0) {
-				stoptimer(&upf_context->timer_entry->rt.ti_id);
-				deinittimer(&upf_context->timer_entry->rt.ti_id);
-				/* free trans data when timer is deint */
-				rte_free(upf_context->timer_entry);
-                upf_context->timer_entry = NULL;
-			}
-#endif
-
-			if(msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED) {
-				msg->state = ERROR_OCCURED_STATE;
-				msg->event = ERROR_OCCURED_EVNT;
-				msg->proc = INITIAL_PDN_ATTACH_PROC;
-				clLog(sxlogger, eCLSeverityDebug,
-						"Cause received  Association response is %d\n",
-						msg->pfcp_msg.pfcp_ass_resp.cause.cause_value);
-
-				/* TODO: Add handling to send association to next upf
-				 * for each buffered CSR 
-                 * Cleanup should be done for each layer
-                 *   1. Cleanup GTPv2
-                 *   2. Cleanup IP-CAN if GX is enabled. 
-                 */
-				cs_error_response(msg,
-								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-                /* cleanup UE context */
-				process_error_occured_handler(&msg, NULL);
-				return -1;
-			}
-
-			if (ret >= 0) {
-				msg->state = upf_context->state;
-				/* Set Hard code value for temporary purpose as assoc is only in initial pdn */
-				msg->proc = INITIAL_PDN_ATTACH_PROC;
-			} else {
-				cs_error_response(msg,
-								  GTPV2C_CAUSE_INVALID_PEER,
-								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-
-				process_error_occured_handler(&msg, NULL);
-				clLog(clSystemLog, eCLSeverityCritical, "%s: Entry not Found Msg_Type:%u, UPF IP:%u, Error_no:%d\n",
-						__func__, msg->msg_type, msg->upf_ipv4.s_addr, ret);
-				return -1;
-			}
-
-			/*Set the appropriate event type.*/
-			msg->event = PFCP_ASSOC_SETUP_RESP_RCVD_EVNT;
-
-			clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-					"Msg_Type:PFCP_ASSOCIATION_SETUP_RESPONSE[%u], UPF_IP:%u, "
-					"Procedure:%s, State:%s, Event:%s\n",
-					__func__, msg->msg_type, msg->upf_ipv4.s_addr,
-					get_proc_string(msg->proc),
-					get_state_string(msg->state), get_event_string(msg->event));
 		break;
 	}
 
@@ -153,17 +68,6 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			decoded = decode_pfcp_pfd_mgmt_rsp_t(pfcp_rx, &msg->pfcp_msg.pfcp_pfd_resp);
 			clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Pfd Mgmt Resp is %d\n",
 					decoded);
-			/* check cause ie */
-			if(msg->pfcp_msg.pfcp_pfd_resp.cause.cause_value !=  REQUESTACCEPTED){
-				clLog(clSystemLog, eCLSeverityCritical, "%s:  Msg_Type:%u, Cause value:%d, offending ie:%u\n",
-							__func__, msg->msg_type, msg->pfcp_msg.pfcp_pfd_resp.cause.cause_value,
-							msg->pfcp_msg.pfcp_pfd_resp.offending_ie.type_of_the_offending_ie);
-					return -1;
-			}
-
-			msg->state = PFCP_PFD_MGMT_RESP_RCVD_STATE;
-			msg->event = PFCP_PFD_MGMT_RESP_RCVD_EVNT;
-			msg->proc = INITIAL_PDN_ATTACH_PROC;
 		break;
 	}
 
@@ -173,51 +77,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 											&msg->pfcp_msg.pfcp_sess_est_resp);
 			clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Sess Estab Resp is %d\n",
 					 decoded);
-			/* Retrive teid from session id */
-			/* stop and delete the timer session for pfcp  est. req. */
-			delete_pfcp_if_timer_entry(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid),
-						UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid) - 5);
 
-			/* Retrive the session information based on session id. */
-			if (get_sess_entry(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid, &resp) != 0) {
-				cs_error_response(msg,
-						  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-				process_error_occured_handler(&msg, NULL);
-				clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u, Sess ID:%lu, Error_no:%d\n",
-						__func__, msg->msg_type,
-						msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid, ret);
-				return -1;
-			}
-
-
-			if(msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value !=
-					REQUESTACCEPTED){
-				msg->state = ERROR_OCCURED_STATE;
-				msg->event = ERROR_OCCURED_EVNT;
-				msg->proc = INITIAL_PDN_ATTACH_PROC;
-				cs_error_response(msg,
-								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-				process_error_occured_handler(&msg, NULL);
-				clLog(sxlogger, eCLSeverityDebug, "Cause received Est response is %d\n",
-						msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value);
-				return -1;
-			}
-
-			msg->state = resp->state;
-			msg->proc = resp->proc;
-
-			/*Set the appropriate event type.*/
-			msg->event = PFCP_SESS_EST_RESP_RCVD_EVNT;
-
-			clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-					"Msg_Type:PFCP_SESSION_ESTABLISHMENT_RESPONSE[%u], Seid:%lu, "
-					"Procedure:%s, State:%s, Event:%s\n",
-					__func__, msg->msg_type,
-					msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid,
-					get_proc_string(msg->proc),
-					get_state_string(msg->state), get_event_string(msg->event));
 		break;
 	}
 
@@ -229,47 +89,6 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			clLog(sxlogger, eCLSeverityDebug, "DECODED bytes in Sess Modify Resp is %d\n",
 					decoded);
 
-			/* Retrive teid from session id */
-			/* stop and delete timer entry for pfcp mod req */
-			delete_pfcp_if_timer_entry(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
-						UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5);
-			/*Validate the modification is accepted or not. */
-			if(msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value !=
-					REQUESTACCEPTED){
-				clLog(sxlogger, eCLSeverityDebug, "Cause received Modify response is %d\n",
-						msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value);
-				mbr_error_response(msg,
-								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-				return -1;
-			}
-
-			/* Retrive the session information based on session id. */
-			if (get_sess_entry(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
-						&resp) != 0) {
-				mbr_error_response(msg,
-								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-				clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u,"
-						"Sess ID:%lu, Error_no:%d\n",
-						__func__, msg->msg_type,
-						msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid, ret);
-				return -1;
-			}
-
-			msg->state = resp->state;
-			msg->proc = resp->proc;
-
-			/*Set the appropriate event type.*/
-			msg->event = PFCP_SESS_MOD_RESP_RCVD_EVNT;
-
-			clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-					"Msg_Type:PFCP_SESSION_MODIFICATION_RESPONSE[%u], Seid:%lu, "
-					"Procedure:%s, State:%s, Event:%s\n",
-					__func__, msg->msg_type,
-					msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
-					get_proc_string(msg->proc),
-					get_state_string(msg->state), get_event_string(msg->event));
 		break;
 	}
 
@@ -280,47 +99,6 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 					clLog(sxlogger, eCLSeverityDebug, "DECODED bytes in Sess Del Resp is %d\n",
 					decoded);
 
-			/* Retrive teid from session id */
-			/* stop and delete timer entry for pfcp sess del req */
-			delete_pfcp_if_timer_entry(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid),
-						UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid) - 5);
-
-			if(msg->pfcp_msg.pfcp_sess_del_resp.cause.cause_value != REQUESTACCEPTED){
-
-				clLog(sxlogger, eCLSeverityCritical, "Cause received Del response is %d\n",
-						msg->pfcp_msg.pfcp_sess_del_resp.cause.cause_value);
-				ds_error_response(msg,
-								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-				return -1;
-			}
-
-			/* Retrive the session information based on session id. */
-			if (get_sess_entry(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
-						&resp) != 0) {
-				clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u, "
-						"Sess ID:%lu, Error_no:%d\n",
-						__func__, msg->msg_type,
-						msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid, ret);
-				ds_error_response(msg,
-								  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-								  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-				return -1;
-			}
-
-			msg->state = resp->state;
-			msg->proc = resp->proc;
-
-			/*Set the appropriate event type.*/
-			msg->event = PFCP_SESS_DEL_RESP_RCVD_EVNT ;
-
-			clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-					"Msg_Type:PFCP_SESSION_DELETION_RESPONSE[%u], Seid:%lu, "
-					"Procedure:%s, State:%s, Event:%s\n",
-					__func__, msg->msg_type,
-					msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
-					get_proc_string(msg->proc),
-					get_state_string(msg->state), get_event_string(msg->event));
 		break;
 	}
 
@@ -333,28 +111,6 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Sess Report Request is %d\n",
 					decoded);
 
-			/* Retrive the session information based on session id. */
-			if (get_sess_entry(msg->pfcp_msg.pfcp_sess_rep_req.header.seid_seqno.has_seid.seid,
-						&resp) != 0) {
-				clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u, Sess ID:%lu, Error_no:%d\n",
-						__func__, msg->msg_type,
-						msg->pfcp_msg.pfcp_sess_rep_req.header.seid_seqno.has_seid.seid, ret);
-				return -1;
-			}
-
-			msg->state = resp->state;
-			msg->proc = resp->proc;
-
-			/*Set the appropriate event type.*/
-			msg->event = PFCP_SESS_RPT_REQ_RCVD_EVNT;
-
-			clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-					"Msg_Type:PFCP_SESSION_REPORT_REQUEST[%u], Seid:%lu, "
-					"Procedure:%s, State:%s, Event:%s\n",
-					__func__, msg->msg_type,
-					msg->pfcp_msg.pfcp_sess_rep_req.header.seid_seqno.has_seid.seid,
-					get_proc_string(msg->proc),
-					get_state_string(msg->state), get_event_string(msg->event));
 		break;
 	}
 
@@ -366,18 +122,6 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Sess Set Deletion Request is %d\n",
 					decoded);
 
-			msg->state = PFCP_SESS_SET_DEL_REQ_RCVD_STATE;
-			msg->proc = RESTORATION_RECOVERY_PROC;
-
-			/*Set the appropriate event type.*/
-			msg->event = PFCP_SESS_SET_DEL_REQ_RCVD_EVNT;
-
-			clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-					" Msg_Type: PFCP_SESSION_SET_DELETION_RESPONSE[%u], "
-					"Procedure:%s, State:%s, Event:%s\n",
-					__func__, msg->msg_type,
-					get_proc_string(msg->proc),
-					get_state_string(msg->state), get_event_string(msg->event));
 		break;
 	case PFCP_SESSION_SET_DELETION_RESPONSE:
 			/*Decode the received msg and stored into the struct. */
@@ -387,18 +131,6 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 			clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Sess Set Deletion Resp is %d\n",
 					decoded);
 
-			msg->state = PFCP_SESS_SET_DEL_REQ_SNT_STATE;
-			msg->proc = RESTORATION_RECOVERY_PROC;
-
-			/*Set the appropriate event type.*/
-			msg->event = PFCP_SESS_SET_DEL_RESP_RCVD_EVNT;
-
-			clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-					" Msg_Type: PFCP_SESSION_SET_DELETION_RESPONSE[%u], "
-					"Procedure:%s, State:%s, Event:%s\n",
-					__func__, msg->msg_type,
-					get_proc_string(msg->proc),
-					get_state_string(msg->state), get_event_string(msg->event));
 		break;
 
 	default:

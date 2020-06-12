@@ -85,6 +85,7 @@ get_sess_entry(uint64_t sess_id, struct resp_info **resp)
 
 }
 
+#ifdef DELETE_THIS
 uint8_t
 get_sess_state(uint64_t sess_id)
 {
@@ -128,6 +129,8 @@ update_sess_state(uint64_t sess_id, uint8_t state)
 	return 0;
 
 }
+
+#endif
 
 uint8_t
 del_sess_entry(uint64_t sess_id)
@@ -632,121 +635,6 @@ const char * get_event_string(int value)
             break;
     }
     return event_name;
-}
-
-uint8_t
-get_procedure(msg_info *msg)
-{
-	uint8_t proc = NONE_PROC;
-
-	switch(msg->msg_type) {
-		case GTP_CREATE_SESSION_REQ: {
-			if (1 == msg->gtpc_msg.csr.indctn_flgs.indication_oi) {
-				/*Set SGW Relocation Case */
-				proc = SGW_RELOCATION_PROC;
-			} else if (msg->gtpc_msg.csr.bearer_contexts_to_be_created.s5s8_u_pgw_fteid.header.len) {
-				/* S1 Based Handover */
-				proc = SERVICE_REQUEST_PROC;
-			} else {
-				proc = INITIAL_PDN_ATTACH_PROC;
-			}
-
-			break;
-		}
-		 case GTP_MODIFY_BEARER_REQ : {
-	               proc = SGW_RELOCATION_PROC;
-				   break;
-	     }
-
-		case GTP_DELETE_SESSION_REQ: {
-		/*if (0 == msg->gtpc_msg.dsr.indctn_flgs.indication_oi &&
-						msg->gtpc_msg.dsr.indctn_flgs.header.len !=0) {
-				proc = SGW_RELOCATION_PROC;
-			} else */{
-				proc = DETACH_PROC;
-			}
-
-			break;
-		}
-
-
-		case GTP_DELETE_SESSION_RSP: {
-				proc = DETACH_PROC;
-			break;
-		}
-		case GTP_RELEASE_ACCESS_BEARERS_REQ: {
-			proc = CONN_SUSPEND_PROC;
-
-			break;
-		}
-
-		case GTP_CREATE_BEARER_REQ: {
-			proc = DED_BER_ACTIVATION_PROC;
-
-			break;
-		}
-
-		case GTP_CREATE_BEARER_RSP: {
-			proc = DED_BER_ACTIVATION_PROC;
-
-			break;
-		}
-
-		case GTP_DELETE_BEARER_REQ: {
-			proc = PDN_GW_INIT_BEARER_DEACTIVATION;
-			break;
-		}
-
-		case GTP_DELETE_BEARER_RSP: {
-			proc = PDN_GW_INIT_BEARER_DEACTIVATION;
-
-			break;
-		}
-
-		case GTP_UPDATE_BEARER_REQ: {
-			proc = UPDATE_BEARER_PROC;
-
-			break;
-		}
-
-		case GTP_UPDATE_BEARER_RSP: {
-			proc = UPDATE_BEARER_PROC;
-
-			break;
-		}
-
-		case GTP_DELETE_BEARER_CMD: {
-			proc = MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC;
-			break;
-		}
-		case GTP_DELETE_PDN_CONNECTION_SET_REQ: {
-			proc = RESTORATION_RECOVERY_PROC;
-
-			break;
-		}
-		case GTP_DELETE_PDN_CONNECTION_SET_RSP: {
-			proc = RESTORATION_RECOVERY_PROC;
-
-			break;
-		}
-		case GTP_UPDATE_PDN_CONNECTION_SET_REQ: {
-			proc = RESTORATION_RECOVERY_PROC;
-
-			break;
-		}
-		case GTP_UPDATE_PDN_CONNECTION_SET_RSP: {
-			proc = RESTORATION_RECOVERY_PROC;
-
-			break;
-		}
-		case GTP_PGW_RESTART_NOTIFICATION_ACK: {
-			proc = RESTORATION_RECOVERY_PROC;
-
-			break;
-		}
-	}
-
-	return proc;
 }
 
 uint8_t

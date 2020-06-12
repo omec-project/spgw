@@ -1669,6 +1669,9 @@ process_del_pdn_conn_set_rsp(void *data, void *unused_param)
 }
 
 /* Function */
+// ajay - unhandled fsm - RESTORATION_RECOVERY_PROC CONNECTED_STATE UPD_PDN_CONN_SET_REQ_RCVD_EVNT => process_upd_pdn_conn_set_req
+// ajay unhandled fsm - RESTORATION_RECOVERY_PROC CONNECTED_STATE UPD_PDN_CONN_SET_REQ_RCVD_EVNT ==> process_upd_pdn_conn_set_req
+// ajay unhandled fsm - RESTORATION_RECOVERY_PROC CONNECTED_STATE UPD_PDN_CONN_SET_REQ_RCVD_EVNT - process_upd_pdn_conn_set_req 
 int
 process_upd_pdn_conn_set_req(void *data, void *unused_param)
 {
@@ -1691,6 +1694,9 @@ process_upd_pdn_conn_set_req(void *data, void *unused_param)
 }
 
 /* Function */
+// ajay - unhandled fsm saegw - RESTORATION_RECOVERY_PROC UPD_PDN_CONN_SET_REQ_SNT_STATE UPD_PDN_CONN_SET_RESP_RCVD_EVNT => process_upd_pdn_conn_set_rsp 
+// ajay unhandled fsm  pgw - RESTORATION_RECOVERY_PROC UPD_PDN_CONN_SET_REQ_SNT_STATE UPD_PDN_CONN_SET_RESP_RCVD_EVNT ==> process_upd_pdn_conn_set_rsp
+// ajay unhandled fsm sgw - RESTORATION_RECOVERY_PROC UPD_PDN_CONN_SET_REQ_SNT_STATE UPD_PDN_CONN_SET_RESP_RCVD_EVNT process_upd_pdn_conn_set_rsp 
 int
 process_upd_pdn_conn_set_rsp(void *data, void *unused_param)
 {
@@ -1733,6 +1739,10 @@ process_pgw_rstrt_notif_ack(void *data, void *unused_param)
 }
 
 /* Function */
+// ajay - unhandled fsm 
+//    pgw RESTORATION_RECOVERY_PROC PFCP_SESS_SET_DEL_REQ_RCVD_STATE PFCP_SESS_SET_DEL_REQ_RCVD_EVNT ==> process_pfcp_sess_set_del_req 
+// sgw unhandled - RESTORATION_RECOVERY_PROC PFCP_SESS_SET_DEL_REQ_RCVD_STATE PFCP_SESS_SET_DEL_RESP_RCVD_EVNT - process_pfcp_sess_set_del_req
+
 int process_pfcp_sess_set_del_req(void *data, void *unused_param)
 {
 #ifdef USE_CSID
@@ -1757,6 +1767,9 @@ int process_pfcp_sess_set_del_req(void *data, void *unused_param)
 }
 
 /* Function */
+// ajay : unhandled fsm saegw - RESTORATION_RECOVERY_PROC PFCP_SESS_SET_DEL_REQ_SNT_STATE PFCP_SESS_SET_DEL_RESP_RCVD_EVNT ==> process_pfcp_sess_set_del_rsp
+// ajay - unhandled fsm pgw - RESTORATION_RECOVERY_PROC PFCP_SESS_SET_DEL_REQ_SNT_STATE PFCP_SESS_SET_DEL_RESP_RCVD_EVNT ==> process_pfcp_sess_set_del_rsp 
+// ajay unhandled fsm sgw - RESTORATION_RECOVERY_PROC PFCP_SESS_SET_DEL_REQ_SNT_STATE PFCP_SESS_SET_DEL_RESP_RCVD_EVNT process_pfcp_sess_set_del_rsp
 int process_pfcp_sess_set_del_rsp(void *data, void *unused_param)
 {
 #ifdef USE_CSID

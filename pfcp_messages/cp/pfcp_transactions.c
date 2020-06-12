@@ -14,6 +14,7 @@
 #include "errno.h"
 #include "rte_common.h"
 #include "pfcp_messages.h"
+#include "assert.h"
 
 transData_t *create_transaction(upf_context_t *upf_ctxt, uint8_t *buf, uint16_t buf_len)
 {
@@ -70,6 +71,7 @@ transaction_timeout_callback(gstimerinfo_t *ti, const void *data_t )
 {
         RTE_SET_USED(ti);
 
+        assert(0);
 #pragma GCC diagnostic push  /* require GCC 4.6 */
 #pragma GCC diagnostic ignored "-Wcast-qual"
         transData_t *data =  (transData_t *) data_t;

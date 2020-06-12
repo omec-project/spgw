@@ -87,7 +87,10 @@ typedef struct msg_info{
 		GxCCA cca;
 		GxRAR rar;
 	}gx_msg;
+
+    uint8_t rx_interface;
     ue_context_t *ue_context;
+    pdn_connection_t *pdn;
     struct sockaddr_in *peer_addr;
 }msg_info;
 
@@ -154,6 +157,7 @@ uint8_t
 get_sess_entry(uint64_t sess_id, struct resp_info **resp);
 
 
+#ifdef DELETE_THIS
 /**
  * @brief  : Retrive session state from session table.
  * @param  : sess_id, session id
@@ -170,6 +174,7 @@ get_sess_state(uint64_t sess_id);
  */
 uint8_t
 update_sess_state(uint64_t sess_id, uint8_t state);
+#endif
 
 /**
  * @brief  : Delete session entry from session table.

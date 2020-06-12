@@ -25,5 +25,14 @@ bool initpeerData( peerData_t *md, const char *name, int t1ms, int t2ms );
  */
 void del_entry_from_hash(uint32_t ipAddr);
 
+/**
+ * @brief  : Adds node connection entry
+ * @param  : dstIp, node ip address
+ * @param  : portId, port number of node
+ * @return : Returns nothing
+ */
+uint8_t
+add_node_conn_entry(uint32_t dstIp, uint8_t portId);
+
 
 #endif

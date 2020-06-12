@@ -71,7 +71,7 @@ DOCKER_TARGETS           ?= cp dp
 #			.; \
 #                docker build $(DOCKER_BUILD_ARGS) \
 #                        --target $$target \
-#                        --tag ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}ngic-$$target:${DOCKER_DEBUG_TAG} \
+#                        --tag ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}spgw-$$target:${DOCKER_DEBUG_TAG} \
 #                        --build-arg RUN_BASE="runtime-utils" \
 #                        --build-arg EXTRA_CFLAGS="-DUSE_AF_PACKET -UPERF_TEST -ggdb " \
 #                        --label "org.label-schema.schema-version=1.0" \
@@ -88,7 +88,7 @@ docker-build:
 	for target in $(DOCKER_TARGETS); do \
                 docker build $(DOCKER_BUILD_ARGS) \
                         --target $$target \
-                        --tag ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}ngic-$$target:${DOCKER_DEBUG_TAG} \
+                        --tag ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}spgw-$$target:${DOCKER_DEBUG_TAG} \
                         --build-arg RUN_BASE="runtime-utils" \
                         --build-arg EXTRA_CFLAGS="-DUSE_AF_PACKET -UPERF_TEST -ggdb " \
                         --label "org.label-schema.schema-version=1.0" \
