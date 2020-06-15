@@ -4,15 +4,21 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #include "gtp_messages_decoder.h"
+#include "gw_adapter.h"
 #include "ue.h"
 #include "cp_stats.h"
 #include "sm_struct.h"
+#include "clogger.h"
 #include "cp_io_poll.h"
-#include "gtpv2c_set_ie.h"
 #include "../cp_dp_api/vepc_cp_dp_api.h"
 #include"cp_config.h"
+#include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
 #include "gtpv2_ie_parsing.h"
+#include "gtpv2_internal.h"
+#include "cp_interface.h"
+#include "sm_structs_api.h"
+#include "cp_config_defs.h"
 
 extern struct cp_stats_t cp_stats;
 
@@ -239,13 +245,6 @@ process_ddn_ack(downlink_data_notification_t ddn_ack, uint8_t *delay)
 		*delay = *ddn_ack.delay;
 	else
 		*delay = 0;
-
-	/*
-	struct dp_id dp_id = { .id = DPN_ID };
-
-	if (send_ddn_ack(dp_id, downlink_data_notification_ack) < 0)
-		rte_exit(EXIT_FAILURE, "Downlink data notification ack fail !!!");
-	*/
 
 	/* VS: Update the UE State */
 	ret = update_ue_state((ddn_ack.context)->s11_sgw_gtpc_teid,

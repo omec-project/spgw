@@ -3,20 +3,21 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
-#include "gtpv2c.h"
 #include "sm_pcnd.h"
 #include "cp_stats.h"
 #include "pfcp_cp_util.h"
 #include "gtp_messages_decoder.h"
 #include "gtpv2c_error_rsp.h"
-#include "cp_config_new.h"
+#include "cp_config.h"
 #include "gtpc_timer.h"
 #include "pfcp_timer.h"
 #include "gtpv2_interface.h"
 #include "cp_timers.h"
+#include "clogger.h"
+#include "sm_structs_api.h"
 
 #ifdef USE_REST
-#include "main.h"
+#include "cp_main.h"
 #endif
 
 #include "cp_config.h"

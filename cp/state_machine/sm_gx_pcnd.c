@@ -3,14 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
-#include "gtpv2c.h"
 #include "sm_pcnd.h"
 #include "cp_stats.h"
 #include "pfcp_cp_util.h"
 #include "pfcp.h"
 #include "gtp_messages_decoder.h"
 #include "cp_config.h"
-#include "cp_config_new.h"
+#include "gw_adapter.h"
 
 extern struct cp_stats_t cp_stats;
 

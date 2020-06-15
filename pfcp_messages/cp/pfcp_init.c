@@ -6,10 +6,11 @@
 #include <stdio.h>
 #include <time.h>
 #include <rte_hash_crc.h>
+#include <rte_errno.h>
 
-#include "cp.h"
 #include "pfcp.h"
 #include "clogger.h"
+#include "gen_utils.h"
 
 /*VS:TODO: Need to revist this for hash size */
 #define PFCP_CNTXT_HASH_SIZE (1 << 15)

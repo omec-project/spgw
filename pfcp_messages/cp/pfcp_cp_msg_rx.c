@@ -14,19 +14,19 @@
 #include "pfcp_messages_decoder.h"
 #include "gw_adapter.h"
 #include "clogger.h"
-#include "pfcp_cp_common.h"
+#include "pfcp_cp_interface.h"
 #include "cp_timers.h"
 #include "pfcp_timer.h"
+#include "sm_structs_api.h"
 
 #include "pfcp.h"
-#include "sm_arr.h"
 #include "sm_pcnd.h"
 #include "cp_stats.h"
 #include "sm_struct.h"
 #include "cp_config.h"
-#include "cp_config_new.h"
+#include "cp_config.h"
 #include "gtpv2c_error_rsp.h"
-#include "cp_global_defs.h"
+#include "cp_config_defs.h"
 
 /*
  * UDP Socket
@@ -34,6 +34,7 @@
 extern udp_sock_t my_sock;
 extern struct rte_hash *heartbeat_recovery_hash;
 
+uint8_t pfcp_rx[1024]; /* TODO: Decide size */
 /*
 saegw    INITIAL_PDN_ATTACH_PROC, PFCP_ASSOC_REQ_SNT_STATE, PFCP_ASSOC_SETUP_RESP_RCVD_EVNT => process_assoc_resp_handler
 saegw    INITIAL_PDN_ATTACH_PROC, PFCP_ASSOC_RESP_RCVD_STATE , PFCP_ASSOC_SETUP_RESP_RCVD_EVNT => process_assoc_resp_handler
@@ -596,10 +597,9 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 
 /* TODO: Parse byte_rx to msg_handler_sx_n4 */
 int
-msg_handler_sx_n4(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
+msg_handler_sx_n4(struct sockaddr_in *peer_addr)
 {
 	int ret = 0, bytes_rx = 0;
-	pfcp_header_t *pfcp_header = (pfcp_header_t *) buf_rx;
 
 	/* TODO: Move this rx */
 	if ((bytes_rx = pfcp_recv(pfcp_rx, 512,
@@ -608,6 +608,7 @@ msg_handler_sx_n4(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		return -1;
 	}
 
+	pfcp_header_t *pfcp_header = (pfcp_header_t *) pfcp_rx;
 	msg_info msg = {0};
 	if(pfcp_header->message_type == PFCP_HEARTBEAT_REQUEST){
 
@@ -615,7 +616,7 @@ msg_handler_sx_n4(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		update_cli_stats(peer_addr->sin_addr.s_addr,
 				pfcp_header->message_type,RCVD,SX);
 
-		ret = process_heartbeat_request(buf_rx, peer_addr);
+		ret = process_heartbeat_request(pfcp_rx, peer_addr);
 		if(ret != 0){
 			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat request\n", __func__);
 			return -1;
@@ -623,7 +624,7 @@ msg_handler_sx_n4(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		return 0;
 	}else if(pfcp_header->message_type == PFCP_HEARTBEAT_RESPONSE){
 		printf("Heartbit response received from UP %s \n",inet_ntoa(peer_addr->sin_addr));
-		ret = process_heartbeat_response(buf_rx, peer_addr);
+		ret = process_heartbeat_response(pfcp_rx, peer_addr);
 		if(ret != 0){
 			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat response\n", __func__);
 			return -1;
@@ -643,7 +644,7 @@ msg_handler_sx_n4(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
         msg.peer_addr = peer_addr;
 
         // TODO - PORT peer address should be copied to msg 
-		if ((ret = pfcp_pcnd_check(buf_rx, &msg, bytes_rx)) != 0) {
+		if ((ret = pfcp_pcnd_check(pfcp_rx, &msg, bytes_rx)) != 0) {
 			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp precondition check\n", __func__);
 
 			update_cli_stats(peer_addr->sin_addr.s_addr,

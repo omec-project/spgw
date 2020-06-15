@@ -8,7 +8,6 @@
 
 #include "gtp_ies.h"
 #include "gtpv2c_error_rsp.h"
-#include "sm_arr.h"
 #include "cp_config.h"
 #include "cp_stats.h"
 #include "ipc_api.h"
@@ -21,13 +20,21 @@
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
+#include "gen_utils.h"
+#include "clogger.h"
+#include "gw_adapter.h"
+#include "sm_structs_api.h"
 
+extern struct sockaddr_in s11_mme_sockaddr;
 extern socklen_t s11_mme_sockaddr_len;
-extern socklen_t s5s8_sockaddr_len;
-extern uint16_t payload_length;
+
 extern int s5s8_fd;
-extern int pfcp_fd;
+extern socklen_t s5s8_sockaddr_len;
 extern struct sockaddr_in s5s8_recv_sockaddr;
+
+extern uint16_t payload_length;
+extern int pfcp_fd;
+extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 int8_t
 clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t imsi_len,uint32_t seq)
@@ -435,8 +442,8 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface)
             		update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
 		}
 #endif
-		bzero(&tx_buf, sizeof(tx_buf));
-		gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) tx_buf;
+		bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
+		gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
 
 		create_sess_rsp_t cs_resp = {0};
 
@@ -489,11 +496,11 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface)
 						rsp_info.teid,&msg->gtpc_msg.csr.imsi.imsi_number_digits,
 						msg->gtpc_msg.csr.imsi.header.len, rsp_info.seq);
 		if(iface == S11_IFACE){
-			gtpv2c_send(s11_fd, tx_buf, payload_length,
+			gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
 					(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
 			update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
 		}else{
-			gtpv2c_send(s5s8_fd, tx_buf, payload_length,
+			gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
 					 (struct sockaddr *)&s5s8_recv_sockaddr,s5s8_sockaddr_len);
 
 			struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)&s5s8_recv_sockaddr;
@@ -523,8 +530,8 @@ void mbr_error_response(msg_info *msg, uint8_t cause_value, int iface)
 
 	get_error_rsp_info(msg, &rsp_info);
 
-	bzero(&tx_buf, sizeof(tx_buf));
-	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) tx_buf;
+	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
+	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
 
 	mod_bearer_rsp_t mb_resp = {0};
 	set_gtpv2c_teid_header(&mb_resp.header,
@@ -562,12 +569,12 @@ void mbr_error_response(msg_info *msg, uint8_t cause_value, int iface)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 
 	if(iface == S11_IFACE){
-		gtpv2c_send(s11_fd, tx_buf, payload_length,
+		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
 
 		update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
 	}else{
-		gtpv2c_send(s5s8_fd, tx_buf, payload_length,
+		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
 				(struct sockaddr *)&s5s8_recv_sockaddr, s5s8_sockaddr_len);
 
 		struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)&s5s8_recv_sockaddr;
@@ -617,10 +624,10 @@ void ds_error_response(msg_info *msg, uint8_t cause_value, int iface)
 		update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
 	}
 #endif
-	bzero(&tx_buf, sizeof(tx_buf));
+	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 
-	bzero(&tx_buf, sizeof(tx_buf));
-	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) tx_buf;
+	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
+	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
 
 	del_sess_rsp_t ds_resp = {0};
 
@@ -642,11 +649,11 @@ void ds_error_response(msg_info *msg, uint8_t cause_value, int iface)
 		return;
 	}
 	if(iface == S11_IFACE){
-		gtpv2c_send(s11_fd, tx_buf, payload_length,
+		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
 		update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
 	}else{
-		gtpv2c_send(s5s8_fd, tx_buf, payload_length,
+		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
 				(struct sockaddr *)&s5s8_recv_sockaddr, s5s8_sockaddr_len);
 
 		struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)&s5s8_recv_sockaddr;
@@ -663,8 +670,8 @@ void ubr_error_response(msg_info *msg, uint8_t cause_value, int iface)
 	err_rsp_info rsp_info = {0};
 	int ebi_index = 0;
 	get_error_rsp_info(msg, &rsp_info);
-	bzero(&tx_buf, sizeof(tx_buf));
-	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)tx_buf;
+	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
+	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
 	if(iface == S5S8_IFACE){
 		upd_bearer_rsp_t ubr_rsp = {0};
@@ -695,7 +702,7 @@ void ubr_error_response(msg_info *msg, uint8_t cause_value, int iface)
 		gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
 		payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 			//send S5S8 interface update bearer response.
-		gtpv2c_send(s5s8_fd, tx_buf, payload_length,
+		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
 		   	  		(struct sockaddr *) &s5s8_recv_sockaddr,
 					s5s8_sockaddr_len);
 	}else{
@@ -728,8 +735,8 @@ void ubr_error_response(msg_info *msg, uint8_t cause_value, int iface)
 void send_version_not_supported(int iface, uint32_t seq)
 {
 
-	bzero(&tx_buf, sizeof(tx_buf));
-	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) tx_buf;
+	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
+	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
 	gtpv2c_header_t *header = (gtpv2c_header_t *) gtpv2c_tx;
 
 	set_gtpv2c_header(header, 0, GTP_VERSION_NOT_SUPPORTED_IND, 0, seq);
@@ -741,11 +748,11 @@ void send_version_not_supported(int iface, uint32_t seq)
 
 	payload_length = msg_len;
 	if(iface == S11_IFACE){
-		gtpv2c_send(s11_fd, tx_buf, payload_length,
+		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
 
 	}else{
-		gtpv2c_send(s5s8_fd, tx_buf, payload_length,
+		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
 				(struct sockaddr *)&s5s8_recv_sockaddr, s5s8_sockaddr_len);
 
 	}

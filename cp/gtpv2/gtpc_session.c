@@ -8,7 +8,6 @@
 #include "gtpc_session.h"
 #include "gtpv2c_error_rsp.h"
 #include "clogger.h"
-#include "main.h"
 #include "gtpv2_internal.h"
 #include "gtpv2_interface.h"
 #include "pfcp_cp_session.h" // ajay - check_interface_type - this should be part of pfcp interface 
@@ -20,12 +19,20 @@
 #include "gtpc_timer.h"
 #include "pfcp_timer.h"
 #include "cp_timers.h"
+#include "gen_utils.h"
+#include "gw_adapter.h"
+#include "sm_structs_api.h"
+#include "pfcp.h"
 
 extern int pfcp_fd;
 extern int s5s8_fd;
 extern socklen_t s5s8_sockaddr_len;
-extern socklen_t s11_mme_sockaddr_len;
 extern struct sockaddr_in s5s8_recv_sockaddr;
+
+extern struct sockaddr_in s11_mme_sockaddr;
+extern socklen_t s11_mme_sockaddr_len;
+
+extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 int
 fill_cs_request(create_sess_req_t *cs_req, ue_context_t *context,
@@ -973,11 +980,6 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 					}
 				}
 			}
-			/*
-			 * struct dp_id dp_id = { .id = DPN_ID };
-			 * session_delete(dp_id, si);
-			 * */
-
 			rte_free(pdn->eps_bearers[i]);
 			pdn->eps_bearers[i] = NULL;
 			context->eps_bearers[i] = NULL;
@@ -1330,8 +1332,8 @@ process_update_bearer_request(upd_bearer_req_t *ubr)
 
 	ue_context_t *context = NULL;
 
-	bzero(&tx_buf, sizeof(tx_buf));
-	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)tx_buf;
+	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
+	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
 	/* for now taking 0th element bearer id bcz
 	 * a request will come from commom PGW for which PDN is same
@@ -1424,7 +1426,7 @@ process_update_bearer_request(upd_bearer_req_t *ubr)
 	s11_mme_sockaddr.sin_addr.s_addr =
 				htonl(context->s11_mme_gtpc_ipv4.s_addr);
 
-	gtpv2c_send(s11_fd, tx_buf, payload_length,
+	gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
 
 	return 0;
@@ -1528,8 +1530,8 @@ process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	ue_context_t *context = NULL;
 	uint16_t payload_length = 0;
 
-	bzero(&tx_buf, sizeof(tx_buf));
-	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)tx_buf;
+	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
+	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
 	ret = get_pdn(ub_rsp->header.teid.has_teid.teid, &pdn_cntxt);
 
@@ -1582,7 +1584,7 @@ process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 	//send S5S8 interface update bearer response.
-	gtpv2c_send(s5s8_fd, tx_buf, payload_length,
+	gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
    	      		(struct sockaddr *) &s5s8_recv_sockaddr,
        			s5s8_sockaddr_len);
 

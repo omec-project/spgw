@@ -22,7 +22,7 @@
 #include <math.h>
 
 #include "cp_interface.h"
-#include "main.h"
+#include "cp_main.h"
 #include "packet_filters.h"
 #include "util.h"
 #include "cp_stats.h"

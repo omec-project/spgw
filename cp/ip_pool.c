@@ -11,7 +11,7 @@
 #include "ip_pool.h"
 #include "gtpv2c_ie.h"
 #include "ue.h"
-#include "cp_config_new.h"
+#include "cp_config.h"
 #include "clogger.h"
 
 /* ajay - only 1 ip pool is supported. Need better pool management  */

@@ -7,7 +7,6 @@
 #define _GTPV2C_ERROR_RSP_H_
 
 #include "ue.h"
-#include "gtpv2c.h"
 #include "sm_struct.h"
 #include "gtpv2c_ie.h"
 

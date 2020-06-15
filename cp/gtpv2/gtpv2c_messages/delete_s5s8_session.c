@@ -10,6 +10,8 @@
 #include "packet_filters.h"
 #include "gtpv2c_set_ie.h"
 #include "../cp_dp_api/vepc_cp_dp_api.h"
+#include "clogger.h"
+#include "sm_structs_api.h"
 
 #include "pfcp_messages.h"
 #include "pfcp_cp_set_ie.h"
@@ -25,6 +27,7 @@
 #include "gtpv2_interface.h"
 
 extern int pfcp_fd;
+extern struct sockaddr_in s11_mme_sockaddr;
 
 /**
  * @brief  : Maintans gateway information

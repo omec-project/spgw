@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "cp_stats.h"
-#include "cp.h"
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <stdbool.h>

@@ -10,7 +10,6 @@
 #include <time.h>
 #include <rte_common.h>
 #define LAST_TIMER_SIZE 80
-#define __file__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 /**
  * @file
  *

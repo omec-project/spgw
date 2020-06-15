@@ -6,10 +6,15 @@
 
 #include <stdio.h>
 #include <rte_hash_crc.h>
+#include <rte_errno.h>
 
 #include "ue.h"
 #include "sm_struct.h"
 #include "cp_config.h"
+#include "cp_log.h"
+#include "gen_utils.h"
+#include "clogger.h"
+#include "sm_structs_api.h"
 
 struct rte_hash *seid_session_hash=NULL;
 extern struct rte_hash *bearer_by_fteid_hash;
@@ -84,53 +89,6 @@ get_sess_entry(uint64_t sess_id, struct resp_info **resp)
 	return 0;
 
 }
-
-#ifdef DELETE_THIS
-uint8_t
-get_sess_state(uint64_t sess_id)
-{
-	int ret = 0;
-	struct resp_info *resp = NULL;
-	ret = rte_hash_lookup_data(seid_session_hash,
-				&sess_id, (void **)&resp);
-
-	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Entry not found for sess_id:%lu...\n",__func__,
-				__file__, __LINE__,sess_id);
-		return -1;
-	}
-
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Msg_Type:%u, Sess ID:%lu, State:%s\n",
-			__func__, resp->msg_type, sess_id, get_state_string(resp->state));
-
-	return resp->state;
-
-}
-
-uint8_t
-update_sess_state(uint64_t sess_id, uint8_t state)
-{
-	int ret = 0;
-	struct resp_info *resp = NULL;
-	ret = rte_hash_lookup_data(seid_session_hash,
-				&sess_id, (void **)&resp);
-
-	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d :Entry not found for sess_id:%lu...\n", __func__,
-				__file__, __LINE__, sess_id);
-		return -1;
-	}
-
-	resp->state = state;
-
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Msg_Type:%u, Sess ID:%lu, State:%s\n",
-			__func__, resp->msg_type, sess_id, get_state_string(resp->state));
-
-	return 0;
-
-}
-
-#endif
 
 uint8_t
 del_sess_entry(uint64_t sess_id)

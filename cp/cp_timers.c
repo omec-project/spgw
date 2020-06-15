@@ -5,9 +5,9 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #include <signal.h>
-
-#include "cp.h"
-#include "main.h"
+#include "stdint.h"
+#include "clogger.h"
+#include "cp_interface.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_association.h"
 #include "cp_stats.h"
@@ -18,14 +18,14 @@
 #include "csid_api.h"
 #include "gtpv2_interface.h"
 #include "cp_timers.h"
-
+#include "cp_config_defs.h"
 #include "timer.h"
 
 
+extern uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
 extern socklen_t s11_mme_sockaddr_len;
 extern socklen_t s5s8_sockaddr_len;
 
-extern struct rte_hash *conn_hash_handle;
 extern int s11_fd;
 extern int s5s8_fd;
 
@@ -339,9 +339,16 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 	clLog(clSystemLog, eCLSeverityDebug, "Current Active Conn Cnt:%u\n", conn_cnt);
 	return 0;
 }
+#ifdef USE_REST
+/**
+ * @brief  : Function to initialize/create shared ring, ring_container and mem_pool to
+ *           inter-communication between DL and iface core.
+ * @param  : No param
+ * @return : Returns nothing
+ */
 
-void
-echo_table_init(void)
+static 
+void echo_table_init(void)
 {
 
 	/* Create conn_hash for maintain each port peer connection details */
@@ -359,10 +366,13 @@ echo_table_init(void)
 	}
 	return;
 }
+#endif /* USE_REST */
 
 void rest_thread_init(void)
 {
+#ifdef USE_REST
 	echo_table_init();
+#endif
 
 	sigset_t sigset;
 

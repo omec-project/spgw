@@ -48,7 +48,6 @@
 #define PCC_TABLE_SIZE               (1025)
 #define METER_PROFILE_SDF_TABLE_SIZE (2048)
 
-#define DPN_ID                       (12345)
 
 #define MAX_BEARERS                  (15)
 #define MAX_FILTERS_PER_UE           (16)

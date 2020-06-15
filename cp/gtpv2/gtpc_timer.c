@@ -4,47 +4,25 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
-#include "gtpv2c.h"
+#include <rte_errno.h>
 #include "pfcp_cp_util.h"
 #include "sm_struct.h"
+#include "sm_structs_api.h"
 #include "rte_common.h"
-#include "cp_config_new.h"
+#include "cp_config.h"
 #include "gtpc_timer.h"
 #include "gtpv2c_error_rsp.h"
 #include "clogger.h"
 #include "rte_hash_crc.h"
 #include "pfcp_cp_set_ie.h" // ajay - upf context should be part of differnt file 
 #include "upf_struct.h"
-#include "cp_apis.h"
+#include "cp_interface.h"
 
 #define DIAMETER_PCC_RULE_EVENT (5142)
 
 extern int s11_fd;
 extern int s5s8_fd;
 
-
-#ifdef DELETE_THIS
-/**
- * @brief  : Retrives session entry
- * @param  : sess_id, session id
- * @param  : resp, structure to be filled with retrived entry
- * @return : Returns 0 in case of success , -1 otherwise
- */
-static uint8_t
-get_ses_entry(uint64_t sess_id, struct resp_info **resp)
-{
-        int ret = 0;
-        ret = rte_hash_lookup_data(sm_hash,
-                                &sess_id, (void **)resp);
-
-        if ( ret < 0) {
-                return -1;
-        }
-
-        return 0;
-
-}
-#endif
 
 bool
 gtpc_add_timer_entry(peerData_t *conn_data, uint32_t timeout_ms,

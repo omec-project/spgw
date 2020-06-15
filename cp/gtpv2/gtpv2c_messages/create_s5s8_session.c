@@ -12,7 +12,6 @@
 #include "../cp_dp_api/vepc_cp_dp_api.h"
 
 #include "pfcp.h"
-#include "gtpv2c.h"
 #include "pfcp_enum.h"
 #include "pfcp_cp_util.h" 
 #include "sm_struct.h"
@@ -27,19 +26,25 @@
 #include "gtpv2_interface.h"
 #include "gtpc_timer.h"
 #include "pfcp_timer.h"
-#include "cp_global_defs.h"
+#include "cp_config_defs.h"
 #include "ip_pool.h"
 #include "apn_apis.h"
 #include "upf_struct.h"
+#include "cp_log.h"
+#include "gen_utils.h"
+#include "sm_structs_api.h"
+#include "clogger.h"
+#include "gw_adapter.h"
 
 #ifdef USE_REST
-#include "main.h"
+#include "cp_main.h"
 #endif /* USE_REST */
 
 
 
 extern int pfcp_fd;
 extern struct sockaddr_in s5s8_recv_sockaddr;
+extern struct sockaddr_in s11_mme_sockaddr;
 
 /* PGWC S5S8 handlers:
  * static int parse_pgwc_s5s8_create_session_request(...)
@@ -321,7 +326,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 			create_s5s8_session_request.
 			s5s8_sgw_gtpc_fteid->fteid_ie_hdr.teid_or_gre;
 
-		pdn->s5s8_pgw_gtpc_ipv4 = pfcp_config.s5s8_ip;
+		pdn->s5s8_pgw_gtpc_ipv4 = cp_config->s5s8_ip;
 
 		s5s8_recv_sockaddr.sin_addr.s_addr =
 						pdn->s5s8_sgw_gtpc_ipv4.s_addr;

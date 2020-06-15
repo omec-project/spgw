@@ -12,25 +12,31 @@
 #include "pfcp_cp_association.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_messages_decoder.h"
-
+#include "sm_structs_api.h"
+#include "clogger.h"
+#include "gw_adapter.h"
 #include "ue.h"
-#include "cp.h"
-#include "main.h"
+#include "cp_main.h"
 #include "pfcp.h"
 #include "ipc_api.h"
 #include "cp_stats.h"
 #include "cp_config.h"
+#include "cp_config_apis.h"
 #include "gtpc_session.h"
 #include "gtp_messages.h"
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
 #include "csid_api.h"
-#include "cp_global_defs.h"
+#include "cp_config_defs.h"
 #include "ip_pool.h"
 #include "apn_apis.h"
 #include "upf_struct.h"
 #include "pfcp_timer.h"
+#include "gen_utils.h"
+#include "gtpv2_internal.h"
 
+extern struct sockaddr_in s5s8_recv_sockaddr;
+extern struct sockaddr_in s11_mme_sockaddr;
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
 static uint32_t s5s8_sgw_gtpc_teid_offset;
 extern int gx_app_sock;
@@ -110,7 +116,7 @@ fill_pfcp_sess_set_del_req( pfcp_sess_set_del_req_t *pfcp_sess_set_del_req)
 	uint32_t epdg_value = inet_addr(epdg_addr);
 	set_fq_csid( &(pfcp_sess_set_del_req->epdg_fqcsid), epdg_value);
 
-	inet_ntop(AF_INET, &(pfcp_config.s11_mme_ip), mme_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->s11_mme_ip), mme_addr, INET_ADDRSTRLEN);
 	unsigned long mme_value = inet_addr(mme_addr);
 	set_fq_csid( &(pfcp_sess_set_del_req->mme_fqcsid), mme_value);
 
@@ -920,7 +926,7 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 	set_fq_csid( &(pfcp_sess_mod_req->sgw_c_fqcsid), sgwc_value);
 
 	char mme_addr[INET_ADDRSTRLEN] ;
-	inet_ntop(AF_INET, &(pfcp_config.s11_mme_ip), mme_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config.s11_mme_ip), mme_addr, INET_ADDRSTRLEN);
 	unsigned long mme_value = inet_addr(mme_addr);
 	set_fq_csid( &(pfcp_sess_mod_req->mme_fqcsid), mme_value);
 
@@ -2156,7 +2162,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	set_fq_csid( &(pfcp_sess_est_req->sgw_c_fqcsid), sgwc_value);
 
 	char mme_addr[INET_ADDRSTRLEN] ;
-	inet_ntop(AF_INET, &(pfcp_config.s11_mme_ip), mme_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config.s11_mme_ip), mme_addr, INET_ADDRSTRLEN);
 	unsigned long mme_value = inet_addr(mme_addr);
 	set_fq_csid( &(pfcp_sess_est_req->mme_fqcsid), mme_value);
 
@@ -2324,7 +2330,7 @@ fill_context_info(create_sess_req_t *csr, ue_context_t *context)
  	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
 	    /* Check ntohl case */
 	    //context->s11_sgw_gtpc_ipv4.s_addr = ntohl(pfcp_config.s11_ip.s_addr);
-	    context->s11_sgw_gtpc_ipv4.s_addr = pfcp_config.s11_ip.s_addr;
+	    context->s11_sgw_gtpc_ipv4.s_addr = cp_config->s11_ip.s_addr;
 	    context->s11_mme_gtpc_teid = csr->sender_fteid_ctl_plane.teid_gre_key;
 	    context->s11_mme_gtpc_ipv4.s_addr = csr->sender_fteid_ctl_plane.ipv4_address;
 	}
@@ -2391,12 +2397,12 @@ fill_pdn_info(create_sess_req_t *csr, pdn_connection_t *pdn)
 	}
 
 	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
-		pdn->s5s8_sgw_gtpc_ipv4 = pfcp_config.s5s8_ip;
+		pdn->s5s8_sgw_gtpc_ipv4 = cp_config->s5s8_ip;
 		pdn->s5s8_sgw_gtpc_ipv4.s_addr = ntohl(pdn->s5s8_sgw_gtpc_ipv4.s_addr);
 		pdn->s5s8_pgw_gtpc_ipv4.s_addr = csr->pgw_s5s8_addr_ctl_plane_or_pmip.ipv4_address;
 
 	} else if (cp_config->cp_type == PGWC){
-		pdn->s5s8_pgw_gtpc_ipv4 = pfcp_config.s5s8_ip;
+		pdn->s5s8_pgw_gtpc_ipv4 = cp_config->s5s8_ip;
 		pdn->s5s8_pgw_gtpc_ipv4.s_addr = ntohl(pdn->s5s8_pgw_gtpc_ipv4.s_addr); //NIKHIL
 		pdn->s5s8_sgw_gtpc_ipv4.s_addr = csr->sender_fteid_ctl_plane.ipv4_address;
 
@@ -4060,7 +4066,7 @@ process_pfcp_sess_est_resp(pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, gtpv2c_head
 		if ((context->sgw_fqcsid)->num_csid) {
 			set_gtpc_fqcsid_t(&cs_req.sgw_fqcsid, IE_INSTANCE_ONE,
 					context->sgw_fqcsid);
-			cs_req.sgw_fqcsid.node_address = ntohl(pfcp_config.s5s8_ip.s_addr);
+			cs_req.sgw_fqcsid.node_address = ntohl(cp_config->s5s8_ip.s_addr);
 		}
 
 		/* Set the MME FQ-CSID */

@@ -13,6 +13,8 @@
 #include "gtpv2_internal.h"
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
+#include "gen_utils.h"
+#include "cp_config_defs.h"
 /**
  * @brief  : Maintains parsed data from modify bearer request
  */

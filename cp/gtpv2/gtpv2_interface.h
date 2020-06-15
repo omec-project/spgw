@@ -18,8 +18,8 @@
 
 #include <stdint.h>
 #include "gtpv2c_ie.h"
-#include "gtpv2c.h"
 #include "gtpv2c_msg_struct.h"
+#include "ue.h"
 
 /**
  * @brief  : Returns cause string from code value as defined by 3gpp TS 29.274.
@@ -444,5 +444,16 @@ int
 decode_check_csr(gtpv2c_header_t *gtpv2c_rx,
 		create_sess_req_t *csr);
 
+
+void msg_handler_s11(void);
+void msg_handler_s5s8(void);
+
+/**
+ * @brief  : Update cli statistics
+ * @param  : msg_type, msg for which cli stats to be updated
+ * @return : Returns nothing
+ */
+void
+stats_update(uint8_t msg_type);
 
 #endif /* DEBUG_STR_H */

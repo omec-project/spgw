@@ -5,11 +5,13 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #include "gtpv2_interface.h"
-#include "gtpv2c.h"
-#include "cp.h"
 #include "clogger.h"
 #include "gtp_messages_decoder.h"
+#include "cp_interface.h"
+#include "cp_config.h"
+#include "cp_stats.h"
 
+struct cp_stats_t cp_stats;
 const char *
 cause_str(enum cause_value cause)
 {
@@ -262,5 +264,58 @@ decode_check_csr(gtpv2c_header_t *gtpv2c_rx,
 	}
 
 	return 0;
+}
+
+void
+stats_update(uint8_t msg_type)
+{
+    switch (cp_config->cp_type) {
+        case SGWC:
+        case SAEGWC:
+            switch (msg_type) {
+                case GTP_CREATE_SESSION_REQ:
+                    cp_stats.create_session++;
+                    break;
+                case GTP_DELETE_SESSION_REQ:
+                    cp_stats.delete_session++;
+                    break;
+                case GTP_MODIFY_BEARER_REQ:
+                    cp_stats.modify_bearer++;
+                    break;
+                case GTP_RELEASE_ACCESS_BEARERS_REQ:
+                    cp_stats.rel_access_bearer++;
+                    break;
+                case GTP_BEARER_RESOURCE_CMD:
+                    cp_stats.bearer_resource++;
+                    break;
+
+                case GTP_DELETE_BEARER_RSP:
+                    cp_stats.delete_bearer++;
+                    return;
+                case GTP_DOWNLINK_DATA_NOTIFICATION_ACK:
+                    cp_stats.ddn_ack++;
+                    break;
+                case GTP_ECHO_REQ:
+                    cp_stats.echo++;
+                    break;
+            }
+            break;
+
+        case PGWC:
+            switch (msg_type) {
+                case GTP_CREATE_SESSION_REQ:
+                    cp_stats.create_session++;
+                    break;
+
+                case GTP_DELETE_SESSION_REQ:
+                    cp_stats.delete_session++;
+                    break;
+            }
+            break;
+        default:
+            rte_panic("main.c::control_plane::cp_stats-"
+                    "Unknown spgw_cfg= %d.", cp_config->cp_type);
+            break;
+    }
 }
 

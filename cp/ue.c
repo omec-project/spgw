@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
+#include <rte_errno.h>
 #include "ue.h"
-#include "cp.h"
 #include "cp_interface.h"
 #include "clogger.h"
 #include "cp_config.h"

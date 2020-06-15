@@ -12,8 +12,8 @@
 #include "clogger.h"
 #include "gw_adapter.h"
 #ifdef CP_BUILD
-#include "cp.h"
-#include "main.h"
+#include "cp_init.h"
+#include "cp_main.h"
 #else
 #include "up_main.h"
 #endif /* CP_BUILD */

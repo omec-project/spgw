@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #include "gtp_messages_decoder.h"
-#include "gtpv2c.h"
 #include "ue.h"
 #include "../cp_dp_api/vepc_cp_dp_api.h"
 #include "gtpv2_ie_parsing.h"

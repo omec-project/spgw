@@ -12,6 +12,7 @@
 #include "vepc_cp_dp_api.h"
 #include "clogger.h"
 #include "gen_utils.h"
+#include "cp_config_defs.h"
 
 const char *direction_str[] = {
 		[TFT_DIRECTION_DOWNLINK_ONLY] = "DOWNLINK_ONLY ",

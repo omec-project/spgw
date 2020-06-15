@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include "gx_app_interface.h"
 #include "ipc_api.h"
-#include "sm_arr.h"
 #include "pfcp.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_association.h"
@@ -15,6 +14,7 @@
 #include "clogger.h"
 #include "gw_adapter.h"
 #include "gx_event_handlers.h"
+#include "gen_utils.h"
 
 static uint32_t cc_request_number = 0;
 int g_cp_sock ;

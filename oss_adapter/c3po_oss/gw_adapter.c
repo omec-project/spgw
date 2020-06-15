@@ -21,11 +21,10 @@
 #ifdef CP_BUILD
 
 #include "../../cp/cp_stats.h"
-#include "../../cp/cp.h"
-#include "../../cp/cp_config_new.h"
+#include "../../cp/cp_init.h"
+#include "../../cp/cp_config.h"
 
 #include "cp_interface.h"
-#include "gtpv2c.h"
 #include "../../cp/ue.h"
 
 #else

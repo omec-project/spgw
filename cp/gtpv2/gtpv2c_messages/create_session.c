@@ -6,6 +6,8 @@
 #include <errno.h>
 #include <rte_debug.h>
 #include "gtp_messages_decoder.h"
+#include "clogger.h"
+#include "gw_adapter.h"
 
 /* TODO: Verify */
 #include "ue.h"
@@ -15,6 +17,7 @@
 #include "../cp_dp_api/vepc_cp_dp_api.h"
 #include "pfcp_cp_set_ie.h"
 #include "cp_config.h"
+#include "cp_config_apis.h"  /* fetch APIs to build PCO */
 #include "cp_stats.h"
 #include "csid_api.h"
 #include "stdint.h"
@@ -23,6 +26,8 @@
 #include "ip_pool.h"
 #include "apn_apis.h"
 #include "upf_struct.h"
+#include "cp_log.h"
+#include "cp_config_defs.h"
 
 extern uint32_t num_adc_rules;
 extern uint32_t adc_rule_id[];
@@ -189,7 +194,7 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 
 	set_cause_accepted(&cs_resp.cause, IE_INSTANCE_ZERO);
 
-	ip.s_addr = ntohl(pfcp_config.s11_ip.s_addr);
+	ip.s_addr = ntohl(cp_config->s11_ip.s_addr);
 
 	if ((context->s11_sgw_gtpc_teid != 0) && (ip.s_addr != 0)) {
 		set_ipv4_fteid(&cs_resp.sender_fteid_ctl_plane,
@@ -415,9 +420,11 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 	memcpy(&context->msisdn, &csr.msisdn.msisdn_number_digits, csr.msisdn.header.len);
 
-	context->s11_sgw_gtpc_ipv4 = pfcp_config.s11_ip;
+	context->s11_sgw_gtpc_ipv4 = cp_config->s11_ip;
 	context->s11_mme_gtpc_teid = csr.sender_fteid_ctl_plane.teid_gre_key;
-	context->s11_mme_gtpc_ipv4 = pfcp_config.s11_mme_ip;
+	struct in_addr peer_addr_temp; 
+    peer_addr_temp.s_addr = csr.sender_fteid_ctl_plane.ipv4_address;
+	context->s11_mme_gtpc_ipv4 = peer_addr_temp; 
 
 	pdn = context->eps_bearers[ebi_index]->pdn;
 	{
@@ -441,7 +448,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 					&csr.chrgng_char.chrgng_char_val,
 					sizeof(csr.chrgng_char.chrgng_char_val));
 
-		pdn->s5s8_sgw_gtpc_ipv4 = pfcp_config.s5s8_ip;
+		pdn->s5s8_sgw_gtpc_ipv4 = cp_config->s5s8_ip;
 		/* Note: s5s8_sgw_gtpc_teid =
 		 * s11_sgw_gtpc_teid
 		 */

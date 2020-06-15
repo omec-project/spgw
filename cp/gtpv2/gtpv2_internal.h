@@ -13,4 +13,6 @@
 
 /* MSISDN length on gtpv2c */
 #define BINARY_MSISDN_LEN 6
+
+#define MAX_GTPV2C_UDP_LEN    (4096)
 #endif

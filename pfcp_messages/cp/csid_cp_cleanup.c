@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
-#include "cp.h"
+#include "cp_init.h"
 #include "pfcp.h"
 #include "clogger.h"
 #include "pfcp_cp_util.h"
@@ -18,6 +18,7 @@
 #include "csid_cp_cleanup.h"
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
+#include "gen_utils.h"
 
 #ifdef GX_BUILD
 #include "gx_app_interface.h"
@@ -29,6 +30,7 @@ extern int gx_app_sock;
 
 extern int pfcp_fd;
 extern socklen_t s11_mme_sockaddr_len;
+extern uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 extern int s5s8_fd;
 struct sockaddr_in s5s8_recv_sockaddr;
@@ -506,7 +508,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 		/* Send the delete PDN set request to PGW */
 		if (cp_config->cp_type == SGWC ) {
 			/* TODO: UPDATE THE NODE ADDRESS */
-			csids.node_addr = pfcp_config.s5s8_ip.s_addr;
+			csids.node_addr = cp_config->s5s8_ip.s_addr;
 
 			fill_gtpc_del_set_pdn_conn_req(gtpv2c_tx, &csids,
 					S5S8_SGWC_PORT_ID);
@@ -609,7 +611,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 	if (del_pdn_req->mme_fqcsid.header.len) {
 		/* Send the delete PDN set request to PGW */
 		if (cp_config->cp_type == SGWC ) {
-			csids.node_addr = ntohl(pfcp_config.s5s8_ip.s_addr);
+			csids.node_addr = ntohl(cp_config->s5s8_ip.s_addr);
 
 			fill_gtpc_del_set_pdn_conn_req(gtpv2c_tx, &csids,
 					S5S8_SGWC_PORT_ID);

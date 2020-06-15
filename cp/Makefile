@@ -25,7 +25,7 @@ APP = ngic_controlplane
 
 # all source are stored in SRCS-y
 
-SRCS-y := main.c
+SRCS-y := cp_main.c
 SRCS-y += ue.c
 SRCS-y += ip_pool.c
 SRCS-y += apn_apis.c
@@ -51,7 +51,6 @@ SRCS-y += gtpv2/gtpv2c_set_ie.c
 SRCS-y += gtpv2/gtpv2_msg_rx.c
 SRCS-y += gtpv2/gtpv2_evt_handler.c
 SRCS-y += gtpv2/gtpv2_msg_validate.c
-SRCS-y += gtpv2/gtpv2c.c
 SRCS-y += gtpv2/gtpv2c_messages/bearer_resource_cmd.o
 SRCS-y += gtpv2/gtpv2c_messages/create_bearer.o
 SRCS-y += gtpv2/gtpv2c_messages/create_session.o

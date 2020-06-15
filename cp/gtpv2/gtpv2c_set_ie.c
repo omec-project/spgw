@@ -8,24 +8,15 @@
 #include "gtpv2c_set_ie.h"
 #include "packet_filters.h"
 #include "clogger.h"
-#include "cp_config_new.h"
+#include "cp_config.h"
 #include <assert.h>
 #include "ue.h"
-#include "gtpv2c.h"
 #include "cp_interface.h"
 #include "gtpv2c_ie.h"
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_ie_parsing.h"
+#include "gtpv2_internal.h"
 
-
-in_port_t s11_port;
-in_port_t s5s8_port;
-struct sockaddr_in s11_sockaddr;
-struct sockaddr_in s5s8_sockaddr;
-
-uint8_t s11_rx_buf[MAX_GTPV2C_UDP_LEN];
-uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
-uint8_t pfcp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 #ifdef USE_REST
 /* ECHO PKTS HANDLING */
@@ -33,8 +24,8 @@ uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
 #endif /* USE_REST */
 
 
-uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
-uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
+extern uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
+extern uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 
 void

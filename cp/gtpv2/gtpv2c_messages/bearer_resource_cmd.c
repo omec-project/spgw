@@ -6,7 +6,7 @@
 #include <rte_errno.h>
 #include <rte_hash.h>
 #include "clogger.h"
-#include "cp_config_new.h"
+#include "cp_config.h"
 #include "gtp_messages_decoder.h"
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_ie_parsing.h"

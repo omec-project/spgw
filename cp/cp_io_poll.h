@@ -11,7 +11,7 @@
  * prototypes of Interface message parsing.
  */
 #include "cp_interface.h"
-#include "main.h"
+#include "cp_main.h"
 #include "gtpv2c_msg_struct.h"
 
 /* message types */
@@ -78,14 +78,6 @@ struct msgbuf {
 struct msgbuf sbuf;
 struct msgbuf rbuf;
 
-uint8_t pfcp_rx[1024]; /* TODO: Decide size */
-
-/* IPC msg node */
-struct ipc_node {
-	int msg_id;	/*msg type*/
-	int (*msg_cb)(struct msgbuf *msg_payload);	/*callback function*/
-};
-struct ipc_node *basenode;
 
 /**
  * @brief Function to recv the IPC message and process them.
@@ -94,43 +86,6 @@ struct ipc_node *basenode;
  */
 void iface_process_ipc_msgs(void);
 
-/**
- * @brief Function to Inilialize memory for IPC msg.
- *
- * @param
- *	void
- */
-void iface_init_ipc_node(void);
-/**
- * @brief Functino to register call back apis with msg id..
- *
- * @param msg_id
- *	msg_id - id number on which the call back function should
- *	invoked.
- * @param msg_payload
- *	msg_payload - payload of the message
- *
- * This function is thread safe due to message queue implementation.
- */
-void
-iface_ipc_register_msg_cb(int msg_id,
-		int (*msg_cb)(struct msgbuf *msg_payload));
-
-
-//#ifdef DP_BUILD
-int
-udp_recv(void *msg_payload, uint32_t size,
-			struct sockaddr_in *peer_addr);
-
-/**
- * @brief Functino to Process IPC msgs.
- *
- * @param none
- * Return
- * 0 on success, -1 on failure
- */
-void msg_handler_s11(void);
-void msg_handler_s5s8(void);
 
 /**
  * @brief Functino to init rte hash tables.

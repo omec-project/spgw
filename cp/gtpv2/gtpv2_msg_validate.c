@@ -7,7 +7,7 @@
 
 #include "sm_struct.h"
 #include "gtp_messages.h"
-#include "cp_config_new.h"
+#include "cp_config.h"
 #include "gtpv2_common.h"
 #include "clogger.h"
 #include "stdio.h"

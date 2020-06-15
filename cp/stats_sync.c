@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
-#include "cp.h"
+#include "clogger.h"
+#include "cp_config_defs.h"
 
 #define CSV_EXTENSION ".csv"
 #define CUR_EXTENSION ".cur"

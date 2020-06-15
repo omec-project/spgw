@@ -6,6 +6,9 @@
 
 #include "ue.h"
 #include "pfcp.h"
+#include "clogger.h"
+#include "gw_adapter.h"
+#include "sm_structs_api.h"
 #include "cp_stats.h"
 #include "cp_config.h"
 #include "sm_struct.h"
@@ -19,6 +22,7 @@
 #include "pfcp_timer.h"
 #include "pfcp_cp_util.h"
 #include "gtpv2_interface.h"
+#include "gen_utils.h"
 
 extern int pfcp_fd;
 

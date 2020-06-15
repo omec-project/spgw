@@ -19,7 +19,7 @@ int validate_pfcp_message_content(msg_info *msg);
  *           received message buffer size
  * @return : Returns 0 in case of success , -1 otherwise
  */
-int msg_handler_sx_n4(uint8_t *buf_rx, struct sockaddr_in *peer_addr);
+int msg_handler_sx_n4(struct sockaddr_in *peer_addr);
 
 
 #endif

@@ -2,19 +2,20 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
-
-#include "cp_global_defs.h"
+#include <rte_errno.h>
+#include "cp_config_defs.h"
 #include "pfcp_ies.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_enum.h"
 #include "clogger.h"
 
-#include "cp.h"
-#include "main.h"
+#include "cp_main.h"
 #include "pfcp.h"
-#include "cp_global_defs.h"
 #include "upf_struct.h"
+#include "cp_log.h"
+#include "gen_utils.h"
+#include "cp_config.h"
 
 #define RI_MAX 8
 
@@ -27,7 +28,6 @@ uint32_t start_time;
 const uint32_t pfcp_base_seq_no = 0x00000000;
 static uint32_t pfcp_seq_no_offset;
 
-#include "cp_config_new.h"
 static uint32_t pfcp_sgwc_seid_offset;
 
 //static uint16_t pdn_conn_set_id;

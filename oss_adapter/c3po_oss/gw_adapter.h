@@ -9,8 +9,8 @@
 
 /* TODO: Verify */
 #ifdef CP_BUILD
-#include "cp.h"
-#include "cp_config_new.h"
+#include "cp_init.h"
+#include "cp_config.h"
 #endif /* CP_BUILD */
 
 #define REST_SUCESSS  200

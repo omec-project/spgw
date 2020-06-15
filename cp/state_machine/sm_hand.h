@@ -1,8 +1,11 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
+#ifndef __SM_HAND_H__
+#define __SM_HAND_H__ 
 #include <stdio.h>
 #include "sm_enum.h"
 
@@ -328,3 +331,4 @@ int process_pfcp_sess_set_del_rsp(void *arg1, void *arg2);
 /* Function */
 int cca_u_msg_handler_handover(void *arg1, void *argu2);
 
+#endif

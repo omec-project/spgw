@@ -10,6 +10,8 @@
 #include "pfcp.h"
 #include "gx_error_rsp.h"
 #include "upf_struct.h"
+#include "gen_utils.h"
+#include "sm_structs_api.h"
 extern int gx_app_sock;
 
 #if 0

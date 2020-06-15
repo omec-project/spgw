@@ -8,7 +8,7 @@
 #include "rte_common.h"
 #include "sm_struct.h"
 #include "gtp_messages.h"
-#include "cp_config_new.h"
+#include "cp_config.h"
 #include "sm_enum.h"
 #include "gtpv2_evt_handler.h"
 #include "gtpv2c_error_rsp.h"
@@ -19,6 +19,7 @@
 #include "gw_adapter.h"
 #include "gtpv2_interface.h"
 #include "pfcp_timer.h"  // ajay - need to cleanup 
+#include "sm_structs_api.h"
 
 extern int s11logger;
 extern int s5s8logger;
@@ -81,9 +82,25 @@ int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
 			/*Set the appropriate state for the SAEGWC and PGWC*/
 #ifdef GX_BUILD
 			msg->state = PGWC_NONE_STATE;
+        	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
+        			"Msg_Type:%s[%u], Teid:%u, "
+        			"Procedure:%s, State:%s, Event:%s\n",
+        			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+        			gtpv2c_rx->teid.has_teid.teid,
+        			get_proc_string(msg->proc),
+        			get_state_string(msg->state), get_event_string(msg->event));
+
             gx_setup_handler((void*)msg, NULL);
 #else
 			msg->state = SGWC_NONE_STATE;
+        	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
+        			"Msg_Type:%s[%u], Teid:%u, "
+        			"Procedure:%s, State:%s, Event:%s\n",
+        			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+        			gtpv2c_rx->teid.has_teid.teid,
+        			get_proc_string(msg->proc),
+        			get_state_string(msg->state), get_event_string(msg->event));
+
             association_setup_handler((void *)msg, NULL);
 #endif
 		}
@@ -94,16 +111,6 @@ int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
 		/* S1 handover  */
         assert(0);
 	}
-
-#if 0
-	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
-			"Msg_Type:%s[%u], Teid:%u, "
-			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
-			gtpv2c_rx->teid.has_teid.teid,
-			get_proc_string(msg->proc),
-			get_state_string(msg->state), get_event_string(msg->event));
-#endif
     return 0;
 }
 

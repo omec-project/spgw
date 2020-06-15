@@ -13,11 +13,11 @@
 #include "pfcp_messages.h"
 
 #include "ue.h"
-#include "cp.h"
 #include "gtp_ies.h"
 #include "gtp_messages.h"
 #include "cp_io_poll.h"
 #include "timer.h"
+#include "gtpv2_internal.h"
 #include <sys/queue.h>
 #include "upf_struct.h"
 

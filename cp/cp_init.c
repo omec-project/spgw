@@ -10,38 +10,34 @@
 #include <rte_hash_crc.h>
 #include <errno.h>
 
-#include "pfcp.h"
-#include "gtpv2c.h"
+#include "clogger.h"
+#include "gw_adapter.h"
 #include "cp_stats.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_cp_association.h"
 #include "timer.h"
 #include "sm_struct.h"
-#include "cp_config_new.h"
+#include "cp_config_apis.h"
 #include "cp_config.h"
-#include "cp_config_new.h"
 #include "gtpc_timer.h"
 #include "pfcp_timer.h"
-#include "cp_apis.h"
+#include "cp_interface.h"
 #include "pfcp_transactions.h"
+#include "gtpv2_internal.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
 #endif /* USE_DNS_QUERY */
-
-#define PCAP_TTL           (64)
-#define PCAP_VIHL          (0x0045)
 
 int s11_fd = -1;
 int s5s8_fd = -1;
 int pfcp_fd = -1;
 int s11_pcap_fd = -1;
 
-pcap_t *pcap_reader;
-pcap_dumper_t *pcap_dumper;
+extern pcap_t *pcap_reader;
+extern pcap_dumper_t *pcap_dumper;
 
-struct cp_stats_t cp_stats;
 cp_config_t *cp_config;
 
 udp_sock_t my_sock;
@@ -57,28 +53,27 @@ struct sockaddr_in pfcp_sockaddr;
 
 /* UPF PFCP */
 in_port_t upf_pfcp_port;
-socklen_t s5s8_sockaddr_len = sizeof(s5s8_sockaddr);
-socklen_t s11_mme_sockaddr_len = sizeof(s11_mme_sockaddr);
-
-in_port_t s11_port;
-in_port_t s5s8_port;
-struct sockaddr_in s11_sockaddr;
-struct sockaddr_in s5s8_sockaddr;
 
 uint8_t s11_rx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
+struct sockaddr_in s11_sockaddr;
+socklen_t s11_mme_sockaddr_len = sizeof(s11_mme_sockaddr);
+
+uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
+uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
+struct sockaddr_in s5s8_sockaddr;
+socklen_t s5s8_sockaddr_len = sizeof(s5s8_sockaddr);
+
+
 uint8_t pfcp_tx_buf[MAX_GTPV2C_UDP_LEN];
-uint8_t msg_buf_t[MAX_GTPV2C_UDP_LEN];
-uint8_t tx_buf[MAX_GTPV2C_UDP_LEN];
+uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 #ifdef USE_REST
 /* ECHO PKTS HANDLING */
 uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
 #endif /* USE_REST */
 
-
-uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
-uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
+extern uint8_t rstCnt;
 
 #ifdef SYNC_STATS
 /**
@@ -108,232 +103,7 @@ init_stats_hash(void)
 
 #endif /* SYNC_STATS */
 
-void
-stats_update(uint8_t msg_type)
-{
-	switch (cp_config->cp_type) {
-		case SGWC:
-		case SAEGWC:
-			switch (msg_type) {
-				case GTP_CREATE_SESSION_REQ:
-					cp_stats.create_session++;
-					break;
-				case GTP_DELETE_SESSION_REQ:
-					cp_stats.delete_session++;
-					break;
-				case GTP_MODIFY_BEARER_REQ:
-					cp_stats.modify_bearer++;
-					break;
-				case GTP_RELEASE_ACCESS_BEARERS_REQ:
-					cp_stats.rel_access_bearer++;
-					break;
-				case GTP_BEARER_RESOURCE_CMD:
-					cp_stats.bearer_resource++;
-					break;
-
-				case GTP_DELETE_BEARER_RSP:
-					cp_stats.delete_bearer++;
-					return;
-				case GTP_DOWNLINK_DATA_NOTIFICATION_ACK:
-					cp_stats.ddn_ack++;
-					break;
-				case GTP_ECHO_REQ:
-					cp_stats.echo++;
-					break;
-			}
-			break;
-
-		case PGWC:
-			 switch (msg_type) {
-			 case GTP_CREATE_SESSION_REQ:
-				 cp_stats.create_session++;
-				 break;
-
-			 case GTP_DELETE_SESSION_REQ:
-			     cp_stats.delete_session++;
-			     break;
-			 }
-			break;
-	default:
-			rte_panic("main.c::control_plane::cp_stats-"
-					"Unknown spgw_cfg= %d.", cp_config->cp_type);
-			break;
-		}
-}
-
-void
-dump_pcap(uint16_t payload_length, uint8_t *tx_buf)
-{
-	static struct pcap_pkthdr pcap_tx_header;
-	gettimeofday(&pcap_tx_header.ts, NULL);
-	pcap_tx_header.caplen = payload_length
-			+ sizeof(struct ether_hdr)
-			+ sizeof(struct ipv4_hdr)
-			+ sizeof(struct udp_hdr);
-	pcap_tx_header.len = payload_length
-			+ sizeof(struct ether_hdr)
-			+ sizeof(struct ipv4_hdr)
-			+ sizeof(struct udp_hdr);
-	uint8_t dump_buf[MAX_GTPV2C_UDP_LEN
-			+ sizeof(struct ether_hdr)
-			+ sizeof(struct ipv4_hdr)
-			+ sizeof(struct udp_hdr)];
-	struct ether_hdr *eh = (struct ether_hdr *) dump_buf;
-
-	memset(&eh->d_addr, '\0', sizeof(struct ether_addr));
-	memset(&eh->s_addr, '\0', sizeof(struct ether_addr));
-	eh->ether_type = htons(ETHER_TYPE_IPv4);
-
-	struct ipv4_hdr *ih = (struct ipv4_hdr *) &eh[1];
-
-	ih->dst_addr = pfcp_config.s11_mme_ip.s_addr;
-	ih->src_addr = pfcp_config.s11_ip.s_addr;
-	ih->next_proto_id = IPPROTO_UDP;
-	ih->version_ihl = PCAP_VIHL;
-	ih->total_length =
-			ntohs(payload_length
-				+ sizeof(struct udp_hdr)
-				+ sizeof(struct ipv4_hdr));
-	ih->time_to_live = PCAP_TTL;
-
-	struct udp_hdr *uh = (struct udp_hdr *) &ih[1];
-
-	uh->dgram_len = htons(
-	    ntohs(ih->total_length) - sizeof(struct ipv4_hdr));
-	uh->dst_port = htons(GTPC_UDP_PORT);
-	uh->src_port = htons(GTPC_UDP_PORT);
-
-	void *payload = &uh[1];
-	memcpy(payload, tx_buf, payload_length);
-	pcap_dump((u_char *) pcap_dumper, &pcap_tx_header,
-			dump_buf);
-	fflush(pcap_dump_file(pcap_dumper));
-}
-/**
- * @brief  : Util to send or dump gtpv2c messages
- * @param  : fd, interface indentifier
- * @param  : t_tx, buffer to store data for peer node
- * @return : void
- */
-void
-pfcp_timer_retry_send(int fd, peerData_t *t_tx)
-{
-	int bytes_tx;
-	struct sockaddr_in tx_sockaddr;
-	tx_sockaddr.sin_addr.s_addr = t_tx->dstIP;
-	tx_sockaddr.sin_port = t_tx->dstPort;
-	if (pcap_dumper) {
-		dump_pcap(t_tx->buf_len, t_tx->buf);
-	} else {
-		bytes_tx = sendto(fd, t_tx->buf, t_tx->buf_len, 0,
-			(struct sockaddr *)&tx_sockaddr, sizeof(struct sockaddr_in));
-
-		clLog(clSystemLog, eCLSeverityDebug, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d\n",fd);
-
-	if (bytes_tx != (int) t_tx->buf_len) {
-			clLog(clSystemLog, eCLSeverityCritical, "Transmitted Incomplete Timer Retry Message:"
-					"%u of %d tx bytes : %s\n",
-					t_tx->buf_len, bytes_tx, strerror(errno));
-		}
-	}
-}
-
-// ajay - use this retry timer  for trans 
-void
-pfcp_timer_retry_send_new(int fd, transData_t *t_tx)
-{
-    assert(0);
-	int bytes_tx;
-	struct sockaddr_in tx_sockaddr;
-	tx_sockaddr.sin_addr.s_addr = t_tx->dstIP;
-	tx_sockaddr.sin_port = t_tx->dstPort;
-	if (pcap_dumper) {
-		dump_pcap(t_tx->buf_len, t_tx->buf);
-	} else {
-		bytes_tx = sendto(fd, t_tx->buf, t_tx->buf_len, 0,
-			(struct sockaddr *)&tx_sockaddr, sizeof(struct sockaddr_in));
-
-		clLog(clSystemLog, eCLSeverityDebug, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d\n",fd);
-
-	if (bytes_tx != (int) t_tx->buf_len) {
-			clLog(clSystemLog, eCLSeverityCritical, "Transmitted Incomplete Timer Retry Message:"
-					"%u of %d tx bytes : %s\n",
-					t_tx->buf_len, bytes_tx, strerror(errno));
-		}
-	}
-}
-
-/**
- * @brief  : Util to send or dump gtpv2c messages
- * @param  : fd, interface indentifier
- * @param  : t_tx, buffer to store data for peer node
- * @return : void
- */
-void
-gtpc_timer_retry_send(int fd, peerData_t *t_tx)
-{
-	int bytes_tx;
-	struct sockaddr_in tx_sockaddr;
-	tx_sockaddr.sin_addr.s_addr = t_tx->dstIP;
-	tx_sockaddr.sin_port = t_tx->dstPort;
-	if (pcap_dumper) {
-		dump_pcap(t_tx->buf_len, t_tx->buf);
-	} else {
-		bytes_tx = sendto(fd, t_tx->buf, t_tx->buf_len, 0,
-			(struct sockaddr *)&tx_sockaddr, sizeof(struct sockaddr_in));
-
-		clLog(clSystemLog, eCLSeverityDebug, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d\n",fd);
-
-	if (bytes_tx != (int) t_tx->buf_len) {
-			clLog(clSystemLog, eCLSeverityCritical, "Transmitted Incomplete Timer Retry Message:"
-					"%u of %d tx bytes : %s\n",
-					t_tx->buf_len, bytes_tx, strerror(errno));
-		}
-	}
-}
-
-
-#ifdef USE_DNS_QUERY
-/**
- * @brief  : Set dns configurations parameters
- * @param  : void
- * @return : void
- */
-static void
-set_dns_config(void)
-{
-	set_dnscache_refresh_params(pfcp_config.dns_cache.concurrent,
-			pfcp_config.dns_cache.percent, pfcp_config.dns_cache.sec);
-
-	set_dns_retry_params(pfcp_config.dns_cache.timeoutms,
-			pfcp_config.dns_cache.tries);
-
-	/* set OPS dns config */
-	for (uint32_t i = 0; i < pfcp_config.ops_dns.nameserver_cnt; i++)
-	{
-		set_nameserver_config(pfcp_config.ops_dns.nameserver_ip[i],
-				DNS_PORT, DNS_PORT, NS_OPS);
-	}
-
-	apply_nameserver_config(NS_OPS);
-	init_save_dns_queries(NS_OPS, pfcp_config.ops_dns.filename,
-			pfcp_config.ops_dns.freq_sec);
-	load_dns_queries(NS_OPS, pfcp_config.ops_dns.filename);
-
-	/* set APP dns config */
-	for (uint32_t i = 0; i < pfcp_config.app_dns.nameserver_cnt; i++)
-		set_nameserver_config(pfcp_config.app_dns.nameserver_ip[i],
-				DNS_PORT, DNS_PORT, NS_APP);
-
-	apply_nameserver_config(NS_APP);
-	init_save_dns_queries(NS_APP, pfcp_config.app_dns.filename,
-			pfcp_config.app_dns.freq_sec);
-	load_dns_queries(NS_APP, pfcp_config.app_dns.filename);
-}
-#endif /* USE_DNS_QUERY */
-
-void
-init_pfcp(void)
+static void init_pfcp(void)
 {
 	int ret;
 	pfcp_port = htons(pfcp_config.pfcp_port);
@@ -371,13 +141,11 @@ init_pfcp(void)
  * @param  : void
  * @return : void
  */
-static void
-init_s11(void)
+static void init_s11(void)
 {
 	int ret;
 	/* TODO: Need to think*/
-	s11_mme_sockaddr.sin_port = htons(pfcp_config.s11_port);
-	s11_port = htons(pfcp_config.s11_port);
+	s11_mme_sockaddr.sin_port = htons(cp_config->s11_port);
 
 	if (pcap_reader != NULL && pcap_dumper != NULL)
 		return;
@@ -391,8 +159,8 @@ init_s11(void)
 	bzero(s11_sockaddr.sin_zero,
 			sizeof(s11_sockaddr.sin_zero));
 	s11_sockaddr.sin_family = AF_INET;
-	s11_sockaddr.sin_port = s11_port;
-	s11_sockaddr.sin_addr = pfcp_config.s11_ip;
+	s11_sockaddr.sin_port = htons(cp_config->s11_port);
+	s11_sockaddr.sin_addr = cp_config->s11_ip;
 
 	ret = bind(s11_fd, (struct sockaddr *) &s11_sockaddr,
 			    sizeof(struct sockaddr_in));
@@ -400,7 +168,7 @@ init_s11(void)
 	clLog(s11logger, eCLSeverityInfo, "NGIC- main.c::init_s11()"
 			"\n\ts11_fd= %d :: "
 			"\n\ts11_ip= %s : s11_port= %d\n",
-			s11_fd, inet_ntoa(pfcp_config.s11_ip), ntohs(s11_port));
+			s11_fd, inet_ntoa(cp_config->s11_ip), cp_config->s11_port);
 
 	if (ret < 0) {
 		rte_panic("Bind error for %s:%u - %s\n",
@@ -415,13 +183,11 @@ init_s11(void)
  * @param  : void
  * @return : void
  */
-static void
-init_s5s8(void)
+static void init_s5s8(void)
 {
 	int ret;
 	/* TODO: Need to think*/
-	s5s8_recv_sockaddr.sin_port = htons(pfcp_config.s5s8_port);
-	s5s8_port = htons(pfcp_config.s5s8_port);
+	s5s8_recv_sockaddr.sin_port = htons(cp_config->s5s8_port);
 
 	if (pcap_reader != NULL && pcap_dumper != NULL)
 		return;
@@ -435,8 +201,8 @@ init_s5s8(void)
 	bzero(s5s8_sockaddr.sin_zero,
 			sizeof(s5s8_sockaddr.sin_zero));
 	s5s8_sockaddr.sin_family = AF_INET;
-	s5s8_sockaddr.sin_port = s5s8_port;
-	s5s8_sockaddr.sin_addr = pfcp_config.s5s8_ip;
+	s5s8_sockaddr.sin_port = htons(cp_config->s5s8_port);
+	s5s8_sockaddr.sin_addr = cp_config->s5s8_ip;
 
 	ret = bind(s5s8_fd, (struct sockaddr *) &s5s8_sockaddr,
 			    sizeof(struct sockaddr_in));
@@ -444,8 +210,8 @@ init_s5s8(void)
 	clLog(s5s8logger, eCLSeverityInfo, "NGIC- main.c::init_s5s8_sgwc()"
 			"\n\ts5s8_fd= %d :: "
 			"\n\ts5s8_ip= %s : s5s8_port= %d\n",
-			s5s8_fd, inet_ntoa(pfcp_config.s5s8_ip),
-			ntohs(s5s8_port));
+			s5s8_fd, inet_ntoa(cp_config->s5s8_ip),
+			htons(cp_config->s5s8_port));
 
 	if (ret < 0) {
 		rte_panic("Bind error for %s:%u - %s\n",
@@ -455,10 +221,9 @@ init_s5s8(void)
 	}
 }
 
-void
-initialize_tables_on_dp(void)
-{
 #ifdef CP_DP_TABLE_CONFIG
+static void initialize_tables_on_dp(void)
+{
 	struct dp_id dp_id = { .id = DPN_ID };
 
 	sprintf(dp_id.name, SDF_FILTER_TABLE);
@@ -481,12 +246,11 @@ initialize_tables_on_dp(void)
 
 	if (session_table_create(dp_id, LDB_ENTRIES_DEFAULT))
 		rte_panic("session_table creation failed\n");
-#endif
 
 }
+#endif
 
-void
-init_dp_rule_tables(void)
+void init_dp_rule_tables(void)
 {
 
 #ifdef CP_DP_TABLE_CONFIG
@@ -501,8 +265,7 @@ init_dp_rule_tables(void)
  * @brief  : Initializes Control Plane data structures, packet filters, and calls for the
  *           Data Plane to create required tables
  */
-void
-init_cp(void)
+void init_cp(void)
 {
 
 	init_pfcp();
@@ -511,6 +274,7 @@ init_cp(void)
 	switch (cp_config->cp_type) {
 	case SGWC:
 		init_s11();
+        break;
 	case PGWC:
 		init_s5s8();
 		break;
@@ -537,20 +301,15 @@ init_cp(void)
 
 	create_upf_by_ue_hash();
 
-#ifdef USE_DNS_QUERY
-	set_dns_config();
-#endif /* USE_DNS_QUERY */
 }
 
-char filename[256] = "../config/cp_rstCnt.txt";
-extern uint8_t rstCnt;
 uint8_t update_rstCnt(void)
 {
 	FILE *fp;
 	int tmp;
 
-	if ((fp = fopen(filename,"rw+")) == NULL){
-		if ((fp = fopen(filename,"w")) == NULL)
+	if ((fp = fopen(RESTART_CNT_FILE,"rw+")) == NULL){
+		if ((fp = fopen(RESTART_CNT_FILE,"w")) == NULL)
 			clLog(clSystemLog, eCLSeverityCritical,"Error! creating cp_rstCnt.txt file");
 	}
 
@@ -574,17 +333,16 @@ uint8_t update_rstCnt(void)
 	return rstCnt;
 }
 
-char hbt_filename[256] = "../config/hrtbeat_recov_time.txt";
 void recovery_time_into_file(uint32_t recov_time)
 {
-	FILE *fp = NULL;
+    FILE *fp = NULL;
 
-	if ((fp = fopen(hbt_filename, "w+")) == NULL) {
-				clLog(clSystemLog, eCLSeverityCritical, "Unable to open heartbeat recovery file..\n");
+    if ((fp = fopen(HEARTBEAT_TIMESTAMP, "w+")) == NULL) {
+        clLog(clSystemLog, eCLSeverityCritical, "Unable to open heartbeat recovery file..\n");
 
-	} else {
-		fseek(fp, 0, SEEK_SET);
-		fprintf(fp, "%u\n", recov_time);
-		fclose(fp);
-	}
+    } else {
+        fseek(fp, 0, SEEK_SET);
+        fprintf(fp, "%u\n", recov_time);
+        fclose(fp);
+    }
 }

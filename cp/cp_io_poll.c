@@ -23,38 +23,18 @@
 
 #include "cp_interface.h"
 #include "cp_io_poll.h"
-#include "pfcp_cp_common.h"
-
 #include "pfcp_cp_util.h"
-#include "../cp/cp.h"
-#include "gx_app_interface.h"
 #include "../cp/cp_stats.h"
 #include "../cp/cp_config.h"
 #include "../cp/state_machine/sm_struct.h"
+#include "gtpv2_interface.h"
+#include "pfcp_cp_interface.h"
+#include "gx_app_interface.h"
 
 #ifdef GX_BUILD
 extern int gx_app_sock;
 #endif /* GX_BUILD */
-udp_sock_t my_sock;
-
-void iface_ipc_register_msg_cb(int msg_id,
-				int (*msg_cb)(struct msgbuf *msg_payload))
-{
-	struct ipc_node *node;
-
-	node = &basenode[msg_id];
-	node->msg_id = msg_id;
-	node->msg_cb = msg_cb;
-}
-
-/********************************** DP API ************************************/
-void iface_init_ipc_node(void)
-{
-	basenode = rte_zmalloc("iface_ipc", sizeof(struct ipc_node) * MSG_END,
-			RTE_CACHE_LINE_SIZE);
-	if (basenode == NULL)
-		exit(0);
-}
+extern udp_sock_t my_sock;
 
 /**
  * @brief Function to Poll message que.
@@ -126,7 +106,7 @@ void iface_process_ipc_msgs(void)
 		/* one or both of the descriptors have data */
 		if (FD_ISSET(my_sock.sock_fd, &readfds))
 		{
-				msg_handler_sx_n4(pfcp_rx, &peer_addr);
+				msg_handler_sx_n4(&peer_addr);
 		}
 
 		if ((cp_config->cp_type  == SGWC) || (cp_config->cp_type == SAEGWC)) {

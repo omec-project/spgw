@@ -12,7 +12,6 @@
 #include "gtpv2_common.h"
 #include "gtpv2_interface.h"
 #include "gtpv2_evt_handler.h"
-#include "cp.h"
 #include "cp_stats.h"
 #include "cp_config.h"
 #include "cp_io_poll.h"
@@ -24,12 +23,12 @@
 #include "pfcp_messages_encoder.h"
 #include "gtpv2_evt_handler.h"
 #include "cp_timers.h"
-
-#include "sm_arr.h"
+#include "gw_adapter.h"
+#include "clogger.h"
 #include "sm_pcnd.h"
 #include "sm_struct.h"
-#include "cp_config_new.h"
 #include "gtpv2c_error_rsp.h"
+#include "gtpv2_internal.h"
 
 #ifdef USE_REST
 #include "timer.h"
@@ -41,6 +40,8 @@
 
 extern int s11_fd;
 extern socklen_t s11_mme_sockaddr_len;
+extern struct sockaddr_in s11_mme_sockaddr;
+uint8_t s11_rx_buf[MAX_GTPV2C_UDP_LEN];
 
 uint32_t start_time;
 
@@ -48,13 +49,15 @@ uint32_t start_time;
 extern int s5s8_fd;
 struct sockaddr_in s5s8_recv_sockaddr;
 extern socklen_t s5s8_sockaddr_len;
+extern uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
+extern uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
 
 struct cp_params cp_params;
 extern struct cp_stats_t cp_stats;
 
 
 uint16_t payload_length;
-
+extern uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 /**
  * @brief  : Process echo request
@@ -469,7 +472,7 @@ msg_handler_s5s8(void)
 				"Expected S5S8_IP = %s\n",
 				inet_ntoa(s5s8_recv_sockaddr.sin_addr),
 				ntohs(s5s8_recv_sockaddr.sin_port),
-				inet_ntoa(pfcp_config.s5s8_ip));
+				inet_ntoa(cp_config->s5s8_ip));
 		return;
 		}
 #endif

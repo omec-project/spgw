@@ -8,7 +8,6 @@
 
 #include "pfcp_messages.h"
 
-#include "gtpv2c.h"
 #include "sm_struct.h"
 #include "pfcp_cp_set_ie.h"
 #include "gtp_messages.h"
@@ -27,14 +26,6 @@ typedef struct association_context{
 }association_context_t;
 
 extern association_context_t assoc_ctxt[NUM_DP] ;
-
-/**
- * @brief  : Update cli statistics
- * @param  : msg_type, msg for which cli stats to be updated
- * @return : Returns nothing
- */
-void
-stats_update(uint8_t msg_type);
 
 /**
  * @brief  : Fill pfcp session establishment response

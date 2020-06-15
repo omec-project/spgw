@@ -5,6 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
+#include <rte_malloc.h>
 #include <rte_common.h>
 #include <rte_debug.h>
 #include <rte_eal.h>
@@ -15,17 +16,21 @@
 #include <rte_log.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include "assert.h"
 
-#include "cp_global_defs.h"
+#include "clogger.h"
+#include "gw_adapter.h"
+#include "cp_config_defs.h"
 #include "monitor_config.h"
 #include "cp_config.h"
+#include "cp_config_apis.h"
 #include "cp_stats.h"
-#include "cp.h"
 #include "apn_struct.h"
 #include "apn_apis.h"
 #include "upf_struct.h"
+#include "cp_log.h"
 
 
 #define GLOBAL_ENTRIES			"GLOBAL"
@@ -137,37 +142,37 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 			/* TODO - ajay get rid of ip address. Get hostname/servicename  if required */
 			/* TODO - ajay mme address is not required to be configured at SPGW */
 			inet_aton(global_entries[i].value,
-					&(pfcp_config->s11_ip));
+					&(cp_config->s11_ip));
 
 			fprintf(stderr, "CP: S11_IP      : %s\n",
-					inet_ntoa(pfcp_config->s11_ip));
+					inet_ntoa(cp_config->s11_ip));
 
 		}else if (strncmp(S11_PORTS, global_entries[i].name,
 					strlen(S11_PORTS)) == 0) {
 
-			pfcp_config->s11_port =
+			cp_config->s11_port =
 					(uint16_t)atoi(global_entries[i].value);
 
 			fprintf(stderr, "CP: S11_PORT    : %d\n",
-					pfcp_config->s11_port);
+					cp_config->s11_port);
 
 		} else if (strncmp(S5S8_IPS, global_entries[i].name,
 					strlen(S5S8_IPS)) == 0) {
 
 			inet_aton(global_entries[i].value,
-					&(pfcp_config->s5s8_ip));
+					&(cp_config->s5s8_ip));
 
 			fprintf(stderr, "CP: S5S8_IP     : %s\n",
-					inet_ntoa(pfcp_config->s5s8_ip));
+					inet_ntoa(cp_config->s5s8_ip));
 
 		} else if (strncmp(S5S8_PORTS, global_entries[i].name,
 					strlen(S5S8_PORTS)) == 0) {
 
-			pfcp_config->s5s8_port =
+			cp_config->s5s8_port =
 				(uint16_t)atoi(global_entries[i].value);
 
 			fprintf(stderr, "CP: S5S8_PORT   : %d\n",
-					pfcp_config->s5s8_port);
+					cp_config->s5s8_port);
 
 		} else if (strncmp(PFCP_IPS , global_entries[i].name,
 					strlen(PFCP_IPS)) == 0) {
@@ -191,17 +196,17 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 					strlen(MME_S11_IPS)) == 0) {
 
 			inet_aton(global_entries[i].value,
-					&(pfcp_config->s11_mme_ip));
+					&(cp_config->s11_mme_ip));
 
 			fprintf(stderr, "CP: MME_S11_IP  : %s\n",
-					inet_ntoa(pfcp_config->s11_mme_ip));
+					inet_ntoa(cp_config->s11_mme_ip));
 
 		} else if (strncmp(MME_S11_PORTS, global_entries[i].name,
 					strlen(MME_S11_PORTS)) == 0) {
-			pfcp_config->s11_mme_port =
+			cp_config->s11_mme_port =
 				(uint16_t)atoi(global_entries[i].value);
 
-			fprintf(stderr, "CP: MME_S11_PORT: %d\n", pfcp_config->s11_mme_port);
+			fprintf(stderr, "CP: MME_S11_PORT: %d\n", cp_config->s11_mme_port);
 
 		} else if (strncmp(UPF_PFCP_IPS , global_entries[i].name,
 					strlen(UPF_PFCP_IPS)) == 0) {
@@ -380,23 +385,23 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 				cache_entries[i].value);
 		if (strncmp(CONCURRENT, cache_entries[i].name,
 						strlen(CONCURRENT)) == 0)
-			pfcp_config->dns_cache.concurrent =
+			cp_config->dns_cache.concurrent =
 					(uint32_t)atoi(cache_entries[i].value);
 		if (strncmp(PERCENTAGE, cache_entries[i].name,
 						strlen(CONCURRENT)) == 0)
-			pfcp_config->dns_cache.percent =
+			cp_config->dns_cache.percent =
 					(uint32_t)atoi(cache_entries[i].value);
 		if (strncmp(INT_SEC, cache_entries[i].name,
 						strlen(CONCURRENT)) == 0)
-			pfcp_config->dns_cache.sec =
+			cp_config->dns_cache.sec =
 					(((uint32_t)atoi(cache_entries[i].value)) * 1000);
 		if (strncmp(QUERY_TIMEOUT, cache_entries[i].name,
 		                strlen(QUERY_TIMEOUT)) == 0)
-		    pfcp_config->dns_cache.timeoutms =
+		    cp_config->dns_cache.timeoutms =
 		            (long)atol(cache_entries[i].value);
 		if (strncmp(QUERY_TRIES, cache_entries[i].name,
 		                strlen(QUERY_TRIES)) == 0)
-		    pfcp_config->dns_cache.tries =
+		    cp_config->dns_cache.tries =
 		           (uint32_t)atoi(cache_entries[i].value);
 	}
 
@@ -429,25 +434,25 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 
 		if (strncmp(FREQ_SEC, app_entries[i].name,
 						strlen(FREQ_SEC)) == 0)
-			pfcp_config->app_dns.freq_sec =
+			cp_config->app_dns.freq_sec =
 					(uint8_t)atoi(app_entries[i].value);
 
 		if (strncmp(FILENAME, app_entries[i].name,
 						strlen(FILENAME)) == 0)
-			strncpy(pfcp_config->app_dns.filename,
+			strncpy(cp_config->app_dns.filename,
 					app_entries[i].value,
 					strlen(app_entries[i].value));
 
 		if (strncmp(NAMESERVER, app_entries[i].name,
 						strlen(NAMESERVER)) == 0) {
-			strncpy(pfcp_config->app_dns.nameserver_ip[app_nameserver_ip_idx],
+			strncpy(cp_config->app_dns.nameserver_ip[app_nameserver_ip_idx],
 					app_entries[i].value,
 					strlen(app_entries[i].value));
 			app_nameserver_ip_idx++;
 		}
 	}
 
-	pfcp_config->app_dns.nameserver_cnt = app_nameserver_ip_idx;
+	cp_config->app_dns.nameserver_cnt = app_nameserver_ip_idx;
 
 	rte_free(app_entries);
 
@@ -478,25 +483,25 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 
 		if (strncmp(FREQ_SEC, ops_entries[i].name,
 						strlen(FREQ_SEC)) == 0)
-			pfcp_config->ops_dns.freq_sec =
+			cp_config->ops_dns.freq_sec =
 					(uint8_t)atoi(ops_entries[i].value);
 
 		if (strncmp(FILENAME, ops_entries[i].name,
 						strlen(FILENAME)) == 0)
-			strncpy(pfcp_config->ops_dns.filename,
+			strncpy(cp_config->ops_dns.filename,
 					ops_entries[i].value,
 					strlen(ops_entries[i].value));
 
 		if (strncmp(NAMESERVER, ops_entries[i].name,
 						strlen(NAMESERVER)) == 0) {
-			strncpy(pfcp_config->ops_dns.nameserver_ip[ops_nameserver_ip_idx],
+			strncpy(cp_config->ops_dns.nameserver_ip[ops_nameserver_ip_idx],
 					ops_entries[i].value,
 					strlen(ops_entries[i].value));
 			ops_nameserver_ip_idx++;
 		}
 	}
 
-	pfcp_config->ops_dns.nameserver_cnt = ops_nameserver_ip_idx;
+	cp_config->ops_dns.nameserver_cnt = ops_nameserver_ip_idx;
 
 	rte_free(ops_entries);
 
@@ -544,6 +549,46 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 
 	return;
 }
+
+#ifdef USE_DNS_QUERY
+/**
+ * @brief  : Set dns configurations parameters
+ * @param  : void
+ * @return : void
+ */
+void
+set_dns_config(void)
+{
+	set_dnscache_refresh_params(pfcp_config.dns_cache.concurrent,
+			pfcp_config.dns_cache.percent, pfcp_config.dns_cache.sec);
+
+	set_dns_retry_params(pfcp_config.dns_cache.timeoutms,
+			pfcp_config.dns_cache.tries);
+
+	/* set OPS dns config */
+	for (uint32_t i = 0; i < pfcp_config.ops_dns.nameserver_cnt; i++)
+	{
+		set_nameserver_config(pfcp_config.ops_dns.nameserver_ip[i],
+				DNS_PORT, DNS_PORT, NS_OPS);
+	}
+
+	apply_nameserver_config(NS_OPS);
+	init_save_dns_queries(NS_OPS, pfcp_config.ops_dns.filename,
+			pfcp_config.ops_dns.freq_sec);
+	load_dns_queries(NS_OPS, pfcp_config.ops_dns.filename);
+
+	/* set APP dns config */
+	for (uint32_t i = 0; i < pfcp_config.app_dns.nameserver_cnt; i++)
+		set_nameserver_config(pfcp_config.app_dns.nameserver_ip[i],
+				DNS_PORT, DNS_PORT, NS_APP);
+
+	apply_nameserver_config(NS_APP);
+	init_save_dns_queries(NS_APP, pfcp_config.app_dns.filename,
+			pfcp_config.app_dns.freq_sec);
+	load_dns_queries(NS_APP, pfcp_config.app_dns.filename);
+}
+#endif /* USE_DNS_QUERY */
+
 
 int
 check_cp_req_timeout_config(char *value) {
@@ -690,8 +735,7 @@ config_change_cbk(char *config_file, uint32_t flags)
 	LIST_FOREACH(dpNew, &new_cfg->dpList, dpentries) {
 		LIST_FOREACH(dpOld, &old_config->dpList, dpentries) {
 			if(dpOld->dpId == dpNew->dpId) {
-                		dpNew->s1u_sgw_ip = dpOld->s1u_sgw_ip;
-				dpNew->upf = dpOld->upf;
+               	dpNew->s1u_sgw_ip = dpOld->s1u_sgw_ip; // ajay - should i delete this ?
 				break;
 			}
 		}	
@@ -1039,21 +1083,6 @@ select_dp_for_key(struct dp_key *key)
 	return DPN_ID; /* 0 is invalid DP */ 
 }
 
-uint8_t
-resolve_upf_context_to_dpInfo(struct cfg_upf_context *upf, char *hostname, struct in_addr s1u_sgw_ip)
-{
-	struct dp_info *dp;
-	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
-		if (!strcmp(hostname, dp->dpName)) {
-			dp->upf = upf;
-			dp->s1u_sgw_ip = s1u_sgw_ip;
-			upf->dpId = dp->dpId;
-			return 1;
-		}
-	}
-	return 0;
-}
-
 struct in_addr
 fetch_s1u_sgw_ip(uint32_t dpId)
 {
@@ -1082,21 +1111,6 @@ fetch_dp_context(uint32_t dpId)
 		}
 	}
 	rte_panic("Could not find DP for dpid: %u\n", dpId);
-	/* control should never reach here */
-	return NULL;
-}
-
-struct cfg_upf_context *
-fetch_upf_context(uint32_t dpId)
-{
-	struct dp_info *dp;
-	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
-		if (dpId == dp->dpId) {
-			return dp->upf;
-		}
-	}
-
-	rte_panic("Could not find upf_context for dpid: %u\n", dpId);
 	/* control should never reach here */
 	return NULL;
 }

@@ -5,8 +5,7 @@
 
 #ifndef GTPC_SESSION_H
 #define GTPC_SESSION_H
-#include "main.h"
-#include "pfcp.h"
+#include "cp_main.h"
 #include "cp_stats.h"
 #include "ue.h"
 #include "gtp_messages.h"

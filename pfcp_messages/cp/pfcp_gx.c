@@ -1,4 +1,3 @@
-
 // Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
@@ -13,6 +12,9 @@
 #include <rte_cfgfile.h>
 #include <rte_string_fns.h>
 
+#include "gw_adapter.h"
+#include "clogger.h"
+#include "sm_structs_api.h"
 //REVIEW: Need to check this: No need to add this header files
 #include "pfcp.h"
 #include "sm_enum.h"
@@ -23,10 +25,10 @@
 #include "pfcp_cp_session.h"
 #include "pfcp_messages.h"
 #include "pfcp_messages_encoder.h"
-#include "clogger.h"
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
 #include "pfcp_timer.h"
+#include "gen_utils.h"
 
 #define PRESENT 1
 #define NUM_VALS 9
@@ -41,6 +43,7 @@
 extern int pfcp_fd;
 extern int s5s8_fd;
 extern socklen_t s5s8_sockaddr_len;
+extern struct sockaddr_in s11_mme_sockaddr;
 extern socklen_t s11_mme_sockaddr_len;
 
 /**
@@ -696,7 +699,8 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 }
 
 int16_t
-gx_update_bearer_req(pdn_connection_t *pdn){
+gx_update_bearer_req(pdn_connection_t *pdn)
+{
 
 	int ret = 0;
 	eps_bearer_t *bearer = NULL;

@@ -41,17 +41,5 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx);
 uint8_t
 gx_pcnd_check(gx_msg *gx_rx, msg_info *msg);
 
-#ifdef USE_DNS_QUERY
-/**
- * @brief  : Retrive upf entry from hash
- * @param  : ctxt, ue context
- * @param  : entry, variable to store retrived dns entry
- * @param  : upf_ip, variable to store retrived ip
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
-		uint32_t **upf_ip);
 
-#endif /* USE_DNS_QUERY */
 #endif

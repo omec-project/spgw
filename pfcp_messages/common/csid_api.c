@@ -19,7 +19,7 @@
 #include "csid_api.h"
 
 #ifdef CP_BUILD
-#include "cp.h"
+#include "cp_init.h"
 
 extern int pfcp_fd;
 #else
@@ -453,7 +453,7 @@ del_pfcp_peer_node_sess(uint32_t node_addr, uint8_t iface)
 
 #ifdef CP_BUILD
     struct sockaddr_in upf_pfcp_sockaddr;
-    assert(0); // Need handling 
+    assert(0); // ajay Need handling 
 	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error sending: %i\n",
 				ERR_MSG, errno);

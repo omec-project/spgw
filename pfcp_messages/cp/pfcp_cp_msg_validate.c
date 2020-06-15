@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-#include "pfcp_cp_common.h"
+#include "pfcp_cp_interface.h"
 
 int validate_pfcp_message_content(msg_info *msg)
 {

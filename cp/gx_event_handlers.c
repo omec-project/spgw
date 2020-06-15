@@ -6,7 +6,7 @@
 
 #include "gx_event_handlers.h"
 #include "clogger.h"
-#include "cp_config_new.h"
+#include "cp_config.h"
 #include "sm_enum.h"
 #include "sm_struct.h"
 #include "sm_hand.h"

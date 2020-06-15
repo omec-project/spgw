@@ -10,7 +10,6 @@
  * This file contains function prototypes of User data
  * PCC and ADC charging records.
  */
-//#include "main.h"
 
 #define CDR_CUR_EXTENSION ".cur"
 #define CDR_CSV_EXTENSION ".csv"

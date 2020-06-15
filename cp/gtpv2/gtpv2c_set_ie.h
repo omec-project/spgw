@@ -13,7 +13,6 @@
  * a message buffer containing a GTP header.
  */
 #include "ue.h"
-#include "gtpv2c.h"
 #include "gtp_ies.h"
 
 #include "gtp_messages_decoder.h" // Added new

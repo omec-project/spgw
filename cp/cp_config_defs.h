@@ -1,0 +1,49 @@
+/*
+ * Copyright 2020-present Open Networking Foundation
+ * Copyright (c) 2019 Sprint
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ */
+
+#ifndef _CP_GLOBAL_DEFS_H_
+#define _CP_GLOBAL_DEFS_H_
+
+#define UINT8_SIZE sizeof(uint8_t)
+#define UINT32_SIZE sizeof(uint32_t)
+#define UINT16_SIZE sizeof(uint16_t)
+#define IPV4_SIZE 4
+#define IPV6_SIZE 8  // ajay - wrong need correct. for now just copied  
+
+
+#define MAX_NUM_APN   16
+#define MAX_NUM_NAMESERVER 8
+
+// default PFCP Ports 
+#define SGWU_PFCP_PORT      (8805)
+#define PGWU_PFCP_PORT      (8805)
+#define SAEGWU_PFCP_PORT    (8805)
+
+#define GTPC_UDP_PORT       (2123)
+
+
+#define DP_SITE_NAME_MAX		256
+
+#define CP_CONFIG_FOLDER		"../config/"
+#define CP_CONFIG_OPT_PATH		"../config/app_config.cfg"
+#define APP_CONFIG_FILE         "../config/app_config.cfg"
+#define STATIC_CP_FILE          "../config/cp.cfg"
+#define METER_PROFILE_FILE      "../config/meter_profile.cfg"
+#define PCC_RULE_FILE           "../config/pcc_rules.cfg"
+#define SDF_RULE_FILE           "../config/sdf_rules.cfg"
+#define ADC_RULE_FILE           "../config/adc_rules.cfg"
+
+#define DEFAULT_STATS_PATH      "./logs/"
+#define HEARTBEAT_TIMESTAMP     "../config/hrtbeat_recov_time.txt"
+#define RESTART_CNT_FILE        "../config/cp_rstCnt.txt"
+
+#define DEFAULT_IPV4_MTU        (1450)
+
+#define DPN_ID                       (12345)
+#endif
+

@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
-#include "gtpv2c.h"
 #include "util.h"
 #include "gtp_messages.h"
 #include "gtpv2c_set_ie.h"

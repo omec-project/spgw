@@ -18,6 +18,8 @@
 #include <rte_jhash.h>
 #include <rte_cfgfile.h>
 #include <rte_byteorder.h>
+#include "gw_adapter.h"
+#include "clogger.h"
 
 
 #include "util.h"
@@ -35,8 +37,7 @@
 
 
 #ifdef CP_BUILD
-#include "cp.h"
-#include "main.h"
+#include "cp_main.h"
 #include "cp_stats.h"
 #include "cp_config.h"
 #include "sm_struct.h"
@@ -392,30 +393,6 @@ session_modify(struct dp_id dp_id,
 	return dp_session_modify(dp_id, &entry);
 #endif		/* CP_BUILD */
 }
-
-#ifdef DELETE_THIS
-#ifdef CP_BUILD
-int
-send_ddn_ack(struct dp_id dp_id,
-				struct downlink_data_notification entry)
-{
-	struct msgbuf msg_payload;
-    printf("%s %d \n",__FUNCTION__,__LINE__);
-	build_dp_msg(MSG_DDN_ACK, dp_id, (void *)&entry, &msg_payload);
-
-	return send_dp_msg(dp_id, &msg_payload);
-}
-#endif		/* CP_BUILD */
-#endif
-
-#ifdef DP_BUILD
-int
-send_ddn_ack(struct dp_id dp_id,
-				struct downlink_data_notification_ack_t entry)
-{
-	return dp_ddn_ack(dp_id, &entry);
-}
-#endif		/* DP_BUILD */
 
 int
 session_delete(struct dp_id dp_id,

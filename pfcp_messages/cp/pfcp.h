@@ -8,10 +8,11 @@
 #define PFCP_H
 
 #ifdef CP_BUILD
-#include "cp.h"
 #include "gx_app/include/gx_struct.h"
 #include "pfcp_struct.h"
 #include "pfcp_cp_struct.h"
+#include "gtpv2c_ie.h"
+#include "ue.h"
 
 
 struct rte_hash *pfcp_cntxt_hash;
@@ -31,17 +32,6 @@ struct rte_hash *rule_name_bearer_id_map_hash;
  * processing function declarations.
  *
  */
-extern struct in_addr s11_mme_ip;
-extern struct sockaddr_in s11_mme_sockaddr;
-
-extern in_port_t s11_port;
-extern struct sockaddr_in s11_sockaddr;
-
-extern struct in_addr s5s8_ip;
-extern in_port_t s5s8_port;
-extern struct sockaddr_in s5s8_sockaddr;
-
-extern struct sockaddr_in s5s8_recv_sockaddr;
 
 extern in_port_t pfcp_port;
 extern struct sockaddr_in pfcp_sockaddr;

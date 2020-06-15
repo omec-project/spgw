@@ -730,23 +730,6 @@ session_create(struct dp_id dp_id, struct session_info session);
 int
 session_modify(struct dp_id dp_id, struct session_info session);
 
-#ifdef DP_BUILD
-/**
- * @brief  : Downlink data notification ack information. The information
- *            regarding downlink should be updated bearer info.
- * @param  : dp_id
- *           table identifier.
- * @param  : ddn_ack
- *           Downlink data notification ack information
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-send_ddn_ack(struct dp_id dp_id,
-		struct downlink_data_notification_ack_t ddn_ack);
-
-
-#endif 	/* DP_BUILD */
-
 /**
  * @brief  : To Delete Bearer Session of user. For deleting session,
  *           sess_id must be updated and all other fields can be left NULL.

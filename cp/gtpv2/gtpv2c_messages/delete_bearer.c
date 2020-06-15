@@ -6,13 +6,13 @@
 #include <rte_debug.h>
 #include "rte_hash.h"
 #include "gtp_messages_decoder.h"
-#include "gtpv2c.h"
 #include "gtpv2c_set_ie.h"
 #include "ue.h"
 #include "../cp_dp_api/vepc_cp_dp_api.h"
 #include "clogger.h"
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_interface.h"
+#include "cp_config_defs.h"
 
 /**
  * @brief  : Maintatins data from parsed delete bearer response

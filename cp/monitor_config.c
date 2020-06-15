@@ -17,7 +17,7 @@
 #include <string.h>
 #include <monitor_config.h>
 #include <rte_log.h>
-#include "cp.h"
+#include "cp_log.h"
 
 #define MAX_FILE_PATH 128
 struct entry
