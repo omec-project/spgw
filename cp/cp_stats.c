@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -151,3 +152,5 @@ void
 reset_cp_stats(void) {
 	memset(&cp_stats, 0, sizeof(cp_stats));
 }
+
+

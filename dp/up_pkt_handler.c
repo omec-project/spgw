@@ -418,14 +418,19 @@ filter_dl_traffic(struct rte_pipeline *p, struct rte_mbuf **pkts, uint32_t n,
 	uint64_t pkts_queue_mask = 0;
 
 	dl_sess_info_get(pkts, n, &pkts_mask, &sess_data[0], &pkts_queue_mask);
+	printf("%s %d - dl_sess_info_get mask = %lu queue Mask = %lu \n",__FUNCTION__,__LINE__,pkts_mask, pkts_queue_mask);
 
 	acl_sdf_lookup(pkts, n, &pkts_mask, &sess_data[0], &precedence[0]);
+	printf("%s %d - acl_sdf_lookup mask = %lu \n",__FUNCTION__,__LINE__, pkts_mask);
 
 	get_pdr_info(&sess_data[0], &pdr[0], &precedence[0], n, &pkts_mask,
 			&pkts_queue_mask);
 
+	printf("%s %d - get_pdr_info mask = %lu queue Mask = %lu \n",__FUNCTION__,__LINE__,pkts_mask, pkts_queue_mask);
 	/* QER Gating */
 	qer_gating(&pdr[0], n, &pkts_mask, &pkts_queue_mask, DOWNLINK);
+
+	printf("%s %d - qer_gating mask = %lu queue Mask = %lu \n",__FUNCTION__,__LINE__,pkts_mask, pkts_queue_mask);
 
 #ifdef HYPERSCAN_DPI
 	/* Send cloned dns pkts to dns handler*/

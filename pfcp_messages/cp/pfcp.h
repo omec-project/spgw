@@ -74,14 +74,6 @@ void
 init_pfcp_tables(void);
 
 /**
- * @brief  : Initializes the pfcp context hash table used to account for PDR, QER, BAR and FAR rules information.
- * @param  : void
- * @return : Does not return anything
- */
-void
-init_hash_tables(void);
-
-/**
  * @brief  : Add PDN Connection information in the table.
  * @param  : call_id
  * @param  : pdn connection details

@@ -11,7 +11,7 @@
 #include "cp_config.h"
 #include "cp_stats.h"
 
-struct cp_stats_t cp_stats;
+extern struct cp_stats_t cp_stats;
 const char *
 cause_str(enum cause_value cause)
 {

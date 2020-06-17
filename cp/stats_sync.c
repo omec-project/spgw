@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -197,4 +198,32 @@ update_stats_entry(uint64_t key, uint8_t type)
 		stats->resp_recv_time = _init_time;
 	}
 }
+
+#ifdef SYNC_STATS
+/**
+ * @brief  : Initializes the hash table used to account for statstics of req and resp time.
+ * @param  : void
+ * @return : void
+ */
+void
+init_stats_hash(void)
+{
+	struct rte_hash_parameters rte_hash_params = {
+			.name = "stats_hash",
+	    .entries = STATS_HASH_SIZE,
+	    .key_len = sizeof(uint64_t),
+	    .hash_func = rte_hash_crc,
+	    .hash_func_init_val = 0,
+	    .socket_id = rte_socket_id(),
+	};
+
+	stats_hash = rte_hash_create(&rte_hash_params);
+	if (!stats_hash) {
+		rte_panic("%s hash create failed: %s (%u)\n",
+				rte_hash_params.name,
+		    rte_strerror(rte_errno), rte_errno);
+	}
+}
+
+#endif /* SYNC_STATS */
 

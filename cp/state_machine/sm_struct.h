@@ -45,10 +45,7 @@ typedef struct msg_info{
 	uint8_t eps_bearer_id;
 	uint32_t teid;
 
-//	char sgwu_fqdn[MAX_HOSTNAME_LENGTH];
 	struct in_addr upf_ipv4;
-
-	//enum source_interface iface;
 
 	union gtpc_msg_info {
 		create_sess_req_t csr;

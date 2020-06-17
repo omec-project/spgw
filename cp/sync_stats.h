@@ -1,9 +1,8 @@
-/*
- * Copyright 2020-present Open Networking Foundation
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- */
+// Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #ifndef __SYNC_STATS_H
 #define __SYNC_STATS_H
@@ -90,6 +89,7 @@ export_stats_report(struct sync_stats stats_info);
  */
 void
 close_stats(void);
+
 /**
  * @brief  : Initialize statistics hash table
  * @param  : void
@@ -97,6 +97,7 @@ close_stats(void);
  */
 void
 init_stats_hash(void);
+
 
 #endif /* SYNC_STATS */
 #endif

@@ -847,15 +847,6 @@ iface_lookup_downlink_bulk_data(const void **key, uint32_t n,
 
 /***********************ddn_utils.c functions start**********************/
 #ifdef USE_REST
-/**
- * @brief  : Function to initialize/create shared ring, ring_container and mem_pool to
- *           inter-communication between DL and iface core.
- * @param  : No param
- * @return : Returns nothing
- */
-void
-echo_table_init(void);
-
 #ifndef CP_BUILD
 /**
  * @brief  : Function to build GTP-U echo request

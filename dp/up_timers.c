@@ -595,7 +595,8 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint64_t sess_id, uint8_t portId)
 
 }
 
-void
+#ifdef USE_REST
+static void
 echo_table_init(void)
 {
 
@@ -647,8 +648,8 @@ void rest_thread_init(void)
 		clLog(clSystemLog, eCLSeverityCritical, "%s - gstimer_init() failed!!\n", getPrintableTime() );
 		//return 1;
 	}
-
 }
+#endif
 
 uint8_t process_response(uint32_t dstIp)
 {

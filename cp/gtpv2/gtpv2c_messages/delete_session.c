@@ -12,11 +12,10 @@
 #include "gtpv2_interface.h"
 #include "sm_struct.h"
 #include "cp_config.h"
-#include "cp_stats.h"
-#include "cp_config.h"
 #include "cp_log.h"
 #include "clogger.h"
 #include "ip_pool.h"
+#include "gw_adapter.h"
 
 int
 delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,

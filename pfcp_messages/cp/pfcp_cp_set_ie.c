@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -1756,21 +1757,21 @@ void clear_heartbeat_hash_table(void)
 void
 create_gx_context_hash(void)
 {
-	struct rte_hash_parameters rte_hash_params = {
-			.name = "gx_context_by_sess_id_hash",
-	    .entries = UPF_ENTRIES_DEFAULT,
-	    .key_len = MAX_LEN,
-	    .hash_func = rte_jhash,
-	    .hash_func_init_val = 0,
-	    .socket_id = rte_socket_id(),
-	};
+    struct rte_hash_parameters rte_hash_params = {
+        .name = "gx_context_by_sess_id_hash",
+        .entries = UPF_ENTRIES_DEFAULT,
+        .key_len = MAX_LEN,
+        .hash_func = rte_jhash,
+        .hash_func_init_val = 0,
+        .socket_id = rte_socket_id(),
+    };
 
-	gx_context_by_sess_id_hash = rte_hash_create(&rte_hash_params);
-	if (!gx_context_by_sess_id_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
+    gx_context_by_sess_id_hash = rte_hash_create(&rte_hash_params);
+    if (!gx_context_by_sess_id_hash) {
+        rte_panic("%s hash create failed: %s (%u)\n.",
+                rte_hash_params.name,
+                rte_strerror(rte_errno), rte_errno);
+    }
 }
 
 void

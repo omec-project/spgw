@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -115,51 +116,49 @@ set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer_t *bearer, pdn_connection_t *pdn)
 void
 create_ue_hash(void)
 {
-	struct rte_hash_parameters rte_hash_params = {
-			.name = "bearer_by_imsi_hash",
-	    .entries = LDB_ENTRIES_DEFAULT,
-	    .key_len = sizeof(uint64_t),
-	    .hash_func = rte_jhash,
-	    .hash_func_init_val = 0,
-	    .socket_id = rte_socket_id(),
-	};
+    struct rte_hash_parameters rte_hash_params = {
+        .name = "ue_context_by_imsi_hash",
+        .entries = LDB_ENTRIES_DEFAULT,
+        .key_len = sizeof(uint64_t),
+        .hash_func = rte_jhash,
+        .hash_func_init_val = 0,
+        .socket_id = rte_socket_id(),
+    };
 
-	ue_context_by_imsi_hash = rte_hash_create(&rte_hash_params);
-	if (!ue_context_by_imsi_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
+    ue_context_by_imsi_hash = rte_hash_create(&rte_hash_params);
+    if (!ue_context_by_imsi_hash) {
+        rte_panic("%s hash create failed: %s (%u)\n.",
+                rte_hash_params.name,
+                rte_strerror(rte_errno), rte_errno);
+    }
 
-	rte_hash_params.name = "bearer_by_fteid_hash";
-	rte_hash_params.key_len = sizeof(uint32_t);
-	ue_context_by_fteid_hash = rte_hash_create(&rte_hash_params);
-	if (!ue_context_by_fteid_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
+    rte_hash_params.name = "ue_context_by_fteid_hash";
+    rte_hash_params.key_len = sizeof(uint32_t);
+    ue_context_by_fteid_hash = rte_hash_create(&rte_hash_params);
+    if (!ue_context_by_fteid_hash) {
+        rte_panic("%s hash create failed: %s (%u)\n.",
+                rte_hash_params.name,
+                rte_strerror(rte_errno), rte_errno);
+    }
 
-	rte_hash_params.name = "pdn_by_fteid_hash";
-	rte_hash_params.key_len = sizeof(uint32_t);
-	pdn_by_fteid_hash = rte_hash_create(&rte_hash_params);
-	if (!pdn_by_fteid_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
-	
-	rte_hash_params.name = "bearer_by_teid_hash";
-	rte_hash_params.key_len = sizeof(uint32_t);
-	bearer_by_fteid_hash = rte_hash_create(&rte_hash_params);
-	if (!bearer_by_fteid_hash) {
-                rte_panic("%s hash create failed: %s (%u)\n.",
-                                rte_hash_params.name,
-                    rte_strerror(rte_errno), rte_errno);
-        }
+    rte_hash_params.name = "pdn_by_fteid_hash";
+    rte_hash_params.key_len = sizeof(uint32_t);
+    pdn_by_fteid_hash = rte_hash_create(&rte_hash_params);
+    if (!pdn_by_fteid_hash) {
+        rte_panic("%s hash create failed: %s (%u)\n.",
+                rte_hash_params.name,
+                rte_strerror(rte_errno), rte_errno);
+    }
+
+    rte_hash_params.name = "bearer_by_teid_hash";
+    rte_hash_params.key_len = sizeof(uint32_t);
+    bearer_by_fteid_hash = rte_hash_create(&rte_hash_params);
+    if (!bearer_by_fteid_hash) {
+        rte_panic("%s hash create failed: %s (%u)\n.",
+                rte_hash_params.name,
+                rte_strerror(rte_errno), rte_errno);
+    }
 }
-
-
 
 void
 print_ue_context_by(struct rte_hash *h, ue_context_t *context)

@@ -282,6 +282,7 @@ enqueue_dl_pkts(pdr_info_t **pdrs, pfcp_session_datat_t **sess_info,
 
 		if (((pdr->far)->actions.nocp) || ((pdr->far)->actions.buff) || ((pdr->far)->actions.forw)) {
 			if (rte_ring_enqueue(ring, (void *)pkts[i]) == -ENOBUFS) {
+                printf("enqueue failed \n");
 				rte_pktmbuf_free(pkts[i]);
 				rte_ring_free(si->dl_ring);
 				si->dl_ring = NULL;
@@ -290,6 +291,7 @@ enqueue_dl_pkts(pdr_info_t **pdrs, pfcp_session_datat_t **sess_info,
 				clLog(clSystemLog, eCLSeverityCritical, "%s::Can't queue pkt- ring full..."
 						" Dropping pkt\n", __func__);
 			} else {
+                printf("enqueue success \n");
 				clLog(clSystemLog, eCLSeverityDebug, "ACTIONS : %s :"
 						"Buffering the pkts\n",
 						(((pdr->far)->actions.nocp != 0) &&
@@ -297,6 +299,8 @@ enqueue_dl_pkts(pdr_info_t **pdrs, pfcp_session_datat_t **sess_info,
 						(pdr->far)->actions.nocp != 0 ? "Notify to CP" :
 						(pdr->far)->actions.nocp != 0 ? "Buffer" :"UNKNOWN");
 			}
-		}
+		} else {
+            printf("dropping packet ?\n");
+        }
 	}
 }

@@ -54,8 +54,6 @@ bool native_config_folder = false;
 /* We should move all the config inside this structure eventually
  * config is scattered all across the place as of now
  */
-extern cp_config_t *cp_config;
-
 #ifdef USE_REST
 uint8_t rstCnt = 0;
 #endif /* USE_REST*/
@@ -65,8 +63,6 @@ uint16_t local_csid = 0;
 #endif /* USE_CSID */
 
 struct cp_params cp_params;
-extern struct cp_stats_t cp_stats;
-
 clock_t cp_stats_execution_time;
 _timer_t st_time;
 
@@ -242,10 +238,9 @@ main(int argc, char **argv)
     // this parses file and allocates cp_config  
     init_config();
 
-
     init_cp();
-    init_cp_params();
 
+    init_cp_params();
 
     /* TODO: Need to Re-arrange the hash initialize */
     create_heartbeat_hash_table();
@@ -278,6 +273,7 @@ main(int argc, char **argv)
 #endif  /* USE_REST */
 
     init_pfcp_tables();
+
     init_transaction_hash();
 
 #ifdef USE_CSID

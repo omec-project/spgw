@@ -50,8 +50,6 @@ void iface_process_ipc_msgs(void)
 	/* Add PFCP_FD in the set */
 	FD_SET(my_sock.sock_fd_pfcp, &readfds);
 
-	int max = 0;
-
 	/* Add S11_FD in the set */
 	if ((cp_config->cp_type  == SGWC) || (cp_config->cp_type == SAEGWC)) {
 		FD_SET(my_sock.sock_fd_s11, &readfds);
@@ -69,28 +67,9 @@ void iface_process_ipc_msgs(void)
 	}
 #endif /* GX_BUILD */
 
-	/* Set the MAX FD's stored into the set */
-	if (cp_config->cp_type == SGWC) {
-		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s11 ?
-				my_sock.sock_fd_pfcp : my_sock.sock_fd_s11);
-		max = (max > my_sock.sock_fd_s5s8 ? max : my_sock.sock_fd_s5s8);
-	}
-	if (cp_config->cp_type == SAEGWC) {
-		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s11 ?
-				my_sock.sock_fd_pfcp : my_sock.sock_fd_s11);
-#ifdef GX_BUILD
-		max = (gx_app_sock > max ? gx_app_sock : max);
-#endif /* GX_BUILD */
-	}
-	if (cp_config->cp_type == PGWC) {
-		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s5s8 ?
-				my_sock.sock_fd_pfcp : my_sock.sock_fd_s5s8);
-#ifdef GX_BUILD
-		max = (gx_app_sock > max ? gx_app_sock : max);
-#endif /* GX_BUILD */
-	}
 
-	n = max + 1;
+	n = my_sock.select_max_fd;
+
 	/* wait until either socket has data
 	 *  ready to be recv()d (timeout 10.5 secs)
 	 */

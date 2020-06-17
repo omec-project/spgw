@@ -1,9 +1,7 @@
-/*
- * Copyright 2020-present Open Networking Foundation
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- */
+// Copyright 2020-present Open Networking Foundation
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #include "rte_common.h"
 #include "sm_struct.h"
@@ -81,7 +79,6 @@ int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
 		} else {
 			/*Set the appropriate state for the SAEGWC and PGWC*/
 #ifdef GX_BUILD
-			msg->state = PGWC_NONE_STATE;
         	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
         			"Msg_Type:%s[%u], Teid:%u, "
         			"Procedure:%s, State:%s, Event:%s\n",
@@ -92,7 +89,6 @@ int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
 
             gx_setup_handler((void*)msg, NULL);
 #else
-			msg->state = SGWC_NONE_STATE;
         	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
         			"Msg_Type:%s[%u], Teid:%u, "
         			"Procedure:%s, State:%s, Event:%s\n",

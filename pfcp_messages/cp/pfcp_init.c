@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -16,7 +17,6 @@
 #define PFCP_CNTXT_HASH_SIZE (1 << 15)
 
 #define TIMESTAMP_LEN 14
-#define NUM_OF_TABLES 4
 
 #define MAX_HASH_SIZE (1 << 15)
 #define MAX_PDN_HASH_SIZE (1 << 8)
@@ -909,15 +909,31 @@ gen_sess_id_for_ccr(char *sess_id, uint32_t call_id)
 	return 0;
 }
 
+
+
 /**
  * @brief Initializes the pfcp context hash table used to account for
- * PDR, QER, BAR and FAR rules information.
+ * PDR, QER, BAR and FAR rules information in control plane.
  */
 void
-init_hash_tables(void)
+init_pfcp_tables(void)
 {
 	struct rte_hash_parameters
-		pfcp_hash_params[NUM_OF_TABLES] = {
+		pfcp_hash_params[6] = {
+		{	.name = "PFCP_CNTXT_HASH",
+			.entries = PFCP_CNTXT_HASH_SIZE,
+			.key_len = sizeof(uint64_t),
+			.hash_func = rte_hash_crc,
+			.hash_func_init_val = 0,
+			.socket_id = rte_socket_id()
+		},
+		{	.name = "RULE_NAME_BEARER_ID_HASH",
+			.entries = MAX_RULES_ENTRIES_HASH_SIZE,
+			.key_len = sizeof(rule_name_key_t),
+			.hash_func = rte_hash_crc,
+			.hash_func_init_val = 0,
+			.socket_id = rte_socket_id()
+		},
 		{	.name = "PDR_ENTRY_HASH",
 			.entries = MAX_HASH_SIZE,
 			.key_len = sizeof(uint16_t),
@@ -949,63 +965,6 @@ init_hash_tables(void)
 		}
 	};
 
-	pdr_entry_hash = rte_hash_create(&pfcp_hash_params[0]);
-	if (!pdr_entry_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
-				pfcp_hash_params[0].name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
-
-	qer_entry_hash = rte_hash_create(&pfcp_hash_params[1]);
-	if (!qer_entry_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
-				pfcp_hash_params[1].name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
-
-	urr_entry_hash = rte_hash_create(&pfcp_hash_params[2]);
-	if (!urr_entry_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
-				pfcp_hash_params[2].name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
-
-	pdn_conn_hash = rte_hash_create(&pfcp_hash_params[3]);
-	if (!pdn_conn_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
-				pfcp_hash_params[3].name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
-
-}
-
-
-/**
- * @brief Initializes the pfcp context hash table used to account for
- * PDR, QER, BAR and FAR rules information in control plane.
- */
-void
-init_pfcp_tables(void)
-{
-
-	struct rte_hash_parameters
-		pfcp_hash_params[2] = {
-		{	.name = "PFCP_CNTXT_HASH",
-			.entries = PFCP_CNTXT_HASH_SIZE,
-			.key_len = sizeof(uint64_t),
-			.hash_func = rte_hash_crc,
-			.hash_func_init_val = 0,
-			.socket_id = rte_socket_id()
-		},
-		{	.name = "RULE_NAME_BEARER_ID_HASH",
-			.entries = MAX_RULES_ENTRIES_HASH_SIZE,
-			.key_len = sizeof(rule_name_key_t),
-			.hash_func = rte_hash_crc,
-			.hash_func_init_val = 0,
-			.socket_id = rte_socket_id()
-		}
-	};
-
 	pfcp_cntxt_hash = rte_hash_create(&pfcp_hash_params[0]);
 	if (!pfcp_cntxt_hash) {
 		rte_panic("%s: hash create failed: %s (%u)\n",
@@ -1020,8 +979,33 @@ init_pfcp_tables(void)
 		    rte_strerror(rte_errno), rte_errno);
 	}
 
-	init_hash_tables();
+	pdr_entry_hash = rte_hash_create(&pfcp_hash_params[2]);
+	if (!pdr_entry_hash) {
+		rte_panic("%s: hash create failed: %s (%u)\n",
+				pfcp_hash_params[2].name,
+		    rte_strerror(rte_errno), rte_errno);
+	}
 
+	qer_entry_hash = rte_hash_create(&pfcp_hash_params[3]);
+	if (!qer_entry_hash) {
+		rte_panic("%s: hash create failed: %s (%u)\n",
+				pfcp_hash_params[3].name,
+		    rte_strerror(rte_errno), rte_errno);
+	}
+
+	urr_entry_hash = rte_hash_create(&pfcp_hash_params[4]);
+	if (!urr_entry_hash) {
+		rte_panic("%s: hash create failed: %s (%u)\n",
+				pfcp_hash_params[4].name,
+		    rte_strerror(rte_errno), rte_errno);
+	}
+
+	pdn_conn_hash = rte_hash_create(&pfcp_hash_params[5]);
+	if (!pdn_conn_hash) {
+		rte_panic("%s: hash create failed: %s (%u)\n",
+				pfcp_hash_params[5].name,
+		    rte_strerror(rte_errno), rte_errno);
+	}
 }
 
 /**

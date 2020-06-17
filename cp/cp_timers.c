@@ -37,18 +37,6 @@ static uint16_t gtpu_sgwc_seqnb	= 0;
 static uint16_t gtpu_pgwc_seqnb	= 0;
 static uint16_t gtpu_sx_seqnb	= 1;
 
-/**
- * @brief  : Connection hash params.
- */
-static struct rte_hash_parameters
-	conn_hash_params = {
-			.name = "CONN_TABLE",
-			.entries = NUM_CONN,
-			.reserved = 0,
-			.key_len = sizeof(uint32_t),
-			.hash_func = rte_jhash,
-			.hash_func_init_val = 0
-};
 
 /**
  * rte hash handler.
@@ -350,29 +338,34 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 static 
 void echo_table_init(void)
 {
+    struct rte_hash_parameters
+        conn_hash_params = {
+            .name = "CONN_TABLE",
+            .entries = NUM_CONN,
+            .reserved = 0,
+            .key_len = sizeof(uint32_t),
+            .hash_func = rte_jhash,
+            .hash_func_init_val = 0
+        };
 
-	/* Create conn_hash for maintain each port peer connection details */
-	/* Create arp_hash for each port */
-	conn_hash_params.socket_id = rte_socket_id();
-	conn_hash_handle =
-			rte_hash_create(&conn_hash_params);
-	if (!conn_hash_handle) {
-		rte_panic("%s::"
-				"\n\thash create failed::"
-				"\n\trte_strerror= %s; rte_errno= %u\n",
-				conn_hash_params.name,
-				rte_strerror(rte_errno),
-				rte_errno);
-	}
-	return;
+    /* Create conn_hash for maintain each port peer connection details */
+    /* Create arp_hash for each port */
+    conn_hash_params.socket_id = rte_socket_id();
+    conn_hash_handle = rte_hash_create(&conn_hash_params);
+    if (!conn_hash_handle) {
+        rte_panic("%s::"
+                "\n\thash create failed::"
+                "\n\trte_strerror= %s; rte_errno= %u\n",
+                conn_hash_params.name,
+                rte_strerror(rte_errno),
+                rte_errno);
+    }
+    return;
 }
-#endif /* USE_REST */
 
 void rest_thread_init(void)
 {
-#ifdef USE_REST
 	echo_table_init();
-#endif
 
 	sigset_t sigset;
 
@@ -388,6 +381,7 @@ void rest_thread_init(void)
 	}
 	return;
 }
+#endif /* USE_REST */
 
 uint8_t process_response(uint32_t dstIp)
 {

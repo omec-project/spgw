@@ -75,33 +75,6 @@ uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 extern uint8_t rstCnt;
 
-#ifdef SYNC_STATS
-/**
- * @brief  : Initializes the hash table used to account for statstics of req and resp time.
- * @param  : void
- * @return : void
- */
-void
-init_stats_hash(void)
-{
-	struct rte_hash_parameters rte_hash_params = {
-			.name = "stats_hash",
-	    .entries = STATS_HASH_SIZE,
-	    .key_len = sizeof(uint64_t),
-	    .hash_func = rte_hash_crc,
-	    .hash_func_init_val = 0,
-	    .socket_id = rte_socket_id(),
-	};
-
-	stats_hash = rte_hash_create(&rte_hash_params);
-	if (!stats_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n",
-				rte_hash_params.name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
-}
-
-#endif /* SYNC_STATS */
 
 static void init_pfcp(void)
 {
@@ -285,6 +258,30 @@ void init_cp(void)
 				"Unknown spgw_cfg= %u\n", cp_config->cp_type);
 		break;
 	}
+
+    int max = 0; 
+	/* Set the MAX FD's stored into the set */
+	if (cp_config->cp_type == SGWC) {
+		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s11 ?
+				my_sock.sock_fd_pfcp : my_sock.sock_fd_s11);
+		max = (max > my_sock.sock_fd_s5s8 ? max : my_sock.sock_fd_s5s8);
+	}
+	if (cp_config->cp_type == SAEGWC) {
+		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s11 ?
+				my_sock.sock_fd_pfcp : my_sock.sock_fd_s11);
+#ifdef GX_BUILD
+		max = (gx_app_sock > max ? gx_app_sock : max);
+#endif /* GX_BUILD */
+	}
+	if (cp_config->cp_type == PGWC) {
+		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s5s8 ?
+				my_sock.sock_fd_pfcp : my_sock.sock_fd_s5s8);
+#ifdef GX_BUILD
+		max = (gx_app_sock > max ? gx_app_sock : max);
+#endif /* GX_BUILD */
+	}
+
+    my_sock.select_max_fd = max+1;
 
 	if (signal(SIGINT, sig_handler) == SIG_ERR)
 		rte_exit(EXIT_FAILURE, "Error:can't catch SIGINT\n");

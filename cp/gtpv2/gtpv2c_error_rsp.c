@@ -9,7 +9,6 @@
 #include "gtp_ies.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_config.h"
-#include "cp_stats.h"
 #include "ipc_api.h"
 #include "gtpc_timer.h"
 #include "pfcp_timer.h"
