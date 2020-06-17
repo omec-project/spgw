@@ -327,14 +327,14 @@ fill_fqcsid_sess_est_req(pfcp_sess_estab_req_t *pfcp_sess_est_req, ue_context_t 
 		/* Set SGW FQ-CSID */
 		if ((context->sgw_fqcsid)->num_csid) {
 			set_fq_csid_t(&pfcp_sess_est_req->sgw_c_fqcsid, context->sgw_fqcsid);
-			(pfcp_sess_est_req->sgw_c_fqcsid).node_address = pfcp_config.pfcp_ip.s_addr;
+			(pfcp_sess_est_req->sgw_c_fqcsid).node_address = cp_config->pfcp_ip.s_addr;
 		}
 
 	} else {
 		/* Set PGW FQ-CSID */
 		if ((context->pgw_fqcsid)->num_csid) {
 			set_fq_csid_t(&pfcp_sess_est_req->pgw_c_fqcsid, context->pgw_fqcsid);
-			(pfcp_sess_est_req->pgw_c_fqcsid).node_address = pfcp_config.pfcp_ip.s_addr;
+			(pfcp_sess_est_req->pgw_c_fqcsid).node_address = cp_config->pfcp_ip.s_addr;
 		}
 	}
 
@@ -355,7 +355,7 @@ fill_pfcp_sess_set_del_req_t(pfcp_sess_set_del_req_t *pfcp_sess_set_del_req,
 	char pAddr[INET_ADDRSTRLEN];
 
 #ifdef CP_BUILD
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pAddr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 #else
 	inet_ntop(AF_INET, &(dp_comm_ip.s_addr), pAddr, INET_ADDRSTRLEN);
 #endif /* CP_BUILD */
@@ -439,7 +439,7 @@ del_pfcp_peer_node_sess(uint32_t node_addr, uint8_t iface)
 	}
 
 #ifdef CP_BUILD
-		csids.node_addr = pfcp_config.pfcp_ip.s_addr;
+		csids.node_addr = cp_config->pfcp_ip.s_addr;
 #endif /* CP_BUILD */
 
 	fill_pfcp_sess_set_del_req_t(&del_set_req_t, &csids, iface);
@@ -482,7 +482,7 @@ fill_pfcp_sess_set_del_resp(pfcp_sess_set_del_rsp_t *pfcp_del_resp,
 
 	set_pfcp_header(&pfcp_del_resp->header, PFCP_SESSION_SET_DELETION_RESPONSE, 0);
 #ifdef CP_BUILD
-	set_node_id(&(pfcp_del_resp->node_id), pfcp_config.pfcp_ip.s_addr);
+	set_node_id(&(pfcp_del_resp->node_id), cp_config->pfcp_ip.s_addr);
 #else
 	set_node_id(&(pfcp_del_resp->node_id), dp_comm_ip.s_addr);
 #endif /* CP_BUILD */

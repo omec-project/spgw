@@ -14,12 +14,14 @@
 #include "timer.h"
 #include "cp_peer_struct.h"
 #include "trans_struct.h"
+struct dp_info;
 
 #define MAX_HOSTNAME_LENGTH							(256)
 
 typedef enum pfcp_assoc_status_en {
-	ASSOC_IN_PROGRESS = 0,
-	ASSOC_ESTABLISHED = 1,
+    ASSOC_NOT_INITIATED=0,
+	ASSOC_IN_PROGRESS = 1,
+	ASSOC_ESTABLISHED = 2,
 } pfcp_assoc_status_en;
 
 /**
@@ -44,9 +46,10 @@ typedef struct ue_context_key context_key;
  * @brief  : Maintains context of upf
  */
 typedef struct upf_context {
+    struct sockaddr_in upf_sockaddr;
+	char fqdn[MAX_HOSTNAME_LENGTH];
+    struct dp_info *dp_info;
 	pfcp_assoc_status_en	assoc_status;
-	char	fqdn[MAX_HOSTNAME_LENGTH];
-
 	uint16_t up_supp_features;
 	uint8_t  cp_supp_features;
 	uint32_t s1u_ip;
@@ -60,9 +63,7 @@ typedef struct upf_context {
 #else
     transData_t *timer_entry;
 #endif
-
     LIST_HEAD(pendingcsrhead, ue_context_key) pendingCSRs;
-    struct sockaddr_in upf_sockaddr;
 } upf_context_t;
 
 #endif

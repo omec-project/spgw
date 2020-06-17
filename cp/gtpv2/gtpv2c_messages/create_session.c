@@ -1,8 +1,10 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
+#include <assert.h>
 #include <errno.h>
 #include <rte_debug.h>
 #include "gtp_messages_decoder.h"
@@ -39,22 +41,25 @@ extern uint32_t adc_rule_id[];
  @ return : length of the PCO buf 
  */
 static int16_t 
-build_pco_response(char *pco_buf, pco_ie_t *req_pco, uint32_t dpId)
+build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
 {
 	uint16_t index = 0;
 	int i = 0;
 	struct in_addr dns_p, dns_s;
-	bool dns_pri_configured = false;
-	bool dns_secondary_configured = false;
+	bool dns_pri_configured = true;
+	bool dns_secondary_configured = true;
+    uint16_t mtu_conf;
 	uint8_t byte;
 	byte = (req_pco->ext<<7) | (req_pco->config_proto & 0x03);
 	memcpy(&pco_buf[index], &byte, sizeof(byte));
 	index++;
 
     /* May be we should fetch DP context once and then fetch individual fields ? */
-    dns_p = fetch_dns_primary_ip(dpId, &dns_pri_configured);
-    dns_s = fetch_dns_secondary_ip(dpId, &dns_secondary_configured);
-    uint16_t mtu_conf = fetch_dp_ip_mtu(dpId);
+    dp_info_t *dp_conf = context->upf_ctxt->dp_info;
+    assert(dp_conf);
+    dns_p = dp_conf->dns_p; 
+    dns_s = dp_conf->dns_s; 
+    mtu_conf = dp_conf->ip_mtu; 
  
     bool ipv4_link_mtu = false;
  
@@ -64,13 +69,7 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, uint32_t dpId)
 		switch(req_pco->ids[i].type) {
 			case PCO_ID_INTERNET_PROTOCOL_CONTROL_PROTOCOL:
 				if (req_pco->ids[i].data[0] == 1) { /* Code : Configuration Request */
-					total_len = 0;
-					if(dns_pri_configured == true)
-						total_len = 10;
-					if(dns_secondary_configured == true)
-						total_len = 16;
-					if(total_len == 0)
-						break; // nothing configured 
+					total_len = 16;
 					memcpy(&pco_buf[index], &pco_type, sizeof(pco_type));
 					index += sizeof(pco_type);
 
@@ -338,7 +337,8 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
         char *pco_buf = calloc(1, 260);
         if (pco_buf != NULL) {
             //Should we even pass the CSReq in case of PCO not able to allocate ?
-            uint16_t len = build_pco_response(pco_buf, context->pco, context->dpId);
+            //TODO -  pass upf context to build PCO 
+            uint16_t len = build_pco_response(pco_buf, context->pco, context);
             set_pco(&cs_resp.pco_new, IE_INSTANCE_ZERO, pco_buf, len);
         }
     } 

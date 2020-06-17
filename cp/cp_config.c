@@ -1,4 +1,3 @@
-
 // Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
@@ -23,6 +22,7 @@
 #include "clogger.h"
 #include "gw_adapter.h"
 #include "cp_config_defs.h"
+#include "cp_log.h"
 #include "monitor_config.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"
@@ -30,13 +30,15 @@
 #include "apn_struct.h"
 #include "apn_apis.h"
 #include "upf_struct.h"
-#include "cp_log.h"
+#include "pfcp_cp_association.h"
+#include "ip_pool.h"
 
 
 #define GLOBAL_ENTRIES			"GLOBAL"
 #define APN_ENTRIES				"APN_CONFIG"
 #define NAMESERVER_ENTRIES		"NAMESERVER_CONFIG"
 #define IP_POOL_ENTRIES			"IP_POOL_CONFIG"
+#define STATIC_IP_POOL_ENTRIES	"STATIC_IP_POOL_CONFIG"
 #define CACHE_ENTRIES			"CACHE"
 #define APP_ENTRIES				"APP"
 #define OPS_ENTRIES				"OPS"
@@ -69,485 +71,568 @@
 #define TRANSMIT_TIMER			"TRANSMIT_TIMER"
 #define PERIODIC_TIMER			"PERIODIC_TIMER"
 #define TRANSMIT_COUNT			"TRANSMIT_COUNT"
-
 /* CP Timer Parameter */
 #define REQUEST_TIMEOUT 		"REQUEST_TIMEOUT"
 #define REQUEST_TRIES			"REQUEST_TRIES"
 
+extern struct ip_table *static_addr_pool;
 extern char* config_update_base_folder; 
 extern bool native_config_folder;
-
 const char *primary_dns = "8.8.8.8";
 const char *secondary_dns = "8.8.8.4";	
+cp_config_t *cp_config = NULL;
+
+void init_config(void) 
+{
+    /*Global config holder for cp */
+    cp_config = (cp_config_t *) calloc(1, sizeof(cp_config_t));
+
+    if (cp_config == NULL) {
+        rte_exit(EXIT_FAILURE, "Can't allocate memory for cp_config!\n");
+    }
+
+    /* start - dynamic config */
+    cp_config->appl_config = (struct app_config *) calloc(1, sizeof(struct app_config));
+    if (cp_config->appl_config == NULL) {
+        rte_exit(EXIT_FAILURE, "Can't allocate memory for appl_config!\n");
+    }
+
+    /* Parse initial configuration file */
+    init_spgwc_dynamic_config(cp_config->appl_config);
+
+    /* Lets register config change hook */
+    char file[128] = {'\0'};
+    strcat(file, config_update_base_folder);
+    strcat(file, "app_config.cfg");
+    RTE_LOG_DP(DEBUG, CP, "Config file to monitor %s ", file);
+    register_config_updates(file);
+    /* end - dynamic config */
+
+    config_cp_ip_port(cp_config);
+
+#ifdef USE_DNS_QUERY
+	set_dns_config();
+#endif /* USE_DNS_QUERY */
+
+    init_cli_module(cp_config->cp_logger);
+
+    return;
+}
 
 void
-config_cp_ip_port(pfcp_config_t *pfcp_config)
+config_cp_ip_port(cp_config_t *cp_config)
 {
-	int32_t i = 0;
-	int32_t num_ops_entries = 0;
-	int32_t num_app_entries = 0;
-	int32_t num_cache_entries = 0;
-	int32_t num_ip_pool_entries = 0;
-	int32_t num_apn_entries = 0;
-	int32_t num_global_entries = 0;
+    int32_t i = 0;
+    int32_t num_ops_entries = 0;
+    int32_t num_app_entries = 0;
+    int32_t num_cache_entries = 0;
+    int32_t num_ip_pool_entries = 0;
+    int32_t num_apn_entries = 0;
+    int32_t num_global_entries = 0;
 
-	struct rte_cfgfile_entry *global_entries = NULL;
-	struct rte_cfgfile_entry *apn_entries = NULL;
-	struct rte_cfgfile_entry *ip_pool_entries = NULL;
-	struct rte_cfgfile_entry *cache_entries = NULL;
-	struct rte_cfgfile_entry *app_entries = NULL;
-	struct rte_cfgfile_entry *ops_entries = NULL;
-
-
-	struct rte_cfgfile *file = rte_cfgfile_load(STATIC_CP_FILE, 0);
-	if (file == NULL) {
-		rte_exit(EXIT_FAILURE, "Cannot load configuration file %s\n",
-				STATIC_CP_FILE);
-	}
-
-	fprintf(stderr, "CP: PFCP Config Parsing %s\n", STATIC_CP_FILE);
-
-	/* Read GLOBAL seaction values and configure respective params. */
-	num_global_entries = rte_cfgfile_section_num_entries(file, GLOBAL_ENTRIES);
-
-	if (num_global_entries > 0) {
-		global_entries = rte_malloc_socket(NULL,
-				sizeof(struct rte_cfgfile_entry) *
-				num_global_entries,
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-	}
-
-	if (global_entries == NULL) {
-		rte_panic("Error configuring global entry of %s\n",
-				STATIC_CP_FILE);
-	}
-
-	rte_cfgfile_section_entries(file, GLOBAL_ENTRIES, global_entries,
-			num_global_entries);
-
-	for (i = 0; i < num_global_entries; ++i) {
-
-		/* Parse SGWC, PGWC and SAEGWC values from cp.cfg */
-		if(strncmp(CP_TYPE, global_entries[i].name, strlen(CP_TYPE)) == 0) {
-			cp_config->cp_type = (uint8_t)atoi(global_entries[i].value);
-
-			fprintf(stderr, "CP: CP_TYPE     : %s\n",
-					cp_config->cp_type == SGWC ? "SGW-C" :
-					cp_config->cp_type == PGWC ? "PGW-C" :
-					cp_config->cp_type == SAEGWC ? "SAEGW-C" : "UNKNOWN");
-
-		}else if (strncmp(S11_IPS, global_entries[i].name,
-					strlen(S11_IPS)) == 0) {
-
-			/* TODO - ajay get rid of ip address. Get hostname/servicename  if required */
-			/* TODO - ajay mme address is not required to be configured at SPGW */
-			inet_aton(global_entries[i].value,
-					&(cp_config->s11_ip));
-
-			fprintf(stderr, "CP: S11_IP      : %s\n",
-					inet_ntoa(cp_config->s11_ip));
-
-		}else if (strncmp(S11_PORTS, global_entries[i].name,
-					strlen(S11_PORTS)) == 0) {
-
-			cp_config->s11_port =
-					(uint16_t)atoi(global_entries[i].value);
-
-			fprintf(stderr, "CP: S11_PORT    : %d\n",
-					cp_config->s11_port);
-
-		} else if (strncmp(S5S8_IPS, global_entries[i].name,
-					strlen(S5S8_IPS)) == 0) {
-
-			inet_aton(global_entries[i].value,
-					&(cp_config->s5s8_ip));
-
-			fprintf(stderr, "CP: S5S8_IP     : %s\n",
-					inet_ntoa(cp_config->s5s8_ip));
-
-		} else if (strncmp(S5S8_PORTS, global_entries[i].name,
-					strlen(S5S8_PORTS)) == 0) {
-
-			cp_config->s5s8_port =
-				(uint16_t)atoi(global_entries[i].value);
-
-			fprintf(stderr, "CP: S5S8_PORT   : %d\n",
-					cp_config->s5s8_port);
-
-		} else if (strncmp(PFCP_IPS , global_entries[i].name,
-					strlen(PFCP_IPS)) == 0) {
-
-			inet_aton(global_entries[i].value,
-					&(pfcp_config->pfcp_ip));
-
-			fprintf(stderr, "CP: PFCP_IP     : %s\n",
-					inet_ntoa(pfcp_config->pfcp_ip));
-
-		} else if (strncmp(PFCP_PORTS, global_entries[i].name,
-					strlen(PFCP_PORTS)) == 0) {
-
-			pfcp_config->pfcp_port =
-				(uint16_t)atoi(global_entries[i].value);
-
-			fprintf(stderr, "CP: PFCP_PORT   : %d\n",
-					pfcp_config->pfcp_port);
-
-		} else if (strncmp(MME_S11_IPS, global_entries[i].name,
-					strlen(MME_S11_IPS)) == 0) {
-
-			inet_aton(global_entries[i].value,
-					&(cp_config->s11_mme_ip));
-
-			fprintf(stderr, "CP: MME_S11_IP  : %s\n",
-					inet_ntoa(cp_config->s11_mme_ip));
-
-		} else if (strncmp(MME_S11_PORTS, global_entries[i].name,
-					strlen(MME_S11_PORTS)) == 0) {
-			cp_config->s11_mme_port =
-				(uint16_t)atoi(global_entries[i].value);
-
-			fprintf(stderr, "CP: MME_S11_PORT: %d\n", cp_config->s11_mme_port);
-
-		} else if (strncmp(UPF_PFCP_IPS , global_entries[i].name,
-					strlen(UPF_PFCP_IPS)) == 0) {
-
-			/* ajay - this should be part of static upf config list */
-			inet_aton(global_entries[i].value,
-					&(pfcp_config->upf_pfcp_ip));
-
-			fprintf(stderr, "CP: UPF_PFCP_IP : %s\n",
-					inet_ntoa(pfcp_config->upf_pfcp_ip));
-
-		} else if (strncmp(UPF_PFCP_PORTS, global_entries[i].name,
-					strlen(UPF_PFCP_PORTS)) == 0) {
-
-			pfcp_config->upf_pfcp_port =
-				(uint16_t)atoi(global_entries[i].value);
-
-			fprintf(stderr, "CP: UPF_PFCP_PORT: %d\n",
-					pfcp_config->upf_pfcp_port);
-
-		 } else if (strncmp(CP_LOGGER, global_entries[i].name, strlen(CP_LOGGER)) == 0) {
-			 cp_config->cp_logger = (uint8_t)atoi(global_entries[i].value);
-			 fprintf(stderr, "CP: CP_LOGGER: %d\n",
-					cp_config->cp_logger);
-		 }
-
-		/* Parse timer and counter values from cp.cfg */
-		if(strncmp(TRANSMIT_TIMER, global_entries[i].name, strlen(TRANSMIT_TIMER)) == 0) {
-			pfcp_config->transmit_timer = (int)atoi(global_entries[i].value);
-			fprintf(stderr, "CP: TRANSMIT_TIMER: %d\n",
-				pfcp_config->transmit_timer);
-		}
-
-		if(strncmp(PERIODIC_TIMER, global_entries[i].name, strlen(PERIODIC_TIMER)) == 0) {
-			pfcp_config->periodic_timer = (int)atoi(global_entries[i].value);
-			fprintf(stderr, "CP: PERIODIC_TIMER: %d\n",
-				pfcp_config->periodic_timer);
-		}
-
-		if(strncmp(TRANSMIT_COUNT, global_entries[i].name, strlen(TRANSMIT_COUNT)) == 0) {
-			pfcp_config->transmit_cnt = (uint8_t)atoi(global_entries[i].value);
-			fprintf(stderr, "CP: TRANSMIT_COUNT: %u\n",
-				pfcp_config->transmit_cnt);
-		}
-
-		/* Parse CP Timer Request Time Out and Retries Values from cp.cfg */
-		if(strncmp(REQUEST_TIMEOUT, global_entries[i].name, strlen(REQUEST_TIMEOUT)) == 0){
-			if(check_cp_req_timeout_config(global_entries[i].value) == 0) {
-				pfcp_config->request_timeout = (int)atoi(global_entries[i].value);
-				fprintf(stderr, "CP: REQUEST_TIMEOUT: %d\n",
-					pfcp_config->request_timeout);
-			} else {
-				rte_panic("Error configuring "
-					"CP TIMER "REQUEST_TIMEOUT" invalid entry of %s\n", STATIC_CP_FILE);
-			}
-		}else {
-			/* if CP Request Timer Parameter is not present is cp.cfg */
-			/* Defualt Request Timerout value */
-			/* 5 minute = 300000 milisecond  */
-			if(pfcp_config->request_timeout == 0) {
-				pfcp_config->request_timeout = 300000;
-				fprintf(stderr, "CP: DEFAULT REQUEST_TIMEOUT: %d\n",
-					pfcp_config->request_timeout);
-			}
-		}
-
-		if(strncmp(REQUEST_TRIES, global_entries[i].name, strlen(REQUEST_TRIES)) == 0) {
-			if(check_cp_req_tries_config(global_entries[i].value) == 0) {
-				pfcp_config->request_tries = (uint8_t)atoi(global_entries[i].value);
-				fprintf(stderr, "CP: REQUEST_TRIES: %d\n",
-					pfcp_config->request_tries);
-			} else {
-				rte_panic("Error configuring "
-					"CP TIMER "REQUEST_TRIES" invalid entry of %s\n", STATIC_CP_FILE);
-			}
-
-		} else {
-			/* if CP Request Timer Parameter is not present is cp.cfg */
-                        /* Defualt Request Retries value */
-			if(pfcp_config->request_tries == 0) {
-				pfcp_config->request_tries = 3;
-				fprintf(stderr, "CP: DEFAULT REQUEST_TRIES: %d\n",
-					pfcp_config->request_tries);
-			}
-		}
-	}
-
-	rte_free(global_entries);
-
-	/* Parse APN and nameserver values. */
-	uint16_t apn_idx = 0;
-	uint16_t app_nameserver_ip_idx = 0;
-	uint16_t ops_nameserver_ip_idx = 0;
-
-	num_apn_entries =
-		rte_cfgfile_section_num_entries(file, APN_ENTRIES);
-
-	if (num_apn_entries > 0) {
-		/* Allocate the memory. */
-		apn_entries = rte_malloc_socket(NULL,
-				sizeof(struct rte_cfgfile_entry) *
-				num_apn_entries,
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-	if (apn_entries == NULL)
-		rte_panic("Error configuring"
-				"apn entry of %s\n", STATIC_CP_FILE);
-	}
+    struct rte_cfgfile_entry *global_entries = NULL;
+    struct rte_cfgfile_entry *apn_entries = NULL;
+    struct rte_cfgfile_entry *ip_pool_entries = NULL;
+    struct rte_cfgfile_entry *static_ip_pool_entries = NULL;
+    struct rte_cfgfile_entry *cache_entries = NULL;
+    struct rte_cfgfile_entry *app_entries = NULL;
+    struct rte_cfgfile_entry *ops_entries = NULL;
 
 
-	/* Fill the entries in APN list. */
-	rte_cfgfile_section_entries(file,
-			APN_ENTRIES, apn_entries, num_apn_entries);
+    struct rte_cfgfile *file = rte_cfgfile_load(STATIC_CP_FILE, 0);
+    if (file == NULL) {
+        rte_exit(EXIT_FAILURE, "Cannot load configuration file %s\n",
+                STATIC_CP_FILE);
+    }
 
-	for (i = 0; i < num_apn_entries; ++i) {
+    fprintf(stderr, "CP: PFCP Config Parsing %s\n", STATIC_CP_FILE);
+
+    /* Read GLOBAL seaction values and configure respective params. */
+    num_global_entries = rte_cfgfile_section_num_entries(file, GLOBAL_ENTRIES);
+
+    if (num_global_entries > 0) {
+        global_entries = rte_malloc_socket(NULL,
+                sizeof(struct rte_cfgfile_entry) *
+                num_global_entries,
+                RTE_CACHE_LINE_SIZE, rte_socket_id());
+    }
+
+    if (global_entries == NULL) {
+        rte_panic("Error configuring global entry of %s\n",
+                STATIC_CP_FILE);
+    }
+
+    rte_cfgfile_section_entries(file, GLOBAL_ENTRIES, global_entries,
+            num_global_entries);
+
+    for (i = 0; i < num_global_entries; ++i) {
+
+        /* Parse SGWC, PGWC and SAEGWC values from cp.cfg */
+        if(strncmp(CP_TYPE, global_entries[i].name, strlen(CP_TYPE)) == 0) {
+            cp_config->cp_type = (uint8_t)atoi(global_entries[i].value);
+
+            fprintf(stderr, "CP: CP_TYPE     : %s\n",
+                    cp_config->cp_type == SGWC ? "SGW-C" :
+                    cp_config->cp_type == PGWC ? "PGW-C" :
+                    cp_config->cp_type == SAEGWC ? "SAEGW-C" : "UNKNOWN");
+
+        }else if (strncmp(S11_IPS, global_entries[i].name,
+                    strlen(S11_IPS)) == 0) {
+
+            /* TODO - ajay get rid of ip address. Get hostname/servicename  if required */
+            /* TODO - ajay mme address is not required to be configured at SPGW */
+            inet_aton(global_entries[i].value,
+                    &(cp_config->s11_ip));
+
+            fprintf(stderr, "CP: S11_IP      : %s\n",
+                    inet_ntoa(cp_config->s11_ip));
+
+        }else if (strncmp(S11_PORTS, global_entries[i].name,
+                    strlen(S11_PORTS)) == 0) {
+
+            cp_config->s11_port =
+                (uint16_t)atoi(global_entries[i].value);
+
+            fprintf(stderr, "CP: S11_PORT    : %d\n",
+                    cp_config->s11_port);
+
+        } else if (strncmp(S5S8_IPS, global_entries[i].name,
+                    strlen(S5S8_IPS)) == 0) {
+
+            inet_aton(global_entries[i].value,
+                    &(cp_config->s5s8_ip));
+
+            fprintf(stderr, "CP: S5S8_IP     : %s\n",
+                    inet_ntoa(cp_config->s5s8_ip));
+
+        } else if (strncmp(S5S8_PORTS, global_entries[i].name,
+                    strlen(S5S8_PORTS)) == 0) {
+
+            cp_config->s5s8_port =
+                (uint16_t)atoi(global_entries[i].value);
+
+            fprintf(stderr, "CP: S5S8_PORT   : %d\n",
+                    cp_config->s5s8_port);
+
+        } else if (strncmp(PFCP_IPS , global_entries[i].name,
+                    strlen(PFCP_IPS)) == 0) {
+
+            inet_aton(global_entries[i].value,
+                    &(cp_config->pfcp_ip));
+
+            fprintf(stderr, "CP: PFCP_IP     : %s\n",
+                    inet_ntoa(cp_config->pfcp_ip));
+
+        } else if (strncmp(PFCP_PORTS, global_entries[i].name,
+                    strlen(PFCP_PORTS)) == 0) {
+
+            cp_config->pfcp_port =
+                (uint16_t)atoi(global_entries[i].value);
+
+            fprintf(stderr, "CP: PFCP_PORT   : %d\n",
+                    cp_config->pfcp_port);
+
+        } else if (strncmp(MME_S11_IPS, global_entries[i].name,
+                    strlen(MME_S11_IPS)) == 0) {
+
+            inet_aton(global_entries[i].value,
+                    &(cp_config->s11_mme_ip));
+
+            fprintf(stderr, "CP: MME_S11_IP  : %s\n",
+                    inet_ntoa(cp_config->s11_mme_ip));
+
+        } else if (strncmp(MME_S11_PORTS, global_entries[i].name,
+                    strlen(MME_S11_PORTS)) == 0) {
+            cp_config->s11_mme_port =
+                (uint16_t)atoi(global_entries[i].value);
+
+            fprintf(stderr, "CP: MME_S11_PORT: %d\n", cp_config->s11_mme_port);
+
+        } else if (strncmp(UPF_PFCP_IPS , global_entries[i].name,
+                    strlen(UPF_PFCP_IPS)) == 0) {
+
+            /* ajay - this should be part of static upf config list */
+            inet_aton(global_entries[i].value,
+                    &(cp_config->upf_pfcp_ip));
+
+            fprintf(stderr, "CP: UPF_PFCP_IP : %s\n",
+                    inet_ntoa(cp_config->upf_pfcp_ip));
+
+        } else if (strncmp(UPF_PFCP_PORTS, global_entries[i].name,
+                    strlen(UPF_PFCP_PORTS)) == 0) {
+
+            cp_config->upf_pfcp_port =
+                (uint16_t)atoi(global_entries[i].value);
+
+            fprintf(stderr, "CP: UPF_PFCP_PORT: %d\n",
+                    cp_config->upf_pfcp_port);
+
+        } else if (strncmp(CP_LOGGER, global_entries[i].name, strlen(CP_LOGGER)) == 0) {
+            cp_config->cp_logger = (uint8_t)atoi(global_entries[i].value);
+            fprintf(stderr, "CP: CP_LOGGER: %d\n",
+                    cp_config->cp_logger);
+        }
+
+        /* Parse timer and counter values from cp.cfg */
+        if(strncmp(TRANSMIT_TIMER, global_entries[i].name, strlen(TRANSMIT_TIMER)) == 0) {
+            cp_config->transmit_timer = (int)atoi(global_entries[i].value);
+            fprintf(stderr, "CP: TRANSMIT_TIMER: %d\n",
+                    cp_config->transmit_timer);
+        }
+
+        if(strncmp(PERIODIC_TIMER, global_entries[i].name, strlen(PERIODIC_TIMER)) == 0) {
+            cp_config->periodic_timer = (int)atoi(global_entries[i].value);
+            fprintf(stderr, "CP: PERIODIC_TIMER: %d\n",
+                    cp_config->periodic_timer);
+        }
+
+        if(strncmp(TRANSMIT_COUNT, global_entries[i].name, strlen(TRANSMIT_COUNT)) == 0) {
+            cp_config->transmit_cnt = (uint8_t)atoi(global_entries[i].value);
+            fprintf(stderr, "CP: TRANSMIT_COUNT: %u\n",
+                    cp_config->transmit_cnt);
+        }
+
+        /* Parse CP Timer Request Time Out and Retries Values from cp.cfg */
+        if(strncmp(REQUEST_TIMEOUT, global_entries[i].name, strlen(REQUEST_TIMEOUT)) == 0){
+            if(check_cp_req_timeout_config(global_entries[i].value) == 0) {
+                cp_config->request_timeout = (int)atoi(global_entries[i].value);
+                fprintf(stderr, "CP: REQUEST_TIMEOUT: %d\n",
+                        cp_config->request_timeout);
+            } else {
+                rte_panic("Error configuring "
+                        "CP TIMER "REQUEST_TIMEOUT" invalid entry of %s\n", STATIC_CP_FILE);
+            }
+        }else {
+            /* if CP Request Timer Parameter is not present is cp.cfg */
+            /* Defualt Request Timerout value */
+            /* 5 minute = 300000 milisecond  */
+            if(cp_config->request_timeout == 0) {
+                cp_config->request_timeout = 300000;
+                fprintf(stderr, "CP: DEFAULT REQUEST_TIMEOUT: %d\n",
+                        cp_config->request_timeout);
+            }
+        }
+
+        if(strncmp(REQUEST_TRIES, global_entries[i].name, strlen(REQUEST_TRIES)) == 0) {
+            if(check_cp_req_tries_config(global_entries[i].value) == 0) {
+                cp_config->request_tries = (uint8_t)atoi(global_entries[i].value);
+                fprintf(stderr, "CP: REQUEST_TRIES: %d\n",
+                        cp_config->request_tries);
+            } else {
+                rte_panic("Error configuring "
+                        "CP TIMER "REQUEST_TRIES" invalid entry of %s\n", STATIC_CP_FILE);
+            }
+
+        } else {
+            /* if CP Request Timer Parameter is not present is cp.cfg */
+            /* Defualt Request Retries value */
+            if(cp_config->request_tries == 0) {
+                cp_config->request_tries = 3;
+                fprintf(stderr, "CP: DEFAULT REQUEST_TRIES: %d\n",
+                        cp_config->request_tries);
+            }
+        }
+    }
+
+    rte_free(global_entries);
+
+    /* Parse APN and nameserver values. */
+    uint16_t apn_idx = 0;
+    uint16_t app_nameserver_ip_idx = 0;
+    uint16_t ops_nameserver_ip_idx = 0;
+
+    num_apn_entries =
+        rte_cfgfile_section_num_entries(file, APN_ENTRIES);
+
+    if (num_apn_entries > 0) {
+        /* Allocate the memory. */
+        apn_entries = rte_malloc_socket(NULL,
+                sizeof(struct rte_cfgfile_entry) *
+                num_apn_entries,
+                RTE_CACHE_LINE_SIZE, rte_socket_id());
+        if (apn_entries == NULL)
+            rte_panic("Error configuring"
+                    "apn entry of %s\n", STATIC_CP_FILE);
+    }
+
+
+    /* Fill the entries in APN list. */
+    rte_cfgfile_section_entries(file,
+            APN_ENTRIES, apn_entries, num_apn_entries);
+
+    for (i = 0; i < num_apn_entries; ++i) {
         apn_t local_apn={0};
-		fprintf(stderr, "CP: [%s] = %s\n",
-				apn_entries[i].name,
-				apn_entries[i].value);
+        fprintf(stderr, "CP: [%s] = %s\n",
+                apn_entries[i].name,
+                apn_entries[i].value);
 
-		if (strncmp(APN, apn_entries[i].name,
-					strlen(APN)) == 0) {
-			/* If key matches */
-			if (i < MAX_NUM_APN) {
-				char *ptr[3];
-				/* Based on default value, set usage type */
-				local_apn.apn_usage_type = -1;
+        if (strncmp(APN, apn_entries[i].name,
+                    strlen(APN)) == 0) {
+            /* If key matches */
+            if (i < MAX_NUM_APN) {
+                char *ptr[3];
+                /* Based on default value, set usage type */
+                local_apn.apn_usage_type = -1;
 
-				parse_apn_args(apn_entries[i].value, ptr);
+                parse_apn_args(apn_entries[i].value, ptr);
 
-				local_apn.apn_name_label = ptr[0];
+                local_apn.apn_name_label = ptr[0];
 
-			    if (ptr[1] != NULL)
-				    local_apn.apn_usage_type = atoi(ptr[1]);
+                if (ptr[1] != NULL)
+                    local_apn.apn_usage_type = atoi(ptr[1]);
 
-		        if (ptr[2] != NULL)
-			        memcpy(local_apn.apn_net_cap, ptr[2], strlen(ptr[2]));
+                if (ptr[2] != NULL)
+                    memcpy(local_apn.apn_net_cap, ptr[2], strlen(ptr[2]));
 
-			    set_apn_name(&local_apn, local_apn.apn_name_label);
+                set_apn_name(&local_apn, local_apn.apn_name_label);
 
-				int f = 0;
-				/* Free the memory allocated by malloc. */
+                int f = 0;
+                /* Free the memory allocated by malloc. */
 
-				for (f = 0; f < 3; f++)
-					free(ptr[f]);
+                for (f = 0; f < 3; f++)
+                    free(ptr[f]);
 
-				apn_idx++;
-			}
-		}
-	}
-	rte_free(apn_entries);
-
-
-	/* Read cache values from cfg seaction. */
-	num_cache_entries =
-		rte_cfgfile_section_num_entries(file, CACHE_ENTRIES);
-
-	if (num_cache_entries > 0) {
-		cache_entries = rte_malloc_socket(NULL,
-						sizeof(struct rte_cfgfile_entry)
-							*num_cache_entries,
-							RTE_CACHE_LINE_SIZE,
-							rte_socket_id());
-	}
-
-	if (cache_entries == NULL)
-		rte_panic("Error configuring"
-				"CACHE entry of %s\n", STATIC_CP_FILE);
-
-	rte_cfgfile_section_entries(file, CACHE_ENTRIES,
-					cache_entries,
-					num_cache_entries);
-
-	for (i = 0; i < num_cache_entries; ++i) {
-		fprintf(stderr, "CP: [%s] = %s\n",
-				cache_entries[i].name,
-				cache_entries[i].value);
-		if (strncmp(CONCURRENT, cache_entries[i].name,
-						strlen(CONCURRENT)) == 0)
-			cp_config->dns_cache.concurrent =
-					(uint32_t)atoi(cache_entries[i].value);
-		if (strncmp(PERCENTAGE, cache_entries[i].name,
-						strlen(CONCURRENT)) == 0)
-			cp_config->dns_cache.percent =
-					(uint32_t)atoi(cache_entries[i].value);
-		if (strncmp(INT_SEC, cache_entries[i].name,
-						strlen(CONCURRENT)) == 0)
-			cp_config->dns_cache.sec =
-					(((uint32_t)atoi(cache_entries[i].value)) * 1000);
-		if (strncmp(QUERY_TIMEOUT, cache_entries[i].name,
-		                strlen(QUERY_TIMEOUT)) == 0)
-		    cp_config->dns_cache.timeoutms =
-		            (long)atol(cache_entries[i].value);
-		if (strncmp(QUERY_TRIES, cache_entries[i].name,
-		                strlen(QUERY_TRIES)) == 0)
-		    cp_config->dns_cache.tries =
-		           (uint32_t)atoi(cache_entries[i].value);
-	}
-
-	rte_free(cache_entries);
-
-	/* Read app values from cfg seaction. */
-	num_app_entries =
-		rte_cfgfile_section_num_entries(file, APP_ENTRIES);
-
-	if (num_app_entries > 0) {
-		app_entries = rte_malloc_socket(NULL,
-						sizeof(struct rte_cfgfile_entry)
-							*num_app_entries,
-							RTE_CACHE_LINE_SIZE,
-							rte_socket_id());
-	}
-
-	if (app_entries == NULL)
-		rte_panic("Error configuring"
-				"APP entry of %s\n", STATIC_CP_FILE);
-
-	rte_cfgfile_section_entries(file, APP_ENTRIES,
-					app_entries,
-					num_app_entries);
-
-	for (i = 0; i < num_app_entries; ++i) {
-		fprintf(stderr, "CP: [%s] = %s\n",
-				app_entries[i].name,
-				app_entries[i].value);
-
-		if (strncmp(FREQ_SEC, app_entries[i].name,
-						strlen(FREQ_SEC)) == 0)
-			cp_config->app_dns.freq_sec =
-					(uint8_t)atoi(app_entries[i].value);
-
-		if (strncmp(FILENAME, app_entries[i].name,
-						strlen(FILENAME)) == 0)
-			strncpy(cp_config->app_dns.filename,
-					app_entries[i].value,
-					strlen(app_entries[i].value));
-
-		if (strncmp(NAMESERVER, app_entries[i].name,
-						strlen(NAMESERVER)) == 0) {
-			strncpy(cp_config->app_dns.nameserver_ip[app_nameserver_ip_idx],
-					app_entries[i].value,
-					strlen(app_entries[i].value));
-			app_nameserver_ip_idx++;
-		}
-	}
-
-	cp_config->app_dns.nameserver_cnt = app_nameserver_ip_idx;
-
-	rte_free(app_entries);
-
-	/* Read ops values from cfg seaction. */
-	num_ops_entries =
-		rte_cfgfile_section_num_entries(file, OPS_ENTRIES);
-
-	if (num_ops_entries > 0) {
-		ops_entries = rte_malloc_socket(NULL,
-						sizeof(struct rte_cfgfile_entry)
-							*num_ops_entries,
-							RTE_CACHE_LINE_SIZE,
-							rte_socket_id());
-	}
-
-	if (ops_entries == NULL)
-		rte_panic("Error configuring"
-				"OPS entry of %s\n", STATIC_CP_FILE);
-
-	rte_cfgfile_section_entries(file, OPS_ENTRIES,
-					ops_entries,
-					num_ops_entries);
-
-	for (i = 0; i < num_ops_entries; ++i) {
-		fprintf(stderr, "CP: [%s] = %s\n",
-				ops_entries[i].name,
-				ops_entries[i].value);
-
-		if (strncmp(FREQ_SEC, ops_entries[i].name,
-						strlen(FREQ_SEC)) == 0)
-			cp_config->ops_dns.freq_sec =
-					(uint8_t)atoi(ops_entries[i].value);
-
-		if (strncmp(FILENAME, ops_entries[i].name,
-						strlen(FILENAME)) == 0)
-			strncpy(cp_config->ops_dns.filename,
-					ops_entries[i].value,
-					strlen(ops_entries[i].value));
-
-		if (strncmp(NAMESERVER, ops_entries[i].name,
-						strlen(NAMESERVER)) == 0) {
-			strncpy(cp_config->ops_dns.nameserver_ip[ops_nameserver_ip_idx],
-					ops_entries[i].value,
-					strlen(ops_entries[i].value));
-			ops_nameserver_ip_idx++;
-		}
-	}
-
-	cp_config->ops_dns.nameserver_cnt = ops_nameserver_ip_idx;
-
-	rte_free(ops_entries);
-
-	/* Read IP_POOL_CONFIG seaction */
-	num_ip_pool_entries = rte_cfgfile_section_num_entries
-									(file, IP_POOL_ENTRIES);
+                apn_idx++;
+            }
+        }
+    }
+    rte_free(apn_entries);
 
 
-	if (num_ip_pool_entries > 0) {
-		ip_pool_entries = rte_malloc_socket(NULL,
-					sizeof(struct rte_cfgfile_entry) *
-					num_ip_pool_entries,
-					RTE_CACHE_LINE_SIZE,
-					rte_socket_id());
-	if (ip_pool_entries == NULL)
-		rte_panic("Error configuring ip"
-				"pool entry of %s\n", STATIC_CP_FILE);
-	}
+    /* Read cache values from cfg seaction. */
+    num_cache_entries =
+        rte_cfgfile_section_num_entries(file, CACHE_ENTRIES);
+
+    if (num_cache_entries > 0) {
+        cache_entries = rte_malloc_socket(NULL,
+                sizeof(struct rte_cfgfile_entry)
+                *num_cache_entries,
+                RTE_CACHE_LINE_SIZE,
+                rte_socket_id());
+    }
+
+    if (cache_entries == NULL)
+        rte_panic("Error configuring"
+                "CACHE entry of %s\n", STATIC_CP_FILE);
+
+    rte_cfgfile_section_entries(file, CACHE_ENTRIES,
+            cache_entries,
+            num_cache_entries);
+
+    for (i = 0; i < num_cache_entries; ++i) {
+        fprintf(stderr, "CP: [%s] = %s\n",
+                cache_entries[i].name,
+                cache_entries[i].value);
+        if (strncmp(CONCURRENT, cache_entries[i].name,
+                    strlen(CONCURRENT)) == 0)
+            cp_config->dns_cache.concurrent =
+                (uint32_t)atoi(cache_entries[i].value);
+        if (strncmp(PERCENTAGE, cache_entries[i].name,
+                    strlen(CONCURRENT)) == 0)
+            cp_config->dns_cache.percent =
+                (uint32_t)atoi(cache_entries[i].value);
+        if (strncmp(INT_SEC, cache_entries[i].name,
+                    strlen(CONCURRENT)) == 0)
+            cp_config->dns_cache.sec =
+                (((uint32_t)atoi(cache_entries[i].value)) * 1000);
+        if (strncmp(QUERY_TIMEOUT, cache_entries[i].name,
+                    strlen(QUERY_TIMEOUT)) == 0)
+            cp_config->dns_cache.timeoutms =
+                (long)atol(cache_entries[i].value);
+        if (strncmp(QUERY_TRIES, cache_entries[i].name,
+                    strlen(QUERY_TRIES)) == 0)
+            cp_config->dns_cache.tries =
+                (uint32_t)atoi(cache_entries[i].value);
+    }
+
+    rte_free(cache_entries);
+
+    /* Read app values from cfg seaction. */
+    num_app_entries =
+        rte_cfgfile_section_num_entries(file, APP_ENTRIES);
+
+    if (num_app_entries > 0) {
+        app_entries = rte_malloc_socket(NULL,
+                sizeof(struct rte_cfgfile_entry)
+                *num_app_entries,
+                RTE_CACHE_LINE_SIZE,
+                rte_socket_id());
+    }
+
+    if (app_entries == NULL)
+        rte_panic("Error configuring"
+                "APP entry of %s\n", STATIC_CP_FILE);
+
+    rte_cfgfile_section_entries(file, APP_ENTRIES,
+            app_entries,
+            num_app_entries);
+
+    for (i = 0; i < num_app_entries; ++i) {
+        fprintf(stderr, "CP: [%s] = %s\n",
+                app_entries[i].name,
+                app_entries[i].value);
+
+        if (strncmp(FREQ_SEC, app_entries[i].name,
+                    strlen(FREQ_SEC)) == 0)
+            cp_config->app_dns.freq_sec =
+                (uint8_t)atoi(app_entries[i].value);
+
+        if (strncmp(FILENAME, app_entries[i].name,
+                    strlen(FILENAME)) == 0)
+            strncpy(cp_config->app_dns.filename,
+                    app_entries[i].value,
+                    strlen(app_entries[i].value));
+
+        if (strncmp(NAMESERVER, app_entries[i].name,
+                    strlen(NAMESERVER)) == 0) {
+            strncpy(cp_config->app_dns.nameserver_ip[app_nameserver_ip_idx],
+                    app_entries[i].value,
+                    strlen(app_entries[i].value));
+            app_nameserver_ip_idx++;
+        }
+    }
+
+    cp_config->app_dns.nameserver_cnt = app_nameserver_ip_idx;
+
+    rte_free(app_entries);
+
+    /* Read ops values from cfg seaction. */
+    num_ops_entries =
+        rte_cfgfile_section_num_entries(file, OPS_ENTRIES);
+
+    if (num_ops_entries > 0) {
+        ops_entries = rte_malloc_socket(NULL,
+                sizeof(struct rte_cfgfile_entry)
+                *num_ops_entries,
+                RTE_CACHE_LINE_SIZE,
+                rte_socket_id());
+    }
+
+    if (ops_entries == NULL)
+        rte_panic("Error configuring"
+                "OPS entry of %s\n", STATIC_CP_FILE);
+
+    rte_cfgfile_section_entries(file, OPS_ENTRIES,
+            ops_entries,
+            num_ops_entries);
+
+    for (i = 0; i < num_ops_entries; ++i) {
+        fprintf(stderr, "CP: [%s] = %s\n",
+                ops_entries[i].name,
+                ops_entries[i].value);
+
+        if (strncmp(FREQ_SEC, ops_entries[i].name,
+                    strlen(FREQ_SEC)) == 0)
+            cp_config->ops_dns.freq_sec =
+                (uint8_t)atoi(ops_entries[i].value);
+
+        if (strncmp(FILENAME, ops_entries[i].name,
+                    strlen(FILENAME)) == 0)
+            strncpy(cp_config->ops_dns.filename,
+                    ops_entries[i].value,
+                    strlen(ops_entries[i].value));
+
+        if (strncmp(NAMESERVER, ops_entries[i].name,
+                    strlen(NAMESERVER)) == 0) {
+            strncpy(cp_config->ops_dns.nameserver_ip[ops_nameserver_ip_idx],
+                    ops_entries[i].value,
+                    strlen(ops_entries[i].value));
+            ops_nameserver_ip_idx++;
+        }
+    }
+
+    cp_config->ops_dns.nameserver_cnt = ops_nameserver_ip_idx;
+
+    rte_free(ops_entries);
+
+    /* Read IP_POOL_CONFIG seaction */
+    num_ip_pool_entries = rte_cfgfile_section_num_entries
+        (file, IP_POOL_ENTRIES);
 
 
+    if (num_ip_pool_entries > 0) {
+        ip_pool_entries = rte_malloc_socket(NULL,
+                sizeof(struct rte_cfgfile_entry) *
+                num_ip_pool_entries,
+                RTE_CACHE_LINE_SIZE,
+                rte_socket_id());
+        if (ip_pool_entries == NULL)
+            rte_panic("Error configuring ip"
+                    "pool entry of %s\n", STATIC_CP_FILE);
+    }
 
-	rte_cfgfile_section_entries(file, IP_POOL_ENTRIES,
-					ip_pool_entries,
-					num_ip_pool_entries);
+    rte_cfgfile_section_entries(file, IP_POOL_ENTRIES,
+            ip_pool_entries,
+            num_ip_pool_entries);
+
+    for (i = 0; i < num_ip_pool_entries; ++i) {
+        fprintf(stderr, "CP: [%s] = %s\n",
+                ip_pool_entries[i].name,
+                ip_pool_entries[i].value);
+        if (strncmp(IP_POOL_IP,
+                    ip_pool_entries[i].name,
+                    strlen(IP_POOL_IP)) == 0) {
+            inet_aton(ip_pool_entries[i].value,
+                    &(cp_config->ip_pool_ip));
+        } else if (strncmp
+                (IP_POOL_MASK, ip_pool_entries[i].name,
+                 strlen(IP_POOL_MASK)) == 0) {
+            inet_aton(ip_pool_entries[i].value,
+                    &(cp_config->ip_pool_mask));
+        }
+    }
+
+    rte_free(ip_pool_entries);
+
+    /* Read STATIC_IP_POOL_CONFIG seaction */
+    num_ip_pool_entries = rte_cfgfile_section_num_entries
+        (file, STATIC_IP_POOL_ENTRIES);
 
 
-	for (i = 0; i < num_ip_pool_entries; ++i) {
-		fprintf(stderr, "CP: [%s] = %s\n",
-				ip_pool_entries[i].name,
-				ip_pool_entries[i].value);
-		if (strncmp(IP_POOL_IP,
-					ip_pool_entries[i].name,
-					strlen(IP_POOL_IP)) == 0) {
-			inet_aton(ip_pool_entries[i].value,
-					&(cp_config->ip_pool_ip));
-		} else if (strncmp
-				(IP_POOL_MASK, ip_pool_entries[i].name,
-				 strlen(IP_POOL_MASK)) == 0) {
-			inet_aton(ip_pool_entries[i].value,
-					&(cp_config->ip_pool_mask));
-		}
-	}
+    if (num_ip_pool_entries > 0) {
+        static_ip_pool_entries = rte_malloc_socket(NULL,
+                sizeof(struct rte_cfgfile_entry) *
+                num_ip_pool_entries,
+                RTE_CACHE_LINE_SIZE,
+                rte_socket_id());
+        if (static_ip_pool_entries == NULL)
+            rte_panic("Error configuring static ip"
+                    "pool entry of %s\n", STATIC_CP_FILE);
+    }
 
-	rte_free(ip_pool_entries);
+    rte_cfgfile_section_entries(file, STATIC_IP_POOL_ENTRIES,
+            static_ip_pool_entries,
+            num_ip_pool_entries);
 
-	return;
+    bool addr_configured=false;
+    bool mask_configured=false;
+    for (i = 0; i < num_ip_pool_entries; ++i) {
+        fprintf(stderr, "CP: [%s] = %s\n",
+                static_ip_pool_entries[i].name,
+                ip_pool_entries[i].value);
+        if (strncmp(IP_POOL_IP,
+                    static_ip_pool_entries[i].name,
+                    strlen(IP_POOL_IP)) == 0) {
+            inet_aton(static_ip_pool_entries[i].value,
+                    &(cp_config->static_ip_pool_ip));
+            cp_config->static_ip_pool_ip.s_addr = ntohl(cp_config->static_ip_pool_ip.s_addr);  
+        } else if (strncmp
+                (IP_POOL_MASK, static_ip_pool_entries[i].name,
+                 strlen(IP_POOL_MASK)) == 0) {
+            inet_aton(static_ip_pool_entries[i].value,
+                    &(cp_config->static_ip_pool_mask));
+            cp_config->static_ip_pool_mask.s_addr = ntohl(cp_config->static_ip_pool_mask.s_addr);  
+        }
+        if(addr_configured && mask_configured) {
+            addr_configured = true;
+            mask_configured = true;
+			static_addr_pool = create_ue_pool(cp_config->static_ip_pool_ip, cp_config->static_ip_pool_mask);
+        }
+    }
+
+    rte_free(static_ip_pool_entries);
+
+    return;
 }
 
 #ifdef USE_DNS_QUERY
@@ -559,33 +644,33 @@ config_cp_ip_port(pfcp_config_t *pfcp_config)
 void
 set_dns_config(void)
 {
-	set_dnscache_refresh_params(pfcp_config.dns_cache.concurrent,
-			pfcp_config.dns_cache.percent, pfcp_config.dns_cache.sec);
+	set_dnscache_refresh_params(cp_config->dns_cache.concurrent,
+			cp_config->dns_cache.percent, cp_config->dns_cache.sec);
 
-	set_dns_retry_params(pfcp_config.dns_cache.timeoutms,
-			pfcp_config.dns_cache.tries);
+	set_dns_retry_params(cp_config->dns_cache.timeoutms,
+			cp_config->dns_cache.tries);
 
 	/* set OPS dns config */
-	for (uint32_t i = 0; i < pfcp_config.ops_dns.nameserver_cnt; i++)
+	for (uint32_t i = 0; i < cp_config->ops_dns.nameserver_cnt; i++)
 	{
-		set_nameserver_config(pfcp_config.ops_dns.nameserver_ip[i],
+		set_nameserver_config(cp_config->ops_dns.nameserver_ip[i],
 				DNS_PORT, DNS_PORT, NS_OPS);
 	}
 
 	apply_nameserver_config(NS_OPS);
-	init_save_dns_queries(NS_OPS, pfcp_config.ops_dns.filename,
-			pfcp_config.ops_dns.freq_sec);
-	load_dns_queries(NS_OPS, pfcp_config.ops_dns.filename);
+	init_save_dns_queries(NS_OPS, cp_config->ops_dns.filename,
+			cp_config->ops_dns.freq_sec);
+	load_dns_queries(NS_OPS, cp_config->ops_dns.filename);
 
 	/* set APP dns config */
-	for (uint32_t i = 0; i < pfcp_config.app_dns.nameserver_cnt; i++)
-		set_nameserver_config(pfcp_config.app_dns.nameserver_ip[i],
+	for (uint32_t i = 0; i < cp_config->app_dns.nameserver_cnt; i++)
+		set_nameserver_config(cp_config->app_dns.nameserver_ip[i],
 				DNS_PORT, DNS_PORT, NS_APP);
 
 	apply_nameserver_config(NS_APP);
-	init_save_dns_queries(NS_APP, pfcp_config.app_dns.filename,
-			pfcp_config.app_dns.freq_sec);
-	load_dns_queries(NS_APP, pfcp_config.app_dns.filename);
+	init_save_dns_queries(NS_APP, cp_config->app_dns.filename,
+			cp_config->app_dns.freq_sec);
+	load_dns_queries(NS_APP, cp_config->app_dns.filename);
 }
 #endif /* USE_DNS_QUERY */
 
@@ -729,28 +814,15 @@ config_change_cbk(char *config_file, uint32_t flags)
 	 * For now I am just going to switch to new config. Anyway its just selection of DPs 
 	 */
 	struct app_config *old_config = cp_config->appl_config;
-    /* Copy resource pointers from old config to new config */
-	struct dp_info *dpNew; 
-	struct dp_info *dpOld; 
-	LIST_FOREACH(dpNew, &new_cfg->dpList, dpentries) {
-		LIST_FOREACH(dpOld, &old_config->dpList, dpentries) {
-			if(dpOld->dpId == dpNew->dpId) {
-               	dpNew->s1u_sgw_ip = dpOld->s1u_sgw_ip; // ajay - should i delete this ?
-				break;
-			}
-		}	
-	}
-
 	cp_config->appl_config = new_cfg; /* switch to new config */ 
 	struct dp_info *np; 
 	np = LIST_FIRST(&old_config->dpList);
 	while (np != NULL) {
 		LIST_REMOVE(np, dpentries);
-		free(np);
+		free(np); /* What if some upf is using this DP config ?. Then dont release it ? */
 		np = LIST_FIRST(&old_config->dpList);
 	}
 	free(old_config);
-
 	/* Everytime we add new config we need to add code here. How to react to config change  */
 }
 
@@ -767,6 +839,8 @@ init_spgwc_dynamic_config(struct app_config *cfg )
 {
 	// Read the config file, parse it and fill passed cfg data structure 
 	const char *entry = NULL;
+	const char *entry1 = NULL;
+	const char *entry2 = NULL;
 	unsigned int num_dp_selection_rules = 0;
 	unsigned int index;
 	LIST_INIT(&cfg->dpList);
@@ -926,46 +1000,54 @@ init_spgwc_dynamic_config(struct app_config *cfg )
  
 		bool static_pool_config_change = false;
 		bool first_time_pool_config = false;
-		entry = rte_cfgfile_get_entry(file, sectionname, "STATIC_IP_POOL");
+		entry1 = rte_cfgfile_get_entry(file, sectionname, "STATIC_IP_POOL_NET");
+		entry2 = rte_cfgfile_get_entry(file, sectionname, "STATIC_IP_POOL_MASK");
 		if(dpOld != NULL) {
-			if(entry == NULL) { 
-				if(dpOld->static_pool == NULL) {
+			if(entry1 == NULL || entry2 == NULL) {
+				if(dpOld->static_pool_net == NULL) {
 					//No old config, no new config.. 
 					RTE_LOG_DP(INFO, CP, "DP(%s) STATIC_IP_POOL is not configured \n", dpInfo->dpName);
-				} else if (dpOld->static_pool != NULL) {
+				} else if (dpOld->static_pool_net != NULL) {
 					// No new config but old config exist 
 					static_pool_config_change = true;
-					RTE_LOG_DP(ERR, CP, "DP(%s) STATIC_IP_POOL config removal not supported. Old config will be used = %s \n", dpInfo->dpName, dpOld->static_pool);
+					RTE_LOG_DP(ERR, CP, "DP(%s) STATIC_IP_POOL config removal not supported. Old config will be used = %s \n", dpInfo->dpName, dpOld->static_pool_net);
 				}
-			} else if (entry != NULL) {  
-				if(dpOld->static_pool == NULL) {
+			} else if (entry1 != NULL && entry2 != NULL) {
+				if(dpOld->static_pool_net == NULL) {
 					first_time_pool_config = true;
-				} else if (dpOld->static_pool != NULL) { 
-					if(strcmp(dpOld->static_pool, entry) != 0) {
+				} else if (dpOld->static_pool_net != NULL) {
+					if(strcmp(dpOld->static_pool_net, entry1) != 0) {
 						static_pool_config_change = true;
-						RTE_LOG_DP(ERR, CP, "DP(%s) STATIC_IP_POOL config modification not supported. Old config(%s) New Config (%s). Continue to use old config \n",dpInfo->dpName, dpOld->static_pool, entry);
+						RTE_LOG_DP(ERR, CP, "DP(%s) STATIC_IP_POOL config modification not supported. Old config(%s) New Config (%s). Continue to use old config \n",dpInfo->dpName, dpOld->static_pool_net, entry);
 					} else {
 						//no change in the pool config  
-						RTE_LOG_DP(INFO, CP, "DP(%s) STATIC_IP_POOL configuration not changed %s \n",dpInfo->dpName, entry);
+						RTE_LOG_DP(INFO, CP, "DP(%s) STATIC_IP_POOL configuration not changed %s \n",dpInfo->dpName, entry1);
 					}
 				}
 			}
 			//Lets take old static config to new as is 
 			dpInfo->static_pool_tree = dpOld->static_pool_tree; // pointer copy 
-			dpInfo->static_pool = dpOld->static_pool; // pointer copy
-		} else if(entry != NULL){
+			dpInfo->static_pool_net = dpOld->static_pool_net; // pointer copy
+			dpInfo->static_pool_mask = dpOld->static_pool_mask; // pointer copy
+		} else if(entry1 != NULL && entry2 != NULL) {
 			first_time_pool_config = true;
-			RTE_LOG_DP(INFO, CP, "DP(%s) STATIC_IP_POOL configured  %s \n",dpInfo->dpName, entry);
+			RTE_LOG_DP(INFO, CP, "DP(%s) STATIC_IP_POOL configured  %s %s \n",dpInfo->dpName, entry1, entry2);
 		}
 
 		if(first_time_pool_config == true && static_pool_config_change == false) {
-			// first time edge configuration 
-			dpInfo->static_pool = NULL; 
-			char *pool_string = parse_create_static_ip_pool(&dpInfo->static_pool_tree, entry);
-			if (pool_string != NULL) {
-				dpInfo->static_pool = pool_string; 
-			} 
-			RTE_LOG_DP(INFO, CP, "DP(%s) STATIC_IP_POOL %s initialized  \n", dpInfo->dpName, dpInfo->static_pool);
+			// first time edge configuration. Create pool 
+            struct in_addr pool_ip;
+            struct in_addr pool_mask; 
+            inet_aton(entry1, &pool_ip);
+            pool_ip.s_addr = ntohl(pool_ip.s_addr);
+            inet_aton(entry2, &pool_mask);
+            pool_mask.s_addr = ntohl(pool_mask.s_addr);
+			dpInfo->static_pool_tree = create_ue_pool(pool_ip, pool_mask);
+			RTE_LOG_DP(INFO, CP, "DP(%s) STATIC_IP_POOL %s initialized  \n", dpInfo->dpName, dpInfo->static_pool_net);
+            dpInfo->static_pool_net = calloc(1,20);
+            dpInfo->static_pool_mask = calloc(1,20);
+			strcpy(dpInfo->static_pool_net, entry1); 
+			strcpy(dpInfo->static_pool_mask, entry2); 
 		}
  	}
 	return;
@@ -1014,8 +1096,8 @@ struct in_addr native_linux_name_resolve(const char *name)
         return ip;
 }
 
-struct in_addr 
-get_upf_ipaddr_for_key(struct dp_key *key, uint32_t *dpId)
+upf_context_t*
+get_upf_context_for_key(struct dp_key *key, dp_info_t **dpInfo)
 {
 	struct in_addr ip = {0};
 #if 0
@@ -1043,10 +1125,20 @@ get_upf_ipaddr_for_key(struct dp_key *key, uint32_t *dpId)
 			continue;
 		if(np->key.tac != key->tac)
 			continue;
-        *dpId = np->dpId; 
-		return native_linux_name_resolve(np->dpName); 
+        *dpInfo = np; 
+		ip = native_linux_name_resolve(np->dpName); 
+        if(ip.s_addr != 0) 
+        {
+            upf_context_t *upf_context = get_upf_context(ip.s_addr);
+            if(upf_context != NULL)
+            {
+                return upf_context;
+            }
+            create_upf_context(ip.s_addr, &upf_context);
+            return upf_context;
+        }
 	}
-	return ip; 
+	return NULL; 
 }
 
 /* Given key find the DP. Once DP is found then return its dpId */
@@ -1083,37 +1175,6 @@ select_dp_for_key(struct dp_key *key)
 	return DPN_ID; /* 0 is invalid DP */ 
 }
 
-struct in_addr
-fetch_s1u_sgw_ip(uint32_t dpId)
-{
-	struct dp_info *dp;
-	struct in_addr a = { .s_addr = 0 };
-	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
-		if (dpId == dp->dpId) {
-			return dp->s1u_sgw_ip;
-		}
-	}
-
-	rte_panic("Could not find s1u ip address for dpid: %u\n", dpId);
-	rte_exit(EXIT_FAILURE, "Could not find s1u ip address for dpid: %u\n", dpId);
-	/* control should never reach here */
-	RTE_SET_USED(a);
-	return a;
-}
-
-struct dp_info *
-fetch_dp_context(uint32_t dpId)
-{
-	struct dp_info *dp;
-	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
-		if (dpId == dp->dpId) {
-			return dp;
-		}
-	}
-	rte_panic("Could not find DP for dpid: %u\n", dpId);
-	/* control should never reach here */
-	return NULL;
-}
 
 struct in_addr
 fetch_dns_primary_ip(uint32_t dpId, bool *present)
@@ -1158,6 +1219,7 @@ fetch_dp_ip_mtu(uint32_t dpId)
 }
 
 
+#ifdef DELETE_THIS
 /* Parse the entry and create IP pool tree */
 char*
 parse_create_static_ip_pool(struct ip_table **addr_pool, const char *entry)
@@ -1203,7 +1265,7 @@ parse_create_static_ip_pool(struct ip_table **addr_pool, const char *entry)
 		uint32_t mask;
 		mask = atoi(mask_str);
 		if (mask > 23 && mask <=32 ) {
-			; // ajay: todo *addr_pool = create_ue_pool(network, mask);
+			*addr_pool = create_ue_pool(network, mask);
 		} else {
 			sprintf(err_string, " Bad Mask. Mask should be from /24 to /32 only - Its %u ", mask);
 			free(pool);
@@ -1216,7 +1278,7 @@ parse_create_static_ip_pool(struct ip_table **addr_pool, const char *entry)
 	RTE_LOG_DP(ERR, CP, "STATIC_IP_POOL %s Parsing failed. Error - %s  \n", entry, err_string);
 	return NULL;
 }
-
+#endif
 /*
  * Set flag that Primary DNS config is available at Edge Site level. This should be called 
  * when primary DNS address is set in the PGW app level 

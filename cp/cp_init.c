@@ -106,7 +106,6 @@ init_stats_hash(void)
 static void init_pfcp(void)
 {
 	int ret;
-	pfcp_port = htons(pfcp_config.pfcp_port);
 
 	pfcp_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	my_sock.sock_fd = pfcp_fd;
@@ -117,16 +116,16 @@ static void init_pfcp(void)
 	bzero(pfcp_sockaddr.sin_zero,
 			sizeof(pfcp_sockaddr.sin_zero));
 	pfcp_sockaddr.sin_family = AF_INET;
-	pfcp_sockaddr.sin_port = pfcp_port;
-	pfcp_sockaddr.sin_addr = pfcp_config.pfcp_ip;
+	pfcp_sockaddr.sin_port = htons(cp_config->pfcp_port);
+	pfcp_sockaddr.sin_addr = cp_config->pfcp_ip;
 
 	ret = bind(pfcp_fd, (struct sockaddr *) &pfcp_sockaddr,
 			sizeof(struct sockaddr_in));
 
 	clLog(sxlogger, eCLSeverityInfo,  "NGIC- main.c::init_pfcp()" "\n\tpfcp_fd = %d :: "
 			"\n\tpfcp_ip = %s : pfcp_port = %d\n",
-			pfcp_fd, inet_ntoa(pfcp_config.pfcp_ip),
-			ntohs(pfcp_port));
+			pfcp_fd, inet_ntoa(cp_config->pfcp_ip),
+			cp_config->pfcp_port);
 	if (ret < 0) {
 		rte_panic("Bind error for %s:%u - %s\n",
 				inet_ntoa(pfcp_sockaddr.sin_addr),

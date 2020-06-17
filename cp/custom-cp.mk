@@ -7,4 +7,7 @@
 #CFLAGS += -DSDN_ODL_BUILD
 
 #Enable/Disable below flag to enable /disable CLI and Logger(OSS-UTILS)
-CFLAGS += -DC3PO_OSS
+CFLAGS += -DC3PO_OSS 
+
+#Enable/Disable multi UPF. If multi UPF is disabled then cp.cfg should have fixed UPF address  
+CFLAGS += -DMULTI_UPFS 

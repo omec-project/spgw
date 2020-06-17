@@ -1,10 +1,9 @@
-/*
- * Copyright 2020-present Open Networking Foundation
- * Copyright (c) 2019 Sprint
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- */
+// Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+
 #include "assert.h"
 #include "string.h"
 #include "rte_malloc.h"
@@ -64,46 +63,11 @@ get_apn(char *apn_label, uint16_t apn_length)
 		if ((apn_length == apn_list[i].apn_name_length)
 			&& !memcmp(apn_label, apn_list[i].apn_name_label,
 			apn_length)) {
-			break;
+            return &apn_list[i];
 	        }
 	}
-	printf("%s %d - APN found ? index = %d \n",__FUNCTION__,__LINE__, i);
+	printf("%s %d - APN Not found index = %d \n",__FUNCTION__,__LINE__, i);
 
-    /* TODO : Return error code */
-    if(i>=MAX_NB_DPN)
-        return NULL;
-
-	if(i >= MAX_NB_DPN) {
-		/* when apn name of csr are not found in cp.cfg file */
-		/* BP : TODO : free apn_reruested and apn_name_label memory */
-		apn_t *apn_requested = rte_zmalloc_socket(NULL, sizeof(apn_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-		if (apn_requested == NULL) {
-			rte_panic("Failure to allocate apn_requested buffer: "
-					"%s (%s:%d)\n",
-					rte_strerror(rte_errno),
-					__FILE__,
-					__LINE__);
-			return NULL;
-		}
-
-		apn_requested->apn_name_label = rte_zmalloc_socket(NULL, apn_length,
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-
-		if (apn_requested->apn_name_label == NULL) {
-			rte_panic("Failure to allocate apn_name_label buffer: "
-					"%s (%s:%d)\n",
-					rte_strerror(rte_errno),
-					__FILE__,
-					__LINE__);
-			return NULL;
-		}
-		strncpy(apn_requested->apn_name_label, apn_label, apn_length);
-		apn_requested->apn_name_length = apn_length;
-		return apn_requested;
-	}
-
-	apn_list[i].apn_idx = i;
-	return apn_list+i; /* ajay - scary.... why do we want to do this ?*/
+    return NULL;
 }
 

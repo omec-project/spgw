@@ -33,11 +33,6 @@ struct rte_hash *rule_name_bearer_id_map_hash;
  *
  */
 
-extern in_port_t pfcp_port;
-extern struct sockaddr_in pfcp_sockaddr;
-
-extern in_port_t upf_pfcp_port;
-
 /**
  * @brief : Rule Name is key for Mapping of Rules and Bearer table.
  */

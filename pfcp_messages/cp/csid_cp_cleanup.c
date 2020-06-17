@@ -379,7 +379,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 
 	if (cp_config->cp_type != PGWC) {
 		if (iface != S11_SGW_PORT_ID) {
-				fill_pgw_restart_notification(gtpv2c_tx, ntohl(pfcp_config.s11_ip.s_addr),
+				fill_pgw_restart_notification(gtpv2c_tx, ntohl(cp_config->s11_ip.s_addr),
 						s5s8_node_addr);
 				/* Send the Delete PDN Request to peer node */
 				payload_length = 0;
@@ -575,7 +575,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 	if (del_pdn_req->pgw_fqcsid.header.len) {
 		/* Send the delete PDN set request to MME */
 		if (cp_config->cp_type == SGWC ) {
-			csids.node_addr = ntohl(pfcp_config.s11_ip.s_addr);
+			csids.node_addr = ntohl(cp_config->s11_ip.s_addr);
 
 			fill_gtpc_del_set_pdn_conn_req(gtpv2c_tx, &csids,
 					S11_SGW_PORT_ID);
@@ -588,7 +588,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 			//		MOD);
 			//if (csid_t != NULL) {
 				/* Fill the PGW restart notification request */
-				fill_pgw_restart_notification(gtpv2c_tx_t, ntohl(pfcp_config.s11_ip.s_addr),
+				fill_pgw_restart_notification(gtpv2c_tx_t, ntohl(cp_config->s11_ip.s_addr),
 						peer_csids.node_addr);
 				/* Send the Delete PDN Request to peer node */
 				int payload_length = 0;
@@ -620,7 +620,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 
 	/* Send the PFCP deletion session set request to PGW */
 	/* TODO: UPDATE THE NODE ADDRESS */
-	csids.node_addr = pfcp_config.pfcp_ip.s_addr;
+	csids.node_addr = cp_config->pfcp_ip.s_addr;
 
 	pfcp_sess_set_del_req_t del_set_req_t = {0};
 

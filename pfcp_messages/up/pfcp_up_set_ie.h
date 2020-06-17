@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -50,7 +51,7 @@
 #define UINT32_SIZE sizeof(uint32_t)
 #define UINT16_SIZE sizeof(uint16_t)
 #define IPV4_SIZE 4
-#define IPV6_SIZE 8
+#define IPV6_SIZE 16
 #define PFCP_IE_HDR_SIZE sizeof(pfcp_ie_header_t)
 #define BITRATE_SIZE 10
 

@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -668,8 +669,8 @@ void add_cli_peer(uint32_t ip_addr,CLIinterface it)
 				cli_node.peer[index]->response_timeout = app.transmit_timer;
 				cli_node.peer[index]->maxtimeout = app.transmit_cnt + 1;
 #else
-				cli_node.peer[index]->response_timeout = pfcp_config.transmit_timer;
-				cli_node.peer[index]->maxtimeout = pfcp_config.transmit_cnt + 1;
+				cli_node.peer[index]->response_timeout = cp_config->transmit_timer;
+				cli_node.peer[index]->maxtimeout = cp_config->transmit_cnt + 1;
 #endif
 
                 cli_node.peer[index]->timeouts = 0;

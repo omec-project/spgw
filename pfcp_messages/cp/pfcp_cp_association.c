@@ -51,7 +51,7 @@ fill_pfcp_association_release_req(pfcp_assn_rel_req_t *pfcp_ass_rel_req)
 			PFCP_ASSOCIATION_RELEASE_REQUEST, NO_SEID, seq);
 	/*filling of node id*/
 	char pAddr[INET_ADDRSTRLEN] ;
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pAddr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 
 	unsigned long node_value = inet_addr(pAddr);
 	set_node_id(&(pfcp_ass_rel_req->node_id), node_value);
@@ -69,7 +69,7 @@ fill_pfcp_association_update_req(pfcp_assn_upd_req_t *pfcp_ass_update_req)
 			 PFCP_ASSOCIATION_UPDATE_REQUEST, NO_SEID, seq);
 
 	char peer_addr[INET_ADDRSTRLEN] = {0};
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), peer_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), peer_addr, INET_ADDRSTRLEN);
 
 	unsigned long node_value = inet_addr(peer_addr);
 	set_node_id(&(pfcp_ass_update_req->node_id), node_value);
@@ -97,7 +97,7 @@ fill_pfcp_association_setup_req(pfcp_assn_setup_req_t *pfcp_ass_setup_req)
 	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_ass_setup_req->header),
 			PFCP_ASSOCIATION_SETUP_REQUEST, NO_SEID, seq);
 
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), node_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), node_addr, INET_ADDRSTRLEN);
 
 	unsigned long node_value = inet_addr(node_addr);
 	set_node_id(&(pfcp_ass_setup_req->node_id), node_value);
@@ -356,22 +356,27 @@ get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 }
 #endif /* USE_DNS_QUERY */
 
-/**
- * @brief  : This function creates association setup request and sends to peer
- * @param  : context holds information of ue
- * @param  : ebi_index denotes index of bearer stored in array
- * @return : This function dose not return anything
- */
-static int
-assoication_setup_request(uint32_t upf_ip, upf_context_t **upf_ctxt)
+upf_context_t *get_upf_context(uint32_t upf_ip)
 {
-	int ret = 0;
-	upf_context_t *upf_context = NULL;
-	//char sgwu_fqdn_res[MAX_HOSTNAME_LENGTH] = {0};
-	pfcp_assn_setup_req_t pfcp_ass_setup_req = {0};
-	struct in_addr test; test.s_addr = upf_ip;
-	printf("Initiate PFCP setup to peer address = %s \n", inet_ntoa(test));
+    int ret = 0;
+    upf_context_t *upf_context = NULL;
 
+	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
+			(const void*) &(upf_ip), (void **) &(upf_context));
+
+	if (ret >= 0) {
+        printf("Found upf context \n");
+        return upf_context;
+    } else {
+        printf("Found upf context \n");
+    }
+    return NULL;
+}
+
+int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt) 
+{
+    int ret;
+    upf_context_t *upf_context = NULL;
 	upf_context  = rte_zmalloc_socket(NULL, sizeof(upf_context_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 
@@ -382,13 +387,12 @@ assoication_setup_request(uint32_t upf_ip, upf_context_t **upf_ctxt)
 				__FILE__,
 				__LINE__);
 
-		return GTPV2C_CAUSE_NO_MEMORY_AVAILABLE;
+		return -1;
 	}
     *upf_ctxt = upf_context;
-
 	bzero(upf_context->upf_sockaddr.sin_zero, sizeof(upf_context->upf_sockaddr.sin_zero));
 	upf_context->upf_sockaddr.sin_family = AF_INET;
-	upf_context->upf_sockaddr.sin_port = htons(pfcp_config.upf_pfcp_port);
+	upf_context->upf_sockaddr.sin_port = htons(cp_config->upf_pfcp_port);
 	upf_context->upf_sockaddr.sin_addr.s_addr = upf_ip; 
 
 	ret = upf_context_entry_add(&upf_ip, upf_context);
@@ -397,8 +401,33 @@ assoication_setup_request(uint32_t upf_ip, upf_context_t **upf_ctxt)
 		return -1;
 	}
 
+	upf_context->assoc_status = ASSOC_NOT_INITIATED;
     LIST_INIT(&upf_context->pendingCSRs);
+    return 0;
 
+} 
+/**
+ * @brief  : This function creates association setup request and sends to peer
+ * @param  : context holds information of ue
+ * @param  : ebi_index denotes index of bearer stored in array
+ * @return : This function dose not return anything
+ */
+static int
+assoication_setup_request(uint32_t upf_ip, upf_context_t **upf_ctxt)
+{
+	upf_context_t *upf_context = NULL;
+	//char sgwu_fqdn_res[MAX_HOSTNAME_LENGTH] = {0};
+	pfcp_assn_setup_req_t pfcp_ass_setup_req = {0};
+	struct in_addr test; test.s_addr = upf_ip;
+	printf("Initiate PFCP setup to peer address = %s \n", inet_ntoa(test));
+
+    upf_context = get_upf_context(upf_ip);
+
+    if(upf_context == NULL && create_upf_context(upf_ip, &upf_context) < 0 )
+    {
+        return -1;
+    }
+    *upf_ctxt = upf_context;
 	upf_context->assoc_status = ASSOC_IN_PROGRESS;
 	upf_context->state = PFCP_ASSOC_REQ_SNT_STATE;
 
@@ -415,9 +444,9 @@ assoication_setup_request(uint32_t upf_ip, upf_context_t **upf_ctxt)
 #ifdef DELETE_THIS
 	peerData_t *timer_entry = NULL;
 	timer_entry =  pfcp_fill_timer_entry_data(PFCP_IFACE, &context->upf_ctxt->upf_sockaddr,
-			pfcp_msg, encoded, pfcp_config.request_tries, context->s11_sgw_gtpc_teid, ebi_index);
+			pfcp_msg, encoded, cp_config->request_tries, context->s11_sgw_gtpc_teid, ebi_index);
 
-	if(!(pfcp_add_timer_entry(timer_entry, pfcp_config.request_timeout, pfcp_peer_timer_callback))) {
+	if(!(pfcp_add_timer_entry(timer_entry, cp_config->request_timeout, pfcp_peer_timer_callback))) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Faild to add timer entry...\n",
 				__FILE__, __func__, __LINE__);
 	}
@@ -438,7 +467,7 @@ assoication_setup_request(uint32_t upf_ip, upf_context_t **upf_ctxt)
    	transData_t *trans_entry = NULL;
 	trans_entry =  create_transaction(upf_context, pfcp_msg, encoded); 
 
-	if(!(start_transaction_timer(trans_entry, pfcp_config.request_timeout, transaction_timeout_callback))) {
+	if(!(start_transaction_timer(trans_entry, cp_config->request_timeout, transaction_timeout_callback))) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Faild to add timer entry...\n",
 				__FILE__, __func__, __LINE__);
 	}
@@ -467,6 +496,7 @@ process_pfcp_assoication_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	struct in_addr upf_ipv4 = {0};
 	upf_context_t *upf_context = NULL;
 
+    //if upf address is not yet selected then go for DNS query or Static  
 	if (pdn->upf_ipv4.s_addr == 0) {
 #ifdef USE_DNS_QUERY
 		uint32_t *upf_ip = NULL;
@@ -486,8 +516,8 @@ process_pfcp_assoication_request(pdn_connection_t *pdn, uint8_t ebi_index)
 #else
 		// if name is nit already resolved and no DNS enabled then use the configured
 		// upf address 
-		pdn->upf_ipv4.s_addr = pfcp_config.upf_pfcp_ip.s_addr;
-		upf_ipv4.s_addr =      pfcp_config.upf_pfcp_ip.s_addr;
+		pdn->upf_ipv4.s_addr = cp_config->upf_pfcp_ip.s_addr;
+		upf_ipv4.s_addr =      cp_config->upf_pfcp_ip.s_addr;
 #endif /* USE_DNS_QUERY */
 	}
 
@@ -495,8 +525,9 @@ process_pfcp_assoication_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	/* VS: Retrive association state based on UPF IP. */
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 			(const void*) &(upf_ipv4.s_addr), (void **) &(upf_context));
-	if (ret >= 0) {
+	if (ret >= 0 && upf_context->assoc_status != ASSOC_NOT_INITIATED) {
         printf("UPF found \n");
+        pdn->context->upf_ctxt = upf_context;
 		if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
             printf("UPF association already formed \n");
 			ret = process_pfcp_sess_est_request(pdn->context->s11_sgw_gtpc_teid, pdn, upf_context);
@@ -550,7 +581,7 @@ fill_pfcp_node_report_req(pfcp_node_rpt_req_t *pfcp_node_rep_req)
 	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_node_rep_req->header),
 			PFCP_NODE_REPORT_REQUEST, NO_SEID, seq);
 
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), node_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), node_addr, INET_ADDRSTRLEN);
 
 	unsigned long node_value = inet_addr(node_addr);
 	set_node_id(&(pfcp_node_rep_req->node_id), node_value);

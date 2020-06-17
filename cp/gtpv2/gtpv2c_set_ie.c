@@ -1,5 +1,5 @@
-// Copyright (c) 2017 Intel Corporation
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
@@ -779,10 +779,6 @@ set_fqdn_ie(gtpv2c_header_t *header, char *fqdn)
 	strncpy((char *)fqdn_ie_ptr->fqdn, fqdn, strnlen(fqdn, 255) + 1);
 }
 
-#ifdef CP_BUILD
-extern pfcp_config_t pfcp_config;
-
-
 void
 set_serving_network(gtp_serving_network_ie_t *serving_nw, create_sess_req_t *csr,  enum ie_instance instance)
 {
@@ -814,7 +810,6 @@ set_mapped_ue_usage_type(gtp_mapped_ue_usage_type_ie_t *ie, uint16_t usage_type_
 			sizeof(uint16_t));
 	ie->mapped_ue_usage_type = usage_type_value;
 }
-#endif /* CP_BUILD */
 
 gtpv2c_ie *
 get_first_ie(gtpv2c_header_t *gtpv2c_h)

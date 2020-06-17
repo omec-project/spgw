@@ -1,9 +1,8 @@
-/*
-* Copyright 2020-present Open Networking Foundation
-*
-* SPDX-License-Identifier: Apache-2.0
-*
-*/
+// Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #ifndef __CP_CONFIG_NEW__
 #define __CP_CONFIG_NEW__
@@ -41,33 +40,7 @@ typedef struct dns_config
 	char nameserver_ip[MAX_NUM_NAMESERVER][INET_ADDRSTRLEN];
 } dns_config_t;
 
-/**
- * @brief  : Maintains pfcp configuration
- */
-typedef struct pfcp_config 
-{
-
-
-
-	struct in_addr pfcp_ip;
-	uint16_t pfcp_port;
-
-	/* User-Plane IPs and Ports Params. */
-	uint16_t upf_pfcp_port;  /* ajay -this should not be part of this config at all  */
-	struct in_addr upf_pfcp_ip;
-
-	/* RESTORATION PARAMETERS */
-	uint8_t transmit_cnt;
-	int transmit_timer;
-	int periodic_timer;
-
-	/* CP Timer Parameters */
-	uint8_t request_tries;
-	int request_timeout;    /* Request time out in milisecond */
-
-} pfcp_config_t;
-
-struct mcc_mnc_key
+typedef struct mcc_mnc_key
 {
 	uint8_t mcc_digit_2 :4;
 	uint8_t mcc_digit_1 :4;
@@ -75,9 +48,9 @@ struct mcc_mnc_key
 	uint8_t mcc_digit_3 :4;
 	uint8_t mnc_digit_2 :4;
 	uint8_t mnc_digit_1 :4;
-};
+} mcc_mnc_key_t;
 
-struct app_config 
+typedef struct app_config 
 {
 	uint32_t  flags;
 	/* Dataplane selection rules. */
@@ -89,31 +62,30 @@ struct app_config
 	 * PGW : APN, IP Pool etc..
 	 */
 	struct in_addr dns_p, dns_s; 
-};
+}app_config_t;
 
-
-struct dp_key
+typedef struct dp_key
 {
 	struct mcc_mnc_key mcc_mnc;
 	uint16_t tac;
-};
+}dp_key_t;
 
 #define  CONFIG_DNS_PRIMARY  	0x00000001
 #define  CONFIG_DNS_SECONDARY   0x00000002
 
-struct dp_info
+typedef struct dp_info
 {
 	uint32_t  flags;
-	struct dp_key key;
+	dp_key_t key; /* TODO - support multiple keys */
 	char dpName[DP_SITE_NAME_MAX];
 	uint32_t dpId;
-	struct in_addr s1u_sgw_ip;
 	struct in_addr dns_p, dns_s; 
 	struct ip_table *static_pool_tree;
-	char   *static_pool;
+	char   *static_pool_net;
+	char   *static_pool_mask;
 	uint16_t ip_mtu;
 	LIST_ENTRY(dp_info) dpentries;
-};
+}dp_info_t;
 
 /*
 - * Define type of Control Plane (CP)
@@ -144,14 +116,34 @@ typedef struct cp_config
 	uint16_t s5s8_port;
 	struct in_addr s5s8_ip;
 
+	struct in_addr pfcp_ip;
+	uint16_t pfcp_port;
+
+	/* User-Plane IPs and Ports Params. */
+	uint16_t upf_pfcp_port;  /* ajay -this should not be part of this config at all  */
+	struct in_addr upf_pfcp_ip;
+
 	/* logger parameter */
 	uint8_t cp_logger;
 
-	struct app_config *appl_config;
+	/* RESTORATION PARAMETERS */
+	uint8_t transmit_cnt;
+	int transmit_timer;
+	int periodic_timer;
+
+	/* CP Timer Parameters */
+	uint8_t request_tries;
+	int request_timeout;    /* Request time out in milisecond */
+
+	app_config_t *appl_config;
 
 	/* IP_POOL_CONFIG Params */
 	struct in_addr ip_pool_ip;
 	struct in_addr ip_pool_mask;
+
+	/* STATIC_IP_POOL_CONFIG Params */
+	struct in_addr static_ip_pool_ip;
+	struct in_addr static_ip_pool_mask;
 
 	/* APN */
 	uint32_t num_apn;
@@ -162,6 +154,6 @@ typedef struct cp_config
 }cp_config_t;
 
 extern cp_config_t *cp_config;
-extern pfcp_config_t pfcp_config;
 
+void init_config(void); 
 #endif

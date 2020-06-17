@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -181,5 +182,9 @@ get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 		uint32_t **upf_ip);
 
 #endif /* USE_DNS_QUERY */
+
+upf_context_t *get_upf_context(uint32_t upf_ip);
+
+int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt); 
 
 #endif /* PFCP_ASSOC_H */

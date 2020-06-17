@@ -1,10 +1,9 @@
-/*
-* Copyright 2020-present Open Networking Foundation
-* Copyright (c) 2019 Sprint
-*
-* SPDX-License-Identifier: Apache-2.0
-*
-*/
+
+// Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #ifndef __CP_CONFIG_H__
 #define __CP_CONFIG_H__
@@ -15,11 +14,11 @@
 
 /**
  * @brief  : parse the SGWU/PGWU/SAEGWU IP from config file
- * @param  : pfcp_config, config file path
+ * @param  : cp_config, config file path
  * @return : Returns nothing
  */
 void
-config_cp_ip_port(pfcp_config_t *pfcp_config);
+config_cp_ip_port(cp_config_t *cp_config);
 
 /**
  * @brief  : parse apn arguments
@@ -88,13 +87,8 @@ uint32_t select_dp_for_key(struct dp_key *);
 
 /* Application can pass the dp_key and get back one of the selected DPname in return.
 */
-struct in_addr get_upf_ipaddr_for_key(struct dp_key *, uint32_t *dpId);
+upf_context_t *get_upf_context_for_key(struct dp_key *, dp_info_t **dpInfo);
 
-
-/**
- * Given dpId, what is the s1u's IP address of dp (as stored in the apl_config list)
- */
-struct in_addr fetch_s1u_sgw_ip(uint32_t dpId);
 
 /**
  * Given dpId, what is the DNS Primary IP address of dp. If DP does not have config then 
@@ -109,14 +103,11 @@ struct in_addr fetch_dns_primary_ip(uint32_t dpId, bool *present);
  */
 struct in_addr fetch_dns_secondary_ip(uint32_t dpId, bool *present);
 
-/**
- * Given dpId, return dpInfo 
- */
-struct dp_info *fetch_dp_context(uint32_t dpId);
-
+#ifdef DELETE_THIS
 /* Parse and create static ip pool */
 char*
 parse_create_static_ip_pool(struct ip_table **addr_pool, const char *entry);
+#endif
 
 /**
  * Given dpId, fetch configured MTU. If not configured, return default

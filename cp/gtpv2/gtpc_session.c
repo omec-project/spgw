@@ -1475,7 +1475,7 @@ process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 
 	//TODO modify this hard code to generic
 	char pAddr[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pAddr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 	unsigned long node_value = inet_addr(pAddr);
 
 	set_fseid(&(pfcp_sess_mod_req.cp_fseid), pdn_cntxt->seid, node_value);

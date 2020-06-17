@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -15,6 +16,7 @@
 #include "cp_config.h"
 #include "cp_log.h"
 #include "clogger.h"
+#include "ip_pool.h"
 
 int
 delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
@@ -90,6 +92,22 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 			"Received delete session on non-existent default EBI\n");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
+
+#ifdef MULTI_UPFS
+	struct dp_info *dp = context->upf_ctxt->dp_info; 
+	if (dp != NULL && (IF_PDN_ADDR_STATIC(pdn))) {
+		struct in_addr host = {0};
+		host.s_addr = pdn->ipv4.s_addr;
+		release_ip_node(dp->static_pool_tree, host);
+	}
+#else
+	if (static_addr_pool != NULL && (IF_PDN_ADDR_STATIC(pdn))) {
+		struct in_addr host = {0};
+		host.s_addr = pdn->ipv4.s_addr;
+		release_ip_node(static_addr_pool, host); 
+	}
+#endif
+
 
 	if (cp_config->cp_type == SGWC) {
 		/*VS: Fill teid and ip address */

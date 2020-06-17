@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
+#include "cp_log.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_enum.h"
 #include "pfcp_cp_set_ie.h"
@@ -90,19 +91,19 @@ fill_pfcp_sess_set_del_req( pfcp_sess_set_del_req_t *pfcp_sess_set_del_req)
 	node_value = inet_addr(pAddr);
 	set_node_id(&(pfcp_sess_set_del_req->node_id), node_value);
 
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), sgwc_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), sgwc_addr, INET_ADDRSTRLEN);
 	sgwc_value = inet_addr(sgwc_addr);
 	set_fq_csid( &(pfcp_sess_set_del_req->sgw_c_fqcsid), sgwc_value);
 
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pgwc_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pgwc_addr, INET_ADDRSTRLEN);
 	unsigned long pgwc_value = inet_addr(pgwc_addr);
 	set_fq_csid( &(pfcp_sess_set_del_req->pgw_c_fqcsid), pgwc_value);
 
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), sgwu_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), sgwu_addr, INET_ADDRSTRLEN);
 	unsigned long sgwu_value = inet_addr(sgwu_addr);
 	set_fq_csid( &(pfcp_sess_set_del_req->sgw_u_fqcsid), sgwu_value);
 
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pgwu_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pgwu_addr, INET_ADDRSTRLEN);
 	unsigned long pgwu_value = inet_addr(pgwu_addr);
 	set_fq_csid( &(pfcp_sess_set_del_req->pgw_u_fqcsid), pgwu_value);
 
@@ -151,7 +152,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 
 	//TODO modify this hard code to generic
 	char pAddr[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pAddr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 	unsigned long node_value = inet_addr(pAddr);
 
 	set_fseid(&(pfcp_sess_mod_req->cp_fseid), pdn->seid, node_value);
@@ -266,7 +267,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 			pfcp_sess_mod_req->header.seid_seqno.has_seid.seid = pdn->dp_seid;
 
 			//TODO modify this hard code to generic
-			inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pAddr, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 			node_value = inet_addr(pAddr);
 
 			set_fseid(&(pfcp_sess_mod_req->cp_fseid), pdn->seid, node_value);
@@ -773,7 +774,7 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 
 	//TODO modify this hard code to generic
 	char pAddr[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pAddr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 	unsigned long node_value = inet_addr(pAddr);
 
 	set_fseid(&(pfcp_sess_mod_req->cp_fseid), pdn->seid, node_value);
@@ -921,7 +922,7 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 	      excluding this IE since we dont have this support  */
 	/*
 	char sgwc_addr[INET_ADDRSTRLEN] ;
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), sgwc_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), sgwc_addr, INET_ADDRSTRLEN);
 	unsigned long sgwc_value = inet_addr(sgwc_addr);
 	set_fq_csid( &(pfcp_sess_mod_req->sgw_c_fqcsid), sgwc_value);
 
@@ -931,7 +932,7 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 	set_fq_csid( &(pfcp_sess_mod_req->mme_fqcsid), mme_value);
 
 	char pgwc_addr[INET_ADDRSTRLEN] ;
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pgwc_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pgwc_addr, INET_ADDRSTRLEN);
 	unsigned long pgwc_value = inet_addr(pgwc_addr);
 	set_fq_csid( &(pfcp_sess_mod_req->pgw_c_fqcsid), pgwc_value);
 
@@ -1788,7 +1789,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	pfcp_sess_est_req->header.seid_seqno.has_seid.seid = pdn->dp_seid;
 
 	char pAddr[INET_ADDRSTRLEN] ;
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pAddr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 
 	unsigned long node_value = inet_addr(pAddr);
 
@@ -2157,7 +2158,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	creating_bar(&(pfcp_sess_est_req->create_bar));
 
 	char sgwc_addr[INET_ADDRSTRLEN] ;
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), sgwc_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), sgwc_addr, INET_ADDRSTRLEN);
 	unsigned long sgwc_value = inet_addr(sgwc_addr);
 	set_fq_csid( &(pfcp_sess_est_req->sgw_c_fqcsid), sgwc_value);
 
@@ -2167,7 +2168,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	set_fq_csid( &(pfcp_sess_est_req->mme_fqcsid), mme_value);
 
 	char pgwc_addr[INET_ADDRSTRLEN] ;
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pgwc_addr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pgwc_addr, INET_ADDRSTRLEN);
 	unsigned long pgwc_value = inet_addr(pgwc_addr);
 	set_fq_csid( &(pfcp_sess_est_req->pgw_c_fqcsid), pgwc_value);
 
@@ -2329,7 +2330,7 @@ fill_context_info(create_sess_req_t *csr, ue_context_t *context)
 {
  	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
 	    /* Check ntohl case */
-	    //context->s11_sgw_gtpc_ipv4.s_addr = ntohl(pfcp_config.s11_ip.s_addr);
+	    //context->s11_sgw_gtpc_ipv4.s_addr = ntohl(cp_config->s11_ip.s_addr);
 	    context->s11_sgw_gtpc_ipv4.s_addr = cp_config->s11_ip.s_addr;
 	    context->s11_mme_gtpc_teid = csr->sender_fteid_ctl_plane.teid_gre_key;
 	    context->s11_mme_gtpc_ipv4.s_addr = csr->sender_fteid_ctl_plane.ipv4_address;
@@ -3349,6 +3350,9 @@ process_create_sess_req(create_sess_req_t *csr,
 	ue_context_t *context = NULL;
 	eps_bearer_t *bearer = NULL;
 	pdn_connection_t *pdn = NULL;
+    bool static_addr_pdn;
+    /* ajay - Should we get default context ?*/
+    upf_context_t *upf_context=NULL; 
 
     /* TODO : Prio-1 Must fix. Handle unknown APN */
 	apn_t *apn_requested = get_apn((char *)csr->apn.apn, csr->apn.header.len);
@@ -3356,7 +3360,28 @@ process_create_sess_req(create_sess_req_t *csr,
     if(apn_requested == NULL) {
         return GTPV2C_CAUSE_MISSING_UNKNOWN_APN;
     }
+// DNS would need changes here 
+#ifdef MULTI_UPFS
+    /* TODO - IE presense should be validated before accessing them */
+    struct dp_key dpkey = {0};
+    dp_info_t *dpInfo=NULL;
+    dpkey.tac = csr->uli.tai2.tai_tac;
+    printf("csr uli mcc %d %d %d  mnc %d %d %d \n", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
 
+    memcpy((void *)(&dpkey.mcc_mnc), (void *)(&csr->uli.tai2), 3);
+
+	/* TODO : more work if SGW call Vs PGW call */
+    upf_context = get_upf_context_for_key(&dpkey, &dpInfo); 
+    // no upf available 
+    if(upf_context == NULL) 
+    {
+        return GTPV2C_CAUSE_REQUEST_REJECTED;
+    }
+    *upf_ipv4 = upf_context->upf_sockaddr.sin_addr;
+    upf_context->dp_info = dpInfo; // upf context needs to point the config dpInfo object 
+
+    printf("Selected UPF address  %s \n", inet_ntoa(*upf_ipv4));
+#endif
 	if(csr->mapped_ue_usage_type.header.len > 0) {
 		apn_requested->apn_usage_type = csr->mapped_ue_usage_type.mapped_ue_usage_type;
 	}
@@ -3364,10 +3389,33 @@ process_create_sess_req(create_sess_req_t *csr,
     /* TODO - Prio-5. New networks support all the 15 EBIs  */
 	uint8_t ebi_index = csr->bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
 
+    ret = 0;
+    if (cp_config->cp_type != SGWC) {
+        struct in_addr *paa_ipv4 = (struct in_addr *) &csr->paa.pdn_addr_and_pfx[0];
+        if (csr->paa.pdn_type == PDN_IP_TYPE_IPV4 && paa_ipv4->s_addr != 0) {
+            bool found = false;
+#ifdef MULTI_UPFS
+            if (dpInfo != NULL)
+                found = reserve_ip_node(dpInfo->static_pool_tree, *paa_ipv4);
+#else
+            found = reserve_ip_node(static_addr_pool, *paa_ipv4);
+#endif
+            if (found == false) {
+                RTE_LOG_DP(DEBUG, CP, "Received CSReq with static address %s"
+                        " . Invalid address received \n",
+                        inet_ntoa(*paa_ipv4));
+                return GTPV2C_CAUSE_REQUEST_REJECTED;
+            }
+            ue_ip = *paa_ipv4;
 
-	if (cp_config->cp_type != SGWC) {
-		ret = acquire_ip(&ue_ip);
-	}
+            /* we want ue_ip in network order. To keep code aligned with dynamic
+             * allocation  */
+            ue_ip.s_addr = htonl(ue_ip.s_addr); 
+            static_addr_pdn = true;
+        } else { 
+		    ret = acquire_ip(&ue_ip);
+        }
+    }
 	if (ret)
 		return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
 
@@ -3402,6 +3450,8 @@ process_create_sess_req(create_sess_req_t *csr,
 	/* Retrive procedure of CSR */
 	pdn = context->eps_bearers[ebi_index]->pdn;
 	pdn->proc = get_csr_proc(csr);
+    if(static_addr_pdn == true)
+        SET_PDN_ADDR_STATIC(pdn);
 
 	/* VS: Stored the RAT TYPE information in UE context */
 	if (csr->rat_type.header.len != 0) {
@@ -3643,22 +3693,13 @@ process_create_sess_req(create_sess_req_t *csr,
 	/* VS: Return the UE context */
 	*_context = context;
 
-#ifndef USE_DNS_QUERY
-    struct dp_key dpkey = {0};
-    dpkey.tac = csr->uli.tai2.tai_tac;
-    printf("csr uli mcc %d %d %d  mnc %d %d %d \n", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
+    context->upf_ctxt = upf_context;
 
-    memcpy((void *)(&dpkey.mcc_mnc), (void *)(&csr->uli.tai2), 3);
-
-	/* TODO : more work if SGW call Vs PGW call */
-    struct in_addr upf_addr = get_upf_ipaddr_for_key(&dpkey, &context->dpId); 
-    printf("UPF address  %s imsi.%llu \n", inet_ntoa(upf_addr), (long long unsigned int)context->imsi);
-    // no upf available 
-    if(upf_addr.s_addr == 0) 
-    {
-	  return GTPV2C_CAUSE_REQUEST_REJECTED;
-    }
-    pdn->upf_ipv4 = upf_addr; 
+#ifdef MULTI_UPFS
+    pdn->upf_ipv4 = *upf_ipv4; 
+#else
+	pdn->upf_ipv4.s_addr = cp_config->upf_pfcp_ip.s_addr;
+	upf_ipv4.s_addr =      cp_config->upf_pfcp_ip.s_addr;
 #endif
     return 0;
 }
@@ -5905,7 +5946,7 @@ fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 
 	//TODO modify this hard code to generic
 	char pAddr[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pAddr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 	unsigned long node_value = inet_addr(pAddr);
 
 	set_fseid(&(pfcp_sess_mod_req->cp_fseid), pdn->seid, node_value);
@@ -5978,7 +6019,7 @@ fill_pfcp_sess_mod_req_pgw_init_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 
 	//TODO modify this hard code to generic
 	char pAddr[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pAddr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 	unsigned long node_value = inet_addr(pAddr);
 
 	set_fseid(&(pfcp_sess_mod_req->cp_fseid), pdn->seid, node_value);
@@ -6057,7 +6098,7 @@ fill_pfcp_sess_mod_req_pgw_init_remove_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 
 	//TODO modify this hard code to generic
 	char pAddr[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pAddr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 	unsigned long node_value = inet_addr(pAddr);
 
 	set_fseid(&(pfcp_sess_mod_req->cp_fseid), pdn->seid, node_value);
@@ -6107,7 +6148,7 @@ fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod
 
 	//TODO modify this hard code to generic
 	char pAddr[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(pfcp_config.pfcp_ip), pAddr, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 	unsigned long node_value = inet_addr(pAddr);
 
 	set_fseid(&(pfcp_sess_mod_req->cp_fseid), pdn->seid, node_value);

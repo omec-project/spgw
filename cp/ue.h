@@ -423,6 +423,11 @@ typedef struct ue_tz_t
 	uint8_t dst;
 }ue_tz;
 
+#define PDN_STATIC_ADDR  0x00000001
+
+#define SET_PDN_ADDR_STATIC(pdn)  ((pdn->pdn_flags = pdn->pdn_flags | PDN_STATIC_ADDR))
+#define IF_PDN_ADDR_STATIC(pdn)   ((pdn->pdn_flags & PDN_STATIC_ADDR)== PDN_STATIC_ADDR)
+
 /**
  * @brief  : Maintains pdn connection information
  */
@@ -507,6 +512,7 @@ typedef struct pdn_connection {
 	/* CSR sequence number for identify CSR retransmission req. */
 	uint32_t csr_sequence;
 
+    uint32_t pdn_flags; 
 } pdn_connection_t;
 
 /**

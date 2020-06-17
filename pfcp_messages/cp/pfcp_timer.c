@@ -240,9 +240,9 @@ add_pfcp_if_timer_entry(uint32_t teid, struct sockaddr_in *peer_addr,
         }
         /* fill and add timer entry */
         timer_entry = pfcp_fill_timer_entry_data(PFCP_IFACE, peer_addr,
-                        buf, buf_len, pfcp_config.request_tries, teid, ebi_index);
+                        buf, buf_len, cp_config->request_tries, teid, ebi_index);
 
-        if(!(pfcp_add_timer_entry(timer_entry, pfcp_config.request_timeout, pfcp_peer_timer_callback))) {
+        if(!(pfcp_add_timer_entry(timer_entry, cp_config->request_timeout, pfcp_peer_timer_callback))) {
                 clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Faild to add timer entry...\n",
                                 __FILE__, __func__, __LINE__);
         }

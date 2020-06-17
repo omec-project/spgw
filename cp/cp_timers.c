@@ -217,7 +217,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		/* TODO: Defined this part after merging sx heartbeat*/
 		/* process_pfcp_heartbeat_req(md->dst_ip, up_time); */ /* TODO: Future Enhancement */
 
-		dest_addr.sin_port = htons(pfcp_config.pfcp_port);
+		dest_addr.sin_port = htons(cp_config->pfcp_port);
 		//dest_addr.sin_port = htons(8805);
 
 		if (ti == &md->pt){
@@ -295,7 +295,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 		conn_data->portId = portId;
 		conn_data->activityFlag = 0;
 		conn_data->dstIP = dstIp;
-		conn_data->itr = pfcp_config.transmit_cnt;
+		conn_data->itr = cp_config->transmit_cnt;
 		conn_data->itr_cnt = 0;
 		conn_data->rcv_time = 0;
 
@@ -305,8 +305,8 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 			clLog(clSystemLog, eCLSeverityCritical, "Failed to add entry in hash table");
 		}
 
-		if ( !initpeerData( conn_data, "PEER_NODE", (pfcp_config.periodic_timer * 1000),
-						(pfcp_config.transmit_timer * 1000)) )
+		if ( !initpeerData( conn_data, "PEER_NODE", (cp_config->periodic_timer * 1000),
+						(cp_config->transmit_timer * 1000)) )
 		{
 		   clLog(clSystemLog, eCLSeverityCritical, "%s - initialization of %s failed\n", getPrintableTime(), conn_data->name );
 		   return -1;
@@ -316,7 +316,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 		update_peer_status(dstIp,TRUE);
 
 		/* clLog(clSystemLog, eCLSeverityDebug,"Timers PERIODIC:%d, TRANSMIT:%d, COUNT:%u\n",
-		 *pfcp_config.periodic_timer, pfcp_config.transmit_timer, pfcp_config.transmit_cnt);
+		 *cp_config->periodic_timer, cp_config->transmit_timer, cp_config->transmit_cnt);
 		 */
 
 		if ( startTimer( &conn_data->pt ) < 0) {
