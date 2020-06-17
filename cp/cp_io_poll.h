@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -13,6 +14,17 @@
 #include "cp_interface.h"
 #include "cp_main.h"
 #include "gtpv2c_msg_struct.h"
+
+/**
+ * @brief udp socket structure.
+ */
+typedef struct udp_sock_t {
+	struct sockaddr_in my_addr;
+	struct sockaddr_in other_addr;
+	int sock_fd_pfcp;
+	int sock_fd_s11;
+	int sock_fd_s5s8;
+} udp_sock_t;
 
 /* message types */
 enum dp_msg_type {

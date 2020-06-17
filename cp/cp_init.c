@@ -9,7 +9,6 @@
 #include <rte_udp.h>
 #include <rte_hash_crc.h>
 #include <errno.h>
-
 #include "clogger.h"
 #include "gw_adapter.h"
 #include "cp_stats.h"
@@ -25,6 +24,7 @@
 #include "cp_interface.h"
 #include "pfcp_transactions.h"
 #include "gtpv2_internal.h"
+#include "cp_io_poll.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -35,12 +35,12 @@ int s5s8_fd = -1;
 int pfcp_fd = -1;
 int s11_pcap_fd = -1;
 
+extern udp_sock_t my_sock;
 extern pcap_t *pcap_reader;
 extern pcap_dumper_t *pcap_dumper;
 
 cp_config_t *cp_config;
 
-udp_sock_t my_sock;
 /* MME */
 struct sockaddr_in s11_mme_sockaddr;
 
@@ -108,7 +108,7 @@ static void init_pfcp(void)
 	int ret;
 
 	pfcp_fd = socket(AF_INET, SOCK_DGRAM, 0);
-	my_sock.sock_fd = pfcp_fd;
+	my_sock.sock_fd_pfcp = pfcp_fd;
 
 	if (pfcp_fd < 0)
 		rte_panic("Socket call error : %s", strerror(errno));

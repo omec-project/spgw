@@ -1,10 +1,8 @@
-/*
- * Copyright 2020-present Open Networking Foundation
- * Copyright (c) 2017 Intel Corporation
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- */
+// Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2017 Intel Corporation
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #include <stdint.h>
 #include <arpa/inet.h>
@@ -34,7 +32,7 @@
 #ifdef GX_BUILD
 extern int gx_app_sock;
 #endif /* GX_BUILD */
-extern udp_sock_t my_sock;
+udp_sock_t my_sock;
 
 /**
  * @brief Function to Poll message que.
@@ -50,7 +48,7 @@ void iface_process_ipc_msgs(void)
 	FD_ZERO(&readfds);
 
 	/* Add PFCP_FD in the set */
-	FD_SET(my_sock.sock_fd, &readfds);
+	FD_SET(my_sock.sock_fd_pfcp, &readfds);
 
 	int max = 0;
 
@@ -73,20 +71,20 @@ void iface_process_ipc_msgs(void)
 
 	/* Set the MAX FD's stored into the set */
 	if (cp_config->cp_type == SGWC) {
-		max = (my_sock.sock_fd > my_sock.sock_fd_s11 ?
-				my_sock.sock_fd : my_sock.sock_fd_s11);
+		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s11 ?
+				my_sock.sock_fd_pfcp : my_sock.sock_fd_s11);
 		max = (max > my_sock.sock_fd_s5s8 ? max : my_sock.sock_fd_s5s8);
 	}
 	if (cp_config->cp_type == SAEGWC) {
-		max = (my_sock.sock_fd > my_sock.sock_fd_s11 ?
-				my_sock.sock_fd : my_sock.sock_fd_s11);
+		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s11 ?
+				my_sock.sock_fd_pfcp : my_sock.sock_fd_s11);
 #ifdef GX_BUILD
 		max = (gx_app_sock > max ? gx_app_sock : max);
 #endif /* GX_BUILD */
 	}
 	if (cp_config->cp_type == PGWC) {
-		max = (my_sock.sock_fd > my_sock.sock_fd_s5s8 ?
-				my_sock.sock_fd : my_sock.sock_fd_s5s8);
+		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s5s8 ?
+				my_sock.sock_fd_pfcp : my_sock.sock_fd_s5s8);
 #ifdef GX_BUILD
 		max = (gx_app_sock > max ? gx_app_sock : max);
 #endif /* GX_BUILD */
@@ -104,7 +102,7 @@ void iface_process_ipc_msgs(void)
 		//perror("select"); /* error occurred in select() */
 	} else if (rv > 0) {
 		/* one or both of the descriptors have data */
-		if (FD_ISSET(my_sock.sock_fd, &readfds))
+		if (FD_ISSET(my_sock.sock_fd_pfcp, &readfds))
 		{
 				msg_handler_sx_n4(&peer_addr);
 		}

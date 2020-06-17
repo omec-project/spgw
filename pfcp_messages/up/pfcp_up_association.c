@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -13,7 +14,9 @@
 #include "clogger.h"
 #include "up_main.h"
 #include "gw_adapter.h"
+#include "up_io_poll.h"
 
+extern udp_sock_t my_sock;
 struct in_addr cp_comm_ip;
 uint16_t cp_comm_port;
 
@@ -195,7 +198,7 @@ int process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(my_sock.sock_fd, pfcp_msg, encoded, peer_addr) < 0 ) {
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, peer_addr) < 0 ) {
 					clLog(clSystemLog, eCLSeverityDebug, "Error sending: %i\n",errno);
 	}
 	else

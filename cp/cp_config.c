@@ -1219,66 +1219,6 @@ fetch_dp_ip_mtu(uint32_t dpId)
 }
 
 
-#ifdef DELETE_THIS
-/* Parse the entry and create IP pool tree */
-char*
-parse_create_static_ip_pool(struct ip_table **addr_pool, const char *entry)
-{
-	char err_string[128];
-	char *pool=NULL;
-	*addr_pool = NULL;
-
-	do {
-		pool= (char *)calloc(1, 128); 
-
-		if (pool == NULL) {
-      			sprintf(err_string, " Memory allocation failed ");
-			break;
-		}
-		strcpy(pool, entry); 
-		RTE_LOG_DP(ERR, CP, "STATIC_IP_POOL %s parsing started \n", pool);
-
-		const char token[2] = "/";
-		char *network_str = strtok(pool, token);
-		if (network_str == NULL) {
-			sprintf(err_string, " STATIC_IP_POOL in bad format. It should be in a.b.c.d/mask format ");
-			free(pool);
-			break;
-		}
-		RTE_LOG_DP(ERR, CP, "STATIC_IP_POOL Network %s \n", network_str);
-
-		struct in_addr network;
-		if (inet_aton(network_str, &network) == 0) {
-			sprintf(err_string, " Network %s in bad format ",  network_str);
-			free(pool);
-			break;
-		}
-		network.s_addr = ntohl(network.s_addr); // host order
-
-		char *mask_str = strtok(NULL, token);
-		if (mask_str == NULL) {
-			sprintf(err_string, ". No mask configured ");
-			free(pool);
-			break;
-		}
-
-		uint32_t mask;
-		mask = atoi(mask_str);
-		if (mask > 23 && mask <=32 ) {
-			*addr_pool = create_ue_pool(network, mask);
-		} else {
-			sprintf(err_string, " Bad Mask. Mask should be from /24 to /32 only - Its %u ", mask);
-			free(pool);
-			break;
-		}
-		RTE_LOG_DP(ERR, CP, "STATIC_IP_POOL %s configured successfully \n", pool);
-		strcpy(pool, entry); /* recopy entry into pool. we need pool in a.b.c.d/mask format  */ 
-		return pool;
-	} while (0);
-	RTE_LOG_DP(ERR, CP, "STATIC_IP_POOL %s Parsing failed. Error - %s  \n", entry, err_string);
-	return NULL;
-}
-#endif
 /*
  * Set flag that Primary DNS config is available at Edge Site level. This should be called 
  * when primary DNS address is set in the PGW app level 

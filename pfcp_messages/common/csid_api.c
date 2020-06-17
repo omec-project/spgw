@@ -460,7 +460,7 @@ del_pfcp_peer_node_sess(uint32_t node_addr, uint8_t iface)
 		return -1;
 	}
 #else
-	if (sendto(my_sock.sock_fd,
+	if (sendto(my_sock.sock_fd_pfcp,
 		(char *)pfcp_msg,
 		encoded,
 		MSG_DONTWAIT,

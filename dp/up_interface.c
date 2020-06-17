@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -80,23 +81,6 @@ struct rte_hash *node_id_hash;
 
 
 
-/**
- * @brief  : Init listen socket.
- * @param  : No param
- * @return : Returns 0 in case of success , -1 otherwise
- */
-static int
-udp_init_dp_socket(void)
-{
-	if (__create_udp_socket(cp_comm_ip, cp_comm_port, dp_comm_port,
-				&my_sock) < 0)
-		rte_exit(EXIT_FAILURE, "Create DP UDP Socket "
-				"Failed for IP %s:%d!!!\n",
-				inet_ntoa(cp_comm_ip), cp_comm_port);
-	return 0;
-}
-
-
 #define IFACE_FILE "../config/interface.cfg"
 #define SET_CONFIG_IP(ip, file, section, entry) \
 do {\
@@ -153,6 +137,7 @@ void read_interface_config(void)
 				DP_PKEY_PATH);
 #endif /* SGX_CDR */
 }
+
 
 
 /**

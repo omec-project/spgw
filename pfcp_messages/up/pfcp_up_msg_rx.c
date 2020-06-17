@@ -68,7 +68,7 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	free(pfcp_heartbeat_req);
 
 	if (encoded != 0) {
-		if (sendto(my_sock.sock_fd,
+		if (sendto(my_sock.sock_fd_pfcp,
 					(char *)pfcp_msg,
 					encoded,
 					MSG_DONTWAIT,
@@ -636,7 +636,7 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 			break;
 	}
 	if (encoded != 0) {
-		if (sendto(my_sock.sock_fd,
+		if (sendto(my_sock.sock_fd_pfcp,
 			(char *)pfcp_msg,
 			encoded,
 			MSG_DONTWAIT,

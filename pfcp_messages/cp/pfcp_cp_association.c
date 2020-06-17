@@ -687,7 +687,7 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				process_error_occured_handler(&msg, NULL);
 			}
-		} 
+		}
 #ifdef DELETE_THIS 
         else {
 	        struct resp_info *resp = NULL;

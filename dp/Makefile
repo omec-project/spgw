@@ -42,7 +42,6 @@ SRCS-y := up_main.c\
 	up_pkt_handler.c\
 	up_kni_pkt_handler.c\
     up_interface.c\
-    vepc_udp.o \
     up_io_poll.o \
 	pipeline/epc_arp.o\
 	pipeline/epc_spns_dns.o\

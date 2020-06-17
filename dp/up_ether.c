@@ -1,10 +1,8 @@
-/*
- * Copyright 2020-present Open Networking Foundation
- * Copyright (c) 2019 Sprint
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- */
+// Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 #include <arpa/inet.h>
 
@@ -42,6 +40,8 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 	struct arp_ipv4_key tmp_arp_key = {
 		.ip = ipv4_hdr->dst_addr
 	};
+    struct in_addr _temp = {0}; _temp.s_addr = tmp_arp_key.ip; 
+    printf("Destination address of packet = %s \n",inet_ntoa(_temp));
 
 	if (app.spgw_cfg == SAEGWU) {
 		if (portid == app.s1u_port) {
@@ -107,7 +107,7 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 				__func__, tmp_arp_key.ip);
 	ret_arp_data = retrieve_arp_entry(tmp_arp_key, portid);
     if(ret_arp_data != NULL)
-	    printf("Get arp for %s \n",inet_ntoa(*(struct in_addr *)&ret_arp_data->ip));
+	    printf("%s - %d -> Get arp for %s \n",__FUNCTION__,__LINE__,inet_ntoa(*(struct in_addr *)&ret_arp_data->ip));
 
 	if (ret_arp_data == NULL) {
 	    printf("Get arp for %s failed \n",inet_ntoa(*(struct in_addr *)&ret_arp_data->ip));
@@ -123,6 +123,7 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 
 #ifndef STATIC_ARP
 		/* AJAY: TODO WE have this code STATIC_ARP is not defined. */
+        printf("dynamic arp %s - %d \n",__FUNCTION__,__LINE__);
 		clLog(clSystemLog, eCLSeverityInfo, "Sendto:: ret_arp_data->ip= %s\n",
 					inet_ntoa(*(struct in_addr *)&ret_arp_data->ip));
 

@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -11,7 +12,9 @@
 #include "pfcp_messages_encoder.h"
 #include "clogger.h"
 #include "gw_adapter.h"
+#include "up_io_poll.h"
 
+extern udp_sock_t my_sock;
 /**
  * @brief  : Allocates ring for buffering downlink packets
  *           Allocate downlink packet buffer ring from a set of
@@ -184,7 +187,7 @@ process_pfcp_session_report_req(struct sockaddr_in *peer_addr,
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(my_sock.sock_fd, pfcp_msg, encoded, peer_addr) < 0 ) {
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, peer_addr) < 0 ) {
 	                clLog(clSystemLog, eCLSeverityDebug, "Error sending: %i\n",errno);
 	                return -1;
 	}

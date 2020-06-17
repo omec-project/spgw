@@ -542,7 +542,7 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	process_response((uint32_t)peer_addr->sin_addr.s_addr);
 #endif /* USE_REST */
 
-	if ( pfcp_send(my_sock.sock_fd, pfcp_msg, encoded, peer_addr) < 0 ) {
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, peer_addr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityDebug, "Error sending in heartbeat request: %i\n",errno);
 	} else {
 		update_cli_stats(peer_addr->sin_addr.s_addr,

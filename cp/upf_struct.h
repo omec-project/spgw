@@ -59,7 +59,6 @@ typedef struct upf_context {
 #ifdef DELETE_THIS
 	/* Add timer_entry for pfcp assoc req */
 	peerData_t *timer_entry;
-	create_sess_req_t csr;
 #else
     transData_t *timer_entry;
 #endif

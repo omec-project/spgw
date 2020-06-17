@@ -1,4 +1,3 @@
-
 // Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
@@ -102,12 +101,6 @@ struct in_addr fetch_dns_primary_ip(uint32_t dpId, bool *present);
  * pass DNS config from global scope 
  */
 struct in_addr fetch_dns_secondary_ip(uint32_t dpId, bool *present);
-
-#ifdef DELETE_THIS
-/* Parse and create static ip pool */
-char*
-parse_create_static_ip_pool(struct ip_table **addr_pool, const char *entry);
-#endif
 
 /**
  * Given dpId, fetch configured MTU. If not configured, return default

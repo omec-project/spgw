@@ -36,7 +36,6 @@ SRCS-y += cp_config.c
 SRCS-y += packet_filters.c
 SRCS-y += gx_error_rsp.c
 SRCS-y += cp_interface.c
-SRCS-y += vepc_udp.c
 SRCS-y += cp_io_poll.c
 SRCS-y += state_machine/sm_init.o
 SRCS-y += state_machine/sm_hand.o

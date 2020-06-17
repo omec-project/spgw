@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -16,9 +17,6 @@
 #include <rte_hash.h>
 
 #include "vepc_cp_dp_api.h"
-#include "vepc_udp.h"
-
-extern udp_sock_t my_sock;
 
 /**
  * @brief  : Process PFCP message.

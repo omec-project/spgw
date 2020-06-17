@@ -117,13 +117,6 @@ association_setup_handler(void *data, void *unused_param)
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 			(const void*) &(pdn->upf_ipv4.s_addr),
 			(void **) &(upf_context));
-	if (upf_context->state != PFCP_ASSOC_RESP_RCVD_STATE) {
-		if (ret >= 0) {
-#ifdef DELETE_THIS
-			upf_context->csr = msg->gtpc_msg.csr;
-#endif
-		}
-	}
 	if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
  		ret = get_sess_entry(pdn->seid, &resp);
 		if(ret != -1 && resp != NULL){
@@ -711,27 +704,6 @@ cca_msg_handler(void *data, void *unused_param)
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 	                 (const void*) &(pdn->upf_ipv4.s_addr),
 	                 (void **) &(upf_context));
-	if(upf_context->state != PFCP_ASSOC_RESP_RCVD_STATE) {
-	       if (ret >= 0) {
-#ifdef DELETE_THIS
-			if(cp_config->cp_type == PGWC) {
-	                        upf_context->csr.sender_fteid_ctl_plane.teid_gre_key = pdn->s5s8_sgw_gtpc_teid;
-	        }
-	        if(cp_config->cp_type == SAEGWC) {
-	                upf_context->csr.sender_fteid_ctl_plane.teid_gre_key = pdn->context->s11_mme_gtpc_teid;
-	        }
-	        upf_context->csr.header.teid.has_teid.seq = pdn->context->sequence;
-	        upf_context->csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi = ebi_index + 5;
-	        if (cp_config->cp_type == PGWC) {
-	                /* : we need teid for send ccr-T to GX  */
-	                upf_context->csr.header.teid.has_teid.teid = pdn->s5s8_pgw_gtpc_teid;
-	        }
-	        if(cp_config->cp_type == SAEGWC) {
-	                 upf_context->csr.header.teid.has_teid.teid = pdn->context->s11_sgw_gtpc_teid;
-	        }
-#endif
-	    }
-	}
 	/* send error response in case of pfcp est. fail using this data */
 	if(upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
                 ret = get_sess_entry(pdn->seid, &resp);

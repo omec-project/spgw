@@ -1,6 +1,6 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright (c) 2017 Intel Corporation
 // Copyright (c) 2019 Sprint
+// Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only
@@ -398,6 +398,7 @@ int arp_qunresolved_ulpkt(struct arp_entry_data *arp_data,
 				__func__,
 				inet_ntoa(*(struct in_addr *)&arp_data->ip));
 		clLog(clSystemLog, eCLSeverityCritical,"%s: Error rte_pktmbuf_clone... Dropping pkt.\n", __func__);
+        printf("%s %d - dropping packet ",__FUNCTION__,__LINE__);
 		print_arp_table();
 		return -1;
 	}

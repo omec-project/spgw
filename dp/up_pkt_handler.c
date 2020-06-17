@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -285,7 +286,6 @@ s1u_pkt_handler(struct rte_pipeline *p, struct rte_mbuf **pkts, uint32_t n,
 	uint64_t pkts_mask;
 	pkts_mask = (~0LLU) >> (64 - n);
 	printf("%s %d - Uplink packet received on S1u \n",__FUNCTION__,__LINE__);
-
 
 	switch(app.spgw_cfg) {
 		case SAEGWU: {

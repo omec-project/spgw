@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -7,7 +8,6 @@
 #define _INTERFACE_CP_H_
 #include <pcap.h>
 #include "vepc_cp_dp_api.h"
-#include "vepc_udp.h"
 #include "trans_struct.h"
 #include "cp_peer_struct.h"
 

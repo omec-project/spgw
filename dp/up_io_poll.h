@@ -1,3 +1,4 @@
+// Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -10,8 +11,28 @@
  * This file contains macros, data structure definitions and function
  * prototypes of Interface message parsing.
  */
+#include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "up_interface.h"
 #include "up_main.h"
+/**
+ * @brief udp socket structure.
+ */
+typedef struct udp_sock_t {
+	struct sockaddr_in my_addr;
+	struct sockaddr_in other_addr;
+	int sock_fd_pfcp;
+} udp_sock_t;
+
+/**
+ * @brief API to create udp socket.
+ */
+int
+create_udp_socket(struct in_addr recv_ip, uint16_t recv_port,
+		udp_sock_t *sock);
+
 
 /* message types */
 enum dp_msg_type {
