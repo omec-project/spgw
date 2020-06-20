@@ -7,7 +7,7 @@ THIRD_PARTY_SW_PATH="third_party"
 OSS_UTIL_DIR="oss-util"
 C3PO_OSS_DIR="oss_adapter/c3po_oss"
 
-export NGIC_DIR=$PWD
+export SPGW_DIR=$PWD
 
 SERVICE_NAME="CP"
 SERVICE=1
@@ -51,8 +51,7 @@ install_dpdk()
 	fi
 
 	cd ${RTE_SDK}
-	#cp $NGIC_CORECUR_DIR/dpdk-18.02_common_linuxapp config/common_linuxapp
-	cp $NGIC_DIR/dpdk-18.02_common_linuxapp config/common_linuxapp
+	cp $SPGW_DIR/dpdk-18.02_common_linuxapp config/common_linuxapp
 #	sed -ri 's,(KNI_KMOD=).*,\1n,' config/common_linuxapp
 	make -j $CPUS install T=${RTE_TARGET} RTE_MACHINE=${RTE_MACHINE} 
 	echo "Installed DPDK at $RTE_SDK"

@@ -7,7 +7,7 @@ THIRD_PARTY_SW_PATH="third_party"
 OSS_UTIL_DIR="oss-util"
 C3PO_OSS_DIR="oss_adapter/c3po_oss"
 
-export NGIC_DIR=$PWD
+export SPGW_DIR=$PWD
 
 SERVICE_NAME="CP"
 SERVICE=1

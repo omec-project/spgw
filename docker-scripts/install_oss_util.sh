@@ -7,7 +7,7 @@ THIRD_PARTY_SW_PATH="third_party"
 OSS_UTIL_DIR="oss-util"
 C3PO_OSS_DIR="oss_adapter/c3po_oss"
 
-export NGIC_DIR=$PWD
+export SPGW_DIR=$PWD
 
 SERVICE_NAME="CP"
 SERVICE=1
@@ -136,8 +136,8 @@ build_c3po_util()
 
 install_oss_util()
 {
-   mkdir -p $NGIC_DIR/$C3PO_OSS_DIR
-   pushd $NGIC_DIR/$C3PO_OSS_DIR
+   mkdir -p $SPGW_DIR/$C3PO_OSS_DIR
+   pushd $SPGW_DIR/$C3PO_OSS_DIR
    git clone $OSS_UTIL_GIT_LINK
    pushd oss-util
    init_oss_util_submodules

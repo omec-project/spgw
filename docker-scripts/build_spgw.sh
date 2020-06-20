@@ -7,7 +7,7 @@ THIRD_PARTY_SW_PATH="third_party"
 OSS_UTIL_DIR="oss-util"
 C3PO_OSS_DIR="oss_adapter/c3po_oss"
 
-export NGIC_DIR=$PWD
+export SPGW_DIR=$PWD
 
 SERVICE_NAME="Collocated CP and DP"
 SERVICE=3
@@ -93,7 +93,7 @@ build_fd_gxapp()
 build_c3po_util()
 {
   echo "Building c3po util ..."
-  pushd $NGIC_DIR/$C3PO_OSS_DIR/$OSS_UTIL_DIR
+  pushd $SPGW_DIR/$C3PO_OSS_DIR/$OSS_UTIL_DIR
   make clean
   make
   $SUDO make install
@@ -103,7 +103,7 @@ build_c3po_util()
 
 build_spgw()
 {
-	pushd $NGIC_DIR
+	pushd $SPGW_DIR
 	source setenv.sh
 
    	build_c3po_util
@@ -117,7 +117,7 @@ build_spgw()
 	fi
 	if [ $SERVICE == 1 ] || [ $SERVICE == 3 ] ; then
 		echo "Building libgtpv2c..."
-		pushd $NGIC_DIR/libgtpv2c
+		pushd $SPGW_DIR/libgtpv2c
 		make 
 		if [ $? -ne 0 ] ; then
 			echo "Failed to build libgtpv2, please check the errors."

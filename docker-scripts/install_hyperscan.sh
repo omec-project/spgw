@@ -5,10 +5,7 @@
 source ./git_url.cfg
 THIRD_PARTY_SW_PATH="third_party"
 
-export NGIC_DIR=$PWD
-
-SERVICE_NAME="CP"
-SERVICE=1
+export SPGW_DIR=$PWD
 
 SUDO=''
 [[ $EUID -ne 0 ]] && SUDO=sudo
