@@ -31,7 +31,6 @@ export RTE_SDK=${RTE_SDK:-$DEPS_DIR/dpdk}
 export RTE_TARGET=${RTE_TARGET:-'x86_64-native-linuxapp-gcc'}
 
 
-
 build_fd_lib()
 {
 	pushd $CUR_DIR/$THIRD_PARTY_SW_PATH/freediameter
@@ -87,7 +86,6 @@ build_fd_gxapp()
 	echo "Building FreeDiameter ..."
 	build_fd_lib
 	ldconfig
-
 	echo "Building GxAPP ..."
 	build_gxapp
 }
@@ -103,22 +101,19 @@ build_c3po_util()
 }
 
 
-build_ngic()
+build_spgw()
 {
 	pushd $NGIC_DIR
 	source setenv.sh
 
-    	build_c3po_util
+   	build_c3po_util
 	build_pfcp_lib
 
 	if [ $SERVICE == 2 ] || [ $SERVICE == 3 ] ; then
 		echo "Building Libs..."
-		make build-lib || { echo -e "\nNG-CORE: Make lib failed\n"; }
+		make build-lib || { echo -e "\nmake lib failed\n"; }
 		echo "Building DP..."
-		### USE_AF_PACKET for deploying in k8s
-		### ggdb must be made standard to help debugging
-		### O2 because O3 causes DP crash https://github.com/omec-project/ngic-rtc/issues/55
-		make build-dp -j 10 EXTRA_CFLAGS='-DUSE_AF_PACKET -ggdb -O2' || { echo -e "\nDP: Make failed\n"; }
+		make build-dp -j 10 EXTRA_CFLAGS='-DUSE_AF_PACKET -ggdb -O2' || { echo -e "\nmake failed\n"; }
 	fi
 	if [ $SERVICE == 1 ] || [ $SERVICE == 3 ] ; then
 		echo "Building libgtpv2c..."
@@ -135,8 +130,7 @@ build_ngic()
 
 		echo "Building CP..."
 		make clean-cp
-		make -j 10 build-cp || { echo -e "\nCP: Make failed\n"; }
-
+		make -j 10 build-cp EXTRA_CFLAGS='-ggdb -O2 ' || { echo -e "\nCP: Make failed\n"; }
 	fi
 	popd
 }
@@ -147,6 +141,3 @@ build_ngic()
 set -o errexit
 set -o pipefail
 set -o nounset
-
-echo "NGIC build complete "
-

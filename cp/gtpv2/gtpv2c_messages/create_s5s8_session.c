@@ -960,7 +960,7 @@ int
 process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 {
 	int ret;
-	uint8_t ebi_index;
+	uint8_t ebi_index = 5;
 	uint8_t bearer_cntr = 0;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
@@ -1062,7 +1062,7 @@ int
 process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 {
 	int ret;
-	uint8_t ebi_index;
+	uint8_t ebi_index = 5;
 	uint8_t bearer_cntr = 0;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;

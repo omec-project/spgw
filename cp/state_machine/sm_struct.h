@@ -18,9 +18,6 @@
 #include "gtpv2c_msg_struct.h"
 
 
-extern char state_name[40];
-extern char event_name[40];
-
 enum source_interface {
 	GX_IFACE = 1,
 	S11_IFACE = 2,

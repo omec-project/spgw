@@ -554,9 +554,11 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 	pdn = context->eps_bearers[ebi_index]->pdn;
 	{
 		struct in_addr ip = {0};
+        struct in_addr *temp;
 		pdn->apn_restriction = cs_rsp->apn_restriction.rstrct_type_val;
 
-		ip = *(struct in_addr *)cs_rsp->paa.pdn_addr_and_pfx;
+		temp = (struct in_addr *)(&cs_rsp->paa.pdn_addr_and_pfx[0]);
+        ip = *temp;
 
 		pdn->ipv4.s_addr = htonl(ip.s_addr);
 		pdn->s5s8_pgw_gtpc_ipv4.s_addr =

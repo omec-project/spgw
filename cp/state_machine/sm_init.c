@@ -21,9 +21,9 @@ extern struct rte_hash *bearer_by_fteid_hash;
 
 #define SM_HASH_SIZE (1 << 18)
 
-char proc_name[40];
-char state_name[40];
-char event_name[40];
+char proc_name [64];
+char state_name[64];
+char event_name[64];
 
 /**
  * @brief  : Add session entry in state machine hash table.

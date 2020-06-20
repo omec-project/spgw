@@ -11,7 +11,7 @@ ARG RUN_BASE=runtime
 FROM $BASE_OS as basepkg
 ARG RTE_MACHINE=native
 
-WORKDIR /ngic-rtc
+WORKDIR /spgw
 SHELL ["/bin/bash", "-c"]
 
 COPY git_url.cfg . 
@@ -39,14 +39,14 @@ RUN source ./docker-scripts/install_oss_util.sh && install_oss_util
 
 COPY . ./
 ARG EXTRA_CFLAGS='-DUSE_AF_PACKET -ggdb -O2'
-FROM ossutil as ngic
-RUN source ./build_ngic.sh && build_ngic
+FROM ossutil as spgw
+RUN source ./docker-scripts/build_spgw.sh && build_spgw
 
-ENV LD_LIBRARY_PATH /ngic-rtc/libgtpv2c/lib:/ngic-rtc/libpfcp/lib:$LD_LIBRARY_PATH
-FROM ngic as cp
-COPY --from=ngic /ngic-rtc/cp/build/ngic_controlplane /bin/ngic_controlplane
+ENV LD_LIBRARY_PATH /spgw/libgtpv2c/lib:/spgw/libpfcp/lib:$LD_LIBRARY_PATH
+FROM spgw as cp
+COPY --from=spgw /spgw/cp/build/ngic_controlplane /bin/ngic_controlplane
 
-FROM ngic as dp
-COPY --from=ngic /ngic-rtc/dp/build/ngic_dataplane /bin/ngic_dataplane
+FROM spgw as dp
+COPY --from=spgw /spgw/dp/build/ngic_dataplane /bin/ngic_dataplane
 
 #ajay - Need to cleanup image 

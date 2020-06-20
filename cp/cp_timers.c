@@ -60,7 +60,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 	dest_addr.sin_addr.s_addr = md->dstIP;
 	dest_addr.sin_port = htons(GTPC_UDP_PORT);
 
-	CLIinterface it;
+	CLIinterface it = S5S8;
 	if (md->portId == S11_SGW_PORT_ID)
 	{
 		it = S11;
