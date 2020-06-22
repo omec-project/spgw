@@ -59,6 +59,7 @@ COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/cpp-driver/build/li
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/c-ares/.libs/libcares.so /usr/local/lib/
 
 FROM runtime as dp
+RUN source ./install_rundeps.sh && install_run_utils && cleanup_image
 COPY --from=spgw /spgw/dp/build/ngic_dataplane /bin/ngic_dataplane
 COPY --from=spgw /spgw/libpfcp/lib/libpfcp.so /usr/local/lib
 
