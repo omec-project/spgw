@@ -1,5 +1,6 @@
 #! /bin/bash
 
+# SPDX-FileCopyrightText: 2020-present Open Networking Foundation <info@opennetworking.org>
 # Copyright (c) 2019 Sprint
 #
 # SPDX-License-Identifier: Apache-2.0
