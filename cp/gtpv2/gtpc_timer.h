@@ -2,7 +2,7 @@
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifndef __GTPC_TIMER_H
 #define __GTPC_TIMER_H
