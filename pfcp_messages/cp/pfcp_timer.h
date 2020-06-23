@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifndef __CP_TIMER_H
 #define __CP_TIMER_H

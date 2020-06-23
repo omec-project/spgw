@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>
 #
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+# SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #SDN_ODL_BUILD flag is set for ODL builds, unset for direct UDP or ZMQ[Direct || ODL] communication between CP and DP
 #CFLAGS += -DSDN_ODL_BUILD

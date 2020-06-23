@@ -1,7 +1,7 @@
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "sm_pcnd.h"
 #include "cp_stats.h"

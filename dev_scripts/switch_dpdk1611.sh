@@ -3,7 +3,7 @@
 # Copyright (c) 2017 Intel Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+# SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 S1UDEV=0000:af:00.0
 SGIDEV=0000:af:00.1

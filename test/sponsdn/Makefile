@@ -1,7 +1,7 @@
 # Copyright (c) 2017 Intel Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-License-Identifier: LicenseRef-ONF-Member-Only
+# SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 ifeq ($(RTE_SDK),)
 $(error "Please define RTE_SDK environment variable")
