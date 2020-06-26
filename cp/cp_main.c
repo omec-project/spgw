@@ -27,6 +27,7 @@
 #include "cp_config.h"
 #include "cp_config_apis.h"
 #include "cp_config_defs.h"
+#include "ipc_api.h"
 
 #ifdef USE_REST
 #include "timer.h"
@@ -45,6 +46,7 @@
 #define IP_POOL_MASK_SET   (0x0100)
 #define APN_NAME_SET	   (0x0200)
 
+extern udp_sock_t my_sock;
 pcap_t *pcap_reader;
 pcap_dumper_t *pcap_dumper;
 uint32_t start_time;
@@ -247,10 +249,13 @@ main(int argc, char **argv)
     create_associated_upf_hash();
 
     /* Make a connection between control-plane and gx_app */
-#ifdef GX_BUILD
-    if(cp_config->cp_type != SGWC)
-        start_cp_app();
-#endif
+    if(cp_config->gx_enabled == true)
+    {
+        if(cp_config->cp_type != SGWC)
+        {
+            start_cp_app();
+        }
+    }
 
 #ifdef SYNC_STATS
     stats_init();
@@ -292,10 +297,8 @@ main(int argc, char **argv)
 void sig_handler(int signo)
 {
     if (signo == SIGINT) {
-#ifdef GX_BUILD
-        if (gx_app_sock > 0)
-            close_ipc_channel(gx_app_sock);
-#endif /* GX_BUILD */
+        if (my_sock.gx_app_sock > 0)
+            close_ipc_channel(my_sock.gx_app_sock);
 #ifdef SYNC_STATS
         retrive_stats_entry();
         close_stats();

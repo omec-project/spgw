@@ -151,6 +151,8 @@ typedef struct cp_config
 	dns_cache_params_t dns_cache;
 	dns_config_t ops_dns;
 	dns_config_t app_dns;
+
+    uint32_t  gx_enabled;
 }cp_config_t;
 
 extern cp_config_t *cp_config;

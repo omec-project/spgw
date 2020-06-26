@@ -10,7 +10,6 @@
 #include "ipc_api.h"
 #include "gx.h"
 
-extern int gx_app_sock;
 extern int g_gx_client_sock;
 
 int done = 0;

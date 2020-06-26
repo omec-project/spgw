@@ -16,11 +16,11 @@
 #include "upf_struct.h"
 #include "cp_interface.h"
 #include "sm_structs_api.h"
+#include "gx_error_rsp.h"
 
 #define DIAMETER_PCC_RULE_EVENT (5142)
 
-extern int pfcp_fd;
-
+extern udp_sock_t my_sock;
 
 bool
 pfcp_add_timer_entry(peerData_t *conn_data, uint32_t timeout_ms,
@@ -113,9 +113,9 @@ pfcp_peer_timer_callback(gstimerinfo_t *ti, const void *data_t )
                                                         cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
                                 } else if ((cp_config->cp_type == PGWC ||  cp_config->cp_type ==  SAEGWC )
                                                 && (resp->msg_type == GX_RAR_MSG || resp->state == CREATE_BER_REQ_SNT_STATE)) {
-#ifdef GX_BUILD
+                                    if(cp_config->gx_enabled) {
                                         gen_reauth_error_response(pdn, DIAMETER_PCC_RULE_EVENT);
-#endif
+                                    }
                                         pdn->state = IDEL_STATE;
                                 } else {
                                         /* Need to handle for other request */
@@ -134,7 +134,7 @@ pfcp_peer_timer_callback(gstimerinfo_t *ti, const void *data_t )
         /* timer retry handler */
         switch(data->portId) {
                 case PFCP_IFACE:
-                        pfcp_timer_retry_send(pfcp_fd, data);
+                        pfcp_timer_retry_send(my_sock.sock_fd_pfcp, data);
                         break;
                 default:
                         break;

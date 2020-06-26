@@ -30,11 +30,7 @@
 #include "cdnshelper.h"
 #endif /* USE_DNS_QUERY */
 
-int s11_fd = -1;
-int s5s8_fd = -1;
-int pfcp_fd = -1;
 int s11_pcap_fd = -1;
-
 extern udp_sock_t my_sock;
 extern pcap_t *pcap_reader;
 extern pcap_dumper_t *pcap_dumper;
@@ -76,9 +72,11 @@ uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
 extern uint8_t rstCnt;
 
 
-static void init_pfcp(void)
+static void 
+init_pfcp(void)
 {
 	int ret;
+    int pfcp_fd = -1;
 
 	pfcp_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	my_sock.sock_fd_pfcp = pfcp_fd;
@@ -115,6 +113,7 @@ static void init_pfcp(void)
  */
 static void init_s11(void)
 {
+    int s11_fd = -1;
 	int ret;
 	/* TODO: Need to think*/
 	s11_mme_sockaddr.sin_port = htons(cp_config->s11_port);
@@ -148,6 +147,7 @@ static void init_s11(void)
 			ntohs(s11_sockaddr.sin_port),
 			strerror(errno));
 	}
+
 }
 
 /**
@@ -157,6 +157,7 @@ static void init_s11(void)
  */
 static void init_s5s8(void)
 {
+    int s5s8_fd = -1;
 	int ret;
 	/* TODO: Need to think*/
 	s5s8_recv_sockaddr.sin_port = htons(cp_config->s5s8_port);
@@ -191,6 +192,7 @@ static void init_s5s8(void)
 			ntohs(s5s8_sockaddr.sin_port),
 			strerror(errno));
 	}
+
 }
 
 #ifdef CP_DP_TABLE_CONFIG
@@ -259,29 +261,21 @@ void init_cp(void)
 		break;
 	}
 
-    int max = 0; 
-	/* Set the MAX FD's stored into the set */
-	if (cp_config->cp_type == SGWC) {
-		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s11 ?
-				my_sock.sock_fd_pfcp : my_sock.sock_fd_s11);
-		max = (max > my_sock.sock_fd_s5s8 ? max : my_sock.sock_fd_s5s8);
-	}
-	if (cp_config->cp_type == SAEGWC) {
-		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s11 ?
-				my_sock.sock_fd_pfcp : my_sock.sock_fd_s11);
-#ifdef GX_BUILD
-		max = (gx_app_sock > max ? gx_app_sock : max);
-#endif /* GX_BUILD */
-	}
-	if (cp_config->cp_type == PGWC) {
-		max = (my_sock.sock_fd_pfcp > my_sock.sock_fd_s5s8 ?
-				my_sock.sock_fd_pfcp : my_sock.sock_fd_s5s8);
-#ifdef GX_BUILD
-		max = (gx_app_sock > max ? gx_app_sock : max);
-#endif /* GX_BUILD */
-	}
-
-    my_sock.select_max_fd = max+1;
+	if((my_sock.sock_fd_s11 > my_sock.sock_fd_pfcp) &&
+	   (my_sock.sock_fd_s11 > my_sock.gx_app_sock) &&
+	   (my_sock.sock_fd_s11 > my_sock.sock_fd_s5s8)) {
+        my_sock.select_max_fd = my_sock.sock_fd_s11 + 1;
+    }
+	else if((my_sock.sock_fd_pfcp > my_sock.sock_fd_s11) &&
+	   (my_sock.sock_fd_pfcp > my_sock.gx_app_sock) &&
+	   (my_sock.sock_fd_pfcp > my_sock.sock_fd_s5s8)) {
+        my_sock.select_max_fd = my_sock.sock_fd_pfcp + 1;
+    }
+	else if((my_sock.sock_fd_s5s8 > my_sock.sock_fd_s11) &&
+	   (my_sock.sock_fd_s5s8 > my_sock.gx_app_sock) &&
+	   (my_sock.sock_fd_s5s8 > my_sock.sock_fd_pfcp)) {
+        my_sock.select_max_fd = my_sock.sock_fd_s5s8 + 1;
+    }
 
 	if (signal(SIGINT, sig_handler) == SIG_ERR)
 		rte_exit(EXIT_FAILURE, "Error:can't catch SIGINT\n");

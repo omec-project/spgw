@@ -40,9 +40,7 @@
 #include "cp_main.h"
 #endif /* USE_REST */
 
-
-
-extern int pfcp_fd;
+extern udp_sock_t my_sock;
 extern struct sockaddr_in s5s8_recv_sockaddr;
 extern struct sockaddr_in s11_mme_sockaddr;
 
@@ -444,7 +442,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	header->message_len = htons(encoded - 4);
 
 	/*Send the packet to PGWU*/
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending CSR to PGW-U. err_no: %i\n", errno);
 	} else {
 
@@ -822,7 +820,7 @@ process_sgwc_s5s8_modify_bearer_response(mod_bearer_rsp_t *mb_rsp, gtpv2c_header
 //	header->message_len = htons(encoded - 4);
 //
 //
-//	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
+//	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 //		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 //	else
 //	{
@@ -920,7 +918,7 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
@@ -1011,7 +1009,7 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
 		clLog(sxlogger, eCLSeverityCritical,
 			"%s : Error in sending MBR to SGW-U. err_no: %i\n",
 			__func__, errno);
@@ -1103,7 +1101,7 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
 		clLog(sxlogger, eCLSeverityCritical,
 			"%s : Error in sending MBR to SGW-U. err_no: %i\n",
 			__func__, errno);

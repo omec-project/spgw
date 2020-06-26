@@ -27,30 +27,28 @@
 #include "upf_struct.h"
 #include "gen_utils.h"
 #include "gw_adapter.h"
+#include "gx_error_rsp.h"
 
 #ifdef USE_REST
 #include "cp_main.h"
 #endif
 
 
-int ret = 0;
+extern udp_sock_t my_sock;
 extern socklen_t s11_mme_sockaddr_len;
 extern struct sockaddr_in s11_mme_sockaddr;
 
-extern int s5s8_fd;
 extern socklen_t s5s8_sockaddr_len;
 extern struct sockaddr_in s5s8_recv_sockaddr;
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 extern struct rte_hash *bearer_by_fteid_hash;
 extern struct cp_stats_t cp_stats;
 
-#ifdef GX_BUILD
-extern int gx_app_sock;
-#endif /* GX_BUILD */
 
 int
 gx_setup_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 	ue_context_t *context = NULL;
 
@@ -75,6 +73,7 @@ gx_setup_handler(void *data, void *unused_param)
 int
 association_setup_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
@@ -131,6 +130,7 @@ association_setup_handler(void *data, void *unused_param)
 int
 process_assoc_resp_handler(void *data, void *addr) // ajay
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 	struct sockaddr_in *peer_addr = (struct sockaddr_in *)addr;
 
@@ -151,6 +151,7 @@ process_assoc_resp_handler(void *data, void *addr) // ajay
 int
 process_cs_resp_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	ret = process_sgwc_s5s8_create_sess_rsp(&msg->gtpc_msg.cs_rsp);
@@ -171,6 +172,7 @@ process_cs_resp_handler(void *data, void *unused_param)
 int
 process_sess_est_resp_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	uint16_t payload_length = 0;
 
 	msg_info *msg = (msg_info *)data;
@@ -199,7 +201,7 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 		+ sizeof(gtpv2c_tx->gtpc);
 
 	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == PGWC)) {
-		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
 				s5s8_sockaddr_len);
 
@@ -218,7 +220,7 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 		//s5s8_sgwc_msgcnt++;
 	} else {
 		/* Send response on s11 interface */
-		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
 				s11_mme_sockaddr_len);
 
@@ -233,6 +235,7 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 int
 process_mb_req_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	ret = process_pfcp_sess_mod_request(&msg->gtpc_msg.mbr);
@@ -252,6 +255,7 @@ process_mb_req_handler(void *data, void *unused_param)
 int
 process_sess_mod_resp_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	uint16_t payload_length = 0;
 
 	msg_info *msg = (msg_info *)data;
@@ -274,7 +278,7 @@ process_sess_mod_resp_handler(void *data, void *unused_param)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-	gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+	gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 			(struct sockaddr *) &s11_mme_sockaddr,
 			s11_mme_sockaddr_len);
 
@@ -288,6 +292,7 @@ process_sess_mod_resp_handler(void *data, void *unused_param)
 int
 process_rel_access_ber_req_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	/* TODO: Check return type and do further processing */
@@ -305,6 +310,7 @@ process_rel_access_ber_req_handler(void *data, void *unused_param)
 int
 process_ds_req_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 	if (cp_config->cp_type == SGWC && msg->gtpc_msg.dsr.indctn_flgs.indication_oi == 1) {
 		/* Indication flag 1 mean dsr needs to be sent to PGW otherwise dont send it to PGW */
@@ -327,51 +333,48 @@ process_ds_req_handler(void *data, void *unused_param)
 int
 process_sess_del_resp_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	uint16_t payload_length = 0;
 	msg_info *msg = (msg_info *)data;
-
-#ifdef GX_BUILD
 	uint16_t msglen = 0;
 	char *buffer = NULL;
 	gx_msg ccr_request = {0};
-#endif
 
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
-	if( cp_config->cp_type != SGWC ) {
-		/* Lookup value in hash using session id and fill pfcp response and delete entry from hash*/
-#ifdef GX_BUILD
+    if( cp_config->cp_type != SGWC ) {
+        /* Lookup value in hash using session id and fill pfcp response and delete entry from hash*/
+        if(cp_config->gx_enabled) {
+            ret = process_pfcp_sess_del_resp(
+                    msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
+                    gtpv2c_tx, &ccr_request, &msglen);
 
-		ret = process_pfcp_sess_del_resp(
-				msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
-				gtpv2c_tx, &ccr_request, &msglen);
+            buffer = rte_zmalloc_socket(NULL, msglen + sizeof(ccr_request.msg_type),
+                    RTE_CACHE_LINE_SIZE, rte_socket_id());
+            if (buffer == NULL) {
+                clLog(sxlogger, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
+                        "structure: %s (%s:%d)\n",
+                        rte_strerror(rte_errno),
+                        __FILE__,
+                        __LINE__);
+                return -1;
+            }
 
-		buffer = rte_zmalloc_socket(NULL, msglen + sizeof(ccr_request.msg_type),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-		if (buffer == NULL) {
-			clLog(sxlogger, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
-					"structure: %s (%s:%d)\n",
-					rte_strerror(rte_errno),
-					__FILE__,
-					__LINE__);
-			return -1;
-		}
+            memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
 
-		memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
+            if (gx_ccr_pack(&(ccr_request.data.ccr),
+                        (unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msglen) == 0) {
+                clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
+                return -1;
+            }
+        } else {
+            ret = process_pfcp_sess_del_resp(
+                    msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
+                    gtpv2c_tx, NULL, NULL);
 
-		if (gx_ccr_pack(&(ccr_request.data.ccr),
-					(unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msglen) == 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
-			return -1;
-		}
-#else
-		ret = process_pfcp_sess_del_resp(
-				msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
-				gtpv2c_tx, NULL, NULL);
-
-#endif /* GX_BUILD */
-	}  else {
+        }
+    }  else {
 		/**/
 		ret = process_pfcp_sess_del_resp(
 				msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
@@ -391,7 +394,7 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 
 	if ((cp_config->cp_type == PGWC) ) {
 		/* Forward s11 delete_session_request on s5s8 */
-		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
 				s5s8_sockaddr_len);
 
@@ -402,7 +405,7 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 		//s5s8_sgwc_msgcnt++;
 	} else {
 		/* Send response on s11 interface */
-		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
 				s11_mme_sockaddr_len);
 
@@ -413,10 +416,10 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 		update_sys_stat(number_of_active_session, DECREMENT);
 
 	}
-#ifdef GX_BUILD
 	/* VS: Write or Send CCR -T msg to Gx_App */
-	if ( cp_config->cp_type != SGWC) {
-		send_to_ipc_channel(gx_app_sock, buffer,
+	if ((cp_config->gx_enabled) && 
+       (cp_config->cp_type != SGWC)) {
+		send_to_ipc_channel(my_sock.gx_app_sock, buffer,
 				msglen + sizeof(ccr_request.msg_type));
 	}
 
@@ -424,7 +427,6 @@ process_sess_del_resp_handler(void *data, void *unused_param)
     	saddr_in.sin_family = AF_INET;
     	inet_aton("127.0.0.1", &(saddr_in.sin_addr));
     	update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
-#endif
 
 	RTE_SET_USED(unused_param);
 	return 0;
@@ -433,6 +435,7 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 int
 process_ds_resp_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	if (cp_config->cp_type == SGWC) {
@@ -457,6 +460,7 @@ process_ds_resp_handler(void *data, void *unused_param)
 int
 process_rpt_req_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	ret = process_pfcp_report_req(&msg->pfcp_msg.pfcp_sess_rep_req);
@@ -470,6 +474,7 @@ process_rpt_req_handler(void *data, void *unused_param)
 int
 process_ddn_ack_resp_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	uint8_t delay = 0; /*TODO move this when more implemented?*/
@@ -501,6 +506,7 @@ process_sess_est_resp_sgw_reloc_handler(void *data, void *unused_param)
 	 */
 
 	uint16_t payload_length = 0;
+    int ret = 0;
 
 	msg_info *msg = (msg_info *)data;
 
@@ -523,7 +529,7 @@ process_sess_est_resp_sgw_reloc_handler(void *data, void *unused_param)
 
 //	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == PGWC)) {
 
-	gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
 				s5s8_sockaddr_len);
 
@@ -549,6 +555,7 @@ This function Handles the CCA-T received from PCEF
 int
 cca_t_msg_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 	gx_context_t *gx_context = NULL;
 
@@ -659,6 +666,7 @@ This function Handles the msgs received from PCEF
 int
 cca_msg_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	int8_t ebi_index = 0;
 	upf_context_t *upf_context = NULL;
 	pdn_connection_t *pdn = NULL;
@@ -668,7 +676,6 @@ cca_msg_handler(void *data, void *unused_param)
 
 	RTE_SET_USED(msg);
 
-#ifdef GX_BUILD
 	/* Handle the CCR-T Message */
 	if (msg->gx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
 		clLog(gxlogger, eCLSeverityDebug, FORMAT"Received GX CCR-T Response..!! \n",
@@ -687,7 +694,6 @@ cca_msg_handler(void *data, void *unused_param)
 		return ret;
 	}
 
-#endif /* GX_BUILD */
 	ebi_index = pdn->default_bearer_id - 5;
 	/* VS: Send the Association setup request */
 	ret = process_pfcp_assoication_request(pdn, ebi_index);
@@ -739,6 +745,7 @@ process_mb_req_sgw_reloc_handler(void *data, void *unused_param)
 	 * of SGW Relocation
 	*/
 	msg_info *msg = (msg_info *)data;
+    int ret = 0;
 	ret = process_pfcp_sess_mod_req_handover(&msg->gtpc_msg.mbr);
 	if (ret) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
@@ -760,6 +767,7 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 	 */
 
 	uint16_t payload_length = 0;
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
@@ -777,7 +785,7 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-	gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 		       (struct sockaddr *) &s5s8_recv_sockaddr,
 		          s5s8_sockaddr_len);
 
@@ -803,6 +811,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *unused_param)
 {
 	uint16_t payload_length = 0;
 	struct resp_info *resp = NULL;
+    int ret = 0;
 
 	msg_info *msg = (msg_info *)data;
 
@@ -834,7 +843,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *unused_param)
 
 	if ((SAEGWC != cp_config->cp_type) && ((resp->msg_type == GTP_CREATE_BEARER_RSP) ||
 			(resp->msg_type == GX_RAR_MSG))){
-	    gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+	    gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 	            (struct sockaddr *) &s5s8_recv_sockaddr,
 	            s5s8_sockaddr_len);
 		if(resp->msg_type != GTP_CREATE_BEARER_RSP){
@@ -857,7 +866,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *unused_param)
 
 	} else {
 		if(resp->msg_type != GX_RAA_MSG) {
-		    gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+		    gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 		            (struct sockaddr *) &s11_mme_sockaddr,
 		            s11_mme_sockaddr_len);
 
@@ -879,6 +888,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *unused_param)
 int
 process_cbresp_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	ret = process_pgwc_create_bearer_rsp(&msg->gtpc_msg.cb_rsp);
@@ -893,7 +903,7 @@ process_cbresp_handler(void *data, void *unused_param)
 
 int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 {
-
+    int ret = 0;
 	uint16_t payload_length = 0;
 	msg_info *msg = (msg_info *)data;
 
@@ -910,7 +920,7 @@ int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-	gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+	gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 			(struct sockaddr *) &s11_mme_sockaddr,
 			s11_mme_sockaddr_len);
 
@@ -928,6 +938,7 @@ int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 int
 process_create_bearer_resp_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	ret = process_sgwc_create_bearer_rsp(&msg->gtpc_msg.cb_rsp);
@@ -944,6 +955,7 @@ process_create_bearer_resp_handler(void *data, void *unused_param)
 int
 process_create_bearer_request_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	ret = process_create_bearer_request(&msg->gtpc_msg.cb_req);
@@ -960,7 +972,7 @@ process_create_bearer_request_handler(void *data, void *unused_param)
 int
 process_rar_request_handler(void *data, void *unused_param)
 {
-#ifdef GX_BUILD
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	ret = parse_gx_rar_msg(&msg->gx_msg.rar);
@@ -989,9 +1001,6 @@ process_rar_request_handler(void *data, void *unused_param)
 				__FILE__, __func__, __LINE__, ret);
 		return -1;
 	}
-#else
-	RTE_SET_USED(data);
-#endif
 	RTE_SET_USED(unused_param);
 	return 0;
 }
@@ -1010,6 +1019,7 @@ pfd_management_handler(void *data, void *unused_param)
 int
 process_mod_resp_delete_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	uint16_t payload_length = 0;
 
 	msg_info *msg = (msg_info *)data;
@@ -1031,7 +1041,7 @@ process_mod_resp_delete_handler(void *data, void *unused_param)
 
 	if (cp_config->cp_type == SGWC) {
 		/* Forward s11 delete_session_request on s5s8 */
-		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
 				s5s8_sockaddr_len);
 
@@ -1060,6 +1070,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 {
 	uint16_t payload_length = 0;
 	struct resp_info *resp = NULL;
+    int ret = 0;
 
 	msg_info *msg = (msg_info *)data;
 
@@ -1092,7 +1103,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 	if ((SAEGWC != cp_config->cp_type) &&
 		((resp->msg_type == GTP_DELETE_BEARER_RSP) ||
 		(resp->msg_type == GX_RAR_MSG))) {
-		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 	            (struct sockaddr *) &s5s8_recv_sockaddr,
 	            s5s8_sockaddr_len);
 
@@ -1108,7 +1119,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 		}
 
 	} else if (resp->msg_type != GX_RAA_MSG) {
-		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
 				s11_mme_sockaddr_len);
 
@@ -1131,6 +1142,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 int
 process_delete_bearer_request_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	ret = process_delete_bearer_request(&msg->gtpc_msg.db_req ,0);
@@ -1172,6 +1184,7 @@ process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
 {
 	uint16_t payload_length = 0;
 	struct resp_info *resp = NULL;
+    int ret = 0;
 
 	msg_info *msg = (msg_info *)data;
 
@@ -1203,7 +1216,7 @@ process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
 
 	if ((SAEGWC != cp_config->cp_type) &&
 		((resp->msg_type == GTP_DELETE_BEARER_RSP))) {
-			gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+			gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 		            (struct sockaddr *) &s5s8_recv_sockaddr,
 	        	    s5s8_sockaddr_len);
 
@@ -1246,6 +1259,7 @@ int process_update_bearer_response_handler(void *data, void *unused_param)
 
 int process_update_bearer_request_handler(void *data, void *unused_param)
 {
+    int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	ret = process_update_bearer_request(&msg->gtpc_msg.ub_req);
@@ -1273,6 +1287,7 @@ int
 process_delete_bearer_command_handler(void *data, void *unused_param)
 {
 	uint16_t payload_length = 0;
+    int ret = 0;
 
 	msg_info *msg = (msg_info *)data;
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
@@ -1290,7 +1305,7 @@ process_delete_bearer_command_handler(void *data, void *unused_param)
 		+ sizeof(gtpv2c_tx->gtpc);
 
 
-	gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 			(struct sockaddr *) &s5s8_recv_sockaddr,
 				   s5s8_sockaddr_len);
 	}
@@ -1309,7 +1324,6 @@ process_delete_bearer_command_handler(void *data, void *unused_param)
 
 int del_bearer_cmd_ccau_handler(void *data, void *unused_param)
 {
-
 	msg_info *msg = (msg_info *)data;
 	int ret = 0;
 	uint32_t call_id = 0;
@@ -1373,7 +1387,6 @@ process_delete_bearer_response_handler(void *data, void *unused_param)
 int
 del_bearer_cmd_mbr_resp_handler(void *data, void *unused_param)
 {
-
 	uint16_t payload_length = 0;
 	msg_info *msg = (msg_info *)data;
 	int ret = 0;
@@ -1397,7 +1410,7 @@ del_bearer_cmd_mbr_resp_handler(void *data, void *unused_param)
 
 
 	if (PGWC == cp_config->cp_type ) {
-		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
 				s5s8_sockaddr_len);
 		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
@@ -1406,7 +1419,7 @@ del_bearer_cmd_mbr_resp_handler(void *data, void *unused_param)
 	} else if ((SGWC == cp_config->cp_type) ||
 				(SAEGWC == cp_config->cp_type)) {
 
-		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
 				s11_mme_sockaddr_len);
 	}
@@ -1434,6 +1447,7 @@ int process_delete_bearer_req_handler(void *data, void *unused_param)
 void
 get_info_filled(msg_info *msg, err_rsp_info *info_resp)
 {
+	int ret = 0;
 	struct resp_info *resp = NULL;
 	//pdn_connection_t *pdn = NULL;
 
@@ -1500,6 +1514,7 @@ int
 process_del_pdn_conn_set_req(void *data, void *unused_param)
 {
 #ifdef USE_CSID
+	int ret = 0;
 	uint16_t payload_length = 0;
 	msg_info *msg = (msg_info *)data;
 
@@ -1519,7 +1534,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 
 	if (msg->gtpc_msg.del_pdn_req.pgw_fqcsid.number_of_csids) {
 		/* Send the delete PDN set request to MME */
-		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
 				s11_mme_sockaddr_len);
 
@@ -1529,7 +1544,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 	if (msg->gtpc_msg.del_pdn_req.mme_fqcsid.number_of_csids) {
 		/* Send the delete PDN set request to PGW */
 		if (cp_config->cp_type == SGWC ) {
-			gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+			gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 					(struct sockaddr *) &s5s8_recv_sockaddr,
 					s5s8_sockaddr_len);
 
@@ -1551,14 +1566,14 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 
 	if (msg->gtpc_msg.del_pdn_req.pgw_fqcsid.number_of_csids) {
 		/* Send response to PGW */
-		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
 				s5s8_sockaddr_len);
 	}
 
 	if (msg->gtpc_msg.del_pdn_req.mme_fqcsid.number_of_csids) {
 		/* Send the delete PDN set request to MME */
-		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
 				s11_mme_sockaddr_len);
 	}
@@ -1594,7 +1609,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 //
 //	/* Send the delete PDN set request to MME */
 //	if (cp_config->cp_type == SGWC ) {
-//		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+//		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 //				(struct sockaddr *) &s11_mme_sockaddr,
 //				s11_mme_sockaddr_len);
 //	}
@@ -1613,7 +1628,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 //		+ sizeof(gtpv2c_tx->gtpc);
 //
 //	/* Send response to PGW */
-//	gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+//	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 //			(struct sockaddr *) &s5s8_recv_sockaddr,
 //			s5s8_sockaddr_len);
 //#else
@@ -1630,6 +1645,7 @@ process_del_pdn_conn_set_rsp(void *data, void *unused_param)
 #ifdef USE_CSID
 	//uint16_t payload_length = 0;
 	msg_info *msg = (msg_info *)data;
+	int ret = 0;
 
 	ret = process_del_pdn_conn_set_rsp_t(&msg->gtpc_msg.del_pdn_rsp);
 	if (ret) {
@@ -1655,6 +1671,7 @@ process_upd_pdn_conn_set_req(void *data, void *unused_param)
 #ifdef USE_CSID
 	//uint16_t payload_length = 0;
 	msg_info *msg = (msg_info *)data;
+	int ret = 0;
 
 	ret = process_upd_pdn_conn_set_req_t(&msg->gtpc_msg.upd_pdn_req);
 	if (ret) {
@@ -1680,6 +1697,7 @@ process_upd_pdn_conn_set_rsp(void *data, void *unused_param)
 #ifdef USE_CSID
 	//uint16_t payload_length = 0;
 	msg_info *msg = (msg_info *)data;
+	int ret = 0;
 
 	ret = process_upd_pdn_conn_set_rsp_t(&msg->gtpc_msg.upd_pdn_rsp);
 	if (ret) {
@@ -1723,6 +1741,7 @@ process_pgw_rstrt_notif_ack(void *data, void *unused_param)
 int process_pfcp_sess_set_del_req(void *data, void *unused_param)
 {
 #ifdef USE_CSID
+	int ret = 0;
 	//uint16_t payload_length = 0;
 	msg_info *msg = (msg_info *)data;
 
@@ -1750,6 +1769,7 @@ int process_pfcp_sess_set_del_req(void *data, void *unused_param)
 int process_pfcp_sess_set_del_rsp(void *data, void *unused_param)
 {
 #ifdef USE_CSID
+	int ret = 0;
 	msg_info *msg = (msg_info *)data;
 
 	ret = process_pfcp_sess_set_del_rsp_t(&msg->pfcp_msg.pfcp_sess_set_del_rsp);
@@ -1899,9 +1919,9 @@ int process_pfcp_sess_mod_resp_ubr_handler(void *data, void *unused_param)
 					teid);
 	}
 
-	#ifdef GX_BUILD
-	gen_reauth_response(context, ebi_index);
-	#endif
+    if(cp_config->gx_enabled) {
+        gen_reauth_response(context, ebi_index);
+    }
 
 	context->eps_bearers[ebi_index]->pdn->state = CONNECTED_STATE;
 

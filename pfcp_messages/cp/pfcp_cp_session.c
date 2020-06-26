@@ -36,16 +36,15 @@
 #include "gen_utils.h"
 #include "gtpv2_internal.h"
 
+extern udp_sock_t my_sock;
 extern struct sockaddr_in s5s8_recv_sockaddr;
 extern struct sockaddr_in s11_mme_sockaddr;
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
 static uint32_t s5s8_sgw_gtpc_teid_offset;
-extern int gx_app_sock;
 
 #define size sizeof(pfcp_sess_mod_req_t) /* ajay - clean this */
 /* Header Size of set_upd_forwarding_param ie */
 #define UPD_PARAM_HEADER_SIZE 4
-extern int pfcp_fd;
 
 /* len of flags*/
 #define FLAG_LEN 2
@@ -1075,16 +1074,16 @@ fill_pdr_far_qer_using_bearer(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		pfcp_sess_mod_req->create_far[itr].far_id.far_id_value =
 			bearer->pdrs[itr]->far.far_id_value;
 
-#ifdef GX_BUILD
-		if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC){
-			pfcp_sess_mod_req->create_pdr[itr].qer_id_count =
-				bearer->pdrs[itr]->qer_id_count;
-			for(int itr1 = 0; itr1 < pfcp_sess_mod_req->create_pdr[itr].qer_id_count; itr1++) {
-				pfcp_sess_mod_req->create_pdr[itr].qer_id[itr1].qer_id_value =
-					bearer->pdrs[itr]->qer_id[itr1].qer_id;
-			}
-		}
-#endif
+        if(cp_config->gx_enabled) {
+            if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC){
+                pfcp_sess_mod_req->create_pdr[itr].qer_id_count =
+                    bearer->pdrs[itr]->qer_id_count;
+                for(int itr1 = 0; itr1 < pfcp_sess_mod_req->create_pdr[itr].qer_id_count; itr1++) {
+                    pfcp_sess_mod_req->create_pdr[itr].qer_id[itr1].qer_id_value =
+                        bearer->pdrs[itr]->qer_id[itr1].qer_id;
+                }
+            }
+        }
 
 		if ((cp_config->cp_type == PGWC) || (SAEGWC == cp_config->cp_type)) {
 			pfcp_sess_mod_req->create_far[itr].apply_action.forw = PRESENT;
@@ -1136,33 +1135,33 @@ fill_pdr_far_qer_using_bearer(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 
 	} /*for loop*/
 
-#ifdef GX_BUILD
-	if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC){
-		pfcp_sess_mod_req->create_qer_count = bearer->qer_count;
-		qer_t *qer_context = NULL;
-		for(int itr1 = 0; itr1 < pfcp_sess_mod_req->create_qer_count ; itr1++) {
-			creating_qer(&(pfcp_sess_mod_req->create_qer[itr1]));
-			pfcp_sess_mod_req->create_qer[itr1].qer_id.qer_id_value  =
-				bearer->qer_id[itr1].qer_id;
-			qer_context = get_qer_entry(pfcp_sess_mod_req->create_qer[itr1].qer_id.qer_id_value);
-			/* Assign the value from the PDR */
-			if(qer_context){
-				pfcp_sess_mod_req->create_qer[itr1].maximum_bitrate.ul_mbr  =
-					qer_context->max_bitrate.ul_mbr;
-				pfcp_sess_mod_req->create_qer[itr1].maximum_bitrate.dl_mbr  =
-					qer_context->max_bitrate.dl_mbr;
-				pfcp_sess_mod_req->create_qer[itr1].guaranteed_bitrate.ul_gbr  =
-					qer_context->guaranteed_bitrate.ul_gbr;
-				pfcp_sess_mod_req->create_qer[itr1].guaranteed_bitrate.dl_gbr  =
-					qer_context->guaranteed_bitrate.dl_gbr;
-			}
-		}
+    if(cp_config->gx_enabled) {
+        if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC){
+            pfcp_sess_mod_req->create_qer_count = bearer->qer_count;
+            qer_t *qer_context = NULL;
+            for(int itr1 = 0; itr1 < pfcp_sess_mod_req->create_qer_count ; itr1++) {
+                creating_qer(&(pfcp_sess_mod_req->create_qer[itr1]));
+                pfcp_sess_mod_req->create_qer[itr1].qer_id.qer_id_value  =
+                    bearer->qer_id[itr1].qer_id;
+                qer_context = get_qer_entry(pfcp_sess_mod_req->create_qer[itr1].qer_id.qer_id_value);
+                /* Assign the value from the PDR */
+                if(qer_context){
+                    pfcp_sess_mod_req->create_qer[itr1].maximum_bitrate.ul_mbr  =
+                        qer_context->max_bitrate.ul_mbr;
+                    pfcp_sess_mod_req->create_qer[itr1].maximum_bitrate.dl_mbr  =
+                        qer_context->max_bitrate.dl_mbr;
+                    pfcp_sess_mod_req->create_qer[itr1].guaranteed_bitrate.ul_gbr  =
+                        qer_context->guaranteed_bitrate.ul_gbr;
+                    pfcp_sess_mod_req->create_qer[itr1].guaranteed_bitrate.dl_gbr  =
+                        qer_context->guaranteed_bitrate.dl_gbr;
+                }
+            }
 
-		for(int itr1 = 0; itr1 < pfcp_sess_mod_req->create_pdr_count ; itr1++) {
-			fill_sdf_rules_modification(pfcp_sess_mod_req, bearer, itr1);
-		}
-	}
-#endif /* GX_BUILD */
+            for(int itr1 = 0; itr1 < pfcp_sess_mod_req->create_pdr_count ; itr1++) {
+                fill_sdf_rules_modification(pfcp_sess_mod_req, bearer, itr1);
+            }
+        }
+    }
 
 }
 
@@ -2477,16 +2476,16 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
 
 	bearer->s5s8_sgw_gtpu_ipv4.s_addr = context->eps_bearers[pdn->default_bearer_id - 5]->s5s8_sgw_gtpu_ipv4.s_addr;
 
-#ifdef GX_BUILD
 	/* TODO: Revisit this for change in yang*/
-	if (cp_config->cp_type != SGWC){
-		bearer->qer_count = NUMBER_OF_QER_PER_BEARER;
-		for(uint8_t itr=0; itr < bearer->qer_count; itr++){
-			bearer->qer_id[itr].qer_id = generate_qer_id();
-			fill_qer_entry(pdn, bearer, itr);
-		}
-	}
-#endif /* GX_BUILD*/
+    if(cp_config->gx_enabled) {
+        if (cp_config->cp_type != SGWC){
+            bearer->qer_count = NUMBER_OF_QER_PER_BEARER;
+            for(uint8_t itr=0; itr < bearer->qer_count; itr++){
+                bearer->qer_id[itr].qer_id = generate_qer_id();
+                fill_qer_entry(pdn, bearer, itr);
+            }
+        }
+    }
 
 	/*SP: As per discussion Per bearer two pdrs and fars will be there*/
 	/************************************************
@@ -2593,16 +2592,16 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 		bearer->s5s8_sgw_gtpu_teid = csr->bearer_contexts_to_be_created.s5s8_u_sgw_fteid.teid_gre_key;
 	}
 
-#ifdef GX_BUILD
 	/* TODO: Revisit this for change in yang*/
-	if (cp_config->cp_type != SGWC){
-		bearer->qer_count = NUMBER_OF_QER_PER_BEARER;
-		for(uint8_t itr=0; itr < bearer->qer_count; itr++){
-			bearer->qer_id[itr].qer_id = generate_qer_id();
-			fill_qer_entry(pdn, bearer,itr);
-		}
-	}
-#endif /* GX_BUILD*/
+    if(cp_config->gx_enabled) {
+        if (cp_config->cp_type != SGWC){
+            bearer->qer_count = NUMBER_OF_QER_PER_BEARER;
+            for(uint8_t itr=0; itr < bearer->qer_count; itr++){
+                bearer->qer_id[itr].qer_id = generate_qer_id();
+                fill_qer_entry(pdn, bearer,itr);
+            }
+        }
+    }
 	/*SP: As per discussion Per bearer two pdrs and fars will be there*/
 	/************************************************
 	 *  cp_type  count      FTEID_1        FTEID_2 *
@@ -2635,7 +2634,6 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 	return 0;
 }
 
-#ifdef GX_BUILD
 static int
 gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr)
 {
@@ -2800,7 +2798,7 @@ gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr
 	}
 
 	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(gx_app_sock, buffer,
+	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
 			msg_len + sizeof(ccr_request.msg_type));
 	return 0;
 }
@@ -3097,7 +3095,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 	}
 
 	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(gx_app_sock, buffer,
+	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
 			msg_len + sizeof(ccr_request.msg_type));
 	return 0;
 }
@@ -3275,13 +3273,11 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 	}
 
 	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(gx_app_sock, buffer,
+	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
 			msg_len + sizeof(ccr_request.msg_type));
 	return 0;
 }
-#endif /* GX_BUILD */
 
-#ifndef GX_BUILD
 void
 fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 {
@@ -3338,7 +3334,6 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 	dynamic_rule->qos.dl_gbr =  GURATEED_BITRATE_DL;
 
 }
-#endif
 
 /* Ajay - new CSReq handler */
 int
@@ -3540,16 +3535,16 @@ process_create_sess_req(create_sess_req_t *csr,
 	}
 	context->pdns[ebi_index]->dp_seid = 0;
 
-	if ((cp_config->cp_type == PGWC) || (cp_config->cp_type == SAEGWC)) {
-#ifdef GX_BUILD
-		if (gen_ccr_request(context, ebi_index, csr)) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
-					strerror(errno));
-			return -1;
-		}
-#else
- 		fill_rule_and_qos_inform_in_pdn(pdn);
-#endif /* GX_BUILD */
+    if ((cp_config->cp_type == PGWC) || (cp_config->cp_type == SAEGWC)) {
+        if(cp_config->gx_enabled) {
+            if (gen_ccr_request(context, ebi_index, csr)) {
+                clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
+                        strerror(errno));
+                return -1;
+            }
+        } else {
+            fill_rule_and_qos_inform_in_pdn(pdn);
+        }
 	}
 
 #ifdef USE_CSID
@@ -3821,7 +3816,7 @@ process_pfcp_sess_est_request(uint32_t teid, pdn_connection_t *pdn, upf_context_
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error sending: %i\n",
 				__func__, __LINE__, errno);
 		return -1;
@@ -4203,7 +4198,7 @@ int send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &pdn->context->upf_ctxt->upf_sockaddr) < 0 ){
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &pdn->context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	}
 
@@ -4528,9 +4523,9 @@ int process_pfcp_sess_mod_req_handover(mod_bearer_req_t *mb_req)
 	if(((context->old_uli_valid == TRUE) && (((context->event_trigger & (1 << ULI_EVENT_TRIGGER))) != 0))
 		|| ((pdn->old_ue_tz_valid == TRUE) && (((context->event_trigger) & (1 << UE_TIMEZONE_EVT_TRIGGER)) != 0))) {
 
-#ifdef GX_BUILD
-		ret = gen_ccru_request(pdn, bearer, mb_req, flag_check_uli);
-#endif /* GX_BUILD */
+        if(cp_config->gx_enabled) {
+            ret = gen_ccru_request(pdn, bearer, mb_req, flag_check_uli);
+        }
 		pdn->context->old_uli_valid = FALSE;
 		pdn->old_ue_tz_valid = FALSE;
 
@@ -4648,7 +4643,7 @@ process_sess_mod_req_del_cmd(pdn_connection_t *pdn)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
 
@@ -4703,15 +4698,15 @@ process_delete_bearer_cmd_request(del_bearer_cmd_t *del_bearer_cmd, gtpv2c_heade
 	pdn = bearer->pdn;
 
 
-	if (SAEGWC == cp_config->cp_type || PGWC == cp_config->cp_type) {
-#ifdef GX_BUILD
-	if (ccru_req_for_bear_termination(pdn , bearer)) {
-				clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
-						strerror(errno));
-				return -1;
-			}
-#endif
-	} else if(SGWC == cp_config->cp_type) {
+    if (SAEGWC == cp_config->cp_type || PGWC == cp_config->cp_type) {
+        if(cp_config->gx_enabled) {
+            if (ccru_req_for_bear_termination(pdn , bearer)) {
+                clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
+                        strerror(errno));
+                return -1;
+            }
+        }
+    } else if(SGWC == cp_config->cp_type) {
 
 		set_delete_bearer_command(del_bearer_cmd, pdn, gtpv2c_tx);
 		s5s8_recv_sockaddr.sin_addr.s_addr =
@@ -4863,7 +4858,7 @@ process_pfcp_sess_mod_request(mod_bearer_req_t *mb_req)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
@@ -4894,7 +4889,6 @@ process_pfcp_sess_mod_request(mod_bearer_req_t *mb_req)
 	return 0;
 }
 
-#ifdef GX_BUILD
 /**
  * @brief  : Generate reauth response
  * @param  : context , pointer to ue context structure
@@ -4985,13 +4979,12 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 			msg_len_total, msg_type_ofs, msg_body_ofs, rqst_ptr_ofs);
 #endif
 	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(gx_app_sock, buffer,
+	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
 			msg_len_total);
 			//msg_len + sizeof(raa.msg_type) + sizeof(unsigned long));
 
 	return 0;
 }
-#endif
 
 
 uint8_t
@@ -5029,11 +5022,11 @@ process_delete_bearer_pfcp_sess_response(uint64_t sess_id, gtpv2c_header_t *gtpv
 		uint8_t bearer_count = 0;
 		uint8_t eps_bearer_ids[MAX_BEARERS];
 
-#ifdef GX_BUILD
-		get_charging_rule_remove_bearer_info(
-			context->pdns[bearer_id],
-			&lbi, eps_bearer_ids, &bearer_count);
-#endif
+        if(cp_config->gx_enabled) {
+            get_charging_rule_remove_bearer_info(
+                    context->pdns[bearer_id],
+                    &lbi, eps_bearer_ids, &bearer_count);
+        }
 
 		set_delete_bearer_request(gtpv2c_tx, context->sequence,
 			context, lbi, eps_bearer_ids, bearer_count);
@@ -5061,22 +5054,21 @@ process_delete_bearer_pfcp_sess_response(uint64_t sess_id, gtpv2c_header_t *gtpv
 			htonl(context->s11_mme_gtpc_ipv4.s_addr);
 
 	} else if (resp->msg_type == GTP_DELETE_BEARER_RSP) {
+        if ((SAEGWC == cp_config->cp_type) ||
+                (PGWC == cp_config->cp_type)) {
+            if(cp_config->gx_enabled) {
+                delete_dedicated_bearers(context->pdns[bearer_id],
+                        resp->eps_bearer_ids, resp->bearer_count);
 
-		if ((SAEGWC == cp_config->cp_type) ||
-			(PGWC == cp_config->cp_type)) {
-#ifdef GX_BUILD
-			delete_dedicated_bearers(context->pdns[bearer_id],
-				resp->eps_bearer_ids, resp->bearer_count);
+                gen_reauth_response(context, resp->eps_bearer_id - 5);
 
-			gen_reauth_response(context, resp->eps_bearer_id - 5);
+                resp->state = CONNECTED_STATE;
+                resp->msg_type = GX_RAA_MSG;
+                context->pdns[resp->eps_bearer_id - 5]->state = CONNECTED_STATE;
 
-			resp->state = CONNECTED_STATE;
-			resp->msg_type = GX_RAA_MSG;
-			context->pdns[resp->eps_bearer_id - 5]->state = CONNECTED_STATE;
-
-			s11_mme_sockaddr.sin_addr.s_addr =
-				htonl(context->s11_mme_gtpc_ipv4.s_addr);
-#endif
+                s11_mme_sockaddr.sin_addr.s_addr =
+                    htonl(context->s11_mme_gtpc_ipv4.s_addr);
+            }
 		} else {
 			delete_dedicated_bearers(context->pdns[bearer_id],
 				resp->eps_bearer_ids, resp->bearer_count);
@@ -5162,7 +5154,6 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 				gtpv2c_tx, context->sequence, context, bearer->pdn, bearer);
 
 	} else if (resp->msg_type == GX_RAR_MSG) {
-#ifdef GX_BUILD
 		uint8_t ebi = 0;
 		get_bearer_info_install_rules(pdn, &ebi);
 		bearer = context->eps_bearers[ebi];
@@ -5189,7 +5180,6 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 		}
 
 		return 0;
-#endif
 	} else if (resp->msg_type == GTP_CREATE_BEARER_REQ) {
 		bearer = context->eps_bearers[resp->eps_bearer_id - 5];
 		set_create_bearer_request(
@@ -5205,9 +5195,7 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 		return 0;
 
 	} else if (resp->msg_type == GTP_CREATE_BEARER_RSP) {
-
 		if ((SAEGWC == cp_config->cp_type) || (PGWC == cp_config->cp_type)) {
-#ifdef GX_BUILD
 			gen_reauth_response(context, resp->eps_bearer_id - 5);
 			struct sockaddr_in saddr_in;
 			saddr_in.sin_family = AF_INET;
@@ -5219,8 +5207,6 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 			pdn->state = CONNECTED_STATE;
 
 			return 0;
-
-#endif
 		} else {
 			bearer = context->eps_bearers[resp->eps_bearer_id - 5];
 			set_create_bearer_response(
@@ -5353,7 +5339,7 @@ process_sgwc_delete_session_request(del_sess_req_t *del_req)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
@@ -5415,7 +5401,7 @@ process_pfcp_sess_del_request(del_sess_req_t *ds_req)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"%s:%d Error sending: %i\n", __func__, __LINE__, errno);
 		return -1;
 	} else  {
@@ -5479,7 +5465,7 @@ process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(sxlogger, eCLSeverityCritical,
 			"%s:%d Error sending: %i\n", __func__, __LINE__, errno);
 		return -1;
@@ -5566,15 +5552,15 @@ del_rule_entries(ue_context_t *context, uint8_t ebi_index)
 	pdr_t *pdr_ctx =  NULL;
 
 	/*Delete all pdr, far, qer entry from table */
-#ifdef GX_BUILD
-    for(uint8_t itr = 0; itr < context->eps_bearers[ebi_index]->qer_count ; itr++) {
- 		if( del_qer_entry(context->eps_bearers[ebi_index]->qer_id[itr].qer_id) != 0 ){
-			clLog(clSystemLog, eCLSeverityCritical,
-					"%s %s %d %s - Error del_pdr_entry deletion\n",__file__,
-					__func__, __LINE__, strerror(ret));
-		}
+    if(cp_config->gx_enabled) {
+        for(uint8_t itr = 0; itr < context->eps_bearers[ebi_index]->qer_count ; itr++) {
+            if( del_qer_entry(context->eps_bearers[ebi_index]->qer_id[itr].qer_id) != 0 ){
+                clLog(clSystemLog, eCLSeverityCritical,
+                        "%s %s %d %s - Error del_pdr_entry deletion\n",__file__,
+                        __func__, __LINE__, strerror(ret));
+            }
+        }
     }
-#endif
 	for(uint8_t itr = 0; itr < context->eps_bearers[ebi_index]->pdr_count ; itr++) {
 		pdr_ctx = context->eps_bearers[ebi_index]->pdrs[itr];
 		if(pdr_ctx == NULL) {
@@ -5629,8 +5615,8 @@ process_pfcp_sess_del_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx,
 
 	/* Update the UE state */
 	pdn->state = PFCP_SESS_DEL_RESP_RCVD_STATE;
-#ifdef GX_BUILD
-	if ( cp_config->cp_type != SGWC) {
+	if ((cp_config->gx_enabled) && 
+	    (cp_config->cp_type != SGWC)) {
 
 		gx_context_t *gx_context = NULL;
 
@@ -5671,12 +5657,6 @@ process_pfcp_sess_del_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx,
 		*msglen = gx_ccr_calc_length(&ccr_request->data.ccr);
 
 	}
-#else
-	 RTE_SET_USED(msglen);
-	 RTE_SET_USED(ccr_request);
-
-#endif /* GX_BUILD */
-
 	if ( cp_config->cp_type == PGWC) {
 
 		fill_pgwc_ds_sess_rsp(&del_resp, context->sequence,

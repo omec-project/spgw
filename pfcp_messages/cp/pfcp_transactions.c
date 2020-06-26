@@ -15,6 +15,9 @@
 #include "rte_common.h"
 #include "pfcp_messages.h"
 #include "assert.h"
+#include "cp_io_poll.h"
+
+extern udp_sock_t my_sock;
 
 transData_t *create_transaction(upf_context_t *upf_ctxt, uint8_t *buf, uint16_t buf_len)
 {
@@ -97,7 +100,7 @@ transaction_timeout_callback(gstimerinfo_t *ti, const void *data_t )
         /* timer retry handler */
         switch(data->portId) {
                 case PFCP_IFACE:
-                        pfcp_timer_retry_send(pfcp_fd, data);
+                        pfcp_timer_retry_send(my_sock.sock_fd_pfcp, data);
                         break;
                 default:
                         break;

@@ -73,7 +73,13 @@ SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_init.o
 SRCS-y += $(SRCDIR)/../test/simu_cp/simu_cp.o
 SRCS-y += $(SRCDIR)/../cp_dp_api/vepc_cp_dp_api.o
 SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/gw_adapter.o
-CFLAGS += -I$(SRCDIR)/../oss_adapter/c3po_oss
+SRCS-y += gx_event_handlers.c 
+SRCS-y += gx_app_interface.c
+SRCS-y += ipc_api.c
+SRCS-y += state_machine/sm_gx_pcnd.o
+SRCS-y += $(SRCDIR)/gx_app/src/gx_pack.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_gx.o
+
 
 #ifneq (,$(findstring C3PO_OSS, $(CFLAGS)))
 #SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/cp_adapter.o
@@ -84,27 +90,22 @@ CFLAGS += -Wno-psabi # suppress "The ABI for passing parameters with 64-byte ali
 CFLAGS += -Werror
 CFLAGS += -Wunused-variable
 
-CFLAGS += -I$(SRCDIR)/../cp
-#CFLAGS += -I$(SRCDIR)/../dp
-#CFLAGS += -I$(SRCDIR)/../dp/pipeline
-CFLAGS += -I$(SRCDIR)/../cp_dp_api
-CFLAGS += -I$(SRCDIR)/../interface
-CFLAGS += -I$(SRCDIR)/../interface/ipc
-CFLAGS += -I$(SRCDIR)/../interface/udp
-CFLAGS += -I$(SRCDIR)/../interface/sdn
-CFLAGS += -I$(SRCDIR)/../interface/zmq
-CFLAGS += -I$(LIBGTPV2C_ROOT)/include
-CFLAGS += -I$(LIBPFCP_ROOT)/include
-
 CFLAGS += -I$(SRCDIR)/..
 CFLAGS += -I$(SRCDIR)/../common
+CFLAGS += -I$(SRCDIR)/../cp
+CFLAGS += -I$(SRCDIR)/../cp/gx_app/include
+CFLAGS += -I$(SRCDIR)/../cp_dp_api
+CFLAGS += -I$(SRCDIR)/gtpv2
+CFLAGS += -I$(SRCDIR)/state_machine
+CFLAGS += -I$(SRCDIR)/gx_app/include/
+CFLAGS += -I$(LIBGTPV2C_ROOT)/include
+CFLAGS += -I$(LIBPFCP_ROOT)/include
+CFLAGS += -I$(SRCDIR)/../oss_adapter/c3po_oss
 CFLAGS += -I$(SRCDIR)/../pfcp_messages
 CFLAGS += -I$(SRCDIR)/../pfcp_messages/cp
 CFLAGS += -I$(SRCDIR)/../pfcp_messages/common
 CFLAGS += -I$(SRCDIR)/../libgtpv2c/include
-CFLAGS += -I$(SRCDIR)/gtpv2
-CFLAGS += -I$(SRCDIR)/state_machine
-CFLAGS += -I$(SRCDIR)/gx_app/include/
+CFLAGS += -I$(OSS_UTIL_ROOT)/include
 
 # Mandatory CFLAGS, LDFLAGS- DO NOT MODIFY
 # #############################################################
@@ -118,21 +119,7 @@ endif
 
 LDLIBS += -L$(LIBGTPV2C_ROOT)/lib -lgtpv2c
 LDLIBS += -L$(LIBPFCP_ROOT)/lib -lpfcp
-
 LDLIBS += -lpcap
-
-# ngic-cp application options CFLAGS
-# #############################################################
-
-#For SDN NB interface enable SDN_ODL_BUILD OR SDN_ONOS_BUILD not both
-ifneq (,$(findstring SDN_ODL_BUILD, $(CFLAGS), $(EXTRA_CFLAGS)))
-	SRCS-y += nb.c
-	LDLIBS += -ljson-c
-	LDLIBS += -lcurl
-endif
-
-# OSS-UTIL
-CFLAGS +=  -I$(OSS_UTIL_ROOT)/include
 LDFLAGS += -lstdc++
 LDLIBS += -lstdc++
 #LDLIBS +=  -L$(OSS_UTIL_ROOT)/lib -loss-util
@@ -202,20 +189,6 @@ endif
 	LDLIBS += $(LIBDNSCLIENT_ROOT)/lib/liboss-util.a -lstdc++ -lpistache
 	LDLIBS += -L$(LIBDNSCLIENT_ROOT)/modules/c-ares -lcares
 #endif
-
-# Comment below line to build cp without GxApp.
-# ajay ; add ticket to support Gx 
-#CFLAGS += -DGX_BUILD
-
-ifneq (,$(findstring GX_BUILD, $(CFLAGS), $(EXTRA_CFLAGS)))
-	SRCS-y += gx_evt_handlers.c
-	SRCS-y += gx_app_interface.c
-	SRCS-y += ipc_api.c
-	SRCS-y += state_machine/sm_gx_pcnd.o
-	SRCS-y += $(SRCDIR)/gx_app/src/gx_pack.o
-	SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_gx.o
-	CFLAGS += -I$(SRCDIR)/../cp/gx_app/include
-endif
 
 # ngic-cp application security check CFLAGS
 ###############################################################

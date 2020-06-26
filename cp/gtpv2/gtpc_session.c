@@ -24,8 +24,7 @@
 #include "sm_structs_api.h"
 #include "pfcp.h"
 
-extern int pfcp_fd;
-extern int s5s8_fd;
+extern udp_sock_t my_sock;
 extern socklen_t s5s8_sockaddr_len;
 extern struct sockaddr_in s5s8_recv_sockaddr;
 
@@ -704,7 +703,7 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 	header->message_len = htons(encoded - 4);
 
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
@@ -803,7 +802,7 @@ process_sgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp)
 	header->message_len = htons(encoded - 4);
 
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
@@ -1098,7 +1097,7 @@ process_sgwc_s5s8_delete_session_request(del_sess_rsp_t *ds_resp)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg,encoded, &context->upf_ctxt->upf_sockaddr) < 0 )
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded, &context->upf_ctxt->upf_sockaddr) < 0 )
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	else {
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
@@ -1149,7 +1148,7 @@ process_pgwc_s5s8_delete_session_request(del_sess_req_t *ds_req)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg,encoded,
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded,
 				&context->upf_ctxt->upf_sockaddr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	}else {
@@ -1293,7 +1292,7 @@ process_pgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
@@ -1428,7 +1427,7 @@ process_update_bearer_request(upd_bearer_req_t *ubr)
 	s11_mme_sockaddr.sin_addr.s_addr =
 				htonl(context->s11_mme_gtpc_ipv4.s_addr);
 
-	gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+	gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
 
 	return 0;
@@ -1495,7 +1494,7 @@ process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	pfcp_header_t *header = (pfcp_header_t *)pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
@@ -1586,7 +1585,7 @@ process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 	//send S5S8 interface update bearer response.
-	gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
    	      		(struct sockaddr *) &s5s8_recv_sockaddr,
        			s5s8_sockaddr_len);
 

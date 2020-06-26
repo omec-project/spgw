@@ -38,7 +38,7 @@
 #include "cdnshelper.h"
 #endif /* USE_DNS_QUERY */
 
-extern int s11_fd;
+extern udp_sock_t my_sock;
 extern socklen_t s11_mme_sockaddr_len;
 extern struct sockaddr_in s11_mme_sockaddr;
 uint8_t s11_rx_buf[MAX_GTPV2C_UDP_LEN];
@@ -46,8 +46,7 @@ uint8_t s11_rx_buf[MAX_GTPV2C_UDP_LEN];
 uint32_t start_time;
 
 /* S5S8 */
-extern int s5s8_fd;
-struct sockaddr_in s5s8_recv_sockaddr;
+extern struct sockaddr_in s5s8_recv_sockaddr;
 extern socklen_t s5s8_sockaddr_len;
 extern uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
 extern uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
@@ -104,14 +103,14 @@ process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int ifa
 		+ sizeof(gtpv2c_tx->gtpc);
 
 	if(iface == S11_IFACE){
-		gtpv2c_send(s11_fd, s11_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s11, s11_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
 				s11_mme_sockaddr_len);
 		cp_stats.echo++;
 		update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,
 					gtpv2c_tx->gtpc.message_type,SENT,S11);
 	}else{
-		gtpv2c_send(s5s8_fd, s5s8_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s5s8, s5s8_tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
 				s5s8_sockaddr_len);
 		cp_stats.echo++;
@@ -178,7 +177,7 @@ msg_handler_s11(void)
     gtpv2c_header_t *gtpv2c_s11_rx = (gtpv2c_header_t *) s11_rx_buf;
     gtpv2c_header_t *gtpv2c_s11_tx = (gtpv2c_header_t *) s11_tx_buf;
 
-    bytes_s11_rx = recvfrom(s11_fd,
+    bytes_s11_rx = recvfrom(my_sock.sock_fd_s11,
             s11_rx_buf, MAX_GTPV2C_UDP_LEN, MSG_DONTWAIT,
             (struct sockaddr *) &s11_mme_sockaddr,
             &s11_mme_sockaddr_len);
@@ -290,7 +289,7 @@ msg_handler_s11(void)
                     }
                     payload_length = ntohs(gtpv2c_s11_tx->gtpc.length)
                         + sizeof(gtpv2c_s11_tx->gtpc);
-                    gtpv2c_send(s11_fd, s11_tx_buf, payload_length,
+                    gtpv2c_send(my_sock.sock_fd_s11, s11_tx_buf, payload_length,
                             (struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
                     break;
 
@@ -308,7 +307,7 @@ msg_handler_s11(void)
                     }
                     payload_length = ntohs(gtpv2c_s11_tx->gtpc.length)
                         + sizeof(gtpv2c_s11_tx->gtpc);
-                    gtpv2c_send(s11_fd, s11_tx_buf, payload_length,
+                    gtpv2c_send(my_sock.sock_fd_s11, s11_tx_buf, payload_length,
                             (struct sockaddr *) &s11_mme_sockaddr,
                             s11_mme_sockaddr_len);
                     break;
@@ -327,7 +326,7 @@ msg_handler_s11(void)
                     }
                     payload_length = ntohs(gtpv2c_s11_tx->gtpc.length)
                         + sizeof(gtpv2c_s11_tx->gtpc);
-                    gtpv2c_send(s11_fd, s11_tx_buf, payload_length,
+                    gtpv2c_send(my_sock.sock_fd_s11, s11_tx_buf, payload_length,
                             (struct sockaddr *) &s11_mme_sockaddr,
                             s11_mme_sockaddr_len);
                     break;
@@ -404,7 +403,7 @@ msg_handler_s5s8(void)
 	gtpv2c_header_t *gtpv2c_s5s8_tx = (gtpv2c_header_t *) s5s8_tx_buf;
 #endif /* USE_REST */
 
-	bytes_s5s8_rx = recvfrom(s5s8_fd, s5s8_rx_buf,
+	bytes_s5s8_rx = recvfrom(my_sock.sock_fd_s5s8, s5s8_rx_buf,
 			MAX_GTPV2C_UDP_LEN, MSG_DONTWAIT,
 			(struct sockaddr *) &s5s8_recv_sockaddr,
 			&s5s8_sockaddr_len);

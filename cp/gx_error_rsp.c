@@ -6,13 +6,19 @@
  *
  */
 
-#ifdef GX_BUILD
 #include "pfcp.h"
 #include "gx_error_rsp.h"
 #include "upf_struct.h"
 #include "gen_utils.h"
 #include "sm_structs_api.h"
-extern int gx_app_sock;
+#include "sm_struct.h"
+#include "gx_error_rsp.h"
+#include "clogger.h"
+#include "rte_errno.h"
+#include "ipc_api.h"
+#include "pfcp_cp_set_ie.h"
+#include "pfcp.h"
+extern udp_sock_t my_sock;
 
 #if 0
 void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info) 
@@ -20,9 +26,7 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info)
 
 	int ret = 0;
 	ue_context_t *context = NULL;
-#ifdef GX_BUILD
 	pdn_connection_t *pdn = NULL;
-#endif
 	struct resp_info *resp = NULL;
 
 	switch(msg->msg_type) {
@@ -219,7 +223,6 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info)
 			rsp_info->teid = msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid;
 			break;
 		}
-#ifdef GX_BUILD
 		case GX_CCA_MSG: {
 			if(parse_gx_cca_msg(&msg->gx_msg.cca, &pdn) < 0) {
 				return;
@@ -234,7 +237,6 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info)
 
 			break;
 		}
-#endif /*GX_BUILD*/
 
 		case GTP_UPDATE_BEARER_REQ :{
 			if(get_ue_context_by_sgw_s5s8_teid(msg->gtpc_msg.ub_req.header.teid.has_teid.teid,
@@ -277,7 +279,6 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info)
 }
 #endif
 
-#ifdef GX_BUILD
 void send_ccr_t_req(msg_info *msg, uint8_t ebi, uint32_t teid) 
 {
 
@@ -342,7 +343,7 @@ void send_ccr_t_req(msg_info *msg, uint8_t ebi, uint32_t teid)
 					return;
 				}
 
-				send_to_ipc_channel(gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type));
+				send_to_ipc_channel(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type));
 
 				if(rte_hash_del_key(gx_context_by_sess_id_hash, pdn->gx_sess_id) < 0){
 					clLog(clSystemLog, eCLSeverityCritical, "%s %s - Error on gx_context_by_sess_id_hash deletion\n"
@@ -430,10 +431,8 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error)
 			sizeof(pdn->rqst_ptr));
 
 	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(gx_app_sock, buffer,
+	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
 			msg_len_total);
 
 	return;
 }
-#endif
-#endif /* GX_BUILD */

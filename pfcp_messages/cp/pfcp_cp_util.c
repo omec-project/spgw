@@ -26,9 +26,8 @@
 #define FAILED_ENB_FILE "logs/failed_enb_queries.log"
 #endif
 
+extern udp_sock_t my_sock;
 #define QUERY_RESULT_COUNT 16
-
-extern int pfcp_fd;
 
 struct rte_hash *node_id_hash;
 struct rte_hash *heartbeat_recovery_hash;
@@ -377,7 +376,7 @@ pfcp_recv(void *msg_payload, uint32_t size,
 {
 	socklen_t addr_len = sizeof(*peer_addr);
 	uint32_t bytes;
-	bytes = recvfrom(pfcp_fd, msg_payload, size, 0,
+	bytes = recvfrom(my_sock.sock_fd_pfcp, msg_payload, size, 0,
 			(struct sockaddr *)peer_addr, &addr_len);
 	//if(cp_config->cp_type == SGWC || cp_config->cp_type == SAEGWC)
 	//	bytes = recvfrom(pfcp_sgwc_fd_arr[0], msg_payload, size, 0,

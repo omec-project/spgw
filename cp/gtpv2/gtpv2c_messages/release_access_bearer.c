@@ -24,8 +24,7 @@
 #include "gtpv2_interface.h"
 #include "gen_utils.h"
 
-extern int pfcp_fd;
-
+extern udp_sock_t my_sock;
 /**
  * @brief  : parses gtpv2c message and populates parse_release_access_bearer_request_t
  *           structure
@@ -167,7 +166,7 @@ process_release_access_bearer_request(rel_acc_ber_req *rel_acc_ber_req_t, uint8_
 		pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 		header->message_len = htons(encoded - 4);
 
-		if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &rel_acc_ber_req_t->context->upf_ctxt->upf_sockaddr) < 0 )
+		if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &rel_acc_ber_req_t->context->upf_ctxt->upf_sockaddr) < 0 )
 			clLog(sxlogger, eCLSeverityCritical,"Error sending: %i\n",errno);
 		else {
 			update_cli_stats((uint32_t)rel_acc_ber_req_t->context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,

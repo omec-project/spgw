@@ -76,30 +76,30 @@ int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
 		if (cp_config->cp_type == SGWC) {
 			/*Set the appropriate state for the SGWC */
 			msg->state = SGWC_NONE_STATE;
-		} else {
-			/*Set the appropriate state for the SAEGWC and PGWC*/
-#ifdef GX_BUILD
-        	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
-        			"Msg_Type:%s[%u], Teid:%u, "
-        			"Procedure:%s, State:%s, Event:%s\n",
-        			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
-        			gtpv2c_rx->teid.has_teid.teid,
-        			get_proc_string(msg->proc),
-        			get_state_string(msg->state), get_event_string(msg->event));
+        } else {
+            /*Set the appropriate state for the SAEGWC and PGWC*/
+            if(cp_config->gx_enabled) {
+                clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
+                        "Msg_Type:%s[%u], Teid:%u, "
+                        "Procedure:%s, State:%s, Event:%s\n",
+                        __func__, gtp_type_str(msg->msg_type), msg->msg_type,
+                        gtpv2c_rx->teid.has_teid.teid,
+                        get_proc_string(msg->proc),
+                        get_state_string(msg->state), get_event_string(msg->event));
 
-            gx_setup_handler((void*)msg, NULL);
-#else
-        	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
-        			"Msg_Type:%s[%u], Teid:%u, "
-        			"Procedure:%s, State:%s, Event:%s\n",
-        			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
-        			gtpv2c_rx->teid.has_teid.teid,
-        			get_proc_string(msg->proc),
-        			get_state_string(msg->state), get_event_string(msg->event));
+                gx_setup_handler((void*)msg, NULL);
+            } else {
+                clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
+                        "Msg_Type:%s[%u], Teid:%u, "
+                        "Procedure:%s, State:%s, Event:%s\n",
+                        __func__, gtp_type_str(msg->msg_type), msg->msg_type,
+                        gtpv2c_rx->teid.has_teid.teid,
+                        get_proc_string(msg->proc),
+                        get_state_string(msg->state), get_event_string(msg->event));
 
-            association_setup_handler((void *)msg, NULL);
-#endif
-		}
+                association_setup_handler((void *)msg, NULL);
+            }
+        }
 	} else if (SGW_RELOCATION_PROC == msg->proc) {
 		/* SGW Relocation */
         assert(0);

@@ -90,6 +90,7 @@ pfcp_context_t pfcp_ctxt;
 extern uint32_t	*g_gx_pending_csr[BUFFERED_ENTRIES_DEFAULT];
 extern uint32_t	g_gx_pending_csr_cnt;
 
+/* TODO - ajay need to move this gx specific file separately */
 /**
  * @brief  : Maintains the Context for Gx interface
  */

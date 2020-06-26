@@ -22,7 +22,7 @@
 #include "cp_config_defs.h"
 
 extern struct cp_stats_t cp_stats;
-
+extern udp_sock_t my_sock;
 
 #if 0
 /**
@@ -108,7 +108,7 @@ ddn_by_session_id(uint64_t session_id)
 	if (pcap_dumper) {
 		dump_pcap(payload_length, tx_buf);
 	} else {
-		uint32_t bytes_tx = sendto(s11_fd, tx_buf, payload_length, 0,
+		uint32_t bytes_tx = sendto(my_sock.sock_fd_s11, tx_buf, payload_length, 0,
 		    (struct sockaddr *) &mme_s11_sockaddr_in,
 		    sizeof(mme_s11_sockaddr_in));
 

@@ -21,8 +21,6 @@
 
 #define QUERY_RESULT_COUNT 16
 
-extern int pfcp_fd;
-
 struct rte_hash *node_id_hash;
 struct rte_hash *heartbeat_recovery_hash;
 struct rte_hash *associated_upf_hash;

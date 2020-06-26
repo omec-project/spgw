@@ -17,12 +17,11 @@
 #include "pfcp_cp_set_ie.h" // ajay - upf context should be part of differnt file 
 #include "upf_struct.h"
 #include "cp_interface.h"
+#include "gx_error_rsp.h"
 
 #define DIAMETER_PCC_RULE_EVENT (5142)
 
-extern int s11_fd;
-extern int s5s8_fd;
-
+extern udp_sock_t my_sock;
 
 bool
 gtpc_add_timer_entry(peerData_t *conn_data, uint32_t timeout_ms,
@@ -116,9 +115,7 @@ gtpc_peer_timer_callback(gstimerinfo_t *ti, const void *data_t )
                                                         cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
                                 } else if ((cp_config->cp_type == PGWC ||  cp_config->cp_type ==  SAEGWC )
                                                 && (resp->msg_type == GX_RAR_MSG || resp->state == CREATE_BER_REQ_SNT_STATE)) {
-#ifdef GX_BUILD
                                         gen_reauth_error_response(pdn, DIAMETER_PCC_RULE_EVENT);
-#endif
                                         pdn->state = IDEL_STATE;
                                 } else {
                                         /* Need to handle for other request */
@@ -139,10 +136,10 @@ gtpc_peer_timer_callback(gstimerinfo_t *ti, const void *data_t )
                 case GX_IFACE:
                         break;
                 case S11_IFACE:
-                        gtpc_timer_retry_send(s11_fd, data);
+                        gtpc_timer_retry_send(my_sock.sock_fd_s11, data);
                         break;
                 case S5S8_IFACE:
-                        gtpc_timer_retry_send(s5s8_fd, data);
+                        gtpc_timer_retry_send(my_sock.sock_fd_s5s8, data);
                         break;
                 default:
                         break;

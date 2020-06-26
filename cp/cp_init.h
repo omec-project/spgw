@@ -31,7 +31,6 @@ struct cp_params {
 #endif
 };
 
-extern int s11_fd;
 extern int s11_pcap_fd;
 extern int s5s8_sgwc_fd;
 extern int s5s8_pgwc_fd;

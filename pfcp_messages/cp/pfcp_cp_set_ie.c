@@ -372,14 +372,13 @@ updating_pdr(pfcp_update_pdr_ie_t *create_pdr, int source_iface_value)
 	if (cp_config->cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
 		size += set_outer_hdr_removal(&(create_pdr->outer_hdr_removal));
 	size += set_far_id(&(create_pdr->far_id));
-#ifdef _GX_BUILD
 	/*TODO : need to check this durinf UT */
-	if (cp_config->cp_type != SGWC){
-		for(int i=0; i < create_pdr->qer_id_count; i++ ) {
-			size += set_qer_id(&(create_pdr->qer_id[i]));
+	if ((cp_config->gx_enabled) && (cp_config->cp_type != SGWC)){
+		//for(int i=0; i < create_pdr->qer_id_count; i++ ) {
+		for(int i=0; i < 1; i++ ) {
+			size += set_qer_id(&(create_pdr->qer_id));
 		}
 	}
-#endif /* GX_BUILD*/
 	/* TODO: Revisit this for change in yang
 	create_pdr->urr_id_count = 1;
 	for(int i=0; i < create_pdr->urr_id_count; i++ ) {

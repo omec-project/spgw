@@ -18,8 +18,8 @@
 #include "gen_utils.h"
 
 static uint32_t cc_request_number = 0;
+extern udp_sock_t my_sock;
 int g_cp_sock ;
-int gx_app_sock  ;
 int ret ;
 
 /*
@@ -384,9 +384,9 @@ msg_handler_gx( void )
 	gx_msg *gxmsg = NULL;
 	char recv_buf[BUFFSIZE] = {0};
 
-	bytes_rx = recv_from_ipc_channel(gx_app_sock, recv_buf);
+	bytes_rx = recv_from_ipc_channel(my_sock.gx_app_sock, recv_buf);
 	if(bytes_rx <= 0 ){
-			close_ipc_channel(gx_app_sock);
+			close_ipc_channel(my_sock.gx_app_sock);
 			/* Greacefull Exit */
 			exit(0);
 	}
@@ -435,7 +435,12 @@ start_cp_app(void )
 	listen_ipc_channel(g_cp_sock);
 
 	/* Accept incomming connection request receive on socket */
-	gx_app_sock  = accept_from_ipc_channel( g_cp_sock, gx_app_sockaddr);
+	my_sock.gx_app_sock  = accept_from_ipc_channel( g_cp_sock, gx_app_sockaddr);
+	if((my_sock.gx_app_sock > my_sock.sock_fd_pfcp) &&
+	   (my_sock.gx_app_sock > my_sock.sock_fd_s11) &&
+	   (my_sock.gx_app_sock > my_sock.sock_fd_s5s8)) {
+        my_sock.select_max_fd = my_sock.gx_app_sock + 1;
+    }
 }
 
 const char *

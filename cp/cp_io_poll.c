@@ -29,10 +29,7 @@
 #include "pfcp_cp_interface.h"
 #include "gx_app_interface.h"
 
-#ifdef GX_BUILD
-extern int gx_app_sock;
-#endif /* GX_BUILD */
-udp_sock_t my_sock;
+udp_sock_t my_sock = {0};
 
 /**
  * @brief Function to Poll message que.
@@ -51,22 +48,18 @@ void iface_process_ipc_msgs(void)
 	FD_SET(my_sock.sock_fd_pfcp, &readfds);
 
 	/* Add S11_FD in the set */
-	if ((cp_config->cp_type  == SGWC) || (cp_config->cp_type == SAEGWC)) {
+	if (my_sock.sock_fd_s11) {
 		FD_SET(my_sock.sock_fd_s11, &readfds);
 	}
-
 	/* Add S5S8_FD in the set */
-	if (cp_config->cp_type != SAEGWC) {
+	if (my_sock.sock_fd_s5s8) {
 		FD_SET(my_sock.sock_fd_s5s8, &readfds);
 	}
 
-#ifdef GX_BUILD
 	/* Add GX_FD in the set */
-	if ((cp_config->cp_type == PGWC ) || (cp_config->cp_type == SAEGWC)) {
-		FD_SET(gx_app_sock, &readfds);
+	if (my_sock.gx_app_sock) {
+		FD_SET(my_sock.gx_app_sock, &readfds);
 	}
-#endif /* GX_BUILD */
-
 
 	n = my_sock.select_max_fd;
 
@@ -98,15 +91,12 @@ void iface_process_ipc_msgs(void)
 			}
 		}
 
-#ifdef GX_BUILD
 		/* Refer - cp/Makefile. For now this is disabled. */
 		if ((cp_config->cp_type == PGWC) || (cp_config->cp_type == SAEGWC)) {
-			if (FD_ISSET(gx_app_sock, &readfds)) {
+			if (FD_ISSET(my_sock.gx_app_sock, &readfds)) {
 					msg_handler_gx();
 			}
 		}
-#endif  /* GX_BUILD */
-
 	}
 }
 

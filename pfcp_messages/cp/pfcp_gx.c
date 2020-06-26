@@ -40,8 +40,9 @@
 
 #define SET_EVENT(val,event) (val |=  (1<<event))
 
-extern int pfcp_fd;
-extern int s5s8_fd;
+extern udp_sock_t my_sock;
+extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
+extern struct sockaddr_in s5s8_recv_sockaddr;
 extern socklen_t s5s8_sockaddr_len;
 extern struct sockaddr_in s11_mme_sockaddr;
 extern socklen_t s11_mme_sockaddr_len;
@@ -493,7 +494,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 			if (charging_rule_remove->list[idx1].presence.charging_rule_name == PRESENT)
 			{
 				//Get the rule name and only store the name in dynamic rule_t
-				memset(rule_name.rule_name, '\0', 256);
+				memset(rule_name.rule_name, '\0', 255);
 				strncpy(rule_name.rule_name,
 						(char *)(charging_rule_remove->list[idx1].charging_rule_name.list[0].val),
 						charging_rule_remove->list[idx1].charging_rule_name.list[0].len);
@@ -710,8 +711,8 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	uint8_t len = 0;
 	uint16_t payload_length = 0;
 
-	bzero(&tx_buf, sizeof(tx_buf));
-	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)tx_buf;
+	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
+	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
 	uint32_t seq_no = generate_rar_seq();
 
@@ -826,13 +827,13 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 		payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 		if(SAEGWC != cp_config->cp_type){
 			//send S5S8 or on S11  interface update bearer request.
-			gtpv2c_send(s5s8_fd, tx_buf, payload_length,
+			gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 	    		      		(struct sockaddr *) &s5s8_recv_sockaddr,
 	        				s5s8_sockaddr_len);
 		}else{
 			s11_mme_sockaddr.sin_addr.s_addr =
 								htonl(context->s11_mme_gtpc_ipv4.s_addr);
-			gtpv2c_send(s11_fd, tx_buf, payload_length,
+			gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 	    		      		(struct sockaddr *) &s11_mme_sockaddr,
 	        				s11_mme_sockaddr_len);
 		}
@@ -847,6 +848,7 @@ parse_gx_rar_msg(GxRAR *rar)
 	uint32_t call_id = 0;
 	uint8_t bearer_id = 0;
 	pdn_connection_t *pdn_cntxt = NULL;
+    ue_context_t *ue_context = NULL;
 
 	gx_context_t *gx_context = NULL;
 	struct resp_info *resp = NULL;
@@ -874,6 +876,7 @@ parse_gx_rar_msg(GxRAR *rar)
 	      return -1;
 	}
 
+    ue_context = pdn_cntxt->context;
 	if(rar->presence.default_eps_bearer_qos)
 	{
 		ret = store_default_bearer_qos_in_policy(pdn_cntxt, rar->default_eps_bearer_qos);
@@ -897,18 +900,18 @@ parse_gx_rar_msg(GxRAR *rar)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ){
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &ue_context->upf_ctxt->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
-		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)ue_context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 					pfcp_sess_mod_req.header.message_type,SENT,SX);
 		if(cp_config->cp_type == PGWC){
-                               add_pfcp_if_timer_entry(pdn_cntxt->s5s8_pgw_gtpc_teid, &context->upf_ctxt->upf_sockaddr,
+                               add_pfcp_if_timer_entry(pdn_cntxt->s5s8_pgw_gtpc_teid, &ue_context->upf_ctxt->upf_sockaddr,
                                        pfcp_msg, encoded, pdn_cntxt->default_bearer_id - 5);
                        }
                if(cp_config->cp_type == SAEGWC)
                {
-                       add_pfcp_if_timer_entry(pdn_cntxt->context->s11_sgw_gtpc_teid, &context->upf_ctxt->upf_sockaddr,
+                       add_pfcp_if_timer_entry(ue_context->s11_sgw_gtpc_teid, &ue_context->upf_ctxt->upf_sockaddr,
                                pfcp_msg, encoded, pdn_cntxt->default_bearer_id - 5);
                }
         }

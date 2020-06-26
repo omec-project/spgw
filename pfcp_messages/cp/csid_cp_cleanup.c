@@ -20,20 +20,16 @@
 #include "gtpv2_interface.h"
 #include "gen_utils.h"
 
-#ifdef GX_BUILD
 #include "gx_app_interface.h"
 #include "sm_enum.h"
 #include "ipc_api.h"
 
-extern int gx_app_sock;
-#endif /* GX_BUILD */
+extern udp_sock_t my_sock;
 
-extern int pfcp_fd;
 extern socklen_t s11_mme_sockaddr_len;
 extern uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
 
-extern int s5s8_fd;
-struct sockaddr_in s5s8_recv_sockaddr;
+extern struct sockaddr_in s5s8_recv_sockaddr;
 extern socklen_t s5s8_sockaddr_len;
 
 static uint16_t sequence = 0;
@@ -125,7 +121,6 @@ fill_gtpc_del_set_pdn_conn_req(gtpv2c_header_t *gtpv2c_tx, fqcsid_t *local_csids
 
 uint32_t s5s8_node_addr = 0;
 
-#ifdef GX_BUILD
 static int8_t
 fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 {
@@ -191,7 +186,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	}
 
 	/* VS: Write or Send CCR -T msg to Gx_App */
-	send_to_ipc_channel(gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type));
+	send_to_ipc_channel(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type));
 	clLog(clSystemLog, eCLSeverityDebug, FORMAT"Send CCR-T to PCRF \n", ERR_MSG);
 
 	struct sockaddr_in saddr_in;
@@ -201,7 +196,6 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 
 	return 0;
 }
-#endif /* GX_BUILD */
 
 static int8_t
 flush_pdr_entries(eps_bearer_t *bearer)
@@ -248,16 +242,12 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == PGWC))
 			s5s8_node_addr = pdn->s5s8_pgw_gtpc_ipv4.s_addr;
 
-#ifdef GX_BUILD
-		if ( cp_config->cp_type != SGWC) {
+		if ((cp_config->gx_enabled) && (cp_config->cp_type != SGWC)) {
 			/* TODO: Need to remove in real enviorment*/
 			if (iface != S11_SGW_PORT_ID) {
 				fill_ccr_t_request(pdn, ebi_index);
 			}
 		}
-#else
-	RTE_SET_USED(iface);
-#endif /* GX_BUILD */
 
 		for (i = 0; i < MAX_BEARERS; ++i) {
 			if (pdn->eps_bearers[i] == NULL)
@@ -389,7 +379,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 				/* TODO: NEED TO HANDLE THIS */
 				/* Send the PGW Restart notification */
 				if (cp_config->cp_type == SAEGWC) {
-					gtpv2c_send(s11_fd, tx_buf, payload_length,
+					gtpv2c_send(my_sock.sock_fd_s11, tx_buf, payload_length,
 							(struct sockaddr *) &s11_mme_sockaddr,
 							s11_mme_sockaddr_len);
 
@@ -399,7 +389,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 				}
 
 				if ((cp_config->cp_type == SGWC) && (iface == S5S8_SGWC_PORT_ID)) {
-					gtpv2c_send(s11_fd, tx_buf, payload_length,
+					gtpv2c_send(my_sock.sock_fd_s11, tx_buf, payload_length,
 							(struct sockaddr *) &s11_mme_sockaddr,
 							s11_mme_sockaddr_len);
 
@@ -426,7 +416,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 			/* Get peer CSID associated with node */
 			//csid = get_peer_addr_csids_entry(s5s8_recv_sockaddr.sin_addr.s_addr,
 			//		MOD);
-				gtpv2c_send(s5s8_fd, tx_buf, payload_length,
+				gtpv2c_send(my_sock.sock_fd_s5s8, tx_buf, payload_length,
 						(struct sockaddr *) &s5s8_recv_sockaddr,
 						s5s8_sockaddr_len);
 		}
@@ -435,7 +425,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 			/* Get peer CSID associated with node */
 			//csid = get_peer_addr_csids_entry(s11_mme_sockaddr.sin_addr.s_addr,
 			//		MOD);
-				gtpv2c_send(s11_fd, tx_buf, payload_length,
+				gtpv2c_send(my_sock.sock_fd_s11, tx_buf, payload_length,
 						(struct sockaddr *) &s11_mme_sockaddr,
 						s11_mme_sockaddr_len);
 		}
@@ -444,7 +434,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 			//csid = get_peer_addr_csids_entry(s5s8_recv_sockaddr.sin_addr.s_addr,
 			//		MOD);
 			if (iface != S5S8_SGWC_PORT_ID) {
-				gtpv2c_send(s5s8_fd, tx_buf, payload_length,
+				gtpv2c_send(my_sock.sock_fd_s5s8, tx_buf, payload_length,
 						(struct sockaddr *) &s5s8_recv_sockaddr,
 						s5s8_sockaddr_len);
 			}
@@ -597,7 +587,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 
 				/* TODO: NEED TO HANDLE THIS */
 				/* Send the PGW Restart notification */
-				gtpv2c_send(s11_fd, s11_tx_buf, payload_length,
+				gtpv2c_send(my_sock.sock_fd_s11, s11_tx_buf, payload_length,
 						(struct sockaddr *) &s11_mme_sockaddr,
 						s11_mme_sockaddr_len);
 
@@ -640,7 +630,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 
     struct sockaddr_in upf_pfcp_sockaddr;
     assert(0); // Need handling 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ) {
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error sending: %i\n",
 				ERR_MSG, errno);
 		return -1;

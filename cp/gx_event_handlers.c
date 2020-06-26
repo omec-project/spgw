@@ -11,7 +11,11 @@
 #include "sm_struct.h"
 #include "sm_hand.h"
 #include "rte_hash.h"
+#include "pfcp_cp_set_ie.h" // ajay - included for Gx context. need cleanup  
+#include "pfcp.h"
+#include "sm_structs_api.h"
 
+extern int sxlogger;
 extern struct rte_hash *gx_context_by_sess_id_hash;
 
 static 
@@ -39,7 +43,7 @@ void dispatch_cca(msg_info *msg)
             {
                 if(msg->state == CCRU_SNT_STATE)
                 {
-                    del_bearer_cmd_ccau_handler(msg);
+                    del_bearer_cmd_ccau_handler(msg, NULL);
                 }
                 break;
             }
@@ -63,7 +67,7 @@ void dispatch_cca(msg_info *msg)
             {
                 if(msg->state == CCRU_SNT_STATE)
                 {
-                    cca_u_msg_handler_handover(msg);
+                    cca_u_msg_handler_handover(msg, NULL);
                 }
                 break;
             }
@@ -79,7 +83,7 @@ void dispatch_cca(msg_info *msg)
             {
                 if(msg->state == CCRU_SNT_STATE)
                 {
-                    del_bearer_cmd_ccau_handler(msg);
+                    del_bearer_cmd_ccau_handler(msg, NULL);
                 }
                 break;
             }
@@ -101,18 +105,18 @@ void dispatch_rar(msg_info *msg)
             case DED_BER_ACTIVATION_PROC:
             {
                 if(msg->state == CONNECTED_STATE) {
-                    process_rar_request_handler(msg);
+                    process_rar_request_handler(msg, NULL);
                 } else if (msg->state == IDEL_STATE) {
-                    process_rar_request_handler(msg);
+                    process_rar_request_handler(msg, NULL);
                 }
                 break;
             }
             case PDN_GW_INIT_BEARER_DEACTIVATION:
             {
                 if(msg->state == CONNECTED_STATE) {
-                    process_rar_request_handler(msg);
+                    process_rar_request_handler(msg, NULL);
                 } else if (msg->state == IDEL_STATE) {
-                    process_rar_request_handler(msg);
+                    process_rar_request_handler(msg, NULL);
                 }
                 break;
             }
@@ -125,18 +129,18 @@ void dispatch_rar(msg_info *msg)
             case DED_BER_ACTIVATION_PROC:
             {
                 if(msg->state == CONNECTED_STATE) {
-                    process_rar_request_handler(msg);
+                    process_rar_request_handler(msg, NULL);
                 } else if (msg->state == IDEL_STATE) {
-                    process_rar_request_handler(msg);
+                    process_rar_request_handler(msg, NULL);
                 }
                 break;
             }
             case PDN_GW_INIT_BEARER_DEACTIVATION:
             {
                 if(msg->state == CONNECTED_STATE) {
-                    process_rar_request_handler(msg);
+                    process_rar_request_handler(msg, NULL);
                 } else if (msg->state == IDEL_STATE) {
-                    process_rar_request_handler(msg);
+                    process_rar_request_handler(msg, NULL);
                 }
                 break;
             }
@@ -149,11 +153,13 @@ int process_gx_message(gx_msg *gx_msg, msg_info *msg)
 {
     int ret = 0;
 	gx_context_t *gx_context = NULL;
+    uint32_t call_id;
 
     switch(msg->msg_type) 
     {
 		case GX_CCA_MSG: 
         {
+			pdn_connection_t *pdn_cntxt = NULL;
 			/* Retrive Gx_context based on Sess ID. */
 			ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
 					(const void*)(msg->gx_msg.cca.session_id.val),
@@ -227,9 +233,9 @@ int process_gx_message(gx_msg *gx_msg, msg_info *msg)
 			    return -1;
 			}
 			/* Reteive the rqst ptr for RAA */
-			buflen = gx_rar_calc_length (&msg->gx_msg.rar);
+			uint32_t buflen = gx_rar_calc_length (&msg->gx_msg.rar);
 			//gx_context->rqst_ptr = (uint64_t *)(((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + buflen));
-			memcpy( &gx_context->rqst_ptr ,((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + buflen),
+			memcpy( &gx_context->rqst_ptr ,((unsigned char *)gx_msg + sizeof(gx_msg->msg_type) + buflen),
 					sizeof(unsigned long));
 
 			pdn_cntxt->rqst_ptr = gx_context->rqst_ptr;

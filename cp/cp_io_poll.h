@@ -24,6 +24,7 @@ typedef struct udp_sock_t {
 	int sock_fd_pfcp;
 	int sock_fd_s11;
 	int sock_fd_s5s8;
+    int gx_app_sock;
     int select_max_fd;
 } udp_sock_t;
 

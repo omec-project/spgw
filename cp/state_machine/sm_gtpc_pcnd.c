@@ -237,15 +237,14 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 			/* Retrive UE state. */
 			if (get_ue_context(ntohl(gtpv2c_rx->teid.has_teid.teid), &context) != 0) {
 				msg->proc =  NONE_PROC;
-				if (SGWC == cp_config->cp_type)
-					msg->state = SGWC_NONE_STATE;
-				else {
-#ifdef GX_BUILD
-					msg->state = PGWC_NONE_STATE;
-#else
-					msg->state = SGWC_NONE_STATE;
-#endif /* GX_BUILD */
-					}
+                if (SGWC == cp_config->cp_type)
+                    msg->state = SGWC_NONE_STATE;
+                else {
+                    if(cp_config->gx_enabled)
+                        msg->state = PGWC_NONE_STATE;
+                    else
+                        msg->state = SGWC_NONE_STATE;
+                }
 			} else {
 					pdn = GET_PDN(context, ebi_index);
 					msg->state = pdn->state;

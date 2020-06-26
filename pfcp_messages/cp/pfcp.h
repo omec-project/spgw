@@ -38,7 +38,7 @@ struct rte_hash *rule_name_bearer_id_map_hash;
  */
 typedef struct rule_name_bearer_id_map_key {
 	/** Rule Name */
-	char rule_name[255];
+	char rule_name[256];
 }rule_name_key_t;
 
 /**
@@ -304,7 +304,6 @@ generate_dp_sess_id(uint64_t cp_sess_id);
 int8_t
 gen_sess_id_for_ccr(char *sess_id, uint32_t call_id);
 
-#ifdef GX_BUILD
 /**
  * @brief  : Parse GX CCA message and fill ue context
  * @param  : cca holds data from gx cca message
@@ -342,7 +341,6 @@ int8_t
 get_bearer_info_install_rules(pdn_connection_t *pdn,
 	uint8_t *ebi);
 
-#endif /* GX_BUILD */
 
 /**
  * @brief  : Convert the decimal value into the string

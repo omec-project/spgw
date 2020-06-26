@@ -74,14 +74,14 @@ bind_ipc_channel(int sock, struct sockaddr_un sock_addr,const char *path)
 int
 accept_from_ipc_channel(int sock, struct sockaddr_un sock_addr)
 {
-	int gx_app_sock = 0;
+	int new_sock = 0;
 	socklen_t len ;
 	len = sizeof(sock_addr);
 
 	while (1) {
 		/* Accept incomming connection request receive on socket */
-		gx_app_sock = accept( sock, (struct sockaddr *) &sock_addr, &len);
-		if (gx_app_sock < 0){
+		new_sock = accept( sock, (struct sockaddr *) &sock_addr, &len);
+		if (new_sock < 0){
 				if (errno == EINTR)
 					continue;
 
@@ -97,7 +97,7 @@ accept_from_ipc_channel(int sock, struct sockaddr_un sock_addr)
 
 	fprintf(stderr, "CP: Gx_app client connection succesfully accepted...!!!\n");
 
-	return gx_app_sock;
+	return new_sock;
 }
 
 void

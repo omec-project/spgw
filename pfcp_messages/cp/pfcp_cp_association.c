@@ -34,8 +34,7 @@
 #include "cdnsutil.h"
 #endif /* USE_DNS_QUERY */
 
-extern int pfcp_fd;
-
+extern udp_sock_t my_sock;
 uint32_t *g_gx_pending_csr[BUFFERED_ENTRIES_DEFAULT];
 uint32_t g_gx_pending_csr_cnt = 0;
 
@@ -451,7 +450,7 @@ assoication_setup_request(uint32_t upf_ip, upf_context_t **upf_ctxt)
 				__FILE__, __func__, __LINE__);
 	}
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ) {
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending\n\n");
 	} else {
 
@@ -472,7 +471,7 @@ assoication_setup_request(uint32_t upf_ip, upf_context_t **upf_ctxt)
 				__FILE__, __func__, __LINE__);
 	}
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, &upf_context->upf_sockaddr) < 0 ) {
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &upf_context->upf_sockaddr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending\n\n");
 	} else {
 
@@ -790,7 +789,7 @@ process_pfcp_report_req(pfcp_sess_rpt_req_t *pfcp_sess_rep_req)
 	pfcp_header_t *pfcp_hdr = (pfcp_header_t *) pfcp_msg;
 	pfcp_hdr->message_len = htons(encoded - 4);
 
-	if (pfcp_send(pfcp_fd, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ) {
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0 ) {
 		clLog(sxlogger, eCLSeverityCritical, "Error REPORT REPONSE message: %i\n", errno);
 		return -1;
 	}
@@ -844,7 +843,7 @@ int process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(pfcp_fd, pfcp_msg, encoded, peer_addr) < 0 ) {
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, peer_addr) < 0 ) {
 				clLog(sxlogger, eCLSeverityDebug, "Error sending: %i\n", errno);
 	}
 

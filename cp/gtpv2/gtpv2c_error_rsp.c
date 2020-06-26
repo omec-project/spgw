@@ -23,16 +23,17 @@
 #include "clogger.h"
 #include "gw_adapter.h"
 #include "sm_structs_api.h"
+#include "gx_error_rsp.h"
+#include "pfcp.h"
 
+extern udp_sock_t my_sock;
 extern struct sockaddr_in s11_mme_sockaddr;
 extern socklen_t s11_mme_sockaddr_len;
 
-extern int s5s8_fd;
 extern socklen_t s5s8_sockaddr_len;
 extern struct sockaddr_in s5s8_recv_sockaddr;
 
 extern uint16_t payload_length;
-extern int pfcp_fd;
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 int8_t
@@ -67,7 +68,7 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 							pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 							header->message_len = htons(encoded - 4);
 
-							if(pfcp_send(pfcp_fd, pfcp_msg,encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
+							if(pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
 								fprintf(stderr , " %s:%s:%u Error sending: %i\n",
 										__FILE__, __func__, __LINE__, errno);
 							}else {
@@ -162,9 +163,7 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info)
 
 	int ret = 0;
 	ue_context_t *context = NULL;
-#ifdef GX_BUILD
 	pdn_connection_t *pdn = NULL;
-#endif
 	struct resp_info *resp = NULL;
 
 	switch(msg->msg_type) {
@@ -361,7 +360,6 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info)
 			rsp_info->teid = msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid;
 			break;
 		}
-#ifdef GX_BUILD
 		case GX_CCA_MSG: {
 			if(parse_gx_cca_msg(&msg->gx_msg.cca, &pdn) < 0) {
 				return;
@@ -376,7 +374,6 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info)
 
 			break;
 		}
-#endif /*GX_BUILD*/
 
 		case GTP_UPDATE_BEARER_REQ :{
 			if(get_ue_context_by_sgw_s5s8_teid(msg->gtpc_msg.ub_req.header.teid.has_teid.teid,
@@ -432,15 +429,15 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface)
 		get_error_rsp_info(msg, &rsp_info);
 
 				//Sending CCR-T in case of failure
-#ifdef GX_BUILD
-		if (cp_config->cp_type != SGWC){
+        /* we should check if subscriber has gx session..this does not look good */
+		if ((cp_config->gx_enabled) &&  
+		    (cp_config->cp_type != SGWC)){
 			send_ccr_t_req(msg, rsp_info.ebi_index, rsp_info.teid);
             		struct sockaddr_in saddr_in;
             		saddr_in.sin_family = AF_INET;
             		inet_aton("127.0.0.1", &(saddr_in.sin_addr));
             		update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
 		}
-#endif
 		bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 		gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
 
@@ -495,11 +492,11 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface)
 						rsp_info.teid,&msg->gtpc_msg.csr.imsi.imsi_number_digits,
 						msg->gtpc_msg.csr.imsi.header.len, rsp_info.seq);
 		if(iface == S11_IFACE){
-			gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+			gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 					(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
 			update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
 		}else{
-			gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+			gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 					 (struct sockaddr *)&s5s8_recv_sockaddr,s5s8_sockaddr_len);
 
 			struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)&s5s8_recv_sockaddr;
@@ -568,12 +565,12 @@ void mbr_error_response(msg_info *msg, uint8_t cause_value, int iface)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 
 	if(iface == S11_IFACE){
-		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
 
 		update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
 	}else{
-		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *)&s5s8_recv_sockaddr, s5s8_sockaddr_len);
 
 		struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)&s5s8_recv_sockaddr;
@@ -614,15 +611,15 @@ void ds_error_response(msg_info *msg, uint8_t cause_value, int iface)
 			return;
 	}
 
-#ifdef GX_BUILD
-	if (cp_config->cp_type != SGWC) {
-		send_ccr_t_req(msg, eps_bearer_id, rsp_info.teid);
-		struct sockaddr_in saddr_in;
+        /* we should check if subscriber has gx session..this does not look good */
+    if ((cp_config->gx_enabled) &&  
+            (cp_config->cp_type != SGWC)){
+        send_ccr_t_req(msg, eps_bearer_id, rsp_info.teid);
+        struct sockaddr_in saddr_in;
 		saddr_in.sin_family = AF_INET;
 		inet_aton("127.0.0.1", &(saddr_in.sin_addr));
 		update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
 	}
-#endif
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
@@ -648,11 +645,11 @@ void ds_error_response(msg_info *msg, uint8_t cause_value, int iface)
 		return;
 	}
 	if(iface == S11_IFACE){
-		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
 		update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
 	}else{
-		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *)&s5s8_recv_sockaddr, s5s8_sockaddr_len);
 
 		struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)&s5s8_recv_sockaddr;
@@ -701,7 +698,7 @@ void ubr_error_response(msg_info *msg, uint8_t cause_value, int iface)
 		gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
 		payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 			//send S5S8 interface update bearer response.
-		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 		   	  		(struct sockaddr *) &s5s8_recv_sockaddr,
 					s5s8_sockaddr_len);
 	}else{
@@ -720,12 +717,10 @@ void ubr_error_response(msg_info *msg, uint8_t cause_value, int iface)
 				__LINE__, ret);
 			return;
 		}
-		pdn_cntxt = context->eps_bearers[ebi_index]->pdn;
-#ifdef GX_BUILD
-		gen_reauth_error_response(pdn_cntxt, DIAMETER_UNABLE_TO_COMPLY);
-#else
-		RTE_SET_USED(pdn_cntxt);
-#endif /* GX_BUILD */
+        pdn_cntxt = context->eps_bearers[ebi_index]->pdn;
+        if(cp_config->gx_enabled) {
+            gen_reauth_error_response(pdn_cntxt, DIAMETER_UNABLE_TO_COMPLY);
+        }
 	}
 
 }
@@ -747,11 +742,11 @@ void send_version_not_supported(int iface, uint32_t seq)
 
 	payload_length = msg_len;
 	if(iface == S11_IFACE){
-		gtpv2c_send(s11_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
 
 	}else{
-		gtpv2c_send(s5s8_fd, gtp_tx_buf, payload_length,
+		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *)&s5s8_recv_sockaddr, s5s8_sockaddr_len);
 
 	}

@@ -44,6 +44,7 @@
 #define OPS_ENTRIES				"OPS"
 
 #define CP_TYPE					"CP_TYPE"
+#define GX_CONFIG               "GX_CONFIG"
 #define CP_LOGGER				"CP_LOGGER"
 #define S11_IPS					"S11_IP"
 #define S11_PORTS				"S11_PORT"
@@ -139,6 +140,8 @@ config_cp_ip_port(cp_config_t *cp_config)
     struct rte_cfgfile_entry *ops_entries = NULL;
 
 
+    cp_config->gx_enabled = 0;
+
     struct rte_cfgfile *file = rte_cfgfile_load(STATIC_CP_FILE, 0);
     if (file == NULL) {
         rte_exit(EXIT_FAILURE, "Cannot load configuration file %s\n",
@@ -175,6 +178,13 @@ config_cp_ip_port(cp_config_t *cp_config)
                     cp_config->cp_type == SGWC ? "SGW-C" :
                     cp_config->cp_type == PGWC ? "PGW-C" :
                     cp_config->cp_type == SAEGWC ? "SAEGW-C" : "UNKNOWN");
+
+        } 
+       /* Parse SGWC, PGWC and SAEGWC values from cp.cfg */
+        else if(strncmp(GX_CONFIG, global_entries[i].name, strlen(GX_CONFIG)) == 0) {
+            cp_config->gx_enabled = (uint8_t)atoi(global_entries[i].value);
+
+            fprintf(stderr, "CP: GX_CONFIG     : %s\n", cp_config->gx_enabled == 1 ? "enabled" : "disabled");
 
         }else if (strncmp(S11_IPS, global_entries[i].name,
                     strlen(S11_IPS)) == 0) {
@@ -631,6 +641,8 @@ config_cp_ip_port(cp_config_t *cp_config)
     }
 
     rte_free(static_ip_pool_entries);
+
+    cp_config->gx_enabled = false;
 
     return;
 }

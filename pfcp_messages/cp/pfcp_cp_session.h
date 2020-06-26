@@ -370,10 +370,9 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 
 int
 fill_update_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dyn_rule);
-#ifdef GX_BUILD
+
 int
 gen_reauth_response(ue_context_t *context, uint8_t ebi_index);
-#endif /* GX_BUILD */
 
 int
 fill_remove_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer_t *bearer);
