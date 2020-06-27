@@ -19,6 +19,8 @@ include $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/*.mk
 OSS_UTIL_ROOT = $(NG_CORE)/oss_adapter/c3po_oss/oss-util
 LIBGTPV2C_ROOT = $(SRCDIR)/../libgtpv2c
 LIBPFCP_ROOT = $(SRCDIR)/../libpfcp
+CPPUTILLIB_ROOT = $(SRCDIR)/../cpplib/target
+$(info VAR is $(CPPUTILLIB_ROOT))
 
 # binary name
 APP = ngic_controlplane
@@ -106,6 +108,7 @@ CFLAGS += -I$(SRCDIR)/../pfcp_messages/cp
 CFLAGS += -I$(SRCDIR)/../pfcp_messages/common
 CFLAGS += -I$(SRCDIR)/../libgtpv2c/include
 CFLAGS += -I$(OSS_UTIL_ROOT)/include
+CFLAGS += -I$(SRCDIR)/../cpplib/
 
 # Mandatory CFLAGS, LDFLAGS- DO NOT MODIFY
 # #############################################################
@@ -119,6 +122,8 @@ endif
 
 LDLIBS += -L$(LIBGTPV2C_ROOT)/lib -lgtpv2c
 LDLIBS += -L$(LIBPFCP_ROOT)/lib -lpfcp
+LDLIBS += -L$(CPPUTILLIB_ROOT)/lib -lspgwcpputil
+$(info LDLIBS is $(LDLIBS))
 LDLIBS += -lpcap
 LDFLAGS += -lstdc++
 LDLIBS += -lstdc++

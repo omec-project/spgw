@@ -57,6 +57,7 @@ COPY --from=spgw /spgw/third_party/freediameter/build/libfdcore/libfdcore.so /us
 COPY --from=spgw /spgw/third_party/freediameter/build/libfdproto/libfdproto.so /usr/local/lib
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/cpp-driver/build/libcassandra.so /usr/local/lib/
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/c-ares/.libs/libcares.so /usr/local/lib/
+COPY --from=spgw /spgw/cpplib/target/lib/libspgwcpputil.so /usr/local/lib/
 
 FROM runtime as dp
 RUN source ./install_rundeps.sh && install_run_utils && cleanup_image

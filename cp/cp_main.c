@@ -28,6 +28,7 @@
 #include "cp_config_apis.h"
 #include "cp_config_defs.h"
 #include "ipc_api.h"
+#include "spgw_cpp_wrapper.h"
 
 #ifdef USE_REST
 #include "timer.h"
@@ -284,7 +285,7 @@ main(int argc, char **argv)
 #ifdef USE_CSID
     init_fqcsid_hash_tables();
 #endif /* USE_CSID */
-
+    parse_config_wrapper();
     while (1) {
         iface_process_ipc_msgs();
     }
