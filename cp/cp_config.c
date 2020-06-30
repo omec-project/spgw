@@ -187,7 +187,6 @@ config_cp_ip_port(cp_config_t *cp_config)
         }else if (strncmp(S11_IPS, global_entries[i].name,
                     strlen(S11_IPS)) == 0) {
 
-            /* TODO - ajay get rid of ip address. Get hostname/servicename  if required */
             /* TODO - ajay mme address is not required to be configured at SPGW */
             inet_aton(global_entries[i].value,
                     &(cp_config->s11_ip));

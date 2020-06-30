@@ -39,18 +39,10 @@ int
 check_cp_req_tries_config(char *value);
 
 
-extern struct app_config *appl_config;
-
 /* Application can pass the dp_key and get back one of the selected DPname in return.
 */
 upf_context_t *get_upf_context_for_key(sub_selection_keys_t*, sub_profile_t **dpInfo);
 
-
-/**
- * Given dpId, what is the DNS Secondary IP address of dp. If DP does not have config then 
- * pass DNS config from global scope 
- */
-struct in_addr fetch_dns_secondary_ip(uint32_t dpId, bool *present);
 
 /* Callback function which is received when config file is updated 
  * may be through helm Charts or any other means. 

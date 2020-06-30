@@ -45,7 +45,8 @@ install_pkg_deps()
         bison flex libsctp-dev libgnutls-dev libgcrypt-dev libidn11-dev \
         nettle-dev \
         ragel \
-        libmnl-dev
+        libmnl-dev \
+        rapidjson-dev
 
         download_hyperscan
 }

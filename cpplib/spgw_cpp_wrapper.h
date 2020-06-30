@@ -1,3 +1,7 @@
+// Copyright 2020-present Open Networking Foundation
+//
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+
 #ifndef __SPGW__CPP_WRAPPER__H
 #define __SPGW__CPP_WRAPPER__H
 #include "spgw_config_struct.h"

@@ -1,3 +1,7 @@
+// Copyright 2020-present Open Networking Foundation
+//
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+
 #ifndef __SPGW_CONFIG_H__
 #define __SPGW_CONFIG_H__
 #include "spgw_config_struct.h"

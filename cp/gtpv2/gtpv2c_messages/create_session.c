@@ -54,8 +54,6 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
     assert(sub_prof != NULL);
     apn_profile_t *apn_prof = sub_prof->apn_profile;
     assert(apn_prof != NULL);
-    //dp_info_t *dp_conf = context->upf_ctxt->dp_info;
-    //assert(dp_conf);
     bool ipv4_link_mtu = false;
  
 	for (i = 0; i < req_pco->num_of_opt; i++) {
