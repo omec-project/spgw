@@ -285,7 +285,6 @@ main(int argc, char **argv)
 #ifdef USE_CSID
     init_fqcsid_hash_tables();
 #endif /* USE_CSID */
-    parse_config_wrapper();
     while (1) {
         iface_process_ipc_msgs();
     }

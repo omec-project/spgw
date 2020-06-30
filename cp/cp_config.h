@@ -15,6 +15,7 @@
 #include <linux/limits.h>
 #include "apn_struct.h"
 #include "cp_config_defs.h"
+#include "spgw_config_struct.h"
 
 /**
  * @brief  : Maintains dns cache information
@@ -39,53 +40,6 @@ typedef struct dns_config
 	uint8_t nameserver_cnt;
 	char nameserver_ip[MAX_NUM_NAMESERVER][INET_ADDRSTRLEN];
 } dns_config_t;
-
-typedef struct mcc_mnc_key
-{
-	uint8_t mcc_digit_2 :4;
-	uint8_t mcc_digit_1 :4;
-	uint8_t mnc_digit_3 :4;
-	uint8_t mcc_digit_3 :4;
-	uint8_t mnc_digit_2 :4;
-	uint8_t mnc_digit_1 :4;
-} mcc_mnc_key_t;
-
-typedef struct app_config 
-{
-	uint32_t  flags;
-	/* Dataplane selection rules. */
-	LIST_HEAD(dplisthead, dp_info) dpList;
-
-	/* add any other dynamic config for spgw control app
-	 * Common : various interfaces timeout intervals,  admin state etc.., logging enable/disable
-	 * SGW : DDN profile, APN (optional) etc..
-	 * PGW : APN, IP Pool etc..
-	 */
-	struct in_addr dns_p, dns_s; 
-}app_config_t;
-
-typedef struct dp_key
-{
-	struct mcc_mnc_key mcc_mnc;
-	uint16_t tac;
-}dp_key_t;
-
-#define  CONFIG_DNS_PRIMARY  	0x00000001
-#define  CONFIG_DNS_SECONDARY   0x00000002
-
-typedef struct dp_info
-{
-	uint32_t  flags;
-	dp_key_t key; /* TODO - support multiple keys */
-	char dpName[DP_SITE_NAME_MAX];
-	uint32_t dpId;
-	struct in_addr dns_p, dns_s; 
-	struct ip_table *static_pool_tree;
-	char   *static_pool_net;
-	char   *static_pool_mask;
-	uint16_t ip_mtu;
-	LIST_ENTRY(dp_info) dpentries;
-}dp_info_t;
 
 /*
 - * Define type of Control Plane (CP)
@@ -135,7 +89,7 @@ typedef struct cp_config
 	uint8_t request_tries;
 	int request_timeout;    /* Request time out in milisecond */
 
-	app_config_t *appl_config;
+    spgw_config_profile_t *subscriber_rulebase;
 
 	/* IP_POOL_CONFIG Params */
 	struct in_addr ip_pool_ip;

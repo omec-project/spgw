@@ -32,6 +32,7 @@
 #include "upf_struct.h"
 #include "pfcp_cp_association.h"
 #include "ip_pool.h"
+#include "spgw_cpp_wrapper.h"
 
 
 #define GLOBAL_ENTRIES			"GLOBAL"
@@ -79,8 +80,6 @@
 extern struct ip_table *static_addr_pool;
 extern char* config_update_base_folder; 
 extern bool native_config_folder;
-const char *primary_dns = "8.8.8.8";
-const char *secondary_dns = "8.8.8.4";	
 cp_config_t *cp_config = NULL;
 
 void init_config(void) 
@@ -91,24 +90,6 @@ void init_config(void)
     if (cp_config == NULL) {
         rte_exit(EXIT_FAILURE, "Can't allocate memory for cp_config!\n");
     }
-
-    /* start - dynamic config */
-    cp_config->appl_config = (struct app_config *) calloc(1, sizeof(struct app_config));
-    if (cp_config->appl_config == NULL) {
-        rte_exit(EXIT_FAILURE, "Can't allocate memory for appl_config!\n");
-    }
-
-    /* Parse initial configuration file */
-    init_spgwc_dynamic_config(cp_config->appl_config);
-
-    /* Lets register config change hook */
-    char file[128] = {'\0'};
-    strcat(file, config_update_base_folder);
-    strcat(file, "app_config.cfg");
-    RTE_LOG_DP(DEBUG, CP, "Config file to monitor %s ", file);
-    register_config_updates(file);
-    /* end - dynamic config */
-
     config_cp_ip_port(cp_config);
 
 #ifdef USE_DNS_QUERY
@@ -116,6 +97,23 @@ void init_config(void)
 #endif /* USE_DNS_QUERY */
 
     init_cli_module(cp_config->cp_logger);
+
+
+    /* start - dynamic config */
+    cp_config->subscriber_rulebase = (spgw_config_profile_t *) calloc(1, sizeof(spgw_config_profile_t));
+    if (cp_config->subscriber_rulebase == NULL) {
+        rte_exit(EXIT_FAILURE, "Can't allocate memory for subscriber_rulebase!\n");
+    }
+
+    /* Parse initial configuration file */
+    cp_config->subscriber_rulebase = parse_subscriber_profiles_c("../config/subscriber_profiles.json");
+    switch_config(cp_config->subscriber_rulebase);
+
+    char file[128] = {'\0'};
+    strcat(file, config_update_base_folder);
+    strcat(file, "subscriber_profiles.json");
+    RTE_LOG_DP(DEBUG, CP, "Config file to monitor %s ", file);
+    register_config_updates(file);
 
     return;
 }
@@ -802,40 +800,10 @@ config_change_cbk(char *config_file, uint32_t flags)
 	 */
 	watch_config_change(config_file, config_change_cbk);
 
-	/* Lets first parse the current app_config.cfg file  */
-	struct app_config *new_cfg;
-	new_cfg = (struct app_config *) calloc(1, sizeof(struct app_config));
-	if (new_cfg == NULL) {
-		rte_exit(EXIT_FAILURE, "Failed to allocate memory for new_cfg!\n");
-	}
-
-	init_spgwc_dynamic_config(new_cfg);
-	/* Now compare whats changed and update our global application config */
-
-	/* Data plane Selection rules config modification
-	 *  Delete - Should not be removed. If removed then it will not delete the existing 
-	 *           subscribers associated with that dataplane 
-	 * 		    TODO : delete subscribers if DP going away 
-	 *  Add - New Rules can be added for existing dataplane or new rules for new dataplane 
-	 *        can be added at any time
-	 *  Modify Rules : Modifying existing rules may not have any impact on existing subscribers
-	 * 
-	 *  Correct way to remove any DP would be to make sure all the subscribers associated with 
-	 *  that DP are deleted first and then DP is removed. 
-	 *  
-	 * For now I am just going to switch to new config. Anyway its just selection of DPs 
-	 */
-	struct app_config *old_config = cp_config->appl_config;
-	cp_config->appl_config = new_cfg; /* switch to new config */ 
-	struct dp_info *np; 
-	np = LIST_FIRST(&old_config->dpList);
-	while (np != NULL) {
-		LIST_REMOVE(np, dpentries);
-		free(np); /* What if some upf is using this DP config ?. Then dont release it ? */
-		np = LIST_FIRST(&old_config->dpList);
-	}
-	free(old_config);
-	/* Everytime we add new config we need to add code here. How to react to config change  */
+	cp_config->subscriber_rulebase = parse_subscriber_profiles_c("../config/subscriber_profiles.json");
+    
+    switch_config(cp_config->subscriber_rulebase);
+    
 }
 
 void 
@@ -846,231 +814,11 @@ register_config_updates(char *file)
 	watch_config_change(file, config_change_cbk);
 }
 
-void 
-init_spgwc_dynamic_config(struct app_config *cfg )
-{
-	// Read the config file, parse it and fill passed cfg data structure 
-	const char *entry = NULL;
-	const char *entry1 = NULL;
-	const char *entry2 = NULL;
-	unsigned int num_dp_selection_rules = 0;
-	unsigned int index;
-	LIST_INIT(&cfg->dpList);
-
-	struct rte_cfgfile *file = rte_cfgfile_load(APP_CONFIG_FILE, 0);
-	if (NULL == file) {
-		RTE_LOG_DP(ERR, CP, "App config file is missing, ignore error...\n");
-		return;
-	}
-
-	entry = rte_cfgfile_get_entry(file, "GLOBAL", "DNS_PRIMARY");
-	if (entry == NULL) {
-		RTE_LOG_DP(INFO, CP, "DNS_PRIMARY default config is missing. \n");
-		entry = primary_dns;
-	}
-	if (inet_aton(entry, &cfg->dns_p) == 1) {
-		set_app_dns_primary(cfg);
-		RTE_LOG_DP(INFO, CP, "Global DNS_PRIMARY address is %s \n", inet_ntoa(cfg->dns_p));
-	} else {
-		// invalid address 
-		RTE_LOG_DP(ERR, CP, "Global DNS_PRIMARY address is invalid %s \n", entry);
-	}
-
-	entry = rte_cfgfile_get_entry(file, "GLOBAL", "DNS_SECONDARY");
-	if (entry == NULL) {
-		RTE_LOG_DP(INFO, CP, "DNS_SECONDARY default config is missing. \n");
-		entry = secondary_dns;
-	}
-	if(inet_aton(entry, &cfg->dns_s) == 1) {
-		set_app_dns_secondary(cfg);
-		RTE_LOG_DP(INFO, CP, "Global DNS_SECONDARY address is %s \n", inet_ntoa(cfg->dns_s));
-	} else {
-		// invalid address 
-		RTE_LOG_DP(ERR, CP, "Global DNS_SECONDARY address is invalid %s \n", entry);
-	}
-	uint16_t ip_mtu = DEFAULT_IPV4_MTU;
-	entry = rte_cfgfile_get_entry(file, "GLOBAL", "IPV4_MTU");
-	if (entry == NULL) {
-		RTE_LOG_DP(INFO, CP, "Global DP IP_MTU default global config is missing. Use default %d  \n",DEFAULT_IPV4_MTU);
-	} else {
-		ip_mtu = atoi(entry);
-		RTE_LOG_DP(INFO, CP, "Global DP IP_MTU set to  %d  \n",ip_mtu);
-	}
-
-	entry = rte_cfgfile_get_entry(file, "GLOBAL", "NUM_DP_SELECTION_RULES");
-	if (entry == NULL) {
-       		RTE_LOG_DP(ERR, CP, "NUM_DP_SELECTION_RULES missing from app_config.cfg file, abort parsing\n");
-       		return;
-	}
-   	RTE_LOG_DP(ERR, CP, "NUM_DP_SELECTION_RULES %s \n", entry);
-	num_dp_selection_rules = atoi(entry);
-
-	for (index = 0; index < num_dp_selection_rules; index++) {
-		static char sectionname[64] = {0};
-		struct dp_info *dpInfo = NULL;
-		dpInfo = (struct dp_info *)calloc(1, sizeof(struct dp_info));
-
-		if (dpInfo == NULL) {
-			RTE_LOG_DP(ERR, CP, "Could not allocate memory for dpInfo!\n");
-			return;
-		}
-		snprintf(sectionname, sizeof(sectionname),
-			 "DP_SELECTION_RULE_%u", index + 1);
-		entry = rte_cfgfile_get_entry(file, sectionname, "DPID");
-		if (entry) {
-			dpInfo->dpId = atoi(entry);
-		} else {
-			RTE_LOG_DP(ERR, CP, "DPID not found in the configuration file\n");
-		}
-
-		entry = rte_cfgfile_get_entry(file, sectionname, "DPNAME");
-		if (entry) {
-			strncpy(dpInfo->dpName, entry, DP_SITE_NAME_MAX);
-		} else {
-			RTE_LOG_DP(ERR, CP, "DPNAME not found in the configuration file\n");
-		}
-		RTE_LOG_DP(ERR, CP, "DPNAME %s configured \n", dpInfo->dpName);
-
-		struct dp_info *dpOld = NULL;
-		LIST_FOREACH(dpOld, &cp_config->appl_config->dpList, dpentries) {
-			if ((dpOld->dpId == dpInfo->dpId)) {
-				break;
-			}
-		}
- 
-
-		entry = rte_cfgfile_get_entry(file, sectionname, "MCC");
-		if (entry) {
-			// TODO : handle 2 digit mcc, mnc
-			RTE_LOG_DP(ERR, CP, "MCC length %lu found in the configuration file\n", strlen(entry));
-			dpInfo->key.mcc_mnc.mcc_digit_1 = (unsigned char )entry[0];
-			dpInfo->key.mcc_mnc.mcc_digit_2 = (unsigned char )entry[1];
-			dpInfo->key.mcc_mnc.mcc_digit_3 = (unsigned char )entry[2];
-			RTE_LOG_DP(ERR, CP, "MCC %d %d %d \n", dpInfo->key.mcc_mnc.mcc_digit_1, dpInfo->key.mcc_mnc.mcc_digit_2, dpInfo->key.mcc_mnc.mcc_digit_3);
-		} else {
-			RTE_LOG_DP(ERR, CP, "MCC not found in the configuration file\n");
-		}
-
-		entry = rte_cfgfile_get_entry(file, sectionname, "MNC");
-		if (entry) {
-			dpInfo->key.mcc_mnc.mnc_digit_1 = (unsigned char )entry[0];
-			dpInfo->key.mcc_mnc.mnc_digit_2 = (unsigned char )entry[1];
-			if(strlen(entry) == 2) {
-			  dpInfo->key.mcc_mnc.mnc_digit_3 = (unsigned char )0xf;
-			} else {
-			  dpInfo->key.mcc_mnc.mnc_digit_3 = (unsigned char )entry[2];
-			}
-			RTE_LOG_DP(ERR, CP, "MNC length %lu found in the configuration file\n", strlen(entry));
-			RTE_LOG_DP(ERR, CP, "MNC %d %d %d \n", dpInfo->key.mcc_mnc.mnc_digit_1, dpInfo->key.mcc_mnc.mnc_digit_2, dpInfo->key.mcc_mnc.mnc_digit_3);
-		} else {
-			RTE_LOG_DP(ERR, CP, "MNC not found in the configuration file\n");
-		}
-
-		entry = rte_cfgfile_get_entry(file, sectionname, "TAC");
-		if (entry) {
-			dpInfo->key.tac = atoi(entry);
-		} else {
-			RTE_LOG_DP(ERR, CP, "TAC not found in the configuration file\n");
-		}
-		LIST_INSERT_HEAD(&cfg->dpList, dpInfo, dpentries);
-
-		entry = rte_cfgfile_get_entry(file, sectionname , "DNS_PRIMARY");
-		if (entry == NULL) {
-			RTE_LOG_DP(INFO, CP, "DP(%s) DNS_PRIMARY default config is missing. \n", dpInfo->dpName);
-			entry = primary_dns;
-		}
-
-		if (inet_aton(entry, &dpInfo->dns_p) == 1) {
-			set_dp_dns_primary(dpInfo);
-			RTE_LOG_DP(INFO, CP, "DP(%s) DNS_PRIMARY address is %s \n", dpInfo->dpName, inet_ntoa(dpInfo->dns_p));
-		} else {
-			//invalid address
-			RTE_LOG_DP(ERR, CP, "DP (%s) DNS_PRIMARY address is invalid %s \n",dpInfo->dpName, entry);
-		}
-
-		entry = rte_cfgfile_get_entry(file, sectionname , "DNS_SECONDARY");
-		if (entry == NULL) {
-			RTE_LOG_DP(INFO, CP, "DP(%s) DNS_SECONDARY default config is missing. \n",dpInfo->dpName);
-			entry = secondary_dns;
-		}
-		if (inet_aton(entry, &dpInfo->dns_s) == 1) {
-			set_dp_dns_secondary(dpInfo);
-			RTE_LOG_DP(INFO, CP, "DP(%s) DNS_SECONDARY address is %s \n", dpInfo->dpName, inet_ntoa(dpInfo->dns_s));
-		} else {
-			//invalid address
-			RTE_LOG_DP(ERR, CP, "DP(%s) DNS_SECONDARY address is invalid %s \n",dpInfo->dpName, entry);
-		}
-
-        entry = rte_cfgfile_get_entry(file, sectionname , "IPV4_MTU");
-        if (entry == NULL) {
-                RTE_LOG_DP(INFO, CP, "DP(%s) IP_MTU default config is missing.  Use  %d  \n",dpInfo->dpName, ip_mtu);
-                dpInfo->ip_mtu = ip_mtu;
-        } else {
-                dpInfo->ip_mtu = atoi(entry);
-                RTE_LOG_DP(INFO, CP, "DP(%s) IP_MTU set to  %d \n",dpInfo->dpName, dpInfo->ip_mtu);
-        }
- 
-		bool static_pool_config_change = false;
-		bool first_time_pool_config = false;
-		entry1 = rte_cfgfile_get_entry(file, sectionname, "STATIC_IP_POOL_NET");
-		entry2 = rte_cfgfile_get_entry(file, sectionname, "STATIC_IP_POOL_MASK");
-		if(dpOld != NULL) {
-			if(entry1 == NULL || entry2 == NULL) {
-				if(dpOld->static_pool_net == NULL) {
-					//No old config, no new config.. 
-					RTE_LOG_DP(INFO, CP, "DP(%s) STATIC_IP_POOL is not configured \n", dpInfo->dpName);
-				} else if (dpOld->static_pool_net != NULL) {
-					// No new config but old config exist 
-					static_pool_config_change = true;
-					RTE_LOG_DP(ERR, CP, "DP(%s) STATIC_IP_POOL config removal not supported. Old config will be used = %s \n", dpInfo->dpName, dpOld->static_pool_net);
-				}
-			} else if (entry1 != NULL && entry2 != NULL) {
-				if(dpOld->static_pool_net == NULL) {
-					first_time_pool_config = true;
-				} else if (dpOld->static_pool_net != NULL) {
-					if(strcmp(dpOld->static_pool_net, entry1) != 0) {
-						static_pool_config_change = true;
-						RTE_LOG_DP(ERR, CP, "DP(%s) STATIC_IP_POOL config modification not supported. Old config(%s) New Config (%s). Continue to use old config \n",dpInfo->dpName, dpOld->static_pool_net, entry);
-					} else {
-						//no change in the pool config  
-						RTE_LOG_DP(INFO, CP, "DP(%s) STATIC_IP_POOL configuration not changed %s \n",dpInfo->dpName, entry1);
-					}
-				}
-			}
-			//Lets take old static config to new as is 
-			dpInfo->static_pool_tree = dpOld->static_pool_tree; // pointer copy 
-			dpInfo->static_pool_net = dpOld->static_pool_net; // pointer copy
-			dpInfo->static_pool_mask = dpOld->static_pool_mask; // pointer copy
-		} else if(entry1 != NULL && entry2 != NULL) {
-			first_time_pool_config = true;
-			RTE_LOG_DP(INFO, CP, "DP(%s) STATIC_IP_POOL configured  %s %s \n",dpInfo->dpName, entry1, entry2);
-		}
-
-		if(first_time_pool_config == true && static_pool_config_change == false) {
-			// first time edge configuration. Create pool 
-            struct in_addr pool_ip;
-            struct in_addr pool_mask; 
-            inet_aton(entry1, &pool_ip);
-            pool_ip.s_addr = ntohl(pool_ip.s_addr);
-            inet_aton(entry2, &pool_mask);
-            pool_mask.s_addr = ntohl(pool_mask.s_addr);
-			dpInfo->static_pool_tree = create_ue_pool(pool_ip, pool_mask);
-			RTE_LOG_DP(INFO, CP, "DP(%s) STATIC_IP_POOL %s initialized  \n", dpInfo->dpName, dpInfo->static_pool_net);
-            dpInfo->static_pool_net = calloc(1,20);
-            dpInfo->static_pool_mask = calloc(1,20);
-			strcpy(dpInfo->static_pool_net, entry1); 
-			strcpy(dpInfo->static_pool_mask, entry2); 
-		}
- 	}
-	return;
-}
-
 /* AJAY : for now I am using linux call to do the dns resolution...
  * Need to use DNS lib from epc tools */
-static
 struct in_addr native_linux_name_resolve(const char *name)
 {
-        printf("Function [%s] - Line - %d \n",__FUNCTION__,__LINE__);
+        printf("Function [%s] - Line - %d - %s - \n",__FUNCTION__,__LINE__,name);
         struct addrinfo hints;
         struct addrinfo *result=NULL, *rp=NULL;
         int err;
@@ -1104,213 +852,43 @@ struct in_addr native_linux_name_resolve(const char *name)
                 }
         }
         assert(0); /* temporary */
-	struct in_addr ip = {0};
+	    struct in_addr ip = {0};
         return ip;
 }
 
 upf_context_t*
-get_upf_context_for_key(struct dp_key *key, dp_info_t **dpInfo)
+get_upf_context_for_key(sub_selection_keys_t *key, sub_profile_t **sub_prof)
 {
-	struct in_addr ip = {0};
+    struct in_addr ip = {0};
 #if 0
-	RTE_LOG_DP(INFO, CP, "Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", key->mcc_mnc.mcc_digit_1,
-		   key->mcc_mnc.mcc_digit_2, key->mcc_mnc.mcc_digit_3, key->mcc_mnc.mnc_digit_1,
-		   key->mcc_mnc.mnc_digit_2, key->mcc_mnc.mnc_digit_3, key->tac);
-#else
-	printf("Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", key->mcc_mnc.mcc_digit_1,
-		   key->mcc_mnc.mcc_digit_2, key->mcc_mnc.mcc_digit_3, key->mcc_mnc.mnc_digit_1,
-		   key->mcc_mnc.mnc_digit_2, key->mcc_mnc.mnc_digit_3, key->tac);
+    printf("Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", key->mcc_mnc.mcc_digit_1,
+            key->mcc_mnc.mcc_digit_2, key->mcc_mnc.mcc_digit_3, key->mcc_mnc.mnc_digit_1,
+            key->mcc_mnc.mnc_digit_2, key->mcc_mnc.mnc_digit_3, key->tac);
 #endif
 
-	struct dp_info *np; // ajaytodo - add upf address 
-	LIST_FOREACH(np, &cp_config->appl_config->dpList, dpentries) {
-#if 0
-	RTE_LOG_DP(INFO, CP, "dp Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", np->key.mcc_mnc.mcc_digit_1,
-		   np->key.mcc_mnc.mcc_digit_2, np->key.mcc_mnc.mcc_digit_3, np->key.mcc_mnc.mnc_digit_1,
-		   np->key.mcc_mnc.mnc_digit_2, np->key.mcc_mnc.mnc_digit_3, np->key.tac);
-#else
-	printf("dp Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", np->key.mcc_mnc.mcc_digit_1,
-		   np->key.mcc_mnc.mcc_digit_2, np->key.mcc_mnc.mcc_digit_3, np->key.mcc_mnc.mnc_digit_1,
-		   np->key.mcc_mnc.mnc_digit_2, np->key.mcc_mnc.mnc_digit_3, np->key.tac);
-#endif
-		if(bcmp((void *)(&np->key.mcc_mnc), (void *)(&key->mcc_mnc), 3) != 0)
-			continue;
-		if(np->key.tac != key->tac)
-			continue;
-        *dpInfo = np; 
-		ip = native_linux_name_resolve(np->dpName); 
-        if(ip.s_addr != 0) 
+    sub_profile_t *sub_profile = match_sub_selection(key);
+    if(sub_profile == NULL)
+    {
+        return NULL;
+    }
+    *sub_prof = sub_profile;
+    user_plane_profile_t *upf_profile = sub_profile->up_profile; 
+    if(upf_profile == NULL)
+    {
+        return NULL;
+    }
+
+    ip = native_linux_name_resolve(upf_profile->user_plane_service); 
+    if(ip.s_addr != 0) 
+    {
+        upf_context_t *upf_context = get_upf_context(ip.s_addr);
+        if(upf_context != NULL)
         {
-            upf_context_t *upf_context = get_upf_context(ip.s_addr);
-            if(upf_context != NULL)
-            {
-                return upf_context;
-            }
-            create_upf_context(ip.s_addr, &upf_context);
             return upf_context;
         }
-	}
+        create_upf_context(ip.s_addr, &upf_context);
+        return upf_context;
+    }
+    printf("DNS Resolution failed %s \n",upf_profile->user_plane_profile_name);
 	return NULL; 
 }
-
-/* Given key find the DP. Once DP is found then return its dpId */
-uint32_t
-select_dp_for_key(struct dp_key *key)
-{
-#if 0
-	RTE_LOG_DP(INFO, CP, "Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", key->mcc_mnc.mcc_digit_1,
-		   key->mcc_mnc.mcc_digit_2, key->mcc_mnc.mcc_digit_3, key->mcc_mnc.mnc_digit_1,
-		   key->mcc_mnc.mnc_digit_2, key->mcc_mnc.mnc_digit_3, key->tac);
-#else
-	printf("Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", key->mcc_mnc.mcc_digit_1,
-		   key->mcc_mnc.mcc_digit_2, key->mcc_mnc.mcc_digit_3, key->mcc_mnc.mnc_digit_1,
-		   key->mcc_mnc.mnc_digit_2, key->mcc_mnc.mnc_digit_3, key->tac);
-#endif
-
-	struct dp_info *np; // ajaytodo - add upf address 
-	LIST_FOREACH(np, &cp_config->appl_config->dpList, dpentries) {
-#if 0
-	RTE_LOG_DP(INFO, CP, "dp Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", np->key.mcc_mnc.mcc_digit_1,
-		   np->key.mcc_mnc.mcc_digit_2, np->key.mcc_mnc.mcc_digit_3, np->key.mcc_mnc.mnc_digit_1,
-		   np->key.mcc_mnc.mnc_digit_2, np->key.mcc_mnc.mnc_digit_3, np->key.tac);
-#else
-	printf("dp Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", np->key.mcc_mnc.mcc_digit_1,
-		   np->key.mcc_mnc.mcc_digit_2, np->key.mcc_mnc.mcc_digit_3, np->key.mcc_mnc.mnc_digit_1,
-		   np->key.mcc_mnc.mnc_digit_2, np->key.mcc_mnc.mnc_digit_3, np->key.tac);
-#endif
-		if(bcmp((void *)(&np->key.mcc_mnc), (void *)(&key->mcc_mnc), 3) != 0)
-			continue;
-		if(np->key.tac != key->tac)
-			continue;
-		return np->dpId;
-	}
-	return DPN_ID; /* 0 is invalid DP */ 
-}
-
-
-struct in_addr
-fetch_dns_primary_ip(uint32_t dpId, bool *present)
-{
-	struct dp_info *dp;
-	struct in_addr dns_p = { .s_addr = 0 };
-	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
-		if ((dpId == dp->dpId) && (dp->flags & CONFIG_DNS_PRIMARY)) {
-			*present = true;
-			return dp->dns_p;
-		}
-	}
-	*present = get_app_primary_dns(cp_config->appl_config, &dns_p);
-	return dns_p;
-}
-
-struct in_addr
-fetch_dns_secondary_ip(uint32_t dpId, bool *present)
-{
-	struct dp_info *dp;
-	struct in_addr dns_s = { .s_addr = 0 };
-	LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
-		if ((dpId == dp->dpId) && (dp->flags & CONFIG_DNS_SECONDARY)) {
-			*present = true;
-			return dp->dns_s;
-		}
-	}
-	*present = get_app_secondary_dns(cp_config->appl_config, &dns_s);
-	return dns_s;
-}
-
-uint16_t
-fetch_dp_ip_mtu(uint32_t dpId)
-{
-       struct dp_info *dp;
-       LIST_FOREACH(dp, &cp_config->appl_config->dpList, dpentries) {
-               if ((dpId == dp->dpId)) {
-                       return dp->ip_mtu;
-               }
-       }
-       return DEFAULT_IPV4_MTU; /* Lets not crash. Return default */
-}
-
-
-/*
- * Set flag that Primary DNS config is available at Edge Site level. This should be called 
- * when primary DNS address is set in the PGW app level 
- */
-void set_dp_dns_primary(struct dp_info *dp) 
-{
-  dp->flags |= CONFIG_DNS_PRIMARY;
-}
-
-/*
- * Set flag that secondary DNS config is available at Edge Site level. This should be called 
- * when secondary DNS address is set in the PGW app level 
- */
-void set_dp_dns_secondary(struct dp_info *dp) 
-{
-  dp->flags |= CONFIG_DNS_SECONDARY;
-}
-
-/*
- * Set flag that primary DNS config is available at App level. This should be called 
- * when primary DNS address is set in the PGW app level 
- */
-
-void set_app_dns_primary(struct app_config *app) 
-{
-	app->flags |= CONFIG_DNS_PRIMARY;
-}
-
-/*
- *  Get primary DNS address if available in dns_p and return true.
- *  In case address is not available then return false
- */
-
-bool get_app_primary_dns(struct app_config *app, struct in_addr *dns_p)
-{
-	if (app->flags & CONFIG_DNS_PRIMARY) {
-		*dns_p = app->dns_p;
-		return true;
-	}
-	return false;
-}
-
-/*
- * Set flag that secondary DNS config is available at App level. This should be called 
- * when secondary DNS address is set in the PGW app level 
- */
-
-void set_app_dns_secondary(struct app_config *app) 
-{
-	app->flags |= CONFIG_DNS_SECONDARY;
-}
-
-/*
- *  Get secondary DNS address if available in dns_p and return true.
- *  In case address is not available then return false
- */
-
-bool get_app_secondary_dns(struct app_config *app, struct in_addr *dns_s)
-{
-	if (app->flags & CONFIG_DNS_SECONDARY) {
-		*dns_s = app->dns_s;
-		return true;
-	}
-	return false;
-}
-
-void
-set_ip_pool_ip(const char *ip_str)
-{
-	if (!inet_aton(ip_str, &cp_config->ip_pool_ip))
-		rte_panic("Invalid argument - %s - Exiting.", ip_str);
-	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_ip:  %s\n", inet_ntoa(cp_config->ip_pool_ip));
-}
-
-
-void
-set_ip_pool_mask(const char *ip_str)
-{
-	if (!inet_aton(ip_str, &cp_config->ip_pool_mask))
-		rte_panic("Invalid argument - %s - Exiting.", ip_str);
-	clLog(clSystemLog, eCLSeverityDebug,"ip_pool_mask: %s\n", inet_ntoa(cp_config->ip_pool_mask));
-}
-

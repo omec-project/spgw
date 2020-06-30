@@ -31,7 +31,7 @@ CFLAGS += -Werror=format-security
 CC := g++
 CFLAGS += -std=c++11 
 
-DEBUG = false
+DEBUG = true
 ifeq ($(DEBUG),true)
         CFLAGS += -g
 endif
@@ -68,7 +68,11 @@ install:
 
 clean:
 	@echo " Cleaning...";
+	-@rm -rf a.out
 	-@rm -rf $(OBJDIR)/
 	-@rm -f $(SPGW_LIBNAME)
 	-@rm -f $(TARGET_DIR)/lib/$(SPGW_LIBNAME)
+
+test:
+	gcc test_main.c -L/users/ajayonf/spgw.ajay/cpplib -lspgwcpputil
 

@@ -104,6 +104,7 @@ build_c3po_util()
 build_cpputil_lib()
 {
   echo "Building cpp util ..."
+  $SUDO apt-get install -y rapidjson-dev 
   pushd $SPGW_DIR/cpplib
   make clean
   make

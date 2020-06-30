@@ -3345,7 +3345,7 @@ process_create_sess_req(create_sess_req_t *csr,
 	ue_context_t *context = NULL;
 	eps_bearer_t *bearer = NULL;
 	pdn_connection_t *pdn = NULL;
-    bool static_addr_pdn;
+    bool static_addr_pdn = false;
     /* ajay - Should we get default context ?*/
     upf_context_t *upf_context=NULL; 
 
@@ -3358,22 +3358,21 @@ process_create_sess_req(create_sess_req_t *csr,
 // DNS would need changes here 
 #ifdef MULTI_UPFS
     /* TODO - IE presense should be validated before accessing them */
-    struct dp_key dpkey = {0};
-    dp_info_t *dpInfo=NULL;
-    dpkey.tac = csr->uli.tai2.tai_tac;
+    sub_profile_t *sub_prof=NULL;
+    sub_selection_keys_t dpkey = {0}; 
+    dpkey.plmn.is_valid = true;
+    dpkey.plmn.tac = csr->uli.tai2.tai_tac;
+    memcpy((void *)(&dpkey.plmn.plmn[0]), (void *)(&csr->uli.tai2), 3);
     printf("csr uli mcc %d %d %d  mnc %d %d %d \n", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
-
-    memcpy((void *)(&dpkey.mcc_mnc), (void *)(&csr->uli.tai2), 3);
-
-	/* TODO : more work if SGW call Vs PGW call */
-    upf_context = get_upf_context_for_key(&dpkey, &dpInfo); 
+    
+    upf_context = get_upf_context_for_key(&dpkey, &sub_prof); 
+    
     // no upf available 
     if(upf_context == NULL) 
     {
         return GTPV2C_CAUSE_REQUEST_REJECTED;
     }
     *upf_ipv4 = upf_context->upf_sockaddr.sin_addr;
-    upf_context->dp_info = dpInfo; // upf context needs to point the config dpInfo object 
 
     printf("Selected UPF address  %s \n", inet_ntoa(*upf_ipv4));
 #endif
@@ -3389,11 +3388,13 @@ process_create_sess_req(create_sess_req_t *csr,
         struct in_addr *paa_ipv4 = (struct in_addr *) &csr->paa.pdn_addr_and_pfx[0];
         if (csr->paa.pdn_type == PDN_IP_TYPE_IPV4 && paa_ipv4->s_addr != 0) {
             bool found = false;
+#ifdef STATIC_ADDR_ALLOC
 #ifdef MULTI_UPFS
             if (dpInfo != NULL)
                 found = reserve_ip_node(dpInfo->static_pool_tree, *paa_ipv4);
 #else
             found = reserve_ip_node(static_addr_pool, *paa_ipv4);
+#endif
 #endif
             if (found == false) {
                 RTE_LOG_DP(DEBUG, CP, "Received CSReq with static address %s"
@@ -3422,7 +3423,7 @@ process_create_sess_req(create_sess_req_t *csr,
 	if (ret)
 		return ret;
 
-
+    context->sub_prof = sub_prof;
 	if (csr->mei.header.len)
 		memcpy(&context->mei, &csr->mei.mei, csr->mei.header.len);
 
