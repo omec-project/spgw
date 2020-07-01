@@ -19,7 +19,7 @@
 #include "gtp_messages_decoder.h" // Added new
 #include "gtp_messages_encoder.h" // Added new
 
-#define MAX_GTPV2C_LENGTH (MAX_GTPV2C_UDP_LEN-12) // sizeof(struct gtpc_t)) ajay
+#define MAX_GTPV2C_LENGTH (MAX_GTPV2C_UDP_LEN-12) 
 
 #ifdef USE_REST
 uint8_t rstCnt;

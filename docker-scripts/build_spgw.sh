@@ -101,12 +101,22 @@ build_c3po_util()
   popd
 }
 
+build_cpputil_lib()
+{
+  echo "Building cpp util ..."
+  pushd $SPGW_DIR/cpplib
+  make clean
+  make
+  $SUDO make install
+  ls -l $SPGW_DIR/cpplib/target/lib
+  popd
+}
 
 build_spgw()
 {
 	pushd $SPGW_DIR
 	source setenv.sh
-
+    build_cpputil_lib
    	build_c3po_util
 	build_pfcp_lib
 

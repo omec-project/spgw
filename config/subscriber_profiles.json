@@ -1,0 +1,169 @@
+{
+  "subscriber-selection-rules": [
+    {
+      "priority": 10,
+      "keys": {
+        "imsi-range": {
+          "from": 400000000000000,
+          "to": 499999999999999
+        }
+      },
+      "selected-apn-profile": "apn_profile1",
+      "selected-user-plane-profile": "user_plane1",
+      "selected-qos-profile": "mobile",
+      "selected-access-profile": [
+        "access-all"
+      ]
+    },
+    {
+      "priority": 11,
+      "keys": {
+        "imsi-range": {
+          "from": 208010000000000,
+          "to": 399999999999999
+        },
+        "serving-plmn": {
+          "mcc": 208,
+          "mnc": 10,
+          "tac": 1
+        },
+        "requested-apn": "mme-selected-apn"
+      },
+      "selected-apn-profile": "apn_profile2",
+      "selected-user-plane-profile": "user_plane2",
+      "selected-qos-profile": "low-bw-iot",
+      "selected-access-profile": [
+        "access-apps"
+      ]
+    },
+    {
+      "priority": 12,
+      "keys": {
+        "imsi-range": {
+          "from": 208010000000000,
+          "to": 399999999999999
+        },
+        "serving-plmn": {
+          "mcc": 208,
+          "mnc": 10,
+          "tac": 1
+        }
+      },
+      "selected-apn-profile": "apn_profile2",
+      "selected-user-plane-profile": "user_plane2",
+      "selected-qos-profile": "mobile",
+      "selected-access-profile": [
+        "access-all"
+      ]
+    },
+    {
+      "_comment_": "No key means this is default selection",
+      "priority": 1000,
+      "selected-apn-profile": "_default_apn_profile_",
+      "selected-user-plane-profile": "_default_user_plane_",
+      "selected-qos-profile": "mobile",
+      "selected-access-profile": ["access-all"]
+    }
+  ],
+  "apn-profiles": {
+    "_default_apn_profile_": {
+      "apn-name": "internet",
+      "dns_primary": "8.8.8.4",
+      "dns_secondary": "8.8.8.8",
+      "mtu": 1460,
+      "gx_enabled": false
+    },
+    "apn_profile1": {
+      "apn-name": "internet",
+      "usage": 1,
+      "network": "lbo",
+      "gx_enabled": true,
+      "dns_primary": "8.8.8.4",
+      "dns_secondary": "8.8.8.8",
+      "mtu": 1460
+    },
+    "apn_profile2": {
+      "apn-name": "intranet",
+      "usage": 1,
+      "network": "lbo",
+      "dns_primary": "8.8.8.4",
+      "dns_secondary": "8.8.8.8",
+      "mtu": 1460,
+      "gx_enabled": false
+    }
+  },
+  "user-plane-profiles": {
+    "_default_user_plane_": {
+      "user-plane": "spgwu.headless",
+      "qos-tags":[],
+      "access-tags": []
+    },
+    "user_plane1": {
+      "user-plane": "spgwu1.headless",
+      "qos-tags":[],
+      "access-tags": []
+    },
+    "user_plane2": {
+      "user-plane": "spgwu2.headless",
+      "qos-tags":[],
+      "access-tags": []
+
+    },
+    "user_plane3": {
+      "user-plane": "spgwu3.headless",
+      "qos-tags":[],
+      "access-tags": []
+    }
+  },
+  "qos-profiles": {
+    "low-bw-iot": {
+      "apn-ambr": [
+        4096,
+        4096
+      ]
+    },
+    "high-bw-iot": {
+      "apn-ambr": [
+        1234567,
+        1234567
+      ]
+    },
+    "mobile": {
+      "apn-ambr": [
+        12345678,
+        12345678
+      ]
+    },
+    "fixed-broadband": {
+      "apn-ambr": [
+        12345678,
+        12345678
+      ]
+    }
+  },
+  "access-profiles": {
+    "access-all": {
+      "type": "allow-all"
+    },
+    "internet-only": {
+      "type": "internet-only",
+      "filter": "No_private_network"
+    },
+    "intranet-only": {
+      "type": "intranet-only",
+      "filter": "only_private_network"
+    },
+    "apps-only": {
+      "type": "specific-network",
+      "filter": "only_apps_network"
+    },
+    "specific-app": {
+      "type": "specific-destination-only",
+      "filter": "allow-app-name"
+    },
+    "excluding-app": {
+      "type": "excluding-this-app",
+      "filter": "exclude-app-name"
+    }
+  }
+}

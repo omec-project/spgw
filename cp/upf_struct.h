@@ -48,7 +48,6 @@ typedef struct ue_context_key context_key;
 typedef struct upf_context {
     struct sockaddr_in upf_sockaddr;
 	char fqdn[MAX_HOSTNAME_LENGTH];
-    struct dp_info *dp_info;
 	pfcp_assoc_status_en	assoc_status;
 	uint16_t up_supp_features;
 	uint8_t  cp_supp_features;

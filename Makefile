@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-DIRS-y =  lib libgtpv2c libpfcp cp dp test
+DIRS-y =  lib cpplib libgtpv2c libpfcp cp dp test
 
 #define targets
 CLEANDIRS-y = $(DIRS-y:%=clean-%)
