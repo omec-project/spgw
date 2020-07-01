@@ -266,38 +266,5 @@ variables in the script.
     -   NG40_DIR - ng40 test directory
     -   NG40_HOST - hostname/ip of ng40 server
 
-8. Known Issues and limitations
------------------------------
--       The current tested ADC rules are not fully conformant to 3GPP release 12 ADC AVPs.
--       ARP handling supported under KNI-Linux
--       ICMP supported under KNI-Linux
--       IPV4 fragmentation and option header not supported.
--       IPSec not supported.
--       Only ethernet v2 frame format is supported.
--       Logic issues found in prepare_acl_parameter() in dp/acl.c
--       ACL context's (struct rte_acl_ctx) trans_table parameter is not being checked
-        for NULL by dpdk. trans_table may appear as NULL during handling of stray GTP
-        packets by DP.
--       Updates to filter packets arriving at the S1U and SGI interfaces for
-        processing by linux. ARP Packets OR
-        packets w/ dest address = {[S1U_IP, SGI_IP]; MULTICAST ADDR; BROADCAST ADDR}
-        are sent to Linux for processing. All other packets are sent to the UL or DL
-        fast path cores for processing. These enhancements need to be tested for following,
-                1- To be tested with targeted packets
-                2- To be tested with S1U and SGI GW configuration
--       Addressed htonl byte order conversion issues, however the following items need to be addressed,
-                1- Some inconsistencies continue to remain in these fields
-                   @~/interface/interface.c::zmq_mbuf_process::CREATE_SESSION, MODIFY_SESSION,
-                   DELETE_SESSION. These needs to be addressed over test scenarios/setups.
-                2- Byte order changes to ~/cp/gtpv2c_messages/modify_bearer.c, delete_session.c need
-                   to be thoroughly tested.
-                3- This patch has NOT been tested for SGWC-SGWU, PGWC-PGWU, and dedicated bearer
-                   configurations/test scenarios. Hence byte order changes to
-                   ~/cp/gtpv2c_messages/create_bearer.c, create_s5s8_session.c,
-                   delete_bearer.c, delete_s5s8_session.c have not been tested.
--		For running ngic-rtc without kni STATIC_ARP must be enabled in the Makefile.
-		ether.c::construct_ether_hdr(...) needs linux (kni) support to ARP discover S1U, SGI peer MAC.
 
--		Without KNI option is only for preformance profiling. There is no support for:
-		    - SGW-PGW separaton not suported in wokni option
-		    - DP_DDN
+

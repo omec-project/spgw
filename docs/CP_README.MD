@@ -325,6 +325,25 @@ would require the following (list may be incomplete):
 * Packet generator to correctly populate appropriate fields (GTP TEID, UE IP)
   according to deterministic provisioning of TEID and IP addresses by the
   Control Plane.
+
+8. Known Issues and limitations Control Plane
+-----------------------------
+- Peer failure detection. 
+- The Control Plane will assign UE IP addresses according to the command line
+  parameters *ip_pool_ip* and *ip_pool_mask*, starting at the highest IP
+  address, decrementing for each successive UE.
+
+          For ip_pool_ip = 16.0.0.0 and ip_pool_mask = 255.0.0.0, and UE i
+          E.g. UE_IP(0) = 16.255.255.255
+          E.g. UE_IP(1) = 16.255.255.254
+          E.g. UE_IP(2) = 16.255.255.253   ... and so on
+- The Control Plane will assign default bearers'
+  S1-U SGW GTP TEIDs for some UE *i* according to
+
+          S11_SGW_GTPC_TEID_DEF(i) = byteswap(S11_SGW_GTPC_TEID(i)) | 0xf0
+          E.g. S11_SGW_GTPC_TEID_DEF(0) = 0xeeffc0f0
+          E.g. S11_SGW_GTPC_TEID_DEF(1) = 0xefffc0f0
+          E.g. S11_SGW_GTPC_TEID_DEF(2) = 0xf0ffc0f0   ... and so on
 * The S11 SGW GTP-C TEID is assigned to UE *i*, where *i* indicates that *i*
   UEs had attached prior to *i*, according to:
 
@@ -333,112 +352,7 @@ would require the following (list may be incomplete):
           E.g. S11_SGW_GTPC_TEID(1) = 0xefffc000
           E.g. S11_SGW_GTPC_TEID(2) = 0xf0ffc000   ... and so on
 
-* The Control Plane will associate this S11 SGW GTPC TEID value with the PDN
-  connection. Thus, any further message received by the control plane
-  referring to this PDN connection must contain this TEID in the GTPv2c
-  header. This includes the Modify Bearer Message. (Note: piggybacking of
-  GTPv2c messages is not currently supported.)
-
-* The Control Plane will assign default bearers'
-  S1-U SGW GTP TEIDs for some UE *i* according to
-
-          S11_SGW_GTPC_TEID_DEF(i) = byteswap(S11_SGW_GTPC_TEID(i)) | 0xf0
-          E.g. S11_SGW_GTPC_TEID_DEF(0) = 0xeeffc0f0
-          E.g. S11_SGW_GTPC_TEID_DEF(1) = 0xefffc0f0
-          E.g. S11_SGW_GTPC_TEID_DEF(2) = 0xf0ffc0f0   ... and so on
-
-* The Control Plane will assign UE IP addresses according to the command line
-  parameters *ip_pool_ip* and *ip_pool_mask*, starting at the highest IP
-  address, decrementing for each successive UE.
-
-          For ip_pool_ip = 16.0.0.0 and ip_pool_mask = 255.0.0.0, and UE i
-          E.g. UE_IP(0) = 16.255.255.255
-          E.g. UE_IP(1) = 16.255.255.254
-          E.g. UE_IP(2) = 16.255.255.253   ... and so on
-
-
-4. CP-FPC Lifecycle (When built with SDN_ODL_BUILD flag)
-----------------------------
-
-##### 4.1 CP-FPC Communication
-
-The CP and FPC ODL Plugin communicate entirely over HTTP. Messages are
-communicated over four different connections. Three of these connections remain
-active throughout the lifespan of the CP and FPC. These connections utilize
-[Server-Sent Events](https://www.w3.org/TR/eventsource/) (SSE) sending message
-using [HTTP Chunked Transfer Encoding](https://tools.ietf.org/html/rfc7230#section-4.1).
-The remaining connetion is a one-time HTTP-GET request for the DPN topology
-made to the FPC ODL Plugin.
-
-
-##### 4.2 CP-FPC Lifecycle Message Time Sequence
-
-
-                            CP                                                              FPC
-                            |                                                                |
-                            |- 1a POST http://<fpc_ip>:<fpc_port>/resposne ----------------->|
-                            |   {"client-uri":"http://<cp_ip>:<cp_port>/request"}            |
-        Resposne SSE Stream |<---------------------------------------- 1b HTTP-OK -----------|
-                            |                                                                |
-                            |                                                                |
-                            |<------------ 2a GET http://<cp_ip>:<cp_port>/resposne ---------|
-                            |- 2a HTTP-OK -------------------------------------------------->| Request SSE Stream
-                            |                                                                |
-                            |                                                                |
-                            |- 3a Bind Client ---------------------------------------------->| Request SSE Stream
-        Resposne SSE Stream |<------------------------------------- 3b Bind Client Response  |
-                            |                                                                |
-                            |                                                                |
-                            |- 4a POST http://<fpc_ip>:<fpc_port>/notification ------------->|
-                            |   {"client-id":"<client_id>"}                                  |
-    Notification SSE Stream |<------------------------------------------------ 4b HTTP-OK ---|
-                            |                                                                |
-                            |                                                                |
-                            |- 5a Get http://<fpc_ip>:<fpc_topology_port>/<topology-path> -->|
-                            |<----------------------------------------------- 5b Topology ---|
-                            //                                                               //
-                            //                 Completion of CP Lifecycle                    //
-                            //                                                               //
-    Notification SSE Stream |<---------------------------------------------- 6 DPN-Available-|
-                            //                                                               //
-                            //       DPN Installed - Ready for Session Establishment         //
-                            //                                                               //
-                            |                                                                |
-                            |- 7a. Create Session------------------------------------------->| Request SSE Stream
-        Resposne SSE Stream |<---------------------------------------- 7b OK-Notify-Follows--|
-    Notification SSE Stream |<------------------------------ 7c Config-Notification-Result---|
-                            |                                                                |
-                            |- 8a. Create Session------------------------------------------->| Request SSE Stream
-        Resposne SSE Stream |<---------------------------------------- 8b OK-Notify-Follows--|
-    Notification SSE Stream |<------------------------------ 8c Config-Notification-Result---|
-                            //                                                               //
-    Notification SSE Stream |<-------------------------------------------- 9 DPN-Unavailable-|
-                            //                                                               //
-                            |- 10 Unbind Client -------------------------------------------->| Request SSE Stream
 
 
 
-5. Control Plane Limitations
-----------------------------
 
-* Error Handling of S11 messages is restricted to detection. In many cases, 3GPP
-  TS 29.274 requires the generation of responses to the MME that indicate error.
-* The Control Plane expects signaling messages to arrive consisting of
-  Information Elements that may be inconsistent with specification. Behavior is
-  unknown with untested MMEs.
-* A number of features are currently unsupported, such as unauthenticated IMSI
-  device connection.
-* GTPv2c Piggybacking is unsupported
-* The Control Plane does not currently implement the Recovery/Restart Counter
-  according to specification. Rather, this value will always be zero.
-* Due to the S11 interface operating over the UDP protocol, messages may be
-  dropped if the rate of message arrival exceeds processing rate. When the
-  Control Plane is compiled with SDN support utilizing the CURL library, the
-  processing rate drops considerably. With the Control Plane is compiled for use
-  of the cp_dp_api utilizing UDP, performance has indicated that in excess of
-  1000 UE's may perform an Initial Attach as well as UE-Initiated Dedicated
-  Bearer Establishments per second on an Ubuntu 14.04 system with a Intel(R)
-  Xeon(R) CPU E5-2699 v4 @ 2.20GHz. With the Initial Attach Procedure consisting
-  of 4 messages, and UE-Initiated Dedicated Bearer Establishment consisting of
-  3 messages, this results in 7000 signaling messages per second over the S11
-  interface.
