@@ -6,7 +6,6 @@
 
 #include <stdint.h>
 #include "gx.h"
-#include "gx_app_interface.h"
 #include "ipc_api.h"
 
 extern int g_gx_client_sock;

@@ -15,6 +15,13 @@
 
 spgwConfigStore *config;
 
+bool 
+compare_sub_rules(const sub_selection_rule_t *rule1, const sub_selection_rule_t *rule2)
+{
+    if(rule1->rule_priority < rule2->rule_priority)
+        return true;
+    return false;
+}
 spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jsonFile)
 {
     std::cout<<"parsing config in class function "<<std::endl;
@@ -172,6 +179,13 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
             std::cout<<"Number of selection rules "<<config_store->sub_sel_rules.size()<<std::endl;
             std::cout<<std::endl;
         }
+        config_store->sub_sel_rules.sort(compare_sub_rules);
+        std::list<sub_selection_rule_t *>::iterator it;
+        for (it=config_store->sub_sel_rules.begin(); it!=config_store->sub_sel_rules.end(); ++it)
+        {
+            sub_selection_rule_t *rule = *it;
+            printf("Searching rule %d \n", rule->rule_priority);
+        }
     }
     if(doc.HasMember("apn-profiles"))
     {
@@ -240,6 +254,7 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
         {
             std::string key = itr->name.GetString();
             user_plane_profile_t *user_plane = new (user_plane_profile_t);
+            user_plane->upf_addr = 0;
             const rapidjson::Value& userPlaneSection = itr->value; 
             strcpy(user_plane->user_plane_profile_name, key.c_str());
             if(userPlaneSection.HasMember("user-plane"))
@@ -295,7 +310,6 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
     return temp_config;
 }
 
-// TODO - ajay - rules should be arranged as per pririty ascending order 
 sub_profile_t* 
 spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
 {

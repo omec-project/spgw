@@ -74,7 +74,7 @@ typedef struct cp_config
 	uint16_t pfcp_port;
 
 	/* User-Plane IPs and Ports Params. */
-	uint16_t upf_pfcp_port;  /* ajay -this should not be part of this config at all  */
+	uint16_t upf_pfcp_port;  
 	struct in_addr upf_pfcp_ip;
 
 	/* logger parameter */

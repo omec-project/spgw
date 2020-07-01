@@ -49,6 +49,7 @@ typedef struct user_plane_profile
 {
     char user_plane_profile_name[64];
     char user_plane_service[64];
+    uint32_t upf_addr; /* run time information */
 }user_plane_profile_t;
 
 typedef struct apn_profile 

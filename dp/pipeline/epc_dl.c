@@ -112,7 +112,7 @@ static inline void epc_dl_set_port_id(struct rte_mbuf *m)
 	*port_id_offset = 1;
 
 	/* Flag ARP pkt for linux handling */
-	if (eh->ether_type == rte_cpu_to_be_16(ETHER_TYPE_ARP)) // || // AJAY : check this carefully 
+	if (eh->ether_type == rte_cpu_to_be_16(ETHER_TYPE_ARP)) // || 
 //			ipv4_hdr->next_proto_id == IPPROTO_ICMP)
 	{
 		printf("%s %d \n",__FUNCTION__,__LINE__);

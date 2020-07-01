@@ -50,7 +50,6 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 				tmp_arp_key.ip = app.s1u_gw_ip;
 				struct in_addr nxt;
 				nxt.s_addr = app.s1u_gw_ip;
-				/* ajay - who does routing when  s1u gw ip address is not configured */ 
 				printf("downlink need mac for %s\n",inet_ntoa(nxt));
 			}
 		} else if(portid == app.sgi_port) {
@@ -59,7 +58,6 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 				tmp_arp_key.ip = app.sgi_gw_ip;
 				struct in_addr nxt;
 				nxt.s_addr = app.sgi_gw_ip;
-				/* ajay - who does routing when  s1u gw ip address is not configured */ 
 				printf("uplink need mac for %s \n",inet_ntoa(nxt));
 			}
 		}
@@ -122,7 +120,6 @@ int construct_ether_hdr(struct rte_mbuf *m, uint8_t portid,
 		printf("Get arp for 0x%x incomplete  \n",tmp_arp_key.ip);
 
 #ifndef STATIC_ARP
-		/* AJAY: TODO WE have this code STATIC_ARP is not defined. */
         printf("dynamic arp %s - %d \n",__FUNCTION__,__LINE__);
 		clLog(clSystemLog, eCLSeverityInfo, "Sendto:: ret_arp_data->ip= %s\n",
 					inet_ntoa(*(struct in_addr *)&ret_arp_data->ip));

@@ -169,17 +169,9 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 		eps_bearer_t *bearer)
 {
 	uint8_t ebi_index = 0;
-	int ret = 0;
 	struct in_addr ip = {0};
-	upf_context_t *upf_ctx = NULL;
+	upf_context_t *upf_ctx = context->upf_ctxt;;
 	create_sess_rsp_t cs_resp = {0};
-
-    /* AJAY - todo - redudadant ? */
-	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
-			&upf_ctx)) < 0) {
-		clLog(s11logger, eCLSeverityCritical, "%s:Error:%d\n", __func__, ret);
-		return;
-	}
 
 	set_gtpv2c_teid_header((gtpv2c_header_t *)&cs_resp.header,
 			GTP_CREATE_SESSION_RSP, context->s11_mme_gtpc_teid,

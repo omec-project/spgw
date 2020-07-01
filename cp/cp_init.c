@@ -244,7 +244,6 @@ void init_cp(void)
 
 	init_pfcp();
 
-	/* AJAY : passing correct spgw service config in container image */
 	switch (cp_config->cp_type) {
 	case SGWC:
 		init_s11();

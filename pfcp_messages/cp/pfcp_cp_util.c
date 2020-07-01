@@ -351,7 +351,6 @@ dns_query_lookup(pdn_connection_t *pdn, uint32_t **upf_ip)
 {
 	upfs_dnsres_t *entry = NULL;
 
-	// Ajay : csreq leads us to here
 	if (get_upf_list(pdn) == 0){
 		 clLog(sxlogger, eCLSeverityCritical, "%s:%d Error:\n",
 			    __func__, __LINE__);

@@ -7,7 +7,6 @@
 #ifndef PFCP_H
 #define PFCP_H
 
-#ifdef CP_BUILD
 #include "gx_app/include/gx_struct.h"
 #include "pfcp_struct.h"
 #include "pfcp_cp_struct.h"
@@ -355,5 +354,4 @@ int8_t
 compare_default_bearer_qos(bearer_qos_ie *default_bearer_qos,
 		bearer_qos_ie *rule_qos);
 
-#endif /* CP_BUILD */
 #endif /* PFCP_H */

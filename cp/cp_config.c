@@ -187,7 +187,7 @@ config_cp_ip_port(cp_config_t *cp_config)
         }else if (strncmp(S11_IPS, global_entries[i].name,
                     strlen(S11_IPS)) == 0) {
 
-            /* TODO - ajay mme address is not required to be configured at SPGW */
+            /* TODO mme address is not required to be configured at SPGW */
             inet_aton(global_entries[i].value,
                     &(cp_config->s11_ip));
 
@@ -258,7 +258,7 @@ config_cp_ip_port(cp_config_t *cp_config)
         } else if (strncmp(UPF_PFCP_IPS , global_entries[i].name,
                     strlen(UPF_PFCP_IPS)) == 0) {
 
-            /* ajay - this should be part of static upf config list */
+            /* This is used in case DNS is not used and MULTI UPF is not configured*/
             inet_aton(global_entries[i].value,
                     &(cp_config->upf_pfcp_ip));
 
@@ -813,10 +813,13 @@ register_config_updates(char *file)
 	watch_config_change(file, config_change_cbk);
 }
 
-/* AJAY : for now I am using linux call to do the dns resolution...
- * Need to use DNS lib from epc tools */
+/* Requirement: 
+ * For now I am using linux system call to do the service name dns resolution...
+ * 3gpp based DNS lookup of NRF support would be required to locate UPF. 
+ */
 struct in_addr native_linux_name_resolve(const char *name)
 {
+	    struct in_addr ip = {0};
         printf("Function [%s] - Line - %d - %s - \n",__FUNCTION__,__LINE__,name);
         struct addrinfo hints;
         struct addrinfo *result=NULL, *rp=NULL;
@@ -830,7 +833,6 @@ struct in_addr native_linux_name_resolve(const char *name)
         hints.ai_canonname = NULL;
         hints.ai_addr = NULL;
         hints.ai_next = NULL;
-	/* ajaytodo : get address only once.. on error we can try to get the error again.. */
         err = getaddrinfo(name, NULL, &hints, &result);
         if (err != 0)
         {
@@ -850,8 +852,7 @@ struct in_addr native_linux_name_resolve(const char *name)
                         }
                 }
         }
-        assert(0); /* temporary */
-	    struct in_addr ip = {0};
+        printf("Function [%s] - Line - %d - %s - name resolution failed \n",__FUNCTION__,__LINE__,name);
         return ip;
 }
 
@@ -859,12 +860,6 @@ upf_context_t*
 get_upf_context_for_key(sub_selection_keys_t *key, sub_profile_t **sub_prof)
 {
     struct in_addr ip = {0};
-#if 0
-    printf("Key - MCC = %d%d%d MNC %d%d%d TAC = %d\n", key->mcc_mnc.mcc_digit_1,
-            key->mcc_mnc.mcc_digit_2, key->mcc_mnc.mcc_digit_3, key->mcc_mnc.mnc_digit_1,
-            key->mcc_mnc.mnc_digit_2, key->mcc_mnc.mnc_digit_3, key->tac);
-#endif
-
     sub_profile_t *sub_profile = match_sub_selection(key);
     if(sub_profile == NULL)
     {
@@ -877,17 +872,21 @@ get_upf_context_for_key(sub_selection_keys_t *key, sub_profile_t **sub_prof)
         return NULL;
     }
 
-    ip = native_linux_name_resolve(upf_profile->user_plane_service); 
-    if(ip.s_addr != 0) 
+    if(upf_profile->upf_addr == 0)
+    {
+        ip = native_linux_name_resolve(upf_profile->user_plane_service); 
+        upf_profile->upf_addr = ip.s_addr; 
+    }
+    if(upf_profile->upf_addr != 0) 
     {
         upf_context_t *upf_context = get_upf_context(ip.s_addr);
         if(upf_context != NULL)
         {
             return upf_context;
         }
-        create_upf_context(ip.s_addr, &upf_context);
+        create_upf_context(upf_profile->upf_addr, &upf_context);
         return upf_context;
     }
-    printf("DNS Resolution failed %s \n",upf_profile->user_plane_profile_name);
+    printf("DNS Resolution failed Profile - %s and Service name  %s \n",upf_profile->user_plane_profile_name, upf_profile->user_plane_service);
 	return NULL; 
 }

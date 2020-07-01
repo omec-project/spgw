@@ -82,24 +82,6 @@ typedef struct pfcp_context_t{
 
 } pfcp_context_t;
 
-pfcp_context_t pfcp_ctxt;
-
-
-
-/* Need to use this for upf_context */
-extern uint32_t	*g_gx_pending_csr[BUFFERED_ENTRIES_DEFAULT];
-extern uint32_t	g_gx_pending_csr_cnt;
-
-/* TODO - ajay need to move this gx specific file separately */
-/**
- * @brief  : Maintains the Context for Gx interface
- */
-typedef struct gx_context_t {
-	uint8_t state;
-	uint8_t proc;
-	char gx_sess_id[MAX_LEN];
-	unsigned long  rqst_ptr; /*In Case of RAA, need to store RAR pointer*/
-} gx_context_t;
 
 /**
  * @brief  : Maintains results returnd via dns for upf
@@ -1074,24 +1056,6 @@ upf_context_entry_add(uint32_t *upf_ip, upf_context_t *entry);
  */
 int
 upf_context_entry_lookup(uint32_t upf_ip, upf_context_t **entry);
-
-/**
- * @brief  : Add entry into gx context hash
- * @param  : sess_id , key to add entry
- * @param  : entry , entry to be added
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-gx_context_entry_add(char *sess_id, gx_context_t *entry);
-
-/**
- * @brief  : search entry in gx context hash
- * @param  : sess_id , key to add entry
- * @param  : entry , entry to be added
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-gx_context_entry_lookup(char *sess_id, gx_context_t **entry);
 
 /**
  * @brief  : Create s5s8 hash table in sgwc

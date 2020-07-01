@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 #include "pfcp.h"
-#include "gx_app_interface.h"
+#include "gx_interface.h"
 #include "sm_enum.h"
 #include "sm_hand.h"
 #include "cp_stats.h"

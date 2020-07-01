@@ -12,7 +12,7 @@
 #include "gtpv2c_error_rsp.h"
 #include "clogger.h"
 #include "rte_hash_crc.h"
-#include "pfcp_cp_set_ie.h" // ajay - upf context should be part of differnt file 
+#include "pfcp_cp_set_ie.h" 
 #include "upf_struct.h"
 #include "cp_interface.h"
 #include "sm_structs_api.h"
