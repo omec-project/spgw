@@ -22,7 +22,6 @@
 #include <rte_malloc.h>
 #include <rte_jhash.h>
 #include <rte_hash.h>
-
 #include "gtpv2c_ie.h"
 #include "cp_interface.h"
 #include "packet_filters.h"
@@ -31,6 +30,7 @@
 #include "apn_struct.h"
 #include "cp_peer_struct.h"
 #include "upf_struct.h"
+#include "spgw_config_struct.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -410,11 +410,11 @@ typedef struct ue_context {
 
     /* UE association with UPF context */
     upf_context_t  *upf_ctxt;
+    sub_profile_t  *sub_prof;
 
     /* Temp - need to find right place to put this */
     void *pco; /* Received PCO from the UE during attach. Once CSRsp sent, release this */
     uint32_t dpId;
-
 } ue_context_t;
 
 typedef struct ue_tz_t

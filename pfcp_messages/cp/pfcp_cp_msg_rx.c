@@ -636,7 +636,7 @@ msg_handler_sx_n4(struct sockaddr_in *peer_addr)
 		}
 		return 0;
 	} else {
-		// ajay - why this is called as response ? it could be request mesage as well 
+		// Requirement - cleanup - why this is called as response ? it could be request mesage as well 
 		printf("PFCP message %d  received from UP %s \n",pfcp_header->message_type, inet_ntoa(peer_addr->sin_addr));
 		/*Reset periodic timers*/
         if(pfcp_header->message_type != PFCP_ASSOCIATION_SETUP_RESPONSE) 

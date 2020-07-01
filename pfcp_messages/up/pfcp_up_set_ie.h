@@ -156,14 +156,6 @@ int
 set_node_id(pfcp_node_id_ie_t *node_id, uint32_t nodeid_value);
 
 /**
- * @brief  : Create and set values in create bar ie
- * @param  : create_bar, ie structure to be filled
- * @return : Returns nothing
- */
-void
-creating_bar(pfcp_create_bar_ie_t *create_bar);
-
-/**
  * @brief  : Set values in fq csid ie
  * @param  : fq_csid, ie structure to be filled
  * @param  : nodeid_value
@@ -720,23 +712,6 @@ add_data_to_heartbeat_hash_table(uint32_t *ip, uint32_t *recov_time);
  */
 void
 clear_heartbeat_hash_table(void);
-
-/**
- * @brief  : Set values in create pdr ie
- * @param  : create_pdr, ie structure to be filled
- * @param  : source_iface_value, interface type
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value);
-
-/**
- * @brief  : Set values in create far ie
- * @param  : create_far, ie structure to be filled
- * @return : Returns nothing
- */
-void
-creating_far(pfcp_create_far_ie_t *create_far);
 
 int
 updating_pdr(pfcp_update_pdr_ie_t *update_pdr, int source_iface_value);

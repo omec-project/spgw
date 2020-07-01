@@ -45,22 +45,15 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
 {
 	uint16_t index = 0;
 	int i = 0;
-	struct in_addr dns_p, dns_s;
-	bool dns_pri_configured = true;
-	bool dns_secondary_configured = true;
-    uint16_t mtu_conf;
 	uint8_t byte;
 	byte = (req_pco->ext<<7) | (req_pco->config_proto & 0x03);
 	memcpy(&pco_buf[index], &byte, sizeof(byte));
 	index++;
 
-    /* May be we should fetch DP context once and then fetch individual fields ? */
-    dp_info_t *dp_conf = context->upf_ctxt->dp_info;
-    assert(dp_conf);
-    dns_p = dp_conf->dns_p; 
-    dns_s = dp_conf->dns_s; 
-    mtu_conf = dp_conf->ip_mtu; 
- 
+    sub_profile_t *sub_prof = context->sub_prof;
+    assert(sub_prof != NULL);
+    apn_profile_t *apn_prof = sub_prof->apn_profile;
+    assert(apn_prof != NULL);
     bool ipv4_link_mtu = false;
  
 	for (i = 0; i < req_pco->num_of_opt; i++) {
@@ -90,7 +83,7 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
 					index += sizeof(ppp_len);
 
 					/* Primary DNS Server IP Address */
-					if (dns_pri_configured == true ) {
+					{
 						uint8_t type=129; /* RFC 1877 Section 1.1  */
 						memcpy(&pco_buf[index], &type, sizeof(type));
 						index += sizeof(type);
@@ -99,12 +92,12 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
 						memcpy(&pco_buf[index], &len, sizeof(len));
 						index += sizeof(len);
 
-						memcpy(&pco_buf[index], &dns_p.s_addr, 4);
+						memcpy(&pco_buf[index], &apn_prof->dns_primary, 4);
 						index += 4;
 					}
 
 					/* Secondary DNS Server IP Address */
-					if (dns_secondary_configured == true) {
+					{
 						uint8_t type=131; /* RFC 1877 Section 1.3 */
 						memcpy(&pco_buf[index], &type, sizeof(type));
 						index += sizeof(type);
@@ -113,22 +106,22 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
 						memcpy(&pco_buf[index], &len, sizeof(len));
 						index += sizeof(len);
 
-						memcpy(&pco_buf[index], &dns_s.s_addr, 4);
+						memcpy(&pco_buf[index], &apn_prof->dns_secondary, 4);
 						index += 4;
 					}
 				}
 				break;
 			case PCO_ID_DNS_SERVER_IPV4_ADDRESS_REQUEST:
-				if (dns_pri_configured) {
+				{
 					memcpy(&pco_buf[index], &pco_type, sizeof(pco_type));
 					index += sizeof(pco_type);
 				}
-				if (dns_pri_configured == true) {
+				{
 					uint8_t len = 4; 
 					memcpy(&pco_buf[index], &len, sizeof(len));
 					index += sizeof(len);
 
-					memcpy(&pco_buf[index], &dns_p.s_addr, 4);
+					memcpy(&pco_buf[index], &apn_prof->dns_primary, 4);
 					index += 4;
 				}
 				break;
@@ -140,7 +133,7 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
                     ipv4_link_mtu=true;
                     memcpy(&pco_buf[index], &pco_type, sizeof(pco_type));
                     index += sizeof(pco_type);
-                    uint16_t mtu = htons(mtu_conf);
+                    uint16_t mtu = htons(apn_prof->mtu);
                     uint8_t len = 2;
                     memcpy(&pco_buf[index], &len, sizeof(len));
                     index += sizeof(len);
@@ -159,7 +152,7 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
             ipv4_link_mtu=true;
             memcpy(&pco_buf[index], &pco_type, sizeof(pco_type));
             index += sizeof(pco_type);
-            uint16_t mtu = htons(mtu_conf);
+            uint16_t mtu = htons(apn_prof->mtu);
             uint8_t len = 2;
             memcpy(&pco_buf[index], &len, sizeof(len));
             index += sizeof(len);
@@ -176,16 +169,9 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 		eps_bearer_t *bearer)
 {
 	uint8_t ebi_index = 0;
-	int ret = 0;
 	struct in_addr ip = {0};
-	upf_context_t *upf_ctx = NULL;
+	upf_context_t *upf_ctx = context->upf_ctxt;;
 	create_sess_rsp_t cs_resp = {0};
-
-	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
-			&upf_ctx)) < 0) {
-		clLog(s11logger, eCLSeverityCritical, "%s:Error:%d\n", __func__, ret);
-		return;
-	}
 
 	set_gtpv2c_teid_header((gtpv2c_header_t *)&cs_resp.header,
 			GTP_CREATE_SESSION_RSP, context->s11_mme_gtpc_teid,
@@ -215,7 +201,6 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 
 	set_apn_restriction(&cs_resp.apn_restriction, IE_INSTANCE_ZERO,
 			pdn->apn_restriction);
-    /* add PCO here */
 	{
 
 		set_ie_header(&cs_resp.bearer_contexts_created.header, GTP_IE_BEARER_CONTEXT,

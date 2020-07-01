@@ -35,6 +35,7 @@
 #include "pfcp_timer.h"
 #include "gen_utils.h"
 #include "gtpv2_internal.h"
+#include "gx_interface.h"
 
 extern udp_sock_t my_sock;
 extern struct sockaddr_in s5s8_recv_sockaddr;
@@ -2634,650 +2635,6 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 	return 0;
 }
 
-static int
-gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr)
-{
-	/* VS: Initialize the Gx Parameters */
-	uint16_t msg_len = 0;
-	char *buffer = NULL;
-	gx_msg ccr_request = {0};
-	gx_context_t *gx_context = NULL;
-
-	/* VS: Generate unique call id per PDN connection */
-	context->pdns[ebi_index]->call_id = generate_call_id();
-
-	/** Allocate the memory for Gx Context
-	 */
-	gx_context = rte_malloc_socket(NULL,
-					sizeof(gx_context_t),
-					RTE_CACHE_LINE_SIZE, rte_socket_id());
-
-	/* VS: Generate unique session id for communicate over the Gx interface */
-	if (gen_sess_id_for_ccr(gx_context->gx_sess_id,
-				context->pdns[ebi_index]->call_id)) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
-				strerror(errno));
-		return -1;
-	}
-
-	/* Maintain the gx session id in context */
-	memcpy(context->pdns[ebi_index]->gx_sess_id,
-			gx_context->gx_sess_id , strlen(gx_context->gx_sess_id));
-
-	/* VS: Maintain the PDN mapping with call id */
-	if (add_pdn_conn_entry(context->pdns[ebi_index]->call_id,
-				context->pdns[ebi_index]) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to add pdn entry with call id\n", __func__, __LINE__);
-		return -1;
-	}
-
-	/* VS: Set the Msg header type for CCR */
-	ccr_request.msg_type = GX_CCR_MSG ;
-
-	/* VS: Set Credit Control Request type */
-	ccr_request.data.ccr.presence.cc_request_type = PRESENT;
-	ccr_request.data.ccr.cc_request_type = INITIAL_REQUEST ;
-
-	/* VG: Set Credit Control Bearer opertaion type */
-	ccr_request.data.ccr.presence.bearer_operation = PRESENT;
-	ccr_request.data.ccr.bearer_operation = ESTABLISHMENT ;
-
-	/* VS:TODO: Need to check the bearer identifier value */
-	ccr_request.data.ccr.presence.bearer_identifier = PRESENT ;
-	ccr_request.data.ccr.bearer_identifier.len =
-		int_to_str((char *)ccr_request.data.ccr.bearer_identifier.val,
-				(context->eps_bearers[ebi_index])->eps_bearer_id);
-
-	/* Subscription-Id */
-	if(csr->imsi.header.len  || csr->msisdn.header.len)
-	{
-		uint8_t idx = 0;
-		ccr_request.data.ccr.presence.subscription_id = PRESENT;
-		ccr_request.data.ccr.subscription_id.count = 1; // IMSI & MSISDN
-		ccr_request.data.ccr.subscription_id.list  = rte_malloc_socket(NULL,
-				(sizeof(GxSubscriptionId)*1),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-
-		/* Fill IMSI */
-		if(csr->imsi.header.len != 0)
-		{
-			ccr_request.data.ccr.subscription_id.list[idx].presence.subscription_id_type = PRESENT;
-			ccr_request.data.ccr.subscription_id.list[idx].presence.subscription_id_data = PRESENT;
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_type = END_USER_IMSI;
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.len = csr->imsi.header.len;
-			memcpy(ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.val,
-					&csr->imsi.imsi_number_digits,
-					csr->imsi.header.len);
-			idx++;
-		}
-
-#if 0
-		/* Fill MSISDN */
-		if(csr->msisdn.header.len !=0)
-		{
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_type = END_USER_E164;
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.len = csr->msisdn.header.len;
-			memcpy(ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.val,
-					&csr->msisdn.msisdn_number_digits,
-					csr->msisdn.header.len);
-		}
-#endif
-	}
-
-	ccr_request.data.ccr.presence.network_request_support = PRESENT;
-	ccr_request.data.ccr.network_request_support = NETWORK_REQUEST_SUPPORTED;
-
-	/* TODO: Removing this ie as it is not require.
-	 * It's showing padding in pcap
-	ccr_request.data.ccr.presence.framed_ip_address = PRESENT;
-
-	ccr_request.data.ccr.framed_ip_address.len = inet_ntoa(ccr_request.data.ccr.framed_ip_address.val,
-			                                               context->pdns[ebi_index]);
-
-	char *temp = inet_ntoa(context->pdns[ebi_index]->ipv4);
-	memcpy(ccr_request.data.ccr.framed_ip_address.val, &temp, strlen(temp)); */
-
-	/*
-	 * nEED TO ADd following to Complete CCR_I, these are all mandatory IEs
-	 * AN-GW Addr (SGW)
-	 * User Eqip info (IMEI)
-	 * 3GPP-ULI
-	 * calling station id (APN)
-	 * Access n/w charging addr (PGW addr)
-	 * Charging Id
-	 */
-
-
-	/* VS: Fill the Credit Crontrol Request to send PCRF */
-	if(fill_ccr_request(&ccr_request.data.ccr, context, ebi_index, gx_context->gx_sess_id) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
-		return -1;
-	}
-
-	struct sockaddr_in saddr_in;
-    	saddr_in.sin_family = AF_INET;
-    	inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-    	update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_INITIAL, SENT, GX);
-
-
-	/* Update UE State */
-	context->pdns[ebi_index]->state = CCR_SNT_STATE;
-
-	/* VS: Set the Gx State for events */
-	gx_context->state = CCR_SNT_STATE;
-	gx_context->proc = context->pdns[ebi_index]->proc;
-
-	/* VS: Maintain the Gx context mapping with Gx Session id */
-	if (gx_context_entry_add(gx_context->gx_sess_id, gx_context) < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
-				strerror(errno));
-		return -1;
-	}
-
-	/* VS: Calculate the max size of CCR msg to allocate the buffer */
-	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
-	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type),
-	    RTE_CACHE_LINE_SIZE, rte_socket_id());
-	if (buffer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
-		return -1;
-	}
-
-	/* VS: Fill the CCR header values */
-	memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
-
-	if (gx_ccr_pack(&(ccr_request.data.ccr),
-				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msg_len) == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
-		return -1;
-
-	}
-
-	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
-			msg_len + sizeof(ccr_request.msg_type));
-	return 0;
-}
-
-static int
-fill_tai(uint8_t *buf, tai_field_t *tai) {
-
-	int index = 0;
-	buf[index++] = ((tai->tai_mcc_digit_2 << 4) | (tai->tai_mcc_digit_1)) & 0xff;
-	buf[index++] = ((tai->tai_mnc_digit_3 << 4 )| (tai->tai_mcc_digit_3)) & 0xff;
-	buf[index++] = ((tai->tai_mnc_digit_2 << 4 ) | (tai->tai_mnc_digit_1)) & 0xff;
-	buf[index++] = ((tai->tai_tac >>8) & 0xff);
-	buf[index++] =  (tai->tai_tac) &0xff;
-
-	return sizeof(tai_field_t);
-}
-
-static int
-fill_ecgi(uint8_t *buf, ecgi_field_t *ecgi) {
-
-	int index = 0;
-	buf[index++] = ((ecgi->ecgi_mcc_digit_2 << 4 ) | (ecgi->ecgi_mcc_digit_1)) & 0xff;
-	buf[index++] = ((ecgi->ecgi_mnc_digit_3 << 4 ) | (ecgi->ecgi_mcc_digit_3)) & 0xff;
-	buf[index++] = ((ecgi->ecgi_mnc_digit_2 << 4 ) | (ecgi->ecgi_mnc_digit_1)) & 0xff;
-	buf[index++] = (((ecgi->ecgi_spare) | (ecgi->eci >> 24 )) & 0xff);
-	buf[index++] = (((ecgi->eci >> 16 )) & 0xff);
-	buf[index++] = (((ecgi->eci >> 8 )) & 0xff);
-	buf[index++] = (ecgi->eci & 0xff);
-
-	return sizeof(ecgi_field_t);
-}
-
-static int
-fill_lai(uint8_t *buf, lai_field_t *lai) {
-
-	int index = 0;
-	buf[index++] = ((lai->lai_mcc_digit_2 << 4) | (lai->lai_mcc_digit_1)) & 0xff;
-	buf[index++] = ((lai->lai_mnc_digit_3 << 4 )| (lai->lai_mcc_digit_3)) & 0xff;
-	buf[index++] = ((lai->lai_mnc_digit_2 << 4 ) | (lai->lai_mnc_digit_1)) & 0xff;
-	buf[index++] = ((lai->lai_lac >>8) & 0xff);
-	buf[index++] =  (lai->lai_lac) &0xff;
-	return sizeof(lai_field_t);
-}
-
-static int
-fill_rai(uint8_t *buf, rai_field_t *rai) {
-
-	int index = 0;
-	buf[index++] = ((rai->ria_mcc_digit_2 << 4) | (rai->ria_mcc_digit_1)) & 0xff;
-	buf[index++] = ((rai->ria_mnc_digit_3 << 4 )| (rai->ria_mcc_digit_3)) & 0xff;
-	buf[index++] = ((rai->ria_mnc_digit_2 << 4 ) | (rai->ria_mnc_digit_1)) & 0xff;
-	buf[index++] = ((rai->ria_lac >>8) & 0xff);
-	buf[index++] =  (rai->ria_lac) &0xff;
-	buf[index++] = ((rai->ria_rac >>8) & 0xff);
-	buf[index++] =  (rai->ria_rac) &0xff;
-
-	return sizeof(rai_field_t);
-}
-
-static int
-fill_sai(uint8_t *buf, sai_field_t *sai) {
-
-	int index = 0;
-	buf[index++] = ((sai->sai_mcc_digit_2 << 4) | (sai->sai_mcc_digit_1)) & 0xff;
-	buf[index++] = ((sai->sai_mnc_digit_3 << 4 )| (sai->sai_mcc_digit_3)) & 0xff;
-	buf[index++] = ((sai->sai_mnc_digit_2 << 4 ) | (sai->sai_mnc_digit_1)) & 0xff;
-	buf[index++] = ((sai->sai_lac >>8) & 0xff);
-	buf[index++] =  (sai->sai_lac) &0xff;
-	buf[index++] = ((sai->sai_sac >>8) & 0xff);
-	buf[index++] =  (sai->sai_sac) &0xff;
-	return sizeof(sai_field_t);
-}
-
-static int
-fill_cgi(uint8_t *buf, cgi_field_t *cgi) {
-
-	int index = 0;
-	buf[index++] = ((cgi->cgi_mcc_digit_2 << 4) | (cgi->cgi_mcc_digit_1)) & 0xff;
-	buf[index++] = ((cgi->cgi_mnc_digit_3 << 4 )| (cgi->cgi_mcc_digit_3)) & 0xff;
-	buf[index++] = ((cgi->cgi_mnc_digit_2 << 4 ) | (cgi->cgi_mnc_digit_1)) & 0xff;
-	buf[index++] = ((cgi->cgi_lac >>8) & 0xff);
-	buf[index++] =  (cgi->cgi_lac) &0xff;
-	buf[index++] = ((cgi->cgi_ci >>8) & 0xff);
-	buf[index++] =  (cgi->cgi_ci) &0xff;
-	return sizeof(cgi_field_t);
-}
-
-
-static int
-gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t *mb_req, uint8_t flag_check)
-{
-	/*
-	 * TODO:
-	 * Passing bearer as parameter is a BAD IDEA
-	 * because what if multiple bearer changes?
-	 * code SHOULD anchor only on pdn.
-	 */
-	/* VS: Initialize the Gx Parameters */
-
-	uint16_t msg_len = 0;
-	char *buffer = NULL;
-	gx_msg ccr_request = {0};
-	gx_context_t *gx_context = NULL;
-
-	int ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
-			          (const void*)(pdn->gx_sess_id),
-					           (void **)&gx_context);
-	  if (ret < 0) {
-		       clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
-					                pdn->gx_sess_id);
-			    return -1;
-	}
-
-	/* VS: Set the Msg header type for CCR */
-	ccr_request.msg_type = GX_CCR_MSG ;
-
-	/* VS: Set Credit Control Request type */
-	ccr_request.data.ccr.presence.cc_request_type = PRESENT;
-	ccr_request.data.ccr.cc_request_type = UPDATE_REQUEST ;
-
-	/* VG: Set Credit Control Bearer opertaion type */
-	ccr_request.data.ccr.presence.bearer_operation = PRESENT;
-	ccr_request.data.ccr.bearer_operation = MODIFICATION;
-
-	/* VS:TODO: Need to check the bearer identifier value */
-	ccr_request.data.ccr.presence.bearer_identifier = PRESENT ;
-	ccr_request.data.ccr.bearer_identifier.len =
-		int_to_str((char *)ccr_request.data.ccr.bearer_identifier.val,
-				bearer->eps_bearer_id);
-
-	/* Subscription-Id */
-	if(pdn->context->imsi  || pdn->context->msisdn)
-	{
-		uint8_t idx = 0;
-		ccr_request.data.ccr.presence.subscription_id = PRESENT;
-		ccr_request.data.ccr.subscription_id.count = 2; // IMSI & MSISDN
-		ccr_request.data.ccr.subscription_id.list  = rte_malloc_socket(NULL,
-				(sizeof(GxSubscriptionId)*2),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-		/* Fill IMSI */
-		if(pdn->context->imsi != 0)
-		{
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_type = END_USER_IMSI;
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.len = pdn->context->imsi_len;
-			memcpy(ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.val,
-					&pdn->context->imsi,
-					pdn->context->imsi_len);
-			idx++;
-		}
-
-		/* Fill MSISDN */
-		if(pdn->context->msisdn !=0)
-		{
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_type = END_USER_E164;
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.len =  pdn->context->msisdn_len;
-			memcpy(ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.val,
-					&pdn->context->msisdn,
-					pdn->context->msisdn_len);
-		}
-	}
-
-	ccr_request.data.ccr.presence.network_request_support = PRESENT;
-	ccr_request.data.ccr.network_request_support = NETWORK_REQUEST_SUPPORTED;
-
-	/*
-	 * nEED TO ADd following to Complete CCR_I, these are all mandatory IEs
-	 * AN-GW Addr (SGW)
-	 * User Eqip info (IMEI)
-	 * 3GPP-ULI
-	 * calling station id (APN)
-	 * Access n/w charging addr (PGW addr)
-	 * Charging Id
-	 */
-
-	int index = 0;
-	int len = 0;
-
-
-	if(pdn->context->old_uli_valid == TRUE) {
-
-		if(flag_check  == ECGI_AND_TAI_PRESENT) {
-			ccr_request.data.ccr.presence.tgpp_user_location_info = PRESENT;
-			ccr_request.data.ccr.tgpp_user_location_info.val[index++] = GX_ECGI_AND_TAI_TYPE;
-			ccr_request.data.ccr.tgpp_user_location_info.len =index ;
-
-			len = fill_tai(&(ccr_request.data.ccr.tgpp_user_location_info.val[index]), &(mb_req->uli.tai2));
-
-			ccr_request.data.ccr.tgpp_user_location_info.len += len;
-
-			len  = fill_ecgi(&(ccr_request.data.ccr.tgpp_user_location_info.val[len + 1]), &(mb_req->uli.ecgi2));
-			ccr_request.data.ccr.tgpp_user_location_info.len += len;
-
-		} else if (((flag_check & (1<< 0)) == TAI_PRESENT) ) {
-
-			ccr_request.data.ccr.presence.tgpp_user_location_info = PRESENT;
-			ccr_request.data.ccr.tgpp_user_location_info.val[index++] = GX_TAI_TYPE;
-
-			ccr_request.data.ccr.tgpp_user_location_info.len = index ;
-
-			len = fill_tai(&(ccr_request.data.ccr.tgpp_user_location_info.val[index]), &(mb_req->uli.tai2));
-
-			ccr_request.data.ccr.tgpp_user_location_info.len += len;
-
-		} else if (((flag_check & (1 << 4)) == ECGI_PRESENT)) {
-
-			ccr_request.data.ccr.presence.tgpp_user_location_info = PRESENT;
-			ccr_request.data.ccr.tgpp_user_location_info.val[index++] = GX_ECGI_TYPE;
-			ccr_request.data.ccr.tgpp_user_location_info.len = index ;
-			len  = fill_ecgi(&(ccr_request.data.ccr.tgpp_user_location_info.val[index]), &(mb_req->uli.ecgi2));
-			ccr_request.data.ccr.tgpp_user_location_info.len += len;
-
-		} else if (((flag_check & (1 << 2)) == SAI_PRESENT)) {
-
-			ccr_request.data.ccr.presence.tgpp_user_location_info = PRESENT;
-			ccr_request.data.ccr.tgpp_user_location_info.val[index++] = GX_SAI_TYPE;
-			ccr_request.data.ccr.tgpp_user_location_info.len = index ;
-			len  = fill_sai(&(ccr_request.data.ccr.tgpp_user_location_info.val[index]), &(mb_req->uli.sai2));
-			ccr_request.data.ccr.tgpp_user_location_info.len += len;
-
-		} else if (((flag_check & (1 << 3)) == RAI_PRESENT)) {
-			ccr_request.data.ccr.presence.tgpp_user_location_info = PRESENT;
-			ccr_request.data.ccr.tgpp_user_location_info.val[index++] = GX_RAI_TYPE;
-			ccr_request.data.ccr.tgpp_user_location_info.len = index ;
-			len  = fill_rai(&(ccr_request.data.ccr.tgpp_user_location_info.val[index]), &(mb_req->uli.rai2));
-			ccr_request.data.ccr.tgpp_user_location_info.len += len;
-
-		} else if (((flag_check & (1 << 1)) == CGI_PRESENT)) {
-
-			ccr_request.data.ccr.presence.tgpp_user_location_info = PRESENT;
-			ccr_request.data.ccr.tgpp_user_location_info.val[index++] = GX_CGI_TYPE;
-			ccr_request.data.ccr.tgpp_user_location_info.len = index ;
-			len  = fill_cgi(&(ccr_request.data.ccr.tgpp_user_location_info.val[index]), &(mb_req->uli.cgi2));
-			ccr_request.data.ccr.tgpp_user_location_info.len += len;
-
-		} else if (((flag_check & (1 << 6)) == 1)) {
-			len = fill_lai(&(ccr_request.data.ccr.tgpp_user_location_info.val[index]), &(mb_req->uli.lai2));
-		}
-
-	}
-
-	if( pdn->old_ue_tz_valid == TRUE ) {
-
-		index = 0;
-		ccr_request.data.ccr.presence.tgpp_ms_timezone = PRESENT;
-		ccr_request.data.ccr.tgpp_ms_timezone.val[index++] = GX_UE_TIMEZONE_TYPE;
-		ccr_request.data.ccr.tgpp_ms_timezone.val[index++] = ((pdn->ue_tz.tz) & 0xff);
-		ccr_request.data.ccr.tgpp_ms_timezone.val[index++] = ((pdn->ue_tz.dst) & 0xff);
-
-		ccr_request.data.ccr.tgpp_ms_timezone.len = index;
-
-	}
-
-
-	/* VS: Fill the Credit Crontrol Request to send PCRF */
-	if(fill_ccr_request(&ccr_request.data.ccr, pdn->context, (bearer->eps_bearer_id - 5), pdn->gx_sess_id) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
-		return -1;
-	}
-
-	struct sockaddr_in saddr_in;
-	saddr_in.sin_family = AF_INET;
-	inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-	update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_INITIAL, SENT, GX);
-
-
-	/* Update UE State */
-	pdn->state = CCRU_SNT_STATE;
-
-	/* VS: Set the Gx State for events */
-	gx_context->state = CCRU_SNT_STATE;
-	gx_context->proc = pdn->proc;
-
-	/* VS: Calculate the max size of CCR msg to allocate the buffer */
-	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
-	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type),
-	    RTE_CACHE_LINE_SIZE, rte_socket_id());
-	if (buffer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
-		return -1;
-	}
-
-	/* VS: Fill the CCR header values */
-	memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
-
-	if (gx_ccr_pack(&(ccr_request.data.ccr),
-				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msg_len) == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
-		return -1;
-
-	}
-
-	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
-			msg_len + sizeof(ccr_request.msg_type));
-	return 0;
-}
-
-/**
- * @brief  : Generate CCR request
- * @param  : context , pointer to ue context structure
- * @param  : ebi_index, index in array where eps bearer is stored
- * @return : Returns 0 in case of success , -1 otherwise
- */
-static int
-ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
-{
-
-	/*
-	 * TODO:
-	 * Passing bearer as parameter is a BAD IDEA
-	 * because what if multiple bearer changes?
-	 * code SHOULD anchor only on pdn.
-	 */
-	/* VS: Initialize the Gx Parameters */
-	int ret = 0;
-	uint16_t msg_len = 0;
-	char *buffer = NULL;
-	gx_msg ccr_request = {0};
-	gx_context_t *gx_context = NULL;
-
-	ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
-			(const void*)(pdn->gx_sess_id),
-			(void **)&gx_context);
-	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
-				pdn->gx_sess_id);
-	return -1;
-	}
-	/* VS: Set the Msg header type for CCR */
-	ccr_request.msg_type = GX_CCR_MSG ;
-
-	/* VS: Set Credit Control Request type */
-	ccr_request.data.ccr.presence.cc_request_type = PRESENT;
-	ccr_request.data.ccr.cc_request_type = UPDATE_REQUEST ;
-
-	/* VG: Set Credit Control Bearer opertaion type */
-	ccr_request.data.ccr.presence.bearer_operation = PRESENT;
-	ccr_request.data.ccr.bearer_operation = TERMINATION;
-
-	/* VS:TODO: Need to check the bearer identifier value */
-	ccr_request.data.ccr.presence.bearer_identifier = PRESENT ;
-	ccr_request.data.ccr.bearer_identifier.len =
-		int_to_str((char *)ccr_request.data.ccr.bearer_identifier.val,
-				bearer->eps_bearer_id -5);
-
-	/* Subscription-Id */
-	if(pdn->context->imsi  || pdn->context->msisdn)
-	{
-		uint8_t idx = 0;
-		ccr_request.data.ccr.presence.subscription_id = PRESENT;
-		ccr_request.data.ccr.subscription_id.count = 1; // IMSI & MSISDN
-		ccr_request.data.ccr.subscription_id.list  = rte_malloc_socket(NULL,
-				(sizeof(GxSubscriptionId)*1),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
-		/* Fill IMSI */
-		if(pdn->context->imsi != 0)
-		{
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_type = END_USER_IMSI;
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.len = pdn->context->imsi_len;
-			memcpy(ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.val,
-					&pdn->context->imsi,
-					pdn->context->imsi_len);
-			idx++;
-		}
-
-		/* Fill MSISDN
-		if(pdn->context->msisdn !=0)
-		{
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_type = END_USER_E164;
-			ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.len =  pdn->context->msisdn_len;
-			memcpy(ccr_request.data.ccr.subscription_id.list[idx].subscription_id_data.val,
-					&pdn->context->msisdn,
-					pdn->context->msisdn_len);
-		} */
-	}
-
-	ccr_request.data.ccr.presence.network_request_support = PRESENT;
-	ccr_request.data.ccr.network_request_support = NETWORK_REQUEST_SUPPORTED;
-
-	/* ccr_request.data.ccr.presence.framed_ip_address = PRESENT;
-	ccr_request.data.ccr.framed_ip_address.len = inet_ntoa(ccr_request.data.ccr.framed_ip_address.val);
-	                                              bearer->eps_bearer_id -5);*/
-	int idx = 0;
-	ccr_request.data.ccr.presence.charging_rule_report = PRESENT;
-	ccr_request.data.ccr.charging_rule_report.count = 1;
-	ccr_request.data.ccr.charging_rule_report.list = rte_malloc_socket(NULL,
-			(sizeof(GxChargingRuleReportList)*1),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
-
-	ccr_request.data.ccr.charging_rule_report.list[idx].presence.charging_rule_name = PRESENT;
-	ccr_request.data.ccr.charging_rule_report.list[idx].charging_rule_name.list = rte_malloc_socket(NULL,
-			(sizeof(GxChargingRuleNameOctetString)*1),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
-	ccr_request.data.ccr.charging_rule_report.list[idx].charging_rule_name.count = 1;
-	ccr_request.data.ccr.charging_rule_report.list[idx].charging_rule_name.list[idx].len = strlen(bearer->dynamic_rules[idx]->rule_name);
-
-	for(uint16_t i = 0 ; i<strlen(bearer->dynamic_rules[idx]->rule_name); i++){
-		ccr_request.data.ccr.charging_rule_report.list[idx].charging_rule_name.list[idx].val[i] =
-			bearer->dynamic_rules[idx]->rule_name[i];
-	}
-//	ccr_request.data.ccr.charging_rule_report.list[idx].presence.bearer_identifier = PRESENT;
-//	ccr_request.data.ccr.charging_rule_report.list[idx].bearer_identifier.val[idx] =
-//		int_to_str((char *)ccr_request.data.ccr.bearer_identifier.val,
-//				bearer->eps_bearer_id - 5);
-
-	ccr_request.data.ccr.charging_rule_report.list[idx].presence.pcc_rule_status = PRESENT;
-	ccr_request.data.ccr.charging_rule_report.list[idx].pcc_rule_status = INACTIVE;
-
-	ccr_request.data.ccr.charging_rule_report.list[idx].presence.rule_failure_code = PRESENT;
-	ccr_request.data.ccr.charging_rule_report.list[idx].rule_failure_code = NO_BEARER_BOUND;
-
-	//ccr_request.data.ccr.charging_rule_report.list[idx].presence.ran_nas_release_cause = PRESENT;
-	//ccr_request.data.ccr.charging_rule_report.list[idx].ran_nas_release_cause =;
-
-	char *temp = inet_ntoa(pdn->ipv4);
-	memcpy(ccr_request.data.ccr.framed_ip_address.val, &temp, strlen(temp));
-
-	/*
-	 * nEED TO ADd following to Complete CCR_I, these are all mandatory IEs
-	 * AN-GW Addr (SGW)
-	 * User Eqip info (IMEI)
-	 * 3GPP-ULI
-	 * calling station id (APN)
-	 * Access n/w charging addr (PGW addr)
-	 * Charging Id
-	 */
-
-
-	/* VS: Fill the Credit Crontrol Request to send PCRF */
-	if(fill_ccr_request(&ccr_request.data.ccr, pdn->context, bearer->eps_bearer_id - 5, pdn->gx_sess_id) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
-		return -1;
-	}
-
-	struct sockaddr_in saddr_in;
-    	saddr_in.sin_family = AF_INET;
-    	inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-    	update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_INITIAL, SENT, GX);
-
-
-	/* Update UE State */
-	pdn->state = CCRU_SNT_STATE;
-
-	/* VS: Set the Gx State for events */
-	gx_context->state = CCRU_SNT_STATE;
-	gx_context->proc = pdn->proc;
-	/* VS: Calculate the max size of CCR msg to allocate the buffer */
-	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
-	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type),
-	    RTE_CACHE_LINE_SIZE, rte_socket_id());
-	if (buffer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
-		return -1;
-	}
-
-	/* VS: Fill the CCR header values */
-	memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
-
-	if (gx_ccr_pack(&(ccr_request.data.ccr),
-				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msg_len) == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
-		return -1;
-
-	}
-
-	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
-			msg_len + sizeof(ccr_request.msg_type));
-	return 0;
-}
-
 void
 fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 {
@@ -3335,7 +2692,6 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 
 }
 
-/* Ajay - new CSReq handler */
 int
 process_create_sess_req(create_sess_req_t *csr,
 		ue_context_t **_context, struct in_addr *upf_ipv4)
@@ -3345,7 +2701,7 @@ process_create_sess_req(create_sess_req_t *csr,
 	ue_context_t *context = NULL;
 	eps_bearer_t *bearer = NULL;
 	pdn_connection_t *pdn = NULL;
-    bool static_addr_pdn;
+    bool static_addr_pdn = false;
     /* ajay - Should we get default context ?*/
     upf_context_t *upf_context=NULL; 
 
@@ -3358,22 +2714,21 @@ process_create_sess_req(create_sess_req_t *csr,
 // DNS would need changes here 
 #ifdef MULTI_UPFS
     /* TODO - IE presense should be validated before accessing them */
-    struct dp_key dpkey = {0};
-    dp_info_t *dpInfo=NULL;
-    dpkey.tac = csr->uli.tai2.tai_tac;
+    sub_profile_t *sub_prof=NULL;
+    sub_selection_keys_t dpkey = {0}; 
+    dpkey.plmn.is_valid = true;
+    dpkey.plmn.tac = csr->uli.tai2.tai_tac;
+    memcpy((void *)(&dpkey.plmn.plmn[0]), (void *)(&csr->uli.tai2), 3);
     printf("csr uli mcc %d %d %d  mnc %d %d %d \n", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
-
-    memcpy((void *)(&dpkey.mcc_mnc), (void *)(&csr->uli.tai2), 3);
-
-	/* TODO : more work if SGW call Vs PGW call */
-    upf_context = get_upf_context_for_key(&dpkey, &dpInfo); 
+    
+    upf_context = get_upf_context_for_key(&dpkey, &sub_prof); 
+    
     // no upf available 
     if(upf_context == NULL) 
     {
         return GTPV2C_CAUSE_REQUEST_REJECTED;
     }
     *upf_ipv4 = upf_context->upf_sockaddr.sin_addr;
-    upf_context->dp_info = dpInfo; // upf context needs to point the config dpInfo object 
 
     printf("Selected UPF address  %s \n", inet_ntoa(*upf_ipv4));
 #endif
@@ -3389,11 +2744,13 @@ process_create_sess_req(create_sess_req_t *csr,
         struct in_addr *paa_ipv4 = (struct in_addr *) &csr->paa.pdn_addr_and_pfx[0];
         if (csr->paa.pdn_type == PDN_IP_TYPE_IPV4 && paa_ipv4->s_addr != 0) {
             bool found = false;
+#ifdef STATIC_ADDR_ALLOC
 #ifdef MULTI_UPFS
             if (dpInfo != NULL)
                 found = reserve_ip_node(dpInfo->static_pool_tree, *paa_ipv4);
 #else
             found = reserve_ip_node(static_addr_pool, *paa_ipv4);
+#endif
 #endif
             if (found == false) {
                 RTE_LOG_DP(DEBUG, CP, "Received CSReq with static address %s"
@@ -3422,7 +2779,7 @@ process_create_sess_req(create_sess_req_t *csr,
 	if (ret)
 		return ret;
 
-
+    context->sub_prof = sub_prof;
 	if (csr->mei.header.len)
 		memcpy(&context->mei, &csr->mei.mei, csr->mei.header.len);
 
@@ -3516,14 +2873,9 @@ process_create_sess_req(create_sess_req_t *csr,
 		return -1;
 
 	/* SGW Handover Storage */
-	// Ajay- indication does not mean its handover..we should have other way to check it 
 	if (csr->indctn_flgs.header.len != 0 && 
 		csr->indctn_flgs.indication_oi == 1)
 	{
-		/* AJAY - changed below code - paa was set to 0.0.0.0 and also address was not set to correct order */
-		// memcpy(&(pdn->ipv4.s_addr) ,&(csr->paa.pdn_addr_and_pfx), IPV4_SIZE);
-		//pdn->ipv4.s_addr = ntohl(pdn->ipv4.s_addr);
-		/*TODO:ntohl is done as in csr response there is htonl*/
 		pdn->ipv4.s_addr = pdn->ipv4.s_addr;
 		context->indication_flag.oi = csr->indctn_flgs.indication_oi;
 		pdn->s5s8_pgw_gtpc_teid = csr->pgw_s5s8_addr_ctl_plane_or_pmip.teid_gre_key;
@@ -4889,102 +4241,6 @@ process_pfcp_sess_mod_request(mod_bearer_req_t *mb_req)
 	return 0;
 }
 
-/**
- * @brief  : Generate reauth response
- * @param  : context , pointer to ue context structure
- * @param  : ebi_index, index in array where eps bearer is stored
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
-{
-	/* VS: Initialize the Gx Parameters */
-	uint16_t msg_len = 0;
-	char *buffer = NULL;
-	gx_msg raa = {0};
-	pdn_connection_t *pdn = NULL;
-	gx_context_t *gx_context = NULL;
-	uint16_t msg_type_ofs = 0;
-	uint16_t msg_body_ofs = 0;
-	uint16_t rqst_ptr_ofs = 0;
-	uint16_t msg_len_total = 0;
-
-	pdn = context->eps_bearers[ebi_index]->pdn;
-
-	/* Clear Policy in PDN */
-	pdn->policy.count = 0;
-	pdn->policy.num_charg_rule_install = 0;
-	pdn->policy.num_charg_rule_modify = 0;
-	pdn->policy.num_charg_rule_delete = 0;
-
-	/* Allocate the memory for Gx Context */
-	gx_context = rte_malloc_socket(NULL,
-			sizeof(gx_context_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
-
-	//strncpy(gx_context->gx_sess_id, context->pdns[ebi_index]->gx_sess_id, strlen(context->pdns[ebi_index]->gx_sess_id));
-
-
-	raa.data.cp_raa.session_id.len = strlen(pdn->gx_sess_id);
-	memcpy(raa.data.cp_raa.session_id.val, pdn->gx_sess_id, raa.data.cp_raa.session_id.len);
-
-	raa.data.cp_raa.presence.session_id = PRESENT;
-
-	/* VS: Set the Msg header type for CCR */
-	raa.msg_type = GX_RAA_MSG;
-
-	/* Result code */
-	raa.data.cp_raa.result_code = 2001;
-	raa.data.cp_raa.presence.result_code = PRESENT;
-
-	/* Update UE State */
-	pdn->state = RE_AUTH_ANS_SNT_STATE;
-
-	/* VS: Set the Gx State for events */
-	gx_context->state = RE_AUTH_ANS_SNT_STATE;
-
-	/* VS: Calculate the max size of CCR msg to allocate the buffer */
-	msg_len = gx_raa_calc_length(&raa.data.cp_raa);
-	msg_body_ofs = sizeof(raa.msg_type);
-	rqst_ptr_ofs = msg_len + msg_body_ofs;
-	msg_len_total = rqst_ptr_ofs + sizeof(pdn->rqst_ptr);
-
-	//buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(uint64_t) + sizeof(raa.msg_type),
-	//		RTE_CACHE_LINE_SIZE, rte_socket_id());
-	buffer = rte_zmalloc_socket(NULL, msg_len_total,
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
-	if (buffer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
-		return -1;
-	}
-
-	memcpy(buffer + msg_type_ofs, &raa.msg_type, sizeof(raa.msg_type));
-
-	//if (gx_raa_pack(&(raa.data.cp_raa), (unsigned char *)(buffer + sizeof(raa.msg_type)), msg_len) == 0 )
-	if (gx_raa_pack(&(raa.data.cp_raa), (unsigned char *)(buffer + msg_body_ofs), msg_len) == 0 )
-		clLog(clSystemLog, eCLSeverityDebug,"RAA Packing failure\n");
-
-	//memcpy((unsigned char *)(buffer + sizeof(raa.msg_type) + msg_len), &(context->eps_bearers[1]->rqst_ptr),
-	memcpy((unsigned char *)(buffer + rqst_ptr_ofs), &(pdn->rqst_ptr),
-			sizeof(pdn->rqst_ptr));
-#if 0
-	clLog(clSystemLog, eCLSeverityDebug,"While packing RAA %p %p\n", (void*)(context->eps_bearers[1]->rqst_ptr),
-			*(void**)(buffer+rqst_ptr_ofs));
-
-	clLog(clSystemLog, eCLSeverityDebug,"msg_len_total [%d] msg_type_ofs[%d] msg_body_ofs[%d] rqst_ptr_ofs[%d]\n",
-			msg_len_total, msg_type_ofs, msg_body_ofs, rqst_ptr_ofs);
-#endif
-	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
-			msg_len_total);
-			//msg_len + sizeof(raa.msg_type) + sizeof(unsigned long));
-
-	return 0;
-}
 
 
 uint8_t

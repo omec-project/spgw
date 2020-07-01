@@ -449,11 +449,8 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_est_req.header.message_type,SENT,SX);
 
-
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(pdn->s5s8_pgw_gtpc_teid,
 			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 	}
 
 	if (add_sess_entry(context->pdns[ebi_index]->seid, resp) != 0) {
@@ -925,10 +922,8 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
 			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 	}
 
 	context->sequence = seq_no;
@@ -1016,10 +1011,8 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 	} else {
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type, SENT, SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
 			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, pdn->default_bearer_id - 5);
-#endif /* CP_BUILD */
 	}
 
 	context->sequence = db_req->header.teid.has_teid.seq;
@@ -1108,10 +1101,8 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 	} else {
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type, SENT, SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(db_rsp->header.teid.has_teid.teid,
 			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, pdn->default_bearer_id - 5);
-#endif /* CP_BUILD */
 	}
 
 	context->sequence = db_rsp->header.teid.has_teid.seq;

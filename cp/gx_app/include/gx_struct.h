@@ -2021,6 +2021,27 @@ typedef struct gxRAR {
     GxRouteRecordList route_record;
 } GxRAR;
 
+/**
+ * @brief  : Maintains data related to different gs messages
+ */
+typedef struct Gx_msg {
+	uint8_t msg_type;
+	union data_t {
+		GxRAR cp_rar;
+		GxRAA cp_raa;
+		GxCCR cp_ccr;
+		GxCCR ccr;
+		GxCCA cp_cca;
+	}data;
+}gx_msg;
+
+enum e_BUF_HDR {
+	GX_RAR_MSG,
+	GX_RAA_MSG,
+	GX_CCR_MSG,
+	GX_CCA_MSG,
+};
+
 #ifdef __cplusplus
 }
 #endif

@@ -27,7 +27,7 @@
 #include "../cp/state_machine/sm_struct.h"
 #include "gtpv2_interface.h"
 #include "pfcp_cp_interface.h"
-#include "gx_app_interface.h"
+#include "gx_interface.h"
 
 udp_sock_t my_sock = {0};
 

@@ -4,13 +4,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "assert.h"
-#include "string.h"
-#include "rte_malloc.h"
-#include "rte_debug.h"
-#include "rte_lcore.h"
+#include <assert.h>
+#include <string.h>
+#include <rte_malloc.h>
+#include <rte_debug.h>
+#include <rte_lcore.h>
+#include <rte_errno.h>
 #include "apn_apis.h"
-#include "rte_errno.h"
 
 #define MAX_NB_DPN 8
 apn_t apn_list[MAX_NB_DPN];

@@ -269,7 +269,7 @@ static inline void set_unused_lcore(int *core, uint64_t *used_coremask)
  * @param  : argv, list of arguments.
  * @return : Returns 0 in case of success , -1 otherwise
  */
-/* AJAY : TODO check all the config option..See what we need to pull from multi-upf branch */
+/* Requirement : check all the config options..See what we need to pull from multi-upf branch */
 static inline int
 parse_config_args(struct app_params *app, int argc, char **argv)
 {

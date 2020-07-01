@@ -19,8 +19,7 @@
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
 #include "gen_utils.h"
-
-#include "gx_app_interface.h"
+#include "gx_interface.h"
 #include "sm_enum.h"
 #include "ipc_api.h"
 

@@ -28,7 +28,6 @@ extern pcap_dumper_t *pcap_dumper_east;
 extern pcap_dumper_t *pcap_dumper_west;
 #endif /* PCAP_GEN */
 
-/* Ajay - not sure when this is called. Need more understanidng */
 int
 notification_handler(struct rte_mbuf **pkts,
 	uint32_t n)

@@ -16,7 +16,7 @@
 struct ip_table *static_addr_pool = NULL;
 
 
-/* ajay - only 1 ip pool is supported. Need better pool management  */
+/* TODO - Priority 1 - only  1 ip pool is supported. Need better pool management  */
 #define GET_UE_IP(ue_index) \
 			(((cp_config->ip_pool_ip.s_addr | (~cp_config->ip_pool_mask.s_addr)) \
 			  - htonl(ue_index)) - 0x01000000)

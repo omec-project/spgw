@@ -405,44 +405,7 @@ set_activate_predefined_rules(pfcp_actvt_predef_rules_ie_t *act_predef_rule)
 	memcpy(&(act_predef_rule->predef_rules_nm), "PCC_RULE",8);
 }
 
-// ajay - not required in user plane 
-int
-creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value)
-{
-	int size = 0;
 
-	size += set_pdr_id(&(create_pdr->pdr_id));
-	size += set_precedence(&(create_pdr->precedence));
-	size += set_pdi(&(create_pdr->pdi));
-	/* TODO: Revisit this for change in yang
-	create_pdr->urr_id_count = 1;
-	for(int i=0; i < create_pdr->urr_id_count; i++ ) {
-		set_urr_id(&(create_pdr->urr_id[i]));
-	} */
-
-	/* TODO: Revisit this for change in yang
-	create_pdr->actvt_predef_rules_count = 1;
-	for(int i=0; i < create_pdr->actvt_predef_rules_count; i++ ) {
-		set_activate_predefined_rules(&(create_pdr->actvt_predef_rules[i]));
-	} */
-
-	pfcp_set_ie_header(&(create_pdr->header), PFCP_IE_CREATE_PDR, size);
-
-	return size;
-}
-
-void
-creating_far(pfcp_create_far_ie_t *create_far)
-{
-	uint16_t len = 0;
-
-	len += set_far_id(&(create_far->far_id));
-	len += set_apply_action(&(create_far->apply_action));
-	/* Currently take as hardcoded value */
-	len += 4; /* Header Size of set_apply action ie */
-
-	pfcp_set_ie_header(&(create_far->header), PFCP_IE_CREATE_FAR, len);
-}
 
 int
 updating_pdr(pfcp_update_pdr_ie_t *create_pdr, int source_iface_value)
@@ -469,16 +432,7 @@ updating_pdr(pfcp_update_pdr_ie_t *create_pdr, int source_iface_value)
 	return size;
 }
 
-void
-creating_bar(pfcp_create_bar_ie_t *create_bar)
-{
-	pfcp_set_ie_header(&(create_bar->header), PFCP_IE_CREATE_BAR,
-			sizeof(pfcp_create_bar_ie_t) - sizeof(pfcp_ie_header_t));
 
-	set_bar_id(&(create_bar->bar_id));
-	set_dl_data_notification_delay(&(create_bar->dnlnk_data_notif_delay));
-	set_sgstd_buff_pkts_cnt(&(create_bar->suggstd_buf_pckts_cnt));
-}
 
 uint16_t
 set_apply_action(pfcp_apply_action_ie_t *apply_action)
