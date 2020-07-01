@@ -1,7 +1,10 @@
 # License & Copyright
 #SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>
+
 #Copyright (c) 2019 Sprint
+
 #SPDX-License-Identifier: Apache-2.0
+
 #SPDX-License-Identifier: LicenseRef-ONF-Member-Only
 
 # DNS Server Setup for UPF selection
