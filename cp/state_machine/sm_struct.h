@@ -14,7 +14,7 @@
 #include "gtp_messages.h"
 #include <sys/queue.h>
 #include "gx_struct.h"
-#include "gx_app_interface.h"
+#include "gx_interface.h"
 #include "gtpv2c_msg_struct.h"
 
 

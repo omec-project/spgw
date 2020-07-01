@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "gx_app_interface.h"
 #include "ipc_api.h"
 #include "gx.h"
 
@@ -108,7 +107,7 @@ int unixsock()
 
 	//bind_ipc_channel( g_gx_client_sock, gx_app_sockaddr, CLIENT_PATH );
 
-	connect_to_ipc_channel( g_gx_client_sock, cp_app_sockaddr, SERVER_PATH );
+	connect_to_ipc_channel( g_gx_client_sock, cp_app_sockaddr, "/usr/sock_server");
 
 	while(1){
 		/* add our descriptors to the set */

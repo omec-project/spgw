@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include "gx_app/include/gx_struct.h"
 #include "gx_app/include/gx.h"
+#include "ue.h"
 
 #ifdef CP_BUILD
 #include "ue.h"
@@ -44,12 +45,6 @@ extern int g_app_sock;
 
 #pragma pack(1)
 
-enum e_BUF_HDR {
-	GX_RAR_MSG,
-	GX_RAA_MSG,
-	GX_CCR_MSG,
-	GX_CCA_MSG,
-};
 
 /**
  * @brief  : Returns Gx message type string from type code value as defined by 3gpp TS
@@ -63,19 +58,15 @@ const char *
 gx_type_str(uint8_t type);
 
 /**
- * @brief  : Maintains data related to different gs messages
+ * @brief  : Maintains the Context for Gx interface
  */
-typedef struct Gx_msg {
-	uint8_t msg_type;
-	union data_t {
-		GxRAR cp_rar;
-		GxRAA cp_raa;
-		GxCCR cp_ccr;
-		GxCCR ccr;
-		GxCCA cp_cca;
-	}data;
-}gx_msg;
-
+typedef struct gx_context_t {
+	uint8_t state;
+	uint8_t proc;
+	char gx_sess_id[MAX_LEN];
+	unsigned long  rqst_ptr; /*In Case of RAA, need to store RAR pointer*/
+} gx_context_t;
+ 
 #pragma pack()
 
 /**
@@ -182,4 +173,33 @@ process_create_bearer_resp_and_send_raa( int sock );
 void
 bin_to_str(unsigned char *b_val, char *s_val, int b_len, int s_len);
 
+int
+gen_reauth_response(ue_context_t *context, uint8_t ebi_index);
+
+/**
+- * @brief  : Add entry into gx context hash
+- * @param  : sess_id , key to add entry
+- * @param  : entry , entry to be added
+- * @return : Returns 0 in case of success , -1 otherwise
+- */
+int
+gx_context_entry_add(char *sess_id, gx_context_t *entry);
+
+/**
+- * @brief  : search entry in gx context hash
+- * @param  : sess_id , key to add entry
+- * @param  : entry , entry to be added
+- * @return : Returns 0 in case of success , -1 otherwise
+- */
+int
+gx_context_entry_lookup(char *sess_id, gx_context_t **entry);
+
+int
+gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr);
+
+int
+gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t *mb_req, uint8_t flag_check);
+
+int
+ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer);
 #endif /* CP_APP_H_ */

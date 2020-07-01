@@ -1452,7 +1452,6 @@ process_update_far_info(pfcp_update_far_ie_t *far, uint64_t up_seid)
 			/* VS: Add S5S8 peer node information in connection table */
 			if (far->upd_frwdng_parms.outer_hdr_creation.ipv4_address != 0) {
 #ifdef USE_REST
-				/* AJAY : TODO - generate ARP request and get ready to forward traffic ?*/
 				if ((add_node_conn_entry(ntohl(far->upd_frwdng_parms.outer_hdr_creation.ipv4_address),
 						up_seid, SGI_PORT_ID)) < 0) {
 					clLog(clSystemLog, eCLSeverityCritical, "%s:%d:Failed to add connection entry for S5S8\n",

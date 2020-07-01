@@ -173,10 +173,8 @@ process_release_access_bearer_request(rel_acc_ber_req *rel_acc_ber_req_t, uint8_
 							pfcp_sess_mod_req.header.message_type,SENT,SX);
 
 
-#ifdef CP_BUILD
 			add_pfcp_if_timer_entry((rel_acc_ber_req_t->context)->s11_sgw_gtpc_teid,
 			&rel_acc_ber_req_t->context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 		}
 
 		/* Update UE State */

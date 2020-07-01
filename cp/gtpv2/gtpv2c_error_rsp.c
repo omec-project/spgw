@@ -4,8 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-// AJAY-MUST clean
-
 #include "gtp_ies.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_config.h"
@@ -72,10 +70,8 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 								fprintf(stderr , " %s:%s:%u Error sending: %i\n",
 										__FILE__, __func__, __LINE__, errno);
 							}else {
-#ifdef CP_BUILD
 							add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
 								&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 							}
 						} else {
 							if(resp->state == PFCP_SESS_DEL_REQ_SNT_STATE) {

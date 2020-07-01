@@ -709,10 +709,8 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 	{
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
 			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 	}
 
 	/* Update UE State */
@@ -809,10 +807,8 @@ process_sgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp)
 
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(cb_rsp->header.teid.has_teid.teid,
 			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 	}
 
 	context->sequence = seq_no;
@@ -1102,10 +1098,8 @@ process_sgwc_s5s8_delete_session_request(del_sess_rsp_t *ds_resp)
 	else {
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_del_req.header.message_type,SENT,SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
 			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 	}
 	/* Update UE State */
 	bearer->pdn->state = PFCP_SESS_DEL_REQ_SNT_STATE;
@@ -1152,10 +1146,8 @@ process_pgwc_s5s8_delete_session_request(del_sess_req_t *ds_req)
 				&context->upf_ctxt->upf_sockaddr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	}else {
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(ds_req->header.teid.has_teid.teid,
 			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded,  _resp.eps_bearer_id - 5);
-#endif /* CP_BUILD */
 	}
 
 	/* Update UE State */
@@ -1299,10 +1291,8 @@ process_pgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp)
 
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(cb_rsp->header.teid.has_teid.teid,
 			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 	}
 
 	context->sequence = seq_no;
@@ -1500,10 +1490,8 @@ process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	{
 		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
-#ifdef CP_BUILD
 		add_pfcp_if_timer_entry(ub_rsp->header.teid.has_teid.teid,
 			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
-#endif /* CP_BUILD */
 	}
 	/* Update UE State */
 	pdn_cntxt->state = PFCP_SESS_MOD_REQ_SNT_STATE;

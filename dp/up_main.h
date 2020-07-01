@@ -210,7 +210,7 @@
 #define PCAP_FILENAME_LEN 256
 
 /**
- * pcap filenames. : ajay should we change filenames ?
+ * Requirements : pcap filenames. : should we change filenames ?
  */
 #define SPGW_S1U_PCAP_FILE LOGS_DIR "saegw_uplnk.pcap"
 #define SPGW_SGI_PCAP_FILE LOGS_DIR "saegw_dwlnk.pcap"

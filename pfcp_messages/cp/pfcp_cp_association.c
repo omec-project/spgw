@@ -35,8 +35,6 @@
 #endif /* USE_DNS_QUERY */
 
 extern udp_sock_t my_sock;
-uint32_t *g_gx_pending_csr[BUFFERED_ENTRIES_DEFAULT];
-uint32_t g_gx_pending_csr_cnt = 0;
 
 void
 fill_pfcp_association_release_req(pfcp_assn_rel_req_t *pfcp_ass_rel_req)
@@ -520,7 +518,7 @@ process_pfcp_assoication_request(pdn_connection_t *pdn, uint8_t ebi_index)
 #endif /* USE_DNS_QUERY */
 	}
 
-	// ajay : we should keep upf_context reference in the pdn 
+	/* Requirement :use upf_context reference from user_context */ 
 	/* VS: Retrive association state based on UPF IP. */
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 			(const void*) &(upf_ipv4.s_addr), (void **) &(upf_context));

@@ -24,6 +24,7 @@
 #define SIZE_IF_TEIDRI_PRESENT 7
 #define SIZE_IF_TEIDRI_NOT_PRESENT 6
 
+pfcp_context_t pfcp_ctxt;
 /* extern */
 uint32_t start_time;
 const uint32_t pfcp_base_seq_no = 0x00000000;
@@ -1418,36 +1419,6 @@ void cause_check_sess_estab(pfcp_sess_estab_req_t *pfcp_session_request,
 
 }
 
-
-int
-gx_context_entry_add(char *sess_id, gx_context_t *entry)
-{
-	int ret = 0;
-	ret = rte_hash_add_key_data(gx_context_by_sess_id_hash,
-			(const void *)sess_id , (void *)entry);
-
-	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s - Error on rte_hash_add_key_data add\n",
-				strerror(ret));
-		return -1;
-	}
-	return 0;
-}
-
-int
-gx_context_entry_lookup(char *sess_id, gx_context_t **entry)
-{
-	int ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
-			(const void*) (sess_id), (void **) entry);
-
-	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityDebug, "NO ENTRY FOUND IN UPF HASH [%s]\n", sess_id);
-		return -1;
-	}
-
-	return 0;
-}
 
 
 uint8_t
