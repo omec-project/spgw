@@ -239,7 +239,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             fprintf(stderr, "CP: PFCP_PORT   : %d\n",
                     cp_config->pfcp_port);
 
-        } else if (strncmp(MME_S11_IPS, global_entries[i].name,
+        } /*else if (strncmp(MME_S11_IPS, global_entries[i].name,
                     strlen(MME_S11_IPS)) == 0) {
 
             inet_aton(global_entries[i].value,
@@ -255,7 +255,7 @@ config_cp_ip_port(cp_config_t *cp_config)
 
             fprintf(stderr, "CP: MME_S11_PORT: %d\n", cp_config->s11_mme_port);
 
-        } else if (strncmp(UPF_PFCP_IPS , global_entries[i].name,
+        } */else if (strncmp(UPF_PFCP_IPS , global_entries[i].name,
                     strlen(UPF_PFCP_IPS)) == 0) {
 
             /* This is used in case DNS is not used and MULTI UPF is not configured*/
