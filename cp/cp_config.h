@@ -13,7 +13,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <linux/limits.h>
-#include "apn_struct.h"
 #include "cp_config_defs.h"
 #include "spgw_config_struct.h"
 

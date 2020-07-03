@@ -22,7 +22,6 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp.h"
 #include <sys/stat.h>
-#include "apn_apis.h"
 #include "cp_log.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"

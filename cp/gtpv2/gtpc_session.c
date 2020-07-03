@@ -186,7 +186,7 @@ fill_cs_request(create_sess_req_t *cs_req, ue_context_t *context,
 
 	set_ie_header(&cs_req->apn.header, GTP_IE_ACC_PT_NAME, IE_INSTANCE_ZERO,
 		             context->pdns[ebi_index]->apn_in_use->apn_name_length);
-	memcpy(cs_req->apn.apn, &(context->pdns[ebi_index]->apn_in_use->apn_name_label[0]),
+	memcpy(cs_req->apn.apn, &(context->pdns[ebi_index]->apn_in_use->apn_name[0]),
 			context->pdns[ebi_index]->apn_in_use->apn_name_length);
 
 	if (context->selection_flag) {

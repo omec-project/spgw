@@ -30,7 +30,6 @@ APP = ngic_controlplane
 SRCS-y := cp_main.c
 SRCS-y += ue.c
 SRCS-y += ip_pool.c
-SRCS-y += apn_apis.c
 SRCS-y += cp_init.c
 SRCS-y += cp_stats.c
 SRCS-y += monitor_config.c

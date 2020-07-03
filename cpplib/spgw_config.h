@@ -104,7 +104,9 @@ class spgwConfig
 {
    public:
     static spgw_config_profile_t *parse_subscriber_profiles_cpp(const char *); 
+    static void set_cp_config_cpp(spgw_config_profile_t *);
     static void switch_config_cpp(spgw_config_profile_t *);
     static sub_profile_t* match_sub_selection_cpp(sub_selection_keys_t *key);
+    static apn_profile_t * match_apn_profile_cpp(char *, uint16_t len);
 };
 #endif

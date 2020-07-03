@@ -16,6 +16,7 @@ int main()
         new_config = parse_subscriber_profiles_c("../config/subscriber_profiles.json");
         switch_config(new_config);
 
+#if TEST_FILTER
         {
             printf("****TEST 1 ****\n");
             sub_selection_keys_t key = {0};
@@ -68,6 +69,7 @@ int main()
                 printf("Qos profile = %s \n",sub_profile->qos_profile->qos_profile_name);
             }
         }
+#endif
     }
     return 0;
 }

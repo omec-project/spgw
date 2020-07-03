@@ -220,7 +220,7 @@ add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, eps_bearer_t **bearer)
 
 int
 create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
-		uint8_t ebi, ue_context_t **context, apn_t *apn_requested,
+		uint8_t ebi, ue_context_t **context, apn_profile_t *apn_requested,
 	  	uint32_t sequence)
 {
 	int ret;
@@ -272,8 +272,8 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 				}
 			}
 		}
-		/*if ((strncmp(apn_requested->apn_name_label,
-					(((*context)->pdns[ebi - 5])->apn_in_use)->apn_name_label,
+		/*if ((strncmp(apn_requested->apn_name,
+					(((*context)->pdns[ebi - 5])->apn_in_use)->apn_name,
 					sizeof(apn_requested->apn_name_length))) == 0) {
 			clLog(clSystemLog, eCLSeverityCritical,
 				"%s- Discarding re-transmitted csr received for IMSI:%lu \n",

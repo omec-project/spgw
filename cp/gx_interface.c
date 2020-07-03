@@ -297,9 +297,9 @@ fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 
 		for(int i=0; i < MAX_APN_LEN; ){
 
-			len = (pdn->apn_in_use)->apn_name_label[i];
-			if((pdn->apn_in_use)->apn_name_label[i] != '\0'){
-				strncat(apn,(const char *) &((pdn->apn_in_use)->apn_name_label[i + 1]), len);
+			len = (pdn->apn_in_use)->apn_name[i];
+			if((pdn->apn_in_use)->apn_name[i] != '\0'){
+				strncat(apn,(const char *) &((pdn->apn_in_use)->apn_name[i + 1]), len);
 				apn[len] = '.';
 				i += len+1;
 			} else {
