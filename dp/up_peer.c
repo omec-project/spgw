@@ -23,7 +23,7 @@
 #include "pfcp_up_association.h"
 #include "up_peer_struct.h"
 #include "timer.h"
-#include "up_timers.h"
+#include "up_peer.h"
 
 #include "gw_adapter.h"
 #include "gtpu.h"
@@ -595,8 +595,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint64_t sess_id, uint8_t portId)
 
 }
 
-#ifdef USE_REST
-static void
+void
 echo_table_init(void)
 {
 
@@ -633,8 +632,6 @@ echo_table_init(void)
 
 void rest_thread_init(void)
 {
-	echo_table_init();
-
 	sigset_t sigset;
 
 	/* mask SIGALRM in all threads by default */
@@ -649,7 +646,6 @@ void rest_thread_init(void)
 		//return 1;
 	}
 }
-#endif
 
 uint8_t process_response(uint32_t dstIp)
 {

@@ -223,7 +223,6 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
                     } while (ptr != apn_profile->apn_name);
                     apn_profile->apn_name_length = strlen(apn_profile->apn_name);
                     std::cout<<"\t\tAPN name after encode ["<<apn_profile->apn_name<<"]"<<std::endl;
-                    uint8_t start = *(uint8_t *)size;
                 }
                 if(apnSection.HasMember("usage")) {
                     uint16_t usage = apnSection["usage"].GetInt();

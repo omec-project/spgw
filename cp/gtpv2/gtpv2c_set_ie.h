@@ -21,10 +21,6 @@
 
 #define MAX_GTPV2C_LENGTH (MAX_GTPV2C_UDP_LEN-12) 
 
-#ifdef USE_REST
-uint8_t rstCnt;
-#endif /* USE_REST */
-
 /**
  * @brief  : Copies existing information element to gtp message
  *           within transmission buffer with the GTP header '*header'

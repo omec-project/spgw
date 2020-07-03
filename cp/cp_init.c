@@ -50,7 +50,6 @@ struct sockaddr_in pfcp_sockaddr;
 /* UPF PFCP */
 in_port_t upf_pfcp_port;
 
-uint8_t s11_rx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
 struct sockaddr_in s11_sockaddr;
 socklen_t s11_mme_sockaddr_len = sizeof(s11_mme_sockaddr);
@@ -64,13 +63,7 @@ socklen_t s5s8_sockaddr_len = sizeof(s5s8_sockaddr);
 uint8_t pfcp_tx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
-#ifdef USE_REST
-/* ECHO PKTS HANDLING */
-uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
-#endif /* USE_REST */
-
 extern uint8_t rstCnt;
-
 
 static void 
 init_pfcp(void)
@@ -335,3 +328,21 @@ void recovery_time_into_file(uint32_t recov_time)
         fclose(fp);
     }
 }
+
+void rest_thread_init(void)
+{
+	sigset_t sigset;
+
+	/* mask SIGALRM in all threads by default */
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGRTMIN);
+	sigaddset(&sigset, SIGUSR1);
+	sigprocmask(SIG_BLOCK, &sigset, NULL);
+
+	if (!gst_init())
+	{
+		clLog(clSystemLog, eCLSeverityDebug, "%s - gstimer_init() failed!!\n", getPrintableTime() );
+	}
+	return;
+}
+

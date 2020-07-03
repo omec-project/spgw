@@ -17,12 +17,12 @@
 #include "csid_cp_cleanup.h"
 #include "csid_api.h"
 #include "gtpv2_interface.h"
-#include "cp_timers.h"
+#include "cp_peer.h"
 #include "cp_config_defs.h"
 #include "timer.h"
 
 
-extern uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
+uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
 extern socklen_t s11_mme_sockaddr_len;
 extern socklen_t s5s8_sockaddr_len;
 extern udp_sock_t my_sock;
@@ -325,15 +325,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 	clLog(clSystemLog, eCLSeverityDebug, "Current Active Conn Cnt:%u\n", conn_cnt);
 	return 0;
 }
-#ifdef USE_REST
-/**
- * @brief  : Function to initialize/create shared ring, ring_container and mem_pool to
- *           inter-communication between DL and iface core.
- * @param  : No param
- * @return : Returns nothing
- */
 
-static 
 void echo_table_init(void)
 {
     struct rte_hash_parameters
@@ -361,32 +353,13 @@ void echo_table_init(void)
     return;
 }
 
-void rest_thread_init(void)
-{
-	echo_table_init();
-
-	sigset_t sigset;
-
-	/* mask SIGALRM in all threads by default */
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGRTMIN);
-	sigaddset(&sigset, SIGUSR1);
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
-
-	if (!gst_init())
-	{
-		clLog(clSystemLog, eCLSeverityDebug, "%s - gstimer_init() failed!!\n", getPrintableTime() );
-	}
-	return;
-}
-#endif /* USE_REST */
 
 uint8_t process_response(uint32_t dstIp)
 {
 	int ret = 0;
 	peerData_t *conn_data = NULL;
 
-	// TODO : BUG COmmon peer table is not good..Currently conn_hash_handle is common for all peers
+	// TODO : Common peer table is not good..Currently conn_hash_handle is common for all peers
 	// e.g. gtp, pfcp, ....
 	ret = rte_hash_lookup_data(conn_hash_handle,
 			&dstIp, (void **)&conn_data);

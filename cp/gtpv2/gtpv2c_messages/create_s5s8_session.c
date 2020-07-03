@@ -35,10 +35,7 @@
 #include "clogger.h"
 #include "gw_adapter.h"
 #include "spgw_cpp_wrapper.h"
-
-#ifdef USE_REST
 #include "cp_main.h"
-#endif /* USE_REST */
 
 extern udp_sock_t my_sock;
 extern struct sockaddr_in s5s8_recv_sockaddr;

@@ -28,10 +28,7 @@
 #include "gen_utils.h"
 #include "gw_adapter.h"
 #include "gx_error_rsp.h"
-
-#ifdef USE_REST
 #include "cp_main.h"
-#endif
 
 
 extern udp_sock_t my_sock;

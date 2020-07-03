@@ -11,7 +11,7 @@
 #include "pfcp_up_association.h"
 #include "clogger.h"
 #include "gw_adapter.h"
-#include "up_timers.h"
+#include "up_peer.h"
 
 extern struct in_addr dp_comm_ip;
 extern struct in_addr cp_comm_ip;
@@ -729,13 +729,11 @@ process_create_far_info(pfcp_create_far_ie_t *far,
 		if (far->frwdng_parms.dst_intfc.interface_value == ACCESS ) {
 			/* VS: Add eNB peer node information in connection table */
 			if (far->frwdng_parms.outer_hdr_creation.ipv4_address != 0) {
-#ifdef USE_REST
 				if ((add_node_conn_entry(ntohl(far->frwdng_parms.outer_hdr_creation.ipv4_address),
 						up_seid, S1U_PORT_ID)) < 0) {
 					clLog(clSystemLog, eCLSeverityCritical, FORMAT":Failed to add connection entry for eNB\n",
 							ERR_MSG);
 				}
-#endif /* USE_REST */
 
 				/* Update the Session state */
 				if (far->frwdng_parms.outer_hdr_creation.teid != 0) {
@@ -747,13 +745,11 @@ process_create_far_info(pfcp_create_far_ie_t *far,
 		} else {
 			/* VS: Add S5S8 peer node information in connection table */
 			if (far->frwdng_parms.outer_hdr_creation.ipv4_address != 0) {
-#ifdef USE_REST
 				if ((add_node_conn_entry(ntohl(far->frwdng_parms.outer_hdr_creation.ipv4_address),
 						up_seid, SGI_PORT_ID)) < 0) {
 					clLog(clSystemLog, eCLSeverityCritical, FORMAT":Failed to add connection entry for S5S8\n",
 							ERR_MSG);
 				}
-#endif /* USE_REST */
 
 				/* Update the Session state */
 				if (far->frwdng_parms.outer_hdr_creation.teid != 0) {
@@ -1387,13 +1383,11 @@ process_update_far_info(pfcp_update_far_ie_t *far, uint64_t up_seid)
 		if (far->upd_frwdng_parms.dst_intfc.interface_value == ACCESS ) {
 			/* VS: Add eNB peer node information in connection table */
 			if (far->upd_frwdng_parms.outer_hdr_creation.ipv4_address != 0) {
-#ifdef USE_REST
 				if ((add_node_conn_entry(ntohl(far->upd_frwdng_parms.outer_hdr_creation.ipv4_address),
 						up_seid, S1U_PORT_ID)) < 0) {
 					clLog(clSystemLog, eCLSeverityCritical, FORMAT":Failed to add connection entry for eNB\n",
 							ERR_MSG);
 				}
-#endif /* USE_REST */
 
 				/* Update the Session state */
 				if (!far->upd_frwdng_parms.outer_hdr_creation.teid) {
@@ -1451,13 +1445,11 @@ process_update_far_info(pfcp_update_far_ie_t *far, uint64_t up_seid)
 		} else {
 			/* VS: Add S5S8 peer node information in connection table */
 			if (far->upd_frwdng_parms.outer_hdr_creation.ipv4_address != 0) {
-#ifdef USE_REST
 				if ((add_node_conn_entry(ntohl(far->upd_frwdng_parms.outer_hdr_creation.ipv4_address),
 						up_seid, SGI_PORT_ID)) < 0) {
 					clLog(clSystemLog, eCLSeverityCritical, "%s:%d:Failed to add connection entry for S5S8\n",
 							 __func__, __LINE__);
 				}
-#endif /* USE_REST */
 
 				/* Update the Session state */
 				if (far->upd_frwdng_parms.outer_hdr_creation.teid != 0) {
@@ -1538,12 +1530,10 @@ process_remove_pdr_sess(pfcp_remove_pdr_ie_t *remove_pdr, uint64_t up_seid)
 				far_info_t *far = pdr->far;
 				/* Cleanup the FAR information */
 				if (far != NULL) {
-#ifdef USE_REST
 					if (far->frwdng_parms.outer_hdr_creation.ipv4_address != 0)
 						dp_flush_session(
 							ntohl(far->frwdng_parms.outer_hdr_creation.ipv4_address),
 							sess->up_seid);
-#endif /* USE_REST */
 
 					/* Flush the far info from the hash table */
 					ret = rte_hash_del_key(far_by_id_hash, &far->far_id_value);
@@ -1922,12 +1912,10 @@ up_delete_session_entry(pfcp_session_t *sess)
 			far_info_t *far = pdr->far;
 			/* Cleanup the FAR information */
 			if (far != NULL) {
-#ifdef USE_REST
 				if (far->frwdng_parms.outer_hdr_creation.ipv4_address != 0)
 					dp_flush_session(
 						ntohl(far->frwdng_parms.outer_hdr_creation.ipv4_address),
 						sess->up_seid);
-#endif /* USE_REST */
 				/* Flush the far info from the hash table */
 				ret = rte_hash_del_key(far_by_id_hash, &far->far_id_value);
 				if ( ret < 0) {

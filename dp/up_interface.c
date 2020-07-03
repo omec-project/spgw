@@ -161,9 +161,7 @@ void iface_module_constructor(void)
 void sig_handler(int signo)
 {
 		if (signo == SIGINT) {
-#ifdef USE_REST
 			gst_deinit();
-#endif /* USE_REST */
 
 			close(route_sock);
 #ifdef USE_AF_PACKET

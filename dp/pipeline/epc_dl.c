@@ -52,7 +52,6 @@ extern pcap_dumper_t *pcap_dumper_east;
 #endif /* PCAP_GEN */
 uint32_t dl_nkni_pkts = 0;
 
-#ifdef USE_REST
 /**
  * @brief  : Perform lookup for src ip, and set activity flag if connection
  *           is active for downlink
@@ -77,7 +76,6 @@ static inline void check_activity(uint32_t srcIp)
 		conn_data->activityFlag = 1;
 	}
 }
-#endif /* USE_REST */
 
 /**
  * @brief  : set port id value for downlink
@@ -161,7 +159,6 @@ static inline void epc_dl_set_port_id(struct rte_mbuf *m)
 			/*((ipv4_hdr->next_proto_id == IPPROTO_UDP) ||
 			(ipv4_hdr->next_proto_id == IPPROTO_TCP)))) */{
 			clLog(clSystemLog, eCLSeverityDebug, "SGI packet\n");
-#ifdef USE_REST
 			if (app.spgw_cfg == SGWU) {
 				/* VS: TODO Set activity flag if data receive from peer node */
 				check_activity(ipv4_hdr->src_addr);
@@ -176,7 +173,6 @@ static inline void epc_dl_set_port_id(struct rte_mbuf *m)
 					}
 				}
 			}
-#endif /* USE_REST */
 			*port_id_offset = 0;
 			dl_sgi_pkt = 1;
 			dl_arp_pkt = 0;

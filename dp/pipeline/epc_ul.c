@@ -40,9 +40,7 @@
 #include "up_main.h"
 #include "epc_packet_framework.h"
 #include "clogger.h"
-#ifdef USE_REST
 #include "timer.h"
-#endif /* USE_REST */
 
 /* Borrowed from dpdk ip_frag_internal.c */
 #define PRIME_VALUE	0xeaad8405
@@ -61,7 +59,6 @@ extern _timer_t _init_time;
 #endif /* TIMER_STATS */
 uint32_t ul_nkni_pkts = 0;
 
-#ifdef USE_REST
 /**
  * @brief  : Perform lookup for src ip, and set activity flag if connection
  *           is active for uplink
@@ -86,7 +83,6 @@ static inline void check_activity(uint32_t srcIp)
 		conn_data->activityFlag = 1;
 	}
 }
-#endif /* USE_REST */
 
 /**
  * @brief  : set port id value for uplink
@@ -170,10 +166,8 @@ static inline void epc_ul_set_port_id(struct rte_mbuf *m)
 			(struct udp_hdr *)&m_data[sizeof(struct ether_hdr) +
 			ip_len];
 		if (likely(udph->dst_port == UDP_PORT_GTPU_NW_ORDER)) {
-#ifdef USE_REST
 			/* VS: TODO Set activity flag if data receive from peer node */
 			check_activity(ipv4_hdr->src_addr);
-#endif /* USE_REST */
 			struct gtpu_hdr *gtpuhdr = get_mtogtpu(m);
 			if ((gtpuhdr->msgtype == GTPU_ECHO_REQUEST && gtpuhdr->teid == 0) ||
 					gtpuhdr->msgtype == GTPU_ECHO_RESPONSE) {

@@ -12,7 +12,7 @@
 #include "gtpv2c_error_rsp.h"
 #include "assert.h"
 #include "clogger.h"
-#include "cp_timers.h"
+#include "cp_peer.h"
 #include "gtpc_timer.h"
 #include "gw_adapter.h"
 #include "gtpv2_interface.h"

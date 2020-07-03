@@ -224,7 +224,7 @@ typedef struct pfcp_session_t {
 	fqcsid_t *sgwu_fqcsid;
 	fqcsid_t *pgw_fqcsid;
 	fqcsid_t *pgwu_fqcsid;
-#endif /* USE_REST */
+#endif /* USE_CSID  */
 	pfcp_session_datat_t *sessions;
 } pfcp_session_t;
 

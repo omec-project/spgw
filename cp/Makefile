@@ -38,6 +38,7 @@ SRCS-y += packet_filters.c
 SRCS-y += gx_error_rsp.c
 SRCS-y += cp_interface.c
 SRCS-y += cp_io_poll.c
+SRCS-y += cp_peer.c
 SRCS-y += state_machine/sm_init.o
 SRCS-y += state_machine/sm_hand.o
 SRCS-y += state_machine/sm_gtpc_pcnd.o
@@ -62,6 +63,7 @@ SRCS-y += gtpv2/gtpv2c_messages/gtpv2c_echo.o
 SRCS-y += gtpv2/gtpv2c_messages/modify_bearer.o
 SRCS-y += gtpv2/gtpv2c_messages/downlink_data_notification.o
 SRCS-y += gtpv2/gtpv2c_messages/release_access_bearer.o
+SRCS-y += $(SRCDIR)/../common/timer.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_timer.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_transactions.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_msg_validate.o
@@ -154,16 +156,6 @@ CFLAGS_config.o := -D_GNU_SOURCE
 
 ifneq (,$(findstring SYNC_STATS, $(CFLAGS), $(EXTRA_CFLAGS)))
 	SRCS-y += stats_sync.c
-endif
-
-#un-comment below line to enable check peer node heartbeat.
-CFLAGS += -DUSE_REST
-
-ifneq (,$(findstring USE_REST, $(CFLAGS), $(EXTRA_CFLAGS)))
-	#VS: ECHO FILES
-	CFLAGS += -I$(SRCDIR)/../restoration
-	SRCS-y += $(SRCDIR)/../common/timer.o
-	SRCS-y += cp_timers.c
 endif
 
 #un-comment below line to enable FQ-CSID support in the control-plane

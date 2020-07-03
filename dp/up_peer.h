@@ -35,4 +35,6 @@ void del_entry_from_hash(uint32_t ipAddr);
 uint8_t
 add_node_conn_entry(uint32_t dstIp, uint64_t sess_id, uint8_t portId);
 
+/* initialize peer echo table */
+void echo_table_init(void);
 #endif
