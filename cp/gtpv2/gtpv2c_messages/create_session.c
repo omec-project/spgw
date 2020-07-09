@@ -26,10 +26,10 @@
 #include "stdbool.h"
 #include "gtpv2_interface.h"
 #include "ip_pool.h"
-#include "apn_apis.h"
 #include "upf_struct.h"
 #include "cp_log.h"
 #include "cp_config_defs.h"
+#include "spgw_cpp_wrapper.h"
 
 extern uint32_t num_adc_rules;
 extern uint32_t adc_rule_id[];
@@ -381,7 +381,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 			return GTPV2C_CAUSE_PREFERRED_PDN_TYPE_UNSUPPORTED;
 	}
 
-	apn_t *apn_requested = get_apn((char *)csr.apn.apn, csr.apn.header.len);
+	apn_profile_t *apn_requested = match_apn_profile((char *)csr.apn.apn, csr.apn.header.len);
 
 	if (!apn_requested)
 		return GTPV2C_CAUSE_MISSING_UNKNOWN_APN;

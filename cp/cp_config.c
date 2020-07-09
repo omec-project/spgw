@@ -27,8 +27,6 @@
 #include "cp_config.h"
 #include "cp_config_apis.h"
 #include "cp_stats.h"
-#include "apn_struct.h"
-#include "apn_apis.h"
 #include "upf_struct.h"
 #include "pfcp_cp_association.h"
 #include "ip_pool.h"
@@ -98,7 +96,6 @@ void init_config(void)
 
     init_cli_module(cp_config->cp_logger);
 
-
     /* start - dynamic config */
     cp_config->subscriber_rulebase = (spgw_config_profile_t *) calloc(1, sizeof(spgw_config_profile_t));
     if (cp_config->subscriber_rulebase == NULL) {
@@ -106,12 +103,12 @@ void init_config(void)
     }
 
     /* Parse initial configuration file */
-    cp_config->subscriber_rulebase = parse_subscriber_profiles_c("../config/subscriber_profiles.json");
-    switch_config(cp_config->subscriber_rulebase);
+    cp_config->subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
+    set_cp_config(cp_config->subscriber_rulebase);
 
     char file[128] = {'\0'};
     strcat(file, config_update_base_folder);
-    strcat(file, "subscriber_profiles.json");
+    strcat(file, "subscriber_mapping.json");
     RTE_LOG_DP(DEBUG, CP, "Config file to monitor %s ", file);
     register_config_updates(file);
 
@@ -126,11 +123,9 @@ config_cp_ip_port(cp_config_t *cp_config)
     int32_t num_app_entries = 0;
     int32_t num_cache_entries = 0;
     int32_t num_ip_pool_entries = 0;
-    int32_t num_apn_entries = 0;
     int32_t num_global_entries = 0;
 
     struct rte_cfgfile_entry *global_entries = NULL;
-    struct rte_cfgfile_entry *apn_entries = NULL;
     struct rte_cfgfile_entry *ip_pool_entries = NULL;
     struct rte_cfgfile_entry *static_ip_pool_entries = NULL;
     struct rte_cfgfile_entry *cache_entries = NULL;
@@ -239,7 +234,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             fprintf(stderr, "CP: PFCP_PORT   : %d\n",
                     cp_config->pfcp_port);
 
-        } else if (strncmp(MME_S11_IPS, global_entries[i].name,
+        } /*else if (strncmp(MME_S11_IPS, global_entries[i].name,
                     strlen(MME_S11_IPS)) == 0) {
 
             inet_aton(global_entries[i].value,
@@ -255,7 +250,7 @@ config_cp_ip_port(cp_config_t *cp_config)
 
             fprintf(stderr, "CP: MME_S11_PORT: %d\n", cp_config->s11_mme_port);
 
-        } else if (strncmp(UPF_PFCP_IPS , global_entries[i].name,
+        } */else if (strncmp(UPF_PFCP_IPS , global_entries[i].name,
                     strlen(UPF_PFCP_IPS)) == 0) {
 
             /* This is used in case DNS is not used and MULTI UPF is not configured*/
@@ -342,69 +337,8 @@ config_cp_ip_port(cp_config_t *cp_config)
     }
 
     rte_free(global_entries);
-
-    /* Parse APN and nameserver values. */
-    uint16_t apn_idx = 0;
     uint16_t app_nameserver_ip_idx = 0;
     uint16_t ops_nameserver_ip_idx = 0;
-
-    num_apn_entries =
-        rte_cfgfile_section_num_entries(file, APN_ENTRIES);
-
-    if (num_apn_entries > 0) {
-        /* Allocate the memory. */
-        apn_entries = rte_malloc_socket(NULL,
-                sizeof(struct rte_cfgfile_entry) *
-                num_apn_entries,
-                RTE_CACHE_LINE_SIZE, rte_socket_id());
-        if (apn_entries == NULL)
-            rte_panic("Error configuring"
-                    "apn entry of %s\n", STATIC_CP_FILE);
-    }
-
-
-    /* Fill the entries in APN list. */
-    rte_cfgfile_section_entries(file,
-            APN_ENTRIES, apn_entries, num_apn_entries);
-
-    for (i = 0; i < num_apn_entries; ++i) {
-        apn_t local_apn={0};
-        fprintf(stderr, "CP: [%s] = %s\n",
-                apn_entries[i].name,
-                apn_entries[i].value);
-
-        if (strncmp(APN, apn_entries[i].name,
-                    strlen(APN)) == 0) {
-            /* If key matches */
-            if (i < MAX_NUM_APN) {
-                char *ptr[3];
-                /* Based on default value, set usage type */
-                local_apn.apn_usage_type = -1;
-
-                parse_apn_args(apn_entries[i].value, ptr);
-
-                local_apn.apn_name_label = ptr[0];
-
-                if (ptr[1] != NULL)
-                    local_apn.apn_usage_type = atoi(ptr[1]);
-
-                if (ptr[2] != NULL)
-                    memcpy(local_apn.apn_net_cap, ptr[2], strlen(ptr[2]));
-
-                set_apn_name(&local_apn, local_apn.apn_name_label);
-
-                int f = 0;
-                /* Free the memory allocated by malloc. */
-
-                for (f = 0; f < 3; f++)
-                    free(ptr[f]);
-
-                apn_idx++;
-            }
-        }
-    }
-    rte_free(apn_entries);
-
 
     /* Read cache values from cfg seaction. */
     num_cache_entries =
@@ -704,7 +638,8 @@ check_cp_req_timeout_config(char *value) {
 }
 
 int
-check_cp_req_tries_config(char *value) {
+check_cp_req_tries_config(char *value) 
+{
 	unsigned int idx = 0;
 	if(value == NULL )
 	        return -1;
@@ -787,11 +722,11 @@ config_change_cbk(char *config_file, uint32_t flags)
 
 	if (native_config_folder == false) {
 		/* Move the updated config to standard path */
-		static char cmd[256];
-		sprintf(cmd, "cp %s %s", config_file, CP_CONFIG_OPT_PATH);
+		char cmd[256];
+		sprintf(cmd, "cp %s %s", config_file, CP_CONFIG_SUB_RULES);
 		int ret = system(cmd);
 		RTE_LOG_DP(INFO, CP, "system call return value: %d \n", ret);
-	}
+    }
  
 	/* We dont expect quick updates from configmap..One update per interval. Typically 
 	 * worst case 60 seconds for 1 config update. Updates are clubbed and dont come frequent 
@@ -799,7 +734,7 @@ config_change_cbk(char *config_file, uint32_t flags)
 	 */
 	watch_config_change(config_file, config_change_cbk);
 
-	cp_config->subscriber_rulebase = parse_subscriber_profiles_c("../config/subscriber_profiles.json");
+	cp_config->subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
     
     switch_config(cp_config->subscriber_rulebase);
     
@@ -819,41 +754,41 @@ register_config_updates(char *file)
  */
 struct in_addr native_linux_name_resolve(const char *name)
 {
-	    struct in_addr ip = {0};
-        printf("Function [%s] - Line - %d - %s - \n",__FUNCTION__,__LINE__,name);
-        struct addrinfo hints;
-        struct addrinfo *result=NULL, *rp=NULL;
-        int err;
+    struct in_addr ip = {0};
+    printf("Function [%s] - Line - %d - %s - \n",__FUNCTION__,__LINE__,name);
+    struct addrinfo hints;
+    struct addrinfo *result=NULL, *rp=NULL;
+    int err;
 
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
-        hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-        hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-        hints.ai_protocol = 0;          /* Any protocol */
-        hints.ai_canonname = NULL;
-        hints.ai_addr = NULL;
-        hints.ai_next = NULL;
-        err = getaddrinfo(name, NULL, &hints, &result);
-        if (err != 0)
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+    hints.ai_protocol = 0;          /* Any protocol */
+    hints.ai_canonname = NULL;
+    hints.ai_addr = NULL;
+    hints.ai_next = NULL;
+    err = getaddrinfo(name, NULL, &hints, &result);
+    if (err != 0)
+    {
+        // Keep trying ...May be SGW is not yet deployed
+        // We shall be doing this once timer library is integrated
+        printf("getaddrinfo: %s\n", gai_strerror(err));
+    }
+    else
+    {
+        for (rp = result; rp != NULL; rp = rp->ai_next)
         {
-                // Keep trying ...May be SGW is not yet deployed
-                // We shall be doing this once timer library is integrated
-                printf("getaddrinfo: %s\n", gai_strerror(err));
+            if(rp->ai_family == AF_INET)
+            {
+                struct sockaddr_in *addrV4 = (struct sockaddr_in *)rp->ai_addr;
+                printf("gw address received from DNS response %s\n", inet_ntoa(addrV4->sin_addr));
+                return addrV4->sin_addr;
+            }
         }
-        else
-        {
-                for (rp = result; rp != NULL; rp = rp->ai_next)
-                {
-                        if(rp->ai_family == AF_INET)
-                        {
-                                struct sockaddr_in *addrV4 = (struct sockaddr_in *)rp->ai_addr;
-                                printf("gw address received from DNS response %s\n", inet_ntoa(addrV4->sin_addr));
-                                return addrV4->sin_addr;
-                        }
-                }
-        }
-        printf("Function [%s] - Line - %d - %s - name resolution failed \n",__FUNCTION__,__LINE__,name);
-        return ip;
+    }
+    printf("Function [%s] - Line - %d - %s - name resolution failed \n",__FUNCTION__,__LINE__,name);
+    return ip;
 }
 
 upf_context_t*

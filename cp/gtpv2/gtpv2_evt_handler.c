@@ -12,7 +12,7 @@
 #include "gtpv2c_error_rsp.h"
 #include "assert.h"
 #include "clogger.h"
-#include "cp_timers.h"
+#include "cp_peer.h"
 #include "gtpc_timer.h"
 #include "gw_adapter.h"
 #include "gtpv2_interface.h"
@@ -22,31 +22,33 @@
 extern int s11logger;
 extern int s5s8logger;
 
-// SGW ->  INITIAL_PDN_ATTACH_PROC, SGWC_NONE_STATE, CS_REQ_RCVD_EVNT ==> association_setup_handler 
-// SAEGW-> INITIAL_PDN_ATTACH_PROC SGWC_NONE_STATE CS_REQ_RCVD_EVNT association_setup_handler  << No Gx case 
-// saegw - INITIAL_PDN_ATTACH_PROC, PGWC_NONE_STATE, CS_REQ_RCVD_EVNT, gx_setup_handler
-// saegw - SGW_RELOCATION_PROC SGWC_NONE_STATE CS_REQ_RCVD_EVNT association_setup_handler 
-// pgw - INITIAL_PDN_ATTACH_PROC SGWC_NONE_STATE CS_REQ_RCVD_EVNT => association_setup_handler 
-// pgw - INITIAL_PDN_ATTACH_PROC PGWC_NONE_STATE CS_REQ_RCVD_EVNT => gx_setup_handler 
-// pgw - SGW_RELOCATION_PROC SGWC_NONE_STATE CS_REQ_RCVD_EVNT association_setup_handler 
-
-// sgw INITIAL_PDN_ATTACH_PROC SGWC_NONE_STATE CS_REQ_RCVD_EVNT ==> association_setup_handler
-// sgw SGW_RELOCATION_PROC SGWC_NONE_STATE CS_REQ_RCVD_EVNT ==> association_setup_handler 
-
 int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
 {
+    ue_context_t *context; 
+    uint64_t imsi;
+
     assert(msg->msg_type == GTP_CREATE_SESSION_REQ);
-    RTE_SET_USED(gtpv2c_rx);
+
+    /*
+     * Requirement1 : Create transaction. If new CSReq is received and previous
+     *                CSreq is already in progress then drop retransmitted CSReq 
+     * Requirement1 : Detect Context Replacement 
+     * Requirement2 : Support guard timer. If retransmitted CSReq is received 
+     *       after sending CSRsp then just sent back same CSrsp or drop CSReq.
+     */
+    imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
+    rte_hash_lookup_data(ue_context_by_imsi_hash, &imsi, (void **) &(context));
+    msg->ue_context = context;
 
     if(msg->rx_interface == PGW_S5_S8) 
     {
-        /*cli_logic --> when CSR received from SGWC add it as a peer*/
+        /* when CSR received from SGWC add it as a peer*/
 	    add_node_conn_entry(ntohl(msg->gtpc_msg.csr.sender_fteid_ctl_plane.ipv4_address),
 								S5S8_SGWC_PORT_ID);
     }
     else if(msg->rx_interface == SGW_S11_S4) 
     {
-	    /*add entry of MME(if cp is SGWC) and SGWC (if cp PGWC)*/
+        /* when CSR received from MME add it as a peer*/
 	    add_node_conn_entry(ntohl(msg->gtpc_msg.csr.sender_fteid_ctl_plane.ipv4_address),
 								S11_SGW_PORT_ID );
     }
@@ -54,29 +56,22 @@ int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
 	if (1 == msg->gtpc_msg.csr.indctn_flgs.indication_oi) {
 				/*Set SGW Relocation Case */
 		msg->proc = SGW_RELOCATION_PROC;
-	} else if (msg->gtpc_msg.csr.bearer_contexts_to_be_created.s5s8_u_pgw_fteid.header.len) {
-		/* S1 Based Handover */
-		msg->proc = SERVICE_REQUEST_PROC;
-	} else {
+	} 
+	else {
+        /* SGW + PGW + SAEGW case */
 		msg->proc = INITIAL_PDN_ATTACH_PROC;
 	}
 
 	/*Set the appropriate event type.*/
 	msg->event = CS_REQ_RCVD_EVNT;
 
-    /*
-     * if session found then detect retransmission
-     * if no retransmission then delete the existing session
-     * handler new event  
-     */
-
 	if (INITIAL_PDN_ATTACH_PROC == msg->proc) {
-		/* VS: Set the initial state for initial PDN connection */
-		/* VS: Make single state for all combination */
 		if (cp_config->cp_type == SGWC) {
 			/*Set the appropriate state for the SGWC */
 			msg->state = SGWC_NONE_STATE;
+            association_setup_handler((void *)msg, NULL);
         } else {
+		    msg->state = PGWC_NONE_STATE;
             /*Set the appropriate state for the SAEGWC and PGWC*/
             if(cp_config->gx_enabled) {
                 clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
@@ -102,10 +97,8 @@ int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
         }
 	} else if (SGW_RELOCATION_PROC == msg->proc) {
 		/* SGW Relocation */
-        assert(0);
-	} else {
-		/* S1 handover  */
-        assert(0);
+		msg->state = SGWC_NONE_STATE;
+        association_setup_handler((void *)msg, NULL);
 	}
     return 0;
 }
@@ -320,7 +313,19 @@ int handle_delete_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
     RTE_SET_USED(gtpv2c_rx);
     ue_context_t *context = NULL;
     pdn_connection_t *pdn = NULL;
+    uint8_t ebi_index;
     assert(msg->msg_type == GTP_DELETE_SESSION_REQ);
+    if(get_ue_context(msg->gtpc_msg.dsr.header.teid.has_teid.teid,
+                &context) != 0) {
+        ds_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
+                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+        return -1;
+    }
+    msg->ue_context = context;
+    ebi_index = msg->gtpc_msg.dsr.lbi.ebi_ebi - 5;
+    pdn = GET_PDN(context, ebi_index);
+    msg->pdn = pdn;
+
 	/*if (0 == msg->gtpc_msg.dsr.indctn_flgs.indication_oi &&
 					msg->gtpc_msg.dsr.indctn_flgs.header.len !=0) {
 			msg->proc = SGW_RELOCATION_PROC;
@@ -336,7 +341,6 @@ int handle_delete_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
 	    return -1;
 	}
 
-	uint8_t ebi_index = msg->gtpc_msg.dsr.lbi.ebi_ebi - 5;
 	if (DETACH_PROC == msg->proc) {
 		if (update_ue_proc(msg->gtpc_msg.dsr.header.teid.has_teid.teid,
 					msg->proc,ebi_index) != 0) {
@@ -831,54 +835,11 @@ int handle_pgw_restart_notf_ack(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
     return 0;
 }
 
-/* Each message has different way of searching user context */
-
-static int 
-get_user_context_gtp_msg(msg_info *msg)
-{
-    /* TODO - if response message then find transaction here and from transaction 
-     * get linked user context, pdn context 
-     */
-    ue_context_t *context = NULL;
-
-    switch(msg->msg_type) 
-    {
-        case GTP_CREATE_SESSION_REQ:  
-        {
-	        uint64_t imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
-            ue_context_t *context; 
-            rte_hash_lookup_data(ue_context_by_imsi_hash, &imsi, (void **) &(context));
-            msg->ue_context = context;
-            break;
-        }
-        case GTP_MODIFY_BEARER_REQ:
-        {
-            break;
-        }
-        case GTP_DELETE_SESSION_REQ:
-        {
-			/* Retrive ue state and set in msg state and event */
-			if(get_ue_context(msg->gtpc_msg.dsr.header.teid.has_teid.teid,
-						&context) != 0) {
-				ds_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
-							cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-				return -1;
-			}
-            msg->ue_context = context;
-			uint8_t ebi_index = msg->gtpc_msg.dsr.lbi.ebi_ebi - 5;
-			pdn_connection_t *pdn = GET_PDN(context, ebi_index);
-            msg->pdn = pdn;
-            break;
-        } 
-        default:
-            break;
-    } 
-    return 0; 
-}
 
 int 
 process_gtp_message(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
 {
+    int ret = 0;
     /* fetch user context */
     // find session context  
     //      non-zero teid - find context from teid 
@@ -886,14 +847,6 @@ process_gtp_message(gtpv2c_header_t *gtpv2c_rx, msg_info *msg)
     //          Request     : IMSI from the message
     //          Response    : transactions
     // Once we have found/not-found context then get procedure...based on UE context and message content  
-
-    int ret = 0;
-    ret = get_user_context_gtp_msg(msg);
-    if(ret != 0) 
-    {
-        printf("User context not found. Error generated \n");
-        return ret;
-    }
 
     switch(msg->msg_type)
     {

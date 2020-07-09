@@ -9,6 +9,8 @@
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
 
+extern uint8_t rstCnt;
+
 int
 process_echo_request(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx)
 {

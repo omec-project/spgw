@@ -18,15 +18,7 @@
 #include "gtpv2_internal.h"
 
 
-#ifdef USE_REST
-/* ECHO PKTS HANDLING */
-uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
-#endif /* USE_REST */
-
-
-extern uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
-extern uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
-
+extern uint8_t rstCnt;
 
 void
 set_gtpv2c_teid_header(gtpv2c_header_t *gtpv2c_tx, uint8_t type,
@@ -747,12 +739,8 @@ set_recovery_ie(gtpv2c_header_t *header, enum ie_instance instance)
 	 * (modulo 256) which is denoted  as the 'local Restart Counter'.
 	 * Instead we set this value as 0
 	 */
-#ifdef USE_REST
 	/* Support for restart counter */
 	return set_uint8_ie(header, GTP_IE_RECOVERY, instance, rstCnt);
-#else
-	return set_uint8_ie(header, GTP_IE_RECOVERY, instance, 0);
-#endif /* USE_REST */
 }
 
 

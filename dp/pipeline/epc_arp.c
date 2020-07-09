@@ -883,7 +883,6 @@ arp_send_buffered_pkts(struct rte_ring *queue,
 	//queue = NULL;
 }
 
-#ifdef USE_REST
 /**
  * @brief  : Function to process GTP-U echo response
  * @param  : echo_pkt, rte_mbuf pointer
@@ -946,7 +945,6 @@ process_echo_response(struct rte_mbuf *echo_pkt)
 	//conn_data->rstCnt = rest_cnt;
 
 }
-#endif /* USE_REST */
 
 /**
  * @brief  : Function to process arp message
@@ -1242,14 +1240,12 @@ pkt_work_arp_key(
 
 			}
 		} else if (gtpuhdr && gtpuhdr->msgtype == GTPU_ECHO_RESPONSE) {
-#ifdef USE_REST
 			/*VS: TODO Add check for Restart counter */
 			/* If peer Restart counter value of peer node is less than privious value than start flusing session*/
 			struct ipv4_hdr *ip_hdr = get_mtoip(pkt);
 			update_cli_stats(ip_hdr->src_addr,GTPU_ECHO_RESPONSE,RCVD,it);
 			clLog(clSystemLog, eCLSeverityDebug, "VS: GTP-U Echo Response Received\n");
 			process_echo_response(pkt);
-#endif /* USE_REST */
 		}
 	}
 }

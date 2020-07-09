@@ -22,17 +22,14 @@
 #include "pfcp_messages_decoder.h"
 #include "pfcp_messages_encoder.h"
 #include "gtpv2_evt_handler.h"
-#include "cp_timers.h"
+#include "cp_peer.h"
 #include "gw_adapter.h"
 #include "clogger.h"
 #include "sm_pcnd.h"
 #include "sm_struct.h"
 #include "gtpv2c_error_rsp.h"
 #include "gtpv2_internal.h"
-
-#ifdef USE_REST
 #include "timer.h"
-#endif /* USE_REST */
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -84,7 +81,7 @@ process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int ifa
 				gtp_type_str(gtpv2c_rx->gtpc.message_type), ret,
 				(ret < 0 ? strerror(-ret) : cause_str(ret)));
 	}
-#ifdef USE_REST
+
 	/* Reset ECHO Timers */
 	if(iface == S11_IFACE){
 		ret = process_response(s11_mme_sockaddr.sin_addr.s_addr);
@@ -97,7 +94,6 @@ process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int ifa
 			/*TODO: Error handling not implemented */
 		}
 	}
-#endif /* USE_REST */
 
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
@@ -120,7 +116,6 @@ process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int ifa
 	return 0;
 }
 
-#ifdef USE_REST
 /**
  * @brief  : Process echo response
  * @param  : gtpv2c_rx, holds data from incoming message
@@ -162,10 +157,9 @@ process_echo_resp(gtpv2c_header_t *gtpv2c_rx, int iface)
 	}
 	return 0;
 }
-#endif /* USE_REST */
 
 
-/* TODO - ajay multiple read to read all the messages from the sockets */
+/* Requirement1 - multiple read to read all the messages from the sockets */
 void
 msg_handler_s11(void)
 {
@@ -201,10 +195,7 @@ msg_handler_s11(void)
     if (bytes_s11_rx > 0)
         ++cp_stats.rx;
 
-    /* Reset periodic timers */
-    process_response(s11_mme_sockaddr.sin_addr.s_addr);
-
-    /*CLI: update counter for any req rcvd on s11 interface */
+     /*CLI: update counter for any req rcvd on s11 interface */
     if(gtpv2c_s11_rx->gtpc.message_type != GTP_DOWNLINK_DATA_NOTIFICATION_ACK) {
 
         update_cli_stats((uint32_t)s11_mme_sockaddr.sin_addr.s_addr,
@@ -225,23 +216,24 @@ msg_handler_s11(void)
     }else if(gtpv2c_s11_rx->gtpc.message_type == GTP_ECHO_RSP) {
         if (bytes_s11_rx > 0) {
 
-#ifdef USE_REST
             /* this call will handle echo responce for boh PGWC and SGWC */
             ret = process_echo_resp(gtpv2c_s11_rx, S11_IFACE);
             if(ret != 0){
                 return;
             }
-#endif /* USE_REST */
             ++cp_stats.tx;
         }
         return;
     } else {
+
+        /* Reset periodic timers */
+         process_response(s11_mme_sockaddr.sin_addr.s_addr);
+
         // in case of response - procerue is already part of transaction 
         // So now we have context. procedure, event, call sm handler  
         // keep procedure/transaction in UE context...
 
-        // decode message 
-        // currently setting proc and event type which we will move to event handler function later 
+        // decode message and return error in case of bad length/invalid GTP version
         if ((ret = gtpc_pcnd_check(gtpv2c_s11_rx, &msg, bytes_s11_rx)) != 0)
         {
             return;
@@ -251,7 +243,7 @@ msg_handler_s11(void)
         ret = validate_gtpv2_message_content(&msg);
         if(ret !=  0) 
         {
-            printf("Message validation failed \n");
+            printf("Message %d validation failed \n", msg.msg_type);
             // validatation failed;
             return;
         }
@@ -398,10 +390,8 @@ msg_handler_s5s8(void)
 	bzero(&s5s8_rx_buf, sizeof(s5s8_rx_buf));
 	gtpv2c_header_t *gtpv2c_s5s8_rx = (gtpv2c_header_t *) s5s8_rx_buf;
 
-#ifdef USE_REST
 	bzero(&s5s8_tx_buf, sizeof(s5s8_tx_buf));
 	gtpv2c_header_t *gtpv2c_s5s8_tx = (gtpv2c_header_t *) s5s8_tx_buf;
-#endif /* USE_REST */
 
 	bytes_s5s8_rx = recvfrom(my_sock.sock_fd_s5s8, s5s8_rx_buf,
 			MAX_GTPV2C_UDP_LEN, MSG_DONTWAIT,
@@ -451,8 +441,6 @@ msg_handler_s5s8(void)
 	if (bytes_s5s8_rx > 0)
 		++cp_stats.rx;
 
-	/* Reset periodic timers */
-	process_response(s5s8_recv_sockaddr.sin_addr.s_addr);
 
 	if (cp_config->cp_type == PGWC)
 		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
@@ -478,29 +466,28 @@ msg_handler_s5s8(void)
 #endif
 	if(gtpv2c_s5s8_rx->gtpc.message_type == GTP_ECHO_REQ){
 		if (bytes_s5s8_rx > 0) {
-#ifdef USE_REST
 			ret = process_echo_req(gtpv2c_s5s8_rx, gtpv2c_s5s8_tx, S5S8_IFACE);
 			if(ret != 0){
 				return;
 			}
-#endif /* USE_REST */
 			++cp_stats.tx;
 		}
 		return;
 	}else if(gtpv2c_s5s8_rx->gtpc.message_type == GTP_ECHO_RSP){
 		if (bytes_s5s8_rx > 0) {
-#ifdef USE_REST
 			ret = process_echo_resp(gtpv2c_s5s8_rx, S5S8_IFACE);
 			if(ret != 0){
 				return;
 			}
-#endif /* USE_REST */
 			++cp_stats.tx;
 		}
 		return;
 	}else {
 
-		if ((ret = gtpc_pcnd_check(gtpv2c_s5s8_rx, &msg, bytes_s5s8_rx)) != 0)
+        /* Reset periodic timers */
+        process_response(s5s8_recv_sockaddr.sin_addr.s_addr);
+
+        if ((ret = gtpc_pcnd_check(gtpv2c_s5s8_rx, &msg, bytes_s5s8_rx)) != 0)
 		{
 			/*CLI: update csr, dsr, mbr rej response*/
 			if(cp_config->cp_type == SGWC)

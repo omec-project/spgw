@@ -23,7 +23,7 @@
 #include "upf_struct.h"
 #include "pfcp_timer.h"
 #include "pfcp_transactions.h"
-#include "cp_timers.h"
+#include "cp_peer.h"
 #include "gen_utils.h"
 #include "sm_structs_api.h"
 #include "gw_adapter.h"
@@ -707,14 +707,11 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 	add_ip_to_heartbeat_hash(peer_addr,
 			msg->pfcp_msg.pfcp_ass_resp.rcvry_time_stmp.rcvry_time_stmp_val);
 
-#ifdef USE_REST
 	if ((add_node_conn_entry((uint32_t)peer_addr->sin_addr.s_addr,
 					SX_PORT_ID)) != 0) {
 
 		clLog(clSystemLog, eCLSeverityCritical, "Failed to add connection entry for SGWU/SAEGWU");
 	}
-
-#endif/* USE_REST */
 	return 0;
 
 }

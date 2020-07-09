@@ -56,8 +56,9 @@ typedef struct apn_profile
 {
     char apn_profile_name[64];
     char apn_name[64];
-    uint16_t usage;
-    char network[16];
+    uint8_t apn_name_length;
+    uint16_t apn_usage_type;
+    char apn_network_cap[16];
     bool gx_enabled;
     uint32_t dns_primary;
     uint32_t dns_secondary;

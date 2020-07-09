@@ -9,8 +9,8 @@ SUDO=''
 install_run_cp_deps() {
 	$SUDO apt-get update && $SUDO apt-get -y install \
 		libnuma1 \
-		libpcap0.8 \
-		libzmq5
+		libpcap0.8 
+
 }
 
 install_run_dp_deps() {

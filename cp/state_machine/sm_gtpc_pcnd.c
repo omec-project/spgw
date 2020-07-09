@@ -13,13 +13,10 @@
 #include "gtpc_timer.h"
 #include "pfcp_timer.h"
 #include "gtpv2_interface.h"
-#include "cp_timers.h"
+#include "cp_peer.h"
 #include "clogger.h"
 #include "sm_structs_api.h"
-
-#ifdef USE_REST
 #include "cp_main.h"
-#endif
 
 #include "cp_config.h"
 #include "gw_adapter.h"
@@ -64,7 +61,6 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 	}
 
 	switch(msg->msg_type) {
-
 		case GTP_CREATE_SESSION_REQ: {
 
 			if ((ret = decode_check_csr(gtpv2c_rx, &msg->gtpc_msg.csr)) != 0){
@@ -73,54 +69,53 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 							cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				return -1;
 			}
-		break;
-	}
+		    break;
+	    }
 
-	case GTP_CREATE_SESSION_RSP: {
+	    case GTP_CREATE_SESSION_RSP: {
 			ret = decode_create_sess_rsp((uint8_t *)gtpv2c_rx, &msg->gtpc_msg.cs_rsp);
 			if(!ret)
 				return -1;
 
-		break;
-	}
+		    break;
+	    }
 
-	case GTP_MODIFY_BEARER_REQ: {
+	    case GTP_MODIFY_BEARER_REQ: {
 			/*Decode the received msg and stored into the struct. */
 			if((ret = decode_mod_bearer_req((uint8_t *) gtpv2c_rx,
 							&msg->gtpc_msg.mbr) == 0)) {
 				return -1;
 			}
 			break;
-	}
+	    }
 
-	case GTP_MODIFY_BEARER_RSP: {
-		if((ret = decode_mod_bearer_rsp((uint8_t *) gtpv2c_rx,
+	    case GTP_MODIFY_BEARER_RSP: {
+		    if((ret = decode_mod_bearer_rsp((uint8_t *) gtpv2c_rx,
 					&msg->gtpc_msg.mb_rsp) == 0)) {
 			return -1;
-		}
+		    }
+		    break;
+	    }
 
-		break;
-	}
-
-	case GTP_DELETE_SESSION_REQ: {
+	    case GTP_DELETE_SESSION_REQ: {
 			/* Decode delete session request */
 
 			ret = decode_del_sess_req((uint8_t *) gtpv2c_rx,
 					&msg->gtpc_msg.dsr);
 			if (ret == 0)
 				return -1;
-		break;
-	}
+		    break;
+	    }
 
-	case GTP_DELETE_SESSION_RSP: {
+	    case GTP_DELETE_SESSION_RSP: {
+		    ret = decode_del_sess_rsp((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.ds_rsp);
+		    if(ret == 0)
+		    	return -1;
 
-		ret = decode_del_sess_rsp((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.ds_rsp);
-		if(ret == 0)
-			return -1;
-
-		break;
+		    break;
 		}
-	case GTP_RELEASE_ACCESS_BEARERS_REQ: {
+
+	    case GTP_RELEASE_ACCESS_BEARERS_REQ: {
 			/* Parse the Relaese access bearer request message and update State and Event */
 			/* TODO: Revisit after libgtpv2c support */
 			ret = parse_release_access_bearer_request(gtpv2c_rx,
@@ -128,111 +123,106 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 			if (ret)
 				return ret;
 
-		break;
-	}
+		    break;
+	    }
 
-	case GTP_DOWNLINK_DATA_NOTIFICATION_ACK: {
+	    case GTP_DOWNLINK_DATA_NOTIFICATION_ACK: {
 			/* TODO: Revisit after libgtpv2c support */
 			ret = parse_downlink_data_notification_ack(gtpv2c_rx,
 				&msg->gtpc_msg.ddn_ack);
 			if (ret)
 				return ret;
 
-		break;
-	}
+		    break;
+	    }
 
-	case GTP_CREATE_BEARER_REQ:{
+	    case GTP_CREATE_BEARER_REQ:{
 
 			if((ret = decode_create_bearer_req((uint8_t *) gtpv2c_rx,
 							&msg->gtpc_msg.cb_req) == 0))
 					return -1;
 
-	   break;
-	}
+	        break;
+	    }
 
-	case GTP_CREATE_BEARER_RSP:{
+	    case GTP_CREATE_BEARER_RSP:{
 			if((ret = decode_create_bearer_rsp((uint8_t *) gtpv2c_rx,
 						&msg->gtpc_msg.cb_rsp) == 0))
 				return -1;
 
-	   break;
-	}
+	        break;
+	    }
 
-	case GTP_DELETE_BEARER_REQ:{
-
+	    case GTP_DELETE_BEARER_REQ:{
 			if((ret = decode_del_bearer_req((uint8_t *) gtpv2c_rx,
 							&msg->gtpc_msg.db_req) == 0))
 					return -1;
 
-	   break;
-	}
+	        break;
+	    }
 
-	case GTP_DELETE_BEARER_RSP:{
+	    case GTP_DELETE_BEARER_RSP:{
 			if((ret = decode_del_bearer_rsp((uint8_t *) gtpv2c_rx,
 						&msg->gtpc_msg.db_rsp) == 0))
 				return -1;
 
-	 	  break;
-	}
-	case GTP_UPDATE_BEARER_REQ:{
-
-		if((ret = decode_upd_bearer_req((uint8_t *) gtpv2c_rx,
+	 	    break;
+	    }
+	    case GTP_UPDATE_BEARER_REQ:{
+		    if((ret = decode_upd_bearer_req((uint8_t *) gtpv2c_rx,
 						&msg->gtpc_msg.ub_req) == 0))
-			return -1;
-		break;
+			    return -1;
+		    break;
+	    }
 
-	}
-
-	case GTP_UPDATE_BEARER_RSP:{
-
-		if((ret = decode_upd_bearer_rsp((uint8_t *) gtpv2c_rx,
+	    case GTP_UPDATE_BEARER_RSP:{
+		    if((ret = decode_upd_bearer_rsp((uint8_t *) gtpv2c_rx,
 						&msg->gtpc_msg.ub_rsp) == 0))
 				return -1;
 
-		break;
-	}
+		    break;
+	    }
 
-	case GTP_DELETE_PDN_CONNECTION_SET_REQ: {
+	    case GTP_DELETE_PDN_CONNECTION_SET_REQ: {
 			if ((ret = decode_del_pdn_conn_set_req((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.del_pdn_req) == 0))
 			    return -1;
 
-		break;
-	}
+		    break;
+	    }
 
-	case GTP_DELETE_PDN_CONNECTION_SET_RSP: {
+	    case GTP_DELETE_PDN_CONNECTION_SET_RSP: {
 			if ((ret = decode_del_pdn_conn_set_rsp((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.del_pdn_rsp) == 0))
 			    return -1;
-		break;
-	}
-	case GTP_UPDATE_PDN_CONNECTION_SET_REQ: {
+		    break;
+	    }
+	    case GTP_UPDATE_PDN_CONNECTION_SET_REQ: {
 			//if ((ret = decode_upd_pdn_conn_set_req((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.upd_pdn_req) == 0))
 			//    return -1;
 
-	   break;
-	 }
-	case GTP_DELETE_BEARER_CMD: {
+	        break;
+	    }
 
+	    case GTP_DELETE_BEARER_CMD: {
 			if((ret = decode_del_bearer_cmd((uint8_t *) gtpv2c_rx,
 					&msg->gtpc_msg.del_ber_cmd) == 0)) {
 					return -1;
 			}
+		    break;
+	    }
 
-
-		break;
-	}
-	case GTP_UPDATE_PDN_CONNECTION_SET_RSP: {
+	    case GTP_UPDATE_PDN_CONNECTION_SET_RSP: {
 			//if ((ret = decode_upd_pdn_conn_set_rsp((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.upd_pdn_rsp) == 0)))
 			//    return -1;
+		    break;
+	    }
 
-		break;
-	}
-	case GTP_PGW_RESTART_NOTIFICATION_ACK: {
+	    case GTP_PGW_RESTART_NOTIFICATION_ACK: {
 			if ((ret = decode_pgw_rstrt_notif_ack((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.pgw_rstrt_notif_ack) == 0))
 			    return -1;
 
-		break;
-	}
-	default:
+		    break;
+	    }
+	    default:
 			/*If Event is not supported then we will called default handler. */
 			/* Retrive UE state. */
 			if (get_ue_context(ntohl(gtpv2c_rx->teid.has_teid.teid), &context) != 0) {
@@ -250,7 +240,6 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 					msg->state = pdn->state;
 					msg->proc = pdn->proc;
 			}
-
 			msg->event = NONE_EVNT;
 
 			clLog(clSystemLog, eCLSeverityCritical, "%s::process_msgs-"

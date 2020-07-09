@@ -11,7 +11,6 @@
  * max length of name string.
  */
 #define MAX_LEN 128
-#ifdef USE_REST
 
 /* VS: Number of connection can maitain in the hash */
 #define NUM_CONN	500
@@ -23,15 +22,6 @@ extern uint16_t local_csid;
 
 extern int32_t conn_cnt;
 
-/**
- * @brief  : Initiatizes echo table and starts the timer thread
- * @param  : No param
- * @return : Returns nothing
- */
-void rest_thread_init(void);
-
-
-#endif  /* USE_REST */
 
 /**
  * @brief  : Functino to handle signals.

@@ -22,17 +22,14 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp.h"
 #include <sys/stat.h>
-#include "apn_apis.h"
 #include "cp_log.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"
 #include "cp_config_defs.h"
 #include "ipc_api.h"
 #include "spgw_cpp_wrapper.h"
-
-#ifdef USE_REST
 #include "timer.h"
-#endif /* USE_REST */
+#include "cp_peer.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -57,9 +54,7 @@ bool native_config_folder = false;
 /* We should move all the config inside this structure eventually
  * config is scattered all across the place as of now
  */
-#ifdef USE_REST
 uint8_t rstCnt = 0;
-#endif /* USE_REST*/
 
 #ifdef USE_CSID
 uint16_t local_csid = 0;
@@ -217,14 +212,11 @@ main(int argc, char **argv)
 
     start_time = current_ntp_timestamp();
 
-#ifdef USE_REST
     /* VS: Increment the restart counter value after starting control plane */
     rstCnt = update_rstCnt();
 
     TIMER_GET_CURRENT_TP(st_time);
     recovery_time_into_file(start_time);
-
-#endif /* USE_REST */
 
     ret = rte_eal_init(argc, argv);
     if (ret < 0)
@@ -271,12 +263,11 @@ main(int argc, char **argv)
         rte_eal_remote_launch(simu_cp, NULL, cp_params.simu_core_id);
 #endif
 
-#ifdef USE_REST
+	echo_table_init();
 
     /* Create thread for handling for sending echo req to its peer node */
     rest_thread_init();
 
-#endif  /* USE_REST */
 
     init_pfcp_tables();
 
@@ -304,9 +295,7 @@ void sig_handler(int signo)
         close_stats();
 #endif /* SYNC_STATS */
 
-#ifdef USE_REST
         gst_deinit();
-#endif /* USE_REST */
 
 #ifdef TIMER_STATS
 #ifdef AUTO_ANALYSIS

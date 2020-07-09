@@ -34,10 +34,7 @@
 #include "vepc_cp_dp_api.h"
 #include "epc_packet_framework.h"
 #include "up_peer_struct.h"
-
-#ifdef USE_REST
 #include "timer.h"
-#endif /* use_rest */
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -248,8 +245,6 @@
 /* UDP socket port configure */
 #define SOCKET_PORT 5556
 
-#ifdef USE_REST
-
 /* VS: Number of connection can maitain in the hash */
 #define NUM_CONN	500
 
@@ -292,7 +287,6 @@ flush_eNB_session(peerData_t *data_t);
  */
 void
 dp_flush_session(uint32_t ip_addr, uint64_t sess_id);
-#endif  /* USE_REST */
 
 /**
  * @brief   :Structure of port parameters
@@ -846,7 +840,6 @@ iface_lookup_downlink_bulk_data(const void **key, uint32_t n,
 
 
 /***********************ddn_utils.c functions start**********************/
-#ifdef USE_REST
 #ifndef CP_BUILD
 /**
  * @brief  : Function to build GTP-U echo request
@@ -857,8 +850,6 @@ iface_lookup_downlink_bulk_data(const void **key, uint32_t n,
 void
 build_echo_request(struct rte_mbuf *echo_pkt, peerData_t *entry, uint16_t gtpu_seqnb);
 #endif /* CP_BUILD*/
-
-#endif /* USE_REST */
 
 #ifdef DP_BUILD
 /**

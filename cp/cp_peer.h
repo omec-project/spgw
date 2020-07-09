@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 
-#ifndef __CP_RESTORATION_PEER__H
-#define __CP_RESTORATION_PEER__H
+#ifndef __CP_PEERS__H
+#define __CP_PEERS__H
 
 uint8_t process_response(uint32_t dstIp);
 /**
@@ -33,6 +33,14 @@ void del_entry_from_hash(uint32_t ipAddr);
  */
 uint8_t
 add_node_conn_entry(uint32_t dstIp, uint8_t portId);
+
+/**
+ * @brief  : Initiatizes peer echo table 
+ * @param  : No param
+ * @return : Returns nothing
+ */
+
+void echo_table_init(void);
 
 
 #endif

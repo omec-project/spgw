@@ -189,7 +189,7 @@ get_upf_list(pdn_connection_t *pdn)
 	}
 
 	/* Get network capabilities from apn configuration file */
-	apn_t *apn_requested = pdn->apn_in_use;
+	apn_profile_t *apn_requested = pdn->apn_in_use;
 
 	//memcpy(apn_name,(char *)ctxt->apn.apn + 1, apn_requested->apn_name_length -1);
 	/* VS: Need to revist this */

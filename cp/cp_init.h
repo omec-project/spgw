@@ -15,10 +15,7 @@
 #include <rte_ether.h>
 #include <rte_ethdev.h>
 #include "cp_main.h"
-
-#ifdef USE_REST
 #include "timer.h"
-#endif /* USE_REST */
 
 
 /**
@@ -69,5 +66,13 @@ update_rstCnt(void);
  */
 void recovery_time_into_file(uint32_t recov_time);
 
+/**
+ * @brief  : starts the timer thread
+ * @param  : No param
+ * @return : Returns nothing
+ */
+
+
+void rest_thread_init(void);
 
 #endif

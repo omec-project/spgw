@@ -68,12 +68,15 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
             if(subRuleSection.HasMember("keys"))
             {
                 sub_selection_keys_t *key = new (sub_selection_keys_t); 
+                key->imsi.is_valid = false;
+                key->plmn.is_valid = false;
+                key->apn.is_valid = false;
                 sub_rule->keys = key;
                 const rapidjson::Value& ruleKeys = subRuleSection["keys"];
-                std::cout<<"\t\tSubscriber selection rule has keys "<<std::endl;
+                std::cout<<"\t\tSubscriber selection rule has keys "<<key<<std::endl;
                 if(ruleKeys.HasMember("imsi-range") && ruleKeys["imsi-range"].IsObject())
                 {
-                    std::cout<<"\t\t\tkeys has imsi-ange Object "<<std::endl;
+                    std::cout<<"\t\t\tkeys has imsi-range Object "<<std::endl;
                     const rapidjson::Value& imsiKeys = ruleKeys["imsi-range"];
                     if(imsiKeys.HasMember("from"))
                     {
@@ -140,6 +143,9 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
                     strcpy(key->apn.requested_apn,temp);
                     
                 }
+                std::cout<<"Sub key imsi "<<key->imsi.is_valid<<std::endl;
+                std::cout<<"Sub key plmn "<<key->plmn.is_valid<<std::endl;
+                std::cout<<"Sub key apn "<<key->apn.is_valid<<std::endl;
             }
             std::cout<<"rule->keys "<<sub_rule->keys<<std::endl;
             std::cout<<"\t\tSelected Profiles"<<std::endl;
@@ -184,7 +190,7 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
         for (it=config_store->sub_sel_rules.begin(); it!=config_store->sub_sel_rules.end(); ++it)
         {
             sub_selection_rule_t *rule = *it;
-            printf("Searching rule %d \n", rule->rule_priority);
+            printf("Configured rules with priority  %d \n", rule->rule_priority);
         }
     }
     if(doc.HasMember("apn-profiles"))
@@ -198,22 +204,41 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
             {
                 std::cout<<"\tAPN profile "<< key.c_str()<<" is Object"<<std::endl; 
                 apn_profile_t *apn_profile = new (apn_profile_t);
+                memset(apn_profile, 0, sizeof(apn_profile_t));
                 strcpy(apn_profile->apn_profile_name, key.c_str());
                 const rapidjson::Value& apnSection = itr->value; 
                 if(apnSection.HasMember("apn-name")) {
                     const char *temp = apnSection["apn-name"].GetString();
-                    std::cout<<"\t\tAPN name "<<temp<<std::endl;
-                    strcpy(apn_profile->apn_name, temp);
+                    std::cout<<"\t\tAPN name["<<temp<<"]"<<std::endl;
+                    /* Don't copy NULL termination */
+                    strncpy(&apn_profile->apn_name[1], temp, strlen(temp));
+                    char *ptr, *size;
+                    size = &apn_profile->apn_name[0];
+                    *size = 0;
+                    ptr = apn_profile->apn_name + strlen(temp); // since we have added space at the start ptr will point to last char  
+                    do {
+                        if (ptr == size)
+                            break;
+                        if (*ptr == '.') {
+                            *ptr = *size;
+                            *size = 0;
+                        } else {
+                            (*size)++;
+                        }
+                        --ptr;
+                    } while (ptr != apn_profile->apn_name);
+                    apn_profile->apn_name_length = strlen(apn_profile->apn_name);
+                    std::cout<<"\t\tAPN name after encode ["<<apn_profile->apn_name<<"]"<<std::endl;
                 }
                 if(apnSection.HasMember("usage")) {
                     uint16_t usage = apnSection["usage"].GetInt();
                     std::cout<<"\t\tUsage type  "<<usage<<std::endl;
-                    apn_profile->usage = usage;
+                    apn_profile->apn_usage_type = usage;
                 }
                 if(apnSection.HasMember("network")) {
                     const char *temp = apnSection["network"].GetString();
                     std::cout<<"\t\tNetwork type "<<temp<<std::endl;
-                    strcpy(apn_profile->network, temp);
+                    strcpy(apn_profile->apn_network_cap, temp);
                 }
                 if(apnSection.HasMember("gx_enabled")) {
                     bool gx_enabled = apnSection["gx_enabled"].GetBool();
@@ -315,23 +340,30 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
 {
     sub_selection_rule_t *rule = nullptr;
     std::list<sub_selection_rule_t *>::iterator it;
+    std::cout<<"IMSI - "<<key->imsi.from_imsi<<std::endl;
     for (it=config->sub_sel_rules.begin(); it!=config->sub_sel_rules.end(); ++it)
     {
         rule = *it;
         printf("Searching rule %d \n", rule->rule_priority);
+        std::cout<<"key in rule "<<rule->keys<<std::endl;
         sub_selection_keys_t *key_l = rule->keys;
         printf("key_l %p \n", key_l);
+        std::cout<<"rule->key imsi "<<key_l->imsi.is_valid<<" search key imsi "<<key->imsi.is_valid<<std::endl;
         if((key_l != nullptr) && (key_l->imsi.is_valid))
         {
-            printf("case %d \n",__LINE__);
             if(key->imsi.is_valid == false)
+            {
                 continue; // no match continue for next rule 
-            printf("case %d \n",__LINE__);
+            }
+            std::cout<<"search key from imsi "<<key->imsi.from_imsi<<" to_imsi "<<key->imsi.to_imsi<<std::endl;
+            std::cout<<"rule->key from imsi "<<key_l->imsi.from_imsi<<" to_imsi "<<key_l->imsi.to_imsi<<std::endl;
             if(!((key->imsi.from_imsi >= key_l->imsi.from_imsi) && (key->imsi.from_imsi <= key_l->imsi.to_imsi)))
                continue; // no match continue for next rule  
         }
-        printf("case %d \n",__LINE__);
         printf("IMSI matched \n");
+        printf("key_l = %p ", key_l);
+        if(key_l)
+            std::cout<<"key_l->plmn "<<key_l->plmn.is_valid<<std::endl;
         if((key_l != nullptr) && (key_l->plmn.is_valid))
         {
             if(key->plmn.is_valid == false)
@@ -355,6 +387,7 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
         printf("Profile found \n");
         break;
     }
+    std::cout<<"Rule Search finished"<<std::endl;
 
     if(it != config->sub_sel_rules.end())
     {
@@ -364,11 +397,14 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
         temp->qos_profile = config->get_qos_profile(rule->selected_qos_profile);
         temp->up_profile = config->get_user_plane_profile(rule->selected_user_plane_profile);
         temp->access_profile = config->get_access_profile(rule->selected_access_profile[0]);
-        printf("returning new temp \n");
         return temp;
     }
-    printf("returning nullptr \n");
     return nullptr;
+}
+
+void spgwConfig::set_cp_config_cpp(spgw_config_profile_t *new_config)
+{
+    config = reinterpret_cast<spgwConfigStore *>(new_config->config); 
 }
 
 void spgwConfig::switch_config_cpp(spgw_config_profile_t *new_config)
@@ -380,3 +416,22 @@ void spgwConfig::switch_config_cpp(spgw_config_profile_t *new_config)
     // release old config
      delete temp;
 }
+
+apn_profile_t* spgwConfig::match_apn_profile_cpp(char *name, uint16_t len)
+{
+    std::list<apn_profile_t*>::iterator it;
+    for (it=config->apn_profile_list.begin(); it!=config->apn_profile_list.end(); ++it)
+    {
+        apn_profile_t* apn = *it;
+        printf("Compare APN profile [%s] with [%s] \n", apn->apn_name, name);
+        if(strlen(apn->apn_name) != len)
+            continue;
+        if(memcmp(apn->apn_name,name,len) != 0)
+            continue;
+        printf("Found APN profile   %s \n", apn->apn_name);
+        return apn;
+    }
+    printf("APN [%s] not found \n", name);
+    return nullptr;
+}
+

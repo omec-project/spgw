@@ -15,10 +15,9 @@
 #include "gw_adapter.h"
 #include "clogger.h"
 #include "pfcp_cp_interface.h"
-#include "cp_timers.h"
+#include "cp_peer.h"
 #include "pfcp_timer.h"
 #include "sm_structs_api.h"
-
 #include "pfcp.h"
 #include "sm_pcnd.h"
 #include "cp_stats.h"
@@ -537,10 +536,8 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	pfcp_header_t *pfcp_hdr = (pfcp_header_t *) pfcp_msg;
 	pfcp_hdr->message_len = htons(encoded - 4);
 
-#ifdef USE_REST
 	/* Reset the periodic timers */
 	process_response((uint32_t)peer_addr->sin_addr.s_addr);
-#endif /* USE_REST */
 
 	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, peer_addr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityDebug, "Error sending in heartbeat request: %i\n",errno);
@@ -562,9 +559,7 @@ static int
 process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 {
 
-#ifdef USE_REST
 	process_response((uint32_t)peer_addr->sin_addr.s_addr);
-#endif /*USE_REST*/
 
 	pfcp_hrtbeat_rsp_t pfcp_hearbeat_resp = {0};
 	decode_pfcp_hrtbeat_rsp_t(buf_rx, &pfcp_hearbeat_resp);

@@ -18,7 +18,7 @@
 #include "gtpv2c_set_ie.h"
 #include "gtpc_timer.h"
 #include "pfcp_timer.h"
-#include "cp_timers.h"
+#include "cp_peer.h"
 #include "gen_utils.h"
 #include "gw_adapter.h"
 #include "sm_structs_api.h"
@@ -186,7 +186,7 @@ fill_cs_request(create_sess_req_t *cs_req, ue_context_t *context,
 
 	set_ie_header(&cs_req->apn.header, GTP_IE_ACC_PT_NAME, IE_INSTANCE_ZERO,
 		             context->pdns[ebi_index]->apn_in_use->apn_name_length);
-	memcpy(cs_req->apn.apn, &(context->pdns[ebi_index]->apn_in_use->apn_name_label[0]),
+	memcpy(cs_req->apn.apn, &(context->pdns[ebi_index]->apn_in_use->apn_name[0]),
 			context->pdns[ebi_index]->apn_in_use->apn_name_length);
 
 	if (context->selection_flag) {
@@ -534,13 +534,11 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
 
-#ifdef USE_REST
 	/*CLI logic : add PGWC entry when CSResponse received*/
 	if ((add_node_conn_entry(ntohl(cs_rsp->pgw_s5s8_s2as2b_fteid_pmip_based_intfc_or_gtp_based_ctl_plane_intfc.ipv4_address),
 			S5S8_SGWC_PORT_ID)) != 0) {
 		clLog(clSystemLog, eCLSeverityDebug, "Fail to add connection entry for PGWC");
 	}
-#endif
 
 	uint8_t ebi_index = cs_rsp->bearer_contexts_created.eps_bearer_id.ebi_ebi - 5;
 

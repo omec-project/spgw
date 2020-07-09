@@ -29,7 +29,7 @@
 #define DP_SITE_NAME_MAX		256
 
 #define CP_CONFIG_FOLDER		"../config/"
-#define CP_CONFIG_OPT_PATH		"../config/subscriber_profiles.json"
+#define CP_CONFIG_SUB_RULES	    "../config/subscriber_mapping.json"
 #define STATIC_CP_FILE          "../config/cp.cfg"
 #define METER_PROFILE_FILE      "../config/meter_profile.cfg"
 #define PCC_RULE_FILE           "../config/pcc_rules.cfg"

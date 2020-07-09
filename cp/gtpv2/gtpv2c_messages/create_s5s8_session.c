@@ -28,17 +28,14 @@
 #include "pfcp_timer.h"
 #include "cp_config_defs.h"
 #include "ip_pool.h"
-#include "apn_apis.h"
 #include "upf_struct.h"
 #include "cp_log.h"
 #include "gen_utils.h"
 #include "sm_structs_api.h"
 #include "clogger.h"
 #include "gw_adapter.h"
-
-#ifdef USE_REST
+#include "spgw_cpp_wrapper.h"
 #include "cp_main.h"
-#endif /* USE_REST */
 
 extern udp_sock_t my_sock;
 extern struct sockaddr_in s5s8_recv_sockaddr;
@@ -262,7 +259,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	if (ret)
 		return ret;
 
-	apn_t *apn_requested = get_apn(
+	apn_profile_t *apn_requested = match_apn_profile(
 	    APN_PTR_FROM_APN_IE(create_s5s8_session_request.apn_ie),
 	    ntohs(create_s5s8_session_request.apn_ie->length));
 

@@ -24,6 +24,7 @@
 #include "gw_adapter.h"
 #include "clogger.h"
 #include "cstats.h"
+#include "up_peer.h"
 #ifdef USE_CSID
 #include "csid_struct.h"
 #endif /* USE_CSID */
@@ -47,9 +48,7 @@ int main(int argc, char **argv)
 
 	start_time = current_ntp_timestamp();
 
-#ifdef USE_REST
 	recovery_time_into_file(start_time);
-#endif
 	/* Initialize the Environment Abstraction Layer */
 	ret = rte_eal_init(argc, argv);
 	if (ret < 0)
@@ -161,15 +160,14 @@ int main(int argc, char **argv)
 	/* VS: Init Downlink data notification ring, container and mempool  */
 	dp_ddn_init();
 
-#ifdef USE_REST
 
 	/* VS: Set current component start/up time */
 	//up_time = current_ntp_timestamp();
 
+    echo_table_init();
 	/* VS: Create thread for handling for sending echo req to its peer node */
 	rest_thread_init();
 
-#endif  /* USE_REST */
 
 #ifdef USE_CSID
 	init_fqcsid_hash_tables();

@@ -27,7 +27,6 @@
 #include "packet_filters.h"
 #include "pfcp_cp_struct.h"
 #include "timer.h"
-#include "apn_struct.h"
 #include "cp_peer_struct.h"
 #include "upf_struct.h"
 #include "spgw_config_struct.h"
@@ -439,7 +438,7 @@ typedef struct pdn_connection {
 	/*VS : Call ID ref. to session id of CCR */
 	uint32_t call_id;
 
-	apn_t *apn_in_use;
+	apn_profile_t *apn_in_use;
 	ambr_ie apn_ambr;
 	uint32_t apn_restriction;
 
@@ -650,7 +649,7 @@ set_s5s8_pgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context);
  */
 int
 create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
-		uint8_t ebi, ue_context_t **context, apn_t *apn_requested,
+		uint8_t ebi, ue_context_t **context, apn_profile_t *apn_requested,
 		uint32_t sequence);
 
 /**

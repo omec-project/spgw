@@ -43,6 +43,8 @@ SRCS-y := up_main.c\
 	up_kni_pkt_handler.c\
     up_interface.c\
     up_io_poll.o \
+	up_peer.o \
+	gtpu_echo_req.o \
 	pipeline/epc_arp.o\
 	pipeline/epc_spns_dns.o\
 	pipeline/epc_packet_framework.o\
@@ -54,6 +56,7 @@ SRCS-y := up_main.c\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_msg_rx.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_association.o\
 	$(SRCDIR)/../pfcp_messages/up/pfcp_up_sess_rsp.o\
+	$(SRCDIR)/../common/timer.c
 
 SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/gw_adapter.o
 CFLAGS += -I$(SRCDIR)/../oss_adapter/c3po_oss
@@ -210,15 +213,6 @@ CFLAGS += -DDEFAULT_ACL_TABLE
 
 # Un-comment below line to dump the acl table.
 #CFLAGS += -DDEBUG_ACL
-
-#un-comment below line to enable check peer node heartbeat.
-CFLAGS += -DUSE_REST
-
-ifneq (,$(findstring USE_REST, $(CFLAGS), $(EXTRA_CFLAGS)))
-	SRCS-y += $(SRCDIR)/../common/timer.c
-	SRCS-y += up_timers.c
-	SRCS-y += gtpu_echo_req.c
-endif
 
 #un-comment below line to enable FQ-CSID support in the control-plane
 #CFLAGS += -DUSE_CSID

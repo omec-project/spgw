@@ -30,12 +30,12 @@
 #include "csid_api.h"
 #include "cp_config_defs.h"
 #include "ip_pool.h"
-#include "apn_apis.h"
 #include "upf_struct.h"
 #include "pfcp_timer.h"
 #include "gen_utils.h"
 #include "gtpv2_internal.h"
 #include "gx_interface.h"
+#include "spgw_cpp_wrapper.h"
 
 extern udp_sock_t my_sock;
 extern struct sockaddr_in s5s8_recv_sockaddr;
@@ -2705,8 +2705,7 @@ process_create_sess_req(create_sess_req_t *csr,
     /* ajay - Should we get default context ?*/
     upf_context_t *upf_context=NULL; 
 
-    /* TODO : Prio-1 Must fix. Handle unknown APN */
-	apn_t *apn_requested = get_apn((char *)csr->apn.apn, csr->apn.header.len);
+	apn_profile_t *apn_requested = match_apn_profile((char *)csr->apn.apn, csr->apn.header.len);
 
     if(apn_requested == NULL) {
         return GTPV2C_CAUSE_MISSING_UNKNOWN_APN;

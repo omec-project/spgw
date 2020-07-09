@@ -18,7 +18,7 @@
 #include "up_main.h"
 #include "pfcp_up_sess.h"
 #include "pfcp_up_struct.h"
-#include "up_timers.h"
+#include "up_peer.h"
 
 uint16_t dp_comm_port;
 uint16_t cp_comm_port;
@@ -60,10 +60,8 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	pfcp_header_t *pfcp_hdr = (pfcp_header_t *) pfcp_msg;
 	pfcp_hdr->message_len = htons(encoded - 4);
 
-#ifdef USE_REST
 	/* Reset the periodic timers */
 	process_response((uint32_t)peer_addr->sin_addr.s_addr);
-#endif /* USE_REST */
 
 	free(pfcp_heartbeat_req);
 
@@ -95,9 +93,7 @@ static int
 process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 {
 
-#ifdef USE_REST
 	process_response((uint32_t)peer_addr->sin_addr.s_addr);
-#endif /*USE_REST*/
 
 	pfcp_hrtbeat_rsp_t pfcp_hearbeat_resp = {0};
 	decode_pfcp_hrtbeat_rsp_t(buf_rx, &pfcp_hearbeat_resp);
@@ -238,11 +234,9 @@ process_pfcp_msg(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 				add_ip_to_heartbeat_hash(peer_addr,
 						pfcp_ass_setup_req.rcvry_time_stmp.rcvry_time_stmp_val);
 
-#ifdef USE_REST
 				if ((add_node_conn_entry((uint32_t)peer_addr->sin_addr.s_addr, 0, SX_PORT_ID)) != 0) {
 					clLog(clSystemLog, eCLSeverityCritical, "Failed to add connection entry for SGWU/SAEGWU");
 				}
-#endif
 
 				fill_pfcp_association_setup_resp(&pfcp_ass_setup_resp, cause_id);
 
