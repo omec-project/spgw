@@ -1,0 +1,156 @@
+{
+  "subscriber-selection-rules": [
+    {
+      "keys": {
+        "imsi-range": {
+          "from": 200000000000000,
+          "to": 299999999999999
+        }
+      },
+      "selected-access-profile": [
+        "access_profile1"
+      ],
+      "priority": 10,
+      "selected-qos-profile": "qos_profile1",
+      "selected-user-plane-profile": "user_plane_profile1",
+      "selected-apn-profile": "apn_profile1"
+    },
+    {
+      "keys": {
+        "serving-plmn": {
+          "mcc": 208,
+          "mnc": 10,
+          "tac": 1
+        },
+        "requested-apn": "mme-selected-apn",
+        "imsi-range": {
+          "from": 200000000000000,
+          "to": 299999999999999
+        }
+      },
+      "selected-access-profile": [
+        "access_profile2"
+      ],
+      "priority": 20,
+      "selected-qos-profile": "qos_profile2",
+      "selected-user-plane-profile": "user_plane_profile2",
+      "selected-apn-profile": "apn_profile2"
+    }
+  ],
+  "access-profiles": {
+    "excluding-app": {
+      "type": "excluding-this-app",
+      "filter": "exclude-app-name"
+    },
+    "specific-app": {
+      "type": "specific-destination-only",
+      "filter": "allow-app-name"
+    },
+    "access-all": {
+      "type": "allow-all"
+    },
+    "apps-only": {
+      "type": "specific-network",
+      "filter": "only_apps_network"
+    },
+    "internet-only": {
+      "type": "internet-only",
+      "filter": "No_private_network"
+    },
+    "intranet-only": {
+      "type": "intranet-only",
+      "filter": "only_private_network"
+    }
+  },
+  "apn-profiles": {
+    "apn_profile2": {
+      "usage": 1,
+      "dns_primary": "8.8.8.4",
+      "network": "lbo",
+      "apn-name": "intranet",
+      "mtu": 1460,
+      "gx_enabled": false,
+      "dns_secondary": "8.8.8.8"
+    },
+    "apn_profile1": {
+      "usage": 1,
+      "dns_primary": "8.8.8.4",
+      "network": "lbo",
+      "apn-name": "internet",
+      "mtu": 1460,
+      "gx_enabled": true,
+      "dns_secondary": "8.8.8.8"
+    },
+    "_default_apn_profile_": {
+      "apn-name": "internet",
+      "mtu": 1460,
+      "dns_primary": "8.8.8.4",
+      "gx_enabled": false,
+      "dns_secondary": "8.8.8.8"
+    }
+  },
+  "user-plane-profiles": {
+    "_default_user_plane_": {
+      "qos-tags": {
+        "tag1": "BW"
+      },
+      "user-plane": "spgwu-headless",
+      "access-tags": {
+        "tag1": "ACC"
+      }
+    },
+    "user_plane1": {
+      "qos-tags": {
+        "tag1": "BW"
+      },
+      "user-plane": "spgwu-headless",
+      "access-tags": {
+        "tag1": "ACC"
+      }
+    },
+    "user_plane3": {
+      "qos-tags": {
+        "tag1": "BW"
+      },
+      "user-plane": "spgwu-headless",
+      "access-tags": {
+        "tag1": "ACC"
+      }
+    },
+    "user_plane2": {
+      "qos-tags": {
+        "tag1": "BW"
+      },
+      "user-plane": "spgwu-headless",
+      "access-tags": {
+        "tag1": "ACC"
+      }
+    }
+  },
+  "qos-profiles": {
+    "low-bw-iot": {
+      "apn-ambr": [
+        4096,
+        4096
+      ]
+    },
+    "high-bw-iot": {
+      "apn-ambr": [
+        1234567,
+        1234567
+      ]
+    },
+    "fixed-broadband": {
+      "apn-ambr": [
+        12345678,
+        12345678
+      ]
+    },
+    "mobile": {
+      "apn-ambr": [
+        12345678,
+        12345678
+      ]
+    }
+  }
+}

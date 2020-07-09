@@ -441,8 +441,6 @@ msg_handler_s5s8(void)
 	if (bytes_s5s8_rx > 0)
 		++cp_stats.rx;
 
-	/* Reset periodic timers */
-	process_response(s5s8_recv_sockaddr.sin_addr.s_addr);
 
 	if (cp_config->cp_type == PGWC)
 		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
@@ -486,7 +484,10 @@ msg_handler_s5s8(void)
 		return;
 	}else {
 
-		if ((ret = gtpc_pcnd_check(gtpv2c_s5s8_rx, &msg, bytes_s5s8_rx)) != 0)
+        /* Reset periodic timers */
+        process_response(s5s8_recv_sockaddr.sin_addr.s_addr);
+
+        if ((ret = gtpc_pcnd_check(gtpv2c_s5s8_rx, &msg, bytes_s5s8_rx)) != 0)
 		{
 			/*CLI: update csr, dsr, mbr rej response*/
 			if(cp_config->cp_type == SGWC)

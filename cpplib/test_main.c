@@ -13,15 +13,14 @@ int main()
     {
         count--;
         spgw_config_profile_t *new_config;
-        new_config = parse_subscriber_profiles_c("../config/subscriber_profiles.json");
+        new_config = parse_subscriber_profiles_c("../config/subscriber_mapping.json");
         switch_config(new_config);
 
-#if TEST_FILTER
         {
             printf("****TEST 1 ****\n");
             sub_selection_keys_t key = {0};
             key.imsi.is_valid = true;
-            key.imsi.from_imsi = 401111111111111;
+            key.imsi.from_imsi = 208014567891201;
             sub_profile_t *sub_profile;
             sub_profile = match_sub_selection(&key);
             printf("sub_profile = %p \n",sub_profile);
@@ -33,6 +32,7 @@ int main()
                 printf("Qos profile = %s \n",sub_profile->qos_profile->qos_profile_name);
             }
         }
+#if TEST_FILTER
         {
             printf("****TEST 2 ****\n");
             sub_profile_t *sub_profile;

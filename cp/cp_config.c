@@ -103,12 +103,12 @@ void init_config(void)
     }
 
     /* Parse initial configuration file */
-    cp_config->subscriber_rulebase = parse_subscriber_profiles_c("../config/subscriber_profiles.json");
+    cp_config->subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
     set_cp_config(cp_config->subscriber_rulebase);
 
     char file[128] = {'\0'};
     strcat(file, config_update_base_folder);
-    strcat(file, "subscriber_profiles.json");
+    strcat(file, "subscriber_mapping.json");
     RTE_LOG_DP(DEBUG, CP, "Config file to monitor %s ", file);
     register_config_updates(file);
 
@@ -722,11 +722,11 @@ config_change_cbk(char *config_file, uint32_t flags)
 
 	if (native_config_folder == false) {
 		/* Move the updated config to standard path */
-		static char cmd[256];
+		char cmd[256];
 		sprintf(cmd, "cp %s %s", config_file, CP_CONFIG_SUB_RULES);
 		int ret = system(cmd);
 		RTE_LOG_DP(INFO, CP, "system call return value: %d \n", ret);
-	}
+    }
  
 	/* We dont expect quick updates from configmap..One update per interval. Typically 
 	 * worst case 60 seconds for 1 config update. Updates are clubbed and dont come frequent 
@@ -734,7 +734,7 @@ config_change_cbk(char *config_file, uint32_t flags)
 	 */
 	watch_config_change(config_file, config_change_cbk);
 
-	cp_config->subscriber_rulebase = parse_subscriber_profiles_c("../config/subscriber_profiles.json");
+	cp_config->subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
     
     switch_config(cp_config->subscriber_rulebase);
     
