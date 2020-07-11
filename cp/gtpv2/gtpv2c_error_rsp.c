@@ -424,7 +424,7 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface)
 		err_rsp_info rsp_info = {0};
 		get_error_rsp_info(msg, &rsp_info);
 
-				//Sending CCR-T in case of failure
+	    //Sending CCR-T in case of failure
         /* we should check if subscriber has gx session..this does not look good */
 		if ((cp_config->gx_enabled) &&  
 		    (cp_config->cp_type != SGWC)){
@@ -432,7 +432,7 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface)
             		struct sockaddr_in saddr_in;
             		saddr_in.sin_family = AF_INET;
             		inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-            		update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
+           	update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
 		}
 		bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 		gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
@@ -444,26 +444,24 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface)
 				rsp_info.sender_teid,
 				rsp_info.seq);
 
-		 if(cause_value == GTPV2C_CAUSE_MANDATORY_IE_MISSING ){
-			set_ie_header(&cs_resp.cause.header, GTP_IE_CAUSE, IE_INSTANCE_ZERO,
-			           sizeof(struct cause_ie));
-			 cs_resp.cause.offend_ie_type = rsp_info.offending;
-			 cs_resp.cause.offend_ie_len = 0;
-			      }
-		   else{
-			set_ie_header(&cs_resp.cause.header, GTP_IE_CAUSE, IE_INSTANCE_ZERO,
-		                  sizeof(struct cause_ie_hdr_t));
-		   }
-		   cs_resp.cause.cause_value = cause_value;
-		   cs_resp.cause.pce = 0;
-		   cs_resp.cause.bce = 0;
-		   cs_resp.cause.spareinstance = 0;
-		   if(cp_config->cp_type != SGWC || cp_config->cp_type !=SAEGWC )
-		         cs_resp.cause.cs = 1;
-		   else
-		         cs_resp.cause.cs = 0;
-
-
+        if(cause_value == GTPV2C_CAUSE_MANDATORY_IE_MISSING ){
+            set_ie_header(&cs_resp.cause.header, GTP_IE_CAUSE, IE_INSTANCE_ZERO,
+                    sizeof(struct cause_ie));
+            cs_resp.cause.offend_ie_type = rsp_info.offending;
+            cs_resp.cause.offend_ie_len = 0;
+        }
+        else{
+            set_ie_header(&cs_resp.cause.header, GTP_IE_CAUSE, IE_INSTANCE_ZERO,
+                    sizeof(struct cause_ie_hdr_t));
+        }
+        cs_resp.cause.cause_value = cause_value;
+        cs_resp.cause.pce = 0;
+        cs_resp.cause.bce = 0;
+        cs_resp.cause.spareinstance = 0;
+        if(cp_config->cp_type != SGWC || cp_config->cp_type !=SAEGWC )
+            cs_resp.cause.cs = 1;
+        else
+            cs_resp.cause.cs = 0;
 
 		set_ie_header(&cs_resp.bearer_contexts_created.header, GTP_IE_BEARER_CONTEXT,
 					IE_INSTANCE_ZERO, 0);

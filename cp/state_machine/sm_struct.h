@@ -32,7 +32,7 @@ enum source_interface {
 /**
  * @brief  : Maintains decoded message from different messages
  */
-typedef struct msg_info{
+typedef struct msg_info {
 	uint8_t msg_type;
 	uint8_t state;
 	uint8_t event;
@@ -83,6 +83,7 @@ typedef struct msg_info{
 	}gx_msg;
 
     uint8_t rx_interface;
+    upf_context_t *upf_context;
     ue_context_t *ue_context;
     pdn_connection_t *pdn;
     struct sockaddr_in *peer_addr;

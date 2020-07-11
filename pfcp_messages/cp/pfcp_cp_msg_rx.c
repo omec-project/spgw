@@ -27,28 +27,10 @@
 #include "gtpv2c_error_rsp.h"
 #include "cp_config_defs.h"
 
-/*
- * UDP Socket
- */
 extern udp_sock_t my_sock;
 extern struct rte_hash *heartbeat_recovery_hash;
-
 uint8_t pfcp_rx[1024]; /* TODO: Decide size */
-/*
-saegw    INITIAL_PDN_ATTACH_PROC, PFCP_ASSOC_REQ_SNT_STATE, PFCP_ASSOC_SETUP_RESP_RCVD_EVNT => process_assoc_resp_handler
-saegw    INITIAL_PDN_ATTACH_PROC, PFCP_ASSOC_RESP_RCVD_STATE , PFCP_ASSOC_SETUP_RESP_RCVD_EVNT => process_assoc_resp_handler
-saegw SGW_RELOCATION_PROC PFCP_ASSOC_REQ_SNT_STATE PFCP_ASSOC_SETUP_RESP_RCVD_EVNT ==> process_assoc_resp_handler
-saegw SGW_RELOCATION_PROC PFCP_ASSOC_RESP_RCVD_STATE PFCP_ASSOC_SETUP_RESP_RCVD_EVNT ==> process_assoc_resp_handler 
 
-pgw INITIAL_PDN_ATTACH_PROC PFCP_ASSOC_REQ_SNT_STATE PFCP_ASSOC_SETUP_RESP_RCVD_EVNT ==> process_assoc_resp_handler
-pgw INITIAL_PDN_ATTACH_PROC PFCP_ASSOC_RESP_RCVD_STATE PFCP_ASSOC_SETUP_RESP_RCVD_EVNT ==> process_assoc_resp_handler 
-pgw SGW_RELOCATION_PROC PFCP_ASSOC_REQ_SNT_STATE PFCP_ASSOC_SETUP_RESP_RCVD_EVNT ==> process_assoc_resp_handler
-pgw SGW_RELOCATION_PROC PFCP_ASSOC_RESP_RCVD_STATE PFCP_ASSOC_RESP_RCVD_STATE ==> process_assoc_resp_handler
-sgw INITIAL_PDN_ATTACH_PROC PFCP_ASSOC_REQ_SNT_STATE PFCP_ASSOC_SETUP_RESP_RCVD_EVNT ===> process_assoc_resp_handler
-sgw INITIAL_PDN_ATTACH_PROC PFCP_ASSOC_RESP_RCVD_STATE PFCP_ASSOC_SETUP_RESP_RCVD_EVNT ==> process_assoc_resp_handler 
-sgw SGW_RELOCATION_PROC PFCP_ASSOC_REQ_SNT_STATE PFCP_ASSOC_SETUP_RESP_RCVD_EVNT ==> process_assoc_resp_handler  
-sgw SGW_RELOCATION_PROC PFCP_ASSOC_RESP_RCVD_STATE PFCP_ASSOC_SETUP_RESP_RCVD_EVNT ==> process_assoc_resp_handler
-*/
 static 
 int handle_pfcp_association_setup_response(msg_info *msg)
 {
@@ -56,27 +38,29 @@ int handle_pfcp_association_setup_response(msg_info *msg)
     int ret=0;
 
     assert(msg->msg_type == PFCP_ASSOCIATION_SETUP_RESPONSE);
-    // TODO : PORT - node_id should come as name or ip address ??
-	memcpy(&msg->upf_ipv4.s_addr,
-				&msg->pfcp_msg.pfcp_ass_resp.node_id.node_id_value,
-				IPV4_SIZE);
+    // Requirement : 
+    // 1. node_id should come as name or ip address
+    // 2. Can UPF change its address and can it be different 
+    memcpy(&msg->upf_ipv4.s_addr,
+            &msg->pfcp_msg.pfcp_ass_resp.node_id.node_id_value,
+            IPV4_SIZE);
 
-
-    assert(msg->upf_ipv4.s_addr != 0);
 	/*Retrive association state based on UPF IP. */
 	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 			(const void*) &(msg->upf_ipv4.s_addr), (void **) &(upf_context));
 
-    assert(upf_context != NULL);
-	// TODO : BUG - unsolicitated setup response will cause crash 	
-#ifdef DELETE_THIS
-	if(upf_context->timer_entry->pt.ti_id != 0) {
-		stoptimer(&upf_context->timer_entry->pt.ti_id);
-		deinittimer(&upf_context->timer_entry->pt.ti_id);
-		/* free peer data when timer is de int */
-		rte_free(upf_context->timer_entry);
+	if (ret < 0) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s: UPF entry not Found Msg_Type:%u, UPF IP:%u, Error_no:%d\n",
+				__func__, msg->msg_type, msg->upf_ipv4.s_addr, ret);
+		cs_error_response(msg,
+						  GTPV2C_CAUSE_INVALID_PEER,
+						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+
+		process_error_occured_handler(&msg, NULL);
+		return -1;
 	}
-#else
+    msg->upf_context = upf_context;
+
 	if(upf_context->timer_entry->rt.ti_id != 0) {
 		stoptimer(&upf_context->timer_entry->rt.ti_id);
 		deinittimer(&upf_context->timer_entry->rt.ti_id);
@@ -84,7 +68,6 @@ int handle_pfcp_association_setup_response(msg_info *msg)
 		rte_free(upf_context->timer_entry);
         upf_context->timer_entry = NULL;
 	}
-#endif
 
 	if(msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED) {
 		msg->state = ERROR_OCCURED_STATE;
@@ -108,22 +91,9 @@ int handle_pfcp_association_setup_response(msg_info *msg)
 		return -1;
 	}
 
-	if (ret >= 0) {
-		msg->state = upf_context->state;
-		/* Set Hard code value for temporary purpose as assoc is only in initial pdn */
-		msg->proc = INITIAL_PDN_ATTACH_PROC;
-	} else {
-		cs_error_response(msg,
-						  GTPV2C_CAUSE_INVALID_PEER,
-						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-
-		process_error_occured_handler(&msg, NULL);
-		clLog(clSystemLog, eCLSeverityCritical, "%s: Entry not Found Msg_Type:%u, UPF IP:%u, Error_no:%d\n",
-				__func__, msg->msg_type, msg->upf_ipv4.s_addr, ret);
-		return -1;
-	}
-
-	/*Set the appropriate event type.*/
+	msg->state = upf_context->state;
+	/* Set Hard code value for temporary purpose as assoc is only in initial pdn */
+	msg->proc = INITIAL_PDN_ATTACH_PROC;
 	msg->event = PFCP_ASSOC_SETUP_RESP_RCVD_EVNT;
 
 	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
@@ -133,23 +103,12 @@ int handle_pfcp_association_setup_response(msg_info *msg)
 			get_proc_string(msg->proc),
 			get_state_string(msg->state), get_event_string(msg->event));
 #if 0
-			if(cp_config->cp_type != SGWC) {
-				/* Init rule tables of user-plane */
-				context->upf_ctxt->upf_sockaddr.sin_addr.s_addr = msg->upf_ipv4.s_addr;
-				// init_dp_rule_tables();
-			}
+    if(cp_config->cp_type != SGWC) {
+        /* Init rule tables of user-plane */
+        context->upf_ctxt->upf_sockaddr.sin_addr.s_addr = msg->upf_ipv4.s_addr;
+        // init_dp_rule_tables();
+    }
 #endif
-
-    /*
-     * if session found then detect retransmission
-     * if no retransmission then delete the existing session
-     * handler new event  
-     */
-    msg->proc = INITIAL_PDN_ATTACH_PROC;
-    /* UPF context state */
-    msg->state = PFCP_ASSOC_REQ_SNT_STATE;
-    msg->event = PFCP_ASSOC_SETUP_RESP_RCVD_EVNT;
-    /* For time being just getting rid of 3d FSM array */
     process_assoc_resp_handler((void *)msg, (void *)msg->peer_addr);
     return 0;
 }

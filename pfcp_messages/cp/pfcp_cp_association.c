@@ -607,112 +607,90 @@ fill_pfcp_sess_report_resp(pfcp_sess_rpt_rsp_t *pfcp_sess_rep_resp,
 uint8_t
 process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
 {
-	int ret = 0;
-	pdn_connection_t *pdn = NULL;
-	upf_context_t *upf_context = NULL;
+    int ret = 0;
+    pdn_connection_t *pdn = NULL;
+    upf_context_t *upf_context = msg->upf_context;
+    assert(upf_context != NULL); /* if NULL we should have already dropped msg */
+    upf_context->assoc_status = ASSOC_ESTABLISHED;
+    upf_context->state = PFCP_ASSOC_RESP_RCVD_STATE;
 
-	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
-			(const void*) &(msg->upf_ipv4.s_addr), (void **) &(upf_context));
+    upf_context->up_supp_features =
+        msg->pfcp_msg.pfcp_ass_resp.up_func_feat.sup_feat;
 
-	if (ret < 0) {
-		clLog(sxlogger, eCLSeverityDebug, "NO ENTRY FOUND IN UPF HASH [%u]\n",
-				msg->upf_ipv4.s_addr);
-		return 0;
-	}
+    switch (cp_config->cp_type)
+    {
+        case SGWC :
+            if (msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
+                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
+                    SOURCE_INTERFACE_VALUE_ACCESS )
+                upf_context->s1u_ip =
+                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
 
-	upf_context->assoc_status = ASSOC_ESTABLISHED;
-	upf_context->state = PFCP_ASSOC_RESP_RCVD_STATE;
+            if( msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].assosi == 1 &&
+                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].src_intfc ==
+                    SOURCE_INTERFACE_VALUE_CORE )
+                upf_context->s5s8_sgwu_ip =
+                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].ipv4_address;
+            break;
 
-	upf_context->up_supp_features =
-			msg->pfcp_msg.pfcp_ass_resp.up_func_feat.sup_feat;
+        case PGWC :
+            if (msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
+                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
+                    SOURCE_INTERFACE_VALUE_ACCESS )
+                upf_context->s5s8_pgwu_ip =
+                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
+            break;
 
-	switch (cp_config->cp_type)
-	{
-		case SGWC :
-			if (msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
-					msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
-					SOURCE_INTERFACE_VALUE_ACCESS )
-				upf_context->s1u_ip =
-						msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
+        case SAEGWC :
+            if( msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
+                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
+                    SOURCE_INTERFACE_VALUE_ACCESS )
+                upf_context->s1u_ip =
+                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
+            break;
 
-			if( msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].assosi == 1 &&
-					msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].src_intfc ==
-					SOURCE_INTERFACE_VALUE_CORE )
-				upf_context->s5s8_sgwu_ip =
-						msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].ipv4_address;
-			break;
+    }
 
-		case PGWC :
-			if (msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
-					msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
-					SOURCE_INTERFACE_VALUE_ACCESS )
-				upf_context->s5s8_pgwu_ip =
-						msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
-			break;
-
-		case SAEGWC :
-			if( msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
-					msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
-					SOURCE_INTERFACE_VALUE_ACCESS )
-				upf_context->s1u_ip =
-						msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
-			break;
-
-	}
-
-	/* teid_range from first user plane ip IE is used since, for same CP ,
-	 * DP will assigne single teid_range , So all IE's will have same value for teid_range*/
-	/* Change teid base address here */
-	if(msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].teidri != 0){
-		set_base_teid(msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].teid_range);
-	}
+    /* teid_range from first user plane ip IE is used since, for same CP ,
+     * DP will assigne single teid_range , So all IE's will have same value for teid_range*/
+    /* Change teid base address here */
+    if(msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].teidri != 0){
+        /* Requirement : This data should go in the upf context */
+        set_base_teid(msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].teid_range);
+    }
 
     context_key *key;
     key = LIST_FIRST(&upf_context->pendingCSRs);
     while (key != NULL) {
         LIST_REMOVE(key, csrentries);
-		if (get_pdn(key->teid, &pdn) < 0){
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to get pdn for teid: %u\n",
-					__func__, __LINE__, key->teid);
-		}
+        if (get_pdn(key->teid, &pdn) < 0){
+            clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to get pdn for teid: %u\n",
+                    __func__, __LINE__, key->teid);
+        }
 
-		ret = process_pfcp_sess_est_request(key->teid, pdn, upf_context);
-		if (ret) {
-			clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
-			if(ret != -1) {
-				cs_error_response(msg, ret,
-						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-				process_error_occured_handler(&msg, NULL);
-			}
-		}
-#ifdef DELETE_THIS 
-        else {
-	        struct resp_info *resp = NULL;
-			/* Need to remove + 5 after adding ebi_index in upf_context */
-			if (get_sess_entry(SESS_ID(key->teid, key->ebi_index + 5), &resp) != 0) {
-				clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-					__func__, __LINE__,  SESS_ID(key->teid, key->ebi_index));
-				return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-			}
-			/* stored csr for error response */
-			resp->gtpc_msg.csr = upf_context->csr;
-		}
-#endif
-
+        ret = process_pfcp_sess_est_request(key->teid, pdn, upf_context);
+        if (ret) {
+            clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+            if(ret != -1) {
+                cs_error_response(msg, ret,
+                        cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+                process_error_occured_handler(&msg, NULL);
+            }
+        }
         rte_free(key);
         key = LIST_FIRST(&upf_context->pendingCSRs);
-	}
+    }
 
-	/* Adding ip to cp  heartbeat when dp returns the association response*/
-	add_ip_to_heartbeat_hash(peer_addr,
-			msg->pfcp_msg.pfcp_ass_resp.rcvry_time_stmp.rcvry_time_stmp_val);
+    /* Adding ip to cp  heartbeat when dp returns the association response*/
+    add_ip_to_heartbeat_hash(peer_addr,
+            msg->pfcp_msg.pfcp_ass_resp.rcvry_time_stmp.rcvry_time_stmp_val);
 
-	if ((add_node_conn_entry((uint32_t)peer_addr->sin_addr.s_addr,
-					SX_PORT_ID)) != 0) {
+    if ((add_node_conn_entry((uint32_t)peer_addr->sin_addr.s_addr,
+                    SX_PORT_ID)) != 0) {
 
-		clLog(clSystemLog, eCLSeverityCritical, "Failed to add connection entry for SGWU/SAEGWU");
-	}
-	return 0;
+        clLog(clSystemLog, eCLSeverityCritical, "Failed to add connection entry for SGWU/SAEGWU");
+    }
+    return 0;
 
 }
 

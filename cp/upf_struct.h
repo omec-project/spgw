@@ -55,12 +55,7 @@ typedef struct upf_context {
 	uint32_t s5s8_sgwu_ip;
 	uint32_t s5s8_pgwu_ip;
 	uint8_t  state;
-#ifdef DELETE_THIS
-	/* Add timer_entry for pfcp assoc req */
-	peerData_t *timer_entry;
-#else
     transData_t *timer_entry;
-#endif
     LIST_HEAD(pendingcsrhead, ue_context_key) pendingCSRs;
 } upf_context_t;
 
