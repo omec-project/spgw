@@ -316,8 +316,8 @@ int
 buffer_csr_request(ue_context_t *context,
 		upf_context_t *upf_context, uint8_t ebi)
 {
-	context_key *key =
-					rte_zmalloc_socket(NULL, sizeof(context_key),
+	pending_csreq_key_t *key =
+					rte_zmalloc_socket(NULL, sizeof(pending_csreq_key_t),
 						RTE_CACHE_LINE_SIZE, rte_socket_id());
 
 	key->teid = context->s11_sgw_gtpc_teid;
@@ -659,7 +659,7 @@ process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr)
         set_base_teid(msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].teid_range);
     }
 
-    context_key *key;
+    pending_csreq_key_t *key;
     key = LIST_FIRST(&upf_context->pendingCSRs);
     while (key != NULL) {
         LIST_REMOVE(key, csrentries);

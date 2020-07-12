@@ -41,7 +41,7 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 	ue_context_t *context = NULL;
 	upf_context_t *upf_context = NULL;
 	pdn_connection_t *pdn = NULL;
-	context_key *key = NULL;
+	pending_csreq_key_t *key = NULL;
 	uint8_t ebi_index = ebi - 5;
 	struct resp_info *resp;
 	int ret = 0;
@@ -212,7 +212,7 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *rsp_info)
 			}
 
 	        RTE_SET_USED(index);
-            context_key *key = LIST_FIRST(&upf_context->pendingCSRs);
+            pending_csreq_key_t *key = LIST_FIRST(&upf_context->pendingCSRs);
             assert(key == NULL);
             LIST_REMOVE(key, csrentries);
 			if (get_ue_context(key->teid, &context) != 0){

@@ -70,7 +70,7 @@ gtpc_peer_timer_callback(gstimerinfo_t *ti, const void *data_t )
                         if (get_sess_entry(seid, &resp) != 0){
                                 /* Assuming that session is not established or resp entry is not created */
                                 upf_context_t *upf_context = NULL;
-                                context_key *key = NULL;
+                                pending_csreq_key_t *key = NULL;
 
                                 ret = rte_hash_lookup_data(upf_context_by_ip_hash,
                                                 (const void*) &(context->eps_bearers[data->ebi_index]->pdn->upf_ipv4.s_addr),

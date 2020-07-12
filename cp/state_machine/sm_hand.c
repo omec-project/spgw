@@ -1464,7 +1464,7 @@ get_info_filled(msg_info *msg, err_rsp_info *info_resp)
 					 __file__, __func__, __LINE__,msg->msg_type, msg->upf_ipv4.s_addr);
 				return;
 			}
-            context_key *key = LIST_FIRST(&upf_context->pendingCSRs);
+            pending_csreq_key_t *key = LIST_FIRST(&upf_context->pendingCSRs);
             assert(key != NULL);
             LIST_REMOVE(key, csrentries);
 	        info_resp->ebi_index = key->ebi_index;
@@ -1806,7 +1806,7 @@ process_error_occured_handler(void *data, void *unused_param)
 			if ((upf_context_entry_lookup(pdn->upf_ipv4.s_addr,&upf_ctx)) ==  0) {
 				if(upf_ctx->state < PFCP_ASSOC_RESP_RCVD_STATE){
 					rte_hash_del_key(upf_context_by_ip_hash, (const void *) &pdn->upf_ipv4.s_addr);
-                    context_key *key;
+                    pending_csreq_key_t *key;
                     key = LIST_FIRST(&upf_ctx->pendingCSRs);
                     while (key != NULL) {
                         LIST_REMOVE(key, csrentries);

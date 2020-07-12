@@ -27,7 +27,7 @@ typedef enum pfcp_assoc_status_en {
 /**
  * @brief  : Maintains ue context Bearer identifier and tied
  */
-struct ue_context_key {
+struct pending_csreq_key {
 	/* Bearer identifier */
 	uint8_t ebi_index;
 	/* UE Context key == teid */
@@ -37,9 +37,9 @@ struct ue_context_key {
 	/* UE Context key == sequence number */
 	uint32_t sequence;
 
-    LIST_ENTRY(ue_context_key) csrentries;
+    LIST_ENTRY(pending_csreq_key) csrentries;
 };
-typedef struct ue_context_key context_key;
+typedef struct pending_csreq_key pending_csreq_key_t;
 
 
 /**
@@ -56,7 +56,7 @@ typedef struct upf_context {
 	uint32_t s5s8_pgwu_ip;
 	uint8_t  state;
     transData_t *timer_entry;
-    LIST_HEAD(pendingcsrhead, ue_context_key) pendingCSRs;
+    LIST_HEAD(pendingcsrhead, pending_csreq_key) pendingCSRs;
 } upf_context_t;
 
 #endif
