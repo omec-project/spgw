@@ -235,7 +235,7 @@ struct gw_info {
 //	header->message_len = htons(encoded - 4);
 //
 //	if (pfcp_send(pfcp_fd, pfcp_msg,encoded,
-//				&context->upf_ctxt.upf_sockaddr) < 0 )
+//				&context->upf_context.upf_sockaddr) < 0 )
 //		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 //	else {
 //		cp_stats.session_deletion_req_sent++;
@@ -436,6 +436,7 @@ gen_sgwc_s5s8_delete_session_request(gtpv2c_header_t *gtpv2c_rx,
 //	return 0;
 //}
 
+#ifdef FUTURE_NEED
 int process_sgwc_delete_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 {
 	uint16_t msg_len = 0;
@@ -444,7 +445,6 @@ int process_sgwc_delete_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 	del_sess_rsp_t del_resp = {0};
 
 	uint32_t teid = UE_SESS_ID(sess_id);
-	struct resp_info *resp = NULL;
 	//gtpv2c_header gtpv2c_rx;
 
 	if (get_sess_entry(sess_id, &resp) != 0){
@@ -484,3 +484,4 @@ int process_sgwc_delete_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 	}
 	return 0;
 }
+#endif

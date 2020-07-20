@@ -19,8 +19,9 @@
  * @brief udp socket structure.
  */
 typedef struct udp_sock_t {
-	struct sockaddr_in my_addr;
-	struct sockaddr_in other_addr;
+    struct sockaddr_in s5s8_recv_sockaddr;
+    struct sockaddr_in pfcp_sockaddr;
+    struct sockaddr_in s11_sockaddr;
 	int sock_fd_pfcp;
 	int sock_fd_s11;
 	int sock_fd_s5s8;

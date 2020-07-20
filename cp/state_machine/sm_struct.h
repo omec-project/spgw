@@ -42,8 +42,6 @@ typedef struct msg_info {
 	uint8_t eps_bearer_id;
 	uint32_t teid;
 
-	struct in_addr upf_ipv4;
-
 	union gtpc_msg_info {
 		create_sess_req_t csr;
 		create_sess_rsp_t cs_rsp;
@@ -51,7 +49,7 @@ typedef struct msg_info {
 		mod_bearer_rsp_t mb_rsp;
 		del_sess_req_t dsr;
 		del_sess_rsp_t ds_rsp;
-		rel_acc_ber_req rel_acc_ber_req_t;
+		rel_acc_bearer_req_t rab;
 		downlink_data_notification_t ddn_ack;
 		create_bearer_req_t cb_req;
 		create_bearer_rsp_t cb_rsp;
@@ -85,9 +83,10 @@ typedef struct msg_info {
     uint8_t rx_interface;
     upf_context_t *upf_context;
     ue_context_t *ue_context;
-    pdn_connection_t *pdn;
-    struct sockaddr_in *peer_addr;
-}msg_info;
+    pdn_connection_t *pdn_context;
+    struct sockaddr_in peer_addr;
+    proc_context_t *proc_context;
+}msg_info_t;
 
 /**
  * @brief  : Structure for handling CS/MB/DS request synchoronusly.

@@ -10,8 +10,6 @@
 #include "gtp_messages_decoder.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_config.h"
-#include "gtpc_timer.h"
-#include "pfcp_timer.h"
 #include "gtpv2_interface.h"
 #include "cp_peer.h"
 #include "clogger.h"
@@ -23,14 +21,16 @@
 
 extern struct cp_stats_t cp_stats;
 
+// Requirement : not consistent handling 
+//  0 success
+// -1 : error drop or error is generated 
+// > 0 : error is not generated from this function 
+
 uint8_t
-gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
+gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg, int bytes_rx)
 {
 	int ret = 0;
-	ue_context_t *context = NULL;
-	pdn_connection_t *pdn = NULL;
 	msg->msg_type = gtpv2c_rx->gtpc.message_type;
-	int ebi_index = 0;
 
 	if ((unsigned)bytes_rx != (ntohs(gtpv2c_rx->gtpc.message_len) + sizeof(gtpv2c_rx->gtpc))) {
 		ret = GTPV2C_CAUSE_INVALID_LENGTH;
@@ -118,10 +118,13 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 	    case GTP_RELEASE_ACCESS_BEARERS_REQ: {
 			/* Parse the Relaese access bearer request message and update State and Event */
 			/* TODO: Revisit after libgtpv2c support */
+#if 0
 			ret = parse_release_access_bearer_request(gtpv2c_rx,
 					&msg->gtpc_msg.rel_acc_ber_req_t);
-			if (ret)
-				return ret;
+#endif
+            ret = decode_rel_acc_bearer_req((uint8_t *)gtpv2c_rx, &msg->gtpc_msg.rab);
+			if (ret == 0)
+				return -1;
 
 		    break;
 	    }
@@ -136,6 +139,7 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 		    break;
 	    }
 
+#ifdef FUTURE_NEED
 	    case GTP_CREATE_BEARER_REQ:{
 
 			if((ret = decode_create_bearer_req((uint8_t *) gtpv2c_rx,
@@ -160,6 +164,7 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 
 	        break;
 	    }
+#endif
 
 	    case GTP_DELETE_BEARER_RSP:{
 			if((ret = decode_del_bearer_rsp((uint8_t *) gtpv2c_rx,
@@ -168,6 +173,7 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 
 	 	    break;
 	    }
+#ifdef FUTURE_NEED
 	    case GTP_UPDATE_BEARER_REQ:{
 		    if((ret = decode_upd_bearer_req((uint8_t *) gtpv2c_rx,
 						&msg->gtpc_msg.ub_req) == 0))
@@ -222,26 +228,8 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx)
 
 		    break;
 	    }
+#endif
 	    default:
-			/*If Event is not supported then we will called default handler. */
-			/* Retrive UE state. */
-			if (get_ue_context(ntohl(gtpv2c_rx->teid.has_teid.teid), &context) != 0) {
-				msg->proc =  NONE_PROC;
-                if (SGWC == cp_config->cp_type)
-                    msg->state = SGWC_NONE_STATE;
-                else {
-                    if(cp_config->gx_enabled)
-                        msg->state = PGWC_NONE_STATE;
-                    else
-                        msg->state = SGWC_NONE_STATE;
-                }
-			} else {
-					pdn = GET_PDN(context, ebi_index);
-					msg->state = pdn->state;
-					msg->proc = pdn->proc;
-			}
-			msg->event = NONE_EVNT;
-
 			clLog(clSystemLog, eCLSeverityCritical, "%s::process_msgs-"
 					"\n\tcase: SAEGWC::spgw_cfg= %d;"
 					"\n\tReceived GTPv2c Message Type: "

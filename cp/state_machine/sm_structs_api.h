@@ -9,6 +9,7 @@
 #define _SM_STRUCT_API_H
 #include "sm_struct.h"
 
+struct ue_context;
 /**
  * @brief  : Create a session hash table to maintain the session information.
  * @param  : No param
@@ -20,11 +21,11 @@ init_transaction_hash(void);
 /**
  * @brief  : Add session entry in session table.
  * @param  : sess_id, session id
- * @param  : resp, structure to store session info
+ * @param  : context, structure to store ue_context info
  * @return : Returns 0 in case of success , -1 otherwise
  */
 uint8_t
-add_sess_entry(uint64_t sess_id, struct resp_info *resp);
+add_sess_entry(uint64_t sess_id, struct ue_context *context);
 
 /**
  * @brief  : Retrive session entry from session table.
@@ -33,7 +34,7 @@ add_sess_entry(uint64_t sess_id, struct resp_info *resp);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 uint8_t
-get_sess_entry(uint64_t sess_id, struct resp_info **resp);
+get_sess_entry(uint64_t sess_id, struct ue_context **context);
 
 
 
@@ -144,16 +145,6 @@ get_ue_context(uint32_t teid_key, ue_context_t **context);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 uint8_t
-get_procedure(msg_info *msg);
-
-/**
- * @brief  : Find Pending CSR Procedure according to indication flags
- * @param  : csr, csr data
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-get_csr_proc(create_sess_req_t *csr);
-
-
+get_procedure(msg_info_t *msg);
 
 #endif

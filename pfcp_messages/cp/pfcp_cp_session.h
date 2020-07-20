@@ -96,7 +96,7 @@ check_interface_type(uint8_t iface);
  * @param  : handover_flag ,  flag to check if it is handover scenario or not
  * @return : Returns nothing
  */
-void
+uint32_t
 fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		gtpv2c_header_t *header, eps_bearer_t *bearer,
 		pdn_connection_t *pdn, pfcp_update_far_ie_t update_far[],  uint8_t handover_flag);
@@ -132,7 +132,9 @@ fill_pfcp_sess_mod_req_pgw_init_remove_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_re
  * @retrun : Returns 0 in case of success
  */
 int8_t
-process_pfcp_sess_est_resp(pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, gtpv2c_header_t *gtpv2c_tx);
+process_pfcp_sess_est_resp(msg_info_t *msg, 
+                           pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, 
+                           gtpv2c_header_t *gtpv2c_tx);
 
 void
 fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
@@ -206,7 +208,7 @@ fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer,uint8_t itr);
  */
 int8_t
 process_pfcp_sess_del_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx,
-		gx_msg *ccr_request, uint16_t *msglen);
+		gx_msg *ccr_request, uint16_t *msglen, proc_context_t *proc);
 
 /**
  * @brief  : fill create session response on PGWC
@@ -383,7 +385,7 @@ get_new_bearer_id(pdn_connection_t *pdn_cntxt);
  * @param  : pfcp_sess_del_req , structure to be filled
  * @return : Returns nothing
  */
-void
+uint32_t
 fill_pfcp_sess_del_req( pfcp_sess_del_req_t *pfcp_sess_del_req);
 /**
  * @brief  : Fill pfcp session set delete request

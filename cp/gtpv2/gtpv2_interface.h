@@ -21,6 +21,7 @@
 #include "gtpv2c_ie.h"
 #include "gtpv2c_msg_struct.h"
 #include "ue.h"
+#include "sm_struct.h"
 
 /**
  * @brief  : Returns cause string from code value as defined by 3gpp TS 29.274.
@@ -76,9 +77,11 @@ gtpv2c_send(int gtpv2c_if_id, uint8_t *gtpv2c_tx_buf,
  *           specified cause error value
  *           - < 0 for all other errors
  */
+#if 0
 int
 parse_release_access_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 		rel_acc_ber_req *rel_acc_ber_req_t);
+#endif
 
 
 /**
@@ -344,19 +347,6 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 		gtpv2c_header_t *gtpv2c_tx);
 
 
-/**
- * @brief  : Handles the processing of release access bearer request messages received by
- *           the control plane.
- * @param  : rel_acc_ber_req_t
- *           gtpv2c message buffer containing the modify bearer request message
- * @param  : proc, procedure type
- * @return : - 0 if successful
- *           - > 0 if error occurs during packet filter parsing corresponds to 3gpp
- *           specified cause error value
- *           - < 0 for all other errors
- */
-int
-process_release_access_bearer_request(rel_acc_ber_req *rel_acc_ber_req_t, uint8_t proc);
 
 /**
  * @brief  : Processes a Downlink Data Notification Acknowledgement message
@@ -373,7 +363,7 @@ process_release_access_bearer_request(rel_acc_ber_req *rel_acc_ber_req_t, uint8_
  *           - < 0 for all other errors
  */
 int
-process_ddn_ack(downlink_data_notification_t ddn_ack, uint8_t *delay);
+process_ddn_ack(downlink_data_notification_t ddn_ack, uint8_t *delay, msg_info_t *data);
 
 /**
  * @brief  : Creates a Downlink Data Notification message
@@ -446,8 +436,8 @@ decode_check_csr(gtpv2c_header_t *gtpv2c_rx,
 		create_sess_req_t *csr);
 
 
-void msg_handler_s11(void);
-void msg_handler_s5s8(void);
+int msg_handler_s11(void);
+int msg_handler_s5s8(void);
 
 /**
  * @brief  : Update cli statistics
@@ -457,4 +447,24 @@ void msg_handler_s5s8(void);
 void
 stats_update(uint8_t msg_type);
 
+void 
+process_create_bearer_request_pfcp_timeout(void *data);
+
+void 
+process_delete_bearer_resp_pfcp_timeout(void *data);
+
+void 
+process_create_bearer_request_pfcp_timeout(void *data);
+
+void 
+process_pgwc_s5s8_create_session_request_pfcp_timeout(void *data);
+
+void
+process_delete_bearer_request_pfcp_timeout(void *data);
+
+void 
+process_delete_bearer_resp_pfcp_timeout(void *data);
+
+void
+process_delete_bearer_request_pfcp_timeout(void *data);
 #endif /* DEBUG_STR_H */

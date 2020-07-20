@@ -11,7 +11,6 @@
 #include "pfcp_messages_decoder.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_config.h"
-#include "pfcp_timer.h"
 #include "cp_config.h"
 #include "pfcp_cp_set_ie.h"
 #include "upf_struct.h"
@@ -39,11 +38,10 @@ pcnd_check(pfcp_header_t *pfcp_header, int bytes_rx)
 }
 
 uint8_t
-pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
+pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info_t *msg, int bytes_rx)
 {
 	int ret = 0;
 	int decoded = 0;
-	struct resp_info *resp = NULL;
 
 	pfcp_header_t *pfcp_header = (pfcp_header_t *) pfcp_rx;
 
@@ -60,14 +58,6 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 
 			clLog(sxlogger, eCLSeverityDebug, "Decoded bytes [%d]\n", decoded);
 
-		break;
-	}
-
-	case PFCP_PFD_MANAGEMENT_RESPONSE: {
-			/* Decode pfd mgmt response */
-			decoded = decode_pfcp_pfd_mgmt_rsp_t(pfcp_rx, &msg->pfcp_msg.pfcp_pfd_resp);
-			clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Pfd Mgmt Resp is %d\n",
-					decoded);
 		break;
 	}
 
@@ -114,6 +104,15 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 		break;
 	}
 
+#ifdef FUTURE_NEED
+	case PFCP_PFD_MANAGEMENT_RESPONSE: {
+			/* Decode pfd mgmt response */
+			decoded = decode_pfcp_pfd_mgmt_rsp_t(pfcp_rx, &msg->pfcp_msg.pfcp_pfd_resp);
+			clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Pfd Mgmt Resp is %d\n",
+					decoded);
+		break;
+	}
+
 	case PFCP_SESSION_SET_DELETION_REQUEST:
 			/*Decode the received msg and stored into the struct. */
 			decoded = decode_pfcp_sess_set_del_req_t(pfcp_rx,
@@ -132,22 +131,9 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx)
 					decoded);
 
 		break;
+#endif
 
 	default:
-			/* Retrive the session information based on session id */
-			if ((get_sess_entry(pfcp_header->seid_seqno.has_seid.seid, &resp)) != 0 ) {
-				msg->proc = NONE_PROC;
-				if( SGWC == cp_config->cp_type )
-					msg->state = SGWC_NONE_STATE;
-				else
-					msg->state = PGWC_NONE_STATE;
-			} else {
-				msg->state = resp->state;
-				msg->proc = resp->proc;
-			}
-
-			msg->event = NONE_EVNT;
-
 			clLog(clSystemLog, eCLSeverityCritical, "%s::process_msgs-"
 					"\n\tcase: spgw_cfg= %d;"
 					"\n\tReceived unprocessed PFCP Message_Type:%u"

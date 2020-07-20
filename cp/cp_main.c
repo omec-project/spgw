@@ -237,6 +237,8 @@ main(int argc, char **argv)
 
     init_cp_params();
 
+    init_cpp_tables(); 
+
     /* TODO: Need to Re-arrange the hash initialize */
     create_heartbeat_hash_table();
     create_associated_upf_hash();

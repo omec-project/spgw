@@ -9,6 +9,6 @@
 #define __GTPV2_COMMON__
 
 #include "sm_struct.h"
-int validate_gtpv2_message_content(msg_info *msg);
+int validate_gtpv2_message_content(msg_info_t *msg);
 
 #endif

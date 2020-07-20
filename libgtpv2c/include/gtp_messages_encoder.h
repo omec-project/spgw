@@ -1644,5 +1644,7 @@ int encode_mbms_sess_upd_rsp(mbms_sess_upd_rsp_t *value,
 int encode_mbms_sess_stop_req(mbms_sess_stop_req_t *value,
     uint8_t *buf);
 
+int encode_rel_acc_bearer_rsp(rel_acc_bearer_rsp_t *value,
+    uint8_t *buf);
 
 #endif /*__GTP_MESSAGES_ENCODE_H__*/

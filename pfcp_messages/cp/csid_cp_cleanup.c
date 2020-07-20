@@ -28,7 +28,6 @@ extern udp_sock_t my_sock;
 extern socklen_t s11_mme_sockaddr_len;
 extern uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
 
-extern struct sockaddr_in s5s8_recv_sockaddr;
 extern socklen_t s5s8_sockaddr_len;
 
 static uint16_t sequence = 0;
@@ -416,7 +415,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 			//csid = get_peer_addr_csids_entry(s5s8_recv_sockaddr.sin_addr.s_addr,
 			//		MOD);
 				gtpv2c_send(my_sock.sock_fd_s5s8, tx_buf, payload_length,
-						(struct sockaddr *) &s5s8_recv_sockaddr,
+						(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 						s5s8_sockaddr_len);
 		}
 	} else {
@@ -434,7 +433,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 			//		MOD);
 			if (iface != S5S8_SGWC_PORT_ID) {
 				gtpv2c_send(my_sock.sock_fd_s5s8, tx_buf, payload_length,
-						(struct sockaddr *) &s5s8_recv_sockaddr,
+						(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 						s5s8_sockaddr_len);
 			}
 		}

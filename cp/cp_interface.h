@@ -26,10 +26,4 @@ dump_pcap(uint16_t payload_length, uint8_t *tx_buf);
 void
 gtpc_timer_retry_send(int fd, peerData_t *t_tx);
 
-void
-pfcp_timer_retry_send(int fd, peerData_t *t_tx);
-
-void
-pfcp_timer_retry_send_new(int fd, transData_t *t_tx);
-
 #endif /* _INTERFACE_H_ */

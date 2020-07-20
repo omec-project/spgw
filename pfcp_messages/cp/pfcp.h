@@ -326,6 +326,7 @@ gx_update_bearer_req(pdn_connection_t *pdn);
  */
 int8_t
 parse_gx_rar_msg(GxRAR *rar);
+void pfcp_modify_rar_trigger_timeout(void *data);
 
 void
 get_charging_rule_remove_bearer_info(pdn_connection_t *pdn,

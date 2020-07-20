@@ -5991,3 +5991,12 @@ int decode_gtp_create_indir_data_fwdng_tunn_response__bearer_ctxt_ie(uint8_t *bu
       }
       return count;
 }
+
+int decode_rel_acc_bearer_req(uint8_t *buf, rel_acc_bearer_req_t *value)
+{
+    uint16_t count = 0;
+
+    count += decode_gtpv2c_header_t(buf + count, &value->header);
+    return count;
+}
+ 

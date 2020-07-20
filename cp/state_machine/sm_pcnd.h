@@ -21,7 +21,7 @@
  * @return : Returns 0 in case of success , -1 otherwise
  */
 uint8_t
-gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx);
+gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg, int bytes_rx);
 
 /**
  * @brief  : Decode and validate pfcp messages
@@ -31,7 +31,7 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info *msg, int bytes_rx);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 uint8_t
-pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx);
+pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info_t *msg, int bytes_rx);
 
 /**
  * @brief  : Decode and validate gx messages
@@ -40,7 +40,7 @@ pfcp_pcnd_check(uint8_t *pfcp_rx, msg_info *msg, int bytes_rx);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 uint8_t
-gx_pcnd_check(gx_msg *gx_rx, msg_info *msg);
+gx_pcnd_check(gx_msg *gx_rx, msg_info_t *msg);
 
 
 #endif

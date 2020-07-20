@@ -223,6 +223,8 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		uint8_t ebi, ue_context_t **context, apn_profile_t *apn_requested,
 	  	uint32_t sequence)
 {
+    RTE_SET_USED(apn_requested);
+    RTE_SET_USED(sequence);
 	int ret;
 	int i;
 	uint8_t ebi_index;
@@ -259,8 +261,10 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
 		}
 	} else {
-		/* VS: TODO: Need to think on this, flush entry when received DSR*/
-		RTE_SET_USED(apn_requested);
+        // Requirement : Rule out its not retransmitted and 
+        // Requirment : Rule out that its not 2nd PDN case 
+        // for now both cases, return error 
+#ifdef REQUIREMENT_MULTIPDN
 		if_ue_present = 1;
 		if((*context)->eps_bearers[ebi - 5] != NULL ) {
 			pdn = (*context)->eps_bearers[ebi - 5]->pdn;
@@ -280,6 +284,8 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 				__func__, imsi);
 			return -1;
 		}*/
+#endif
+        return -1;
 	}
 	if (if_ue_present == 0){
 		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
@@ -428,6 +434,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		rte_free((*context));
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
 	}
+	pdn->apn_in_use = apn_requested;
 
 	return 0;
 }

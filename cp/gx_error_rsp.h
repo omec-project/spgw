@@ -15,6 +15,6 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error);
  * @param  : teid, teid value
  * @return : Returns nothing
  */
-void send_ccr_t_req(msg_info *msg, uint8_t ebi, uint32_t teid);
+void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid);
 #endif
 

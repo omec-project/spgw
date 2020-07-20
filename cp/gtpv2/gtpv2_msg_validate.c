@@ -11,6 +11,7 @@
 #include "gtpv2_common.h"
 #include "clogger.h"
 #include "stdio.h"
+#include "gtpv2c_error_rsp.h"
 
 static 
 int validate_csreq_msg(create_sess_req_t *csr) 
@@ -19,6 +20,7 @@ int validate_csreq_msg(create_sess_req_t *csr)
 			csr->indctn_flgs.indication_uimsi) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Unauthenticated IMSI Not Yet Implemented - "
 				"Dropping packet\n", __FILE__, __func__, __LINE__);
+	
 		return GTPV2C_CAUSE_IMSI_NOT_KNOWN;
 	}
 
@@ -76,6 +78,8 @@ int validate_mbrsp_msg(mod_bearer_rsp_t *mbrsp)
     return 0;
 }
 
+/* Requirement : validate presence of EBI in DSReq 
+*/
 static
 int validate_dsreq_msg(del_sess_req_t *dsreq)
 {
@@ -91,7 +95,7 @@ int validate_dsrsp_msg(del_sess_rsp_t *dsrsp)
 }
 
 static
-int validate_rab_req_msg(rel_acc_ber_req *rab)
+int validate_rab_req_msg(rel_acc_bearer_req_t *rab)
 {
     RTE_SET_USED(rab);
     return 0;
@@ -146,14 +150,20 @@ int validate_ubrsp_msg(upd_bearer_rsp_t *ubrsp)
     return 0;
 }
 
-int validate_gtpv2_message_content(msg_info *msg)
+int validate_gtpv2_message_content(msg_info_t *msg)
 {
     int ret=0;
+    printf("Validate gtpv2 message\n");
     switch(msg->msg_type)
     {
     	case GTP_CREATE_SESSION_REQ:
         {
+            printf("Validate CSReq message\n");
             ret = validate_csreq_msg(&msg->gtpc_msg.csr);
+		    if(ret != 0 ) {
+                cs_error_response(msg, ret,
+				cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+            }
             break;
         }
     	case GTP_CREATE_SESSION_RSP:
@@ -183,7 +193,7 @@ int validate_gtpv2_message_content(msg_info *msg)
         }        
         case GTP_RELEASE_ACCESS_BEARERS_REQ:
         {
-            ret = validate_rab_req_msg(&msg->gtpc_msg.rel_acc_ber_req_t);
+            ret = validate_rab_req_msg(&msg->gtpc_msg.rab);
             break;
         } 
         case GTP_DOWNLINK_DATA_NOTIFICATION_ACK:
@@ -223,7 +233,7 @@ int validate_gtpv2_message_content(msg_info *msg)
         }        
         default:
         {
-            assert(0);
+            assert(0); // unhandled message reception
             break;
         }
     }

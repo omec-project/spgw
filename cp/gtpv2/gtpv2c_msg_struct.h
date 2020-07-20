@@ -41,6 +41,7 @@ typedef struct downlink_data_notification { /* This struct needs to be moved to 
 	uint8_t dl_buff_duration;
 }downlink_data_notification_t;
 
+#if 0
 /* TODO - following structre needs to move at right place */
 /**
  * @brief  : Maintains information parsed from release access bearer request
@@ -50,5 +51,6 @@ typedef struct parse_release_access_bearer_request_t {
 	struct ue_context *context;
 	uint32_t seq;
 } rel_acc_ber_req;
+#endif
 
 #endif

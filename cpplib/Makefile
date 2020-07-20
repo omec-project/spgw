@@ -30,7 +30,8 @@ endif
 SPGW_LIBNAME = libspgwcpputil.so 
 
 SPGWLIB_SRCS := ./spgw_config.cpp \
-                   ./spgw_wrapper.cpp 
+				./spgw_tables.cpp \
+				./spgw_wrapper.cpp 
 
 SRCDIR := .
 SRCEXT := cpp

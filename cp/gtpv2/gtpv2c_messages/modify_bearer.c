@@ -243,6 +243,7 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 }
 
 
+#ifdef FUTURE_NEED
 void set_modify_bearer_request(gtpv2c_header_t *gtpv2c_tx, /*create_sess_req_t *csr,*/
 		pdn_connection_t *pdn, eps_bearer_t *bearer)
 {
@@ -434,6 +435,7 @@ void set_modify_bearer_request(gtpv2c_header_t *gtpv2c_tx, /*create_sess_req_t *
 	gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
 
 }
+#endif
 
 
 #if 0

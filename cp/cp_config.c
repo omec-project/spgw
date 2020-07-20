@@ -812,6 +812,7 @@ get_upf_context_for_key(sub_selection_keys_t *key, sub_profile_t **sub_prof)
         ip = native_linux_name_resolve(upf_profile->user_plane_service); 
         upf_profile->upf_addr = ip.s_addr; 
     }
+
     if(upf_profile->upf_addr != 0) 
     {
         upf_context_t *upf_context = get_upf_context(ip.s_addr);

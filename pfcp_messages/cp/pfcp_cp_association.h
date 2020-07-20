@@ -10,15 +10,7 @@
 #include "pfcp_messages.h"
 #include "sm_struct.h"
 #include "upf_struct.h"
-
-/**
- * @brief  : Process pfcp session association request
- * @param  : context, ue context structure pointer
- * @param  : ebi_index, index of ebi in array
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-process_pfcp_assoication_request(pdn_connection_t *pdn, uint8_t ebi_index);
+#include "cp_proc.h"
 
 /**
  * @brief  : This function processes pfcp associatiuon response
@@ -27,19 +19,7 @@ process_pfcp_assoication_request(pdn_connection_t *pdn, uint8_t ebi_index);
  * @return : Returns 0 in case of success else negative value
  */
 uint8_t
-process_pfcp_ass_resp(msg_info *msg, struct sockaddr_in *peer_addr);
-
-/**
- * @brief  : This function adds csr to list of buffrered csrs
- * @param  : context hold information about ue context
- * @param  : upf_context hold information about upf context
- * @param  : ebi indicates eps bearer id
- * @return : Returns 0 in case of success else negative value
- */
-int
-buffer_csr_request(ue_context_t *context,
-		upf_context_t *upf_context, uint8_t ebi);
-
+process_pfcp_ass_resp(msg_info_t *msg, struct sockaddr_in *peer_addr);
 
 /**
  * @brief  : fills default rule and qos values
@@ -72,7 +52,7 @@ fill_pfcp_association_update_resp(pfcp_assn_upd_rsp_t *pfcp_asso_update_resp);
  * @param  : pfcp_asso_setup_req is pointer to structure of pfcp association setup request
  * @return : This function dose not return anything
  */
-void
+uint32_t
 fill_pfcp_association_setup_req(pfcp_assn_setup_req_t *pfcp_ass_setup_req);
 
 /**
@@ -185,6 +165,5 @@ get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 
 upf_context_t *get_upf_context(uint32_t upf_ip);
 
-int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt); 
 
 #endif /* PFCP_ASSOC_H */

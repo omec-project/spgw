@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <byteswap.h>
-
 #include "pfcp_cp_util.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_set_ie.h"
@@ -16,7 +15,6 @@
 #include "clogger.h"
 #include "pfcp_cp_interface.h"
 #include "cp_peer.h"
-#include "pfcp_timer.h"
 #include "sm_structs_api.h"
 #include "pfcp.h"
 #include "sm_pcnd.h"
@@ -26,98 +24,20 @@
 #include "cp_config.h"
 #include "gtpv2c_error_rsp.h"
 #include "cp_config_defs.h"
+#include "spgw_cpp_wrapper.h"
+#include "cp_transactions.h"
 
 extern udp_sock_t my_sock;
 extern struct rte_hash *heartbeat_recovery_hash;
 uint8_t pfcp_rx[1024]; /* TODO: Decide size */
 
-static 
-int handle_pfcp_association_setup_response(msg_info *msg)
-{
-	upf_context_t *upf_context = NULL;
-    int ret=0;
 
-    assert(msg->msg_type == PFCP_ASSOCIATION_SETUP_RESPONSE);
-    // Requirement : 
-    // 1. node_id should come as name or ip address
-    // 2. Can UPF change its address and can it be different 
-    memcpy(&msg->upf_ipv4.s_addr,
-            &msg->pfcp_msg.pfcp_ass_resp.node_id.node_id_value,
-            IPV4_SIZE);
-
-	/*Retrive association state based on UPF IP. */
-	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
-			(const void*) &(msg->upf_ipv4.s_addr), (void **) &(upf_context));
-
-	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s: UPF entry not Found Msg_Type:%u, UPF IP:%u, Error_no:%d\n",
-				__func__, msg->msg_type, msg->upf_ipv4.s_addr, ret);
-		cs_error_response(msg,
-						  GTPV2C_CAUSE_INVALID_PEER,
-						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-
-		process_error_occured_handler(&msg, NULL);
-		return -1;
-	}
-    msg->upf_context = upf_context;
-
-	if(upf_context->timer_entry->rt.ti_id != 0) {
-		stoptimer(&upf_context->timer_entry->rt.ti_id);
-		deinittimer(&upf_context->timer_entry->rt.ti_id);
-		/* free trans data when timer is deint */
-		rte_free(upf_context->timer_entry);
-        upf_context->timer_entry = NULL;
-	}
-
-	if(msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED) {
-		msg->state = ERROR_OCCURED_STATE;
-		msg->event = ERROR_OCCURED_EVNT;
-		msg->proc = INITIAL_PDN_ATTACH_PROC;
-		clLog(sxlogger, eCLSeverityDebug,
-				"Cause received  Association response is %d\n",
-				msg->pfcp_msg.pfcp_ass_resp.cause.cause_value);
-
-		/* TODO: Add handling to send association to next upf
-		 * for each buffered CSR 
-         * Cleanup should be done for each layer
-         *   1. Cleanup GTPv2
-         *   2. Cleanup IP-CAN if GX is enabled. 
-         */
-		cs_error_response(msg,
-						  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-        /* cleanup UE context */
-		process_error_occured_handler(&msg, NULL);
-		return -1;
-	}
-
-	msg->state = upf_context->state;
-	/* Set Hard code value for temporary purpose as assoc is only in initial pdn */
-	msg->proc = INITIAL_PDN_ATTACH_PROC;
-	msg->event = PFCP_ASSOC_SETUP_RESP_RCVD_EVNT;
-
-	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-			"Msg_Type:PFCP_ASSOCIATION_SETUP_RESPONSE[%u], UPF_IP:%u, "
-			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, msg->msg_type, msg->upf_ipv4.s_addr,
-			get_proc_string(msg->proc),
-			get_state_string(msg->state), get_event_string(msg->event));
-#if 0
-    if(cp_config->cp_type != SGWC) {
-        /* Init rule tables of user-plane */
-        context->upf_ctxt->upf_sockaddr.sin_addr.s_addr = msg->upf_ipv4.s_addr;
-        // init_dp_rule_tables();
-    }
-#endif
-    process_assoc_resp_handler((void *)msg, (void *)msg->peer_addr);
-    return 0;
-}
 
 // saegw - INITIAL_PDN_ATTACH_PROC,PFCP_PFD_MGMT_RESP_RCVD_STATE, PFCP_PFD_MGMT_RESP_RCVD_EVNT, => pfd_management_handler
 // pgw - INITIAL_PDN_ATTACH_PROC PFCP_PFD_MGMT_RESP_RCVD_STATE PFCP_PFD_MGMT_RESP_RCVD_EVNT ==> pfd_management_handler
 // sgw - INITIAL_PDN_ATTACH_PROC PFCP_PFD_MGMT_RESP_RCVD_STATE PFCP_PFD_MGMT_RESP_RCVD_EVNT - pfd_management_handler 
 static
-int handle_pfcp_pfd_management_response(msg_info *msg)
+int handle_pfcp_pfd_management_response(msg_info_t *msg)
 {
     assert(msg->msg_type == PFCP_PFD_MANAGEMENT_RESPONSE);
     /*
@@ -149,10 +69,20 @@ int handle_pfcp_pfd_management_response(msg_info *msg)
 // sgw - INITIAL_PDN_ATTACH_PROC PFCP_SESS_EST_REQ_SNT_STATE PFCP_SESS_EST_RESP_RCVD_EVNT ==> process_sess_est_resp_handler
 // sgw - SGW_RELOCATION_PROC PFCP_SESS_EST_REQ_SNT_STATE PFCP_SESS_EST_RESP_RCVD_EVNT ==> process_sess_est_resp_sgw_reloc_handler
 static
-int handle_pfcp_session_est_response(msg_info *msg)
+int handle_pfcp_session_est_response(msg_info_t *msg)
 {
-	struct resp_info *resp = NULL;
     assert(msg->msg_type == PFCP_SESSION_ESTABLISHMENT_RESPONSE);
+    uint32_t seq_num = msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seq_no; 
+    uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
+    uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
+
+    transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
+
+	/* Retrive the session information based on session id. */
+    if(pfcp_trans == NULL) {
+        clLog(sxlogger, eCLSeverityCritical, "Received PFCP response and transaction not found \n");
+		return -1;
+    }
     /*
      * if session found then detect retransmission
      * if no retransmission then delete the existing session
@@ -160,48 +90,19 @@ int handle_pfcp_session_est_response(msg_info *msg)
      */
 	/* Retrive teid from session id */
 	/* stop and delete the timer session for pfcp  est. req. */
-	delete_pfcp_if_timer_entry(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid),
-				UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid) - 5);
+	stop_transaction_timer(pfcp_trans);
 
-	/* Retrive the session information based on session id. */
-	if (get_sess_entry(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid, &resp) != 0) {
-		cs_error_response(msg,
-				  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-				  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		process_error_occured_handler(&msg, NULL);
-		clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u, Sess ID:%lu, \n",
-				__func__, msg->msg_type,
-				msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid);
-		return -1;
-	}
+    proc_context_t *proc_context = (proc_context_t *)pfcp_trans->proc_context; 
+    proc_context->pfcp_trans = NULL; 
+    msg->proc_context = pfcp_trans->proc_context;
+    free(pfcp_trans); /* EST Response */
 
-	if(msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value !=
-			REQUESTACCEPTED){
-		msg->state = ERROR_OCCURED_STATE;
-		msg->event = ERROR_OCCURED_EVNT;
-		msg->proc = INITIAL_PDN_ATTACH_PROC;
-		cs_error_response(msg,
-						  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		process_error_occured_handler(&msg, NULL);
-		clLog(sxlogger, eCLSeverityDebug, "Cause received Est response is %d\n",
-				msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value);
-		return -1;
-	}
-
+    msg->ue_context = proc_context->ue_context; 
+    msg->pdn_context = proc_context->pdn_context; 
+    assert(msg->ue_context != NULL);
+    assert(msg->pdn_context != NULL);
     msg->event = PFCP_SESS_EST_RESP_RCVD_EVNT;
-	msg->state = resp->state;
-	msg->proc = resp->proc;
-	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-			"Msg_Type:PFCP_SESSION_ESTABLISHMENT_RESPONSE[%u], Seid:%lu, "
-			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, msg->msg_type,
-			msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid,
-			get_proc_string(msg->proc),
-			get_state_string(msg->state), get_event_string(msg->event));
-
-    /* For time being just getting rid of 3d FSM array */
-    process_sess_est_resp_handler((void *)msg, NULL);
+    proc_context->handler((void*)proc_context, msg->event, (void *)msg);
     return 0;
 }
 
@@ -226,57 +127,34 @@ int handle_pfcp_session_est_response(msg_info *msg)
 // sgw PDN_GW_INIT_BEARER_DEACTIVATION PFCP_SESS_MOD_REQ_SNT_STATE PFCP_SESS_MOD_RESP_RCVD_EVNT : process_pfcp_sess_mod_resp_dbr_handler
 // sgw MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC - PFCP_SESS_MOD_REQ_SNT_STATE PFCP_SESS_MOD_RESP_RCVD_EVNT - process_pfcp_sess_mod_resp_dbr_handler 
 static
-int handle_pfcp_session_modification_response(msg_info *msg)
+int handle_pfcp_session_modification_response(msg_info_t *msg)
 {
-	struct resp_info *resp = NULL;
     assert(msg->msg_type == PFCP_SESSION_MODIFICATION_RESPONSE);
-    /*
-     * if session found then detect retransmission
-     * if no retransmission then delete the existing session
-     * handler new event  
-     */
+    uint32_t seq_num = msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seq_no; 
+    uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
+    uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
 
+    transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
+
+    if(pfcp_trans == NULL) {
+        clLog(sxlogger, eCLSeverityCritical, "Received Modify response and transaction not found \n");
+        return -1;
+    }
+    clLog(sxlogger, eCLSeverityDebug, "Received Modify response and transaction found \n");
 	/* Retrive teid from session id */
 	/* stop and delete timer entry for pfcp mod req */
-	delete_pfcp_if_timer_entry(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
-				UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5);
+	stop_transaction_timer(pfcp_trans);
+    proc_context_t *proc_context = pfcp_trans->proc_context;
+    free(pfcp_trans);
+    proc_context->pfcp_trans = NULL;
 
-	/*Validate the modification is accepted or not. */
-	if(msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value != REQUESTACCEPTED){
-			clLog(sxlogger, eCLSeverityDebug, "Cause received Modify response is %d\n",
-					msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value);
-			mbr_error_response(msg,
-							  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-							  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-			return -1;
-	}
-
-	/* Retrive the session information based on session id. */
-	if (get_sess_entry(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
-				&resp) != 0) {
-		mbr_error_response(msg,
-						  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u,"
-				"Sess ID:%lu, n",
-				__func__, msg->msg_type,
-				msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
-		return -1;
-	}
-
-	msg->state = resp->state;
-	msg->proc = resp->proc;
+    msg->proc_context = proc_context;
+    msg->ue_context = proc_context->ue_context; 
+    msg->pdn_context = proc_context->pdn_context; /* can be null in case of rab release */ 
+    assert(msg->ue_context != NULL);
     msg->event = PFCP_SESS_MOD_RESP_RCVD_EVNT;
-	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-			"Msg_Type:PFCP_SESSION_MODIFICATION_RESPONSE[%u], Seid:%lu, "
-			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, msg->msg_type,
-			msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
-			get_proc_string(msg->proc),
-			get_state_string(msg->state), get_event_string(msg->event));
 
-    /* For time being just getting rid of 3d FSM array */
-    process_sess_mod_resp_handler((void *)msg, NULL);
+    proc_context->handler((void*)proc_context, msg->event, (void *)msg);
     return 0;
 }
 
@@ -288,59 +166,33 @@ int handle_pfcp_session_modification_response(msg_info *msg)
 // sgw PDN_GW_INIT_BEARER_DEACTIVATION PFCP_SESS_DEL_REQ_SNT_STATE PFCP_SESS_DEL_RESP_RCVD_EVNT : process_pfcp_sess_del_resp_dbr_handler 
 
 static
-int handle_pfcp_session_delete_response(msg_info *msg)
+int handle_pfcp_session_delete_response(msg_info_t *msg)
 {
-	struct resp_info *resp = NULL;
     assert(msg->msg_type == PFCP_SESSION_DELETION_RESPONSE);
-    /*
-     * if session found then detect retransmission
-     * if no retransmission then delete the existing session
-     * handler new event  
-     */
+    uint32_t seq_num = msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seq_no; 
+    uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
+    uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
+
+    transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
+
+	/* Retrive the session information based on session id. */
+    if(pfcp_trans == NULL) {
+        clLog(sxlogger, eCLSeverityCritical, "Received PFCP response and transaction not found \n");
+		return -1;
+    }
 
 	/* Retrive teid from session id */
 	/* stop and delete timer entry for pfcp sess del req */
-	delete_pfcp_if_timer_entry(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid),
-				UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid) - 5);
+	stop_transaction_timer(pfcp_trans);
+    proc_context_t *proc_context = (proc_context_t *)pfcp_trans->proc_context; 
+    proc_context->pfcp_trans = NULL; 
+    msg->proc_context = pfcp_trans->proc_context;
+    msg->ue_context = proc_context->ue_context; 
+    msg->pdn_context = proc_context->pdn_context; 
 
-	if(msg->pfcp_msg.pfcp_sess_del_resp.cause.cause_value != REQUESTACCEPTED){
-
-		clLog(sxlogger, eCLSeverityCritical, "Cause received Del response is %d\n",
-				msg->pfcp_msg.pfcp_sess_del_resp.cause.cause_value);
-		ds_error_response(msg,
-						  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		return -1;
-	}
-
-
-    /* Retrive the session information based on session id. */
-	if (get_sess_entry(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
-				&resp) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u, "
-				"Sess ID:%lu\n",
-				__func__, msg->msg_type,
-				msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
-		ds_error_response(msg,
-						  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		return -1;
-	}
-
-	msg->state = resp->state;
-	msg->proc = resp->proc;
     msg->event = PFCP_SESS_DEL_RESP_RCVD_EVNT;
+    proc_context->handler((void *)proc_context, msg->event, (void *)msg);
 
-	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
-			"Msg_Type:PFCP_SESSION_DELETION_RESPONSE[%u], Seid:%lu, "
-			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, msg->msg_type,
-			msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
-			get_proc_string(msg->proc),
-			get_state_string(msg->state), get_event_string(msg->event));
-
-    /* TODO - For time being just getting rid of 3d FSM array */
-    process_sess_del_resp_handler((void *)msg, NULL);
     return 0;
 }
 
@@ -349,9 +201,9 @@ int handle_pfcp_session_delete_response(msg_info *msg)
 // sgw - CONN_SUSPEND_PROC CONNECTED_STATE PFCP_SESS_RPT_REQ_RCVD_EVNT ==> process_rpt_req_handler
 // sgw - CONN_SUSPEND_PROC IDEL_STATE PFCP_SESS_RPT_REQ_RCVD_EVNT ==> process_rpt_req_handler 
 static
-int handle_pfcp_session_report_req_msg(msg_info *msg)
+int handle_pfcp_session_report_req_msg(msg_info_t *msg)
 {
-	struct resp_info *resp = NULL;
+    ue_context_t *context = NULL;
     assert(msg->msg_type == PFCP_SESSION_REPORT_REQUEST);
     /*
      * if session found then detect retransmission
@@ -360,7 +212,7 @@ int handle_pfcp_session_report_req_msg(msg_info *msg)
      */
 	/* Retrive the session information based on session id. */
 	if (get_sess_entry(msg->pfcp_msg.pfcp_sess_rep_req.header.seid_seqno.has_seid.seid,
-				&resp) != 0) {
+				&context) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u, Sess ID:%lu\n",
 				__func__, msg->msg_type,
 				msg->pfcp_msg.pfcp_sess_rep_req.header.seid_seqno.has_seid.seid);
@@ -372,8 +224,6 @@ int handle_pfcp_session_report_req_msg(msg_info *msg)
      * case 2: Connection is active. UE usage report.
      * case 3: Connection is active. Error indication is received. 
      */
-	msg->state = resp->state;
-	msg->proc = resp->proc;
 	msg->event = PFCP_SESS_RPT_REQ_RCVD_EVNT;
     /* For time being just getting rid of 3d FSM array */
 	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
@@ -390,9 +240,8 @@ int handle_pfcp_session_report_req_msg(msg_info *msg)
 
 // saegw - RESTORATION_RECOVERY_PROC PFCP_SESS_SET_DEL_REQ_RCVD_STATE PFCP_SESS_SET_DEL_REQ_RCVD_EVNT => process_pfcp_sess_set_del_req 
 static
-int handle_pfcp_session_set_delete_request(msg_info *msg)
+int handle_pfcp_session_set_delete_request(msg_info_t *msg)
 {
-	struct resp_info *resp = NULL;
     assert(msg->msg_type == PFCP_SESSION_SET_DELETION_REQUEST);
 	msg->state = PFCP_SESS_SET_DEL_REQ_RCVD_STATE;
 	msg->proc = RESTORATION_RECOVERY_PROC;
@@ -406,12 +255,11 @@ int handle_pfcp_session_set_delete_request(msg_info *msg)
 			__func__, msg->msg_type,
 			get_proc_string(msg->proc),
 			get_state_string(msg->state), get_event_string(msg->event));
-    RTE_SET_USED(resp);
     return 0;
 }
  
 static 
-void handle_pfcp_message(msg_info *msg)
+void handle_pfcp_message(msg_info_t *msg)
 {
     /* fetch user context */
     // find session context  
@@ -551,59 +399,65 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 
 /* TODO: Parse byte_rx to msg_handler_sx_n4 */
 int
-msg_handler_sx_n4(struct sockaddr_in *peer_addr)
+msg_handler_sx_n4(void)
 {
-	int ret = 0, bytes_rx = 0;
+	socklen_t addr_len = sizeof(struct sockaddr_in);
+	int ret = 0, bytes_pfcp_rx = 0;
+	msg_info_t msg = {0};
+	struct sockaddr_in peer_addr = {0};
 
-	/* TODO: Move this rx */
-	if ((bytes_rx = pfcp_recv(pfcp_rx, 512,
-					peer_addr)) < 0) {
-		perror("msgrecv");
-		return -1;
-	}
+	bytes_pfcp_rx = recvfrom(my_sock.sock_fd_pfcp, pfcp_rx, 512, MSG_DONTWAIT,
+			(struct sockaddr *)(&peer_addr), &addr_len);
+
+    if ((bytes_pfcp_rx < 0) &&
+            (errno == EAGAIN  || errno == EWOULDBLOCK)) {
+        return -1; // Read complete data 
+    }
+
+    if (bytes_pfcp_rx == 0) {
+        clLog(clSystemLog, eCLSeverityCritical, "SGWC|SAEGWC_s11 recvfrom error: %s",
+                strerror(errno));
+        return -1;
+    }
 
 	pfcp_header_t *pfcp_header = (pfcp_header_t *) pfcp_rx;
-	msg_info msg = {0};
-	if(pfcp_header->message_type == PFCP_HEARTBEAT_REQUEST){
+	if(pfcp_header->message_type == PFCP_HEARTBEAT_REQUEST) {
 
-		printf("Heartbit request received from UP %s \n",inet_ntoa(peer_addr->sin_addr));
-		update_cli_stats(peer_addr->sin_addr.s_addr,
+		printf("Heartbit request received from UP %s \n",inet_ntoa(peer_addr.sin_addr));
+		update_cli_stats(peer_addr.sin_addr.s_addr,
 				pfcp_header->message_type,RCVD,SX);
 
-		ret = process_heartbeat_request(pfcp_rx, peer_addr);
+		ret = process_heartbeat_request(pfcp_rx, &peer_addr);
 		if(ret != 0){
 			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat request\n", __func__);
-			return -1;
 		}
 		return 0;
-	}else if(pfcp_header->message_type == PFCP_HEARTBEAT_RESPONSE){
-		printf("Heartbit response received from UP %s \n",inet_ntoa(peer_addr->sin_addr));
-		ret = process_heartbeat_response(pfcp_rx, peer_addr);
+	}else if(pfcp_header->message_type == PFCP_HEARTBEAT_RESPONSE) {
+		printf("Heartbit response received from UP %s \n",inet_ntoa(peer_addr.sin_addr));
+		ret = process_heartbeat_response(pfcp_rx, &peer_addr);
 		if(ret != 0){
 			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat response\n", __func__);
-			return -1;
 		} else {
-
-			update_cli_stats(peer_addr->sin_addr.s_addr,
+			update_cli_stats(peer_addr.sin_addr.s_addr,
 					PFCP_HEARTBEAT_RESPONSE,RCVD,SX);
-
 		}
 		return 0;
 	} else {
 		// Requirement - cleanup - why this is called as response ? it could be request mesage as well 
-		printf("PFCP message %d  received from UP %s \n",pfcp_header->message_type, inet_ntoa(peer_addr->sin_addr));
+		printf("PFCP message %d  received from UP %s \n",pfcp_header->message_type, inet_ntoa(peer_addr.sin_addr));
 		/*Reset periodic timers*/
         if(pfcp_header->message_type != PFCP_ASSOCIATION_SETUP_RESPONSE) 
-		    process_response(peer_addr->sin_addr.s_addr);
+		    process_response(peer_addr.sin_addr.s_addr);
+
         msg.peer_addr = peer_addr;
 
         // TODO - PORT peer address should be copied to msg 
-		if ((ret = pfcp_pcnd_check(pfcp_rx, &msg, bytes_rx)) != 0) {
+		if ((ret = pfcp_pcnd_check(pfcp_rx, &msg, bytes_pfcp_rx)) != 0) {
 			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp precondition check\n", __func__);
 
-			update_cli_stats(peer_addr->sin_addr.s_addr,
+			update_cli_stats(peer_addr.sin_addr.s_addr,
 							pfcp_header->message_type, REJ,SX);
-			return -1;
+			return 0;
 		}
 
         // validate message content - validate the presence of IEs
@@ -612,7 +466,7 @@ msg_handler_sx_n4(struct sockaddr_in *peer_addr)
         {
             // validatation failed;
             printf("PFCP message validation failed \n");
-            return ret;
+            return 0;
         }
 
         /* Event figured out from msg. 
@@ -620,10 +474,10 @@ msg_handler_sx_n4(struct sockaddr_in *peer_addr)
          * State is on the pdn connection (for now)..Need some more attention here later   
          */
 		if(pfcp_header->message_type == PFCP_SESSION_REPORT_REQUEST)
-			update_cli_stats(peer_addr->sin_addr.s_addr,
+			update_cli_stats(peer_addr.sin_addr.s_addr,
 							pfcp_header->message_type, RCVD,SX);
 		else
-			update_cli_stats(peer_addr->sin_addr.s_addr,
+			update_cli_stats(peer_addr.sin_addr.s_addr,
 							pfcp_header->message_type, ACC,SX);
 
         msg.rx_interface = PGW_SXB; 

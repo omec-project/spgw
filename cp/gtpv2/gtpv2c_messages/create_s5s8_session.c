@@ -24,8 +24,6 @@
 #include "cp_config.h"
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_interface.h"
-#include "gtpc_timer.h"
-#include "pfcp_timer.h"
 #include "cp_config_defs.h"
 #include "ip_pool.h"
 #include "upf_struct.h"
@@ -36,9 +34,9 @@
 #include "gw_adapter.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_main.h"
+#include "cp_transactions.h"
 
 extern udp_sock_t my_sock;
-extern struct sockaddr_in s5s8_recv_sockaddr;
 extern struct sockaddr_in s11_mme_sockaddr;
 
 /* PGWC S5S8 handlers:
@@ -82,6 +80,7 @@ struct parse_pgwc_s5s8_create_session_request_t {
  *           - < 0 for all other errors
  */
 
+#ifdef FUTURE_NEED
 static int
 parse_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		struct parse_pgwc_s5s8_create_session_request_t *csr)
@@ -176,6 +175,7 @@ parse_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	}
 	return 0;
 }
+#endif
 
 /**
  * @brief  : from parameters, populates gtpv2c message 'create session response' and
@@ -230,6 +230,14 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 	}
 }
 
+void 
+process_pgwc_s5s8_create_session_request_pfcp_timeout(void *data)
+{
+    RTE_SET_USED(data);
+    return;
+}
+
+#ifdef FUTURE_NEED
 int
 process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		struct in_addr *upf_ipv4, uint8_t proc)
@@ -242,7 +250,6 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	eps_bearer_t *bearer = NULL;
 	create_sess_req_t csr = {0};
 
-	struct resp_info *resp = NULL;
 	struct parse_pgwc_s5s8_create_session_request_t create_s5s8_session_request = { 0 };
 
 	upf_context_t *upf_context = NULL;
@@ -323,7 +330,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 		pdn->s5s8_pgw_gtpc_ipv4 = cp_config->s5s8_ip;
 
-		s5s8_recv_sockaddr.sin_addr.s_addr =
+		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
 						pdn->s5s8_sgw_gtpc_ipv4.s_addr;
 
 		/* Note: s5s8_pgw_gtpc_teid generated from
@@ -367,7 +374,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	/* VS: Allocate the memory for response
 	 */
 	resp = rte_malloc_socket(NULL,
-					sizeof(struct resp_info),
+					sizeof(struct x resp_info),
 					RTE_CACHE_LINE_SIZE, rte_socket_id());
 
 	/* Set create session response */
@@ -439,15 +446,16 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	header->message_len = htons(encoded - 4);
 
 	/*Send the packet to PGWU*/
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending CSR to PGW-U. err_no: %i\n", errno);
 	} else {
 
-		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_est_req.header.message_type,SENT,SX);
 
-		add_pfcp_if_timer_entry(pdn->s5s8_pgw_gtpc_teid,
-			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
+        transData_t *trans_entry;
+		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pgwc_s5s8_create_session_request_pfcp_timeout);
+        pdn->trans_entry = trans_entry;
 	}
 
 	if (add_sess_entry(context->pdns[ebi_index]->seid, resp) != 0) {
@@ -458,6 +466,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 	return 0;
 }
+#endif
 
 /**
  * @brief  : parses gtpv2c message and populates parse_sgwc_s5s8_create_session_response_t structure
@@ -814,7 +823,7 @@ process_sgwc_s5s8_modify_bearer_response(mod_bearer_rsp_t *mb_rsp, gtpv2c_header
 //	header->message_len = htons(encoded - 4);
 //
 //
-//	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
+//	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0)
 //		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 //	else
 //	{
@@ -843,6 +852,14 @@ process_sgwc_s5s8_modify_bearer_response(mod_bearer_rsp_t *mb_rsp, gtpv2c_header
 //	return 0;
 //}
 
+#ifdef FUTURE_NEED
+void 
+process_create_bearer_request_pfcp_timeout(void *data)
+{
+    RTE_SET_USED(data);
+    return;
+}
+
 int
 process_create_bearer_request(create_bearer_req_t *cbr)
 {
@@ -852,7 +869,6 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 	eps_bearer_t *bearer = NULL;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
-	struct resp_info *resp = NULL;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
 	ret = get_ue_context_by_sgw_s5s8_teid(cbr->header.teid.has_teid.teid, &context);
@@ -912,15 +928,16 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0)
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
 
-		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type,SENT,SX);
-		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
-			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
+        transData_t *trans_entry;
+		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_create_bearer_request_pfcp_timeout);
+        pdn->trans_entry = trans_entry;
 	}
 
 	context->sequence = seq_no;
@@ -944,7 +961,15 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 
 	return 0;
 }
+#endif
 
+#ifdef FUTURE_NEED
+void
+process_delete_bearer_request_pfcp_timeout(void *data)
+{
+    RTE_SET_USED(data);
+    return;
+}
 
 int
 process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
@@ -954,7 +979,6 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 	uint8_t bearer_cntr = 0;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
-	struct resp_info *resp = NULL;
 	uint8_t default_bearer_id = 0;
 	eps_bearer_t *bearers[MAX_BEARERS];
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
@@ -1001,15 +1025,16 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0) {
 		clLog(sxlogger, eCLSeverityCritical,
 			"%s : Error in sending MBR to SGW-U. err_no: %i\n",
 			__func__, errno);
 	} else {
-		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type, SENT, SX);
-		add_pfcp_if_timer_entry(context->s11_sgw_gtpc_teid,
-			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, pdn->default_bearer_id - 5);
+        transData_t *trans_entry;
+		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_delete_bearer_request_pfcp_timeout);
+        pdn->trans_entry = trans_entry;
 	}
 
 	context->sequence = db_req->header.teid.has_teid.seq;
@@ -1045,6 +1070,14 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 	}
 	return 0;
 }
+#endif
+
+void 
+process_delete_bearer_resp_pfcp_timeout(void *data)
+{
+    RTE_SET_USED(data);
+    return;
+}
 
 int
 process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
@@ -1054,10 +1087,10 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 	uint8_t bearer_cntr = 0;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
-	struct resp_info *resp = NULL;
 	uint8_t default_bearer_id = 0;
 	eps_bearer_t *bearers[MAX_BEARERS];
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
+    RTE_SET_USED(is_del_bearer_cmd);
 
 	ret = get_ue_context(db_rsp->header.teid.has_teid.teid, &context);
 	if (ret) {
@@ -1091,20 +1124,24 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_ctxt->upf_sockaddr) < 0) {
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0) {
 		clLog(sxlogger, eCLSeverityCritical,
 			"%s : Error in sending MBR to SGW-U. err_no: %i\n",
 			__func__, errno);
 	} else {
-		update_cli_stats((uint32_t)context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
 				pfcp_sess_mod_req.header.message_type, SENT, SX);
-		add_pfcp_if_timer_entry(db_rsp->header.teid.has_teid.teid,
-			&context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, pdn->default_bearer_id - 5);
+        transData_t *trans_entry;
+		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_delete_bearer_resp_pfcp_timeout);
+        pdn->trans_entry = trans_entry;
 	}
 
+#ifdef FUTURE_NEED
 	context->sequence = db_rsp->header.teid.has_teid.seq;
+#endif
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
+#if 0
 	if (get_sess_entry(pdn->seid, &resp) != 0) {
 		clLog(sxlogger, eCLSeverityCritical,
 			"%s : Failed to add response in entry in SM_HASH\n",
@@ -1133,6 +1170,7 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 		resp->proc = MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC;
 		pdn->proc = MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC;
 	}
+#endif
 
 	return 0;
 }
