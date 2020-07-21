@@ -340,7 +340,7 @@ assoication_setup_request(upf_context_t *upf_context)
                                             process_assoc_resp_timeout_handler);
         
         // for now...upf is responding with 0 seq 
-        add_pfcp_transaction(local_addr, port_num, 0, (void*)trans_entry);  
+        add_pfcp_transaction(local_addr, port_num, seq_num, (void*)trans_entry);  
         upf_context->trans_entry = trans_entry;
         upf_context->state = PFCP_ASSOC_REQ_SNT_STATE;
     }
