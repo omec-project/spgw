@@ -1006,6 +1006,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 	*_context = context;
 	return 0;
 }
+#endif
 
 int
 delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *seid)
@@ -1067,6 +1068,7 @@ delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *sei
 	return 0;
 }
 
+#ifdef FUTURE_NEED
 void process_sgwc_s5s8_delete_session_request_pfcp_timeout(void *data)
 {
     RTE_SET_USED(data);

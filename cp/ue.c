@@ -285,6 +285,9 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			return -1;
 		}*/
 #endif
+        clLog(clSystemLog, eCLSeverityCritical,
+                "%s- Context Replacement CSReq Received for IMSI:%lu \n",
+                __func__, imsi);
         return -1;
 	}
 	if (if_ue_present == 0){
@@ -438,5 +441,3 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 
 	return 0;
 }
-
-
