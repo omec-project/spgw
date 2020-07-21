@@ -56,7 +56,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
 
         RTE_SET_USED(unused_param);
         RTE_SET_USED(ret);
-        return;
+        return -1;
     }
     assert(context == msg->ue_context); 
 
