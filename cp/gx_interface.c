@@ -380,7 +380,7 @@ int
 msg_handler_gx( void )
 {
 	int bytes_rx = 0;
-	msg_info msg = {0};
+	msg_info_t msg = {0};
 	gx_msg *gxmsg = NULL;
 	char recv_buf[BUFFSIZE] = {0};
 

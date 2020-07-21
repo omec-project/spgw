@@ -92,9 +92,10 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
 
+#if 0
 #ifdef STATIC_ADDR_ALLOC /* ajay TODO */
 #ifdef MULTI_UPFS
-	struct dp_info *dp = context->upf_ctxt->dp_info; 
+	struct dp_info *dp = context->upf_context->dp_info; 
 	if (dp != NULL && (IF_PDN_ADDR_STATIC(pdn))) {
 		struct in_addr host = {0};
 		host.s_addr = pdn->ipv4.s_addr;
@@ -106,6 +107,7 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 		host.s_addr = pdn->ipv4.s_addr;
 		release_ip_node(static_addr_pool, host); 
 	}
+#endif
 #endif
 #endif
 

@@ -19,7 +19,7 @@ extern int sxlogger;
 extern struct rte_hash *gx_context_by_sess_id_hash;
 
 static 
-void dispatch_cca(msg_info *msg)
+void dispatch_cca(msg_info_t *msg)
 {
 	if (cp_config->cp_type == SAEGWC) {
         switch(msg->proc) {
@@ -39,6 +39,7 @@ void dispatch_cca(msg_info *msg)
                 }
                 break;
             }
+#ifdef FUTURE_NEED
             case MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC: 
             {
                 if(msg->state == CCRU_SNT_STATE)
@@ -47,12 +48,14 @@ void dispatch_cca(msg_info *msg)
                 }
                 break;
             }
+#endif
             default:
             {
                 assert(0);
             }
         }
     }
+#ifdef FUTURE_NEED
 	else if (cp_config->cp_type == PGWC) {
         switch(msg->proc) {
             case INITIAL_PDN_ATTACH_PROC:
@@ -93,11 +96,12 @@ void dispatch_cca(msg_info *msg)
             }
         }
     }
+#endif
     return;
 }
 
 static 
-void dispatch_rar(msg_info *msg)
+void dispatch_rar(msg_info_t *msg)
 {
 	if (cp_config->cp_type == SAEGWC){
         switch(msg->proc)
@@ -149,7 +153,7 @@ void dispatch_rar(msg_info *msg)
     return;
 }
 
-int process_gx_message(gx_msg *gx_msg, msg_info *msg)
+int process_gx_message(gx_msg *gx_msg, msg_info_t *msg)
 {
     int ret = 0;
 	gx_context_t *gx_context = NULL;

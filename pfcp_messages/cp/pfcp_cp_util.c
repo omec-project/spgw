@@ -370,23 +370,6 @@ dns_query_lookup(pdn_connection_t *pdn, uint32_t **upf_ip)
 #endif /* USE_DNS_QUERY */
 
 int
-pfcp_recv(void *msg_payload, uint32_t size,
-		struct sockaddr_in *peer_addr)
-{
-	socklen_t addr_len = sizeof(*peer_addr);
-	uint32_t bytes;
-	bytes = recvfrom(my_sock.sock_fd_pfcp, msg_payload, size, 0,
-			(struct sockaddr *)peer_addr, &addr_len);
-	//if(cp_config->cp_type == SGWC || cp_config->cp_type == SAEGWC)
-	//	bytes = recvfrom(pfcp_sgwc_fd_arr[0], msg_payload, size, 0,
-	//			(struct sockaddr *)peer_addr, &addr_len);
-	//else
-	//	bytes = recvfrom(pfcp_pgwc_fd_arr[0], msg_payload, size, 0,
-	//			(struct sockaddr *)peer_addr, &addr_len);
-	return bytes;
-}
-
-int
 pfcp_send(int fd, void *msg_payload, uint32_t size,
 		struct sockaddr_in *peer_addr)
 {

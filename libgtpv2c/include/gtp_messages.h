@@ -1187,6 +1187,15 @@ typedef struct mod_bearer_rsp_t {
   gtp_priv_ext_ie_t priv_ext;
 } mod_bearer_rsp_t;
 
+typedef struct rel_acc_bearer_req_t {
+  gtpv2c_header_t header;
+} rel_acc_bearer_req_t;
+
+typedef struct rel_acc_bearer_rsp_t {
+  gtpv2c_header_t header;
+  gtp_cause_ie_t cause;
+} rel_acc_bearer_rsp_t;
+
 typedef struct del_sess_req_t {
   gtpv2c_header_t header;
   gtp_eps_bearer_id_ie_t lbi;

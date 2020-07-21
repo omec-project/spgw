@@ -152,4 +152,10 @@ process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp);
 int
 process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp);
 
+void process_s5s8_upd_bearer_response_pfcp_timeout(void *data);
+void process_pgwc_create_bearer_rsp_pfcp_timeout(void *data);
+void process_pgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
+void process_sgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
+void process_sgwc_create_bearer_rsp_pfcp_timeout(void *data);
+void process_sgwc_s5s8_create_sess_rsp_pfcp_timeout(void *data);
 #endif

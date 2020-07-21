@@ -30,6 +30,7 @@
 #include "cp_peer_struct.h"
 #include "upf_struct.h"
 #include "spgw_config_struct.h"
+#include "cp_proc.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -383,7 +384,6 @@ typedef struct ue_context {
 #endif /* USE_CSID */
 
 	int16_t mapped_ue_usage_type;
-	uint32_t sequence;
 
 	uint8_t selection_flag;
 	selection_mode select_mode;
@@ -408,12 +408,14 @@ typedef struct ue_context {
 	uint64_t event_trigger;
 
     /* UE association with UPF context */
-    upf_context_t  *upf_ctxt;
+    upf_context_t  *upf_context;
     sub_profile_t  *sub_prof;
 
     /* Temp - need to find right place to put this */
     void *pco; /* Received PCO from the UE during attach. Once CSRsp sent, release this */
     uint32_t dpId;
+
+    proc_context_t *current_proc;
 } ue_context_t;
 
 typedef struct ue_tz_t
@@ -507,9 +509,7 @@ typedef struct pdn_connection {
 
 	/* timer entry data for stop timer session */
 	peerData_t *timer_entry; // ajay - is this GTP peer or pfcp peer ?
-
-	/* CSR sequence number for identify CSR retransmission req. */
-	uint32_t csr_sequence;
+    transData_t *trans_entry;
 
     uint32_t pdn_flags; 
 } pdn_connection_t;

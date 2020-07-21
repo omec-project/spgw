@@ -18,11 +18,11 @@
 #include "gtpv2c_set_ie.h"
 #include "pfcp_messages_encoder.h"
 #include "../cp_dp_api/vepc_cp_dp_api.h"
-#include "gtpc_timer.h"
-#include "pfcp_timer.h"
 #include "pfcp_cp_util.h"
 #include "gtpv2_interface.h"
 #include "gen_utils.h"
+#include "cp_transactions.h"
+#include "spgw_cpp_wrapper.h"
 
 extern udp_sock_t my_sock;
 /**
@@ -37,6 +37,7 @@ extern udp_sock_t my_sock;
  *             specified cause error value
  *           - < 0 for all other errors
  */
+#if 0
 int
 parse_release_access_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 		rel_acc_ber_req *rel_acc_ber_req_t)
@@ -55,16 +56,15 @@ parse_release_access_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 
 	if(gtpv2c_rx != NULL) {
 		if(gtpv2c_rx->gtpc.teid_flag == 1) {
-			rel_acc_ber_req_t->seq =
-				gtpv2c_rx->teid.has_teid.seq;
+			rel_acc_ber_req_t->seq = ntohl(gtpv2c_rx->teid.has_teid.seq);
 		} else {
-			rel_acc_ber_req_t->seq =
-				gtpv2c_rx->teid.no_teid.seq;
+			rel_acc_ber_req_t->seq = ntohl(gtpv2c_rx->teid.no_teid.seq);
 		}
 	}
 
 	return 0;
 }
+#endif
 
 /**
  * @brief  : from parameters, populates gtpv2c message 'release access bearer response'
@@ -89,96 +89,4 @@ set_release_access_bearer_response(gtpv2c_header_t *gtpv2c_tx,
 
 }
 
-int
-process_release_access_bearer_request(rel_acc_ber_req *rel_acc_ber_req_t, uint8_t proc)
-{
-	uint8_t ebi_index = 0;
-	eps_bearer_t *bearer  = NULL;
-	pdn_connection_t *pdn =  NULL;
-	struct resp_info *resp = NULL;
-	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
-
-	for (int i = 0; i < MAX_BEARERS; ++i) {
-		if ((rel_acc_ber_req_t->context)->eps_bearers[i] == NULL)
-			continue;
-
-		bearer = (rel_acc_ber_req_t->context)->eps_bearers[ebi_index];
-		if (!bearer) {
-			clLog(clSystemLog, eCLSeverityCritical,
-					"Retrive Context for release access bearer is non-existent EBI - "
-					"Bitmap Inconsistency - Dropping packet\n");
-			return -EPERM;
-		}
-
-		bearer->s1u_enb_gtpu_teid = 0;
-
-		pdn = bearer->pdn;
-
-		rel_acc_ber_req_t->context->pdns[ebi_index]->seid =
-			SESS_ID((rel_acc_ber_req_t->context)->s11_sgw_gtpc_teid, bearer->eps_bearer_id);
-
-		pfcp_update_far_ie_t update_far[MAX_LIST_SIZE];
-		pfcp_sess_mod_req.update_far_count = 1;
-		for(int itr=0; itr < pfcp_sess_mod_req.update_far_count; itr++ ){
-			update_far[itr].upd_frwdng_parms.outer_hdr_creation.teid =
-				bearer->s1u_enb_gtpu_teid;
-			update_far[itr].upd_frwdng_parms.outer_hdr_creation.ipv4_address =
-				bearer->s1u_enb_gtpu_ipv4.s_addr;
-			update_far[itr].upd_frwdng_parms.dst_intfc.interface_value =
-				GTPV2C_IFTYPE_S1U_ENODEB_GTPU;
-			update_far[pfcp_sess_mod_req.update_far_count].apply_action.forw = PRESENT;
-		}
-
-		fill_pfcp_sess_mod_req(&pfcp_sess_mod_req, &rel_acc_ber_req_t->header,
-				 bearer, pdn, update_far, 0);
-
-		if(pfcp_sess_mod_req.update_far_count) {
-			for(int itr=0; itr < pfcp_sess_mod_req.update_far_count; itr++ ){
-				pfcp_sess_mod_req.update_far[itr].apply_action.forw = 0;
-				pfcp_sess_mod_req.update_far[itr].apply_action.buff = PRESENT;
-				if (pfcp_sess_mod_req.update_far[itr].apply_action.buff == PRESENT) {
-					pfcp_sess_mod_req.update_far[itr].apply_action.nocp = PRESENT;
-					pfcp_sess_mod_req.update_far[itr].upd_frwdng_parms.outer_hdr_creation.teid = 0;
-				}
-			}
-		}
-
-
-		if (get_sess_entry((rel_acc_ber_req_t->context)->pdns[ebi_index]->seid, &resp) != 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Failed to add response in entry in SM_HASH\n",__file__,
-					__func__, __LINE__);
-			return -1;
-		}
-
-		/* Update the Sequence number */
-		(rel_acc_ber_req_t->context)->sequence =
-			rel_acc_ber_req_t->header.teid.has_teid.seq;
-
-		/* Store s11 struture data into sm_hash for sending response back to s11 */
-		resp->msg_type = GTP_RELEASE_ACCESS_BEARERS_REQ;
-		resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-		resp->proc = proc;
-
-		uint8_t pfcp_msg[sizeof(pfcp_sess_mod_req_t)]={0};
-		int encoded = encode_pfcp_sess_mod_req_t(&pfcp_sess_mod_req, pfcp_msg);
-
-		pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
-		header->message_len = htons(encoded - 4);
-
-		if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &rel_acc_ber_req_t->context->upf_ctxt->upf_sockaddr) < 0 )
-			clLog(sxlogger, eCLSeverityCritical,"Error sending: %i\n",errno);
-		else {
-			update_cli_stats((uint32_t)rel_acc_ber_req_t->context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
-							pfcp_sess_mod_req.header.message_type,SENT,SX);
-
-
-			add_pfcp_if_timer_entry((rel_acc_ber_req_t->context)->s11_sgw_gtpc_teid,
-			&rel_acc_ber_req_t->context->upf_ctxt->upf_sockaddr, pfcp_msg, encoded, ebi_index);
-		}
-
-		/* Update UE State */
-		pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-	}
-	return 0;
-}

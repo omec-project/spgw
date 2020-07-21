@@ -27,8 +27,8 @@
 #include "pfcp_messages_encoder.h"
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
-#include "pfcp_timer.h"
 #include "gen_utils.h"
+#include "cp_transactions.h"
 
 #define PRESENT 1
 #define NUM_VALS 9
@@ -42,7 +42,6 @@
 
 extern udp_sock_t my_sock;
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
-extern struct sockaddr_in s5s8_recv_sockaddr;
 extern socklen_t s5s8_sockaddr_len;
 extern struct sockaddr_in s11_mme_sockaddr;
 extern socklen_t s11_mme_sockaddr_len;
@@ -706,7 +705,6 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	int ret = 0;
 	eps_bearer_t *bearer = NULL;
 	ue_context_t *context = NULL;
-	struct resp_info *resp = NULL;
 	int update_require = 0, send_ubr = 0;
 	uint8_t len = 0;
 	uint16_t payload_length = 0;
@@ -718,7 +716,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 
 	upd_bearer_req_t ubr_req = {0};
 
-	if (get_sess_entry(pdn->seid, &resp) != 0){
+	if (get_sess_entry(pdn->seid, &context) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, pdn->seid);
 		return DIAMETER_ERROR_USER_UNKNOWN;
@@ -781,7 +779,9 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 			ubr_req.bearer_contexts[ubr_req.bearer_context_count].header.len += len;
 			update_require++;
 
+#ifdef FUTURE_NEED 
 			resp->list_bearer_ids[resp->num_of_bearers++] = bearer->eps_bearer_id;
+#endif
 
 			set_ebi(&ubr_req.bearer_contexts[ubr_req.bearer_context_count].eps_bearer_id,
 					IE_INSTANCE_ZERO, bearer->eps_bearer_id);
@@ -813,10 +813,12 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	/* Update UE Proc */
 	pdn->proc = UPDATE_BEARER_PROC;
 
+#ifdef FUTURE_NEED
 	/* Set GX rar message */
 	resp->msg_type = GTP_UPDATE_BEARER_REQ;
 	resp->state =  UPDATE_BEARER_REQ_SNT_STATE;
 	resp->proc =  UPDATE_BEARER_PROC;
+#endif
 
 
 	if(send_ubr){
@@ -828,7 +830,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 		if(SAEGWC != cp_config->cp_type){
 			//send S5S8 or on S11  interface update bearer request.
 			gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
-	    		      		(struct sockaddr *) &s5s8_recv_sockaddr,
+	    		      		(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 	        				s5s8_sockaddr_len);
 		}else{
 			s11_mme_sockaddr.sin_addr.s_addr =
@@ -841,6 +843,12 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	return 0;
 }
 
+void pfcp_modify_rar_trigger_timeout(void *data)
+{
+    RTE_SET_USED(data);
+    return;
+}
+
 int8_t
 parse_gx_rar_msg(GxRAR *rar)
 {
@@ -851,7 +859,6 @@ parse_gx_rar_msg(GxRAR *rar)
     ue_context_t *ue_context = NULL;
 
 	gx_context_t *gx_context = NULL;
-	struct resp_info *resp = NULL;
 
 	//dynamic_rule_t *dynamic_rule = NULL;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
@@ -892,29 +899,39 @@ parse_gx_rar_msg(GxRAR *rar)
 	}
 
 	fill_pfcp_gx_sess_mod_req(&pfcp_sess_mod_req, pdn_cntxt);
+
 	// Maintaining seq no in ue cntxt is not good idea, move it to PDN
+    RTE_SET_USED(seq_no);
+#ifdef FUTURE_NEED
 	pdn_cntxt->context->sequence = seq_no;
+#endif
 
 	uint8_t pfcp_msg[1024] = {0};
 	int encoded = encode_pfcp_sess_mod_req_t(&pfcp_sess_mod_req, pfcp_msg);
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &ue_context->upf_ctxt->upf_sockaddr) < 0 ){
+	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &ue_context->upf_context->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
-		update_cli_stats((uint32_t)ue_context->upf_ctxt->upf_sockaddr.sin_addr.s_addr,
+		update_cli_stats((uint32_t)ue_context->upf_context->upf_sockaddr.sin_addr.s_addr,
 					pfcp_sess_mod_req.header.message_type,SENT,SX);
-		if(cp_config->cp_type == PGWC){
-                               add_pfcp_if_timer_entry(pdn_cntxt->s5s8_pgw_gtpc_teid, &ue_context->upf_ctxt->upf_sockaddr,
-                                       pfcp_msg, encoded, pdn_cntxt->default_bearer_id - 5);
-                       }
-               if(cp_config->cp_type == SAEGWC)
-               {
-                       add_pfcp_if_timer_entry(ue_context->s11_sgw_gtpc_teid, &ue_context->upf_ctxt->upf_sockaddr,
-                               pfcp_msg, encoded, pdn_cntxt->default_bearer_id - 5);
-               }
+        transData_t *trans_entry = NULL;
+        if(cp_config->cp_type == PGWC){
+            trans_entry = start_pfcp_session_timer(ue_context,
+                    pfcp_msg, encoded, 
+                    pfcp_modify_rar_trigger_timeout);
+            RTE_SET_USED(trans_entry);
         }
+        if(cp_config->cp_type == SAEGWC)
+        {
+            trans_entry = start_pfcp_session_timer(ue_context, 
+                    pfcp_msg, encoded, pfcp_modify_rar_trigger_timeout);
+        }
+#ifdef FUTURE_NEED
+        pdn_cntxt->trans_entry = trans_entry;
+#endif
+    }
 
 	/* Retrive Gx_context based on Sess ID. */
 	ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
@@ -930,27 +947,33 @@ parse_gx_rar_msg(GxRAR *rar)
 	pdn_cntxt->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
 	/*Retrive the session information based on session id. */
-	if (get_sess_entry(pdn_cntxt->seid, &resp) != 0){
+	if (get_sess_entry(pdn_cntxt->seid, &ue_context) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, (pdn_cntxt->context)->pdns[bearer_id]->seid);
 		return -1;
 	}
 
+#ifdef FUTURE_NEED
 	/* Set GX rar message */
 	resp->eps_bearer_id = bearer_id + 5;
 	resp->msg_type = GX_RAR_MSG;
 	resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
+#endif
 
 	if(rar->charging_rule_remove.count != 0) {
 		/* Update UE Proc */
 		pdn_cntxt->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
 
+#ifdef FUTURE_NEED
 		resp->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
+#endif
 	} else {
 		/* Update UE Proc */
 		pdn_cntxt->proc = DED_BER_ACTIVATION_PROC;
 
+#ifdef FUTURE_NEED
 		resp->proc = DED_BER_ACTIVATION_PROC;
+#endif
 	}
 
 	pdn_cntxt->rqst_ptr = gx_context->rqst_ptr;

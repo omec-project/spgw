@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include "trans_struct.h"
 typedef enum 
 {
 	INTF_NONE,
@@ -76,6 +77,7 @@ typedef enum
 	DEL_PDN_CONN_SET_REQ_RCVD_STATE=33,
 	PFCP_SESS_SET_DEL_REQ_SNT_STATE,
 	PFCP_SESS_SET_DEL_REQ_RCVD_STATE,
+    UPF_SETUP_FAILED,
 	END_STATE
 }sm_state;
 
@@ -124,4 +126,8 @@ typedef enum
 	END_EVNT
 }sm_event;
 
+typedef enum 
+{
+    PFCP_ASSOCIATION_SETUP = 1,
+}proc_event;
 #endif

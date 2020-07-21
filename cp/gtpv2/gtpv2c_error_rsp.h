@@ -43,7 +43,16 @@ int8_t clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint
  * @param  : iface, interface on which response to be sent
  * @return : Returns nothing
  */
-void cs_error_response(msg_info *msg, uint8_t cause_value, int iface);
+void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface);
+/**
+ * @brief  : Gets information related to error and fills error response structure
+ * @param  : msg, information related to message which caused error
+ * @param  : err_rsp_info, structure to be filled
+ * @param  : index, index of csr message in pending_csr array if parant message is csr
+ * @return : Returns nothing
+ */
+void get_error_csrsp_info(msg_info_t *msg, err_rsp_info *err_rsp_info);
+
 
 /**
  * @brief  : Set and send error response in case of processing modify bearer request
@@ -52,7 +61,15 @@ void cs_error_response(msg_info *msg, uint8_t cause_value, int iface);
  * @param  : iface, interface on which response to be sent
  * @return : Returns nothing
  */
-void mbr_error_response(msg_info *msg, uint8_t cause_value, int iface);
+void mbr_error_response(msg_info_t *msg, uint8_t cause_value, int iface);
+/**
+ * @brief  : Gets information related to error and fills error response structure
+ * @param  : msg, information related to message which caused error
+ * @param  : err_rsp_info, structure to be filled
+ * @param  : index, index of csr message in pending_csr array if parant message is csr
+ * @return : Returns nothing
+ */
+void get_error_mbrsp_info(msg_info_t *msg, err_rsp_info *err_rsp_info);
 
 /**
  * @brief  : Set and send error response in case of processing delete session request
@@ -61,7 +78,7 @@ void mbr_error_response(msg_info *msg, uint8_t cause_value, int iface);
  * @param  : iface, interface on which response to be sent
  * @return : Returns nothing
  */
-void ds_error_response(msg_info *msg, uint8_t cause_value, int iface);
+void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface);
 
 /**
  * @brief  : Gets information related to error and fills error response structure
@@ -70,7 +87,8 @@ void ds_error_response(msg_info *msg, uint8_t cause_value, int iface);
  * @param  : index, index of csr message in pending_csr array if parant message is csr
  * @return : Returns nothing
  */
-void get_error_rsp_info(msg_info *msg, err_rsp_info *err_rsp_info);
+void get_error_dsrsp_info(msg_info_t *msg, err_rsp_info *err_rsp_info);
+
 
 /**
  * @brief  : Gets information related to error and fills error response structure
@@ -80,9 +98,10 @@ void get_error_rsp_info(msg_info *msg, err_rsp_info *err_rsp_info);
  * @param  : index, index of csr message in pending_csr array if parant message is csr
  * @return : Returns nothing
  */
-void get_info_filled(msg_info *msg, err_rsp_info *t2);
+void get_info_filled(msg_info_t *msg, err_rsp_info *t2);
 
-void ubr_error_response(msg_info *msg, uint8_t cause_value, int iface);
+void ubr_error_response(msg_info_t *msg, uint8_t cause_value, int iface);
+void get_error_ubrsp_info(msg_info_t *msg, err_rsp_info *err_rsp_info);
 
 
 /**
@@ -93,4 +112,8 @@ void ubr_error_response(msg_info *msg, uint8_t cause_value, int iface);
  */
 void send_version_not_supported(int iface, uint32_t seq);
 
+void clean_up_while_error_pfcp_timeout(void *data);
+
+void rab_error_response(msg_info_t *msg, uint8_t cause_value, int iface);
+void get_error_rabrsp_info(msg_info_t *msg, err_rsp_info *err_rsp_info);
 #endif

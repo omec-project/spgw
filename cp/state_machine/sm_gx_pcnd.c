@@ -17,7 +17,7 @@
 extern struct cp_stats_t cp_stats;
 
 uint8_t
-gx_pcnd_check(gx_msg *gx_rx, msg_info *msg)
+gx_pcnd_check(gx_msg *gx_rx, msg_info_t *msg)
 {
 	struct sockaddr_in saddr_in;
 	saddr_in.sin_family = AF_INET;

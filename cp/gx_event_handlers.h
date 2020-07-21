@@ -8,6 +8,6 @@
 #include "sm_struct.h"
 #include "gx_interface.h"
 
-int process_gx_message(gx_msg *gx_msg, msg_info *msg);
+int process_gx_message(gx_msg *gx_msg, msg_info_t *msg);
 
 #endif

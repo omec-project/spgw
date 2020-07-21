@@ -14,19 +14,20 @@
 /**
  * @brief  : Maintains context of upf
  */
+typedef void (*timeout_handler_t)(void *);
+
 struct transData 
 {
-    uint8_t  iface;
-    uint8_t  msg_type;
-	uint32_t  dstIP;
-	uint16_t  dstPort;
-    uint32_t  sequence;
-	uint16_t buf_len;
-	uint8_t buf[1024];
+    uint8_t     iface;
+    uint8_t     msg_type;
+    uint32_t    sequence;
+	uint16_t    buf_len;
+	uint8_t     buf[1024];
+    void        *cb_data; /* UE context or upf context */ 
+    void        *proc_context;
 	gstimerinfo_t  rt;
-	void* upf_ctxt;
-    void* ue_context;
     uint8_t itr_cnt;
+    timeout_handler_t timeout_function;
 };
 typedef struct transData transData_t; 
 #endif

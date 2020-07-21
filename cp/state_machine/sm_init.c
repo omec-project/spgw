@@ -32,29 +32,21 @@ char event_name[64];
  * @return : 0 or 1.
  */
 uint8_t
-add_sess_entry(uint64_t sess_id, struct resp_info *resp)
+add_sess_entry(uint64_t sess_id, ue_context_t *context)
 {
 	int ret;
-	struct resp_info *tmp = NULL;
+	ue_context_t *temp = NULL;
+
 	/* Lookup for session entry. */
 	ret = rte_hash_lookup_data(seid_session_hash,
-				&sess_id, (void **)&tmp);
+				&sess_id, (void **)&temp);
 
 	if ( ret < 0) {
 		/* No session entry for sess_id
 		 * Add session entry for sess_id at seid_session_hash.
 		 */
-
-		tmp = rte_malloc_socket(NULL,
-						sizeof(struct resp_info),
-						RTE_CACHE_LINE_SIZE, rte_socket_id());
-
-		/* Assign the resp entry to tmp */
-		memcpy(tmp, resp, sizeof(struct resp_info));
-
-		/* Session Entry not present. Add session Entry */
 		ret = rte_hash_add_key_data(seid_session_hash,
-						&sess_id, resp);
+						&sess_id, context);
 		if (ret) {
 			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to add entry = %lu"
 					"\n\tError= %s\n",
@@ -63,20 +55,20 @@ add_sess_entry(uint64_t sess_id, struct resp_info *resp)
 			return -1;
 		}
 	} else {
-		memcpy(tmp, resp, sizeof(struct resp_info));
+        assert(0); 
 	}
 
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Sess Entry add for Msg_Type:%u, Sess ID:%lu, State:%s\n",
-			__func__, tmp->msg_type, sess_id, get_state_string(tmp->state));
+	clLog(clSystemLog, eCLSeverityDebug, "%s: Sess Entry add for Sess ID:%lu\n",
+			__func__, sess_id);
 	return 0;
 }
 
 uint8_t
-get_sess_entry(uint64_t sess_id, struct resp_info **resp)
+get_sess_entry(uint64_t sess_id, ue_context_t **context)
 {
 	int ret = 0;
 	ret = rte_hash_lookup_data(seid_session_hash,
-				&sess_id, (void **)resp);
+				&sess_id, (void **)context);
 
 	if ( ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Entry not found for sess_id:%lu...\n",__func__,
@@ -84,8 +76,8 @@ get_sess_entry(uint64_t sess_id, struct resp_info **resp)
 		return -1;
 	}
 
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Msg_type:%u, Sess ID:%lu, State:%s\n",
-			__func__, (*resp)->msg_type, sess_id, get_state_string((*resp)->state));
+	clLog(clSystemLog, eCLSeverityDebug, "%s %s %d Entry found for sess_id:%lu...\n",__func__,
+				__file__, __LINE__,sess_id);
 	return 0;
 
 }
@@ -595,17 +587,6 @@ const char * get_event_string(int value)
     return event_name;
 }
 
-uint8_t
-get_csr_proc(create_sess_req_t *csr)
-{
-	if (1 == csr->indctn_flgs.indication_oi) {
-		return SGW_RELOCATION_PROC;
-	} else if (csr->bearer_contexts_to_be_created.s5s8_u_pgw_fteid.header.len) {
-		return SERVICE_REQUEST_PROC;
-	} else {
-		return INITIAL_PDN_ATTACH_PROC;
-	}
-}
 
 uint8_t
 update_ue_proc(uint32_t teid_key, uint8_t proc, uint8_t ebi_index)

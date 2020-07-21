@@ -19,10 +19,8 @@
 #include "sm_struct.h"
 #include "cp_config_apis.h"
 #include "cp_config.h"
-#include "gtpc_timer.h"
-#include "pfcp_timer.h"
 #include "cp_interface.h"
-#include "pfcp_transactions.h"
+#include "cp_transactions.h"
 #include "gtpv2_internal.h"
 #include "cp_io_poll.h"
 
@@ -40,18 +38,8 @@ cp_config_t *cp_config;
 /* MME */
 struct sockaddr_in s11_mme_sockaddr;
 
-/* S5S8 */
-struct sockaddr_in s5s8_recv_sockaddr;
-
-/* PFCP */
-in_port_t pfcp_port;
-struct sockaddr_in pfcp_sockaddr;
-
-/* UPF PFCP */
-in_port_t upf_pfcp_port;
 
 uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
-struct sockaddr_in s11_sockaddr;
 socklen_t s11_mme_sockaddr_len = sizeof(s11_mme_sockaddr);
 
 uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
@@ -70,6 +58,7 @@ init_pfcp(void)
 {
 	int ret;
     int pfcp_fd = -1;
+    struct sockaddr_in pfcp_sockaddr;
 
 	pfcp_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	my_sock.sock_fd_pfcp = pfcp_fd;
@@ -96,6 +85,7 @@ init_pfcp(void)
 				ntohs(pfcp_sockaddr.sin_port),
 				strerror(errno));
 	}
+    my_sock.pfcp_sockaddr = pfcp_sockaddr; 
 }
 
 
@@ -108,6 +98,8 @@ static void init_s11(void)
 {
     int s11_fd = -1;
 	int ret;
+    struct sockaddr_in s11_sockaddr;
+
 	/* TODO: Need to think*/
 	s11_mme_sockaddr.sin_port = htons(cp_config->s11_port);
 
@@ -140,6 +132,7 @@ static void init_s11(void)
 			ntohs(s11_sockaddr.sin_port),
 			strerror(errno));
 	}
+    my_sock.s11_sockaddr = s11_sockaddr;
 
 }
 
@@ -152,6 +145,8 @@ static void init_s5s8(void)
 {
     int s5s8_fd = -1;
 	int ret;
+    struct sockaddr_in s5s8_recv_sockaddr;
+
 	/* TODO: Need to think*/
 	s5s8_recv_sockaddr.sin_port = htons(cp_config->s5s8_port);
 
@@ -186,6 +181,7 @@ static void init_s5s8(void)
 			strerror(errno));
 	}
 
+    my_sock.s5s8_recv_sockaddr = s5s8_recv_sockaddr;
 }
 
 #ifdef CP_DP_TABLE_CONFIG

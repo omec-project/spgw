@@ -170,7 +170,7 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 {
 	uint8_t ebi_index = 0;
 	struct in_addr ip = {0};
-	upf_context_t *upf_ctx = context->upf_ctxt;;
+	upf_context_t *upf_ctx = context->upf_context;;
 	create_sess_rsp_t cs_resp = {0};
 
 	set_gtpv2c_teid_header((gtpv2c_header_t *)&cs_resp.header,

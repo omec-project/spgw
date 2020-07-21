@@ -22,7 +22,6 @@
  */
 typedef struct udp_sock_t {
 	struct sockaddr_in my_addr;
-	struct sockaddr_in other_addr;
 	int sock_fd_pfcp;
 } udp_sock_t;
 

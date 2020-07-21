@@ -5768,3 +5768,15 @@ if (value->sgw_fteid_ul_data_fwdng.header.len)
     return encoded;
 }
 
+int encode_rel_acc_bearer_rsp(rel_acc_bearer_rsp_t *value,
+        uint8_t *buf)
+{
+    uint16_t encoded = 0;
+    encoded += encode_gtpv2c_header_t(&value->header, buf +encoded);
+
+    if (value->cause.header.len)
+        encoded += encode_gtp_cause_ie(&(value->cause), buf + encoded);
+
+    return encoded;
+}
+

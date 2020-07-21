@@ -43,7 +43,6 @@ uint8_t s11_rx_buf[MAX_GTPV2C_UDP_LEN];
 uint32_t start_time;
 
 /* S5S8 */
-extern struct sockaddr_in s5s8_recv_sockaddr;
 extern socklen_t s5s8_sockaddr_len;
 extern uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
 extern uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
@@ -89,7 +88,7 @@ process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int ifa
 			/* TODO: Error handling not implemented */
 		}
 	}else {
-		ret = process_response(s5s8_recv_sockaddr.sin_addr.s_addr);
+		ret = process_response(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 		if (ret) {
 			/*TODO: Error handling not implemented */
 		}
@@ -107,10 +106,10 @@ process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int ifa
 					gtpv2c_tx->gtpc.message_type,SENT,S11);
 	}else{
 		gtpv2c_send(my_sock.sock_fd_s5s8, s5s8_tx_buf, payload_length,
-				(struct sockaddr *) &s5s8_recv_sockaddr,
+				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 				s5s8_sockaddr_len);
 		cp_stats.echo++;
-		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
+		update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
 					gtpv2c_tx->gtpc.message_type,SENT,S5S8);
 	}
 	return 0;
@@ -144,7 +143,7 @@ process_echo_resp(gtpv2c_header_t *gtpv2c_rx, int iface)
 			return -1;
 		}
 	}else{
-		ret = process_response(s5s8_recv_sockaddr.sin_addr.s_addr);
+		ret = process_response(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 		if (ret) {
 			clLog(clSystemLog, eCLSeverityCritical, "main.c::control_plane()::Error"
 					"\n\tprocess_echo_resp "
@@ -159,12 +158,14 @@ process_echo_resp(gtpv2c_header_t *gtpv2c_rx, int iface)
 }
 
 
-/* Requirement1 - multiple read to read all the messages from the sockets */
-void
+/* Requirement1 - multiple read to read all the messages from the sockets 
+ * Requirement2 - Support multiple MME connections. Having global - s11_mme_sockaddr is bad
+ */
+int
 msg_handler_s11(void)
 {
     int ret = 0, bytes_s11_rx = 0;
-    msg_info msg = {0};
+    msg_info_t msg = {0};
 
     bzero(&s11_rx_buf, sizeof(s11_rx_buf));
     bzero(&s11_tx_buf, sizeof(s11_tx_buf));
@@ -181,26 +182,24 @@ msg_handler_s11(void)
                 inet_ntoa(s11_mme_sockaddr.sin_addr),
                 s11_mme_sockaddr.sin_port,
                 strerror(errno));
-        return;
+        return -1;
     }
 
     if ((bytes_s11_rx < 0) &&
             (errno == EAGAIN  || errno == EWOULDBLOCK))
-        return;
+        return -1;
 
     if (!gtpv2c_s11_rx->gtpc.message_type) {
-        return;
+        return -1;
     }
+
+    msg.peer_addr = s11_mme_sockaddr;
 
     if (bytes_s11_rx > 0)
         ++cp_stats.rx;
 
-     /*CLI: update counter for any req rcvd on s11 interface */
-    if(gtpv2c_s11_rx->gtpc.message_type != GTP_DOWNLINK_DATA_NOTIFICATION_ACK) {
-
-        update_cli_stats((uint32_t)s11_mme_sockaddr.sin_addr.s_addr,
-                gtpv2c_s11_rx->gtpc.message_type,RCVD,S11);
-    }
+    update_cli_stats((uint32_t)s11_mme_sockaddr.sin_addr.s_addr,
+            gtpv2c_s11_rx->gtpc.message_type,RCVD,S11);
 
     if (gtpv2c_s11_rx->gtpc.message_type == GTP_ECHO_REQ){
         if (bytes_s11_rx > 0) {
@@ -208,22 +207,22 @@ msg_handler_s11(void)
             /* this call will handle echo request for boh PGWC and SGWC */
             ret = process_echo_req(gtpv2c_s11_rx, gtpv2c_s11_tx, S11_IFACE);
             if(ret != 0){
-                return;
+                return 0;
             }
             ++cp_stats.tx;
         }
-        return;
+        return 0;
     }else if(gtpv2c_s11_rx->gtpc.message_type == GTP_ECHO_RSP) {
         if (bytes_s11_rx > 0) {
 
             /* this call will handle echo responce for boh PGWC and SGWC */
             ret = process_echo_resp(gtpv2c_s11_rx, S11_IFACE);
             if(ret != 0){
-                return;
+                return 0;
             }
             ++cp_stats.tx;
         }
-        return;
+        return 0;
     } else {
 
         /* Reset periodic timers */
@@ -236,7 +235,8 @@ msg_handler_s11(void)
         // decode message and return error in case of bad length/invalid GTP version
         if ((ret = gtpc_pcnd_check(gtpv2c_s11_rx, &msg, bytes_s11_rx)) != 0)
         {
-            return;
+            printf("gtpc_pcnd_check failed\n");
+            return 0;
         }
 
         // validate message content - validate the presence of IEs
@@ -245,7 +245,7 @@ msg_handler_s11(void)
         {
             printf("Message %d validation failed \n", msg.msg_type);
             // validatation failed;
-            return;
+            return 0;
         }
 
         if(gtpv2c_s11_rx->gtpc.message_type == GTP_DOWNLINK_DATA_NOTIFICATION_ACK) {
@@ -363,12 +363,13 @@ msg_handler_s11(void)
                         break;
                     case GTP_CREATE_BEARER_RSP:
                         cp_stats.create_bearer++;
-                        return;
+                        break;
                     case GTP_DELETE_BEARER_RSP:
                         cp_stats.delete_bearer++;
-                        return;
+                        break;
                     case GTP_DOWNLINK_DATA_NOTIFICATION_ACK:
                         cp_stats.ddn_ack++;
+                        break;
                 }
             }
             break;
@@ -377,15 +378,15 @@ msg_handler_s11(void)
                     "Unknown spgw_cfg= %u.", cp_config->cp_type);
             break;
     }
-
+    return 0;
 }
 
-void
+int
 msg_handler_s5s8(void)
 {
 	int ret = 0;
 	int bytes_s5s8_rx = 0;
-	msg_info msg = {0};
+	msg_info_t msg = {0};
 
 	bzero(&s5s8_rx_buf, sizeof(s5s8_rx_buf));
 	gtpv2c_header_t *gtpv2c_s5s8_rx = (gtpv2c_header_t *) s5s8_rx_buf;
@@ -395,14 +396,14 @@ msg_handler_s5s8(void)
 
 	bytes_s5s8_rx = recvfrom(my_sock.sock_fd_s5s8, s5s8_rx_buf,
 			MAX_GTPV2C_UDP_LEN, MSG_DONTWAIT,
-			(struct sockaddr *) &s5s8_recv_sockaddr,
+			(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 			&s5s8_sockaddr_len);
 
 	if (bytes_s5s8_rx == 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "s5s8 recvfrom error:"
 				"\n\ton %s:%u - %s\n",
-				inet_ntoa(s5s8_recv_sockaddr.sin_addr),
-				s5s8_recv_sockaddr.sin_port,
+				inet_ntoa(my_sock.s5s8_recv_sockaddr.sin_addr),
+				my_sock.s5s8_recv_sockaddr.sin_port,
 				strerror(errno));
 	}
 
@@ -410,10 +411,10 @@ msg_handler_s5s8(void)
 		(bytes_s5s8_rx < 0) &&
 		(errno == EAGAIN  || errno == EWOULDBLOCK)
 		)
-		return;
+		return -1;
 
 	if (!gtpv2c_s5s8_rx->gtpc.message_type) {
-		return;
+		return -1;
 	}
 
 #if 0
@@ -443,14 +444,14 @@ msg_handler_s5s8(void)
 
 
 	if (cp_config->cp_type == PGWC)
-		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
+		update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
 					gtpv2c_s5s8_rx->gtpc.message_type,RCVD,S5S8);
 
 	if (cp_config->cp_type == SGWC && (gtpv2c_s5s8_rx->gtpc.message_type == GTP_ECHO_REQ ||
 		gtpv2c_s5s8_rx->gtpc.message_type == GTP_ECHO_RSP ||
 		gtpv2c_s5s8_rx->gtpc.message_type == GTP_CREATE_BEARER_REQ))
 
-		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
+		update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
 					gtpv2c_s5s8_rx->gtpc.message_type,RCVD,S5S8);
 #if 0
 	if (((cp_config->cp_type == PGWC) && (bytes_s5s8_rx > 0)) &&
@@ -468,32 +469,32 @@ msg_handler_s5s8(void)
 		if (bytes_s5s8_rx > 0) {
 			ret = process_echo_req(gtpv2c_s5s8_rx, gtpv2c_s5s8_tx, S5S8_IFACE);
 			if(ret != 0){
-				return;
+				return 0;
 			}
 			++cp_stats.tx;
 		}
-		return;
+		return 0;
 	}else if(gtpv2c_s5s8_rx->gtpc.message_type == GTP_ECHO_RSP){
 		if (bytes_s5s8_rx > 0) {
 			ret = process_echo_resp(gtpv2c_s5s8_rx, S5S8_IFACE);
 			if(ret != 0){
-				return;
+				return 0;
 			}
 			++cp_stats.tx;
 		}
-		return;
+		return 0;
 	}else {
 
         /* Reset periodic timers */
-        process_response(s5s8_recv_sockaddr.sin_addr.s_addr);
+        process_response(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 
         if ((ret = gtpc_pcnd_check(gtpv2c_s5s8_rx, &msg, bytes_s5s8_rx)) != 0)
 		{
 			/*CLI: update csr, dsr, mbr rej response*/
 			if(cp_config->cp_type == SGWC)
-				update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
+				update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
 							gtpv2c_s5s8_rx->gtpc.message_type,REJ,S5S8);
-			return;
+			return 0;
 		}
 
         // validate message content - validate the presence of IEs
@@ -502,22 +503,22 @@ msg_handler_s5s8(void)
         {
             printf("Message validation failed \n");
             // validatation failed;
-            return;
+            return 0;
         }
 
 	if (cp_config->cp_type == SGWC)
-		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
+		update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
 					gtpv2c_s5s8_rx->gtpc.message_type,ACC,S5S8);
 
 	if (cp_config->cp_type == SGWC)
 	{
 		if (gtpv2c_s5s8_rx->gtpc.message_type == GTP_CREATE_SESSION_RSP )
 		{
-			add_node_conn_entry(s5s8_recv_sockaddr.sin_addr.s_addr, S5S8_SGWC_PORT_ID);
+			add_node_conn_entry(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr, S5S8_SGWC_PORT_ID);
 		}
 		if (gtpv2c_s5s8_rx->gtpc.message_type == GTP_MODIFY_BEARER_RSP)
 		{
-			add_node_conn_entry(s5s8_recv_sockaddr.sin_addr.s_addr, S5S8_SGWC_PORT_ID);
+			add_node_conn_entry(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr, S5S8_SGWC_PORT_ID);
 		}
 	}
         /* Event set depending on msg type 
@@ -555,4 +556,5 @@ msg_handler_s5s8(void)
 				"Unknown spgw_cfg= %u.", cp_config->cp_type);
 		break;
 	}
+    return 0;
 }

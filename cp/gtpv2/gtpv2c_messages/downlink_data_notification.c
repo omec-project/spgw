@@ -223,22 +223,25 @@ create_downlink_data_notification(ue_context_t *context, uint8_t eps_bearer_id,
 }
 
 int
-process_ddn_ack(downlink_data_notification_t ddn_ack, uint8_t *delay)
+process_ddn_ack(downlink_data_notification_t ddn_ack, uint8_t *delay, msg_info_t *data)
 {
 	int ret = 0;
-	struct resp_info *resp = NULL;
+    ue_context_t *context = NULL;
 
 	/* Lookup entry in hash table on the basis of session id*/
 	uint64_t ebi_index = 0;   /*ToDo : Need to revisit this.*/
-	if (get_sess_entry((ddn_ack.context)->pdns[ebi_index]->seid, &resp) != 0){
+	if (get_sess_entry((ddn_ack.context)->pdns[ebi_index]->seid, &context) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for sess ID:%lu\n",
 				(ddn_ack.context)->pdns[ebi_index]->seid);
 		return -1;
 	}
+    assert(context == data->ue_context);
 
+#ifdef DDN_STATES
 	/* VS: Update the session state */
 	resp->msg_type = GTP_DOWNLINK_DATA_NOTIFICATION_ACK;
 	resp->state = DDN_ACK_RCVD_STATE;
+#endif
 
 	/* check for conditional delay value, set if necessary,
 	 * or indicate no delay */
