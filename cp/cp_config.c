@@ -20,10 +20,10 @@
 #include "assert.h"
 
 #include "clogger.h"
-#include "gw_adapter.h"
 #include "cp_config_defs.h"
 #include "cp_log.h"
 #include "monitor_config.h"
+#include "cp_init.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"
 #include "cp_stats.h"
@@ -31,6 +31,7 @@
 #include "pfcp_cp_association.h"
 #include "ip_pool.h"
 #include "spgw_cpp_wrapper.h"
+#include "gw_adapter.h"
 
 
 #define GLOBAL_ENTRIES			"GLOBAL"

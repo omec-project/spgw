@@ -23,13 +23,15 @@
 #include "pfcp_messages_encoder.h"
 #include "gtpv2_evt_handler.h"
 #include "cp_peer.h"
-#include "gw_adapter.h"
 #include "clogger.h"
 #include "sm_pcnd.h"
 #include "sm_struct.h"
 #include "gtpv2c_error_rsp.h"
 #include "gtpv2_internal.h"
 #include "timer.h"
+#include "cp_config.h"
+#include "cp_init.h"
+#include "gw_adapter.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"

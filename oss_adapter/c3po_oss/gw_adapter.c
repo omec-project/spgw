@@ -19,7 +19,6 @@
 #include <stdbool.h>
 
 
-#ifdef CP_BUILD
 
 #include "../../cp/cp_stats.h"
 #include "../../cp/cp_init.h"
@@ -28,23 +27,12 @@
 #include "cp_interface.h"
 #include "../../cp/ue.h"
 
-#else
-
-#include "up_main.h"
-#include "gtpu.h"
-
-#endif /* CP_BUILD */
-
 #include "gw_adapter.h"
 #include "crest.h"
 #include "clogger.h"
 #include "cstats.h"
 
-#ifdef CP_BUILD
 #include "pfcp_cp_set_ie.h"
-#else
-#include "pfcp_up_set_ie.h"
-#endif
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -159,8 +147,6 @@ MessageType ossS11MessageDefs[] = {
         {       -1      , NULL,dNone  					}
 };
 
-#ifdef CP_BUILD
-
 MessageType ossSxaMessageDefs[] = {
         {	   1	  ,"PFCP Heartbeat Request",dNone		},
         {	   2	  ,"PFCP Heartbeat Response",dNone		},
@@ -240,85 +226,6 @@ MessageType ossSxaSxbMessageDefs[] = {
         {         -1     , NULL,dNone  					}
 };
 
-#else /* DP_BUILD */
-
-MessageType ossSxaMessageDefs[] = {
-        {          1      ,"PFCP Heartbeat Request",dNone               },
-        {          2      ,"PFCP Heartbeat Response",dNone              },
-        {          5      ,"PFCP Association Setup Request",dIn        },
-        {          6      ,"PFCP Association Setup Response",dRespSend  },
-        {          7      ,"PFCP Association Update Request",dNone      },
-        {          8      ,"PFCP Association Update Response",dNone     },
-        {          9      ,"PFCP Association Release Request",dNone     },
-        {          10     ,"PFCP Association Release Response",dNone    },
-        {          11     ,"PFCP Version Not Supported Response",dNone  },
-        {          12     ,"PFCP Node Report Request",dNone             },
-        {          13     ,"PFCP Node Report Response",dNone            },
-        {          14     ,"PFCP Session Set Deletion Request",dNone    },
-        {          15     ,"PFCP Session Set Deletion Response",dNone   },
-        {          50     ,"PFCP Session Establishment Request",dIn    },
-        {          51     ,"PFCP Session Establishment Response",dRespSend},
-        {          52     ,"PFCP Session Modification Request",dIn     },
-        {          53     ,"PFCP Session Modification Response",dRespSend},
-        {          54     ,"PFCP Session Deletion Request",dIn         },
-        {          55     ,"PFCP Session Deletion Response",dRespSend   },
-        {          56     ,"PFCP Session Report Request",dOut           },
-        {          57     ,"PFCP Session Report Response",dRespRcvd     },
-        {          -1     , NULL,dNone			  		}
-};
-MessageType ossSxbMessageDefs[] = {
-        {         1       ,"PFCP Heartbeat Request",dNone               },
-        {         2       ,"PFCP Heartbeat Response",dNone              },
-	{         3       ,"PFCP PFD Management Request",dIn           },
-	{         4       ,"PFCP PFD Management Response",dRespSend    },
-        {         5       ,"PFCP Association Setup Request",dIn        },
-        {         6       ,"PFCP Association Setup Response",dRespSend  },
-        {         7       ,"PFCP Association Update Request",dNone      },
-        {         8       ,"PFCP Association Update Response",dNone     },
-        {         9       ,"PFCP Association Release Request",dNone     },
-        {         10      ,"PFCP Association Release Response",dNone    },
-        {         11      ,"PFCP Version Not Supported Response",dNone  },
-        {         12      ,"PFCP Node Report Request",dNone             },
-        {         13      ,"PFCP Node Report Response",dNone            },
-        {         14      ,"PFCP Session Set Deletion Request",dNone    },
-        {         15      ,"PFCP Session Set Deletion Response",dNone   },
-        {         50      ,"PFCP Session Establishment Request",dIn    },
-        {         51      ,"PFCP Session Establishment Response",dRespSend},
-        {         52      ,"PFCP Session Modification Request",dIn     },
-        {         53      ,"PFCP Session Modification Response",dRespSend},
-        {         54      ,"PFCP Session Deletion Request",dIn         },
-        {         55      ,"PFCP Session Deletion Response",dRespSend   },
-        {         56      ,"PFCP Session Report Request",dOut           },
-        {         57      ,"PFCP Session Report Response",dRespRcvd     },
-        {         -1      , NULL,dNone  				}
-};
-MessageType ossSxaSxbMessageDefs[] = {
-        {         1      ,"PFCP Heartbeat Request",dNone                },
-        {         2      ,"PFCP Heartbeat Response",dNone               },
-        {         3      ,"PFCP PFD Management Request",dIn             },
-        {         4      ,"PFCP PFD Management Response",dRespSend      },
-        {         5      ,"PFCP Association Setup Request",dIn         },
-        {         6      ,"PFCP Association Setup Response",dRespSend   },
-        {         7      ,"PFCP Association Update Request",dNone       },
-        {         8      ,"PFCP Association Update Response",dNone      },
-        {         9      ,"PFCP Association Release Request",dNone      },
-        {         10     ,"PFCP Association Release Response",dNone     },
-        {         11     ,"PFCP Version Not Supported Response",dNone   },
-        {         12     ,"PFCP Node Report Request",dNone              },
-        {         13     ,"PFCP Node Report Response",dNone             },
-        {         14     ,"PFCP Session Set Deletion Request",dNone     },
-        {         15     ,"PFCP Session Set Deletion Response",dNone    },
-        {         50     ,"PFCP Session Establishment Request",dIn     },
-        {         51     ,"PFCP Session Establishment Response",dRespSend},
-        {         52     ,"PFCP Session Modification Request",dIn      },
-        {         53     ,"PFCP Session Modification Response",dRespSend},
-        {         54     ,"PFCP Session Deletion Request",dIn          },
-        {         55     ,"PFCP Session Deletion Response",dRespSend    },
-        {         56     ,"PFCP Session Report Request",dOut            },
-        {         57     ,"PFCP Session Report Response",dRespRcvd      },
-        {         -1     , NULL,dNone                                   }
-};
-#endif /* CP_BUILD */
 
 MessageType ossGxMessageDefs[] = {
     {     120    ,"Credit Control Request Initial",dOut             },
@@ -355,11 +262,7 @@ char ossInterfaceStr[][10] = {
 
 char ossInterfaceProtocolStr[][10] = {
     "gtpv2" ,
-#ifdef CP_BUILD
     "gtpv2",
-#else
-	"gtp",
-#endif
     "pfcp",
     "pfcp",
     "pfcp",
@@ -546,7 +449,6 @@ int update_cli_stats(uint32_t ip_addr, uint8_t msg_type, int dir, CLIinterface i
 		clLog(clSystemLog, eCLSeverityTrace, "peer not found\n");
 		return -1;
 	}
-#ifdef CP_BUILD
 	if(msg_type == PFCP_HEARTBEAT_REQUEST || msg_type == GTP_ECHO_REQ) {
 		__sync_add_and_fetch(&cli_node.peer[index]->hcrequest[dir], 1);
 		if (dir == RCVD)
@@ -556,16 +458,6 @@ int update_cli_stats(uint32_t ip_addr, uint8_t msg_type, int dir, CLIinterface i
 		__sync_add_and_fetch(&cli_node.peer[index]->hcresponse[dir], 1);
 		if (dir == RCVD)
 			update_last_activity(ip_addr, stat_timestamp);
-#else
-	if(msg_type == PFCP_HEARTBEAT_REQUEST || msg_type == GTPU_ECHO_REQUEST ) {
-		__sync_add_and_fetch(&cli_node.peer[index]->hcrequest[dir], 1);
-		if (dir == RCVD)
-			update_last_activity(ip_addr, stat_timestamp);
-	} else if(msg_type == PFCP_HEARTBEAT_RESPONSE || msg_type == GTPU_ECHO_RESPONSE ) {
-		__sync_add_and_fetch(&cli_node.peer[index]->hcresponse[dir], 1);
-		if (dir == RCVD)
-			update_last_activity(ip_addr, stat_timestamp);
-#endif
 	} else {
 
 		switch(cli_node.peer[index]->intfctype) {

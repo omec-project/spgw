@@ -13,7 +13,6 @@
 #include "assert.h"
 #include "clogger.h"
 #include "cp_peer.h"
-#include "gw_adapter.h"
 #include "gtpv2_interface.h"
 #include "sm_structs_api.h"
 #include "spgw_cpp_wrapper.h"
@@ -31,6 +30,9 @@
 #include "rab_proc.h"
 #include "detach_proc.h"
 #include "service_request_proc.h"
+#include "cp_config.h"
+#include "cp_init.h"
+#include "gw_adapter.h"
 
 extern int s11logger;
 extern int s5s8logger;

@@ -15,6 +15,8 @@
 #include "cp_log.h"
 #include "clogger.h"
 #include "ip_pool.h"
+#include "cp_config.h"
+#include "cp_init.h"
 #include "gw_adapter.h"
 
 int

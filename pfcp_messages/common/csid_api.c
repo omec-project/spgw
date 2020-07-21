@@ -4,29 +4,20 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#ifdef CP_BUILD
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_set_ie.h"
-#else
-#include "pfcp_up_util.h"
-#include "pfcp_up_set_ie.h"
-#endif
 #include "pfcp_enum.h"
 #include "csid_struct.h"
 #include "pfcp_messages_encoder.h"
 #include "clogger.h"
+#include "cp_init.h"
+#include "cp_config.h"
 #include "gw_adapter.h"
 #include "csid_api.h"
 
-#ifdef CP_BUILD
 #include "cp_init.h"
 
 extern udp_sock_t my_sock;
-#else
-#include "up_main.h"
-extern struct in_addr dp_comm_ip;
-extern struct in_addr cp_comm_ip;
-#endif /* CP_BUILD */
 
 /* PFCP: Create and Fill the FQ-CSIDs */
 void
@@ -47,7 +38,6 @@ set_fq_csid_t(pfcp_fqcsid_ie_t *fq_csid, fqcsid_t *csids)
 
 }
 
-#ifdef CP_BUILD
 void
 set_gtpc_fqcsid_t(gtp_fqcsid_ie_t *fqcsid,
 		enum ie_instance instance, fqcsid_t *csids)
@@ -340,7 +330,6 @@ fill_fqcsid_sess_est_req(pfcp_sess_estab_req_t *pfcp_sess_est_req, ue_context_t 
 
 	return 0;
 }
-#endif /* CP_BUID */
 
 
 static uint16_t seq_t = 0;
@@ -354,11 +343,7 @@ fill_pfcp_sess_set_del_req_t(pfcp_sess_set_del_req_t *pfcp_sess_set_del_req,
 
 	char pAddr[INET_ADDRSTRLEN];
 
-#ifdef CP_BUILD
 	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
-#else
-	inet_ntop(AF_INET, &(dp_comm_ip.s_addr), pAddr, INET_ADDRSTRLEN);
-#endif /* CP_BUILD */
 
 	unsigned long node_value = inet_addr(pAddr);
 	set_node_id(&(pfcp_sess_set_del_req->node_id), node_value);
@@ -438,9 +423,7 @@ del_pfcp_peer_node_sess(uint32_t node_addr, uint8_t iface)
 		return 0;
 	}
 
-#ifdef CP_BUILD
 		csids.node_addr = cp_config->pfcp_ip.s_addr;
-#endif /* CP_BUILD */
 
 	fill_pfcp_sess_set_del_req_t(&del_set_req_t, &csids, iface);
 
@@ -451,7 +434,6 @@ del_pfcp_peer_node_sess(uint32_t node_addr, uint8_t iface)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-#ifdef CP_BUILD
     struct sockaddr_in upf_pfcp_sockaddr;
     assert(0); // ajay Need handling 
 	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ) {
@@ -459,17 +441,6 @@ del_pfcp_peer_node_sess(uint32_t node_addr, uint8_t iface)
 				ERR_MSG, errno);
 		return -1;
 	}
-#else
-	if (sendto(my_sock.sock_fd_pfcp,
-		(char *)pfcp_msg,
-		encoded,
-		MSG_DONTWAIT,
-		(struct sockaddr *)&dest_addr_t,
-		sizeof(struct sockaddr_in)) < 0) {
-		clLog(clSystemLog, eCLSeverityDebug, "Error sending: %i\n",errno);
-			return -1;
-	}
-#endif /* CP_BUILD */
 	return 0;
 }
 
@@ -481,11 +452,7 @@ fill_pfcp_sess_set_del_resp(pfcp_sess_set_del_rsp_t *pfcp_del_resp,
 	memset(pfcp_del_resp, 0, sizeof(pfcp_sess_set_del_rsp_t));
 
 	set_pfcp_header(&pfcp_del_resp->header, PFCP_SESSION_SET_DELETION_RESPONSE, 0);
-#ifdef CP_BUILD
 	set_node_id(&(pfcp_del_resp->node_id), cp_config->pfcp_ip.s_addr);
-#else
-	set_node_id(&(pfcp_del_resp->node_id), dp_comm_ip.s_addr);
-#endif /* CP_BUILD */
 	pfcp_set_ie_header(&pfcp_del_resp->cause.header, PFCP_IE_CAUSE,
 			sizeof(pfcp_del_resp->cause.cause_value));
 	pfcp_del_resp->cause.cause_value = cause_val;

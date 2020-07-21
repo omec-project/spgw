@@ -7,8 +7,10 @@
 #ifndef __CP_CONFIG_H__
 #define __CP_CONFIG_H__
 
-#include "cstats.h"
 #include "cp_config.h"
+#include "cp_init.h"
+#include "gw_adapter.h"
+#include "cstats.h"
 #include "upf_struct.h"
 #include "spgw_config_struct.h"
 

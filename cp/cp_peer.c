@@ -12,7 +12,7 @@
 #include "pfcp_cp_association.h"
 #include "cp_stats.h"
 #include "cp_config.h"
-#include "gw_adapter.h"
+#include "cp_init.h"
 #include "sm_struct.h"
 #include "csid_cp_cleanup.h"
 #include "csid_api.h"
@@ -20,6 +20,7 @@
 #include "cp_peer.h"
 #include "cp_config_defs.h"
 #include "timer.h"
+#include "gw_adapter.h"
 
 
 uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];

@@ -10,7 +10,6 @@
 #include <rte_hash_crc.h>
 #include <errno.h>
 #include "clogger.h"
-#include "gw_adapter.h"
 #include "cp_stats.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
@@ -18,15 +17,18 @@
 #include "timer.h"
 #include "sm_struct.h"
 #include "cp_config_apis.h"
+#include "cp_init.h"
 #include "cp_config.h"
 #include "cp_interface.h"
 #include "cp_transactions.h"
 #include "gtpv2_internal.h"
 #include "cp_io_poll.h"
+#include "gw_adapter.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
 #endif /* USE_DNS_QUERY */
+
 
 int s11_pcap_fd = -1;
 extern udp_sock_t my_sock;

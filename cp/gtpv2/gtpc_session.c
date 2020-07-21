@@ -18,10 +18,12 @@
 #include "gtpv2c_set_ie.h"
 #include "cp_peer.h"
 #include "gen_utils.h"
-#include "gw_adapter.h"
 #include "sm_structs_api.h"
 #include "pfcp.h"
 #include "cp_transactions.h"
+#include "cp_config.h"
+#include "cp_init.h"
+#include "gw_adapter.h"
 
 extern udp_sock_t my_sock;
 extern socklen_t s5s8_sockaddr_len;

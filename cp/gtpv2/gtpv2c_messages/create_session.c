@@ -9,7 +9,6 @@
 #include <rte_debug.h>
 #include "gtp_messages_decoder.h"
 #include "clogger.h"
-#include "gw_adapter.h"
 
 /* TODO: Verify */
 #include "ue.h"
@@ -30,6 +29,9 @@
 #include "cp_log.h"
 #include "cp_config_defs.h"
 #include "spgw_cpp_wrapper.h"
+#include "cp_config.h"
+#include "cp_init.h"
+#include "gw_adapter.h"
 
 extern uint32_t num_adc_rules;
 extern uint32_t adc_rule_id[];

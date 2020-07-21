@@ -21,7 +21,6 @@
 #include "pfcp_messages.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_util.h"
-#include "cp_config.h"
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_interface.h"
 #include "cp_config_defs.h"
@@ -31,10 +30,12 @@
 #include "gen_utils.h"
 #include "sm_structs_api.h"
 #include "clogger.h"
-#include "gw_adapter.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_main.h"
 #include "cp_transactions.h"
+#include "cp_config.h"
+#include "cp_init.h"
+#include "gw_adapter.h"
 
 extern udp_sock_t my_sock;
 extern struct sockaddr_in s11_mme_sockaddr;

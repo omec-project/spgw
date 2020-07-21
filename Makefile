@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-DIRS-y =  lib cpplib libgtpv2c libpfcp cp dp test
+DIRS-y =  lib cpplib libgtpv2c libpfcp cp test
 
 #define targets
 CLEANDIRS-y = $(DIRS-y:%=clean-%)
@@ -23,7 +23,7 @@ $(CLEANDIRS-y):
 RECURSIVETARGETS := all clean
 CPDEPS := libgtpv2c
 DPDEPS := lib
-DIRS := cp dp test
+DIRS := cp test
 # Use 'make WHAT=cp' to compile cp only
 WHAT ?= $(DIRS)
 
@@ -53,7 +53,7 @@ DOCKER_LABEL_VCS_URL     ?= $(shell git remote get-url $(shell git remote))
 DOCKER_LABEL_VCS_REF     ?= $(shell git diff-index --quiet HEAD -- && git rev-parse HEAD || echo "unknown")
 DOCKER_LABEL_COMMIT_DATE ?= $(shell git diff-index --quiet HEAD -- && git show -s --format=%cd --date=iso-strict HEAD || echo "unknown" )
 DOCKER_LABEL_BUILD_DATE  ?= $(shell date -u "+%Y-%m-%dT%H:%M:%SZ")
-DOCKER_TARGETS           ?= cp dp 
+DOCKER_TARGETS           ?= cp
 
 # https://docs.docker.com/engine/reference/commandline/build/#specifying-target-build-stage---target
 #ajay - need to get clean image with appripriate tags 

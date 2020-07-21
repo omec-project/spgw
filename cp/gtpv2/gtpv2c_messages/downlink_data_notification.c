@@ -20,6 +20,9 @@
 #include "cp_interface.h"
 #include "sm_structs_api.h"
 #include "cp_config_defs.h"
+#include "cp_config.h"
+#include "cp_init.h"
+#include "gw_adapter.h"
 
 extern struct cp_stats_t cp_stats;
 extern udp_sock_t my_sock;

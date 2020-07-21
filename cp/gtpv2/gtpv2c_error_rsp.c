@@ -17,12 +17,14 @@
 #include "upf_struct.h"
 #include "gen_utils.h"
 #include "clogger.h"
-#include "gw_adapter.h"
 #include "sm_structs_api.h"
 #include "gx_error_rsp.h"
 #include "pfcp.h"
 #include "cp_transactions.h"
 #include "spgw_cpp_wrapper.h"
+#include "cp_config.h"
+#include "cp_init.h"
+#include "gw_adapter.h"
 
 extern udp_sock_t my_sock;
 extern struct sockaddr_in s11_mme_sockaddr;

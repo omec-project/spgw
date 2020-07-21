@@ -13,6 +13,8 @@
 #include "sm_pcnd.h"
 #include "ue.h"
 #include "clogger.h"
+#include "cp_config.h"
+#include "cp_init.h"
 #include "gw_adapter.h"
 #include "gx_event_handlers.h"
 #include "gen_utils.h"

@@ -9,6 +9,8 @@
 #include "clogger.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_enum.h"
+#include "cp_init.h"
+#include "cp_config.h"
 #include "gw_adapter.h"
 #include "csid_struct.h"
 #include "pfcp_cp_set_ie.h"

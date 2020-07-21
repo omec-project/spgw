@@ -28,11 +28,12 @@ FROM dpdkbuild as freediambuild
 COPY docker-scripts/install_freediameter.sh ./docker-scripts/
 RUN source ./docker-scripts/install_freediameter.sh && download_freediameter 
 
-FROM freediambuild as hyperscanbuild
-COPY docker-scripts/install_hyperscan.sh ./docker-scripts/
-RUN source ./docker-scripts/install_hyperscan.sh && install_hyperscan 
+#FROM freediambuild as hyperscanbuild
+#COPY docker-scripts/install_hyperscan.sh ./docker-scripts/
+#RUN source ./docker-scripts/install_hyperscan.sh && install_hyperscan 
+#FROM hyperscanbuild as ossutil
 
-FROM hyperscanbuild as ossutil
+FROM freediambuild as ossutil
 COPY docker-scripts/install_oss_util.sh ./docker-scripts/
 RUN source ./docker-scripts/install_oss_util.sh && install_oss_util 
 
@@ -58,10 +59,3 @@ COPY --from=spgw /spgw/third_party/freediameter/build/libfdproto/libfdproto.so /
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/cpp-driver/build/libcassandra.so /usr/local/lib/
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/c-ares/.libs/libcares.so /usr/local/lib/
 COPY --from=spgw /spgw/cpplib/target/lib/libspgwcpputil.so /usr/local/lib/
-
-FROM runtime as dp
-RUN source ./install_rundeps.sh && install_run_utils && cleanup_image
-COPY --from=spgw /spgw/dp/build/ngic_dataplane /bin/ngic_dataplane
-COPY --from=spgw /spgw/libpfcp/lib/libpfcp.so /usr/local/lib
-
-#ajay - Need to cleanup image 

@@ -8,12 +8,6 @@
 #ifndef GW_ADAPTER_H
 #define GW_ADAPTER_H
 
-/* TODO: Verify */
-#ifdef CP_BUILD
-#include "cp_init.h"
-#include "cp_config.h"
-#endif /* CP_BUILD */
-
 #define REST_SUCESSS  200
 #define REST_FAIL     400
 #define LAST_TIMER_SIZE 80

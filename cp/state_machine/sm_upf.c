@@ -5,6 +5,7 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <stdio.h>
+#include "rte_errno.h"
 #include "rte_common.h"
 #include "pfcp.h"
 #include "gx_interface.h"

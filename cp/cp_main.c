@@ -9,8 +9,6 @@
 #include <rte_ip.h>
 #include <rte_udp.h>
 #include <rte_cfgfile.h>
-
-#include "gw_adapter.h"
 #include "clogger.h"
 #include "cp_init.h"
 #include "cp_main.h"
@@ -30,6 +28,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "timer.h"
 #include "cp_peer.h"
+#include "gw_adapter.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"

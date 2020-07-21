@@ -8,11 +8,12 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <string.h>
-
 #include "cp_stats.h"
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <stdbool.h>
+#include "cp_config.h"
+#include "cp_init.h"
 #include "gw_adapter.h"
 
 
