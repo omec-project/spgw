@@ -82,6 +82,7 @@ get_sess_entry(uint64_t sess_id, ue_context_t **context)
 
 }
 
+/* Requirement : Not sure why we lookup 2 tables. Need to understand this code and clean */
 uint8_t
 del_sess_entry(uint64_t sess_id)
 {

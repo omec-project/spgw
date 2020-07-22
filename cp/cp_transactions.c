@@ -93,7 +93,7 @@ void stop_transaction_timer(transData_t *data)
         deinittimer(&data->rt.ti_id);
         data->rt.ti_id = 0;
     } else {
-        assert(0); // bad stop timer case 
+        printf("Bad timer stop event received \n");
     }
  
     return;

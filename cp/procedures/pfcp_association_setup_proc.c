@@ -126,6 +126,7 @@ process_pfcp_assoication_request(ue_context_t *ue_context)
 
     upf_context = ue_context->upf_context;
 
+    printf("UPF association state %d \n", upf_context->state);
     if(upf_context->state == PFCP_ASSOC_REQ_SNT_STATE) {
         printf("UPF association formation in progress. Buffer new CSReq  \n");
         // After every setup timeout we would flush the buffered entries..
@@ -187,11 +188,22 @@ handle_pfcp_association_setup_response(void *msg_t)
 #endif
     transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
 
-	if (pfcp_trans == NULL ) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s: UPF entry not Found Msg_Type:%u, UPF IP:%u\n",
-				__func__, msg->msg_type, inet_ntoa(peer_addr->sin_addr));
-		return -1;
-	}
+    do {
+        if(pfcp_trans != NULL) { 
+            break;
+        }
+		clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. using workaround to find transaction for  UPF IP:%s\n",
+		__func__, inet_ntoa(peer_addr->sin_addr));
+        upf_context = get_upf_context(peer_addr->sin_addr.s_addr);
+        pfcp_trans = upf_context->trans_entry;
+        // hack for pfcp which sends 0 sequence number in ack 
+	    if (pfcp_trans == NULL ) {
+		    clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. Dropping association response message. from UPF IP:%s\n",
+				__func__, inet_ntoa(peer_addr->sin_addr));
+		    return -1;
+	    }
+        break;
+    }while(0);
     upf_context = (upf_context_t *)(pfcp_trans->cb_data);
     msg->upf_context = upf_context;
 
@@ -352,9 +364,9 @@ process_assoc_resp_timeout_handler(void *data1)
 {
     transData_t *data = (transData_t *)data1;
     upf_context_t *upf_ctxt = (upf_context_t *)(data->cb_data);
-    clLog(sxlogger, eCLSeverityCritical, "%s %d - Failed to receive PFCP association response " 
-          "from %s  \n",__FUNCTION__,__LINE__, inet_ntoa(upf_ctxt->upf_sockaddr.sin_addr));
-    free(data);
+    clLog(sxlogger, eCLSeverityCritical, "PFCP association response timeout from %s  \n",
+          inet_ntoa(upf_ctxt->upf_sockaddr.sin_addr));
+    // transaction will be freed in the cleanup 
     upf_pfcp_setup_failure((void *)upf_ctxt, PFCP_SETUP_TIMEOUT); 
 }
 
@@ -362,12 +374,13 @@ void
 upf_pfcp_setup_failure(void *data, uint16_t event)
 {
     RTE_SET_USED(event);
-    msg_info_t msg;
+    msg_info_t msg = {0};
     upf_context_t *upf_context = (upf_context_t *)data;
     pending_proc_key_t *key;
     key = LIST_FIRST(&upf_context->pendingProcs);
     while(key != NULL)
     {
+        printf("Reject buffered procedure \n");
         LIST_REMOVE(key, procentries);
         proc_context_t *csreq_proc = (proc_context_t *)key->proc_context;
 
@@ -375,17 +388,18 @@ upf_pfcp_setup_failure(void *data, uint16_t event)
         msg.msg_type = PFCP_ASSOCIATION_SETUP_RESPONSE;
         msg.upf_context = upf_context;
         msg.proc_context = key->proc_context; 
-        msg.ue_context = csreq_proc->ue_context;  
+        msg.ue_context =  csreq_proc->ue_context;  
         msg.pdn_context = csreq_proc->pdn_context;  
         cs_error_response(&msg,
-                GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+                          GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
+                          cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
         /* local cleanup of UE context */
         process_error_occured_handler_new(&msg, NULL);
         rte_free(key);
         key = LIST_FIRST(&upf_context->pendingProcs);
     }
     // ajay - check upf address carefully
+    printf("Deleting UPF context %s",inet_ntoa(upf_context->upf_sockaddr.sin_addr));
     rte_hash_del_key(upf_context_by_ip_hash, (const void *) &upf_context->upf_sockaddr.sin_addr.s_addr);
     rte_free(upf_context);
 }
