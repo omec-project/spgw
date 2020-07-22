@@ -188,11 +188,22 @@ handle_pfcp_association_setup_response(void *msg_t)
 #endif
     transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
 
-	if (pfcp_trans == NULL ) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. Dropping association response message. from UPF IP:%s\n",
+    do {
+        if(pfcp_trans != NULL) { 
+            break;
+        }
+		clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. using workaround to find transaction for  UPF IP:%s\n",
+		__func__, inet_ntoa(peer_addr->sin_addr));
+        upf_context = get_upf_context(peer_addr->sin_addr.s_addr);
+        pfcp_trans = upf_context->trans_entry;
+        // hack for pfcp which sends 0 sequence number in ack 
+	    if (pfcp_trans == NULL ) {
+		    clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. Dropping association response message. from UPF IP:%s\n",
 				__func__, inet_ntoa(peer_addr->sin_addr));
-		return -1;
-	}
+		    return -1;
+	    }
+        break;
+    }while(0);
     upf_context = (upf_context_t *)(pfcp_trans->cb_data);
     msg->upf_context = upf_context;
 
@@ -369,7 +380,7 @@ upf_pfcp_setup_failure(void *data, uint16_t event)
     key = LIST_FIRST(&upf_context->pendingProcs);
     while(key != NULL)
     {
-        printf("Reject buffered procedure \n", key);
+        printf("Reject buffered procedure \n");
         LIST_REMOVE(key, procentries);
         proc_context_t *csreq_proc = (proc_context_t *)key->proc_context;
 
