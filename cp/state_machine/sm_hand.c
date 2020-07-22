@@ -1107,10 +1107,19 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
 	//pdn_connection_t *pdn = NULL;
 
 	switch(msg->msg_type){
-		case GTP_CREATE_SESSION_REQ:
-			info_resp->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
-			info_resp->teid =  msg->gtpc_msg.csr.header.teid.has_teid.teid;
-	   		break;
+        case GTP_CREATE_SESSION_REQ: {
+                info_resp->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
+                info_resp->teid =  msg->gtpc_msg.csr.header.teid.has_teid.teid;
+                break;
+            }
+
+        case GTP_RESERVED: {
+                ue_context_t *ue_context = msg->ue_context; 
+			    info_resp->teid = ue_context->s11_sgw_gtpc_teid;
+                // assumed to be triggered due to CSReq 
+                info_resp->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
+                break;
+            }
 
 		case PFCP_ASSOCIATION_SETUP_RESPONSE:{
             ue_context_t  *ue = msg->ue_context; 
@@ -1118,7 +1127,7 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
 			info_resp->sender_teid = ue->s11_mme_gtpc_teid;
             // TODO - Need more thought 
 			// info_resp->seq = ue->sequence;
-			info_resp->ebi_index = pdn->default_bearer_id;
+			info_resp->ebi_index = pdn->default_bearer_id - 5;
 			info_resp->teid = ue->s11_sgw_gtpc_teid;
 			break;
 		}

@@ -271,7 +271,7 @@ process_create_sess_req(create_sess_req_t *csr,
     }
 
     if(csr->pco_new.header.len != 0) {
-        printf("%s %d - PCO length = %d \n", __FUNCTION__, __LINE__, csr->pco.header.len);
+        printf("%s %d - PCO length = %d \n", __FUNCTION__, __LINE__, csr->pco_new.header.len);
         context->pco = calloc(1, sizeof(pco_ie_t));
         memcpy(context->pco, (void *)(&csr->pco_new), sizeof(pco_ie_t));
     }

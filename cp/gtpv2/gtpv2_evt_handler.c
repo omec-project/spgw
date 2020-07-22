@@ -99,15 +99,22 @@ int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *ms
      * Requirement2 : Support guard timer. If retransmitted CSReq is received 
      *       after sending CSRsp then just sent back same CSrsp or drop CSReq.
      */
-#ifdef TEMP
-    ue_context_t *context; 
+    ue_context_t *context = NULL; 
     uint64_t imsi;
     imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
-    rte_hash_lookup_data(ue_context_by_imsi_hash, &imsi, (void **) &(context));
-    if(context != NULL)
+    int ret = rte_hash_lookup_data(ue_context_by_imsi_hash, &imsi, (void **) &(context));
+    if(ret >= 0)
     {
+        printf("Detected context replacement of the call \n");
+        msg->msg_type = GTP_RESERVED; 
+        msg->ue_context = context;
+        process_error_occured_handler_new((void *)msg, NULL);
+        printf("Deleted old call due to context replacement \n");
+        msg->msg_type = GTP_CREATE_SESSION_REQ; 
+        msg->ue_context = NULL;
     }
    
+#ifdef TEMP
     if(msg->rx_interface == PGW_S5_S8) 
     {
         /* when CSR received from SGWC add it as a peer*/
