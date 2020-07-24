@@ -4107,6 +4107,9 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 				"%s %s - Error on ue_context_by_fteid_hash del\n",__file__,
 				strerror(ret));
 	}
+    /* delete context from user context */
+    uint32_t temp_teid = context->s11_sgw_gtpc_teid;
+    rte_hash_del_key(ue_context_by_fteid_hash,(const void *) &temp_teid);
 
 #ifdef USE_DNS_QUERY
 	/* Delete UPFList entry from UPF Hash */
