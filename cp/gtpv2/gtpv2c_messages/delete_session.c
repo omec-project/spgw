@@ -40,7 +40,6 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 	uint32_t *s5s8_pgw_gtpc_ipv4)
 {
 	int ret;
-	int i;
 	ue_context_t *context = NULL;
 
 	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
@@ -111,7 +110,6 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 #endif
 #endif
 
-
 	if (cp_config->cp_type == SGWC) {
 		/*VS: Fill teid and ip address */
 		*s5s8_pgw_gtpc_teid = htonl(pdn->s5s8_pgw_gtpc_teid);
@@ -121,6 +119,8 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 				*s5s8_pgw_gtpc_teid, *s5s8_pgw_gtpc_ipv4);
 	}
 
+#ifdef DELETE_THIS
+	int i;
 	for (i = 0; i < MAX_BEARERS; ++i) {
 		if (pdn->eps_bearers[i] == NULL)
 			continue;
@@ -145,6 +145,7 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 			rte_panic("Incorrect provisioning of bearers\n");
 		}
 	}
+#endif
 	*_context = context;
 	return 0;
 }

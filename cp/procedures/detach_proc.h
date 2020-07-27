@@ -8,6 +8,12 @@
 proc_context_t*
 alloc_detach_proc(msg_info_t *msg);
 
+void
+proc_detach_failure(msg_info_t *msg, uint8_t cause);
+
+void proc_detach_complete(proc_context_t *proc_context);
+
+
 void 
 detach_event_handler(void *proc, uint32_t event, void *data);
 

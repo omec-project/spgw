@@ -27,8 +27,6 @@
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 extern udp_sock_t my_sock;
-extern struct sockaddr_in s11_mme_sockaddr;
-extern socklen_t s11_mme_sockaddr_len;
 
 proc_context_t*
 alloc_rab_proc(msg_info_t *msg)
@@ -104,7 +102,14 @@ process_rel_access_ber_req_handler(void *data, void *unused_param)
 void 
 process_release_access_bearer_request_pfcp_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    ue_context_t *ue_context = (ue_context_t *)data;
+    proc_context_t *proc_context = ue_context->current_proc;
+
+    msg_info_t msg = {0};
+    msg.msg_type = PFCP_SESSION_MODIFICATION_RESPONSE;
+    msg.proc_context = proc_context;
+
+    proc_rab_failed(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
     return;
 }
 
@@ -217,33 +222,34 @@ process_release_access_bearer_request(rel_acc_bearer_req_t *rel_acc_ber_req_t, u
 void 
 process_rab_proc_pfcp_mod_sess_rsp(msg_info_t *msg)
 {
-    ue_context_t *context = NULL;
     int ret = 0;
 	uint16_t payload_length = 0;
+    ue_context_t *ue_context = msg->ue_context; 
+    proc_context_t *proc_context = msg->proc_context;
+    transData_t *gtpc_trans = proc_context->gtpc_trans;
+
 
 	/*Validate the modification is accepted or not. */
 	if(msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value != REQUESTACCEPTED){
-			clLog(sxlogger, eCLSeverityDebug, "Cause received Modify response is %d\n",
+			clLog(sxlogger, eCLSeverityDebug, "Cause received PFCP Modify response is %d\n",
 					msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value);
-			mbr_error_response(msg,
-							  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-							  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+			proc_rab_failed(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
 			return;
 	}
 
 	/* Retrive the session information based on session id. */
+    ue_context_t *temp_context = NULL; 
 	if (get_sess_entry(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
-				&context) != 0) {
-		mbr_error_response(msg,
-						  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+				&temp_context) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u,"
 				"Sess ID:%lu, n",
 				__func__, msg->msg_type,
 				msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+
+		proc_rab_failed(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
 		return ;
 	}
-    assert(context == msg->proc_context->ue_context);
+    assert(temp_context == ue_context);
 
 	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
 			"Msg_Type:PFCP_SESSION_MODIFICATION_RESPONSE[%u], Seid:%lu, "
@@ -261,11 +267,9 @@ process_rab_proc_pfcp_mod_sess_rsp(msg_info_t *msg)
 			gtpv2c_tx);
 	if (ret != 0) {
 		if(ret != -1)
-            assert(0); // need to send RAB response 
-			mbr_error_response(msg, ret,
-								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
+		    clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
+			proc_rab_failed(msg, ret); 
 		return;
 	}
 
@@ -273,35 +277,13 @@ process_rab_proc_pfcp_mod_sess_rsp(msg_info_t *msg)
 		+ sizeof(gtpv2c_tx->gtpc);
 
 	gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
-			(struct sockaddr *) &s11_mme_sockaddr,
-			s11_mme_sockaddr_len);
+			(struct sockaddr *) &gtpc_trans->peer_sockaddr,
+			sizeof(struct sockaddr_in));
 
-	update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,
+	update_cli_stats(gtpc_trans->peer_sockaddr.sin_addr.s_addr,
 				gtpv2c_tx->gtpc.message_type,ACC,S11);
 
-    ue_context_t *ue_context = msg->ue_context; 
-    proc_context_t *proc_context = ue_context->current_proc;
-    transData_t *trans_rec = proc_context->gtpc_trans;
-
-    uint16_t port_num = s11_mme_sockaddr.sin_port; 
-    uint32_t sender_addr = s11_mme_sockaddr.sin_addr.s_addr; 
-    uint32_t seq_num = trans_rec->sequence; 
-    transData_t *temp_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
-    assert(temp_trans != NULL);
-
-    /* Let's cross check if transaction from the table is matchig with the one we have 
-     * in subscriber 
-     */
-    assert(proc_context->gtpc_trans == temp_trans);
-    proc_context->gtpc_trans =  NULL;
-
-    /* PFCP transaction is already complete. */
-    assert(proc_context->pfcp_trans == NULL);
-    free(temp_trans);
-    proc_context->gtpc_trans = NULL;
-    free(proc_context);
-    ue_context->current_proc = NULL;
-
+    proc_rab_complete(proc_context);
 	return;
 }
 
@@ -359,13 +341,48 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
     /* Update the UE state */
     pdn->state = IDEL_STATE;
 
-    s11_mme_sockaddr.sin_addr.s_addr =
-        htonl(context->s11_mme_gtpc_ipv4.s_addr);
-
-    clLog(sxlogger, eCLSeverityDebug, "%s:%d s11_mme_sockaddr.sin_addr.s_addr :%s\n",
+    clLog(sxlogger, eCLSeverityDebug, "%s:%d Sent RAB response to peer : %s\n",
             __func__, __LINE__,
-            inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
+            inet_ntoa(*((struct in_addr *)&gtpc_trans->peer_sockaddr.sin_addr.s_addr)));
 
     return 0;
 }
 
+void 
+proc_rab_failed(msg_info_t *msg, uint8_t cause )
+{
+    proc_context_t *proc_context = msg->proc_context;
+
+    rab_error_response(msg,
+                       cause,
+                       cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+
+    proc_rab_complete(proc_context);
+}
+
+/* should be called after sending RAB response */
+void 
+proc_rab_complete(proc_context_t *proc_context)
+{
+    ue_context_t *ue_context = proc_context->ue_context; 
+    transData_t *trans_rec = proc_context->gtpc_trans;
+
+    uint16_t port_num = trans_rec->peer_sockaddr.sin_port; 
+    uint32_t sender_addr = trans_rec->peer_sockaddr.sin_addr.s_addr; 
+    uint32_t seq_num = trans_rec->sequence; 
+    transData_t *temp_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
+    assert(temp_trans != NULL);
+
+    /* Let's cross check if transaction from the table is matchig with the one we have 
+     * in subscriber 
+     */
+    assert(proc_context->gtpc_trans == temp_trans);
+    proc_context->gtpc_trans =  NULL;
+
+    /* PFCP transaction is already complete. */
+    assert(proc_context->pfcp_trans == NULL);
+    free(temp_trans);
+    proc_context->gtpc_trans = NULL;
+    free(proc_context);
+    ue_context->current_proc = NULL;
+}

@@ -38,7 +38,6 @@
 #include "cp_transactions.h"
 
 extern udp_sock_t my_sock;
-extern struct sockaddr_in s11_mme_sockaddr;
 
 #define size sizeof(pfcp_sess_mod_req_t) /* ajay - clean this */
 /* Header Size of set_upd_forwarding_param ie */
@@ -2603,10 +2602,6 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
         transData_t *gtpc_trans = proc_context->gtpc_trans; 
 		set_create_session_response(
 				gtpv2c_tx, gtpc_trans->sequence, context, pdn, bearer);
-
-		s11_mme_sockaddr.sin_addr.s_addr =
-						htonl(context->s11_mme_gtpc_ipv4.s_addr);
-
 	}
 #ifdef FUTURE_NEED
     else if (cp_config->cp_type == PGWC) {
@@ -4063,6 +4058,7 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 
 
     transData_t *gtpc_trans = proc_context->gtpc_trans; 
+    proc_context->gtpc_trans = NULL; /* Caller would send gtp message and free the trans */ 
 	/* Fill gtpv2c structure for sending on s11 interface */
 	set_gtpv2c_teid_header((gtpv2c_header_t *) &del_resp, GTP_DELETE_SESSION_RSP,
 			context->s11_mme_gtpc_teid, gtpc_trans->sequence);
@@ -4074,14 +4070,6 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 	msg_len = encode_del_sess_rsp(&del_resp, (uint8_t *)gtpv2c_tx);
 
 	gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
-
-	s11_mme_sockaddr.sin_addr.s_addr =
-					htonl(context->s11_mme_gtpc_ipv4.s_addr);
-
-	clLog(s11logger, eCLSeverityDebug, "SAEGWC:%s:%d"
-			"s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__, __LINE__,
-			inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
-
 
 	/* Delete entry from session entry */
     printf("Delete session from the pfcp seid table \n");
@@ -4100,88 +4088,92 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 	if (ret)
 		return ret;
     printf("%s %d : number of PDNS = %d  \n",__FUNCTION__, __LINE__,context->num_pdns);
-	if(context->num_pdns == 0) {
-	/* Delete UE context entry from UE Hash */
-	if (rte_hash_del_key(ue_context_by_imsi_hash, &context->imsi) < 0){
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s %s - Error on ue_context_by_fteid_hash del\n",__file__,
-				strerror(ret));
-	}
+    if(context->num_pdns == 0) {
+        /* Delete UE context entry from UE Hash */
+        if (rte_hash_del_key(ue_context_by_imsi_hash, &context->imsi) < 0){
+            clLog(clSystemLog, eCLSeverityCritical,
+                    "%s %s - Error on ue_context_by_fteid_hash del\n",__file__,
+                    strerror(ret));
+        }
+
+        /* delete context from user context */
+        uint32_t temp_teid = context->s11_sgw_gtpc_teid;
+        rte_hash_del_key(ue_context_by_fteid_hash,(const void *) &temp_teid);
 
 #ifdef USE_DNS_QUERY
-	/* Delete UPFList entry from UPF Hash */
-	if ((upflist_by_ue_hash_entry_delete(&context->imsi, sizeof(context->imsi))) < 0){
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s %s - Error on upflist_by_ue_hash deletion of IMSI \n",__file__,
-				strerror(ret));
-	}
+        /* Delete UPFList entry from UPF Hash */
+        if ((upflist_by_ue_hash_entry_delete(&context->imsi, sizeof(context->imsi))) < 0){
+            clLog(clSystemLog, eCLSeverityCritical,
+                    "%s %s - Error on upflist_by_ue_hash deletion of IMSI \n",__file__,
+                    strerror(ret));
+        }
 #endif /* USE_DNS_QUERY */
 
 #ifdef USE_CSID
-	fqcsid_t *csids = context->sgw_fqcsid;
+        fqcsid_t *csids = context->sgw_fqcsid;
 
-	/* Get the session ID by csid */
-	for (uint16_t itr = 0; itr < csids->num_csid; itr++) {
-		sess_csid *tmp = NULL;
+        /* Get the session ID by csid */
+        for (uint16_t itr = 0; itr < csids->num_csid; itr++) {
+            sess_csid *tmp = NULL;
 
-		tmp = get_sess_csid_entry(csids->local_csid[itr]);
-		if (tmp == NULL)
-			continue;
+            tmp = get_sess_csid_entry(csids->local_csid[itr]);
+            if (tmp == NULL)
+                continue;
 
-		/* VS: Delete sess id from csid table */
-		for(uint16_t cnt = 0; cnt < tmp->seid_cnt; cnt++) {
-			if (sess_id == tmp->cp_seid[cnt]) {
-				for(uint16_t pos = cnt; pos < (tmp->seid_cnt - 1); pos++ )
-					tmp->cp_seid[pos] = tmp->cp_seid[pos + 1];
+            /* VS: Delete sess id from csid table */
+            for(uint16_t cnt = 0; cnt < tmp->seid_cnt; cnt++) {
+                if (sess_id == tmp->cp_seid[cnt]) {
+                    for(uint16_t pos = cnt; pos < (tmp->seid_cnt - 1); pos++ )
+                        tmp->cp_seid[pos] = tmp->cp_seid[pos + 1];
 
-				tmp->seid_cnt--;
-				clLog(clSystemLog, eCLSeverityDebug, "Session Deleted from csid table sid:%lu\n",
-						sess_id);
-			}
-		}
+                    tmp->seid_cnt--;
+                    clLog(clSystemLog, eCLSeverityDebug, "Session Deleted from csid table sid:%lu\n",
+                            sess_id);
+                }
+            }
 
-		if (tmp->seid_cnt == 0) {
-			/* Cleanup Internal data structures */
-			ret = del_peer_csid_entry(&csids->local_csid[itr], S5S8_PGWC_PORT_ID);
-			if (ret) {
-				clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-								strerror(errno));
-				return -1;
-			}
+            if (tmp->seid_cnt == 0) {
+                /* Cleanup Internal data structures */
+                ret = del_peer_csid_entry(&csids->local_csid[itr], S5S8_PGWC_PORT_ID);
+                if (ret) {
+                    clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
+                            strerror(errno));
+                    return -1;
+                }
 
-			/* Clean MME FQ-CSID */
-			if (context->mme_fqcsid != 0) {
-				ret = del_peer_csid_entry(&(context->mme_fqcsid)->local_csid[itr], S5S8_PGWC_PORT_ID);
-				if (ret) {
-					clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-									strerror(errno));
-					return -1;
-				}
-				if (!(context->mme_fqcsid)->num_csid)
-					rte_free(context->mme_fqcsid);
-			}
+                /* Clean MME FQ-CSID */
+                if (context->mme_fqcsid != 0) {
+                    ret = del_peer_csid_entry(&(context->mme_fqcsid)->local_csid[itr], S5S8_PGWC_PORT_ID);
+                    if (ret) {
+                        clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
+                                strerror(errno));
+                        return -1;
+                    }
+                    if (!(context->mme_fqcsid)->num_csid)
+                        rte_free(context->mme_fqcsid);
+                }
 
-			/* Clean UP FQ-CSID */
-			if (context->up_fqcsid != 0) {
-				ret = del_peer_csid_entry(&(context->up_fqcsid)->local_csid[itr],
-						SX_PORT_ID);
-				if (ret) {
-					clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-									strerror(errno));
-					return -1;
-				}
-				if (!(context->up_fqcsid)->num_csid)
-					rte_free(context->up_fqcsid);
-			}
-		}
+                /* Clean UP FQ-CSID */
+                if (context->up_fqcsid != 0) {
+                    ret = del_peer_csid_entry(&(context->up_fqcsid)->local_csid[itr],
+                            SX_PORT_ID);
+                    if (ret) {
+                        clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
+                                strerror(errno));
+                        return -1;
+                    }
+                    if (!(context->up_fqcsid)->num_csid)
+                        rte_free(context->up_fqcsid);
+                }
+            }
 
-	}
+        }
 
 #endif /* USE_CSID */
 
-	//Free UE context
-	rte_free(context);
-	}
+        //Free UE context
+        rte_free(context);
+    }
 	return 0;
 }
 
