@@ -133,6 +133,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
             uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
             uint32_t seq_num = proc->pfcp_trans->sequence; 
             transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
+            assert(pfcp_trans != NULL);
             assert(pfcp_trans == proc->pfcp_trans);
             stop_transaction_timer(proc->pfcp_trans);
             free(proc->pfcp_trans);

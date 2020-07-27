@@ -222,7 +222,7 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 		update_sys_stat(number_of_users, DECREMENT);
 		update_sys_stat(number_of_active_session, DECREMENT);
 
-        proc_detach_complete(proc_context);
+        proc_detach_complete(msg);
 
 	}
 	/* VS: Write or Send CCR -T msg to Gx_App */
@@ -311,6 +311,7 @@ process_pfcp_sess_del_request(msg_info_t *msg, del_sess_req_t *ds_req)
     transData_t *trans_entry;
     trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_del_request_timeout);
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
+    trans_entry->sequence = sequence;
 
     // link new transaction and proc context 
     proc_context->pfcp_trans = trans_entry;
@@ -337,21 +338,19 @@ process_pfcp_sess_del_request(msg_info_t *msg, del_sess_req_t *ds_req)
 void
 proc_detach_failure(msg_info_t *msg, uint8_t cause)
 {
-    proc_context_t *proc_context = msg->proc_context;
-
     ds_error_response(msg,
                       cause,
                       cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 
-    proc_detach_complete(proc_context);
+    proc_detach_complete(msg);
 }
 
 /* free transactions. delink from procedure. Free procedure and de-link from subscriber */
 void 
-proc_detach_complete(proc_context_t *proc_context)
+proc_detach_complete(msg_info_t *msg)
 {
+    proc_context_t *proc_context = msg->proc_context;
     transData_t *gtpc_trans = proc_context->gtpc_trans;
-    ue_context_t *ue_context = proc_context->ue_context;
  
     /* Cleanup transaction and cross references  */
     transData_t *trans = (transData_t *)delete_gtp_transaction(gtpc_trans->peer_sockaddr.sin_addr.s_addr,         
@@ -363,8 +362,5 @@ proc_detach_complete(proc_context_t *proc_context)
     proc_context->gtpc_trans = NULL;
     free(gtpc_trans);
     free(proc_context);
-
-    /* Requirement - multi-proc handling */
-    ue_context->current_proc = NULL;
     return;
 }

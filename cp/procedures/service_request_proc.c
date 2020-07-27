@@ -232,6 +232,7 @@ process_pfcp_sess_mod_request(msg_info_t *msg)
     transData_t *trans_entry;
     trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_mod_request_timeout);
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
+    trans_entry->sequence = sequence;
 
     proc_context_t *proc_context = context->current_proc;
     proc_context->pfcp_trans = trans_entry;

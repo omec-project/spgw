@@ -209,6 +209,7 @@ process_release_access_bearer_request(rel_acc_bearer_req_t *rel_acc_ber_req_t, u
 
         /* add transaction into transaction table */
         add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
+        trans_entry->sequence = sequence;
         /* link proc & transaction */
         rab_proc->pfcp_trans = trans_entry;
         trans_entry->proc_context = (void *)rab_proc;

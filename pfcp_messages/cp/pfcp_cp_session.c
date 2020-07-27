@@ -2397,6 +2397,7 @@ process_pfcp_sess_est_request(pdn_connection_t *pdn, upf_context_t *upf_ctx)
     update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
             pfcp_sess_est_req.header.message_type,SENT,SX);
     trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_est_request_timeout);
+    trans_entry->sequence = sequence;
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
 
     if (add_sess_entry(pdn->seid, context) != 0) {
@@ -4058,7 +4059,6 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 
 
     transData_t *gtpc_trans = proc_context->gtpc_trans; 
-    proc_context->gtpc_trans = NULL; /* Caller would send gtp message and free the trans */ 
 	/* Fill gtpv2c structure for sending on s11 interface */
 	set_gtpv2c_teid_header((gtpv2c_header_t *) &del_resp, GTP_DELETE_SESSION_RSP,
 			context->s11_mme_gtpc_teid, gtpc_trans->sequence);
