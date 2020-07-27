@@ -110,7 +110,7 @@ void get_error_ubrsp_info(msg_info_t *msg, err_rsp_info *err_rsp_info);
  * @param  : seq, sequesnce number.
  * @return : Returns nothing
  */
-void send_version_not_supported(int iface, uint32_t seq);
+void send_version_not_supported(struct sockaddr_in *peer_addr, int iface, uint32_t seq);
 
 void clean_up_while_error_pfcp_timeout(void *data);
 

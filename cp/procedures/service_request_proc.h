@@ -11,6 +11,12 @@ alloc_service_req_proc(msg_info_t *msg);
 void 
 service_req_event_handler(void *proc, uint32_t event, void *data);
 
+void
+proc_service_request_complete(proc_context_t *proc_context);
+
+void
+proc_service_request_failure(msg_info_t *msg, uint8_t cause);
+
 /* Function */
 /**
  * @brief  : Handles processing of modify bearer request
@@ -26,7 +32,7 @@ int process_mb_req_handler(void *arg1, void *arg2);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-process_pfcp_sess_mod_request(mod_bearer_req_t *mbr);
+process_pfcp_sess_mod_request(msg_info_t *msg);
 
 void
 process_pfcp_sess_mod_request_timeout(void *data);

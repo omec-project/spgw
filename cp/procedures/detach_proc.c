@@ -36,8 +36,6 @@
 #include "gtp_ies.h"
 
 extern udp_sock_t my_sock;
-extern socklen_t s11_mme_sockaddr_len;
-extern struct sockaddr_in s11_mme_sockaddr;
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 proc_context_t*
@@ -101,9 +99,9 @@ process_ds_req_handler(void *data, void *unused_param)
 	}
 
 	if (ret) {
-		if(ret != -1)
-			ds_error_response(msg, ret,
-								cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
+		if(ret != -1) {
+            proc_detach_failure(msg, ret);
+        }
 		return ret;
 	}
 
@@ -121,6 +119,7 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 	char *buffer = NULL;
 	gx_msg ccr_request = {0};
     proc_context_t *proc_context = msg->proc_context;
+    
 
 	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
 			"Msg_Type:PFCP_SESSION_DELETION_RESPONSE[%u], Seid:%lu, "
@@ -135,9 +134,8 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 
 		clLog(sxlogger, eCLSeverityCritical, "Cause received Del response is %d\n",
 				msg->pfcp_msg.pfcp_sess_del_resp.cause.cause_value);
-		ds_error_response(msg,
-						  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+
+		proc_detach_failure(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
 		return -1;
 	}
 
@@ -183,10 +181,10 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 	}
 
 	if (ret) {
-		ds_error_response(msg, ret,
-				cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
 		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
+
+		proc_detach_failure(msg, ret); 
 		return -1;
 	}
 
@@ -209,16 +207,22 @@ process_sess_del_resp_handler(void *data, void *unused_param)
     else 
 #endif
     {
+
+        transData_t *gtpc_trans = proc_context->gtpc_trans; 
+        struct sockaddr_in peer_addr = gtpc_trans->peer_sockaddr; 
 		/* Send response on s11 interface */
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
-				(struct sockaddr *) &s11_mme_sockaddr,
-				s11_mme_sockaddr_len);
+				(struct sockaddr *) &peer_addr,
+				sizeof(struct sockaddr_in));
 
 		/*CLI:CSResp sent cnt*/
-		update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,
+		update_cli_stats(peer_addr.sin_addr.s_addr,
 				gtpv2c_tx->gtpc.message_type, ACC,S11);
+
 		update_sys_stat(number_of_users, DECREMENT);
 		update_sys_stat(number_of_active_session, DECREMENT);
+
+        proc_detach_complete(msg);
 
 	}
 	/* VS: Write or Send CCR -T msg to Gx_App */
@@ -228,10 +232,13 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 				msglen + sizeof(ccr_request.msg_type));
 	}
 
-    	struct sockaddr_in saddr_in;
-    	saddr_in.sin_family = AF_INET;
-    	inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-    	update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
+#ifdef FUTURE_NEED
+    struct sockaddr_in saddr_in;
+    saddr_in.sin_family = AF_INET;
+    inet_aton("127.0.0.1", &(saddr_in.sin_addr));
+    update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
+#endif
+
 
 	RTE_SET_USED(unused_param);
 	return 0;
@@ -241,6 +248,14 @@ void
 process_pfcp_sess_del_request_timeout(void *data)
 {
     RTE_SET_USED(data);
+    ue_context_t *ue_context = (ue_context_t *)data;
+    proc_context_t *proc_context = ue_context->current_proc;
+
+    msg_info_t msg = {0};
+    msg.msg_type = PFCP_SESSION_DELETION_RESPONSE;
+    msg.proc_context = proc_context;
+
+    proc_detach_failure(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
     return;
 }
 
@@ -259,6 +274,7 @@ process_pfcp_sess_del_request(msg_info_t *msg, del_sess_req_t *ds_req)
     uint32_t sequence;
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
+	uint8_t pfcp_msg[512]={0};
 
     proc_context_t *proc_context = msg->proc_context;
 
@@ -268,17 +284,19 @@ process_pfcp_sess_del_request(msg_info_t *msg, del_sess_req_t *ds_req)
 	/* Lookup and get context of delete request */
 	ret = delete_context(ds_req->lbi, ds_req->header.teid.has_teid.teid,
 		&context, &s5s8_pgw_gtpc_teid, &s5s8_pgw_gtpc_ipv4);
-	if (ret)
+	if (ret) {
 		return ret;
+    }
 
     assert(proc_context->ue_context == context);
+
+	pdn = GET_PDN(context, ebi_index);
 
 	/* Fill pfcp structure for pfcp delete request and send it */
 	sequence = fill_pfcp_sess_del_req(&pfcp_sess_del_req);
 
-	pfcp_sess_del_req.header.seid_seqno.has_seid.seid = context->pdns[ebi_index]->dp_seid;
+	pfcp_sess_del_req.header.seid_seqno.has_seid.seid = pdn->dp_seid;
 
-	uint8_t pfcp_msg[512]={0};
 
 	int encoded = encode_pfcp_sess_del_req_t(&pfcp_sess_del_req, pfcp_msg);
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
@@ -286,29 +304,63 @@ process_pfcp_sess_del_request(msg_info_t *msg, del_sess_req_t *ds_req)
 
 	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"%s:%d Error sending: %i\n", __func__, __LINE__, errno);
-        return -1;
+        // Just logging is good enough, let timeout & retry take care further 
     } 
     update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
             pfcp_sess_del_req.header.message_type,SENT,SX);
     transData_t *trans_entry;
     trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_del_request_timeout);
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
+    trans_entry->sequence = sequence;
 
     // link new transaction and proc context 
     proc_context->pfcp_trans = trans_entry;
     trans_entry->proc_context = (void *)proc_context;
 
-	/* Update UE State */
-	pdn = GET_PDN(context, ebi_index);
 	pdn->state = PFCP_SESS_DEL_REQ_SNT_STATE;
 
+#ifdef DELETE_THIS
 	/* Lookup entry in hash table on the basis of session id*/
 	if (get_sess_entry(context->pdns[ebi_index]->seid, &context) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, context->pdns[ebi_index]->seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
+#endif
 
 	return 0;
 }
 
+// case 1: failed to delete context locally for whatever reason or failed to encode pfcp message  
+// case 2: Received pfcp del response with -ve casue 
+// case 3: failed to process pfcp del response 
+// case 3: PFCP delete message timedout 
+void
+proc_detach_failure(msg_info_t *msg, uint8_t cause)
+{
+    ds_error_response(msg,
+                      cause,
+                      cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+
+    proc_detach_complete(msg);
+}
+
+/* free transactions. delink from procedure. Free procedure and de-link from subscriber */
+void 
+proc_detach_complete(msg_info_t *msg)
+{
+    proc_context_t *proc_context = msg->proc_context;
+    transData_t *gtpc_trans = proc_context->gtpc_trans;
+ 
+    /* Cleanup transaction and cross references  */
+    transData_t *trans = (transData_t *)delete_gtp_transaction(gtpc_trans->peer_sockaddr.sin_addr.s_addr,         
+                                                               gtpc_trans->peer_sockaddr.sin_port,
+                                                               gtpc_trans->sequence);
+    assert(trans != NULL);
+    assert(trans == gtpc_trans);
+    gtpc_trans->cb_data = NULL;
+    proc_context->gtpc_trans = NULL;
+    free(gtpc_trans);
+    free(proc_context);
+    return;
+}
