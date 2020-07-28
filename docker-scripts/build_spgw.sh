@@ -124,7 +124,7 @@ build_spgw()
 		echo "Building Libs..."
 		make build-lib || { echo -e "\nmake lib failed\n"; }
 		echo "Building DP..."
-		make build-dp -j 10 EXTRA_CFLAGS='-DUSE_AF_PACKET -ggdb -O2' || { echo -e "\nmake failed\n"; }
+		#make build-dp -j 10 EXTRA_CFLAGS='-DUSE_AF_PACKET -ggdb -O2' || { echo -e "\nmake failed\n"; }
 	fi
 	if [ $SERVICE == 1 ] || [ $SERVICE == 3 ] ; then
 		echo "Building libgtpv2c..."
@@ -145,7 +145,6 @@ build_spgw()
 	fi
 	popd
 }
-
 
 (return 2>/dev/null) && echo "Sourced" && return
 
