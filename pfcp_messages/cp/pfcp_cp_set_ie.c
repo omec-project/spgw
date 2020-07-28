@@ -17,6 +17,10 @@
 #include "cp_log.h"
 #include "gen_utils.h"
 #include "cp_config.h"
+#include "spgw_cpp_wrapper.h"
+#include "gw_adapter.h"
+#include "cp_config_apis.h"
+#include "pfcp_cp_association.h"
 
 #define RI_MAX 8
 
@@ -1715,12 +1719,20 @@ void add_ip_to_heartbeat_hash(struct sockaddr_in *peer_addr, uint32_t recovery_t
 
 void delete_entry_heartbeat_hash(struct sockaddr_in *peer_addr)
 {
+    upf_context_t *upf_context = get_upf_context(peer_addr->sin_addr.s_addr);
+    if(upf_context != NULL)
+    {
+        upf_context->state = 0;
+    }
+
+    invalidate_upf_dns_results(peer_addr->sin_addr.s_addr);
 	int ret = rte_hash_del_key(heartbeat_recovery_hash,
 			(const void *)&(peer_addr->sin_addr.s_addr));
 	if (ret == -EINVAL || ret == -ENOENT) {
 		clLog(clSystemLog, eCLSeverityCritical,"%s - Error on rte_delete_enrty_key_data add in heartbeat\n",
 				strerror(ret));
 	}
+    
 }
 
 void clear_heartbeat_hash_table(void)

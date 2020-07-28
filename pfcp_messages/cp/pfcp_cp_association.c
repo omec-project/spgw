@@ -355,8 +355,6 @@ upf_context_t *get_upf_context(uint32_t upf_ip)
     return NULL;
 }
 
-
-
 void
 fill_pfcp_node_report_req(pfcp_node_rpt_req_t *pfcp_node_rep_req)
 {

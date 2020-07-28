@@ -42,6 +42,11 @@ extern "C"
         return spgwConfig::match_apn_profile_cpp(apn, len);
     }
     
+    void invalidate_upf_dns_results(uint32_t ip) 
+    {
+        spgwConfig::invalidate_user_plane_address(ip);
+    }
+
     void init_cpp_tables(void)
     {
         table = new spgwTables();

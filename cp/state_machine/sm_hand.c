@@ -1140,7 +1140,7 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
 			info_resp->sender_teid = ue->s11_mme_gtpc_teid;
             // TODO - Need more thought 
 			//info_resp->seq = ue->sequence;
-			info_resp->ebi_index = pdn->default_bearer_id;
+			info_resp->ebi_index = pdn->default_bearer_id - 5;
 			info_resp->teid = ue->s11_sgw_gtpc_teid;
 			break;
 		}
