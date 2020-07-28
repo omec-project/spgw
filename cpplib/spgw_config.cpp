@@ -435,3 +435,18 @@ apn_profile_t* spgwConfig::match_apn_profile_cpp(char *name, uint16_t len)
     return nullptr;
 }
 
+void 
+spgwConfig::invalidate_user_plane_address(uint32_t addr) 
+{
+    for (std::list<user_plane_profile_t*>::iterator it=config->user_plane_list.begin(); it!=config->user_plane_list.end(); ++it)
+    {
+        user_plane_profile_t *up=*it;
+        if(up->upf_addr == addr)
+        {
+            std::cout<<"invalidating upf address. \n";
+            up->upf_addr = 0;
+        }
+    }
+    return ;
+}
+

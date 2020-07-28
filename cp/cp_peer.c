@@ -112,6 +112,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		/* TODO: Flush sessions */
 		if (md->portId == SX_PORT_ID) {
 			delete_entry_heartbeat_hash(&dest_addr);
+            // invalidate dns results  
 #ifdef USE_CSID
 			del_peer_node_sess(md->dstIP, SX_PORT_ID);
 #endif /* USE_CSID */
