@@ -27,7 +27,6 @@
 #include "gtpv2_interface.h"
 
 extern int pfcp_fd;
-extern struct sockaddr_in s11_mme_sockaddr;
 
 /**
  * @brief  : Maintans gateway information

@@ -84,6 +84,7 @@ typedef struct msg_info {
     upf_context_t *upf_context;
     ue_context_t *ue_context;
     pdn_connection_t *pdn_context;
+    eps_bearer_t *bearer_context;
     struct sockaddr_in peer_addr;
     proc_context_t *proc_context;
 }msg_info_t;

@@ -285,7 +285,10 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			return -1;
 		}*/
 #endif
-        return -1;
+        clLog(clSystemLog, eCLSeverityCritical,
+                "%s- Context Replacement CSReq Received for IMSI:%lu \n",
+                __func__, imsi);
+        return GTPV2C_CAUSE_REQUEST_REJECTED ; 
 	}
 	if (if_ue_present == 0){
 		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
@@ -438,5 +441,3 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 
 	return 0;
 }
-
-

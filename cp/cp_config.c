@@ -816,7 +816,7 @@ get_upf_context_for_key(sub_selection_keys_t *key, sub_profile_t **sub_prof)
 
     if(upf_profile->upf_addr != 0) 
     {
-        upf_context_t *upf_context = get_upf_context(ip.s_addr);
+        upf_context_t *upf_context = get_upf_context(upf_profile->upf_addr);
         if(upf_context != NULL)
         {
             return upf_context;

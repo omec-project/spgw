@@ -12,6 +12,12 @@ alloc_initial_proc(msg_info_t *msg);
 void 
 initial_attach_event_handler(void *proc, uint32_t event, void *data);
 
+void 
+proc_initial_attach_complete(proc_context_t *proc_context);
+
+void 
+proc_initial_attach_failure(msg_info_t *msg, int cause);
+
 int
 handle_csreq_msg(proc_context_t *proc_context, msg_info_t *msg);
 
@@ -30,5 +36,6 @@ process_create_sess_req(create_sess_req_t *csr,
 
 int
 process_sess_est_resp_handler(void *data, void *unused_param);
+
 
 #endif

@@ -37,12 +37,7 @@ extern pcap_dumper_t *pcap_dumper;
 
 cp_config_t *cp_config;
 
-/* MME */
-struct sockaddr_in s11_mme_sockaddr;
-
-
 uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
-socklen_t s11_mme_sockaddr_len = sizeof(s11_mme_sockaddr);
 
 uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
@@ -101,9 +96,6 @@ static void init_s11(void)
     int s11_fd = -1;
 	int ret;
     struct sockaddr_in s11_sockaddr;
-
-	/* TODO: Need to think*/
-	s11_mme_sockaddr.sin_port = htons(cp_config->s11_port);
 
 	if (pcap_reader != NULL && pcap_dumper != NULL)
 		return;

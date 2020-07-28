@@ -35,8 +35,6 @@
 
 
 extern udp_sock_t my_sock;
-extern socklen_t s11_mme_sockaddr_len;
-extern struct sockaddr_in s11_mme_sockaddr;
 
 extern socklen_t s5s8_sockaddr_len;
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
@@ -508,7 +506,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *unused_param)
 		if(resp->msg_type != GX_RAA_MSG) {
 		    gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 		            (struct sockaddr *) &s11_mme_sockaddr,
-		            s11_mme_sockaddr_len);
+		            sizeof(struct sockaddr_in));
 
 			add_gtpv2c_if_timer_entry(
 					UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
@@ -542,6 +540,7 @@ process_cbresp_handler(void *data, void *unused_param)
 }
 #endif
 
+#ifdef FUTURE_NEED
 int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 {
     int ret = 0;
@@ -563,7 +562,7 @@ int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 
 	gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 			(struct sockaddr *) &s11_mme_sockaddr,
-			s11_mme_sockaddr_len);
+			sizeof(struct sockaddr_in));
 
 	update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,
 						gtpv2c_tx->gtpc.message_type, ACC,S11);
@@ -575,6 +574,7 @@ int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 
 	return 0;
 }
+#endif
 
 #ifdef FUTURE_NEED
 int
@@ -760,7 +760,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 	} else if (resp->msg_type != GX_RAA_MSG) {
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
-				s11_mme_sockaddr_len);
+				sizeof(struct sockaddr_in));
 
 		add_gtpv2c_if_timer_entry(
 				UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
@@ -1016,6 +1016,7 @@ int del_bearer_cmd_ccau_handler(void *data, void *unused_param)
  *
  */
 
+#ifdef FUTURE_NEED
 int
 process_delete_bearer_response_handler(void *data, void *unused_param)
 {
@@ -1030,6 +1031,7 @@ process_delete_bearer_response_handler(void *data, void *unused_param)
 	RTE_SET_USED(unused_param);
 	return 0;
 }
+#endif
 
 /*
  * This handler will be called when PFCP MOD is received from
@@ -1074,8 +1076,8 @@ del_bearer_cmd_mbr_resp_handler(void *data, void *unused_param)
 				(SAEGWC == cp_config->cp_type)) {
 
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
-				(struct sockaddr *) &s11_mme_sockaddr,
-				s11_mme_sockaddr_len);
+				(struct sockaddr *) &s11_mme_sockaddr,  /* need change - future */
+				sizeof(struct sockaddr_in));
 	}
 
 	RTE_SET_USED(unused_param);
@@ -1107,10 +1109,19 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
 	//pdn_connection_t *pdn = NULL;
 
 	switch(msg->msg_type){
-		case GTP_CREATE_SESSION_REQ:
-			info_resp->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
-			info_resp->teid =  msg->gtpc_msg.csr.header.teid.has_teid.teid;
-	   		break;
+        case GTP_CREATE_SESSION_REQ: {
+                info_resp->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
+                info_resp->teid =  msg->gtpc_msg.csr.header.teid.has_teid.teid;
+                break;
+            }
+
+        case GTP_RESERVED: {
+                ue_context_t *ue_context = msg->ue_context; 
+			    info_resp->teid = ue_context->s11_sgw_gtpc_teid;
+                // assumed to be triggered due to CSReq 
+                info_resp->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
+                break;
+            }
 
 		case PFCP_ASSOCIATION_SETUP_RESPONSE:{
             ue_context_t  *ue = msg->ue_context; 
@@ -1118,7 +1129,7 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
 			info_resp->sender_teid = ue->s11_mme_gtpc_teid;
             // TODO - Need more thought 
 			// info_resp->seq = ue->sequence;
-			info_resp->ebi_index = pdn->default_bearer_id;
+			info_resp->ebi_index = pdn->default_bearer_id - 5;
 			info_resp->teid = ue->s11_sgw_gtpc_teid;
 			break;
 		}
@@ -1180,7 +1191,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 		/* Send the delete PDN set request to MME */
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
-				s11_mme_sockaddr_len);
+				sizeof(struct sockaddr_in));
 
 		memset(gtpv2c_tx, 0, sizeof(gtpv2c_header_t));
 	}
@@ -1219,7 +1230,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 		/* Send the delete PDN set request to MME */
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
-				s11_mme_sockaddr_len);
+				sizeof(struct sockaddr_in));
 	}
 #else
 	RTE_SET_USED(data);

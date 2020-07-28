@@ -27,9 +27,6 @@
 #include "gw_adapter.h"
 
 extern udp_sock_t my_sock;
-extern struct sockaddr_in s11_mme_sockaddr;
-extern socklen_t s11_mme_sockaddr_len;
-
 extern socklen_t s5s8_sockaddr_len;
 
 extern uint16_t payload_length;
@@ -84,6 +81,7 @@ void get_error_csrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
             ue_context_t  *ue = (ue_context_t *)csreq_proc->ue_context; 
             pdn_connection_t *pdn = (pdn_connection_t *)csreq_proc->pdn_context;
             transData_t *gtpc_trans = csreq_proc->gtpc_trans;
+            msg->peer_addr = gtpc_trans->peer_sockaddr; 
 
 			rsp_info->sender_teid = ue->s11_mme_gtpc_teid;
 			rsp_info->seq = gtpc_trans->sequence; 
@@ -97,6 +95,7 @@ void get_error_csrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
             pdn_connection_t *pdn = (pdn_connection_t *)csreq_proc->pdn_context;
 	        ue_context_t *context = pdn->context;
             transData_t *gtpc_trans = csreq_proc->gtpc_trans;
+            msg->peer_addr = gtpc_trans->peer_sockaddr; 
 
 			rsp_info->sender_teid = context->s11_mme_gtpc_teid;
 			rsp_info->seq = gtpc_trans->sequence; 
@@ -165,6 +164,8 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 
     get_error_csrsp_info(msg, &rsp_info); 
 
+    assert(msg->peer_addr.sin_port != 0);
+
 #ifdef TEMP
     // Sending CCR-T in case of failure
     /* we should check if subscriber has gx session..this does not look good */
@@ -232,10 +233,11 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
             msg->gtpc_msg.csr.imsi.header.len, rsp_info.seq);
 #endif
 
+    
     if(iface == S11_IFACE){
         gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
-                (struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
-        update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
+                (struct sockaddr *) &msg->peer_addr, sizeof(struct sockaddr_in));
+        update_cli_stats(msg->peer_addr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
     }else{
         gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
                 (struct sockaddr *)(&my_sock.s5s8_recv_sockaddr),s5s8_sockaddr_len);
@@ -247,8 +249,8 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
     }
 
     /* Cleanup transaction and cross references  */
-    transData_t *trans = (transData_t *)delete_gtp_transaction(s11_mme_sockaddr.sin_addr.s_addr,         
-                                        s11_mme_sockaddr.sin_port,
+    transData_t *trans = (transData_t *)delete_gtp_transaction(msg->peer_addr.sin_addr.s_addr,         
+                                        msg->peer_addr.sin_port,
                                         rsp_info.seq);
 
     assert(trans != NULL);
@@ -301,10 +303,11 @@ void get_error_mbrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
             proc_context_t *proc_context = (proc_context_t *)msg->proc_context;
             ue_context_t  *ue_context = (ue_context_t *)proc_context->ue_context; 
             pdn_connection_t *pdn = (pdn_connection_t *)proc_context->pdn_context;
-            transData_t *trans_rec = proc_context->gtpc_trans;
+            transData_t *gtpc_trans = proc_context->gtpc_trans;
+            msg->peer_addr = gtpc_trans->peer_sockaddr; 
  
 			rsp_info->sender_teid = ue_context->s11_mme_gtpc_teid;
-			rsp_info->seq = trans_rec->sequence; 
+			rsp_info->seq = gtpc_trans->sequence; 
 		    rsp_info->ebi_index = pdn->default_bearer_id;
 			break;
 		}
@@ -336,6 +339,8 @@ void mbr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 	err_rsp_info rsp_info = {0};
 
 	get_error_mbrsp_info(msg, &rsp_info); // mbrsp 
+
+    assert(msg->peer_addr.sin_port != 0);
 
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
@@ -377,9 +382,9 @@ void mbr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 
 	if(iface == S11_IFACE){
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
-				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
+				(struct sockaddr *) &msg->peer_addr, sizeof(struct sockaddr_in));
 
-		update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
+		update_cli_stats(msg->peer_addr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
 	}else{
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), s5s8_sockaddr_len);
@@ -410,16 +415,11 @@ void get_error_dsrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 		case PFCP_SESSION_DELETION_RESPONSE: {
             proc_context_t *detach_proc = (proc_context_t *)msg->proc_context;
+            ue_context_t *ue_context = detach_proc->ue_context;
             transData_t *gtpc_trans = detach_proc->gtpc_trans;
-
-			if (get_ue_context(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid), &context)!= 0){
-				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
-				return;
-			}
-			rsp_info->sender_teid = context->s11_mme_gtpc_teid;
+            msg->peer_addr = gtpc_trans->peer_sockaddr; 
+			rsp_info->sender_teid = ue_context->s11_mme_gtpc_teid;
 			rsp_info->seq = gtpc_trans->sequence;
-			rsp_info->teid = UE_SESS_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
-			rsp_info->ebi_index = UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
 			break;
 
 		}
@@ -444,30 +444,14 @@ void get_error_dsrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 {
-	uint8_t eps_bearer_id = 0;
-	pdn_connection_t *pdn = NULL;
-	ue_context_t *context = NULL;
 	err_rsp_info rsp_info = {0};
 
 	get_error_dsrsp_info(msg, &rsp_info); // dsrsp
 
-	if(get_ue_context_while_error(rsp_info.teid, &context) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
-        // move on even if session is not found 
-	}
-	if(context != NULL ) {
-		for(int8_t idx = 0 ; idx < MAX_BEARERS; idx++) {
-			pdn = context->pdns[idx];
-			if(pdn == NULL) {
-				continue;
-			} else {
-				eps_bearer_id = UE_BEAR_ID(pdn->seid);
-			}
-		}
-	}
-    RTE_SET_USED(eps_bearer_id);
+    assert(msg->peer_addr.sin_port != 0);
 
 #ifdef FUTURE_NEED
+	uint8_t eps_bearer_id = 0;
     /* we should check if subscriber has gx session..this does not look good */
     if ((cp_config->gx_enabled) &&  
             (cp_config->cp_type != SGWC)){
@@ -496,6 +480,7 @@ void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 	header->gtpc.message_len = htons(msg_len - 4);
 
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
+
 #ifdef FUTURE_NEED
 	int ret = 0;
 	ret = clean_up_while_error(eps_bearer_id, rsp_info.teid, &context->imsi, context->imsi_len, rsp_info.seq);
@@ -505,8 +490,8 @@ void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 #endif
 	if(iface == S11_IFACE){
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
-				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
-		update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
+				(struct sockaddr *) &msg->peer_addr, sizeof(struct sockaddr_in));
+		update_cli_stats(msg->peer_addr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
 	}else{
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), s5s8_sockaddr_len);
@@ -537,15 +522,11 @@ void get_error_rabrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 		case PFCP_SESSION_MODIFICATION_RESPONSE: {
             proc_context_t *rab_proc = (proc_context_t *)msg->proc_context;
+            ue_context_t *ue_context = rab_proc->ue_context;
             transData_t *gtpc_trans = rab_proc->gtpc_trans;
-			if (get_ue_context(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid), &context)!= 0){
-				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
-				return;
-			}
-			rsp_info->sender_teid = context->s11_mme_gtpc_teid;
+            msg->peer_addr = gtpc_trans->peer_sockaddr; 
+			rsp_info->sender_teid = ue_context->s11_mme_gtpc_teid;
 			rsp_info->seq = gtpc_trans->sequence;
-			rsp_info->teid = UE_SESS_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
-			rsp_info->ebi_index = UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
 			break;
 
 		}
@@ -557,27 +538,11 @@ void get_error_rabrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 void rab_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 {
     RTE_SET_USED(iface);
-	uint8_t eps_bearer_id = 0;
-	pdn_connection_t *pdn = NULL;
-	ue_context_t *context = NULL;
 	err_rsp_info rsp_info = {0};
 
 	get_error_rabrsp_info(msg, &rsp_info); // rab-rsp
 
-	if(get_ue_context_while_error(rsp_info.teid, &context) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
-	}
-	if(context != NULL ) {
-		for(int8_t idx = 0 ; idx < MAX_BEARERS; idx++) {
-			pdn = context->pdns[idx];
-			if(pdn == NULL) {
-				continue;
-			} else {
-				eps_bearer_id = UE_BEAR_ID(pdn->seid);
-			}
-		}
-	}
-    RTE_SET_USED(eps_bearer_id);
+    assert(msg->peer_addr.sin_port != 0);
 
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
@@ -595,6 +560,8 @@ void rab_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 #ifdef FUTURE_NEED
+	ue_context_t *context = NULL;
+	uint8_t eps_bearer_id = 0;
 	int ret = 0;
 	ret = clean_up_while_error(eps_bearer_id, rsp_info.teid, &context->imsi, context->imsi_len, rsp_info.seq);
 	if( ret < 0 ) {
@@ -602,8 +569,8 @@ void rab_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 	}
 #endif
     gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
-            (struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
-    update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
+            (struct sockaddr *) &msg->peer_addr, sizeof(struct sockaddr_in));
+    update_cli_stats(msg->peer_addr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
 }
 
 #ifdef UPDATE_BEARER_SUPPORT
@@ -746,7 +713,7 @@ void ubr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 #endif
 
 /* Function to Fill and Send  Version not supported response to peer node */
-void send_version_not_supported(int iface, uint32_t seq)
+void send_version_not_supported(struct sockaddr_in *peer_addr, int iface, uint32_t seq)
 {
 	uint16_t payload_length = 0;
 	uint16_t msg_len = 0;
@@ -761,24 +728,25 @@ void send_version_not_supported(int iface, uint32_t seq)
 	header->gtpc.message_len = htons(msg_len - 4);
 
 	payload_length = msg_len;
-	if(iface == S11_IFACE){
-		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
-				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
+    if(iface == S11_IFACE){
+        payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
+            + sizeof(gtpv2c_tx->gtpc);
 
-	}else{
+        gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
+                (struct sockaddr *) peer_addr,
+                sizeof(struct sockaddr_in));
+
+        update_cli_stats(peer_addr->sin_addr.s_addr,
+                gtpv2c_tx->gtpc.message_type,REJ,S11);
+
+        gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
+                (struct sockaddr *) peer_addr, sizeof(struct sockaddr_in));
+
+    }else{
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), s5s8_sockaddr_len);
 
 	}
-	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
-		+ sizeof(gtpv2c_tx->gtpc);
-
-	gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
-			(struct sockaddr *) &s11_mme_sockaddr,
-			s11_mme_sockaddr_len);
-
-	update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,
-				gtpv2c_tx->gtpc.message_type,REJ,S11);
 
 	return;
 }

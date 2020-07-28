@@ -59,7 +59,7 @@ build_gtpv2_echo_request(gtpv2c_header_t *echo_pkt, uint16_t gtpu_seqnb)
 {
 	echo_request_t echo_req = {0};
 
-	set_gtpv2c_teid_header((gtpv2c_header_t *)&echo_req.header,
+	set_gtpv2c_header((gtpv2c_header_t *)&echo_req.header, 0, 
 			GTP_ECHO_REQ, 0, gtpu_seqnb);
 
 	set_recovery_ie_t((gtp_recovery_ie_t *)&echo_req.recovery, GTP_IE_RECOVERY,

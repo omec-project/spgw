@@ -43,8 +43,6 @@
 extern udp_sock_t my_sock;
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 extern socklen_t s5s8_sockaddr_len;
-extern struct sockaddr_in s11_mme_sockaddr;
-extern socklen_t s11_mme_sockaddr_len;
 
 /**
  * @brief  : Fill UE context default bearer information of default_eps_bearer_qos from CCA
@@ -833,11 +831,14 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	    		      		(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 	        				s5s8_sockaddr_len);
 		}else{
+            assert(0); 
+#ifdef FUTURE_NEED
 			s11_mme_sockaddr.sin_addr.s_addr =
 								htonl(context->s11_mme_gtpc_ipv4.s_addr);
 			gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 	    		      		(struct sockaddr *) &s11_mme_sockaddr,
-	        				s11_mme_sockaddr_len);
+	        				sizeof(struct sockaddr_in));
+#endif
 		}
 	}
 	return 0;

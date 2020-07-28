@@ -38,8 +38,6 @@
 #endif /* USE_DNS_QUERY */
 
 extern udp_sock_t my_sock;
-extern socklen_t s11_mme_sockaddr_len;
-extern struct sockaddr_in s11_mme_sockaddr;
 uint8_t s11_rx_buf[MAX_GTPV2C_UDP_LEN];
 
 uint32_t start_time;
@@ -64,7 +62,8 @@ extern uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
  * @return : Returns 0 in case of success , -1 otherwise
  */
 static uint8_t
-process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int iface)
+process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int iface, 
+                struct sockaddr_in *peer_addr)
 {
 	uint16_t payload_length = 0;
 	int ret = 0;
@@ -85,7 +84,7 @@ process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int ifa
 
 	/* Reset ECHO Timers */
 	if(iface == S11_IFACE){
-		ret = process_response(s11_mme_sockaddr.sin_addr.s_addr);
+		ret = process_response(peer_addr->sin_addr.s_addr);
 		if (ret) {
 			/* TODO: Error handling not implemented */
 		}
@@ -101,10 +100,10 @@ process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int ifa
 
 	if(iface == S11_IFACE){
 		gtpv2c_send(my_sock.sock_fd_s11, s11_tx_buf, payload_length,
-				(struct sockaddr *) &s11_mme_sockaddr,
-				s11_mme_sockaddr_len);
+				(struct sockaddr *) peer_addr,
+				sizeof(struct sockaddr_in));
 		cp_stats.echo++;
-		update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,
+		update_cli_stats(peer_addr->sin_addr.s_addr,
 					gtpv2c_tx->gtpc.message_type,SENT,S11);
 	}else{
 		gtpv2c_send(my_sock.sock_fd_s5s8, s5s8_tx_buf, payload_length,
@@ -124,7 +123,7 @@ process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int ifa
  * @return : Returns 0 in case of success , -1 otherwise
  */
 static uint8_t
-process_echo_resp(gtpv2c_header_t *gtpv2c_rx, int iface)
+process_echo_resp(gtpv2c_header_t *gtpv2c_rx, int iface, struct sockaddr_in *peer_addr)
 {
 	int ret = 0;
 
@@ -134,7 +133,7 @@ process_echo_resp(gtpv2c_header_t *gtpv2c_rx, int iface)
 	}
 
 	if(iface == S11_IFACE){
-		ret = process_response(s11_mme_sockaddr.sin_addr.s_addr);
+		ret = process_response(peer_addr->sin_addr.s_addr);
 		if (ret) {
 			clLog(clSystemLog, eCLSeverityCritical, "main.c::control_plane()::Error"
 					"\n\tprocess_echo_resp "
@@ -161,13 +160,14 @@ process_echo_resp(gtpv2c_header_t *gtpv2c_rx, int iface)
 
 
 /* Requirement1 - multiple read to read all the messages from the sockets 
- * Requirement2 - Support multiple MME connections. Having global - s11_mme_sockaddr is bad
  */
 int
 msg_handler_s11(void)
 {
     int ret = 0, bytes_s11_rx = 0;
     msg_info_t msg = {0};
+    struct sockaddr_in s11_peer_sockaddr = {0};
+    socklen_t s11_peer_sockaddr_len = sizeof(s11_peer_sockaddr);
 
     bzero(&s11_rx_buf, sizeof(s11_rx_buf));
     bzero(&s11_tx_buf, sizeof(s11_tx_buf));
@@ -176,13 +176,13 @@ msg_handler_s11(void)
 
     bytes_s11_rx = recvfrom(my_sock.sock_fd_s11,
             s11_rx_buf, MAX_GTPV2C_UDP_LEN, MSG_DONTWAIT,
-            (struct sockaddr *) &s11_mme_sockaddr,
-            &s11_mme_sockaddr_len);
+            (struct sockaddr *) &s11_peer_sockaddr,
+            &s11_peer_sockaddr_len);
     if (bytes_s11_rx == 0) {
         clLog(clSystemLog, eCLSeverityCritical, "SGWC|SAEGWC_s11 recvfrom error:"
                 "\n\ton %s:%u - %s\n",
-                inet_ntoa(s11_mme_sockaddr.sin_addr),
-                s11_mme_sockaddr.sin_port,
+                inet_ntoa(s11_peer_sockaddr.sin_addr),
+                s11_peer_sockaddr.sin_port,
                 strerror(errno));
         return -1;
     }
@@ -195,19 +195,19 @@ msg_handler_s11(void)
         return -1;
     }
 
-    msg.peer_addr = s11_mme_sockaddr;
+    msg.peer_addr = s11_peer_sockaddr;
 
     if (bytes_s11_rx > 0)
         ++cp_stats.rx;
 
-    update_cli_stats((uint32_t)s11_mme_sockaddr.sin_addr.s_addr,
+    update_cli_stats((uint32_t)s11_peer_sockaddr.sin_addr.s_addr,
             gtpv2c_s11_rx->gtpc.message_type,RCVD,S11);
 
     if (gtpv2c_s11_rx->gtpc.message_type == GTP_ECHO_REQ){
         if (bytes_s11_rx > 0) {
 
             /* this call will handle echo request for boh PGWC and SGWC */
-            ret = process_echo_req(gtpv2c_s11_rx, gtpv2c_s11_tx, S11_IFACE);
+            ret = process_echo_req(gtpv2c_s11_rx, gtpv2c_s11_tx, S11_IFACE, &s11_peer_sockaddr);
             if(ret != 0){
                 return 0;
             }
@@ -218,7 +218,7 @@ msg_handler_s11(void)
         if (bytes_s11_rx > 0) {
 
             /* this call will handle echo responce for boh PGWC and SGWC */
-            ret = process_echo_resp(gtpv2c_s11_rx, S11_IFACE);
+            ret = process_echo_resp(gtpv2c_s11_rx, S11_IFACE, &s11_peer_sockaddr);
             if(ret != 0){
                 return 0;
             }
@@ -228,7 +228,7 @@ msg_handler_s11(void)
     } else {
 
         /* Reset periodic timers */
-         process_response(s11_mme_sockaddr.sin_addr.s_addr);
+         process_response(s11_peer_sockaddr.sin_addr.s_addr);
 
         // in case of response - procerue is already part of transaction 
         // So now we have context. procedure, event, call sm handler  
@@ -251,7 +251,7 @@ msg_handler_s11(void)
         }
 
         if(gtpv2c_s11_rx->gtpc.message_type == GTP_DOWNLINK_DATA_NOTIFICATION_ACK) {
-            update_cli_stats((uint32_t)s11_mme_sockaddr.sin_addr.s_addr,
+            update_cli_stats((uint32_t)s11_peer_sockaddr.sin_addr.s_addr,
                     gtpv2c_s11_rx->gtpc.message_type,ACC,S11);
         }
 
@@ -383,12 +383,14 @@ msg_handler_s11(void)
     return 0;
 }
 
+#ifdef FUTURE_NEED
 int
 msg_handler_s5s8(void)
 {
 	int ret = 0;
 	int bytes_s5s8_rx = 0;
 	msg_info_t msg = {0};
+
 
 	bzero(&s5s8_rx_buf, sizeof(s5s8_rx_buf));
 	gtpv2c_header_t *gtpv2c_s5s8_rx = (gtpv2c_header_t *) s5s8_rx_buf;
@@ -560,3 +562,4 @@ msg_handler_s5s8(void)
 	}
     return 0;
 }
+#endif
