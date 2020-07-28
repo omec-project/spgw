@@ -1424,6 +1424,8 @@ void cause_check_sess_estab(pfcp_sess_estab_req_t *pfcp_session_request,
 uint8_t
 upf_context_entry_add(uint32_t *upf_ip, upf_context_t *entry)
 {
+    struct in_addr test; test.s_addr = *upf_ip;
+    printf("%s UPF context entry add UPF address %s \n", __FUNCTION__,inet_ntoa(test));
 	int ret = 0;
 	ret = rte_hash_add_key_data(upf_context_by_ip_hash,
 			(const void *)upf_ip , (void *)entry);
@@ -1440,6 +1442,8 @@ upf_context_entry_add(uint32_t *upf_ip, upf_context_t *entry)
 int
 upf_context_entry_lookup(uint32_t upf_ip, upf_context_t **entry)
 {
+    struct in_addr test; test.s_addr = upf_ip;
+    printf("%s UPF context entry find UPF address %s \n", __FUNCTION__,inet_ntoa(test));
 	int ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 			(const void*) &(upf_ip), (void **) entry);
 

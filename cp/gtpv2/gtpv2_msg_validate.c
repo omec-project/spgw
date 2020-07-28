@@ -65,9 +65,43 @@ int validate_csrsp_msg(create_sess_rsp_t *csrsp)
 }
 
 static
-int validate_mbreq_msg(mod_bearer_req_t *mbreq)
+int validate_mbreq_msg(msg_info_t *msg, mod_bearer_req_t *mb_req)
 {
-    RTE_SET_USED(mbreq);
+    int ret;
+    ue_context_t *context = NULL;
+
+	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
+			(const void *) &mb_req->header.teid.has_teid.teid,
+			(void **) &context);
+
+	if (ret < 0 || !context)
+		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+
+    msg->ue_context = context;
+
+	if (!mb_req->bearer_contexts_to_be_modified.eps_bearer_id.header.len
+			|| !mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.header.len) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Mandatory IE lbi/fteid missing in MBReq Dropping packet\n",
+				__func__, __LINE__);
+		return GTPV2C_CAUSE_INVALID_LENGTH;
+	}
+
+	uint8_t ebi_index = mb_req->bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
+	if (!(context->bearer_bitmap & (1 << ebi_index))) {
+		clLog(clSystemLog, eCLSeverityCritical,
+				"%s:%d Received modify bearer on non-existent EBI - "
+				"Dropping packet\n", __func__, __LINE__);
+		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+	}
+
+	eps_bearer_t *bearer = context->eps_bearers[ebi_index];
+	if (!bearer) {
+		clLog(clSystemLog, eCLSeverityCritical,
+				"%s:%d Received modify bearer on non-existent EBI - "
+				"Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
+		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+	}
+    msg->bearer_context = bearer; 
     return 0;
 }
 
@@ -173,7 +207,11 @@ int validate_gtpv2_message_content(msg_info_t *msg)
         }        
         case GTP_MODIFY_BEARER_REQ:
         {
-            ret = validate_mbreq_msg(&msg->gtpc_msg.mbr);
+            ret = validate_mbreq_msg(msg, &msg->gtpc_msg.mbr);
+		    if(ret != 0 ) {
+                mbr_error_response(msg, ret,
+				cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+            }
             break;
         }
         case GTP_MODIFY_BEARER_RSP:

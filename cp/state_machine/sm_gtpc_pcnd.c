@@ -53,8 +53,9 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg, int bytes_rx)
 			fprintf(stderr, "Discarding packet due to gtp version is not supported..");
 			return GTPV2C_CAUSE_VERSION_NOT_SUPPORTED;
 		}else if (gtpv2c_rx->gtpc.version > GTP_VERSION_GTPV2C) {
-			send_version_not_supported(cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE,
-					gtpv2c_rx->teid.has_teid.seq);
+			send_version_not_supported(&msg->peer_addr, 
+                                       cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE,
+					                   gtpv2c_rx->teid.has_teid.seq);
 			fprintf(stderr, "Discarding packet due to gtp version is not supported..");
 			return GTPV2C_CAUSE_VERSION_NOT_SUPPORTED;
 		}

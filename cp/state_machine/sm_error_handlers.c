@@ -29,6 +29,8 @@
 #include "gx_error_rsp.h"
 #include "cp_main.h"
 #include "upf_struct.h"
+#include "spgw_cpp_wrapper.h"
+#include "cp_transactions.h"
 
 extern struct rte_hash *bearer_by_fteid_hash;
 extern udp_sock_t my_sock;
@@ -62,7 +64,6 @@ process_error_occured_handler_new(void *data, void *unused_param)
 
     ebi_index = info_resp.ebi_index;
     pdn = GET_PDN(context ,ebi_index);
-    assert(pdn == msg->pdn_context);
 
     del_sess_entry(pdn->seid); 
 
@@ -77,6 +78,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
         }
     }
 
+    printf("Delete all bearers \n");
     // if all bearers released then release pdn context 
     if(pdn->num_bearer == 0) {
         rte_hash_del_key(pdn_by_fteid_hash, (const void*) &teid);
@@ -88,7 +90,10 @@ process_error_occured_handler_new(void *data, void *unused_param)
         context->num_pdns --;
     }
 
+    printf("Delete all PDNs \n");
     proc_context_t *proc = context->current_proc;
+    upf_context_t *upf_context = context->upf_context;
+
     // if all PDNs released then release user context 
     if (context->num_pdns == 0) {
         rte_hash_del_key(ue_context_by_imsi_hash,(const void *) &(*context).imsi);
@@ -96,9 +101,45 @@ process_error_occured_handler_new(void *data, void *unused_param)
         rte_free(context);
         context = NULL;
     }
-    assert(proc->gtpc_trans == NULL);
-    assert(proc->pfcp_trans == NULL);
-    free(proc);
+
+    if(upf_context != NULL) {
+	    pending_proc_key_t *key = NULL;
+        LIST_FOREACH(key, &upf_context->pendingProcs, procentries) {
+            if(key != NULL && (key->proc_context == (void *)proc) ) {
+                LIST_REMOVE(key, procentries);
+                rte_free(key);
+                break;
+            }
+        }
+    }
+
+    printf("Delete Proc if any \n");
+    if(proc != NULL) {
+        if(proc->gtpc_trans != NULL) {
+            printf("Delete gtpc procs \n");
+            /* Only MME initiated transactions as of now */
+            uint16_t port_num = proc->gtpc_trans->peer_sockaddr.sin_port; 
+            uint32_t sender_addr = proc->gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
+            uint32_t seq_num = proc->gtpc_trans->sequence; 
+            transData_t *gtpc_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
+            assert(gtpc_trans == proc->gtpc_trans);
+            stop_transaction_timer(proc->gtpc_trans);
+            free(proc->gtpc_trans);
+        }
+        if(proc->pfcp_trans != NULL) {
+            // only self initiated transactions as of now 
+            printf("Delete pfcp procs \n");
+            uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
+            uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
+            uint32_t seq_num = proc->pfcp_trans->sequence; 
+            transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
+            assert(pfcp_trans != NULL);
+            assert(pfcp_trans == proc->pfcp_trans);
+            stop_transaction_timer(proc->pfcp_trans);
+            free(proc->pfcp_trans);
+        }
+        free(proc);
+    }
     return 0;
 }
 

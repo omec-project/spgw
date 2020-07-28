@@ -25,7 +25,6 @@
 
 extern udp_sock_t my_sock;
 
-extern socklen_t s11_mme_sockaddr_len;
 extern uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 extern socklen_t s5s8_sockaddr_len;
@@ -379,7 +378,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 				if (cp_config->cp_type == SAEGWC) {
 					gtpv2c_send(my_sock.sock_fd_s11, tx_buf, payload_length,
 							(struct sockaddr *) &s11_mme_sockaddr,
-							s11_mme_sockaddr_len);
+							sizeof(struct sockaddr_in));
 
 					clLog(clSystemLog, eCLSeverityDebug, FORMAT"Send PGW Restart notification to MME \n",
 							ERR_MSG);
@@ -389,7 +388,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 				if ((cp_config->cp_type == SGWC) && (iface == S5S8_SGWC_PORT_ID)) {
 					gtpv2c_send(my_sock.sock_fd_s11, tx_buf, payload_length,
 							(struct sockaddr *) &s11_mme_sockaddr,
-							s11_mme_sockaddr_len);
+							sizeof(struct sockaddr_in));
 
 					clLog(clSystemLog, eCLSeverityDebug, FORMAT"Send PGW Restart notification to MME \n",
 							ERR_MSG);
@@ -425,7 +424,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 			//		MOD);
 				gtpv2c_send(my_sock.sock_fd_s11, tx_buf, payload_length,
 						(struct sockaddr *) &s11_mme_sockaddr,
-						s11_mme_sockaddr_len);
+						sizeof(struct sockaddr_in));
 		}
 		if (cp_config->cp_type == SGWC) {
 			/* Get peer CSID associated with node */
@@ -587,7 +586,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 				/* Send the PGW Restart notification */
 				gtpv2c_send(my_sock.sock_fd_s11, s11_tx_buf, payload_length,
 						(struct sockaddr *) &s11_mme_sockaddr,
-						s11_mme_sockaddr_len);
+						sizeof(struct sockaddr_in));
 
 				clLog(clSystemLog, eCLSeverityDebug, FORMAT"Send PGW Restart notification to MME \n",
 						ERR_MSG);

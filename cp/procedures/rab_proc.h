@@ -12,6 +12,13 @@ alloc_rab_proc(msg_info_t *msg);
 void 
 rab_event_handler(void *proc, uint32_t event, void *data);
 
+void 
+proc_rab_complete(proc_context_t *proc_context);
+
+void 
+proc_rab_failed(msg_info_t *msg, uint8_t cause);
+
+
 int
 process_rel_access_ber_req_handler(void *data, void *unused_param);
 

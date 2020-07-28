@@ -34,7 +34,6 @@
 
 extern int s11logger;
 extern int s5s8logger;
-extern struct sockaddr_in s11_mme_sockaddr;
 extern udp_sock_t my_sock;
 
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
@@ -99,15 +98,22 @@ int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *ms
      * Requirement2 : Support guard timer. If retransmitted CSReq is received 
      *       after sending CSRsp then just sent back same CSrsp or drop CSReq.
      */
-#ifdef TEMP
-    ue_context_t *context; 
+    ue_context_t *context = NULL; 
     uint64_t imsi;
     imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
-    rte_hash_lookup_data(ue_context_by_imsi_hash, &imsi, (void **) &(context));
-    if(context != NULL)
+    int ret = rte_hash_lookup_data(ue_context_by_imsi_hash, &imsi, (void **) &(context));
+    if(ret >= 0)
     {
+        printf("Detected context replacement of the call \n");
+        msg->msg_type = GTP_RESERVED; 
+        msg->ue_context = context;
+        process_error_occured_handler_new((void *)msg, NULL);
+        printf("Deleted old call due to context replacement \n");
+        msg->msg_type = GTP_CREATE_SESSION_REQ; 
+        msg->ue_context = NULL;
     }
    
+#ifdef TEMP
     if(msg->rx_interface == PGW_S5_S8) 
     {
         /* when CSR received from SGWC add it as a peer*/
@@ -147,6 +153,7 @@ int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *ms
     trans->proc_context = (void *)csreq_proc;
     csreq_proc->gtpc_trans = trans;
     trans->sequence = seq_num;
+    trans->peer_sockaddr = msg->peer_addr;
 
     csreq_proc->handler((void *)csreq_proc, (uint32_t)msg->event, (void *)msg);
     return 0;
@@ -380,6 +387,7 @@ int handle_modify_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg
         transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
         add_gtp_transaction(source_addr, source_port, seq_num, trans);
         trans->sequence = seq_num;
+        trans->peer_sockaddr = msg->peer_addr;
 
         /* link transaction and proc */
         trans->proc_context = (void *)mbreq_proc;
@@ -494,6 +502,7 @@ int handle_delete_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *ms
     gtpc_trans->proc_context = (void *)detach_proc;
     detach_proc->gtpc_trans = gtpc_trans;
     gtpc_trans->sequence = seq_num;
+    gtpc_trans->peer_sockaddr = msg->peer_addr;
 
     detach_proc->handler((void*)detach_proc, msg->event, (void*)msg); 
     return 0;
@@ -602,6 +611,7 @@ int handle_rel_access_bearer_req_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg
     trans->proc_context = (void *)rab_proc;
     rab_proc->gtpc_trans = trans;
     trans->sequence = seq_num;
+    trans->peer_sockaddr = msg->peer_addr;
 
     // set cross references in context 
     context->current_proc = rab_proc;
@@ -842,6 +852,7 @@ int handle_delete_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg
     return 0;
 }
 
+#ifdef FUTURE_NEEDS
 // saegw - PDN_GW_INIT_BEARER_DEACTIVATION  DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT => process_delete_bearer_resp_handler  
 // saegw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT => process_delete_bearer_response_handler 
 // pgw - PDN_GW_INIT_BEARER_DEACTIVATION DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT ==> process_delete_bearer_resp_handler
@@ -899,6 +910,7 @@ int handle_delete_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *ms
     process_delete_bearer_response_handler(msg, NULL);
     return 0;
 }
+#endif
 
 // saegw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC CONNECTED_STATE DELETE_BER_CMD_RCVD_EVNT ==> process_delete_bearer_command_handler
 // pgw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC CONNECTED_STATE DELETE_BER_CMD_RCVD_EVNT - process_delete_bearer_command_handler

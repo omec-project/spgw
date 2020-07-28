@@ -37,7 +37,6 @@
 #include "cp_transactions.h"
 
 extern udp_sock_t my_sock;
-extern struct sockaddr_in s11_mme_sockaddr;
 
 /* PGWC S5S8 handlers:
  * static int parse_pgwc_s5s8_create_session_request(...)
@@ -1079,6 +1078,7 @@ process_delete_bearer_resp_pfcp_timeout(void *data)
     return;
 }
 
+#ifdef FUTURE_NEED
 int
 process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 {
@@ -1174,3 +1174,4 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 
 	return 0;
 }
+#endif

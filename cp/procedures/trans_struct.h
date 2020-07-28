@@ -10,6 +10,7 @@
 #define __TRANS_STRUCT_H
 #include <stdint.h>
 #include "timer.h"
+#include <netinet/ip.h>
 
 /**
  * @brief  : Maintains context of upf
@@ -28,6 +29,9 @@ struct transData
 	gstimerinfo_t  rt;
     uint8_t itr_cnt;
     timeout_handler_t timeout_function;
+
+    /* This is important field, since sender FTEID and actual sender address can be different */
+    struct sockaddr_in peer_sockaddr; 
 };
 typedef struct transData transData_t; 
 #endif
