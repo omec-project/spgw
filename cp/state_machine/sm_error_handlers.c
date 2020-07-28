@@ -34,7 +34,6 @@
 
 extern struct rte_hash *bearer_by_fteid_hash;
 extern udp_sock_t my_sock;
-struct sockaddr_in s11_mme_sockaddr;
 
 // case1 : pfcp association setup failure
 int
@@ -119,8 +118,8 @@ process_error_occured_handler_new(void *data, void *unused_param)
         if(proc->gtpc_trans != NULL) {
             printf("Delete gtpc procs \n");
             /* Only MME initiated transactions as of now */
-            uint16_t port_num = s11_mme_sockaddr.sin_port; 
-            uint32_t sender_addr = s11_mme_sockaddr.sin_addr.s_addr; 
+            uint16_t port_num = proc->gtpc_trans->peer_sockaddr.sin_port; 
+            uint32_t sender_addr = proc->gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
             uint32_t seq_num = proc->gtpc_trans->sequence; 
             transData_t *gtpc_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
             assert(gtpc_trans == proc->gtpc_trans);
@@ -134,6 +133,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
             uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
             uint32_t seq_num = proc->pfcp_trans->sequence; 
             transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
+            assert(pfcp_trans != NULL);
             assert(pfcp_trans == proc->pfcp_trans);
             stop_transaction_timer(proc->pfcp_trans);
             free(proc->pfcp_trans);

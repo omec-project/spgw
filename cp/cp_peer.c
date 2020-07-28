@@ -23,7 +23,6 @@
 
 
 uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
-extern socklen_t s11_mme_sockaddr_len;
 extern socklen_t s5s8_sockaddr_len;
 extern udp_sock_t my_sock;
 
@@ -70,7 +69,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		it = S5S8;
 	}
 
-	clLog(clSystemLog, eCLSeverityDebug, "%s - %s:%s:%u.%s (%dms) has expired\n", getPrintableTime(),
+	clLog(clSystemLog, eCLSeverityCritical, "%s - %s:%s:%u.%s (%dms) has expired\n", getPrintableTime(),
 		md->name, inet_ntoa(*(struct in_addr *)&md->dstIP), md->portId,
 		ti == &md->pt ? "Periodic_Timer" :
 		ti == &md->tt ? "Transmit_Timer" : "unknown",
@@ -170,7 +169,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 	if (md->portId == S11_SGW_PORT_ID) {
 		gtpv2c_send(my_sock.sock_fd_s11, echo_tx_buf, payload_length,
 		               (struct sockaddr *) &dest_addr,
-		               s11_mme_sockaddr_len);
+		               sizeof(struct sockaddr_in));
 
 		if (ti == &md->tt)
 		{

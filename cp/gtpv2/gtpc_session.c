@@ -25,10 +25,6 @@
 
 extern udp_sock_t my_sock;
 extern socklen_t s5s8_sockaddr_len;
-
-extern struct sockaddr_in s11_mme_sockaddr;
-extern socklen_t s11_mme_sockaddr_len;
-
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 #ifdef FUTURE_NEED
@@ -779,9 +775,6 @@ process_sgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp)
 	bearer->s1u_sgw_gtpu_ipv4.s_addr = cb_rsp->bearer_contexts.s1u_sgw_fteid.ipv4_address;
 	bearer->s1u_sgw_gtpu_teid = cb_rsp->bearer_contexts.s1u_sgw_fteid.teid_gre_key;
 
-	/* Update the next hop IP address */
-	s11_mme_sockaddr.sin_addr.s_addr = ntohl(context->s11_mme_gtpc_ipv4.s_addr);
-
 	uint32_t  seq_no = 0;
 	seq_no = bswap_32(cb_rsp->header.teid.has_teid.seq) ;
 	seq_no = seq_no >> 8;
@@ -1220,9 +1213,6 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *dsr, uint8_t *gtpv2c_t
 	gtpv2c_header_t *header = (gtpv2c_header_t *) gtpv2c_tx;
 	header->gtpc.message_len = htons(msg_len - 4);
 
-	s11_mme_sockaddr.sin_addr.s_addr =
-		htonl(context->s11_mme_gtpc_ipv4.s_addr);
-
 	clLog(clSystemLog, eCLSeverityDebug, "%s: s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__,
 			inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
 
@@ -1449,11 +1439,8 @@ process_update_bearer_request(upd_bearer_req_t *ubr)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 
 
-	s11_mme_sockaddr.sin_addr.s_addr =
-				htonl(context->s11_mme_gtpc_ipv4.s_addr);
-
 	gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
-				(struct sockaddr *) &s11_mme_sockaddr, s11_mme_sockaddr_len);
+				(struct sockaddr *) &s11_mme_sockaddr, sizeof(struct sockaddr_in));
 
 	return 0;
 }

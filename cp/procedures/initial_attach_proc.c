@@ -30,12 +30,9 @@
 #include "pfcp_association_setup_proc.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
-extern struct sockaddr_in s11_mme_sockaddr;
-extern socklen_t s11_mme_sockaddr_len;
 
 extern int s11logger;
 extern int s5s8logger;
-extern struct sockaddr_in s11_mme_sockaddr;
 extern udp_sock_t my_sock;
 
 static uint32_t s5s8_sgw_gtpc_teid_offset;
@@ -103,15 +100,9 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
 	if (ret) {
         // > 0 cause - Send reject message out 
         // -1 : just cleanup call locally 
-		if(ret != -1) {
-            // send cs response 
-			cs_error_response(msg, ret,
-					cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		}
-        // cleanup call locally 
-		process_error_occured_handler_new((void *)msg, NULL);
 		clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Error: %d \n",
 				__file__, __func__, __LINE__, ret);
+        proc_initial_attach_failure(msg, ret);
 		return -1;
 	}
     csreq_proc->ue_context = (void *)context;
@@ -147,10 +138,8 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
         if (pfcp_trans == NULL) {
             clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: pfcp send error \n",
                     __func__, __LINE__);
-            ret = GTPV2C_CAUSE_INVALID_PEER;
-			cs_error_response(msg, ret,
-						      cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-	        process_error_occured_handler_new((void *)msg, NULL);
+            proc_initial_attach_failure(msg, GTPV2C_CAUSE_INVALID_PEER);
+            return -1;
         }
         csreq_proc->pfcp_trans = pfcp_trans;
         return 0;
@@ -535,6 +524,7 @@ process_sess_est_resp_handler(void *data, void *unused_param)
     int ret = 0;
 	uint16_t payload_length = 0;
 	msg_info_t *msg = (msg_info_t *)data;
+    proc_context_t *proc_context = msg->proc_context;
 
 	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
 			"Msg_Type:PFCP_SESSION_ESTABLISHMENT_RESPONSE[%u], Seid:%lu, "
@@ -546,15 +536,9 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 
 
 	if(msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value != REQUESTACCEPTED) {
-		msg->state = ERROR_OCCURED_STATE;
-		msg->event = ERROR_OCCURED_EVNT;
-		msg->proc = INITIAL_PDN_ATTACH_PROC;
-		cs_error_response(msg,
-						  GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER,
-						  cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		process_error_occured_handler_new(&msg, NULL);
 		clLog(sxlogger, eCLSeverityDebug, "Cause received Est response is %d\n",
 				msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value);
+        proc_initial_attach_failure(msg, GTPV2C_CAUSE_REQUEST_REJECTED);
 		return -1;
 	}
 
@@ -570,13 +554,9 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 	//		msg->pfcp_msg.pfcp_sess_est_resp.up_fseid.seid);
 
 	if (ret) {
-		if(ret != -1){
-			cs_error_response(msg, ret,
-								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-			process_error_occured_handler_new(data, unused_param);
-		}
 		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
+        proc_initial_attach_failure(msg, ret);
 		return -1;
 	}
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
@@ -603,34 +583,17 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 		//s5s8_sgwc_msgcnt++;
 	} else {
 #endif
+        transData_t *trans_rec = proc_context->gtpc_trans;
 		/* Send response on s11 interface */
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
-				(struct sockaddr *) &s11_mme_sockaddr,
-				s11_mme_sockaddr_len);
+				(struct sockaddr *) &trans_rec->peer_sockaddr,
+				sizeof(struct sockaddr_in));
 
-		update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,
+		update_cli_stats(trans_rec->peer_sockaddr.sin_addr.s_addr,
 				gtpv2c_tx->gtpc.message_type, ACC,S11);
+    
+        proc_initial_attach_complete(proc_context);
         
-        ue_context_t *ue_context = msg->ue_context; 
-        proc_context_t *proc_context = ue_context->current_proc;
-        transData_t *trans_rec = proc_context->gtpc_trans;
-        uint16_t port_num = s11_mme_sockaddr.sin_port; 
-        uint32_t sender_addr = s11_mme_sockaddr.sin_addr.s_addr; 
-        uint32_t seq_num = trans_rec->sequence; 
-        transData_t *temp_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
-        assert(temp_trans != NULL);
-
-        /* Let's cross check if transaction from the table is matchig with the one we have 
-         * in subscriber 
-         */
-        assert(proc_context->gtpc_trans == temp_trans);
-        proc_context->gtpc_trans =  NULL;
-        
-        /* PFCP transaction is already complete. */
-        assert(proc_context->pfcp_trans == NULL);
-        free(temp_trans);
-        free(proc_context);
-        ue_context->current_proc = NULL;
 #ifdef FUTURE_NEED
 	}
 #endif
@@ -791,14 +754,11 @@ fill_context_info(create_sess_req_t *csr, ue_context_t *context)
 	context->serving_nw.mcc_digit_2 = csr->serving_network.mcc_digit_2;
 	context->serving_nw.mcc_digit_3 = csr->serving_network.mcc_digit_3;
 
- 	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
-	  if(csr->indctn_flgs.header.len != 0) {
-	  	context->indication_flag.oi = csr->indctn_flgs.indication_oi;
-	  }
-
-	  s11_mme_sockaddr.sin_addr.s_addr =
-	  				htonl(csr->sender_fteid_ctl_plane.ipv4_address);
-	}
+    if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
+        if(csr->indctn_flgs.header.len != 0) {
+            context->indication_flag.oi = csr->indctn_flgs.indication_oi;
+        }
+    }
 
 	return 0;
 }
@@ -1025,5 +985,40 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 
 }
 
+void proc_initial_attach_failure(msg_info_t *msg, int cause)
+{
+    if(cause != -1) {
+        // send cs response 
+        cs_error_response(msg, cause,
+                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+    }
+    // cleanup call locally 
+    process_error_occured_handler_new((void *)msg, NULL);
+    return;
+}
 
+void proc_initial_attach_complete(proc_context_t *proc_context)
+{
+    transData_t *gtpc_trans = proc_context->gtpc_trans;
+    ue_context_t *ue_context = proc_context->ue_context;
 
+    uint16_t port_num = gtpc_trans->peer_sockaddr.sin_port; 
+    uint32_t sender_addr = gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
+    uint32_t seq_num = gtpc_trans->sequence; 
+
+    transData_t *temp_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
+    assert(temp_trans != NULL);
+
+    /* Let's cross check if transaction from the table is matchig with the one we have 
+     * in subscriber 
+     */
+    assert(gtpc_trans == temp_trans);
+    proc_context->gtpc_trans =  NULL;
+
+    /* PFCP transaction is already complete. */
+    assert(proc_context->pfcp_trans == NULL);
+    free(gtpc_trans);
+    free(proc_context);
+    ue_context->current_proc = NULL;
+    return;
+}
