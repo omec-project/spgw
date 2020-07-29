@@ -72,6 +72,7 @@ class spgwConfigStore
             }
             return nullptr;
         }
+
         qos_profile_t* get_qos_profile(char *name) 
         {
             for (std::list<qos_profile_t*>::iterator it=qos_profile_list.begin(); it!=qos_profile_list.end(); ++it)
@@ -108,5 +109,6 @@ class spgwConfig
     static void switch_config_cpp(spgw_config_profile_t *);
     static sub_profile_t* match_sub_selection_cpp(sub_selection_keys_t *key);
     static apn_profile_t * match_apn_profile_cpp(char *, uint16_t len);
+    static void invalidate_user_plane_address(uint32_t addr); 
 };
 #endif
