@@ -104,8 +104,7 @@ docker-build:
 
 docker-push:
 	for target in $(DOCKER_TARGETS); do \
-		docker push ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}ngic-$$target:${DOCKER_TAG}; \
-		docker push ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}ngic-$$target:${DOCKER_DEBUG_TAG}; \
+		docker push ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}spgw-$$target:${DOCKER_DEBUG_TAG}; \
 	done
 
 .PHONY: $(RECURSIVETARGETS) $(WHAT) $(CPDEPS) $(DPDEPS) docker-build docker-push
