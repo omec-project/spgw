@@ -52,9 +52,11 @@ install_dpdk()
 	fi
 
 	cd ${RTE_SDK}
-	cp $SPGW_DIR/dpdk-18.02_common_linuxapp config/common_linuxapp
+	#cp $SPGW_DIR/dpdk-18.02_common_linuxapp config/common_linuxapp
 #	sed -ri 's,(KNI_KMOD=).*,\1n,' config/common_linuxapp
-	make -j $CPUS install T=${RTE_TARGET} RTE_MACHINE=${RTE_MACHINE} 
+    sed -ri 's,(IGB_UIO=).*,\1n,' config/common_linuxapp
+    sed -ri 's,(KNI_KMOD=).*,\1n,' config/common_linuxapp
+	make --trace --debug -j $CPUS install T=${RTE_TARGET} RTE_MACHINE=${RTE_MACHINE} 
 	echo "Installed DPDK at $RTE_SDK"
 
 }
