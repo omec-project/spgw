@@ -25,14 +25,15 @@ trap finish EXIT
 install_pkg_deps() 
 {
     $SUDO apt-get update && $SUDO apt-get -y install \
-        curl build-essential \
-        linux-headers-$(uname -r) git \
-        unzip libpcap0.8-dev gcc libjson0-dev make \
+        curl \
+        build-essential \
+        git \
+        wget \
+        unzip libpcap0.8-dev libjson0-dev \
         libc6 libc6-dev \
         g++-multilib libcurl4-openssl-dev \
         libssl-dev \
         python-pip \
-        wget \
         lsb-core \
         g++ \
         make \
