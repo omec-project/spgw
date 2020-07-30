@@ -6,7 +6,6 @@ lib/libsponsdn/libsponsdn/
 lib/libsponsdn/x86_64-native-linuxapp-gcc/
 test/sponsdn/sponsdn/
 test/sponsdn/x86_64-native-linuxapp-gcc/
-config/cp_rstCnt.txt
 config/hrtbeat_recov_time.txt
 cp/gx_app/gx_app
 cp/.gdb_history
