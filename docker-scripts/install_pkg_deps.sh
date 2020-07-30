@@ -83,7 +83,6 @@ download_hyperscan()
 set -o errexit
 set -o pipefail
 set -o nounset
-
 install_build_deps
 echo "Dependency install complete"
 
