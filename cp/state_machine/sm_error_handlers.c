@@ -125,6 +125,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
             assert(gtpc_trans == proc->gtpc_trans);
             stop_transaction_timer(proc->gtpc_trans);
             free(proc->gtpc_trans);
+            proc->gtpc_trans = NULL;
         }
         if(proc->pfcp_trans != NULL) {
             // only self initiated transactions as of now 
@@ -137,6 +138,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
             assert(pfcp_trans == proc->pfcp_trans);
             stop_transaction_timer(proc->pfcp_trans);
             free(proc->pfcp_trans);
+            proc->pfcp_trans = NULL;
         }
         free(proc);
     }

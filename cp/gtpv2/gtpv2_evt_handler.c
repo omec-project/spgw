@@ -503,6 +503,7 @@ int handle_delete_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *ms
     detach_proc->gtpc_trans = gtpc_trans;
     gtpc_trans->sequence = seq_num;
     gtpc_trans->peer_sockaddr = msg->peer_addr;
+    context->current_proc = detach_proc;
 
     detach_proc->handler((void*)detach_proc, msg->event, (void*)msg); 
     return 0;

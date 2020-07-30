@@ -992,6 +992,23 @@ void proc_initial_attach_failure(msg_info_t *msg, int cause)
         cs_error_response(msg, cause,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
     }
+    if(msg->proc_context != NULL && msg->ue_context == NULL)
+    {
+        proc_context_t *proc_context = msg->proc_context;
+        if(proc_context->gtpc_trans != NULL) {
+            printf("Delete gtpc procs \n");
+            /* Only MME initiated transactions as of now */
+            uint16_t port_num = proc_context->gtpc_trans->peer_sockaddr.sin_port; 
+            uint32_t sender_addr = proc_context->gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
+            uint32_t seq_num = proc_context->gtpc_trans->sequence; 
+            transData_t *gtpc_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
+            assert(gtpc_trans == proc_context->gtpc_trans);
+            stop_transaction_timer(proc_context->gtpc_trans);
+            free(proc_context->gtpc_trans);
+            proc_context->gtpc_trans = NULL;
+        }
+
+    }
     // cleanup call locally 
     process_error_occured_handler_new((void *)msg, NULL);
     return;
