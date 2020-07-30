@@ -72,7 +72,6 @@ docker-build:
         docker build $(DOCKER_BUILD_ARGS) \
                 --target $$target \
                 --tag ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}spgw:${DOCKER_DEBUG_TAG} \
-                --build-arg RUN_BASE="runtime-utils" \
                 --build-arg EXTRA_CFLAGS="-DUSE_AF_PACKET -UPERF_TEST -ggdb " \
                 --label "org.label-schema.schema-version=1.0" \
                 --label "org.label-schema.name=ngic-$$target-af-packet" \
