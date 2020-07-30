@@ -1007,7 +1007,8 @@ void proc_initial_attach_failure(msg_info_t *msg, int cause)
             free(proc_context->gtpc_trans);
             proc_context->gtpc_trans = NULL;
         }
-
+        msg->proc_context = NULL;
+        free(proc_context); 
     }
     // cleanup call locally 
     process_error_occured_handler_new((void *)msg, NULL);
