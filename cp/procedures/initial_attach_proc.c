@@ -181,10 +181,19 @@ process_create_sess_req(create_sess_req_t *csr,
     /* TODO - IE presense should be validated before accessing them */
     sub_profile_t *sub_prof=NULL;
     sub_selection_keys_t dpkey = {0}; 
+
+    dpkey.imsi.is_valid = true;
+    dpkey.imsi.from_imsi = csr->imsi.imsi64; 
+    dpkey.imsi.to_imsi =  csr->imsi.imsi64;
+    
     dpkey.plmn.is_valid = true;
     dpkey.plmn.tac = csr->uli.tai2.tai_tac;
     memcpy((void *)(&dpkey.plmn.plmn[0]), (void *)(&csr->uli.tai2), 3);
-    printf("csr uli mcc %d %d %d  mnc %d %d %d \n", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
+
+    clLog(s11logger, eCLSeverityTrace, "Create Session Request ULI mcc %d %d %d " 
+                " mnc %d %d %d \n", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, 
+                csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, 
+                csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
     
     upf_context = get_upf_context_for_key(&dpkey, &sub_prof); 
     
