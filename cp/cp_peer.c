@@ -6,6 +6,8 @@
 
 #include <signal.h>
 #include "stdint.h"
+#include "rte_errno.h"
+#include "rte_debug.h"
 #include "clogger.h"
 #include "cp_interface.h"
 #include "pfcp_cp_set_ie.h"

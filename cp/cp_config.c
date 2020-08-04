@@ -19,9 +19,11 @@
 #include "assert.h"
 
 #include "clogger.h"
-#include "gw_adapter.h"
+#include "cp_init.h"
+#include "cp_config.h"
 #include "cp_config_defs.h"
 #include "monitor_config.h"
+#include "gw_adapter.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"
 #include "cp_stats.h"

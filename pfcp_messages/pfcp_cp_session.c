@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
+#include "rte_errno.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_enum.h"
 #include "pfcp_cp_set_ie.h"

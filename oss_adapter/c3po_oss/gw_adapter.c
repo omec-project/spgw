@@ -19,8 +19,6 @@
 #include <stdbool.h>
 
 
-#ifdef CP_BUILD
-
 #include "../../cp/cp_stats.h"
 #include "../../cp/cp_init.h"
 #include "../../cp/cp_config.h"
@@ -28,23 +26,12 @@
 #include "cp_interface.h"
 #include "../../cp/ue.h"
 
-#else
-
-#include "up_main.h"
-#include "gtpu.h"
-
-#endif /* CP_BUILD */
-
 #include "gw_adapter.h"
 #include "crest.h"
 #include "clogger.h"
 #include "cstats.h"
 
-#ifdef CP_BUILD
 #include "pfcp_cp_set_ie.h"
-#else
-#include "pfcp_up_set_ie.h"
-#endif
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -62,9 +49,6 @@ int sxlogger;
 int gxlogger;
 int apilogger;
 int epclogger;
-int s_one_u_logger;
-int sgilogger;
-int knilogger;
 
 
 MessageType ossS5s8MessageDefs[] = {
@@ -159,8 +143,6 @@ MessageType ossS11MessageDefs[] = {
         {       -1      , NULL,dNone  					}
 };
 
-#ifdef CP_BUILD
-
 MessageType ossSxaMessageDefs[] = {
         {	   1	  ,"PFCP Heartbeat Request",dNone		},
         {	   2	  ,"PFCP Heartbeat Response",dNone		},
@@ -240,85 +222,6 @@ MessageType ossSxaSxbMessageDefs[] = {
         {         -1     , NULL,dNone  					}
 };
 
-#else /* DP_BUILD */
-
-MessageType ossSxaMessageDefs[] = {
-        {          1      ,"PFCP Heartbeat Request",dNone               },
-        {          2      ,"PFCP Heartbeat Response",dNone              },
-        {          5      ,"PFCP Association Setup Request",dIn        },
-        {          6      ,"PFCP Association Setup Response",dRespSend  },
-        {          7      ,"PFCP Association Update Request",dNone      },
-        {          8      ,"PFCP Association Update Response",dNone     },
-        {          9      ,"PFCP Association Release Request",dNone     },
-        {          10     ,"PFCP Association Release Response",dNone    },
-        {          11     ,"PFCP Version Not Supported Response",dNone  },
-        {          12     ,"PFCP Node Report Request",dNone             },
-        {          13     ,"PFCP Node Report Response",dNone            },
-        {          14     ,"PFCP Session Set Deletion Request",dNone    },
-        {          15     ,"PFCP Session Set Deletion Response",dNone   },
-        {          50     ,"PFCP Session Establishment Request",dIn    },
-        {          51     ,"PFCP Session Establishment Response",dRespSend},
-        {          52     ,"PFCP Session Modification Request",dIn     },
-        {          53     ,"PFCP Session Modification Response",dRespSend},
-        {          54     ,"PFCP Session Deletion Request",dIn         },
-        {          55     ,"PFCP Session Deletion Response",dRespSend   },
-        {          56     ,"PFCP Session Report Request",dOut           },
-        {          57     ,"PFCP Session Report Response",dRespRcvd     },
-        {          -1     , NULL,dNone			  		}
-};
-MessageType ossSxbMessageDefs[] = {
-        {         1       ,"PFCP Heartbeat Request",dNone               },
-        {         2       ,"PFCP Heartbeat Response",dNone              },
-	{         3       ,"PFCP PFD Management Request",dIn           },
-	{         4       ,"PFCP PFD Management Response",dRespSend    },
-        {         5       ,"PFCP Association Setup Request",dIn        },
-        {         6       ,"PFCP Association Setup Response",dRespSend  },
-        {         7       ,"PFCP Association Update Request",dNone      },
-        {         8       ,"PFCP Association Update Response",dNone     },
-        {         9       ,"PFCP Association Release Request",dNone     },
-        {         10      ,"PFCP Association Release Response",dNone    },
-        {         11      ,"PFCP Version Not Supported Response",dNone  },
-        {         12      ,"PFCP Node Report Request",dNone             },
-        {         13      ,"PFCP Node Report Response",dNone            },
-        {         14      ,"PFCP Session Set Deletion Request",dNone    },
-        {         15      ,"PFCP Session Set Deletion Response",dNone   },
-        {         50      ,"PFCP Session Establishment Request",dIn    },
-        {         51      ,"PFCP Session Establishment Response",dRespSend},
-        {         52      ,"PFCP Session Modification Request",dIn     },
-        {         53      ,"PFCP Session Modification Response",dRespSend},
-        {         54      ,"PFCP Session Deletion Request",dIn         },
-        {         55      ,"PFCP Session Deletion Response",dRespSend   },
-        {         56      ,"PFCP Session Report Request",dOut           },
-        {         57      ,"PFCP Session Report Response",dRespRcvd     },
-        {         -1      , NULL,dNone  				}
-};
-MessageType ossSxaSxbMessageDefs[] = {
-        {         1      ,"PFCP Heartbeat Request",dNone                },
-        {         2      ,"PFCP Heartbeat Response",dNone               },
-        {         3      ,"PFCP PFD Management Request",dIn             },
-        {         4      ,"PFCP PFD Management Response",dRespSend      },
-        {         5      ,"PFCP Association Setup Request",dIn         },
-        {         6      ,"PFCP Association Setup Response",dRespSend   },
-        {         7      ,"PFCP Association Update Request",dNone       },
-        {         8      ,"PFCP Association Update Response",dNone      },
-        {         9      ,"PFCP Association Release Request",dNone      },
-        {         10     ,"PFCP Association Release Response",dNone     },
-        {         11     ,"PFCP Version Not Supported Response",dNone   },
-        {         12     ,"PFCP Node Report Request",dNone              },
-        {         13     ,"PFCP Node Report Response",dNone             },
-        {         14     ,"PFCP Session Set Deletion Request",dNone     },
-        {         15     ,"PFCP Session Set Deletion Response",dNone    },
-        {         50     ,"PFCP Session Establishment Request",dIn     },
-        {         51     ,"PFCP Session Establishment Response",dRespSend},
-        {         52     ,"PFCP Session Modification Request",dIn      },
-        {         53     ,"PFCP Session Modification Response",dRespSend},
-        {         54     ,"PFCP Session Deletion Request",dIn          },
-        {         55     ,"PFCP Session Deletion Response",dRespSend    },
-        {         56     ,"PFCP Session Report Request",dOut            },
-        {         57     ,"PFCP Session Report Response",dRespRcvd      },
-        {         -1     , NULL,dNone                                   }
-};
-#endif /* CP_BUILD */
 
 MessageType ossGxMessageDefs[] = {
     {     120    ,"Credit Control Request Initial",dOut             },
@@ -355,11 +258,7 @@ char ossInterfaceStr[][10] = {
 
 char ossInterfaceProtocolStr[][10] = {
     "gtpv2" ,
-#ifdef CP_BUILD
     "gtpv2",
-#else
-	"gtp",
-#endif
     "pfcp",
     "pfcp",
     "pfcp",
@@ -442,21 +341,12 @@ bool is_last_activity_update(uint8_t msg_type, CLIinterface it)
 {
     EInterfaceType it_cli;
     if(it == SX) {
-#ifdef DP_BUILD
-        if(app.spgw_cfg == SGWU)
-            it_cli = itSxa;
-        else if(app.spgw_cfg == PGWU)
-            it_cli = itSxb;
-        else
-            it_cli = itSxaSxb;
-#else
         if(cp_config->cp_type == SGWC)
             it_cli = itSxa;
         else if(cp_config->cp_type == PGWC)
             it_cli = itSxb;
         else
             it_cli = itSxaSxb;
-#endif
     } else if(it == GX)
         it_cli = itGx;
     else if(it == S1U)
@@ -546,7 +436,6 @@ int update_cli_stats(uint32_t ip_addr, uint8_t msg_type, int dir, CLIinterface i
 		clLog(clSystemLog, eCLSeverityTrace, "peer not found\n");
 		return -1;
 	}
-#ifdef CP_BUILD
 	if(msg_type == PFCP_HEARTBEAT_REQUEST || msg_type == GTP_ECHO_REQ) {
 		__sync_add_and_fetch(&cli_node.peer[index]->hcrequest[dir], 1);
 		if (dir == RCVD)
@@ -556,16 +445,6 @@ int update_cli_stats(uint32_t ip_addr, uint8_t msg_type, int dir, CLIinterface i
 		__sync_add_and_fetch(&cli_node.peer[index]->hcresponse[dir], 1);
 		if (dir == RCVD)
 			update_last_activity(ip_addr, stat_timestamp);
-#else
-	if(msg_type == PFCP_HEARTBEAT_REQUEST || msg_type == GTPU_ECHO_REQUEST ) {
-		__sync_add_and_fetch(&cli_node.peer[index]->hcrequest[dir], 1);
-		if (dir == RCVD)
-			update_last_activity(ip_addr, stat_timestamp);
-	} else if(msg_type == PFCP_HEARTBEAT_RESPONSE || msg_type == GTPU_ECHO_RESPONSE ) {
-		__sync_add_and_fetch(&cli_node.peer[index]->hcresponse[dir], 1);
-		if (dir == RCVD)
-			update_last_activity(ip_addr, stat_timestamp);
-#endif
 	} else {
 
 		switch(cli_node.peer[index]->intfctype) {
@@ -604,91 +483,74 @@ int update_cli_stats(uint32_t ip_addr, uint8_t msg_type, int dir, CLIinterface i
 
 void add_cli_peer(uint32_t ip_addr,CLIinterface it)
 {
-        int index = -1;
-        SPeer temp_peer;
+    int index = -1;
+    SPeer temp_peer;
 
-	EInterfaceType it_cli;
+    EInterfaceType it_cli;
 
-	/*NK:need to optimize*/
-	if (it == SX)
-	{
-#ifdef DP_BUILD
-		if (app.spgw_cfg == SGWU){
-			it_cli = itSxa;
-		} else if (app.spgw_cfg == PGWU){
-			it_cli = itSxb;
-		} else{
-			it_cli = itSxaSxb;
-		}
-#else
-		if (cp_config->cp_type == SGWC){
-			it_cli = itSxa;
-		} else if (cp_config->cp_type == PGWC){
-			it_cli = itSxb;
-		} else{
-			it_cli = itSxaSxb;
-		}
-#endif
+    /*NK:need to optimize*/
+    if (it == SX)
+    {
+        if (cp_config->cp_type == SGWC){
+            it_cli = itSxa;
+        } else if (cp_config->cp_type == PGWC){
+            it_cli = itSxb;
+        } else{
+            it_cli = itSxaSxb;
+        }
+    } else if (it == GX)
+    {
+        it_cli = itGx;
+    } else if (it == S1U)
+    {
+        it_cli = itS1U;
+    } else if (it == SGI)
+    {
+        it_cli = itSGI;
+    }else if (it == S5S8)
+    {
+        it_cli = itS5S8;
+    }else
+    {
+        it_cli = itS11;
+    }
 
-	} else if (it == GX)
-	{
-		it_cli = itGx;
-	} else if (it == S1U)
-	{
-		it_cli = itS1U;
-	} else if (it == SGI)
-	{
-		it_cli = itSGI;
-	}else if (it == S5S8)
-	{
-		it_cli = itS5S8;
-	}else
-	{
-		it_cli = itS11;
-	}
+    clLog(clSystemLog, eCLSeverityTrace,
+            "CLI:Request rcvd for ip addr:%s\n",
+            inet_ntoa(*((struct in_addr *)&ip_addr)));
+
+    /*Check peer is allready added or not*/
+    index = get_peer_index(ip_addr);
+
+    if (index == -1)  /*peer is not added yet*/
+    {
+        index = get_first_index(); /*find the postn*/
+        cli_node.peer[index] = calloc(1,sizeof(temp_peer));
+
+        //Initialization
+        cli_node.peer[index]->ipaddr = (*(struct in_addr *)&ip_addr);
+        cli_node.peer[index]->intfctype = it_cli;
+        cli_node.peer[index]->status = FALSE;
+
+        cli_node.peer[index]->response_timeout = cp_config->transmit_timer;
+        cli_node.peer[index]->maxtimeout = cp_config->transmit_cnt + 1;
+
+        cli_node.peer[index]->timeouts = 0;
 
         clLog(clSystemLog, eCLSeverityTrace,
-                        "CLI:Request rcvd for ip addr:%s\n",
-                        inet_ntoa(*((struct in_addr *)&ip_addr)));
+                "Interface type is : %d\n",it);
+        clLog(clSystemLog, eCLSeverityTrace,
+                "Added peer with ip addr : %s\n\n",
+                inet_ntoa(cli_node.peer[index]->ipaddr));
 
-        /*Check peer is allready added or not*/
-        index = get_peer_index(ip_addr);
+        nbr_of_peer++; /*peer count incremented*/
 
-        if (index == -1)  /*peer is not added yet*/
-        {
-                index = get_first_index(); /*find the postn*/
-                cli_node.peer[index] = calloc(1,sizeof(temp_peer));
-
-                //Initialization
-                cli_node.peer[index]->ipaddr = (*(struct in_addr *)&ip_addr);
-                cli_node.peer[index]->intfctype = it_cli;
-                cli_node.peer[index]->status = FALSE;
-
-		/*TODO Need to revisit after DP timer counter get*/
-#ifdef DP_BUILD
-				cli_node.peer[index]->response_timeout = app.transmit_timer;
-				cli_node.peer[index]->maxtimeout = app.transmit_cnt + 1;
-#else
-				cli_node.peer[index]->response_timeout = cp_config->transmit_timer;
-				cli_node.peer[index]->maxtimeout = cp_config->transmit_cnt + 1;
-#endif
-
-                cli_node.peer[index]->timeouts = 0;
-
-                clLog(clSystemLog, eCLSeverityTrace,
-                                                "Interface type is : %d\n",it);
-                clLog(clSystemLog, eCLSeverityTrace,
-                                                "Added peer with ip addr : %s\n\n",
-                                                inet_ntoa(cli_node.peer[index]->ipaddr));
-
-                nbr_of_peer++; /*peer count incremented*/
-
-                if (index == cnt_peer)
-                        cnt_peer++;
-        }
-        else {
-                clLog(clSystemLog, eCLSeverityTrace,"CLI:peer already exist\n");
-        }
+        if (index == cnt_peer)
+            cnt_peer++;
+    }
+    else {
+        clLog(clSystemLog, eCLSeverityTrace,"CLI:peer already exist\n");
+    }
 }
 
 int get_peer_index(uint32_t ip_addr)
@@ -819,118 +681,8 @@ int update_sys_stat(int index, int operation)
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
-static int
-get_logger(const char *request_body, char **response_body)
-{
-	char *loggers = NULL;
-
-	clLog(clSystemLog, eCLSeverityInfo, "get_logger() body=[%s]",
-			request_body);
-
-	loggers = clGetLoggers();
-	*response_body = strdup(loggers);
-
-	if (*response_body) {
-		free(loggers);
-		return REST_SUCESSS;
-	}
-
-	return REST_FAIL;
-}
-
-	static int
-post_logger(const char *request_body, char **response_body)
-{
-	clLog(clSystemLog, eCLSeverityInfo, "post_logger() body=[%s]",
-			request_body);
-
-	return clUpdateLogger(request_body, response_body);
-}
-
-
-	static int
-get_cp_logger(const char *request_body, char **response_body)
-{
-	clLog(clSystemLog, eCLSeverityInfo,"get_cp_logger() body=[%s]",request_body);
-
-	return clRecentLogger(request_body, response_body);
-}
-
-
-	static int
-post_max_size(const char *request_body, char **response_body)
-{
-	clLog(clSystemLog, eCLSeverityInfo, "post_max_size() body=[%s]",
-			request_body);
-
-	return clRecentSetMaxsize(request_body, response_body);
-}
-
-	static int
-get_max_size(const char *request_body, char **response_body)
-{
-
-	clLog(clSystemLog, eCLSeverityMajor, "get_max_size() body=[%s]",request_body);
-
-	return clRecentLogMaxsize(request_body, response_body);
-
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
-
-	static int
-get_stat_frequency(const char *request_body, char **response_body)
-{
-	clLog(clSystemLog, eCLSeverityInfo, "get_stat_frequency() body=[%s]",
-			request_body);
-
-	return csGetInterval(response_body);
-}
-
-
-	static int
-post_stat_frequency(const char *request_body, char **response_body)
-{
-	clLog(clSystemLog, eCLSeverityInfo, "post_stat_frequency() body=[%s]",
-			request_body);
-
-	return csUpdateInterval(request_body, response_body);
-}
-	static int
-get_stat_logging(const char *request_body, char **response_body)
-{
-	clLog(clSystemLog, eCLSeverityInfo, "get_stat_logging() body=[%s]",
-			request_body);
-
-	return csGetStatLogging(response_body);
-}
-
-static int
-post_stat_logging(const char *request_body, char **response_body)
-{
-	clLog(clSystemLog, eCLSeverityInfo, "post_stat_logging() body=[%s]",
-			request_body);
-
-	return csUpdateStatLogging(request_body, response_body);
-}
-	static int
-get_stat_live(const char *request_body, char **response_body)
-{
-	clLog(clSystemLog, eCLSeverityInfo, "get_stat_live() body=[%s]",
-			request_body);
-
-	return csGetLive(response_body);
-}
-
-	static int
-get_stat_live_all(const char *request_body, char **response_body)
-{
-	clLog(clSystemLog, eCLSeverityInfo, "get_stat_live_all() body=[%s]",
-			request_body);
-
-	return csGetLiveAll(response_body);
-}
 
 void
 get_current_time_oss(char *last_time_stamp)
@@ -950,67 +702,12 @@ init_rest_methods(int port_no, size_t thread_count)
 {
 	crInit(clGetAuditLogger(), port_no, thread_count);
 
-	/*Commands related with logging*/
-
-	crRegisterStaticHandler(eCRCommandGet, "/logger", get_logger);
-	crRegisterStaticHandler(eCRCommandPost, "/logger", post_logger);
-	crRegisterStaticHandler(eCRCommandGet, "/cp_logger", get_cp_logger);
-	crRegisterStaticHandler(eCRCommandGet, "/max_size", get_max_size);
-	crRegisterStaticHandler(eCRCommandPost, "/max_size", post_max_size);
-
-	/*Commands related with statistics*/
-
-	crRegisterStaticHandler(eCRCommandGet, "/statfreq", get_stat_frequency);
-	crRegisterStaticHandler(eCRCommandPost, "/statfreq", post_stat_frequency);
-
-	crRegisterStaticHandler(eCRCommandGet, "/statlogging", get_stat_logging);
-	crRegisterStaticHandler(eCRCommandPost, "/statlogging", post_stat_logging);
-
-	crRegisterStaticHandler(eCRCommandGet, "/statlive", get_stat_live);
-	crRegisterStaticHandler(eCRCommandGet, "/statliveall", get_stat_live_all);
-
 	crStart();
 
 }
 
 void init_cli_module(uint8_t gw_logger)
 {
-
-#ifdef DP_BUILD
-
-	if (app.spgw_cfg == SGWU){
-            cli_node.gw_type = OSS_SGWU;
-        } else if (app.spgw_cfg == PGWU){
-	    cli_node.gw_type = OSS_PGWU;
-        } else{
-            cli_node.gw_type = OSS_SAEGWU;
-        }
-
-	clSetOption(eCLOptLogFileName, "logs/dp.log");
-	clSetOption(eCLOptStatFileName, "logs/dp_stat.log");
-	clSetOption(eCLOptAuditFileName, "logs/dp_sys.log");
-
-        if (app.spgw_cfg == SGWU){
-		clInit("sgwu", gw_logger);
-		s_one_u_logger = clAddLogger("s1u", gw_logger);
-		s5s8logger = clAddLogger("s5s8", gw_logger);
-	} else if (app.spgw_cfg == PGWU){
-		clInit("pgwu", gw_logger);
-		sgilogger = clAddLogger("sgi", gw_logger);
-		s5s8logger = clAddLogger("s5s8", gw_logger);
-	} else{
-		clInit("saegwu", gw_logger);
-		sgilogger = clAddLogger("sgi", gw_logger);
-		s_one_u_logger = clAddLogger("s1u", gw_logger);
-	}
-
-	knilogger = clAddLogger("kni", gw_logger);
-	sxlogger = clAddLogger("sx", gw_logger);
-	apilogger = clAddLogger("api", gw_logger);
-	epclogger = clAddLogger("epc", gw_logger);
-	clAddRecentLogger("sgwu-001","dp",5);
-#else
-
 	clSetOption(eCLOptLogFileName, "logs/cp.log");
 	clSetOption(eCLOptStatFileName, "logs/cp_stat.log");
 	clSetOption(eCLOptAuditFileName, "logs/cp_sys.log");
@@ -1042,7 +739,6 @@ void init_cli_module(uint8_t gw_logger)
 	apilogger = clAddLogger("api", gw_logger);
 	epclogger = clAddLogger("epc", gw_logger);
 	clAddRecentLogger("sgwc-001","cp",5);
-#endif
 	clStart();
 	csInit(clGetStatsLogger(), 5000);
 	csStart();

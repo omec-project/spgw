@@ -30,6 +30,7 @@
 #include "gtpv2c_error_rsp.h"
 #include "gtpv2_internal.h"
 #include "cp_timer.h"
+#include "cp_init.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"

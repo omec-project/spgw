@@ -9,6 +9,7 @@
 #include <rte_udp.h>
 #include <rte_hash_crc.h>
 #include <errno.h>
+#include "cp_init.h"
 #include "clogger.h"
 #include "gw_adapter.h"
 #include "cp_stats.h"
