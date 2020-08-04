@@ -41,14 +41,6 @@ void
 init_cp(void);
 
 /**
- * @brief  : Initialize dp rule table
- * @param  : void
- * @return : Void
- */
-void
-init_dp_rule_tables(void);
-
-/**
  * @brief  : Updates restart counter Value
  * @param  : No param
  * @return : Returns nothing

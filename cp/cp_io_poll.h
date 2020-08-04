@@ -103,17 +103,6 @@ void iface_process_ipc_msgs(void);
 
 
 /**
- * @brief Functino to init rte hash tables.
- *
- * @param none
- * Return
- *  None
- */
-
-int
-simu_cp(__rte_unused void *ptr);
-
-/**
  * @brief callback to handle downlink data notification messages from the
  * data plane
  * @param msg_payload

@@ -38,7 +38,6 @@
 #define PCAP_TTL           (64)
 #define PCAP_VIHL          (0x0045)
 
-
 #ifdef USE_AF_PACKET
 #include <libmnl/libmnl.h>
 #endif
@@ -62,25 +61,6 @@ extern pcap_dumper_t *pcap_dumper;
 extern struct rte_hash *heartbeat_recovery_hash;
 
 struct rte_hash *node_id_hash;
-
-#define IFACE_FILE "../config/interface.cfg"
-#define SET_CONFIG_IP(ip, file, section, entry) \
-do {\
-	entry = rte_cfgfile_get_entry(file, section, #ip);\
-	if (entry == NULL)\
-	rte_panic("%s not found in %s", #ip, IFACE_FILE);\
-	if (inet_aton(entry, &ip) == 0)\
-	rte_panic("Invalid %s in %s", #ip, IFACE_FILE);\
-} while (0)
-
-#define SET_CONFIG_PORT(port, file, section, entry) \
-do {\
-	entry = rte_cfgfile_get_entry(file, section, #port);\
-	if (entry == NULL)\
-	rte_panic("%s not found in %s", #port, IFACE_FILE);\
-	if (sscanf(entry, "%"SCNu16, &port) != 1)\
-	rte_panic("Invalid %s in %s", #port, IFACE_FILE);\
-} while (0)
 
 /**
  * @brief  : Util to send or dump gtpv2c messages

@@ -161,20 +161,6 @@ send_dp_msg(struct dp_id dp_id, struct msgbuf *msg_payload)
 	return 0;
 }
 //#endif /* CP_BUILD*/
-/******************** SDF Pkt filter **********************/
-int
-sdf_filter_table_create(struct dp_id dp_id, uint32_t max_elements)
-{
-#ifdef CP_BUILD
-	struct msgbuf msg_payload;
-    printf("%s %d \n",__FUNCTION__,__LINE__);
-	build_dp_msg(MSG_SDF_CRE, dp_id, (void *)&max_elements, &msg_payload);
-	return send_dp_msg(dp_id, &msg_payload);
-#else
-	return dp_sdf_filter_table_create(dp_id, max_elements);
-#endif
-}
-
 int
 sdf_filter_table_delete(struct dp_id dp_id)
 {
@@ -214,19 +200,7 @@ sdf_filter_entry_delete(struct dp_id dp_id, struct pkt_filter pkt_filter_entry)
 #endif
 }
 
-/******************** ADC Rule Table **********************/
-int
-adc_table_create(struct dp_id dp_id, uint32_t max_elements)
-{
-#ifdef CP_BUILD
-	struct msgbuf msg_payload;
-    printf("%s %d \n",__FUNCTION__,__LINE__);
-	build_dp_msg(MSG_ADC_TBL_CRE, dp_id, (void *)&max_elements, &msg_payload);
-	return send_dp_msg(dp_id, &msg_payload);
-#else
-	return dp_adc_table_create(dp_id, max_elements);
-#endif
-}
+
 
 int adc_table_delete(struct dp_id dp_id)
 {
@@ -265,19 +239,6 @@ int adc_entry_delete(struct dp_id dp_id, struct adc_rules entry)
 }
 
 /******************** PCC Rule Table **********************/
-int
-pcc_table_create(struct dp_id dp_id, uint32_t max_elements)
-{
-#ifdef CP_BUILD
-	struct msgbuf msg_payload;
-    printf("%s %d \n",__FUNCTION__,__LINE__);
-	build_dp_msg(MSG_PCC_TBL_CRE, dp_id, (void *)&max_elements, &msg_payload);
-	return send_dp_msg(dp_id, &msg_payload);
-#else
-	return dp_pcc_table_create(dp_id, max_elements);
-#endif
-}
-
 int
 pcc_table_delete(struct dp_id dp_id)
 {
@@ -318,18 +279,7 @@ pcc_entry_delete(struct dp_id dp_id, struct pcc_rules entry)
 }
 
 /******************** Bearer Session Table **********************/
-int
-session_table_create(struct dp_id dp_id, uint32_t max_elements)
-{
-#ifdef CP_BUILD
-	struct msgbuf msg_payload;
-    printf("%s %d \n",__FUNCTION__,__LINE__);
-	build_dp_msg(MSG_SESS_TBL_CRE, dp_id, (void *)&max_elements, &msg_payload);
-	return send_dp_msg(dp_id, &msg_payload);
-#else
-	return dp_session_table_create(dp_id, max_elements);
-#endif
-}
+
 
 int
 session_table_delete(struct dp_id dp_id)
@@ -417,19 +367,6 @@ session_delete(struct dp_id dp_id,
 #endif		/* CP_BUILD */
 }
 
-/******************** Meter Table **********************/
-int
-meter_profile_table_create(struct dp_id dp_id, uint32_t max_elements)
-{
-#ifdef CP_BUILD
-	struct msgbuf msg_payload;
-    printf("%s %d \n",__FUNCTION__,__LINE__);
-	build_dp_msg(MSG_MTR_CRE, dp_id, (void *)&max_elements, &msg_payload);
-	return send_dp_msg(dp_id, &msg_payload);
-#else
-	return dp_meter_profile_table_create(dp_id, max_elements);
-#endif
-}
 
 int
 meter_profile_table_delete(struct dp_id dp_id)

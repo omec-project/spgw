@@ -177,46 +177,6 @@ static void init_s5s8(void)
     my_sock.s5s8_recv_sockaddr = s5s8_recv_sockaddr;
 }
 
-#ifdef CP_DP_TABLE_CONFIG
-static void initialize_tables_on_dp(void)
-{
-	struct dp_id dp_id = { .id = DPN_ID };
-
-	sprintf(dp_id.name, SDF_FILTER_TABLE);
-	if (sdf_filter_table_create(dp_id, SDF_FILTER_TABLE_SIZE))
-		rte_panic("sdf_filter_table creation failed\n");
-
-	sprintf(dp_id.name, ADC_TABLE);
-	if (adc_table_create(dp_id, ADC_TABLE_SIZE))
-		rte_panic("adc_table creation failed\n");
-
-	sprintf(dp_id.name, PCC_TABLE);
-	if (pcc_table_create(dp_id, PCC_TABLE_SIZE))
-		rte_panic("pcc_table creation failed\n");
-
-	sprintf(dp_id.name, METER_PROFILE_SDF_TABLE);
-	if (meter_profile_table_create(dp_id, METER_PROFILE_SDF_TABLE_SIZE))
-		rte_panic("meter_profile_sdf_table creation failed\n");
-
-	sprintf(dp_id.name, SESSION_TABLE);
-
-	if (session_table_create(dp_id, LDB_ENTRIES_DEFAULT))
-		rte_panic("session_table creation failed\n");
-
-}
-#endif
-
-void init_dp_rule_tables(void)
-{
-
-#ifdef CP_DP_TABLE_CONFIG
-	initialize_tables_on_dp();
-#endif
-
-	init_packet_filters();
-	parse_adc_rules();
-
-}
 /**
  * @brief  : Initializes Control Plane data structures, packet filters, and calls for the
  *           Data Plane to create required tables
