@@ -7,6 +7,7 @@
 #include "../include/gtp_ies_decoder.h"
 
 #include "../include/enc_dec_bits.h"
+#include <stdio.h>
 
 #define IE_HEADER_SIZE sizeof(ie_header_t)
 
@@ -289,6 +290,7 @@ int decode_gtp_guti_ie(uint8_t *buf,
 * @return
 *   number of decoded bytes.
 */
+
 int decode_gtp_imsi_ie(uint8_t *buf,
         gtp_imsi_ie_t *value)
 {
@@ -297,8 +299,28 @@ int decode_gtp_imsi_ie(uint8_t *buf,
     //uint16_t decoded = 0;
     // value->imsi_number_digits = decode_bits(buf, total_decoded, 64, &decoded);
     // total_decoded += decoded;
+    /* Conver string to value */
     /* TODO: Revisit this for change in yang */
     memcpy(&value->imsi_number_digits, (uint8_t *)buf + total_decoded/CHAR_SIZE, value->header.len);
+    imsi_bcd_t *temp = (imsi_bcd_t *)(buf+total_decoded/CHAR_SIZE);
+    uint64_t imsi64 = temp->digit1;
+    imsi64 = imsi64*10 + temp->digit2;
+    imsi64 = imsi64*10 + temp->digit3;
+    imsi64 = imsi64*10 + temp->digit4;
+    imsi64 = imsi64*10 + temp->digit5;
+    imsi64 = imsi64*10 + temp->digit6;
+    imsi64 = imsi64*10 + temp->digit7;
+    imsi64 = imsi64*10 + temp->digit8;
+    imsi64 = imsi64*10 + temp->digit9;
+    imsi64 = imsi64*10 + temp->digit10;
+    imsi64 = imsi64*10 +  temp->digit11;
+    imsi64 = imsi64*10 +  temp->digit12;
+    imsi64 = imsi64*10 +  temp->digit13;
+    imsi64 = imsi64*10 +  temp->digit14;
+    if(value->header.len == 8) {
+        imsi64 = imsi64*10 +  temp->digit15;
+    }
+    value->imsi64 = imsi64;
     total_decoded += value->header.len * CHAR_SIZE;
     return total_decoded/CHAR_SIZE;
 }

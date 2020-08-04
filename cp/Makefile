@@ -71,14 +71,13 @@ SRCS-y += gtpv2/gtpv2c_messages/modify_bearer.o
 SRCS-y += gtpv2/gtpv2c_messages/downlink_data_notification.o
 SRCS-y += gtpv2/gtpv2c_messages/release_access_bearer.o
 SRCS-y += $(SRCDIR)/../common/timer.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_msg_validate.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_association.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_msg_rx.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_session.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_set_ie.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_cp_util.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_init.o
-SRCS-y += $(SRCDIR)/../test/simu_cp/simu_cp.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_cp_msg_validate.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_cp_association.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_cp_msg_rx.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_cp_session.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_cp_set_ie.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_cp_util.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_init.o
 SRCS-y += $(SRCDIR)/../cp_dp_api/vepc_cp_dp_api.o
 SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/gw_adapter.o
 SRCS-y += gx_event_handlers.c 
@@ -86,7 +85,7 @@ SRCS-y += gx_interface.c
 SRCS-y += ipc_api.c
 SRCS-y += state_machine/sm_gx_pcnd.o
 SRCS-y += $(SRCDIR)/gx_app/src/gx_pack.o
-SRCS-y += $(SRCDIR)/../pfcp_messages/cp/pfcp_gx.o
+SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_gx.o
 
 
 #ifneq (,$(findstring C3PO_OSS, $(CFLAGS)))
@@ -111,8 +110,6 @@ CFLAGS += -I$(LIBGTPV2C_ROOT)/include
 CFLAGS += -I$(LIBPFCP_ROOT)/include
 CFLAGS += -I$(SRCDIR)/../oss_adapter/c3po_oss
 CFLAGS += -I$(SRCDIR)/../pfcp_messages
-CFLAGS += -I$(SRCDIR)/../pfcp_messages/cp
-CFLAGS += -I$(SRCDIR)/../pfcp_messages/common
 CFLAGS += -I$(SRCDIR)/../libgtpv2c/include
 CFLAGS += -I$(OSS_UTIL_ROOT)/include
 CFLAGS += -I$(SRCDIR)/../cpplib/
@@ -169,10 +166,10 @@ endif
 
 ifneq (,$(findstring USE_CSID, $(CFLAGS), $(EXTRA_CFLAGS)))
  #VS:Support partial failure FQ-CSID m/c
- SRCS-y += $(SRCDIR)/../pfcp_messages/common/csid_init.o
- SRCS-y += $(SRCDIR)/../pfcp_messages/common/csid_api.o
- SRCS-y += $(SRCDIR)/../pfcp_messages/common/csid_peer_init.o
- SRCS-y += $(SRCDIR)/../pfcp_messages/cp/csid_cp_cleanup.o
+ SRCS-y += $(SRCDIR)/../pfcp_messages/csid_init.o
+ SRCS-y += $(SRCDIR)/../pfcp_messages/csid_api.o
+ SRCS-y += $(SRCDIR)/../pfcp_messages/csid_peer_init.o
+ SRCS-y += $(SRCDIR)/../pfcp_messages/csid_cp_cleanup.o
 endif
 
 # Un-comment below line to read fake cp config.

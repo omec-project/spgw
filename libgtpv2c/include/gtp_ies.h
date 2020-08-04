@@ -459,9 +459,36 @@ typedef struct trgt_id_type_extnded_macro_ng_enb_t {
   uint32_t fivegs_tac :24;
 } trgt_id_type_extnded_macro_ng_enb_t;
 
+typedef struct imsi_bcd {
+    uint8_t digit1:4;
+    uint8_t digit2:4;
+
+    uint8_t digit3:4;
+    uint8_t digit4:4;
+
+    uint8_t digit5:4;
+    uint8_t digit6:4;
+
+    uint8_t digit7:4;
+    uint8_t digit8:4;
+
+    uint8_t digit9:4;
+    uint8_t digit10:4;
+
+    uint8_t digit11:4;
+    uint8_t digit12:4;
+
+    uint8_t digit13:4;
+    uint8_t digit14:4;
+
+    uint8_t digit15:4;
+    uint8_t digit16:4;
+}__attribute__ ((packed)) imsi_bcd_t;
+
 typedef struct gtp_imsi_ie_t {
   ie_header_t header;
   uint64_t imsi_number_digits;
+  uint64_t imsi64; // printable without 0xf, can be printed using %lu 
 } gtp_imsi_ie_t;
 
 typedef struct gtp_cause_ie_t {

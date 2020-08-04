@@ -185,13 +185,6 @@ init_cp_params(void)
                 "spawn stats thread\n");
     last_lcore = cp_params.stats_core_id;
 
-#ifdef SIMU_CP
-    cp_params.simu_core_id = rte_get_next_lcore(last_lcore, 1, 0);
-    if (cp_params.simu_core_id == RTE_MAX_LCORE)
-        clLog(clSystemLog, eCLSeverityCritical, "Insufficient cores in coremask to "
-                "spawn stats thread\n");
-    last_lcore = cp_params.simu_core_id;
-#endif
 }
 
 
@@ -259,11 +252,6 @@ main(int argc, char **argv)
 
     if (cp_params.stats_core_id != RTE_MAX_LCORE)
         rte_eal_remote_launch(do_stats, NULL, cp_params.stats_core_id);
-
-#ifdef SIMU_CP
-    if (cp_params.simu_core_id != RTE_MAX_LCORE)
-        rte_eal_remote_launch(simu_cp, NULL, cp_params.simu_core_id);
-#endif
 
 	echo_table_init();
 

@@ -345,10 +345,8 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
     {
         rule = *it;
         printf("Searching rule %d \n", rule->rule_priority);
-        std::cout<<"key in rule "<<rule->keys<<std::endl;
         sub_selection_keys_t *key_l = rule->keys;
-        printf("key_l %p \n", key_l);
-        std::cout<<"rule->key imsi "<<key_l->imsi.is_valid<<" search key imsi "<<key->imsi.is_valid<<std::endl;
+        std::cout<<"rule->key imsi valid : "<<key_l->imsi.is_valid<<" search key imsi valid "<<key->imsi.is_valid<<std::endl;
         if((key_l != nullptr) && (key_l->imsi.is_valid))
         {
             if(key->imsi.is_valid == false)

@@ -23,9 +23,6 @@
  */
 struct cp_params {
 	unsigned stats_core_id;
-#ifdef SIMU_CP
-	unsigned simu_core_id;
-#endif
 };
 
 extern int s11_pcap_fd;
