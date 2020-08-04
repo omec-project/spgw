@@ -16,7 +16,7 @@
 #include "gtp_ies.h"
 #include "gtp_messages.h"
 #include "cp_io_poll.h"
-#include "timer.h"
+#include "cp_timer.h"
 #include "gtpv2_internal.h"
 #include <sys/queue.h>
 #include "upf_struct.h"

@@ -16,8 +16,8 @@
 #include <pthread.h>
 #include <string.h>
 #include <monitor_config.h>
-#include <rte_log.h>
-#include "cp_log.h"
+#include "clogger.h"
+#include "rte_common.h"
 
 #define MAX_FILE_PATH 128
 struct entry
@@ -39,7 +39,7 @@ handle_events(int fd, int *wd, struct entry *config)
 	char *ptr;
 
 	/* Loop while events can be read from inotify file descriptor. */
-	RTE_LOG_DP(INFO, CP, "Received file event for %s \n", config->config_file);
+	clLog(clSystemLog, eCLSeverityCritical, "Received file event for %s \n", config->config_file);
 	/* Read some events. */
 	len = read(fd, buf, sizeof buf);
 	/* If the nonblocking read() found no events to read, then
@@ -50,7 +50,7 @@ handle_events(int fd, int *wd, struct entry *config)
 	}
 
 	if (len <= 0) {
-		RTE_LOG_DP(DEBUG, CP, "inotify read config change len <= 0 \n ");
+		clLog(clSystemLog, eCLSeverityDebug, "inotify read config change len <= 0 \n ");
 		return handled; 
 	}
 
@@ -59,54 +59,54 @@ handle_events(int fd, int *wd, struct entry *config)
 	     ptr += sizeof(struct inotify_event) + event->len) {
 
 		event = (const struct inotify_event *) ptr;
-		RTE_LOG_DP(DEBUG, CP, "event mask %x: \n", event->mask);
+		clLog(clSystemLog, eCLSeverityDebug, "event mask %x: \n", event->mask);
 
 		/* Print event type */
 		if (event->mask & IN_ACCESS) {
-			RTE_LOG_DP(DEBUG, CP, "IN_ACCESS: \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_ACCESS: \n");
 			continue;
 		}
 		if (event->mask & IN_CLOSE_NOWRITE) {
-			RTE_LOG_DP(DEBUG, CP, "IN_CLOSE_NOWRITE: \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_CLOSE_NOWRITE: \n");
 			continue;
 		}
 		if (event->mask & IN_OPEN) {
-			RTE_LOG_DP(DEBUG, CP, "IN_OPEN: skip \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_OPEN: skip \n");
 			continue;
 		}
 		if (event->mask & IN_ATTRIB) {
-			RTE_LOG_DP(DEBUG, CP, "IN_ATTRIB: \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_ATTRIB: \n");
 		}
 		if (event->mask & IN_CLOSE_WRITE) {
-			RTE_LOG_DP(DEBUG, CP, "IN_CLOSE_WRITE: \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_CLOSE_WRITE: \n");
 		}
 		if (event->mask & IN_CREATE) {
-			RTE_LOG_DP(DEBUG, CP, "IN_CREATE: \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_CREATE: \n");
 		}
 		if (event->mask & IN_DELETE) {
-			RTE_LOG_DP(DEBUG, CP, "IN_DELETE: \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_DELETE: \n");
 		}
 		if (event->mask & IN_DELETE_SELF) {
-			RTE_LOG_DP(DEBUG, CP, "IN_DELETE_SELF: \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_DELETE_SELF: \n");
 		}
 		if (event->mask & IN_MODIFY) {
-			RTE_LOG_DP(DEBUG, CP, "IN_MODIFY: \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_MODIFY: \n");
 		}
 		if (event->mask & IN_MOVE_SELF) {
-			RTE_LOG_DP(DEBUG, CP, "IN_MOVE_SELF: \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_MOVE_SELF: \n");
 		}
 		if (event->mask & IN_MOVED_FROM)
-			RTE_LOG_DP(DEBUG, CP, "IN_MOVED_FROM: \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_MOVED_FROM: \n");
 
 		if (event->mask & IN_MOVED_TO) {
-				RTE_LOG_DP(DEBUG, CP, "IN_MOVED_TO: \n");
+				clLog(clSystemLog, eCLSeverityDebug, "IN_MOVED_TO: \n");
 		}
 		if (event->mask & IN_IGNORED) {
-			RTE_LOG_DP(DEBUG, CP, "IN_IGNORE: file deleted \n");
+			clLog(clSystemLog, eCLSeverityDebug, "IN_IGNORE: file deleted \n");
 		}
 
 		if (wd[0] == event->wd) {
-			RTE_LOG_DP(DEBUG, CP, "calling config change callback \n");
+			clLog(clSystemLog, eCLSeverityDebug, "calling config change callback \n");
 			handled = true;
 			config->callback(config->config_file, 0);
 			break;
@@ -125,7 +125,7 @@ config_thread_handler(void *config)
 	struct entry *cfg = (struct entry *)config;
 	int fd = 0;
 
-	RTE_LOG_DP(INFO, CP, "Thread started for monitoring config file %s\n",
+	clLog(clSystemLog, eCLSeverityCritical, "Thread started for monitoring config file %s\n",
 		   cfg->config_file);
 
 	fd = inotify_init1(IN_NONBLOCK);
@@ -136,11 +136,11 @@ config_thread_handler(void *config)
 
 	wd = inotify_add_watch(fd, cfg->config_file, IN_ALL_EVENTS); //OPEN | IN_CLOSE);
 	if (wd == -1) {
-		RTE_LOG_DP(ERR, CP, "Can not watch file. File does not exist - %s \n",
+		clLog(clSystemLog, eCLSeverityCritical, "Can not watch file. File does not exist - %s \n",
 			cfg->config_file);
 		return NULL;
 	}
-	RTE_LOG_DP(INFO, CP, "add_watch return %d \n", wd);
+	clLog(clSystemLog, eCLSeverityCritical, "add_watch return %d \n", wd);
 
 	/* Prepare for polling */
 	nfds = 1;
@@ -165,7 +165,7 @@ config_thread_handler(void *config)
 				/* Inotify events are available */
 				bool handled = handle_events(fd, &wd, cfg);
 				if (handled == true) {
-					RTE_LOG_DP(INFO, CP, "FILE change handled \n");
+					clLog(clSystemLog, eCLSeverityCritical, "FILE change handled \n");
 					/* One time event. Exit from the thread  */
 					return NULL;
 				}
@@ -181,7 +181,7 @@ watch_config_change(const char *config_file, configCbk cbk)
 {
 	pthread_attr_t attr;
 
-	RTE_LOG_DP(INFO, CP, "Register config change notification %s\n", config_file);
+	clLog(clSystemLog, eCLSeverityCritical, "Register config change notification %s\n", config_file);
 
 	struct entry *config_entry = (struct entry *) calloc(1, sizeof(struct entry));
 	if (config_entry == NULL) {

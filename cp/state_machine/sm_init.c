@@ -11,7 +11,6 @@
 #include "ue.h"
 #include "sm_struct.h"
 #include "cp_config.h"
-#include "cp_log.h"
 #include "gen_utils.h"
 #include "clogger.h"
 #include "sm_structs_api.h"

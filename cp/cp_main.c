@@ -22,13 +22,12 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp.h"
 #include <sys/stat.h>
-#include "cp_log.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"
 #include "cp_config_defs.h"
 #include "ipc_api.h"
 #include "spgw_cpp_wrapper.h"
-#include "timer.h"
+#include "cp_timer.h"
 #include "cp_peer.h"
 
 #ifdef USE_DNS_QUERY
@@ -65,28 +64,6 @@ clock_t cp_stats_execution_time;
 _timer_t st_time;
 
 /**
- * @brief  : Setting/enable CP RTE LOG_LEVEL.
- * @param  : log_level, log level to be set
- * @return : Returns nothing
- */
-static void
-set_log_level(uint8_t log_level)
-{
-
-/** Note :In dpdk set max log level is INFO, here override the
- *  max value of RTE_LOG_INFO for enable DEBUG logs (dpdk-16.11.4
- *  and dpdk-18.02).
- */
-	if (log_level == NGIC_DEBUG)
-		rte_log_set_level(RTE_LOGTYPE_CP, RTE_LOG_DEBUG);
-	else if (log_level == NOTICE)
-		rte_log_set_global_level(RTE_LOG_NOTICE);
-	else 
-        rte_log_set_global_level(RTE_LOG_INFO);
-
-}
-
-/**
  *
  * @brief  : Parses non-dpdk command line program arguments for control plane
  * @param  : argc, number of arguments
@@ -97,7 +74,6 @@ static void
 parse_arg(int argc, char **argv)
 {
     char errbuff[PCAP_ERRBUF_SIZE];
-    int args_set = 0;
     int c = 0;
     pcap_t *pcap;
 
@@ -131,14 +107,6 @@ parse_arg(int argc, char **argv)
                     pcap = pcap_open_dead(DLT_EN10MB, UINT16_MAX);
                     pcap_dumper = pcap_dump_open(pcap, optarg);
                     s11_pcap_fd = pcap_fileno(pcap);
-                    break;
-                }
-
-            case 'l':
-                {
-                    // ajay - How to change DPDK log level
-                    set_log_level((uint8_t)atoi(optarg));
-                    args_set |= LOG_LEVEL_SET;
                     break;
                 }
 

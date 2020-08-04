@@ -14,7 +14,6 @@
 #include "cp_main.h"
 #include "pfcp.h"
 #include "upf_struct.h"
-#include "cp_log.h"
 #include "gen_utils.h"
 #include "cp_config.h"
 #include "spgw_cpp_wrapper.h"

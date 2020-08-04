@@ -15,7 +15,7 @@
 #include <rte_ether.h>
 #include <rte_ethdev.h>
 #include "cp_main.h"
-#include "timer.h"
+#include "cp_timer.h"
 
 
 /**

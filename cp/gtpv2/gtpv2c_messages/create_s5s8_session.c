@@ -27,7 +27,6 @@
 #include "cp_config_defs.h"
 #include "ip_pool.h"
 #include "upf_struct.h"
-#include "cp_log.h"
 #include "gen_utils.h"
 #include "sm_structs_api.h"
 #include "clogger.h"

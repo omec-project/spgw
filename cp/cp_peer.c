@@ -19,7 +19,7 @@
 #include "gtpv2_interface.h"
 #include "cp_peer.h"
 #include "cp_config_defs.h"
-#include "timer.h"
+#include "cp_timer.h"
 
 
 uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];

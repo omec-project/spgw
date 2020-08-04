@@ -20,7 +20,6 @@
 
 #include <rte_common.h>
 #include <rte_eal.h>
-#include <rte_log.h>
 #include <rte_malloc.h>
 #include <rte_jhash.h>
 #include <rte_cfgfile.h>

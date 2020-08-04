@@ -26,7 +26,7 @@
 #include "cp_interface.h"
 #include "packet_filters.h"
 #include "pfcp_cp_struct.h"
-#include "timer.h"
+#include "cp_timer.h"
 #include "cp_peer_struct.h"
 #include "upf_struct.h"
 #include "spgw_config_struct.h"

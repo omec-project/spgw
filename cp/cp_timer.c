@@ -19,7 +19,7 @@
 #include <arpa/inet.h>
 #include "rte_hash.h"
 #include "rte_errno.h"
-#include "timer.h"
+#include "cp_timer.h"
 #include "clogger.h"
 #include "errno.h"
 

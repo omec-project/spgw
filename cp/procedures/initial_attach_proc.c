@@ -23,7 +23,6 @@
 #include "pfcp_enum.h"
 #include "pfcp.h"
 #include "pfcp_cp_association.h"
-#include "cp_log.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
 #include "initial_attach_proc.h"
@@ -228,7 +227,7 @@ process_create_sess_req(create_sess_req_t *csr,
 #endif
 #endif
             if (found == false) {
-                RTE_LOG_DP(DEBUG, CP, "Received CSReq with static address %s"
+                clLog(sxlogger, eCLSeverityCritical,"Received CSReq with static address %s"
                         " . Invalid address received \n",
                         inet_ntoa(*paa_ipv4));
                 // caller sends out csrsp 

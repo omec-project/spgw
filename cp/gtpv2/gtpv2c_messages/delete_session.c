@@ -12,7 +12,6 @@
 #include "gtpv2_interface.h"
 #include "sm_struct.h"
 #include "cp_config.h"
-#include "cp_log.h"
 #include "clogger.h"
 #include "ip_pool.h"
 #include "gw_adapter.h"
@@ -185,7 +184,7 @@ process_delete_session_request(gtpv2c_header_t *gtpv2c_rx,
 			gen_sgwc_s5s8_delete_session_request(gtpv2c_rx,
 				gtpv2c_s5s8_tx, s5s8_pgw_gtpc_del_teid,
 				gtpv2c_rx->teid.has_teid.seq, ds_req.lbi.ebi_ebi);
-		RTE_LOG(DEBUG, CP, "NGIC- delete_session.c::"
+		clLog(s11logger, eCLSeverityDebug,
 				"\n\tprocess_delete_session_request::case= %d;"
 				"\n\tprocess_sgwc_s5s8_ds_req_cnt= %u;"
 				"\n\tue_ip= pdn->ipv4= %s;"

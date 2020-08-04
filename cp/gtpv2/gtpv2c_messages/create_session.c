@@ -27,7 +27,6 @@
 #include "gtpv2_interface.h"
 #include "ip_pool.h"
 #include "upf_struct.h"
-#include "cp_log.h"
 #include "cp_config_defs.h"
 #include "spgw_cpp_wrapper.h"
 
@@ -142,7 +141,8 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
             }
 			break;
 			default:
-				RTE_LOG_DP(INFO, CP, "Unknown PCO ID:(0x%x) received ", req_pco->ids[i].type);
+			    clLog(s11logger, eCLSeverityDebug,"Unknown PCO ID:(0x%x) received ", 
+                                                req_pco->ids[i].type);
 		}
 	}
     // Lets add some additional parameters even if UE has requested for it

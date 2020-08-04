@@ -24,7 +24,6 @@
 #include "pfcp_enum.h"
 #include "pfcp.h"
 #include "pfcp_cp_association.h"
-#include "cp_log.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
 #include "initial_attach_proc.h"
