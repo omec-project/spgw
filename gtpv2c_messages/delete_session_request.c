@@ -15,6 +15,11 @@
 #include "clogger.h"
 #include "ip_pool.h"
 #include "gw_adapter.h"
+#include "cp_peer.h"
+#include "spgw_cpp_wrapper.h"
+#include "sm_structs_api.h"
+#include "gtpv2c_error_rsp.h"
+#include "detach_proc.h"
 
 int
 delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
@@ -216,4 +221,84 @@ process_delete_session_request(gtpv2c_header_t *gtpv2c_rx,
 	set_cause_accepted_ie(gtpv2c_s11_tx, IE_INSTANCE_ZERO);
 
 	return 0;
+}
+
+// saegw - DETACH_PROC CONNECTED_STATE DS_REQ_RCVD_EVNT => process_ds_req_handler
+// saegw - DETACH_PROC IDEL_STATE  DS_REQ_RCVD_EVNT => process_ds_req_handler
+// pgw - DETACH_PROC CONNECTED_STATE DS_REQ_RCVD_EVNT ==> process_ds_req_handler
+// pgw - DETACH_PROC IDEL_STATE DS_REQ_RCVD_EVNT ==> process_ds_req_handler 
+// sgw DETACH_PROC CONNECTED_STATE DS_REQ_RCVD_EVNT : process_ds_req_handler 
+// sgw DETACH_PROC IDEL_STATE DS_REQ_RCVD_EVNT : process_ds_req_handler 
+
+int
+handle_delete_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
+{
+    int ret;
+    struct sockaddr_in s11_peer_sockaddr = {0};
+    s11_peer_sockaddr = msg->peer_addr;
+    /* Reset periodic timers */
+    process_response(s11_peer_sockaddr.sin_addr.s_addr);
+
+    /* Decode delete session request */
+    ret = decode_del_sess_req((uint8_t *) gtpv2c_rx,
+            &msg->gtpc_msg.dsr);
+    if (ret == 0)
+        return -1;
+
+    /* validate DSReq conente */
+
+    // update cli sstats 
+    RTE_SET_USED(gtpv2c_rx);
+    ue_context_t *context = NULL;
+    pdn_connection_t *pdn = NULL;
+    uint8_t ebi_index;
+    assert(msg->msg_type == GTP_DELETE_SESSION_REQ);
+
+    /* Find old transaction */
+    uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
+    uint16_t source_port = msg->peer_addr.sin_port;
+    uint32_t seq_num = msg->gtpc_msg.dsr.header.teid.has_teid.seq;  
+    transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
+
+    if(old_trans != NULL)
+    {
+        printf("Retransmitted DSReq received. Old DSReq is in progress\n");
+        return -1;
+    }
+
+    if(get_ue_context(msg->gtpc_msg.dsr.header.teid.has_teid.teid,
+                &context) != 0) {
+        ds_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
+                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+        return -1;
+    }
+    msg->ue_context = context;
+    ebi_index = msg->gtpc_msg.dsr.lbi.ebi_ebi - 5;
+    pdn = GET_PDN(context, ebi_index);
+    msg->pdn_context = pdn;
+    msg->event = DS_REQ_RCVD_EVNT;
+    msg->proc = DETACH_PROC;
+
+#ifdef FUTURE_NEED
+    if((msg->gtpc_msg.dsr.indctn_flgs.header.len !=0)  && 
+            (msg->gtpc_msg.dsr.indctn_flgs.indication_si != 0)) {
+        msg->proc = SGW_RELOCATION_PROC;
+    } 
+#endif
+    /*Set the appropriate event type.*/
+
+    /* Allocate new Proc */
+    proc_context_t *detach_proc = alloc_detach_proc(msg);
+
+    /* Create new transaction */
+    transData_t *gtpc_trans = (transData_t *) calloc(1, sizeof(transData_t));  
+    add_gtp_transaction(source_addr, source_port, seq_num, gtpc_trans);
+    gtpc_trans->proc_context = (void *)detach_proc;
+    detach_proc->gtpc_trans = gtpc_trans;
+    gtpc_trans->sequence = seq_num;
+    gtpc_trans->peer_sockaddr = msg->peer_addr;
+    context->current_proc = detach_proc;
+
+    detach_proc->handler((void*)detach_proc, msg->event, (void*)msg); 
+    return 0;
 }

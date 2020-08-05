@@ -80,6 +80,7 @@ typedef struct msg_info {
 		GxRAR rar;
 	}gx_msg;
 
+    uint32_t source_interface;
     uint8_t rx_interface;
     upf_context_t *upf_context;
     ue_context_t *ue_context;

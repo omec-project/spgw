@@ -8,13 +8,9 @@
 #ifndef __GTPV2_EVT_HANDLER_H
 #define __GTPV2_EVT_HANDLER_H
 #include "sm_struct.h"
-int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_create_session_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_modify_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_modify_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_delete_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_delete_session_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_rel_access_bearer_req_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_ddn_ack_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 
 #ifdef FUTURE_NEEDS

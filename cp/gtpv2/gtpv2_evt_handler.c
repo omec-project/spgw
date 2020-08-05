@@ -71,147 +71,6 @@ check_interface_type(uint8_t iface)
 }
 
 
-int handle_create_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg)
-{
-    RTE_SET_USED(gtpv2c_rx);
-    assert(msg->msg_type == GTP_CREATE_SESSION_REQ);
-    proc_context_t *csreq_proc = NULL;
-
-    /* Find old transaction */
-    uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
-    uint16_t source_port = msg->peer_addr.sin_port;
-    uint32_t seq_num = msg->gtpc_msg.csr.header.teid.has_teid.seq;  
-    transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
-
-    if(old_trans != NULL)
-    {
-        printf("Retransmitted CSReq received. Old CSReq is in progress\n");
-        return -1;
-    }
-
-
-    /*
-     * Requirement1 : Create transaction. If new CSReq is received and previous
-     *                CSreq is already in progress then drop retransmitted CSReq 
-     * Requirement1 : Detect Context Replacement 
-     * Requirement2 : Support guard timer. If retransmitted CSReq is received 
-     *       after sending CSRsp then just sent back same CSrsp or drop CSReq.
-     */
-    ue_context_t *context = NULL; 
-    uint64_t imsi;
-    imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
-    int ret = rte_hash_lookup_data(ue_context_by_imsi_hash, &imsi, (void **) &(context));
-    if(ret >= 0)
-    {
-        printf("Detected context replacement of the call \n");
-        msg->msg_type = GTP_RESERVED; 
-        msg->ue_context = context;
-        process_error_occured_handler_new((void *)msg, NULL);
-        printf("Deleted old call due to context replacement \n");
-        msg->msg_type = GTP_CREATE_SESSION_REQ; 
-        msg->ue_context = NULL;
-    }
-   
-#ifdef TEMP
-    if(msg->rx_interface == PGW_S5_S8) 
-    {
-        /* when CSR received from SGWC add it as a peer*/
-	    add_node_conn_entry(ntohl(msg->gtpc_msg.csr.sender_fteid_ctl_plane.ipv4_address),
-								S5S8_SGWC_PORT_ID);
-    }
-    else 
-#endif
-    if(msg->rx_interface == SGW_S11_S4) 
-    {
-        /* when CSR received from MME add it as a peer*/
-	    add_node_conn_entry(ntohl(msg->gtpc_msg.csr.sender_fteid_ctl_plane.ipv4_address),
-								S11_SGW_PORT_ID );
-    }
-
-#ifdef FUTURE_NEED
-	if (1 == msg->gtpc_msg.csr.indctn_flgs.indication_oi) {
-				/*Set SGW Relocation Case */
-		msg->proc = SGW_RELOCATION_PROC;
-	} 
-#endif
-    /* SGW + PGW + SAEGW case */
-    msg->proc = INITIAL_PDN_ATTACH_PROC;
-
-	/*Set the appropriate event type.*/
-	msg->event = CS_REQ_RCVD_EVNT;
-    /* Create new transaction */
-    transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
-    add_gtp_transaction(source_addr, source_port, seq_num, trans);
-
-    if(INITIAL_PDN_ATTACH_PROC == msg->proc) {
-        /* Allocate new Proc */
-        csreq_proc = alloc_initial_proc(msg);
-    }
-
-    assert(csreq_proc != NULL);
-    trans->proc_context = (void *)csreq_proc;
-    csreq_proc->gtpc_trans = trans;
-    trans->sequence = seq_num;
-    trans->peer_sockaddr = msg->peer_addr;
-
-    csreq_proc->handler((void *)csreq_proc, (uint32_t)msg->event, (void *)msg);
-    return 0;
-
-#ifdef FUTURE_NEEDS
-
-	if (INITIAL_PDN_ATTACH_PROC == msg->proc) {
-		if (cp_config->cp_type == SGWC) {
-			/*Set the appropriate state for the SGWC */
-			msg->state = SGWC_NONE_STATE;
-            int ret = process_csreq((void*)msg);
-            if(ret != 0) {
-                return ret;
-            }
-            /* Send PFCP Establishment Req OR 
-             * Send PFCP Setup + Buffer CSReq proc 
-             * */
-            association_setup_handler((void *)msg, NULL);
-        } else {
-		    msg->state = PGWC_NONE_STATE;
-            /*Set the appropriate state for the SAEGWC and PGWC*/
-            if(cp_config->gx_enabled) {
-                clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
-                        "Msg_Type:%s[%u], Teid:%u, "
-                        "Procedure:%s, State:%s, Event:%s\n",
-                        __func__, gtp_type_str(msg->msg_type), msg->msg_type,
-                        gtpv2c_rx->teid.has_teid.teid,
-                        get_proc_string(msg->proc),
-                        get_state_string(msg->state), get_event_string(msg->event));
-
-                gx_setup_handler((void*)msg, NULL);
-            } else {
-                clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
-                        "Msg_Type:%s[%u], Teid:%u, "
-                        "Procedure:%s, State:%s, Event:%s\n",
-                        __func__, gtp_type_str(msg->msg_type), msg->msg_type,
-                        gtpv2c_rx->teid.has_teid.teid,
-                        get_proc_string(msg->proc),
-                        get_state_string(msg->state), get_event_string(msg->event));
-
-                int ret = process_csreq((void*)msg);
-                if(ret != 0) {
-                    return ret;
-                }
-                association_setup_handler((void *)msg, NULL);
-            }
-        }
-	} else if (SGW_RELOCATION_PROC == msg->proc) {
-		/* SGW Relocation */
-		msg->state = SGWC_NONE_STATE;
-        int ret = process_csreq((void*)msg);
-        if(ret != 0)
-            return ret;
-        association_setup_handler((void *)msg, NULL);
-	}
-    return 0;
-#endif
-}
-
 // saegw, INITIAL_PDN_ATTACH_PROC, CS_REQ_SNT_STATE, CS_RESP_RCVD_EVNT, process_cs_resp_handler
 // saegw, SGW_RELOCATION_PROC CS_REQ_SNT_STATE CS_RESP_RCVD_EVNT -> process_cs_resp_handler 
 // pgw - INITIAL_PDN_ATTACH_PROC CS_REQ_SNT_STATE CS_RESP_RCVD_EVNT ==> process_cs_resp_handler 
@@ -289,127 +148,6 @@ int handle_create_session_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *m
 }
 #endif
 
-// Saegw, INITIAL_PDN_ATTACH_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT =>                   process_mb_req_handler
-// saegw, INITIAL_PDN_ATTACH_PROC IDEL_STATE MB_REQ_RCVD_EVNT =>                        process_mb_req_handler 
-// saegw, INITIAL_PDN_ATTACH_PROC,DDN_ACK_RCVD_STATE,MB_REQ_RCVD_EVNT,                  process_mb_req_handler 
-// saegw, SGW_RELOCATION_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT                          process_mb_req_sgw_reloc_handler 
-// saegw, SGW_RELOCATION_PROC IDEL_STATE MB_REQ_RCVD_EVNT                               process_mb_req_sgw_reloc_handler 
-// saegw, SGW_RELOCATION_PROC DDN_ACK_RCVD_STATE MB_REQ_RCVD_EVNT DDN_ACK_RCVD_STATE=>  process_mb_req_handler   
-// saegw  CONN_SUSPEND_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT =>process_mb_req_handler
-// saegw  CONN_SUSPEND_PROC IDEL_STATE MB_REQ_RCVD_EVNT => process_mb_req_handler  
-// saegw  CONN_SUSPEND_PROC DDN_ACK_RCVD_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler
-// pgw SGW_RELOCATION_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT => process_mb_req_sgw_reloc_handler
-// pgw SGW_RELOCATION_PROC IDEL_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_sgw_reloc_handler
-// sgw INITIAL_PDN_ATTACH_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler
-// sgw INITIAL_PDN_ATTACH_PROC IDEL_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler 
-// sgw INITIAL_PDN_ATTACH_PROC DDN_ACK_RCVD_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler 
-// sgw SGW_RELOCATION_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler
-// sgw SGW_RELOCATION_PROC IDEL_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler 
-// sgw CONN_SUSPEND_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT - process_mb_req_handler 
-// sgw CONN_SUSPEND_PROC IDEL_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler
-// sgw CONN_SUSPEND_PROC DDN_ACK_RCVD_STATE MB_REQ_RCVD_EVNT => process_mb_req_handler 
-
-int handle_modify_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg)
-{
-    ue_context_t *context = NULL;
-    pdn_connection_t *pdn = NULL;
-    uint8_t ebi_index ;
-
-    RTE_SET_USED(gtpv2c_rx);
-    assert(msg->msg_type == GTP_MODIFY_BEARER_REQ);
-
-    uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
-    uint16_t source_port = msg->peer_addr.sin_port;
-    uint32_t seq_num = msg->gtpc_msg.mbr.header.teid.has_teid.seq;  
-    transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
-
-    if(old_trans != NULL)
-    {
-        printf("Retransmitted MBReq received. Old MBReq is in progress\n");
-        return -1;
-    }
-
-#ifdef FUTURE_NEED
-	if(cp_config->cp_type == PGWC) {
-		msg->proc = SGW_RELOCATION_PROC;  /* ajay - not correct */
-
-		gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);//0xd0ffee;
-
-		uint8_t ebi_index = msg->gtpc_msg.mbr.bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
-
-		if (update_ue_proc(gtpv2c_rx->teid.has_teid.teid, msg->proc ,ebi_index) != 0) {
-				mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
-						    cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-				return -1;
-		}
-
-		if(get_ue_context(msg->gtpc_msg.mbr.header.teid.has_teid.teid, &context) != 0) {
-			mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
-					    cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-			return -1;
-		}
-		pdn = GET_PDN(context, ebi_index);
-		msg->state = pdn->state;
-		msg->proc = pdn->proc;
-		msg->event = MB_REQ_RCVD_EVNT;
-		add_node_conn_entry(ntohl(msg->gtpc_msg.mbr.sender_fteid_ctl_plane.ipv4_address),
-									S5S8_PGWC_PORT_ID);
-
-        assert(NULL); /* ajay - add function */ 
-	} else 
-#endif
-    {
-		/*Retrive UE state. */
-		if(get_ue_context(msg->gtpc_msg.mbr.header.teid.has_teid.teid, &context) != 0) {
-
-			mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
-							    cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-			return -1;
-		}
-		ebi_index = msg->gtpc_msg.mbr.bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
-		pdn = GET_PDN(context, ebi_index);
-        msg->pdn_context = pdn;
-        msg->ue_context = context;
-		msg->state = pdn->state; 
-		if((pdn->proc == INITIAL_PDN_ATTACH_PROC) || (CONN_SUSPEND_PROC == pdn->proc)){
-			msg->proc = pdn->proc;
-		} 
-
-		/*Set the appropriate event type.*/
-		msg->event = MB_REQ_RCVD_EVNT;
-
-        /* Allocate new Proc */
-        proc_context_t *mbreq_proc = alloc_service_req_proc(msg);
-        context->current_proc = mbreq_proc;
-
-        /* Find new transaction */
-        transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
-        add_gtp_transaction(source_addr, source_port, seq_num, trans);
-        trans->sequence = seq_num;
-        trans->peer_sockaddr = msg->peer_addr;
-
-        /* link transaction and proc */
-        trans->proc_context = (void *)mbreq_proc;
-        mbreq_proc->gtpc_trans = trans;
-        
-        mbreq_proc->handler((void *)mbreq_proc, msg->event, (void *)msg);
-
-#ifdef FUTURE_NEED
-        else {
-			msg->proc = SGW_RELOCATION_PROC; /* wrong */ 
-			if (update_ue_proc(ntohl(gtpv2c_rx->teid.has_teid.teid), msg->proc, ebi_index) != 0) {
-				mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
-						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-				return -1;
-			}
-			pdn->proc = msg->proc;
-		}
-#endif
-
-	}
-    return 0;
-}
-
 #ifdef FUTURE_NEED_SGW
 // sgw : SGW_RELOCATION_PROC DDN_ACK_RCVD_STATE MB_RESP_RCVD_EVNT => process_mbr_resp_handover_handler  
 int handle_modify_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg)
@@ -443,70 +181,6 @@ int handle_modify_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *ms
     return 0;
 }
 #endif
-
-// saegw - DETACH_PROC CONNECTED_STATE DS_REQ_RCVD_EVNT => process_ds_req_handler
-// saegw - DETACH_PROC IDEL_STATE  DS_REQ_RCVD_EVNT => process_ds_req_handler
-// pgw - DETACH_PROC CONNECTED_STATE DS_REQ_RCVD_EVNT ==> process_ds_req_handler
-// pgw - DETACH_PROC IDEL_STATE DS_REQ_RCVD_EVNT ==> process_ds_req_handler 
-
-// sgw DETACH_PROC CONNECTED_STATE DS_REQ_RCVD_EVNT : process_ds_req_handler 
-// sgw DETACH_PROC IDEL_STATE DS_REQ_RCVD_EVNT : process_ds_req_handler 
-int handle_delete_session_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg)
-{
-    RTE_SET_USED(gtpv2c_rx);
-    ue_context_t *context = NULL;
-    pdn_connection_t *pdn = NULL;
-    uint8_t ebi_index;
-    assert(msg->msg_type == GTP_DELETE_SESSION_REQ);
-
-    /* Find old transaction */
-    uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
-    uint16_t source_port = msg->peer_addr.sin_port;
-    uint32_t seq_num = msg->gtpc_msg.dsr.header.teid.has_teid.seq;  
-    transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
-
-    if(old_trans != NULL)
-    {
-        printf("Retransmitted DSReq received. Old DSReq is in progress\n");
-        return -1;
-    }
-
-    if(get_ue_context(msg->gtpc_msg.dsr.header.teid.has_teid.teid,
-                &context) != 0) {
-        ds_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
-                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-        return -1;
-    }
-    msg->ue_context = context;
-    ebi_index = msg->gtpc_msg.dsr.lbi.ebi_ebi - 5;
-    pdn = GET_PDN(context, ebi_index);
-    msg->pdn_context = pdn;
-	msg->event = DS_REQ_RCVD_EVNT;
-    msg->proc = DETACH_PROC;
-
-#ifdef FUTURE_NEED
-    if((msg->gtpc_msg.dsr.indctn_flgs.header.len !=0)  && 
-	   (msg->gtpc_msg.dsr.indctn_flgs.indication_si != 0)) {
-			msg->proc = SGW_RELOCATION_PROC;
-	} 
-#endif
-	/*Set the appropriate event type.*/
-
-    /* Allocate new Proc */
-    proc_context_t *detach_proc = alloc_detach_proc(msg);
-
-    /* Create new transaction */
-    transData_t *gtpc_trans = (transData_t *) calloc(1, sizeof(transData_t));  
-    add_gtp_transaction(source_addr, source_port, seq_num, gtpc_trans);
-    gtpc_trans->proc_context = (void *)detach_proc;
-    detach_proc->gtpc_trans = gtpc_trans;
-    gtpc_trans->sequence = seq_num;
-    gtpc_trans->peer_sockaddr = msg->peer_addr;
-    context->current_proc = detach_proc;
-
-    detach_proc->handler((void*)detach_proc, msg->event, (void*)msg); 
-    return 0;
-}
 
 #ifdef FUTURE_NEED_SGW
 // saegw DETACH_PROC DS_REQ_SNT_STATE DS_RESP_RCVD_EVNT => process_ds_resp_handler
@@ -568,117 +242,6 @@ int handle_delete_session_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *m
     return 0;
 }
 #endif
-
-// saegw - CONN_SUSPEND_PROC CONNECTED_STATE REL_ACC_BER_REQ_RCVD_EVNT => process_rel_access_ber_req_handler  
-// sgw   - CONN_SUSPEND_PROC CONNECTED_STATE REL_ACC_BER_REQ_RCVD_EVNT => process_rel_access_ber_req_handler 
-int handle_rel_access_bearer_req_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg)
-{
-    ue_context_t *context = NULL;
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
-
-    /* Find old transaction */
-    uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
-    uint16_t source_port = msg->peer_addr.sin_port;
-    uint32_t seq_num = msg->gtpc_msg.rab.header.teid.has_teid.seq;  
-    transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
-
-    if(old_trans != NULL)
-    {
-        printf("Retransmitted RAB received. Old RAB is in progress\n");
-        return -1;
-    }
-
-    if(get_ue_context(msg->gtpc_msg.rab.header.teid.has_teid.teid,
-                &context) != 0) {
-        rab_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
-                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-        return -1;
-    }
-    msg->ue_context = context;
-	msg->proc = CONN_SUSPEND_PROC;
-    assert(context->current_proc == NULL);
-
-	/*Set the appropriate event type.*/
-	msg->event = REL_ACC_BER_REQ_RCVD_EVNT;
-
-    /* Allocate new Proc */
-    proc_context_t *rab_proc = alloc_rab_proc(msg);
-
-    /* Create new transaction */
-    transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
-    add_gtp_transaction(source_addr, source_port, seq_num, trans);
-    trans->proc_context = (void *)rab_proc;
-    rab_proc->gtpc_trans = trans;
-    trans->sequence = seq_num;
-    trans->peer_sockaddr = msg->peer_addr;
-
-    // set cross references in context 
-    context->current_proc = rab_proc;
-
-    rab_proc->handler(rab_proc, msg->event, (void *)msg);
-    return 0;
-}
-
-// saegw - CONN_SUSPEND_PROC DDN_REQ_SNT_STATE DDN_ACK_RESP_RCVD_EVNT ==> process_ddn_ack_resp_handler
-// sgw  CONN_SUSPEND_PROC DDN_REQ_SNT_STATE DDN_ACK_RESP_RCVD_EVNT ==> process_ddn_ack_resp_handler 
-int handle_ddn_ack_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg)
-{
-    ue_context_t *context = NULL;
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
-
-    uint32_t local_addr = my_sock.s11_sockaddr.sin_addr.s_addr;
-    uint16_t port_num = my_sock.s11_sockaddr.sin_port;
-    uint32_t seq_num = gtpv2c_rx->teid.has_teid.seq;
-
-    transData_t *gtpc_trans = delete_gtp_transaction(local_addr, port_num, seq_num);
-
-	/* Retrive the session information based on session id. */
-    if(gtpc_trans == NULL) {
-        printf("Unsolicitated DDN Ack responnse \n");
-		return -1;
-    }
-
-    proc_context_t *proc_context = gtpc_trans->proc_context;
-    ue_context_t *context1 = proc_context->ue_context;
-    
-
-	/*Retrive UE state. */
-	if (get_ue_context(ntohl(gtpv2c_rx->teid.has_teid.teid), &context) != 0) {
-		return -1;
-	}
-    assert(context != context1); // no cross connection 
-
-    msg->proc_context = gtpc_trans->proc_context;
-    msg->ue_context = proc_context->ue_context; 
-    msg->pdn_context = proc_context->pdn_context; 
-
-	for(int i=0; i < MAX_BEARERS; i++){
-		if(context->pdns[i] == NULL){
-			continue;
-		}
-		else{
-			msg->state = context->pdns[i]->state;
-			msg->proc = context->pdns[i]->proc;
-		}
-	}
-
-	/*Set the appropriate event type.*/
-	msg->event = DDN_ACK_RESP_RCVD_EVNT;
-
-	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
-			"Msg_Type:%s[%u], Teid:%u, "
-			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
-			gtpv2c_rx->teid.has_teid.teid,
-			get_proc_string(msg->proc),
-			get_state_string(msg->state), get_event_string(msg->event));
-
-    process_ddn_ack_resp_handler(msg, NULL);
-    return 0;
-}
-
 
 #ifdef FUTURE_NEEDS
 // sgw - UPDATE_BEARER_PROC CONNECTED_STATE UPDATE_BEARER_REQ_RCVD_EVNT - process_update_bearer_request_handler
@@ -1032,6 +595,7 @@ int
 process_gtp_message(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg)
 {
     int ret = 0;
+    RTE_SET_USED(gtpv2c_rx);
     /* fetch user context */
     // find session context  
     //      non-zero teid - find context from teid 
@@ -1042,64 +606,22 @@ process_gtp_message(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg)
 
     switch(msg->msg_type)
     {
-        case GTP_CREATE_SESSION_REQ:
-        {
-            // if any error then errors are generated. No action
-            // needs to be taken by caller. But dont access sub
-            // context, because if error subscriber context is 
-            // deleted right away  
-            handle_create_session_request_msg(gtpv2c_rx, msg);
-            break;
-        }
-
 #ifdef FUTURE_NEEDS
         case GTP_CREATE_SESSION_RSP:
         {
             handle_create_session_response_msg(gtpv2c_rx, msg);
             break;
         }
-#endif
-
-        case GTP_MODIFY_BEARER_REQ:
-        {
-            handle_modify_bearer_request_msg(gtpv2c_rx, msg);
-            break;
-        }        
-
-#ifdef FUTURE_NEEDS
         case GTP_MODIFY_BEARER_RSP:
         {
             handle_modify_bearer_response_msg(gtpv2c_rx, msg);
             break;
         }
-#endif
-
-        case GTP_DELETE_SESSION_REQ:
-        {
-            handle_delete_session_request_msg(gtpv2c_rx,msg);
-            break;
-        } 
-
-#ifdef FUTURE_NEEDS
         case GTP_DELETE_SESSION_RSP:
         {
             handle_delete_session_response_msg(gtpv2c_rx,msg);
             break;
         }
-#endif
-        case GTP_RELEASE_ACCESS_BEARERS_REQ:
-        {
-            handle_rel_access_bearer_req_msg(gtpv2c_rx,msg);
-            break;
-        } 
-
-        case GTP_DOWNLINK_DATA_NOTIFICATION_ACK:
-        {
-            handle_ddn_ack_msg(gtpv2c_rx,msg);
-            break;
-        }
-
-#ifdef FUTURE_NEEDS
         case GTP_DELETE_BEARER_REQ:
         {
             handle_delete_bearer_request_msg(gtpv2c_rx,msg);

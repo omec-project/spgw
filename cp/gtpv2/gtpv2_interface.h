@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#ifndef DEBUG_STR_H
-#define DEBUG_STR_H
+#ifndef _GTPV2_INTERFACE_H
+#define _GTPV2_INTERFACE_H 
 
 /**
  * @file
@@ -467,4 +467,33 @@ process_delete_bearer_resp_pfcp_timeout(void *data);
 
 void
 process_delete_bearer_request_pfcp_timeout(void *data);
-#endif /* DEBUG_STR_H */
+
+void init_gtp_interface(void);
+
+typedef int (*gtp_handler)(msg_info_t *msg, gtpv2c_header_t *); 
+
+extern gtp_handler gtp_msg_handler[256];
+int 
+handle_echo_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx);
+
+int 
+handle_echo_response(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx);
+
+int
+handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx);
+
+int
+handle_modify_bearer_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx);
+
+int
+handle_delete_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx);
+
+int 
+handle_rab_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx);
+
+int
+handle_ddn_ack(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx);
+
+int 
+handle_unknown_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx);
+#endif 

@@ -53,111 +53,6 @@ extern struct cp_stats_t cp_stats;
 uint16_t payload_length;
 extern uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
 
-/**
- * @brief  : Process echo request
- * @param  : gtpv2c_rx, holds data from incoming request
- * @param  : gtpv2c_tx, structure to be filled with response
- * @param  : iface, interfcae from which request is received
- * @return : Returns 0 in case of success , -1 otherwise
- */
-static uint8_t
-process_echo_req(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx, int iface, 
-                struct sockaddr_in *peer_addr)
-{
-	uint16_t payload_length = 0;
-	int ret = 0;
-
-	if((iface != S11_IFACE) && (iface != S5S8_IFACE)){
-		clLog(clSystemLog, eCLSeverityCritical, "%s: Invalid interface %d \n", __func__, iface);
-		return -1;
-	}
-
-	ret = process_echo_request(gtpv2c_rx, gtpv2c_tx);
-	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, "main.c::control_plane()::Error"
-				"\n\tprocess_echo_req "
-				"%s: (%d) %s\n",
-				gtp_type_str(gtpv2c_rx->gtpc.message_type), ret,
-				(ret < 0 ? strerror(-ret) : cause_str(ret)));
-	}
-
-	/* Reset ECHO Timers */
-	if(iface == S11_IFACE){
-		ret = process_response(peer_addr->sin_addr.s_addr);
-		if (ret) {
-			/* TODO: Error handling not implemented */
-		}
-	}else {
-		ret = process_response(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
-		if (ret) {
-			/*TODO: Error handling not implemented */
-		}
-	}
-
-	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
-		+ sizeof(gtpv2c_tx->gtpc);
-
-	if(iface == S11_IFACE){
-		gtpv2c_send(my_sock.sock_fd_s11, s11_tx_buf, payload_length,
-				(struct sockaddr *) peer_addr,
-				sizeof(struct sockaddr_in));
-		cp_stats.echo++;
-		update_cli_stats(peer_addr->sin_addr.s_addr,
-					gtpv2c_tx->gtpc.message_type,SENT,S11);
-	}else{
-		gtpv2c_send(my_sock.sock_fd_s5s8, s5s8_tx_buf, payload_length,
-				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-				s5s8_sockaddr_len);
-		cp_stats.echo++;
-		update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
-					gtpv2c_tx->gtpc.message_type,SENT,S5S8);
-	}
-	return 0;
-}
-
-/**
- * @brief  : Process echo response
- * @param  : gtpv2c_rx, holds data from incoming message
- * @param  : iface, interfcae from which response is received
- * @return : Returns 0 in case of success , -1 otherwise
- */
-static uint8_t
-process_echo_resp(gtpv2c_header_t *gtpv2c_rx, int iface, struct sockaddr_in *peer_addr)
-{
-	int ret = 0;
-
-	if((iface != S11_IFACE) && (iface != S5S8_IFACE)){
-		clLog(clSystemLog, eCLSeverityCritical, "%s: Invalid interface %d \n", __func__, iface);
-		return -1;
-	}
-
-	if(iface == S11_IFACE){
-		ret = process_response(peer_addr->sin_addr.s_addr);
-		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, "main.c::control_plane()::Error"
-					"\n\tprocess_echo_resp "
-					"%s: (%d) %s\n",
-					gtp_type_str(gtpv2c_rx->gtpc.message_type), ret,
-					(ret < 0 ? strerror(-ret) : cause_str(ret)));
-			/* Error handling not implemented */
-			return -1;
-		}
-	}else{
-		ret = process_response(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
-		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, "main.c::control_plane()::Error"
-					"\n\tprocess_echo_resp "
-					"%s: (%d) %s\n",
-					gtp_type_str(gtpv2c_rx->gtpc.message_type), ret,
-					(ret < 0 ? strerror(-ret) : cause_str(ret)));
-			/* Error handling not implemented */
-			return -1;
-		}
-	}
-	return 0;
-}
-
-
 /* Requirement1 - multiple read to read all the messages from the sockets 
  */
 int
@@ -172,6 +67,8 @@ msg_handler_s11(void)
     bzero(&s11_tx_buf, sizeof(s11_tx_buf));
     gtpv2c_header_t *gtpv2c_s11_rx = (gtpv2c_header_t *) s11_rx_buf;
     gtpv2c_header_t *gtpv2c_s11_tx = (gtpv2c_header_t *) s11_tx_buf;
+    RTE_SET_USED(gtpv2c_s11_tx);
+    RTE_SET_USED(ret);
 
     bytes_s11_rx = recvfrom(my_sock.sock_fd_s11,
             s11_rx_buf, MAX_GTPV2C_UDP_LEN, MSG_DONTWAIT,
@@ -198,69 +95,52 @@ msg_handler_s11(void)
 
     if (bytes_s11_rx > 0)
         ++cp_stats.rx;
-
+  
     update_cli_stats((uint32_t)s11_peer_sockaddr.sin_addr.s_addr,
             gtpv2c_s11_rx->gtpc.message_type,RCVD,S11);
 
-    if (gtpv2c_s11_rx->gtpc.message_type == GTP_ECHO_REQ){
-        if (bytes_s11_rx > 0) {
+    msg.source_interface = S11_IFACE;
+    msg.rx_interface = SGW_S11_S4; 
+	msg.msg_type = gtpv2c_s11_rx->gtpc.message_type;
 
-            /* this call will handle echo request for boh PGWC and SGWC */
-            ret = process_echo_req(gtpv2c_s11_rx, gtpv2c_s11_tx, S11_IFACE, &s11_peer_sockaddr);
-            if(ret != 0){
-                return 0;
-            }
-            ++cp_stats.tx;
-        }
+    gtp_msg_handler[gtpv2c_s11_rx->gtpc.message_type](&msg, gtpv2c_s11_rx);
+
+#if 0
+    /* Reset periodic timers */
+     process_response(s11_peer_sockaddr.sin_addr.s_addr);
+
+    // in case of response - procerue is already part of transaction 
+    // So now we have context. procedure, event, call sm handler  
+    // keep procedure/transaction in UE context...
+
+    // decode message and return error in case of bad length/invalid GTP version
+    if ((ret = gtpc_pcnd_check(gtpv2c_s11_rx, &msg, bytes_s11_rx)) != 0)
+    {
+        printf("gtpc_pcnd_check failed\n");
         return 0;
-    }else if(gtpv2c_s11_rx->gtpc.message_type == GTP_ECHO_RSP) {
-        if (bytes_s11_rx > 0) {
-
-            /* this call will handle echo responce for boh PGWC and SGWC */
-            ret = process_echo_resp(gtpv2c_s11_rx, S11_IFACE, &s11_peer_sockaddr);
-            if(ret != 0){
-                return 0;
-            }
-            ++cp_stats.tx;
-        }
-        return 0;
-    } else {
-
-        /* Reset periodic timers */
-         process_response(s11_peer_sockaddr.sin_addr.s_addr);
-
-        // in case of response - procerue is already part of transaction 
-        // So now we have context. procedure, event, call sm handler  
-        // keep procedure/transaction in UE context...
-
-        // decode message and return error in case of bad length/invalid GTP version
-        if ((ret = gtpc_pcnd_check(gtpv2c_s11_rx, &msg, bytes_s11_rx)) != 0)
-        {
-            printf("gtpc_pcnd_check failed\n");
-            return 0;
-        }
-
-        // validate message content - validate the presence of IEs
-        ret = validate_gtpv2_message_content(&msg);
-        if(ret !=  0) 
-        {
-            printf("Message %d validation failed \n", msg.msg_type);
-            // validatation failed;
-            return 0;
-        }
-
-        if(gtpv2c_s11_rx->gtpc.message_type == GTP_DOWNLINK_DATA_NOTIFICATION_ACK) {
-            update_cli_stats((uint32_t)s11_peer_sockaddr.sin_addr.s_addr,
-                    gtpv2c_s11_rx->gtpc.message_type,ACC,S11);
-        }
-
-        /* Event set depending on msg type 
-         * Proc  found from user context and message content, message type 
-         * State is on the pdn connection (for now)..Need some more attention here later   
-         */
-        msg.rx_interface = SGW_S11_S4; 
-        process_gtp_message(gtpv2c_s11_rx, &msg);
     }
+
+    // validate message content - validate the presence of IEs
+    ret = validate_gtpv2_message_content(&msg);
+    if(ret !=  0) 
+    {
+        printf("Message %d validation failed \n", msg.msg_type);
+        // validatation failed;
+        return 0;
+    }
+
+    if(gtpv2c_s11_rx->gtpc.message_type == GTP_DOWNLINK_DATA_NOTIFICATION_ACK) {
+        update_cli_stats((uint32_t)s11_peer_sockaddr.sin_addr.s_addr,
+                gtpv2c_s11_rx->gtpc.message_type,ACC,S11);
+    }
+
+    /* Event set depending on msg type 
+     * Proc  found from user context and message content, message type 
+     * State is on the pdn connection (for now)..Need some more attention here later   
+     */
+    msg.rx_interface = SGW_S11_S4; 
+    process_gtp_message(gtpv2c_s11_rx, &msg);
+#endif
 
 #if 0
     if (bytes_s11_rx > 0) {

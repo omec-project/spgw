@@ -10,8 +10,35 @@
 #include "cp_interface.h"
 #include "cp_config.h"
 #include "cp_stats.h"
+#include "gtp_ies.h"
+#include "rte_common.h"
 
 extern struct cp_stats_t cp_stats;
+gtp_handler gtp_msg_handler[256];
+
+void init_gtp_interface(void)
+{
+    for(int i=0;i<256;i++)
+        gtp_msg_handler[i] = handle_unknown_msg;
+
+    gtp_msg_handler[GTP_ECHO_REQ] =  handle_echo_request;
+    gtp_msg_handler[GTP_ECHO_RSP] =  handle_echo_response;
+    gtp_msg_handler[GTP_CREATE_SESSION_REQ] =  handle_create_session_request;
+    gtp_msg_handler[GTP_MODIFY_BEARER_REQ] = handle_modify_bearer_request; 
+    gtp_msg_handler[GTP_DELETE_SESSION_REQ] = handle_delete_session_request;
+    gtp_msg_handler[GTP_RELEASE_ACCESS_BEARERS_REQ] = handle_rab_request;
+    gtp_msg_handler[GTP_DOWNLINK_DATA_NOTIFICATION_ACK] = handle_ddn_ack; 
+
+}
+
+int 
+handle_unknown_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx)
+{
+    RTE_SET_USED(msg);
+	clLog(clSystemLog, eCLSeverityCritical, "Unhandled GTP message = %d\n", gtpv2c_s11_rx->gtpc.message_type);
+    return -1;
+}
+
 const char *
 cause_str(enum cause_value cause)
 {

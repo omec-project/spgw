@@ -24,6 +24,7 @@
 #include "cp_transactions.h"
 #include "gtpv2_internal.h"
 #include "cp_io_poll.h"
+#include "gtpv2_interface.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -37,13 +38,10 @@ extern pcap_dumper_t *pcap_dumper;
 cp_config_t *cp_config;
 
 uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
-
 uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
 struct sockaddr_in s5s8_sockaddr;
 socklen_t s5s8_sockaddr_len = sizeof(s5s8_sockaddr);
-
-
 uint8_t pfcp_tx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -185,6 +183,8 @@ void init_cp(void)
 {
 
 	init_pfcp();
+
+    init_gtp_interface();
 
 	switch (cp_config->cp_type) {
 	case SGWC:

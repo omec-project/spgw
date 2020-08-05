@@ -20,6 +20,9 @@
 #include "cp_interface.h"
 #include "sm_structs_api.h"
 #include "cp_config_defs.h"
+#include "cp_peer.h"
+#include "spgw_cpp_wrapper.h"
+#include "sm_structs_api.h"
 
 extern struct cp_stats_t cp_stats;
 extern udp_sock_t my_sock;
@@ -261,3 +264,76 @@ process_ddn_ack(downlink_data_notification_t ddn_ack, uint8_t *delay, msg_info_t
 
 }
 
+// saegw - CONN_SUSPEND_PROC DDN_REQ_SNT_STATE DDN_ACK_RESP_RCVD_EVNT ==> process_ddn_ack_resp_handler
+// sgw  CONN_SUSPEND_PROC DDN_REQ_SNT_STATE DDN_ACK_RESP_RCVD_EVNT ==> process_ddn_ack_resp_handler 
+int
+handle_ddn_ack(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
+{
+    int ret;
+    struct sockaddr_in s11_peer_sockaddr = {0};
+
+    s11_peer_sockaddr = msg->peer_addr;
+    /* Reset periodic timers */
+    process_response(s11_peer_sockaddr.sin_addr.s_addr);
+
+    ret = parse_downlink_data_notification_ack(gtpv2c_rx,
+            &msg->gtpc_msg.ddn_ack);
+    if (ret)
+        return ret;
+
+    // update CLCI stats 
+    // validate message 
+    ue_context_t *context = NULL;
+    RTE_SET_USED(gtpv2c_rx);
+    RTE_SET_USED(msg);
+
+    uint32_t local_addr = my_sock.s11_sockaddr.sin_addr.s_addr;
+    uint16_t port_num = my_sock.s11_sockaddr.sin_port;
+    uint32_t seq_num = gtpv2c_rx->teid.has_teid.seq;
+
+    transData_t *gtpc_trans = delete_gtp_transaction(local_addr, port_num, seq_num);
+
+    /* Retrive the session information based on session id. */
+    if(gtpc_trans == NULL) {
+        printf("Unsolicitated DDN Ack responnse \n");
+        return -1;
+    }
+
+    proc_context_t *proc_context = gtpc_trans->proc_context;
+    ue_context_t *context1 = proc_context->ue_context;
+
+
+    /*Retrive UE state. */
+    if (get_ue_context(ntohl(gtpv2c_rx->teid.has_teid.teid), &context) != 0) {
+        return -1;
+    }
+    assert(context != context1); // no cross connection 
+
+    msg->proc_context = gtpc_trans->proc_context;
+    msg->ue_context = proc_context->ue_context; 
+    msg->pdn_context = proc_context->pdn_context; 
+
+    for(int i=0; i < MAX_BEARERS; i++){
+        if(context->pdns[i] == NULL){
+            continue;
+        }
+        else{
+            msg->state = context->pdns[i]->state;
+            msg->proc = context->pdns[i]->proc;
+        }
+    }
+
+    /*Set the appropriate event type.*/
+    msg->event = DDN_ACK_RESP_RCVD_EVNT;
+
+    clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
+            "Msg_Type:%s[%u], Teid:%u, "
+            "Procedure:%s, State:%s, Event:%s\n",
+            __func__, gtp_type_str(msg->msg_type), msg->msg_type,
+            gtpv2c_rx->teid.has_teid.teid,
+            get_proc_string(msg->proc),
+            get_state_string(msg->state), get_event_string(msg->event));
+
+    process_ddn_ack_resp_handler(msg, NULL);
+    return 0;
+}

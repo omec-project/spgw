@@ -16,6 +16,13 @@
 #include "upf_struct.h"
 #include "gen_utils.h"
 #include "cp_config_defs.h"
+#include "cp_peer.h"
+#include "cp_config.h"
+#include "spgw_cpp_wrapper.h"
+#include "service_request_proc.h"
+#include "sm_structs_api.h"
+#include "gtpv2c_error_rsp.h"
+
 /**
  * @brief  : Maintains parsed data from modify bearer request
  */
@@ -501,3 +508,190 @@ void set_modify_bearer_request(gtpv2c_header *gtpv2c_tx, create_sess_req_t *csr,
 }
 
 #endif
+
+static
+int validate_mbreq_msg(msg_info_t *msg, mod_bearer_req_t *mb_req)
+{
+    int ret;
+    ue_context_t *context = NULL;
+
+	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
+			(const void *) &mb_req->header.teid.has_teid.teid,
+			(void **) &context);
+
+	if (ret < 0 || !context)
+		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+
+    msg->ue_context = context;
+
+	if (!mb_req->bearer_contexts_to_be_modified.eps_bearer_id.header.len
+			|| !mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.header.len) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Mandatory IE lbi/fteid missing in MBReq Dropping packet\n",
+				__func__, __LINE__);
+		return GTPV2C_CAUSE_INVALID_LENGTH;
+	}
+
+	uint8_t ebi_index = mb_req->bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
+	if (!(context->bearer_bitmap & (1 << ebi_index))) {
+		clLog(clSystemLog, eCLSeverityCritical,
+				"%s:%d Received modify bearer on non-existent EBI - "
+				"Dropping packet\n", __func__, __LINE__);
+		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+	}
+
+	eps_bearer_t *bearer = context->eps_bearers[ebi_index];
+	if (!bearer) {
+		clLog(clSystemLog, eCLSeverityCritical,
+				"%s:%d Received modify bearer on non-existent EBI - "
+				"Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
+		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+	}
+    msg->bearer_context = bearer; 
+    return 0;
+}
+
+// Saegw, INITIAL_PDN_ATTACH_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT =>                   process_mb_req_handler
+// saegw, INITIAL_PDN_ATTACH_PROC IDEL_STATE MB_REQ_RCVD_EVNT =>                        process_mb_req_handler 
+// saegw, INITIAL_PDN_ATTACH_PROC,DDN_ACK_RCVD_STATE,MB_REQ_RCVD_EVNT,                  process_mb_req_handler 
+// saegw, SGW_RELOCATION_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT                          process_mb_req_sgw_reloc_handler 
+// saegw, SGW_RELOCATION_PROC IDEL_STATE MB_REQ_RCVD_EVNT                               process_mb_req_sgw_reloc_handler 
+// saegw, SGW_RELOCATION_PROC DDN_ACK_RCVD_STATE MB_REQ_RCVD_EVNT DDN_ACK_RCVD_STATE=>  process_mb_req_handler   
+// saegw  CONN_SUSPEND_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT =>process_mb_req_handler
+// saegw  CONN_SUSPEND_PROC IDEL_STATE MB_REQ_RCVD_EVNT => process_mb_req_handler  
+// saegw  CONN_SUSPEND_PROC DDN_ACK_RCVD_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler
+// pgw SGW_RELOCATION_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT => process_mb_req_sgw_reloc_handler
+// pgw SGW_RELOCATION_PROC IDEL_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_sgw_reloc_handler
+// sgw INITIAL_PDN_ATTACH_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler
+// sgw INITIAL_PDN_ATTACH_PROC IDEL_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler 
+// sgw INITIAL_PDN_ATTACH_PROC DDN_ACK_RCVD_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler 
+// sgw SGW_RELOCATION_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler
+// sgw SGW_RELOCATION_PROC IDEL_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler 
+// sgw CONN_SUSPEND_PROC CONNECTED_STATE MB_REQ_RCVD_EVNT - process_mb_req_handler 
+// sgw CONN_SUSPEND_PROC IDEL_STATE MB_REQ_RCVD_EVNT ==> process_mb_req_handler
+// sgw CONN_SUSPEND_PROC DDN_ACK_RCVD_STATE MB_REQ_RCVD_EVNT => process_mb_req_handler 
+
+
+int
+handle_modify_bearer_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
+{
+    int ret;
+    struct sockaddr_in s11_peer_sockaddr = {0};
+
+    s11_peer_sockaddr = msg->peer_addr;
+
+
+    /* Reset periodic timers */
+    process_response(s11_peer_sockaddr.sin_addr.s_addr);
+
+    /*Decode the received msg and stored into the struct. */
+    if((ret = decode_mod_bearer_req((uint8_t *) gtpv2c_rx,
+                    &msg->gtpc_msg.mbr) == 0)) {
+        return -1;
+    }
+
+    ret = validate_mbreq_msg(msg, &msg->gtpc_msg.mbr);
+    if(ret != 0 ) {
+        mbr_error_response(msg, ret,
+                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+    }
+
+    // update CLI stats ??
+
+    ue_context_t *context = NULL;
+    pdn_connection_t *pdn = NULL;
+    uint8_t ebi_index ;
+
+    RTE_SET_USED(gtpv2c_rx);
+    assert(msg->msg_type == GTP_MODIFY_BEARER_REQ);
+
+    uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
+    uint16_t source_port = msg->peer_addr.sin_port;
+    uint32_t seq_num = msg->gtpc_msg.mbr.header.teid.has_teid.seq;  
+    transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
+
+    if(old_trans != NULL)
+    {
+        printf("Retransmitted MBReq received. Old MBReq is in progress\n");
+        return -1;
+    }
+
+#ifdef FUTURE_NEED
+	if(cp_config->cp_type == PGWC) {
+		msg->proc = SGW_RELOCATION_PROC;  /* ajay - not correct */
+
+		gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);//0xd0ffee;
+
+		uint8_t ebi_index = msg->gtpc_msg.mbr.bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
+
+		if (update_ue_proc(gtpv2c_rx->teid.has_teid.teid, msg->proc ,ebi_index) != 0) {
+				mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
+						    cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+				return -1;
+		}
+
+		if(get_ue_context(msg->gtpc_msg.mbr.header.teid.has_teid.teid, &context) != 0) {
+			mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
+					    cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+			return -1;
+		}
+		pdn = GET_PDN(context, ebi_index);
+		msg->state = pdn->state;
+		msg->proc = pdn->proc;
+		msg->event = MB_REQ_RCVD_EVNT;
+		add_node_conn_entry(ntohl(msg->gtpc_msg.mbr.sender_fteid_ctl_plane.ipv4_address),
+									S5S8_PGWC_PORT_ID);
+
+        assert(NULL); /* ajay - add function */ 
+	} else 
+#endif
+    {
+		/*Retrive UE state. */
+		if(get_ue_context(msg->gtpc_msg.mbr.header.teid.has_teid.teid, &context) != 0) {
+
+			mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
+							    cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+			return -1;
+		}
+		ebi_index = msg->gtpc_msg.mbr.bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
+		pdn = GET_PDN(context, ebi_index);
+        msg->pdn_context = pdn;
+        msg->ue_context = context;
+		msg->state = pdn->state; 
+		if((pdn->proc == INITIAL_PDN_ATTACH_PROC) || (CONN_SUSPEND_PROC == pdn->proc)){
+			msg->proc = pdn->proc;
+		} 
+
+		/*Set the appropriate event type.*/
+		msg->event = MB_REQ_RCVD_EVNT;
+
+        /* Allocate new Proc */
+        proc_context_t *mbreq_proc = alloc_service_req_proc(msg);
+        context->current_proc = mbreq_proc;
+
+        /* Find new transaction */
+        transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
+        add_gtp_transaction(source_addr, source_port, seq_num, trans);
+        trans->sequence = seq_num;
+        trans->peer_sockaddr = msg->peer_addr;
+
+        /* link transaction and proc */
+        trans->proc_context = (void *)mbreq_proc;
+        mbreq_proc->gtpc_trans = trans;
+        
+        mbreq_proc->handler((void *)mbreq_proc, msg->event, (void *)msg);
+
+#ifdef FUTURE_NEED
+        else {
+			msg->proc = SGW_RELOCATION_PROC; /* wrong */ 
+			if (update_ue_proc(ntohl(gtpv2c_rx->teid.has_teid.teid), msg->proc, ebi_index) != 0) {
+				mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
+						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+				return -1;
+			}
+			pdn->proc = msg->proc;
+		}
+#endif
+
+	}
+    return 0;
+}

@@ -62,32 +62,12 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg, int bytes_rx)
 	}
 
 	switch(msg->msg_type) {
-		case GTP_CREATE_SESSION_REQ: {
-
-			if ((ret = decode_check_csr(gtpv2c_rx, &msg->gtpc_msg.csr)) != 0){
-				if(ret != -1)
-					cs_error_response(msg, ret,
-							cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-				return -1;
-			}
-		    break;
-	    }
-
 	    case GTP_CREATE_SESSION_RSP: {
 			ret = decode_create_sess_rsp((uint8_t *)gtpv2c_rx, &msg->gtpc_msg.cs_rsp);
 			if(!ret)
 				return -1;
 
 		    break;
-	    }
-
-	    case GTP_MODIFY_BEARER_REQ: {
-			/*Decode the received msg and stored into the struct. */
-			if((ret = decode_mod_bearer_req((uint8_t *) gtpv2c_rx,
-							&msg->gtpc_msg.mbr) == 0)) {
-				return -1;
-			}
-			break;
 	    }
 
 	    case GTP_MODIFY_BEARER_RSP: {
@@ -98,16 +78,6 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg, int bytes_rx)
 		    break;
 	    }
 
-	    case GTP_DELETE_SESSION_REQ: {
-			/* Decode delete session request */
-
-			ret = decode_del_sess_req((uint8_t *) gtpv2c_rx,
-					&msg->gtpc_msg.dsr);
-			if (ret == 0)
-				return -1;
-		    break;
-	    }
-
 	    case GTP_DELETE_SESSION_RSP: {
 		    ret = decode_del_sess_rsp((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.ds_rsp);
 		    if(ret == 0)
@@ -115,30 +85,6 @@ gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg, int bytes_rx)
 
 		    break;
 		}
-
-	    case GTP_RELEASE_ACCESS_BEARERS_REQ: {
-			/* Parse the Relaese access bearer request message and update State and Event */
-			/* TODO: Revisit after libgtpv2c support */
-#if 0
-			ret = parse_release_access_bearer_request(gtpv2c_rx,
-					&msg->gtpc_msg.rel_acc_ber_req_t);
-#endif
-            ret = decode_rel_acc_bearer_req((uint8_t *)gtpv2c_rx, &msg->gtpc_msg.rab);
-			if (ret == 0)
-				return -1;
-
-		    break;
-	    }
-
-	    case GTP_DOWNLINK_DATA_NOTIFICATION_ACK: {
-			/* TODO: Revisit after libgtpv2c support */
-			ret = parse_downlink_data_notification_ack(gtpv2c_rx,
-				&msg->gtpc_msg.ddn_ack);
-			if (ret)
-				return ret;
-
-		    break;
-	    }
 
 #ifdef FUTURE_NEED
 	    case GTP_CREATE_BEARER_REQ:{

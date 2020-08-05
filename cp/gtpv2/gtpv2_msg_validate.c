@@ -13,95 +13,11 @@
 #include "stdio.h"
 #include "gtpv2c_error_rsp.h"
 
-static 
-int validate_csreq_msg(create_sess_req_t *csr) 
-{
-	if (csr->indctn_flgs.header.len &&
-			csr->indctn_flgs.indication_uimsi) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Unauthenticated IMSI Not Yet Implemented - "
-				"Dropping packet\n", __FILE__, __func__, __LINE__);
-	
-		return GTPV2C_CAUSE_IMSI_NOT_KNOWN;
-	}
-
-	if ((cp_config->cp_type == SGWC) &&
-			(!csr->pgw_s5s8_addr_ctl_plane_or_pmip.header.len)) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Mandatory IE missing. Dropping packet len:%u\n",
-				__FILE__, __func__, __LINE__,
-				csr->pgw_s5s8_addr_ctl_plane_or_pmip.header.len);
-		return GTPV2C_CAUSE_MANDATORY_IE_MISSING;
-	}
-
-    printf("bc = %d fteid = %d imsi %d apn_ambr = %d pdn_type = %d bc qos = %d rat %d pdn type = %d \n", csr->bearer_contexts_to_be_created.header.len, csr->sender_fteid_ctl_plane.header.len, csr->imsi.header.len, csr->apn_ambr.header.len, csr->pdn_type.header.len, csr->bearer_contexts_to_be_created.bearer_lvl_qos.header.len, csr->rat_type.header.len, (csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4));
-
-	if (/*!csr->max_apn_rstrct.header.len
-			||*/ !csr->bearer_contexts_to_be_created.header.len
-			|| !csr->sender_fteid_ctl_plane.header.len
-			|| !csr->imsi.header.len
-			|| !csr->apn_ambr.header.len
-			|| !csr->pdn_type.header.len
-			|| !csr->bearer_contexts_to_be_created.bearer_lvl_qos.header.len
-			|| !csr->rat_type.header.len
-			|| !(csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4) ) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Mandatory IE missing. Dropping packet\n",
-				__FILE__, __func__, __LINE__);
-		return GTPV2C_CAUSE_MANDATORY_IE_MISSING;
-	}
-
-	if (csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV6 ||
-			csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4V6) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d IPv6 Not Yet Implemented - Dropping packet\n",
-				__FILE__, __func__, __LINE__);
-		return GTPV2C_CAUSE_PREFERRED_PDN_TYPE_UNSUPPORTED;
-	}    
-    return 0;
-}
 
 static
 int validate_csrsp_msg(create_sess_rsp_t *csrsp)
 {
     RTE_SET_USED(csrsp);
-    return 0;
-}
-
-static
-int validate_mbreq_msg(msg_info_t *msg, mod_bearer_req_t *mb_req)
-{
-    int ret;
-    ue_context_t *context = NULL;
-
-	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-			(const void *) &mb_req->header.teid.has_teid.teid,
-			(void **) &context);
-
-	if (ret < 0 || !context)
-		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-
-    msg->ue_context = context;
-
-	if (!mb_req->bearer_contexts_to_be_modified.eps_bearer_id.header.len
-			|| !mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.header.len) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Mandatory IE lbi/fteid missing in MBReq Dropping packet\n",
-				__func__, __LINE__);
-		return GTPV2C_CAUSE_INVALID_LENGTH;
-	}
-
-	uint8_t ebi_index = mb_req->bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
-	if (!(context->bearer_bitmap & (1 << ebi_index))) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s:%d Received modify bearer on non-existent EBI - "
-				"Dropping packet\n", __func__, __LINE__);
-		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-	}
-
-	eps_bearer_t *bearer = context->eps_bearers[ebi_index];
-	if (!bearer) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s:%d Received modify bearer on non-existent EBI - "
-				"Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
-		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-	}
-    msg->bearer_context = bearer; 
     return 0;
 }
 
@@ -114,31 +30,11 @@ int validate_mbrsp_msg(mod_bearer_rsp_t *mbrsp)
 
 /* Requirement : validate presence of EBI in DSReq 
 */
-static
-int validate_dsreq_msg(del_sess_req_t *dsreq)
-{
-    RTE_SET_USED(dsreq);
-    return 0;
-}
 
 static
 int validate_dsrsp_msg(del_sess_rsp_t *dsrsp)
 {
     RTE_SET_USED(dsrsp);
-    return 0;
-}
-
-static
-int validate_rab_req_msg(rel_acc_bearer_req_t *rab)
-{
-    RTE_SET_USED(rab);
-    return 0;
-}
-
-static
-int validate_ddnack_msg(downlink_data_notification_t *ddnack)
-{
-    RTE_SET_USED(ddnack);
     return 0;
 }
 
@@ -190,53 +86,19 @@ int validate_gtpv2_message_content(msg_info_t *msg)
     printf("Validate gtpv2 message\n");
     switch(msg->msg_type)
     {
-    	case GTP_CREATE_SESSION_REQ:
-        {
-            printf("Validate CSReq message\n");
-            ret = validate_csreq_msg(&msg->gtpc_msg.csr);
-		    if(ret != 0 ) {
-                cs_error_response(msg, ret,
-				cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-            }
-            break;
-        }
     	case GTP_CREATE_SESSION_RSP:
         {
             ret = validate_csrsp_msg(&msg->gtpc_msg.cs_rsp);
             break;
         }        
-        case GTP_MODIFY_BEARER_REQ:
-        {
-            ret = validate_mbreq_msg(msg, &msg->gtpc_msg.mbr);
-		    if(ret != 0 ) {
-                mbr_error_response(msg, ret,
-				cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-            }
-            break;
-        }
         case GTP_MODIFY_BEARER_RSP:
         {
             ret = validate_mbrsp_msg(&msg->gtpc_msg.mb_rsp);
             break;
         }
-        case GTP_DELETE_SESSION_REQ:
-        {
-            ret = validate_dsreq_msg(&msg->gtpc_msg.dsr);
-            break;
-        } 
         case GTP_DELETE_SESSION_RSP:
         {
             ret = validate_dsrsp_msg(&msg->gtpc_msg.ds_rsp);
-            break;
-        }        
-        case GTP_RELEASE_ACCESS_BEARERS_REQ:
-        {
-            ret = validate_rab_req_msg(&msg->gtpc_msg.rab);
-            break;
-        } 
-        case GTP_DOWNLINK_DATA_NOTIFICATION_ACK:
-        {
-            ret = validate_ddnack_msg(&msg->gtpc_msg.ddn_ack);
             break;
         }        
         case GTP_CREATE_BEARER_REQ:
