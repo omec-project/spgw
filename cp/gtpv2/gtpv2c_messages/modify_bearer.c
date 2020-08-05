@@ -144,6 +144,7 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 		gtpv2c_header_t *gtpv2c_tx)
 {
 	struct dp_id dp_id = { .id = DPN_ID };
+    RTE_SET_USED(dp_id);
 	mod_bearer_req_t mb_req = {0};
 	uint32_t i;
 	ue_context_t *context = NULL;
@@ -237,8 +238,10 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 			context->s11_sgw_gtpc_teid,
 			bearer->eps_bearer_id);
 
+#ifdef OBSELETE_APIS
 	if (session_modify(dp_id, session) < 0)
 		rte_exit(EXIT_FAILURE, "Bearer Session modify fail !!!");
+#endif
 	return 0;
 }
 

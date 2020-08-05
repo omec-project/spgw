@@ -78,7 +78,6 @@ SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_cp_session.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_cp_set_ie.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_cp_util.o
 SRCS-y += $(SRCDIR)/../pfcp_messages/pfcp_init.o
-SRCS-y += $(SRCDIR)/../cp_dp_api/vepc_cp_dp_api.o
 SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/gw_adapter.o
 SRCS-y += gx_event_handlers.c 
 SRCS-y += gx_interface.c

@@ -547,9 +547,13 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 						bearer->eps_bearer_id);
 
 	struct dp_id dp_id = { .id = DPN_ID };
+    RTE_SET_USED(dp_id);
+    
 
+#ifdef OBSOLETE_APIS
 	if (session_create(dp_id, session) < 0)
 		rte_exit(EXIT_FAILURE,"Bearer Session create fail !!!");
+#endif
 
 	if (bearer->s11u_mme_gtpu_teid) {
 		session.num_dl_pcc_rules = 1;
@@ -560,8 +564,11 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		for (i = 0; i < num_adc_rules; ++i)
 			        session.adc_rule_id[i] = adc_rule_id[i];
 
+#ifdef OBSOLETE_APIS
 		if (session_modify(dp_id, session) < 0)
 			rte_exit(EXIT_FAILURE, "Bearer Session create CIOT implicit modify fail !!!");
+#endif
 	}
+
 	return 0;
 }
