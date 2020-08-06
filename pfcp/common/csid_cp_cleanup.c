@@ -328,9 +328,9 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 	if (peer_csids == NULL) {
 		/* Delete UPF hash entry */
 		if (iface == SX_PORT_ID) {
-			if (rte_hash_del_key(upf_context_by_ip_hash, &node_addr) < 0) {
+			if (upf_context_delete_entry(&node_addr) < 0) {
 				clLog(clSystemLog, eCLSeverityCritical,
-						FORMAT" Error on upf_context_by_ip_hash del\n", ERR_MSG);
+						FORMAT" Error on deleting upf context del\n", ERR_MSG);
 			}
 		}
 		clLog(clSystemLog, eCLSeverityDebug, FORMAT" Entry not found \n", ERR_MSG);
@@ -453,9 +453,9 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 
 	/* Delete UPF hash entry */
 	if (iface == SX_PORT_ID) {
-		if (rte_hash_del_key(upf_context_by_ip_hash, &node_addr) < 0) {
+		if (upf_context_delete_entry(&node_addr) < 0) {
 			clLog(clSystemLog, eCLSeverityCritical,
-					FORMAT" Error on upf_context_by_ip_hash del\n", ERR_MSG);
+					FORMAT" Error on delete upf context \n", ERR_MSG);
 		}
 	}
 	clLog(apilogger, eCLSeverityDebug, "%s:END\n", __func__);

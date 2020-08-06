@@ -38,6 +38,7 @@
 #include "cp_transactions.h"
 #include "cp_peer.h"
 #include "pfcp_association_setup_proc.h"
+#include "tables/tables.h"
 
 
 extern udp_sock_t my_sock;
@@ -401,7 +402,7 @@ upf_pfcp_setup_failure(void *data, uint16_t event)
     }
     // ajay - check upf address carefully
     printf("Deleting UPF context %s",inet_ntoa(upf_context->upf_sockaddr.sin_addr));
-    rte_hash_del_key(upf_context_by_ip_hash, (const void *) &upf_context->upf_sockaddr.sin_addr.s_addr);
+    upf_context_delete_entry(upf_context->upf_sockaddr.sin_addr.s_addr);
     rte_free(upf_context);
 }
 

@@ -22,6 +22,7 @@
 #include "service_request_proc.h"
 #include "sm_structs_api.h"
 #include "gtpv2_error_rsp.h"
+#include "tables/tables.h"
 
 /**
  * @brief  : Maintains parsed data from modify bearer request

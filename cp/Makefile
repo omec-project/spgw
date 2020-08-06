@@ -47,6 +47,7 @@ SRCS-y += state_machine/sm_upf.o
 SRCS-y += state_machine/sm_hand.o
 SRCS-y += state_machine/sm_error_handlers.o
 SRCS-y += state_machine/sm_gx_pcnd.o
+SRCS-y += tables/upf_table.o
 SRCS-y += procedures/proc_report.o
 SRCS-y += procedures/initial_attach_proc.o
 SRCS-y += procedures/pfcp_association_setup_proc.o

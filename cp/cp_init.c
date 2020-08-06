@@ -26,6 +26,7 @@
 #include "cp_io_poll.h"
 #include "gtpv2_interface.h"
 #include "pfcp_cp_interface.h"
+#include "tables/tables.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"

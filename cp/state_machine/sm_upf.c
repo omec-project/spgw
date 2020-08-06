@@ -37,6 +37,7 @@
 #include "pfcp_enum.h"
 #include "cp_transactions.h"
 #include "cp_peer.h"
+#include "tables/tables.h"
 
 
 int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt) 

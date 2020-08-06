@@ -34,6 +34,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_main.h"
 #include "cp_transactions.h"
+#include "tables/tables.h"
 
 extern udp_sock_t my_sock;
 
@@ -251,8 +252,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	struct parse_pgwc_s5s8_create_session_request_t create_s5s8_session_request = { 0 };
 
 	upf_context_t *upf_context = NULL;
-	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
-			(const void*) &(upf_ipv4->s_addr), (void **) &(upf_context));
+	ret = upf_context_entry_lookup((upf_ipv4->s_addr), &(upf_context));
 
 	if (ret < 0) {
 		clLog(s5s8logger, eCLSeverityDebug, "NO ENTRY FOUND IN UPF HASH [%u]\n", upf_ipv4->s_addr);

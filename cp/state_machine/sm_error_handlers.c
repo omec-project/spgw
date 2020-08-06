@@ -31,6 +31,7 @@
 #include "upf_struct.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
+#include "tables/tables.h"
 
 extern struct rte_hash *bearer_by_fteid_hash;
 extern udp_sock_t my_sock;
@@ -163,7 +164,7 @@ process_error_occured_handler(void *data, void *unused_param)
         pdn = GET_PDN(context ,ebi_index);
         if ((upf_context_entry_lookup(pdn->upf_ipv4.s_addr,&upf_ctx)) ==  0) {
             if(upf_ctx->state < PFCP_ASSOC_RESP_RCVD_STATE){
-                rte_hash_del_key(upf_context_by_ip_hash, (const void *) &pdn->upf_ipv4.s_addr);
+                upf_context_delete_entry(&pdn->upf_ipv4.s_addr);
                 pending_proc_key_t *key;
                 key = LIST_FIRST(&upf_ctx->pendingProcs);
                 while (key != NULL) {
@@ -294,8 +295,7 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
                                                 }
                                             }
                                             if(LIST_EMPTY(&upf_context->pendingProcs)) {
-									        		ret = rte_hash_del_key(upf_context_by_ip_hash,
-												(const void *) &pdn->upf_ipv4.s_addr);
+									        	ret = upf_context_delete_entry(&pdn->upf_ipv4.s_addr);
 												rte_free(upf_context);
 												upf_context  = NULL;
                                             }

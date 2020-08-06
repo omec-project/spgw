@@ -31,6 +31,7 @@
 #include "trans_struct.h"
 #include "spgw_cpp_wrapper.h"
 #include "pfcp_association_setup_proc.h"
+#include "tables/tables.h"
 
 
 extern udp_sock_t my_sock;
@@ -261,9 +262,7 @@ cca_msg_handler(void *data, void *unused_param)
 		return -1;
 	}
 	/* Retrive association state based on UPF IP. */
-	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
-	                 (const void*) &(pdn->upf_ipv4.s_addr),
-	                 (void **) &(upf_context));
+	ret = upf_context_entry_lookup((pdn->upf_ipv4.s_addr), &(upf_context));
 #if 0
 	/* send error response in case of pfcp est. fail using this data */
 	if(upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {

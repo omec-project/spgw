@@ -28,6 +28,7 @@
 #include "gw_adapter.h"
 #include "spgw_cpp_wrapper.h"
 #include "assert.h"
+#include "tables/tables.h"
 
 
 #if defined(USE_DNS_QUERY)
@@ -343,8 +344,7 @@ upf_context_t *get_upf_context(uint32_t upf_ip)
     upf_context_t *upf_context = NULL;
     struct in_addr test; test.s_addr = upf_ip;
     printf("%s find UPF address %s \n", __FUNCTION__,inet_ntoa(test));
-	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
-			(const void*) &(upf_ip), (void **) &(upf_context));
+	ret = upf_context_entry_lookup((upf_ip), &(upf_context));
 
 	if (ret >= 0) {
         printf("Found upf context \n");

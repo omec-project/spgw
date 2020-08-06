@@ -36,6 +36,7 @@
 #include "gx_interface.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
+#include "tables/tables.h"
 
 extern udp_sock_t my_sock;
 
@@ -2238,9 +2239,7 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
 
 	bearer->pdn = pdn;
 
-	ret = rte_hash_lookup_data(upf_context_by_ip_hash,
-			(const void*) &(pdn->upf_ipv4.s_addr),
-			(void **) &(upf_ctx));
+	ret = upf_context_entry_lookup((pdn->upf_ipv4.s_addr), &(upf_ctx));
 	if (ret < 0) {
 		clLog(sxlogger, eCLSeverityDebug, "%s:%d NO ENTRY FOUND IN UPF HASH [%u]\n",
 			__func__, __LINE__, (pdn->upf_ipv4.s_addr));
@@ -2637,9 +2636,8 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		uint16_t msg_len = 0;
 		upf_context_t *upf_context = NULL;
 
-		ret = rte_hash_lookup_data(upf_context_by_ip_hash,
-				(const void*) &((context->pdns[ebi_index])->upf_ipv4.s_addr),
-				(void **) &(upf_context));
+		ret = upf_context_entry_lookup(((context->pdns[ebi_index])->upf_ipv4.s_addr),
+				&(upf_context));
 
 		if (ret < 0) {
 			clLog(clSystemLog, eCLSeverityDebug, "%s:%d NO ENTRY FOUND IN UPF HASH [%u]\n", __func__,

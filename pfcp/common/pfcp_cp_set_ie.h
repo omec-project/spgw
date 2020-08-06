@@ -99,7 +99,6 @@ typedef struct upfs_dnsres_t {
 /* upflist returned via DNS query */
 struct rte_hash *upflist_by_ue_hash;
 
-struct rte_hash *upf_context_by_ip_hash;
 
 struct rte_hash *gx_context_by_sess_id_hash;
 
@@ -205,14 +204,6 @@ process_pfcp_sess_del_request_delete_bearer_rsp_timeout(void *data);
  */
 void
 set_pdn_type(pfcp_pdn_type_ie_t *pdn, pdn_type_ie *pdn_mme);
-
-/**
- * @brief  : Creates upf context hash
- * @param  : No param
- * @return : Returns nothing
- */
-void
-create_upf_context_hash(void);
 
 /**
  * @brief  : Creates gx conetxt hash
@@ -1013,24 +1004,6 @@ upflist_by_ue_hash_entry_lookup(uint64_t *imsi_val, uint16_t imsi_len,
  */
 int
 upflist_by_ue_hash_entry_delete(uint64_t *imsi_val, uint16_t imsi_len);
-
-/**
- * @brief  : Add entry to upf conetxt hash
- * @param  : upf_ip, up ip address
- * @param  : entry ,entry to be added
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-upf_context_entry_add(uint32_t *upf_ip, upf_context_t *entry);
-
-/**
- * @brief  : search entry in upf hash using ip
- * @param  : upf_ip, key to search entry
- * @param  : entry, variable to store search result
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-upf_context_entry_lookup(uint32_t upf_ip, upf_context_t **entry);
 
 /**
  * @brief  : Create s5s8 hash table in sgwc
