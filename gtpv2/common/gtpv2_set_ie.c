@@ -5,15 +5,15 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "gtp_ies.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "packet_filters.h"
 #include "clogger.h"
 #include "cp_config.h"
 #include <assert.h>
 #include "ue.h"
 #include "cp_interface.h"
-#include "gtpv2c_ie.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_ie.h"
+#include "gtpv2_set_ie.h"
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_internal.h"
 

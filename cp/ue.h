@@ -22,7 +22,7 @@
 #include <rte_malloc.h>
 #include <rte_jhash.h>
 #include <rte_hash.h>
-#include "gtpv2c_ie.h"
+#include "gtpv2_ie.h"
 #include "cp_interface.h"
 #include "packet_filters.h"
 #include "pfcp_cp_struct.h"

@@ -6,7 +6,7 @@
 
 #include "util.h"
 #include "gtp_messages.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "gtpv2_interface.h"
 #include "cp_peer.h"
 #include "clogger.h"

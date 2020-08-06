@@ -10,7 +10,7 @@
 #include "gx_app/include/gx_struct.h"
 #include "pfcp_struct.h"
 #include "pfcp_cp_struct.h"
-#include "gtpv2c_ie.h"
+#include "gtpv2_ie.h"
 #include "ue.h"
 
 

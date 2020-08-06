@@ -25,7 +25,7 @@
 #include "pfcp_cp_session.h"
 #include "pfcp_messages.h"
 #include "pfcp_messages_encoder.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "gtpv2_interface.h"
 #include "gen_utils.h"
 #include "cp_transactions.h"

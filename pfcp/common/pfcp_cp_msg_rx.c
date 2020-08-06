@@ -22,7 +22,7 @@
 #include "sm_struct.h"
 #include "cp_config.h"
 #include "cp_config.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_error_rsp.h"
 #include "cp_config_defs.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"

@@ -9,7 +9,7 @@
 
 #include "ue.h"
 #include "sm_struct.h"
-#include "gtpv2c_ie.h"
+#include "gtpv2_ie.h"
 
 /**
  * @brief  : Maintains data to be filled in error response

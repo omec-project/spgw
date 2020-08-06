@@ -7,7 +7,7 @@
 #include "gtp_messages.h"
 #include "cp_config.h"
 #include "sm_enum.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_error_rsp.h"
 #include "assert.h"
 #include "clogger.h"
 #include "cp_peer.h"

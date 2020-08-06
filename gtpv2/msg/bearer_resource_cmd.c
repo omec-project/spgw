@@ -9,7 +9,7 @@
 #include "clogger.h"
 #include "cp_config.h"
 #include "gtp_messages_decoder.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_interface.h"
 

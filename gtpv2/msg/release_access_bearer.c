@@ -15,7 +15,7 @@
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_messages.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "pfcp_messages_encoder.h"
 #include "vepc_cp_dp_api.h"
 #include "pfcp_cp_util.h"
@@ -24,7 +24,7 @@
 #include "cp_transactions.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_peer.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_error_rsp.h"
 #include "rab_proc.h"
 #include "sm_structs_api.h"
 

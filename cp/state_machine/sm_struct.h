@@ -15,7 +15,7 @@
 #include <sys/queue.h>
 #include "gx_struct.h"
 #include "gx_interface.h"
-#include "gtpv2c_msg_struct.h"
+#include "gtpv2_msg_struct.h"
 
 
 enum source_interface {

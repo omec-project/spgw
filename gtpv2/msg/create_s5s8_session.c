@@ -8,7 +8,7 @@
 #include <byteswap.h>
 #include "gtp_messages_decoder.h"
 #include "packet_filters.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "vepc_cp_dp_api.h"
 
 #include "pfcp.h"

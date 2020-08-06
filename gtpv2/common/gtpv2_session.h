@@ -10,7 +10,7 @@
 #include "cp_stats.h"
 #include "ue.h"
 #include "gtp_messages.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "cp_config.h"
 #include "ipc_api.h"
 

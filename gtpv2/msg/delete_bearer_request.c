@@ -7,7 +7,7 @@
 #include <rte_debug.h>
 #include "rte_hash.h"
 #include "gtp_messages_decoder.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "ue.h"
 #include "vepc_cp_dp_api.h"
 #include "clogger.h"

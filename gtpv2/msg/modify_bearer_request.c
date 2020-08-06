@@ -7,7 +7,7 @@
 #include "gtp_messages_decoder.h"
 #include "ue.h"
 #include "gtp_messages.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "vepc_cp_dp_api.h"
 #include "pfcp_cp_set_ie.h"
 #include "clogger.h"
@@ -21,7 +21,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "service_request_proc.h"
 #include "sm_structs_api.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_error_rsp.h"
 
 /**
  * @brief  : Maintains parsed data from modify bearer request

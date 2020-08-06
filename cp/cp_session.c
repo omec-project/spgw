@@ -5,8 +5,8 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "gtp_messages_encoder.h"
-#include "gtpc_session.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_session.h"
+#include "gtpv2_error_rsp.h"
 #include "clogger.h"
 #include "gtpv2_internal.h"
 #include "gtpv2_interface.h"
@@ -15,7 +15,7 @@
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_util.h" // ajay should be part of interface 
 #include "pfcp_cp_session.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "cp_peer.h"
 #include "gen_utils.h"
 #include "gw_adapter.h"

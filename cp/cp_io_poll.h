@@ -13,7 +13,7 @@
  */
 #include "cp_interface.h"
 #include "cp_main.h"
-#include "gtpv2c_msg_struct.h"
+#include "gtpv2_msg_struct.h"
 
 /**
  * @brief udp socket structure.

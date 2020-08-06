@@ -13,7 +13,7 @@
 #include "ue.h"
 #include "packet_filters.h"
 #include "gtp_messages.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "vepc_cp_dp_api.h"
 #include "pfcp_cp_set_ie.h"
 #include "cp_config.h"
@@ -28,7 +28,7 @@
 #include "cp_config_defs.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_peer.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_error_rsp.h"
 #include "initial_attach_proc.h"
 
 extern uint32_t num_adc_rules;

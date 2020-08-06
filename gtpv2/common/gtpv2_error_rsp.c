@@ -5,14 +5,14 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "gtp_ies.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_error_rsp.h"
 #include "cp_config.h"
 #include "ipc_api.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_messages_encoder.h"
 #include "gtp_messages_encoder.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
 #include "gen_utils.h"

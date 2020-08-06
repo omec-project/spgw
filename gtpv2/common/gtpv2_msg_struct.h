@@ -7,8 +7,7 @@
 #define __GTPV2_MSG_STRUCT_H
 
 #include "gtp_ies.h"
-#include "gtpv2c_ie.h"
-#include "gtpv2c_ie.h"
+#include "gtpv2_ie.h"
 struct ue_context;
 /**
  * @brief  : Table 7.2.1-1: Information Elements in a Create Session Response -

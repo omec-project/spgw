@@ -7,7 +7,7 @@
 #include "gtp_messages.h"
 #include "cp_config.h"
 #include "sm_enum.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_error_rsp.h"
 #include "assert.h"
 #include "clogger.h"
 #include "cp_peer.h"
@@ -27,7 +27,7 @@
 #include "service_request_proc.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_messages_encoder.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];

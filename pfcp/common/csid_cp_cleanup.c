@@ -16,7 +16,7 @@
 #include "clogger.h"
 #include "csid_api.h"
 #include "csid_cp_cleanup.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "gtpv2_interface.h"
 #include "gen_utils.h"
 #include "gx_interface.h"

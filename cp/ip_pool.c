@@ -8,7 +8,7 @@
 #include <sys/socket.h>
 #include "stdint.h"
 #include "ip_pool.h"
-#include "gtpv2c_ie.h"
+#include "gtpv2_ie.h"
 #include "ue.h"
 #include "cp_config.h"
 #include "clogger.h"

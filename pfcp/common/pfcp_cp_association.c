@@ -18,7 +18,7 @@
 #include "cp_stats.h"
 #include "cp_config.h"
 #include "cp_config.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_error_rsp.h"
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
 #include "cp_transactions.h"

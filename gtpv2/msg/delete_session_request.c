@@ -8,7 +8,7 @@
 #include "gtp_messages_decoder.h"
 #include "gtp_messages.h"
 #include "vepc_cp_dp_api.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
 #include "gtpv2_interface.h"
 #include "sm_struct.h"
 #include "cp_config.h"
@@ -18,7 +18,7 @@
 #include "cp_peer.h"
 #include "spgw_cpp_wrapper.h"
 #include "sm_structs_api.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_error_rsp.h"
 #include "detach_proc.h"
 
 int

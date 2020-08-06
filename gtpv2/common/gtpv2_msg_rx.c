@@ -24,7 +24,7 @@
 #include "clogger.h"
 #include "sm_pcnd.h"
 #include "sm_struct.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_error_rsp.h"
 #include "gtpv2_internal.h"
 #include "cp_timer.h"
 #include "cp_init.h"
