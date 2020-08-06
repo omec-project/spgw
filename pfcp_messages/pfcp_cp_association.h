@@ -105,14 +105,6 @@ void
 fill_pfcp_node_report_resp(pfcp_node_rpt_rsp_t *pfcp_node_rep_resp);
 
 /**
- * @brief  : This is a function to fill pfcp heartbeat response
- * @param  : pfcp_heartbeat_resp is pointer to structure of pfcp heartbeat response
- * @return : This function dose not return anything
- */
-void
-fill_pfcp_heartbeat_resp(pfcp_hrtbeat_rsp_t *pfcp_heartbeat_resp);
-
-/**
  * @brief  : This is a function to fill pfcp pfd management response
  * @param  : pfd_resp is pointer to structure of pfcp pfd management response
  * @param  : cause_id describes cause if requested or not

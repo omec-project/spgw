@@ -473,6 +473,7 @@ void init_gtp_interface(void);
 typedef int (*gtp_handler)(msg_info_t *msg, gtpv2c_header_t *); 
 
 extern gtp_handler gtp_msg_handler[256];
+
 int 
 handle_echo_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx);
 
@@ -496,4 +497,39 @@ handle_ddn_ack(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx);
 
 int 
 handle_unknown_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx);
+
+void process_s5s8_upd_bearer_response_pfcp_timeout(void *data);
+void process_pgwc_create_bearer_rsp_pfcp_timeout(void *data);
+void process_pgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
+void process_sgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
+void process_sgwc_create_bearer_rsp_pfcp_timeout(void *data);
+void process_sgwc_s5s8_create_sess_rsp_pfcp_timeout(void *data);
+
+
+/* Slowly delete following block under if 1*/
+#if 1
+int validate_gtpv2_message_content(msg_info_t *msg);
+int handle_create_session_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_modify_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_delete_session_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_ddn_ack_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+
+
+#ifdef FUTURE_NEEDS
+int handle_update_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_update_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_create_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_create_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_delete_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_delete_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_delete_bearer_cmd_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_delete_pdn_conn_set_req(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_delete_pdn_conn_set_rsp(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_update_pdn_conn_set_req(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_update_pdn_conn_set_rsp(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_pgw_restart_notf_ack(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+#endif
+
+#endif
+
 #endif 

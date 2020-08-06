@@ -14,7 +14,7 @@
 #include "packet_filters.h"
 #include "gtp_messages.h"
 #include "gtpv2c_set_ie.h"
-#include "../cp_dp_api/vepc_cp_dp_api.h"
+#include "vepc_cp_dp_api.h"
 #include "pfcp_cp_set_ie.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"  /* fetch APIs to build PCO */
@@ -789,3 +789,290 @@ handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 #endif
     return 0;
 }
+
+#ifdef FUTURE_NEEDS
+int
+fill_cs_request(create_sess_req_t *cs_req, ue_context_t *context,
+		uint8_t ebi_index)
+{
+	int len = 0 ;
+	set_gtpv2c_header(&cs_req->header, 1, GTP_CREATE_SESSION_REQ,
+			0, context->sequence);
+
+	cs_req->imsi.imsi_number_digits = context->imsi;
+	set_ie_header(&cs_req->imsi.header, GTP_IE_IMSI, IE_INSTANCE_ZERO,
+			sizeof(cs_req->imsi.imsi_number_digits));
+
+	set_ie_header(&cs_req->msisdn.header, GTP_IE_MSISDN, IE_INSTANCE_ZERO, BINARY_MSISDN_LEN);
+	cs_req->msisdn.msisdn_number_digits = context->msisdn;
+
+	if (context->uli.lai) {
+		cs_req->uli.lai = context->uli.lai;
+		cs_req->uli.lai2.lai_mcc_digit_2 = context->uli.lai2.lai_mcc_digit_2;
+		cs_req->uli.lai2.lai_mcc_digit_1 = context->uli.lai2.lai_mcc_digit_1;
+		cs_req->uli.lai2.lai_mnc_digit_3 = context->uli.lai2.lai_mnc_digit_3;
+		cs_req->uli.lai2.lai_mcc_digit_3 = context->uli.lai2.lai_mcc_digit_3;
+		cs_req->uli.lai2.lai_mnc_digit_2 = context->uli.lai2.lai_mnc_digit_2;
+		cs_req->uli.lai2.lai_mnc_digit_1 = context->uli.lai2.lai_mnc_digit_1;
+		cs_req->uli.lai2.lai_lac = context->uli.lai2.lai_lac;
+
+		len += sizeof(cs_req->uli.lai2);
+	}
+	if (context->uli.tai) {
+		cs_req->uli.tai = context->uli.tai;
+		cs_req->uli.tai2.tai_mcc_digit_2 = context->uli.tai2.tai_mcc_digit_2;
+		cs_req->uli.tai2.tai_mcc_digit_1 = context->uli.tai2.tai_mcc_digit_1;
+		cs_req->uli.tai2.tai_mnc_digit_3 = context->uli.tai2.tai_mnc_digit_3;
+		cs_req->uli.tai2.tai_mcc_digit_3 = context->uli.tai2.tai_mcc_digit_3;
+		cs_req->uli.tai2.tai_mnc_digit_2 = context->uli.tai2.tai_mnc_digit_2;
+		cs_req->uli.tai2.tai_mnc_digit_1 = context->uli.tai2.tai_mnc_digit_1;
+		cs_req->uli.tai2.tai_tac = context->uli.tai2.tai_tac;
+		len += sizeof(cs_req->uli.tai2);
+	}
+	if (context->uli.rai) {
+		cs_req->uli.rai = context->uli.rai;
+		cs_req->uli.rai2.ria_mcc_digit_2 = context->uli.rai2.ria_mcc_digit_2;
+		cs_req->uli.rai2.ria_mcc_digit_1 = context->uli.rai2.ria_mcc_digit_1;
+		cs_req->uli.rai2.ria_mnc_digit_3 = context->uli.rai2.ria_mnc_digit_3;
+		cs_req->uli.rai2.ria_mcc_digit_3 = context->uli.rai2.ria_mcc_digit_3;
+		cs_req->uli.rai2.ria_mnc_digit_2 = context->uli.rai2.ria_mnc_digit_2;
+		cs_req->uli.rai2.ria_mnc_digit_1 = context->uli.rai2.ria_mnc_digit_1;
+		cs_req->uli.rai2.ria_lac = context->uli.rai2.ria_lac;
+		cs_req->uli.rai2.ria_rac = context->uli.rai2.ria_rac;
+		len += sizeof(cs_req->uli.rai2);
+	}
+	if (context->uli.sai) {
+		cs_req->uli.sai = context->uli.sai;
+		cs_req->uli.sai2.sai_mcc_digit_2 = context->uli.sai2.sai_mcc_digit_2;
+		cs_req->uli.sai2.sai_mcc_digit_1 = context->uli.sai2.sai_mcc_digit_1;
+		cs_req->uli.sai2.sai_mnc_digit_3 = context->uli.sai2.sai_mnc_digit_3;
+		cs_req->uli.sai2.sai_mcc_digit_3 = context->uli.sai2.sai_mcc_digit_3;
+		cs_req->uli.sai2.sai_mnc_digit_2 = context->uli.sai2.sai_mnc_digit_2;
+		cs_req->uli.sai2.sai_mnc_digit_1 = context->uli.sai2.sai_mnc_digit_1;
+		cs_req->uli.sai2.sai_lac = context->uli.sai2.sai_lac;
+		cs_req->uli.sai2.sai_sac = context->uli.sai2.sai_sac;
+		len += sizeof(cs_req->uli.sai2);
+	}
+	if (context->uli.cgi) {
+		cs_req->uli.cgi = context->uli.cgi;
+		cs_req->uli.cgi2.cgi_mcc_digit_2 = context->uli.cgi2.cgi_mcc_digit_2;
+		cs_req->uli.cgi2.cgi_mcc_digit_1 = context->uli.cgi2.cgi_mcc_digit_1;
+		cs_req->uli.cgi2.cgi_mnc_digit_3 = context->uli.cgi2.cgi_mnc_digit_3;
+		cs_req->uli.cgi2.cgi_mcc_digit_3 = context->uli.cgi2.cgi_mcc_digit_3;
+		cs_req->uli.cgi2.cgi_mnc_digit_2 = context->uli.cgi2.cgi_mnc_digit_2;
+		cs_req->uli.cgi2.cgi_mnc_digit_1 = context->uli.cgi2.cgi_mnc_digit_1;
+		cs_req->uli.cgi2.cgi_lac = context->uli.cgi2.cgi_lac;
+	    cs_req->uli.cgi2.cgi_ci = context->uli.cgi2.cgi_ci;
+		len += sizeof(cs_req->uli.cgi2);
+	}
+	if (context->uli.ecgi) {
+		cs_req->uli.ecgi = context->uli.ecgi;
+		cs_req->uli.ecgi2.ecgi_mcc_digit_2 = context->uli.ecgi2.ecgi_mcc_digit_2;
+		cs_req->uli.ecgi2.ecgi_mcc_digit_1 = context->uli.ecgi2.ecgi_mcc_digit_1;
+		cs_req->uli.ecgi2.ecgi_mnc_digit_3 = context->uli.ecgi2.ecgi_mnc_digit_3;
+		cs_req->uli.ecgi2.ecgi_mcc_digit_3 = context->uli.ecgi2.ecgi_mcc_digit_3;
+		cs_req->uli.ecgi2.ecgi_mnc_digit_2 = context->uli.ecgi2.ecgi_mnc_digit_2;
+		cs_req->uli.ecgi2.ecgi_mnc_digit_1 = context->uli.ecgi2.ecgi_mnc_digit_1;
+		cs_req->uli.ecgi2.ecgi_spare = context->uli.ecgi2.ecgi_spare;
+	    cs_req->uli.ecgi2.eci = context->uli.ecgi2.eci;
+		len += sizeof(cs_req->uli.ecgi2);
+	}
+	if (context->uli.macro_enodeb_id) {
+		cs_req->uli.macro_enodeb_id = context->uli.macro_enodeb_id;
+		cs_req->uli.macro_enodeb_id2.menbid_mcc_digit_2 =
+			context->uli.macro_enodeb_id2.menbid_mcc_digit_2;
+		cs_req->uli.macro_enodeb_id2.menbid_mcc_digit_1 =
+			context->uli.macro_enodeb_id2.menbid_mcc_digit_1;
+		cs_req->uli.macro_enodeb_id2.menbid_mnc_digit_3 =
+			context->uli.macro_enodeb_id2.menbid_mnc_digit_3;
+		cs_req->uli.macro_enodeb_id2.menbid_mcc_digit_3 =
+			context->uli.macro_enodeb_id2.menbid_mcc_digit_3;
+		cs_req->uli.macro_enodeb_id2.menbid_mnc_digit_2 =
+			context->uli.macro_enodeb_id2.menbid_mnc_digit_2;
+		cs_req->uli.macro_enodeb_id2.menbid_mnc_digit_1 =
+			context->uli.macro_enodeb_id2.menbid_mnc_digit_1;
+		cs_req->uli.macro_enodeb_id2.menbid_spare =
+			context->uli.macro_enodeb_id2.menbid_spare;
+		cs_req->uli.macro_enodeb_id2.menbid_macro_enodeb_id =
+			context->uli.macro_enodeb_id2.menbid_macro_enodeb_id;
+		cs_req->uli.macro_enodeb_id2.menbid_macro_enb_id2 =
+			context->uli.macro_enodeb_id2.menbid_macro_enb_id2;
+		len += sizeof(cs_req->uli.macro_enodeb_id2);
+	}
+	if (context->uli.extnded_macro_enb_id) {
+		cs_req->uli.extnded_macro_enb_id = context->uli.extnded_macro_enb_id;
+		cs_req->uli.extended_macro_enodeb_id2.emenbid_mcc_digit_1 =
+			context->uli.extended_macro_enodeb_id2.emenbid_mcc_digit_1;
+		cs_req->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_3 =
+			context->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_3;
+		cs_req->uli.extended_macro_enodeb_id2.emenbid_mcc_digit_3 =
+			context->uli.extended_macro_enodeb_id2.emenbid_mcc_digit_3;
+		cs_req->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_2 =
+			context->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_2;
+		cs_req->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_1 =
+			context->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_1;
+		cs_req->uli.extended_macro_enodeb_id2.emenbid_smenb =
+			context->uli.extended_macro_enodeb_id2.emenbid_smenb;
+		cs_req->uli.extended_macro_enodeb_id2.emenbid_spare =
+			context->uli.extended_macro_enodeb_id2.emenbid_spare;
+		cs_req->uli.extended_macro_enodeb_id2.emenbid_extnded_macro_enb_id =
+			context->uli.extended_macro_enodeb_id2.emenbid_extnded_macro_enb_id;
+		cs_req->uli.extended_macro_enodeb_id2.emenbid_extnded_macro_enb_id2 =
+			context->uli.extended_macro_enodeb_id2.emenbid_extnded_macro_enb_id2;
+		len += sizeof(cs_req->uli.extended_macro_enodeb_id2);
+	}
+	len += 1;
+	set_ie_header(&cs_req->uli.header, GTP_IE_USER_LOC_INFO, IE_INSTANCE_ZERO, len);
+
+
+	set_ie_header(&cs_req->serving_network.header, GTP_IE_SERVING_NETWORK, IE_INSTANCE_ZERO,
+		sizeof(gtp_serving_network_ie_t) - sizeof(ie_header_t));
+	cs_req->serving_network.mnc_digit_1 = context->serving_nw.mnc_digit_1;
+	cs_req->serving_network.mnc_digit_2 = context->serving_nw.mnc_digit_2;
+	cs_req->serving_network.mnc_digit_3 = context->serving_nw.mnc_digit_3;
+	cs_req->serving_network.mcc_digit_1 = context->serving_nw.mcc_digit_1;
+	cs_req->serving_network.mcc_digit_2 = context->serving_nw.mcc_digit_2;
+	cs_req->serving_network.mcc_digit_3 = context->serving_nw.mcc_digit_3;
+
+	set_ie_header(&cs_req->rat_type.header, GTP_IE_RAT_TYPE, IE_INSTANCE_ZERO,
+			 sizeof(gtp_rat_type_ie_t) - sizeof(ie_header_t));
+	cs_req->rat_type.rat_type = context->rat_type.rat_type;
+
+	set_ipv4_fteid(&cs_req->sender_fteid_ctl_plane, GTPV2C_IFTYPE_S5S8_SGW_GTPC,
+				IE_INSTANCE_ZERO, context->pdns[ebi_index]->s5s8_sgw_gtpc_ipv4,
+				context->pdns[ebi_index]->s5s8_sgw_gtpc_teid);
+
+	set_ie_header(&cs_req->apn.header, GTP_IE_ACC_PT_NAME, IE_INSTANCE_ZERO,
+		             context->pdns[ebi_index]->apn_in_use->apn_name_length);
+	memcpy(cs_req->apn.apn, &(context->pdns[ebi_index]->apn_in_use->apn_name[0]),
+			context->pdns[ebi_index]->apn_in_use->apn_name_length);
+
+	if (context->selection_flag) {
+		cs_req->selection_mode.spare2 = context->select_mode.spare2;
+		cs_req->selection_mode.selec_mode = context->select_mode.selec_mode;
+	}
+
+	set_ie_header(&cs_req->selection_mode.header, GTP_IE_SELECTION_MODE, IE_INSTANCE_ZERO,
+			sizeof(uint8_t));
+
+	if (context->pdns[ebi_index]->ue_time_zone_flag == TRUE) {
+		cs_req->ue_time_zone.time_zone = context->pdns[ebi_index]->ue_tz.tz;
+		cs_req->ue_time_zone.daylt_svng_time = context->pdns[ebi_index]->ue_tz.dst;
+		cs_req->ue_time_zone.spare2 = 0;
+
+		set_ie_header(&cs_req->ue_time_zone.header, GTP_IE_UE_TIME_ZONE, IE_INSTANCE_ZERO,
+				sizeof(gtp_ue_time_zone_ie_t) - sizeof(ie_header_t));
+		cs_req->header.gtpc.message_len = cs_req->ue_time_zone.header.len + sizeof(ie_header_t);
+		//context->pdns[ebi_index]->ue_time_zone_flag = FALSE;
+	}
+
+	if (context->pdns[ebi_index]->pdn_type.ipv4)
+		cs_req->pdn_type.pdn_type_pdn_type = PDN_TYPE_TYPE_IPV4;
+
+	if (context->pdns[ebi_index]->pdn_type.ipv6)
+		cs_req->pdn_type.pdn_type_pdn_type = PDN_TYPE_TYPE_IPV6;
+
+	cs_req->pdn_type.pdn_type_spare2 = context->pdns[ebi_index]->pdn_type.spare;
+	set_ie_header(&cs_req->pdn_type.header, GTP_IE_PDN_TYPE, IE_INSTANCE_ZERO,
+			sizeof(uint8_t));
+
+	set_ipv4_paa(&cs_req->paa, IE_INSTANCE_ZERO,
+			context->pdns[ebi_index]->ipv4);
+	uint32_t temp;
+	temp = htonl(context->pdns[ebi_index]->ipv4.s_addr);
+	memcpy(cs_req->paa.pdn_addr_and_pfx, &temp, sizeof(uint32_t));
+
+	cs_req->max_apn_rstrct.rstrct_type_val = context->pdns[ebi_index]->apn_restriction;
+	set_ie_header(&cs_req->max_apn_rstrct.header, GTP_IE_APN_RESTRICTION, IE_INSTANCE_ZERO,
+			sizeof(uint8_t));
+
+	cs_req->apn_ambr.apn_ambr_uplnk = context->pdns[ebi_index]->apn_ambr.ambr_uplink;
+	cs_req->apn_ambr.apn_ambr_dnlnk = context->pdns[ebi_index]->apn_ambr.ambr_downlink;
+	set_ie_header(&cs_req->apn_ambr.header, GTP_IE_AGG_MAX_BIT_RATE, IE_INSTANCE_ZERO,
+			sizeof(uint64_t));
+
+	set_ebi(&cs_req->bearer_contexts_to_be_created.eps_bearer_id, IE_INSTANCE_ZERO,
+				context->eps_bearers[ebi_index]->eps_bearer_id);
+	set_ie_header(&cs_req->bearer_contexts_to_be_created.eps_bearer_id.header,
+			GTP_IE_EPS_BEARER_ID, IE_INSTANCE_ZERO,
+			sizeof(uint8_t));
+
+	set_ie_header(&cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.header,
+			GTP_IE_BEARER_QLTY_OF_SVC, IE_INSTANCE_ZERO, sizeof(gtp_bearer_qlty_of_svc_ie_t) - sizeof(ie_header_t));
+	cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.pvi =
+			context->eps_bearers[ebi_index]->qos.arp.preemption_vulnerability;
+	cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.spare2 = 0;
+	cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.pl =
+		context->eps_bearers[ebi_index]->qos.arp.priority_level;
+	cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.pci =
+		context->eps_bearers[ebi_index]->qos.arp.preemption_capability;
+	cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.spare3 = 0;
+	cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.qci =
+		context->eps_bearers[ebi_index]->qos.qci;
+	cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.max_bit_rate_uplnk =
+		context->eps_bearers[ebi_index]->qos.ul_mbr;
+	cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.max_bit_rate_dnlnk =
+		context->eps_bearers[ebi_index]->qos.dl_mbr;
+	cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.guarntd_bit_rate_uplnk =
+		context->eps_bearers[ebi_index]->qos.ul_gbr;
+	cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.guarntd_bit_rate_dnlnk =
+		context->eps_bearers[ebi_index]->qos.dl_gbr;
+
+	set_ipv4_fteid(&cs_req->bearer_contexts_to_be_created.s5s8_u_sgw_fteid,
+			GTPV2C_IFTYPE_S5S8_SGW_GTPU,
+			IE_INSTANCE_TWO, context->eps_bearers[ebi_index]->s5s8_sgw_gtpu_ipv4,
+			context->eps_bearers[ebi_index]->s5s8_sgw_gtpu_teid);
+	cs_req->bearer_contexts_to_be_created.s5s8_u_sgw_fteid.ipv4_address =
+		htonl(cs_req->bearer_contexts_to_be_created.s5s8_u_sgw_fteid.ipv4_address);
+	set_ie_header(&cs_req->bearer_contexts_to_be_created.header,
+			GTP_IE_BEARER_CONTEXT, IE_INSTANCE_ZERO,
+		cs_req->bearer_contexts_to_be_created.eps_bearer_id.header.len
+		+ sizeof(ie_header_t)
+		+ cs_req->bearer_contexts_to_be_created.bearer_lvl_qos.header.len
+		+ sizeof(ie_header_t)
+		+ cs_req->bearer_contexts_to_be_created.s5s8_u_sgw_fteid.header.len
+		+ sizeof(ie_header_t));
+	/*fill fqdn string */
+	set_ie_header(&cs_req->sgw_u_node_name.header, GTP_IE_FULLY_QUAL_DOMAIN_NAME, IE_INSTANCE_ZERO,
+			    strlen((char *)context->pdns[ebi_index]->fqdn));
+	strncpy((char *)&cs_req->sgw_u_node_name.fqdn, (char *)context->pdns[ebi_index]->fqdn, strlen((char *)context->pdns[ebi_index]->fqdn));
+
+	if (context->mapped_ue_usage_type >= 0)
+		set_mapped_ue_usage_type(&cs_req->mapped_ue_usage_type, context->mapped_ue_usage_type);
+
+	cs_req->header.gtpc.message_len +=
+			cs_req->imsi.header.len + cs_req->msisdn.header.len
+			+ sizeof(ie_header_t)
+			+ sizeof(ie_header_t)
+			+ cs_req->uli.header.len + cs_req->rat_type.header.len
+			+ sizeof(ie_header_t)
+			+ sizeof(ie_header_t)
+			+ cs_req->serving_network.header.len
+			+ sizeof(ie_header_t)
+			+ cs_req->sender_fteid_ctl_plane.header.len
+			+ sizeof(ie_header_t)
+			+ cs_req->apn.header.len
+			+ sizeof(ie_header_t)
+			+ cs_req->selection_mode.header.len
+			+ sizeof(ie_header_t)
+			+ cs_req->pdn_type.header.len
+			+ sizeof(ie_header_t)
+			+ cs_req->paa.header.len
+			+ sizeof(ie_header_t)
+			+ cs_req->max_apn_rstrct.header.len
+			+ sizeof(ie_header_t)
+			+ cs_req->apn_ambr.header.len
+			+ sizeof(ie_header_t)
+			+ cs_req->bearer_contexts_to_be_created.header.len
+			+ sizeof(ie_header_t)
+			+ sizeof(gtpv2c_header_t);
+
+	if (context->mapped_ue_usage_type >= 0)
+			cs_req->header.gtpc.message_len +=
+				cs_req->mapped_ue_usage_type.header.len
+				+ sizeof(ie_header_t);
+
+	return 0;
+}
+#endif
+

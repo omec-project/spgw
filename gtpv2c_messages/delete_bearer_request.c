@@ -9,7 +9,7 @@
 #include "gtp_messages_decoder.h"
 #include "gtpv2c_set_ie.h"
 #include "ue.h"
-#include "../cp_dp_api/vepc_cp_dp_api.h"
+#include "vepc_cp_dp_api.h"
 #include "clogger.h"
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_interface.h"
@@ -236,3 +236,92 @@ set_delete_bearer_response(gtpv2c_header_t *gtpv2c_tx, uint32_t sequence,
 	gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
 }
 
+#ifdef FUTURE_NEED
+
+// sgw :  PDN_GW_INIT_BEARER_DEACTIVATION CONNECTED_STATE DELETE_BER_REQ_RCVD_EVNT - process_delete_bearer_request_handler 
+// sgw : PDN_GW_INIT_BEARER_DEACTIVATION IDEL_STATE DELETE_BER_REQ_RCVD_EVNT - process_delete_bearer_request_handler
+// sgw : MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC CONNECTED_STATE DELETE_BER_REQ_RCVD_EVNT : process_delete_bearer_req_handler 
+int handle_delete_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
+{
+    ue_context_t *context = NULL;
+    uint8_t ebi_index;
+    RTE_SET_USED(gtpv2c_rx);
+    RTE_SET_USED(msg);
+
+    if((ret = decode_del_bearer_req((uint8_t *) gtpv2c_rx,
+                    &msg->gtpc_msg.db_req) == 0))
+        return -1;
+
+
+
+	gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
+
+	if (msg->gtpc_msg.db_req.lbi.header.len) {
+		ebi_index = msg->gtpc_msg.db_req.lbi.ebi_ebi - 5;
+	} else {
+		ebi_index = msg->gtpc_msg.db_req.eps_bearer_ids[0].ebi_ebi - 5;
+	}
+
+	if(get_ue_context_by_sgw_s5s8_teid(gtpv2c_rx->teid.has_teid.teid, &context) != 0) {
+		clLog(sxlogger, eCLSeverityCritical,
+			"%s:%d UE Context not found... 0x%x\n",__func__,
+			__LINE__, gtpv2c_rx->teid.has_teid.teid);
+		return -1;
+	}
+
+	if(context->eps_bearers[ebi_index]->pdn->proc == MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC){
+		msg->proc = context->eps_bearers[ebi_index]->pdn->proc;
+	}else{
+		msg->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
+		context->eps_bearers[ebi_index]->pdn->proc = msg->proc;
+	}
+	msg->state = context->eps_bearers[ebi_index]->pdn->state;
+	msg->event = DELETE_BER_REQ_RCVD_EVNT;
+
+	context->eps_bearers[ebi_index]->pdn->proc = msg->proc;
+
+	clLog(s5s8logger, eCLSeverityDebug, "%s: Callback called for"
+			"Msg_Type:%s[%u], Teid:%u, "
+			"State:%s, Event:%s\n",
+			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+			gtpv2c_rx->teid.has_teid.teid,
+			get_state_string(msg->state), get_event_string(msg->event));
+
+
+    return 0;
+}
+
+int
+process_delete_bearer_request_handler(void *data, void *unused_param)
+{
+    int ret = 0;
+	msg_info_t *msg = (msg_info_t *)data;
+
+	ret = process_delete_bearer_request(&msg->gtpc_msg.db_req ,0);
+	if (ret) {
+		clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
+			__func__, __LINE__, ret);
+		return -1;
+	}
+
+	RTE_SET_USED(data);
+	RTE_SET_USED(unused_param);
+
+	return 0;
+}
+
+/*PGWC send Delete Bearer Request to SGWC*/
+int process_delete_bearer_req_handler(void *data, void *unused_param)
+{
+	msg_info_t *msg = (msg_info_t *)data;
+	int ret = process_delete_bearer_request(&msg->gtpc_msg.db_req, 1);
+	if(ret !=0 ) {
+		/*TODO: set error response*/
+		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+	}
+
+	RTE_SET_USED(unused_param);
+	return 0;
+}
+
+#endif

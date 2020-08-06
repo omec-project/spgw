@@ -14,16 +14,6 @@
 #include "gtp_messages.h"
 
 /**
- * @brief  : Decode and validate gtpv2c message
- * @param  : gtpv2c_rx, message data
- * @param  : msg, structure to store decoded message
- * @param  : bytes_rx, number of bytes in message
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-gtpc_pcnd_check(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg, int bytes_rx);
-
-/**
  * @brief  : Decode and validate pfcp messages
  * @param  : pfcp_rx, message data
  * @param  : msg, structure to store decoded message

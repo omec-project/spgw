@@ -28,7 +28,23 @@ void init_gtp_interface(void)
     gtp_msg_handler[GTP_DELETE_SESSION_REQ] = handle_delete_session_request;
     gtp_msg_handler[GTP_RELEASE_ACCESS_BEARERS_REQ] = handle_rab_request;
     gtp_msg_handler[GTP_DOWNLINK_DATA_NOTIFICATION_ACK] = handle_ddn_ack; 
-
+#ifdef FUTURE_NEED
+    gtp_msg_handler[GTP_CREATE_SESSION_RSP]= handle_create_session_response_msg;
+    gtp_msg_handler[GTP_MODIFY_BEARER_RSP] = handle_modify_bearer_response_msg;
+    gtp_msg_handler[GTP_DELETE_SESSION_RSP] = handle_delete_session_response_msg;
+    gtp_msg_handler[GTP_DELETE_BEARER_REQ] =  handle_delete_bearer_request_msg;
+    gtp_msg_handler[GTP_DELETE_BEARER_RSP] =  handle_delete_bearer_response_msg;
+    gtp_msg_handler[GTP_UPDATE_BEARER_REQ] = handle_update_bearer_request_msg;
+    gtp_msg_handler[GTP_UPDATE_BEARER_RSP] = handle_update_bearer_response_msg;
+    gtp_msg_handler[GTP_CREATE_BEARER_REQ] =  handle_create_bearer_request_msg;
+    gtp_msg_handler[GTP_CREATE_BEARER_RSP] = handle_create_bearer_response_msg;
+	gtp_msg_handler[GTP_DELETE_BEARER_CMD] = handle_delete_bearer_cmd_msg;
+	gtp_msg_handler[GTP_DELETE_PDN_CONNECTION_SET_REQ] = handle_delete_pdn_conn_set_req;
+	gtp_msg_handler[GTP_DELETE_PDN_CONNECTION_SET_RSP] =  handle_delete_pdn_conn_set_rsp;
+	gtp_msg_handler[GTP_UPDATE_PDN_CONNECTION_SET_REQ] =  handle_update_pdn_conn_set_req;
+	gtp_msg_handler[GTP_UPDATE_PDN_CONNECTION_SET_RSP] = handle_update_pdn_conn_set_rsp;
+	gtp_msg_handler[GTP_PGW_RESTART_NOTIFICATION_ACK]  =  handle_pgw_restart_notf_ack;
+#endif
 }
 
 int 

@@ -1,0 +1,214 @@
+// Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+
+#ifdef FUTURE_NEED_SGW
+// saegw DETACH_PROC DS_REQ_SNT_STATE DS_RESP_RCVD_EVNT => process_ds_resp_handler
+// sgw DETACH_PROC DS_REQ_SNT_STATE DS_RESP_RCVD_EVNT : process_ds_resp_handler 
+int handle_delete_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
+{
+    ue_context_t *context = NULL;
+    uint8_t ebi_index = 5; // ajay - todo use transaction 
+    RTE_SET_USED(gtpv2c_rx);
+    RTE_SET_USED(msg);
+
+    ret = decode_del_sess_rsp((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.ds_rsp);
+    if(ret == 0)
+        return -1;
+
+
+	gtpc_delete_timer_entry(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid);
+
+	if(get_ue_context_by_sgw_s5s8_teid(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid, &context) != 0)
+	 {
+
+		ds_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
+						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+		return -1;
+	}
+
+	if(msg->gtpc_msg.ds_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
+		clLog(clSystemLog, eCLSeverityCritical, "Cause Req Error : (%s:%d)msg type :%u, cause ie : %u \n", __func__, __LINE__,
+				msg->msg_type, msg->gtpc_msg.ds_rsp.cause.cause_value);
+
+		 ds_error_response(msg, msg->gtpc_msg.ds_rsp.cause.cause_value,
+						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+		return -1;
+	}
+	/*Set the appropriate procedure and state.*/
+	msg->state = context->pdns[ebi_index]->state;
+	msg->proc = context->pdns[ebi_index]->proc;
+	/*Set the appropriate event type.*/
+	msg->event = DS_RESP_RCVD_EVNT;
+
+#if 0
+	msg->state = DS_REQ_SNT_STATE;
+	msg->proc =  DETACH_PROC;
+	/*Set the appropriate event type.*/
+	msg->event = DS_RESP_RCVD_EVNT;
+#endif
+
+	clLog(s5s8logger, eCLSeverityDebug, "%s: Callback called for"
+		"Msg_Type:%s[%u], Teid:%u, "
+		"Procedure:%s, State:%s, Event:%s\n",
+		__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+		msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid,
+		get_proc_string(msg->proc),
+		get_state_string(msg->state), get_event_string(msg->event));
+#if 0
+// SGW egress ???
+			msg->state = context->pdns[ebi_index]->state;
+			msg->proc = context->pdns[ebi_index]->proc;
+
+			/*Set the appropriate event type.*/
+			msg->event = DS_RESP_RCVD_EVNT;
+
+
+#endif
+    return 0;
+}
+
+int
+process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *dsr, uint8_t *gtpv2c_tx)
+{
+	uint16_t msg_len = 0;
+	uint64_t seid = 0;
+	ue_context_t *context = NULL;
+	del_sess_rsp_t del_resp = {0};
+
+	int ret = delete_sgwc_context(dsr->header.teid.has_teid.teid, &context, &seid);
+	if (ret){
+		return ret;
+	}
+	set_gtpv2c_header(&del_resp.header, dsr->header.gtpc.teid_flag, GTP_DELETE_SESSION_RSP,
+								 context->s11_mme_gtpc_teid, dsr->header.teid.has_teid.seq);
+
+	set_cause_accepted(&del_resp.cause, IE_INSTANCE_ZERO);
+
+	msg_len = encode_del_sess_rsp(&del_resp, (uint8_t *)gtpv2c_tx);
+	gtpv2c_header_t *header = (gtpv2c_header_t *) gtpv2c_tx;
+	header->gtpc.message_len = htons(msg_len - 4);
+
+	clLog(clSystemLog, eCLSeverityDebug, "%s: s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__,
+			inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
+
+	/* Delete entry from session entry */
+	if (del_sess_entry(seid) != 0){
+		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for Key sess ID:%lu\n", seid);
+		return -1;
+	}
+
+	/* Delete UE context entry from UE Hash */
+	if (rte_hash_del_key(ue_context_by_imsi_hash, &context->imsi) < 0){
+	clLog(clSystemLog, eCLSeverityCritical,
+			"%s %s - Error on ue_context_by_fteid_hash deletion\n",__file__,
+			strerror(ret));
+	}
+
+	rte_free(context);
+	return 0;
+}
+
+void
+fill_pgwc_ds_sess_rsp(del_sess_rsp_t *ds_resp, uint32_t sequence, uint32_t has_teid)
+{
+	    set_gtpv2c_header(&ds_resp->header, 1, GTP_DELETE_SESSION_RSP,
+				                                 has_teid, sequence);
+
+		    set_cause_accepted(&ds_resp->cause, IE_INSTANCE_ZERO);
+
+}
+
+int
+process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
+{
+	int ret = 0;
+	ue_context_t *context = NULL;
+	eps_bearer_t *bearer = NULL;
+	//int ebi_index = 0;
+
+	pfcp_sess_del_req_t pfcp_sess_del_req = {0};
+	fill_pfcp_sess_del_req(&pfcp_sess_del_req);
+
+	//int ret = delete_sgwc_context(ds_req->header.teid.has_teid.teid, &context, &seid);
+	//if (ret)
+	//	return ret;
+
+	/* Retrieve the UE context */
+	ret = get_ue_context_by_sgw_s5s8_teid(ds_resp->header.teid.has_teid.teid, &context);
+	if (ret < 0) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to get UE State for teid: %u\n",
+				__func__, __LINE__,
+				ds_resp->header.teid.has_teid.teid);
+	}
+	ret = get_bearer_by_teid(ds_resp->header.teid.has_teid.teid, &bearer);
+	     if(ret < 0) {
+	               clLog(clSystemLog, eCLSeverityCritical, "%s:%d Entry not found for teid:%x...\n", __func__, __LINE__, ds_resp->header.teid.has_teid.teid);
+	               return -1;
+	       }
+	// ebi_index = UE_BEAR_ID(bearer->pdn->seid) -5;
+	//pfcp_sess_del_req.header.seid_seqno.has_seid.seid =
+	//	SESS_ID(ds_resp->header.teid.has_teid.teid,ds_resp->lbi.ebi_ebi);
+
+	uint8_t pfcp_msg[512]={0};
+
+	pfcp_sess_del_req.header.seid_seqno.has_seid.seid = bearer->pdn->dp_seid;
+	int encoded = encode_pfcp_sess_del_req_t(&pfcp_sess_del_req, pfcp_msg);
+	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
+	header->message_len = htons(encoded - 4);
+
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded, &context->upf_context->upf_sockaddr) < 0 )
+		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
+	else {
+		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
+				pfcp_sess_del_req.header.message_type,SENT,SX);
+        transData_t *trans_entry;
+		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_delete_session_request_pfcp_timeout);
+        bearer->pdn->trans_entry = trans_entry; 
+	}
+	/* Update UE State */
+	bearer->pdn->state = PFCP_SESS_DEL_REQ_SNT_STATE;
+
+	/* VS: Stored/Update the session information. */
+	if (get_sess_entry(bearer->pdn->seid, &resp) != 0) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Failed to get response entry in SM_HASH\n", __file__
+				,__func__, __LINE__);
+		return -1;
+	}
+
+	resp->msg_type = GTP_DELETE_SESSION_REQ;
+	resp->state = PFCP_SESS_DEL_REQ_SNT_STATE;
+
+	return 0;
+}
+
+int
+process_ds_resp_handler(void *data, void *unused_param)
+{
+    int ret = 0;
+	msg_info_t *msg = (msg_info_t *)data;
+
+	if (cp_config->cp_type == SGWC) {
+		ret = process_sgwc_s5s8_delete_session_response(&msg->gtpc_msg.ds_rsp);
+		if (ret) {
+			if(ret  != -1)
+				ds_error_response(msg, ret,
+						           cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
+			/* Error handling not implemented */
+			clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+			return -1;
+		}
+	} else {
+		/*Code should not reach here since this handler is only for SGWC*/
+		return -1;
+	}
+
+	RTE_SET_USED(unused_param);
+	return 0;
+}
+
+#endif
+
+

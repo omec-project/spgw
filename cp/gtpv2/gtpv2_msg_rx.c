@@ -9,9 +9,7 @@
 #include <rte_ip.h>
 #include <rte_udp.h>
 #include <rte_cfgfile.h>
-#include "gtpv2_common.h"
 #include "gtpv2_interface.h"
-#include "gtpv2_evt_handler.h"
 #include "cp_stats.h"
 #include "cp_config.h"
 #include "cp_io_poll.h"
@@ -21,7 +19,6 @@
 #include "pfcp_cp_association.h"
 #include "pfcp_messages_decoder.h"
 #include "pfcp_messages_encoder.h"
-#include "gtpv2_evt_handler.h"
 #include "cp_peer.h"
 #include "gw_adapter.h"
 #include "clogger.h"
@@ -58,23 +55,21 @@ extern uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
 int
 msg_handler_s11(void)
 {
-    int ret = 0, bytes_s11_rx = 0;
+    int ret = 0, bytes_rx = 0;
     msg_info_t msg = {0};
     struct sockaddr_in s11_peer_sockaddr = {0};
     socklen_t s11_peer_sockaddr_len = sizeof(s11_peer_sockaddr);
 
     bzero(&s11_rx_buf, sizeof(s11_rx_buf));
     bzero(&s11_tx_buf, sizeof(s11_tx_buf));
-    gtpv2c_header_t *gtpv2c_s11_rx = (gtpv2c_header_t *) s11_rx_buf;
-    gtpv2c_header_t *gtpv2c_s11_tx = (gtpv2c_header_t *) s11_tx_buf;
-    RTE_SET_USED(gtpv2c_s11_tx);
+    gtpv2c_header_t *gtpv2c_rx = (gtpv2c_header_t *) s11_rx_buf;
     RTE_SET_USED(ret);
 
-    bytes_s11_rx = recvfrom(my_sock.sock_fd_s11,
+    bytes_rx = recvfrom(my_sock.sock_fd_s11,
             s11_rx_buf, MAX_GTPV2C_UDP_LEN, MSG_DONTWAIT,
             (struct sockaddr *) &s11_peer_sockaddr,
             &s11_peer_sockaddr_len);
-    if (bytes_s11_rx == 0) {
+    if (bytes_rx == 0) {
         clLog(clSystemLog, eCLSeverityCritical, "SGWC|SAEGWC_s11 recvfrom error:"
                 "\n\ton %s:%u - %s\n",
                 inet_ntoa(s11_peer_sockaddr.sin_addr),
@@ -83,27 +78,55 @@ msg_handler_s11(void)
         return -1;
     }
 
-    if ((bytes_s11_rx < 0) &&
+    if ((bytes_rx < 0) &&
             (errno == EAGAIN  || errno == EWOULDBLOCK))
         return -1;
 
-    if (!gtpv2c_s11_rx->gtpc.message_type) {
+    if (!gtpv2c_rx->gtpc.message_type) {
         return -1;
     }
 
     msg.peer_addr = s11_peer_sockaddr;
 
-    if (bytes_s11_rx > 0)
+    if (bytes_rx > 0)
         ++cp_stats.rx;
   
     update_cli_stats((uint32_t)s11_peer_sockaddr.sin_addr.s_addr,
-            gtpv2c_s11_rx->gtpc.message_type,RCVD,S11);
+            gtpv2c_rx->gtpc.message_type,RCVD,S11);
 
     msg.source_interface = S11_IFACE;
     msg.rx_interface = SGW_S11_S4; 
-	msg.msg_type = gtpv2c_s11_rx->gtpc.message_type;
+	msg.msg_type = gtpv2c_rx->gtpc.message_type;
 
-    gtp_msg_handler[gtpv2c_s11_rx->gtpc.message_type](&msg, gtpv2c_s11_rx);
+	if ((unsigned)bytes_rx != (ntohs(gtpv2c_rx->gtpc.message_len) + sizeof(gtpv2c_rx->gtpc))) {
+		ret = GTPV2C_CAUSE_INVALID_LENGTH;
+		/* According to 29.274 7.7.7, if message is request,
+		 * reply with cause = GTPV2C_CAUSE_INVALID_LENGTH
+		 *  should be sent - ignoring packet for now
+		 */
+		clLog(clSystemLog, eCLSeverityCritical, "GTPv2C Received UDP Payload:"
+				"\n\t(%d bytes) with gtpv2c + "
+				"header (%u + %lu) = %lu bytes\n",
+				bytes_rx, ntohs(gtpv2c_rx->gtpc.message_len),
+				sizeof(gtpv2c_rx->gtpc),
+				ntohs(gtpv2c_rx->gtpc.message_len)
+				+ sizeof(gtpv2c_rx->gtpc));
+		return ret;
+	}
+
+	if(bytes_rx > 0) {
+		if (gtpv2c_rx->gtpc.version < GTP_VERSION_GTPV2C) {
+			fprintf(stderr, "Discarding packet due to gtp version is not supported..");
+			return GTPV2C_CAUSE_VERSION_NOT_SUPPORTED;
+		}else if (gtpv2c_rx->gtpc.version > GTP_VERSION_GTPV2C) {
+			send_version_not_supported(&msg.peer_addr, 
+                                       cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE,
+					                   gtpv2c_rx->teid.has_teid.seq);
+			fprintf(stderr, "Discarding packet due to gtp version is not supported..");
+			return GTPV2C_CAUSE_VERSION_NOT_SUPPORTED;
+		}
+	}
+    gtp_msg_handler[gtpv2c_rx->gtpc.message_type](&msg, gtpv2c_rx);
 
 #if 0
     /* Reset periodic timers */
@@ -222,9 +245,9 @@ msg_handler_s11(void)
     switch (cp_config->cp_type) {
         case SGWC:
         case SAEGWC:
-            if (bytes_s11_rx > 0) {
+            if (bytes_rx > 0) {
                 ++cp_stats.tx;
-                switch (gtpv2c_s11_rx->gtpc.message_type) {
+                switch (gtpv2c_rx->gtpc.message_type) {
                     case GTP_CREATE_SESSION_REQ:
                         cp_stats.create_session++;
                         break;

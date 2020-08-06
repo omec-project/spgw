@@ -9,7 +9,7 @@
 #include "gtp_messages_decoder.h"
 #include "packet_filters.h"
 #include "gtpv2c_set_ie.h"
-#include "../cp_dp_api/vepc_cp_dp_api.h"
+#include "vepc_cp_dp_api.h"
 
 #include "pfcp.h"
 #include "pfcp_enum.h"

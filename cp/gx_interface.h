@@ -22,9 +22,7 @@
 #include "gx_app/include/gx.h"
 #include "ue.h"
 
-#ifdef CP_BUILD
 #include "ue.h"
-#endif /* CP_BUILD */
 
 /* VG1 Temp inlude remove this after handling of CSR on gx*/
 #include "../libgtpv2c/include/gtp_messages.h"
@@ -101,7 +99,6 @@ msg_handler_gx( void );
 void
 start_cp_app( void );
 
-#ifdef CP_BUILD
 /**
  * @brief  : Fill ccr request
  * @param  : ccr, structure to be filled
@@ -114,7 +111,6 @@ int
 fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 		uint8_t ebi_index, char *sess_id);
 
-#endif /* CP_BUILD */
 
 /**
  * @brief  : Fill rat type ie

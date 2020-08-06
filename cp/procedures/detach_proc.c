@@ -28,7 +28,6 @@
 #include "gw_adapter.h"
 #include "gx_error_rsp.h"
 #include "cp_main.h"
-#include "gtpv2_evt_handler.h"
 #include "trans_struct.h"
 #include "spgw_cpp_wrapper.h"
 #include "detach_proc.h"

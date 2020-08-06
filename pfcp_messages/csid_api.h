@@ -6,7 +6,6 @@
  */
 #ifndef __CSID_API_H
 #define __CSID_API_H
-#ifdef CP_BUILD
 #include "gtp_messages.h"
 #include "ue.h"
 
@@ -33,7 +32,6 @@ fill_fqcsid_sess_est_req(pfcp_sess_estab_req_t *pfcp_sess_est_req, ue_context_t 
 
 int
 fill_peer_node_info(pdn_connection_t *pdn, eps_bearer_t *bearer);
-#endif
 #endif
 #endif
 

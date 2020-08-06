@@ -471,58 +471,6 @@ struct msg_ue_cdr {
 							 * write new logs into cdr log file.*/
 } __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
 
-#ifdef DP_BUILD
-/**
- * @brief  : SDF Packet filter configuration structure.
- */
-struct sdf_pkt_filter {
-	uint32_t precedence;				/* Precedence */
-	union {
-		char rule_str[MAX_LEN];		/* string of rule, please refer
-						 * cp/main.c for example
-						 * TODO: rule should be in struct five_tuple_rule*/
-		struct five_tuple_rule rule_5tp;	/* 5 Tuple rule.
-							 * This field is currently not used*/
-	} u;
-	enum rule_type sel_rule_type;
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
-
-/**
- * @brief  : Structure to downlink data notification ack information struct.
- */
-struct downlink_data_notification_ack_t {
-
-	/* todo! more to implement... see table 7.2.11.2-1
-	 * 'recovery: this ie shall be included if contacting the peer
-	 * for the first time'
-	 */
-	/* */
-	uint64_t dl_buff_cnt;
-	uint64_t dl_buff_duration;
-};
-
-/*
- * @brief  : Structure to store information for sending End Marker
- */
-struct sess_info_endmark {
-	uint32_t teid;
-	uint32_t dst_ip;
-	uint32_t src_ip;
-	uint8_t dst_port;
-	uint8_t src_port;
-	struct ether_addr source_MAC;
-	struct ether_addr destination_MAC;
-}__attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
-
-/**
- * @brief  : Create and send endmarker packet
- * @param  : edmk, holds information to fill in packet
- * @return : Returns nothing
- */
-void
-build_endmarker_and_send(struct sess_info_endmark *edmk);
-
-#endif 	/* DP_BUILD */
 
 #define MAX_NB_DPN	8  /* Note: MAX_NB_DPN <= 8 */
 

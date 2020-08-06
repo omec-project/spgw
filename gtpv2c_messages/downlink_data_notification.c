@@ -11,7 +11,7 @@
 #include "sm_struct.h"
 #include "clogger.h"
 #include "cp_io_poll.h"
-#include "../cp_dp_api/vepc_cp_dp_api.h"
+#include "vepc_cp_dp_api.h"
 #include"cp_config.h"
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
@@ -337,3 +337,29 @@ handle_ddn_ack(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     process_ddn_ack_resp_handler(msg, NULL);
     return 0;
 }
+
+int
+process_ddn_ack_resp_handler(void *data, void *unused_param)
+{
+    int ret = 0;
+	msg_info_t *msg = (msg_info_t *)data;
+
+	uint8_t delay = 0; /*TODO move this when more implemented?*/
+	ret = process_ddn_ack(msg->gtpc_msg.ddn_ack, &delay, data);
+	if (ret) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d:Error"
+				"\n\tprocess_ddn_ack_resp_hand "
+				"%s: (%d) %s\n", __func__, __LINE__,
+				gtp_type_str(msg->msg_type), ret,
+				(ret < 0 ? strerror(-ret) : cause_str(ret)));
+		/* Error handling not implemented */
+		return ret;
+	}
+
+	/* TODO something with delay if set */
+	/* TODO Implemente the PFCP Session Report Resp message sent to dp */
+
+	RTE_SET_USED(unused_param);
+	return 0;
+}
+

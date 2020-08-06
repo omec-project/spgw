@@ -11,12 +11,8 @@
 #include "csid_struct.h"
 #include "clogger.h"
 #include "gw_adapter.h"
-#ifdef CP_BUILD
 #include "cp_init.h"
 #include "cp_main.h"
-#else
-#include "up_main.h"
-#endif /* CP_BUILD */
 
 /**
  * Add local csid entry by peer csid in peer csid hash table.

@@ -8,10 +8,10 @@
 #include "sm_struct.h"
 #include "gtp_messages.h"
 #include "cp_config.h"
-#include "gtpv2_common.h"
 #include "clogger.h"
 #include "stdio.h"
 #include "gtpv2c_error_rsp.h"
+#include "gtpv2_interface.h"
 
 
 static

@@ -28,7 +28,6 @@
 #include "gw_adapter.h"
 #include "gx_error_rsp.h"
 #include "cp_main.h"
-#include "gtpv2_evt_handler.h"
 #include "trans_struct.h"
 #include "spgw_cpp_wrapper.h"
 #include "pfcp_association_setup_proc.h"
@@ -68,87 +67,6 @@ gx_setup_handler(void *data, void *unused_param)
 	return ret;
 }
 #endif
-
-
-#ifdef FUTURE_NEED
-int
-process_cs_resp_handler(void *data, void *unused_param)
-{
-    int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-
-	ret = process_sgwc_s5s8_create_sess_rsp(&msg->gtpc_msg.cs_rsp);
-	if (ret) {
-			if(ret != -1){
-				cs_error_response(msg, ret, S11_IFACE);
-				process_error_occured_handler_new(data, unused_param);
-			}
-			clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
-					__func__, __LINE__, ret);
-			return -1;
-	}
-
-	RTE_SET_USED(unused_param);
-	return 0;
-}
-#endif
-
-
-
-
-
-#ifdef FUTURE_NEED
-int
-process_ds_resp_handler(void *data, void *unused_param)
-{
-    int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-
-	if (cp_config->cp_type == SGWC) {
-		ret = process_sgwc_s5s8_delete_session_request(&msg->gtpc_msg.ds_rsp);
-		if (ret) {
-			if(ret  != -1)
-				ds_error_response(msg, ret,
-						           cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
-			/* Error handling not implemented */
-			clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
-			return -1;
-		}
-	} else {
-		/*Code should not reach here since this handler is only for SGWC*/
-		return -1;
-	}
-
-	RTE_SET_USED(unused_param);
-	return 0;
-}
-#endif
-
-
-int
-process_ddn_ack_resp_handler(void *data, void *unused_param)
-{
-    int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-
-	uint8_t delay = 0; /*TODO move this when more implemented?*/
-	ret = process_ddn_ack(msg->gtpc_msg.ddn_ack, &delay, data);
-	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d:Error"
-				"\n\tprocess_ddn_ack_resp_hand "
-				"%s: (%d) %s\n", __func__, __LINE__,
-				gtp_type_str(msg->msg_type), ret,
-				(ret < 0 ? strerror(-ret) : cause_str(ret)));
-		/* Error handling not implemented */
-		return ret;
-	}
-
-	/* TODO something with delay if set */
-	/* TODO Implemente the PFCP Session Report Resp message sent to dp */
-
-	RTE_SET_USED(unused_param);
-	return 0;
-}
 
 #ifdef FUTURE_NEED
 int
@@ -779,50 +697,6 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 }
 #endif
 
-#ifdef FUTURE_NEED
-int
-process_delete_bearer_request_handler(void *data, void *unused_param)
-{
-    int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-
-	ret = process_delete_bearer_request(&msg->gtpc_msg.db_req ,0);
-	if (ret) {
-		clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
-			__func__, __LINE__, ret);
-		return -1;
-	}
-
-	RTE_SET_USED(data);
-	RTE_SET_USED(unused_param);
-
-	return 0;
-}
-
-#endif
-
-#ifdef FUTURE_NEED
-int
-process_delete_bearer_resp_handler(void *data, void *unused_param)
-{
-	msg_info_t *msg = (msg_info_t *)data;
-
-	if (msg->gtpc_msg.db_rsp.lbi.header.len != 0) {
-		/* Delete Default Bearer. Send PFCP Session Deletion Request */
-		process_pfcp_sess_del_request_delete_bearer_rsp(&msg->gtpc_msg.db_rsp);
-	} else {
-		/* Delete Dedicated Bearer. Send PFCP Session Modification Request */
-		process_delete_bearer_resp(&msg->gtpc_msg.db_rsp , 0);
-	}
-
-	RTE_SET_USED(data);
-	RTE_SET_USED(unused_param);
-
-	return 0;
-}
-#endif
-
-
 #ifdef SUPPORT_DEDICATED_BEARER
 int
 process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
@@ -876,95 +750,7 @@ process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
 }
 #endif
 
-#ifdef FUTURE_NEED
-/*UPDATE bearer */
-int process_update_bearer_response_handler(void *data, void *unused_param)
-{
-	int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-	if (SGWC == cp_config->cp_type) {
-
-		ret = process_s11_upd_bearer_response(&msg->gtpc_msg.ub_rsp);
-		if(ret && ret != -1)
-				ubr_error_response(msg, ret, S5S8_IFACE);
-	} else {
-
-		ret = process_s5s8_upd_bearer_response(&msg->gtpc_msg.ub_rsp);
-		if(ret && ret != -1)
-				ubr_error_response(msg, ret, GX_IFACE);
-	}
-	if (ret) {
-			clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
-					__func__, __LINE__, ret);
-			return -1;
-	}
-
-	RTE_SET_USED(unused_param);
-	return 0;
-}
-#endif
-
-#ifdef FUTURE_NEED
-int process_update_bearer_request_handler(void *data, void *unused_param)
-{
-    int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-
-	ret = process_update_bearer_request(&msg->gtpc_msg.ub_req);
-	if (ret) {
-		if(ret != -1)
-			ubr_error_response(msg, ret, S5S8_IFACE);
-		clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
-					__func__, __LINE__, ret);
-		return -1;
-	}
-
-	RTE_SET_USED(unused_param);
-	return 0;
-
-}
-
-#endif
-
 /*DELETE bearer commaand deactivation*/
-
-/*
- * The Function handles when MME sends Delete Bearer CMD to SGWC and
- * also when SGWC sends the same to PGWC
-*/
-#ifdef FUTURE_NEED
-int
-process_delete_bearer_command_handler(void *data, void *unused_param)
-{
-	uint16_t payload_length = 0;
-    int ret = 0;
-
-	msg_info_t *msg = (msg_info_t *)data;
-	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
-	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
-
-	ret = process_delete_bearer_cmd_request(&msg->gtpc_msg.del_ber_cmd, gtpv2c_tx);
-
-	if(ret != 0) {
-	/* TODO:set error response*/
-	clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
-	}
-
-	if (SGWC == cp_config->cp_type ) {
-	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
-		+ sizeof(gtpv2c_tx->gtpc);
-
-
-	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
-			(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-				   s5s8_sockaddr_len);
-	}
-
-	RTE_SET_USED(unused_param);
-
-	return 0;
-}
-#endif
 
 /*
  * This handler is called when CCA-U is received on PGWC.
@@ -1078,23 +864,6 @@ del_bearer_cmd_mbr_resp_handler(void *data, void *unused_param)
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,  /* need change - future */
 				sizeof(struct sockaddr_in));
-	}
-
-	RTE_SET_USED(unused_param);
-	return 0;
-}
-#endif
-
-
-#ifdef FUTURE_NEED
-/*PGWC send Delete Bearer Request to SGWC*/
-int process_delete_bearer_req_handler(void *data, void *unused_param)
-{
-	msg_info_t *msg = (msg_info_t *)data;
-	int ret = process_delete_bearer_request(&msg->gtpc_msg.db_req, 1);
-	if(ret !=0 ) {
-		/*TODO: set error response*/
-		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
 	}
 
 	RTE_SET_USED(unused_param);
@@ -1368,25 +1137,6 @@ process_upd_pdn_conn_set_rsp(void *data, void *unused_param)
 	return 0;
 }
 
-/* Function */
-int
-process_pgw_rstrt_notif_ack(void *data, void *unused_param)
-{
-#ifdef USE_CSID
-	msg_info_t *msg = (msg_info_t *)data;
-
-	if (msg->gtpc_msg.pgw_rstrt_notif_ack.cause.cause_value ==
-			GTPV2C_CAUSE_REQUEST_ACCEPTED) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-				strerror(errno));
-		return -1;
-	}
-#else
-	RTE_SET_USED(data);
-#endif /* USE_CSID */
-	RTE_SET_USED(unused_param);
-	return 0;
-}
 
 /* Function */
 // ajay - unhandled fsm 
@@ -1455,42 +1205,4 @@ process_default_handler(void *data, void *unused_param)
 }
 
 
-#ifdef FUTURE_NEED
-int process_pfcp_sess_mod_resp_ubr_handler(void *data, void *unused_param)
-{
-	int ret = 0;
-	ue_context_t *context = NULL;
-	uint8_t ebi_index = 0;
 
-	msg_info_t *msg = (msg_info_t *)data;
-	uint32_t teid = UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
-
-
-	if (get_sess_entry(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
-																			&resp) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-				__func__, __LINE__, msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
-		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-	}
-	if(resp->num_of_bearers)
-		ebi_index = resp->list_bearer_ids[0] - 5;
-
-	/* Retrieve the UE context */
-	ret = get_ue_context(teid, &context);
-	if (ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
-					__func__, __LINE__,
-					teid);
-	}
-
-    if(cp_config->gx_enabled) {
-        gen_reauth_response(context, ebi_index);
-    }
-
-	context->eps_bearers[ebi_index]->pdn->state = CONNECTED_STATE;
-
-	RTE_SET_USED(unused_param);
-	return 0;
-
-}
-#endif

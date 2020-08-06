@@ -11,12 +11,8 @@
 #include "csid_struct.h"
 #include "clogger.h"
 #include "gw_adapter.h"
-#ifdef CP_BUILD
 #include "cp_init.h"
 #include "cp_main.h"
-#else
-#include "up_main.h"
-#endif /* CP_BUILD */
 
 #define NUM_OF_TABLES 7
 #define NUM_OF_NODE 15
@@ -90,11 +86,7 @@ compare_peer_info(csid_key *peer1, csid_key *peer2)
 			(peer1->sgwu_ip == peer2->sgwu_ip) &&
 			(peer1->pgwc_ip == peer2->pgwc_ip) &&
 			(peer1->pgwu_ip == peer2->pgwu_ip)
-#ifdef CP_BUILD
 			&& (peer1->enodeb_id == peer2->enodeb_id)
-#else
-			&& (peer1->enodeb_ip == peer2->enodeb_ip)
-#endif /* CP_BUILD */
 	   ) {
 		clLog(apilogger, eCLSeverityDebug, FORMAT"Peer node exsting entry is matched\n", ERR_MSG);
 		return 0;

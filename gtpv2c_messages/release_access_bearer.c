@@ -17,7 +17,7 @@
 #include "pfcp_messages.h"
 #include "gtpv2c_set_ie.h"
 #include "pfcp_messages_encoder.h"
-#include "../cp_dp_api/vepc_cp_dp_api.h"
+#include "vepc_cp_dp_api.h"
 #include "pfcp_cp_util.h"
 #include "gtpv2_interface.h"
 #include "gen_utils.h"

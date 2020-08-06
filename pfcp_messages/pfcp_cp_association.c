@@ -11,7 +11,7 @@
 #include "pfcp_cp_association.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_messages_decoder.h"
-#include "../cp_dp_api/vepc_cp_dp_api.h"
+#include "vepc_cp_dp_api.h"
 #include "clogger.h"
 #include "cp_main.h"
 #include "pfcp.h"
@@ -406,18 +406,7 @@ fill_pfcp_heartbeat_req(pfcp_hrtbeat_req_t *pfcp_heartbeat_req, uint32_t seq)
 	set_recovery_time_stamp(&(pfcp_heartbeat_req->rcvry_time_stmp));
 	seq++;
 }
-void
-fill_pfcp_heartbeat_resp(pfcp_hrtbeat_rsp_t *pfcp_heartbeat_resp)
-{
 
-	uint32_t seq  = 1;
-	memset(pfcp_heartbeat_resp, 0, sizeof(pfcp_hrtbeat_rsp_t)) ;
-
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_heartbeat_resp->header),
-			PFCP_HEARTBEAT_RESPONSE, NO_SEID, seq);
-
-	set_recovery_time_stamp(&(pfcp_heartbeat_resp->rcvry_time_stmp));
-}
 
 int process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq)
 {

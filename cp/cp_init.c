@@ -25,6 +25,7 @@
 #include "gtpv2_internal.h"
 #include "cp_io_poll.h"
 #include "gtpv2_interface.h"
+#include "pfcp_cp_interface.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -181,6 +182,8 @@ static void init_s5s8(void)
  */
 void init_cp(void)
 {
+
+    init_pfcp_interface();
 
 	init_pfcp();
 

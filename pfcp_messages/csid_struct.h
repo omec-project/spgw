@@ -69,15 +69,8 @@ typedef struct peer_node_info_t {
 	uint32_t pgwc_ip;
 	/* Sx || S5/S8 IP Address */
 	uint32_t pgwu_ip;
-#ifdef CP_BUILD
 	/* CP: eNB ID */
 	uint32_t enodeb_id; /* Optional for UP */
-#else
-	/* Temp solution for multiple SGW and PGW */
-	uint16_t peer_csid;
-	/* UP: Used the enodeb ip address for peer node */
-	uint32_t enodeb_ip; /* Optional for CP */
-#endif /* CP_BUILD */
 }csid_key;
 
 /* Collection of the associated peer node CSIDs*/

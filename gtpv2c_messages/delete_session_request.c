@@ -7,7 +7,7 @@
 #include <rte_debug.h>
 #include "gtp_messages_decoder.h"
 #include "gtp_messages.h"
-#include "../cp_dp_api/vepc_cp_dp_api.h"
+#include "vepc_cp_dp_api.h"
 #include "gtpv2c_set_ie.h"
 #include "gtpv2_interface.h"
 #include "sm_struct.h"
@@ -302,3 +302,209 @@ handle_delete_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     detach_proc->handler((void*)detach_proc, msg->event, (void*)msg); 
     return 0;
 }
+
+#ifdef FUTURE_NEED
+void process_pgwc_s5s8_delete_session_request_pfcp_timeout(void *data)
+{
+    RTE_SET_USED(data);
+    return;
+}
+
+
+int
+process_pgwc_s5s8_delete_session_request(del_sess_req_t *ds_req)
+{
+	struct gw_info _resp = {0};
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
+	int ebi_index = 0;
+	int ret = delete_pgwc_context(ds_req, &context, &_resp);
+
+	if (ret)
+		return ret;
+
+	pdn = GET_PDN(context , ebi_index);
+
+	pfcp_sess_del_req_t pfcp_sess_del_req = {0};
+	fill_pfcp_sess_del_req(&pfcp_sess_del_req);
+
+	pfcp_sess_del_req.header.seid_seqno.has_seid.seid = _resp.seid;
+	ebi_index =  UE_BEAR_ID(pfcp_sess_del_req.header.seid_seqno.has_seid.seid) -5 ;
+
+	uint8_t pfcp_msg[512]={0};
+
+	int encoded = encode_pfcp_sess_del_req_t(&pfcp_sess_del_req, pfcp_msg);
+	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
+	header->message_len = htons(encoded - 4);
+
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded,
+				&context->upf_context->upf_sockaddr) < 0 ) {
+		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
+	}else {
+        transData_t *trans_entry;
+		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pgwc_s5s8_delete_session_request_pfcp_timeout);
+        pdn->trans_entry = trans_entry;
+	}
+
+	/* Update UE State */
+	pdn->state = PFCP_SESS_DEL_REQ_SNT_STATE;
+
+	/* VS: Stored/Update the session information. */
+	if (get_sess_entry(_resp.seid, &resp) != 0) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Failed to add response in entry in SM_HASH\n", __file__
+				,__func__, __LINE__);
+		return -1;
+	}
+
+	/* Store s11 struture data into sm_hash for sending delete response back to s11 */
+	resp->eps_bearer_id = _resp.eps_bearer_id;
+	resp->s5s8_pgw_gtpc_ipv4 = _resp.s5s8_pgw_gtpc_ipv4;
+	resp->msg_type = GTP_DELETE_SESSION_REQ;
+	resp->state = PFCP_SESS_DEL_REQ_SNT_STATE;
+
+	return 0;
+}
+
+void process_sgwc_s5s8_delete_session_request_pfcp_timeout(void *data)
+{
+    RTE_SET_USED(data);
+    return;
+}
+
+
+void
+fill_ds_request(del_sess_req_t *ds_req, ue_context_t *context,
+		 uint8_t ebi_index)
+{
+	int len = 0;
+	set_gtpv2c_header(&ds_req->header, 1,
+			GTP_DELETE_SESSION_REQ, context->pdns[ebi_index]->s5s8_pgw_gtpc_teid,
+			context->sequence);
+
+	set_ie_header(&ds_req->lbi.header, GTP_IE_EPS_BEARER_ID,
+			IE_INSTANCE_ZERO, sizeof(uint8_t));
+
+	set_ebi(&ds_req->lbi, IE_INSTANCE_ZERO,
+			context->eps_bearers[ebi_index]->eps_bearer_id);
+
+	if (context->uli.lai) {
+		ds_req->uli.lai = context->uli.lai;
+		ds_req->uli.lai2.lai_mcc_digit_2 = context->uli.lai2.lai_mcc_digit_2;
+		ds_req->uli.lai2.lai_mcc_digit_1 = context->uli.lai2.lai_mcc_digit_1;
+		ds_req->uli.lai2.lai_mnc_digit_3 = context->uli.lai2.lai_mnc_digit_3;
+		ds_req->uli.lai2.lai_mcc_digit_3 = context->uli.lai2.lai_mcc_digit_3;
+		ds_req->uli.lai2.lai_mnc_digit_2 = context->uli.lai2.lai_mnc_digit_2;
+		ds_req->uli.lai2.lai_mnc_digit_1 = context->uli.lai2.lai_mnc_digit_1;
+		ds_req->uli.lai2.lai_lac = context->uli.lai2.lai_lac;
+		len += sizeof(ds_req->uli.lai2);
+	}
+	if (context->uli.tai) {
+		ds_req->uli.tai = context->uli.tai;
+		ds_req->uli.tai2.tai_mcc_digit_2 = context->uli.tai2.tai_mcc_digit_2;
+		ds_req->uli.tai2.tai_mcc_digit_1 = context->uli.tai2.tai_mcc_digit_1;
+		ds_req->uli.tai2.tai_mnc_digit_3 = context->uli.tai2.tai_mnc_digit_3;
+		ds_req->uli.tai2.tai_mcc_digit_3 = context->uli.tai2.tai_mcc_digit_3;
+		ds_req->uli.tai2.tai_mnc_digit_2 = context->uli.tai2.tai_mnc_digit_2;
+		ds_req->uli.tai2.tai_mnc_digit_1 = context->uli.tai2.tai_mnc_digit_1;
+		ds_req->uli.tai2.tai_tac = context->uli.tai2.tai_tac;
+		len += sizeof(ds_req->uli.tai2);
+	}
+	if (context->uli.rai) {
+		ds_req->uli.rai = context->uli.rai;
+		ds_req->uli.rai2.ria_mcc_digit_2 = context->uli.rai2.ria_mcc_digit_2;
+		ds_req->uli.rai2.ria_mcc_digit_1 = context->uli.rai2.ria_mcc_digit_1;
+		ds_req->uli.rai2.ria_mnc_digit_3 = context->uli.rai2.ria_mnc_digit_3;
+		ds_req->uli.rai2.ria_mcc_digit_3 = context->uli.rai2.ria_mcc_digit_3;
+		ds_req->uli.rai2.ria_mnc_digit_2 = context->uli.rai2.ria_mnc_digit_2;
+		ds_req->uli.rai2.ria_mnc_digit_1 = context->uli.rai2.ria_mnc_digit_1;
+		ds_req->uli.rai2.ria_lac = context->uli.rai2.ria_lac;
+		ds_req->uli.rai2.ria_rac = context->uli.rai2.ria_rac;
+		len += sizeof(ds_req->uli.rai2);
+	}
+	if (context->uli.sai) {
+		ds_req->uli.sai = context->uli.sai;
+		ds_req->uli.sai2.sai_mcc_digit_2 = context->uli.sai2.sai_mcc_digit_2;
+		ds_req->uli.sai2.sai_mcc_digit_1 = context->uli.sai2.sai_mcc_digit_1;
+		ds_req->uli.sai2.sai_mnc_digit_3 = context->uli.sai2.sai_mnc_digit_3;
+		ds_req->uli.sai2.sai_mcc_digit_3 = context->uli.sai2.sai_mcc_digit_3;
+		ds_req->uli.sai2.sai_mnc_digit_2 = context->uli.sai2.sai_mnc_digit_2;
+		ds_req->uli.sai2.sai_mnc_digit_1 = context->uli.sai2.sai_mnc_digit_1;
+		ds_req->uli.sai2.sai_lac = context->uli.sai2.sai_lac;
+		ds_req->uli.sai2.sai_sac = context->uli.sai2.sai_sac;
+		len += sizeof(ds_req->uli.sai2);
+	}
+	if (context->uli.cgi) {
+		ds_req->uli.cgi = context->uli.cgi;
+		ds_req->uli.cgi2.cgi_mcc_digit_2 = context->uli.cgi2.cgi_mcc_digit_2;
+		ds_req->uli.cgi2.cgi_mcc_digit_1 = context->uli.cgi2.cgi_mcc_digit_1;
+		ds_req->uli.cgi2.cgi_mnc_digit_3 = context->uli.cgi2.cgi_mnc_digit_3;
+		ds_req->uli.cgi2.cgi_mcc_digit_3 = context->uli.cgi2.cgi_mcc_digit_3;
+		ds_req->uli.cgi2.cgi_mnc_digit_2 = context->uli.cgi2.cgi_mnc_digit_2;
+		ds_req->uli.cgi2.cgi_mnc_digit_1 = context->uli.cgi2.cgi_mnc_digit_1;
+		ds_req->uli.cgi2.cgi_lac = context->uli.cgi2.cgi_lac;
+	    ds_req->uli.cgi2.cgi_ci = context->uli.cgi2.cgi_ci;
+		len += sizeof(ds_req->uli.cgi2);
+	}
+	if (context->uli.ecgi) {
+		ds_req->uli.ecgi = context->uli.ecgi;
+		ds_req->uli.ecgi2.ecgi_mcc_digit_2 = context->uli.ecgi2.ecgi_mcc_digit_2;
+		ds_req->uli.ecgi2.ecgi_mcc_digit_1 = context->uli.ecgi2.ecgi_mcc_digit_1;
+		ds_req->uli.ecgi2.ecgi_mnc_digit_3 = context->uli.ecgi2.ecgi_mnc_digit_3;
+		ds_req->uli.ecgi2.ecgi_mcc_digit_3 = context->uli.ecgi2.ecgi_mcc_digit_3;
+		ds_req->uli.ecgi2.ecgi_mnc_digit_2 = context->uli.ecgi2.ecgi_mnc_digit_2;
+		ds_req->uli.ecgi2.ecgi_mnc_digit_1 = context->uli.ecgi2.ecgi_mnc_digit_1;
+		ds_req->uli.ecgi2.ecgi_spare = context->uli.ecgi2.ecgi_spare;
+	    ds_req->uli.ecgi2.eci = context->uli.ecgi2.eci;
+		len += sizeof(ds_req->uli.ecgi2);
+	}
+	if (context->uli.macro_enodeb_id) {
+		ds_req->uli.macro_enodeb_id = context->uli.macro_enodeb_id;
+		ds_req->uli.macro_enodeb_id2.menbid_mcc_digit_2 =
+			context->uli.macro_enodeb_id2.menbid_mcc_digit_2;
+		ds_req->uli.macro_enodeb_id2.menbid_mcc_digit_1 =
+			context->uli.macro_enodeb_id2.menbid_mcc_digit_1;
+		ds_req->uli.macro_enodeb_id2.menbid_mnc_digit_3 =
+			context->uli.macro_enodeb_id2.menbid_mnc_digit_3;
+		ds_req->uli.macro_enodeb_id2.menbid_mcc_digit_3 =
+			context->uli.macro_enodeb_id2.menbid_mcc_digit_3;
+		ds_req->uli.macro_enodeb_id2.menbid_mnc_digit_2 =
+			context->uli.macro_enodeb_id2.menbid_mnc_digit_2;
+		ds_req->uli.macro_enodeb_id2.menbid_mnc_digit_1 =
+			context->uli.macro_enodeb_id2.menbid_mnc_digit_1;
+		ds_req->uli.macro_enodeb_id2.menbid_spare =
+			context->uli.macro_enodeb_id2.menbid_spare;
+		ds_req->uli.macro_enodeb_id2.menbid_macro_enodeb_id =
+			context->uli.macro_enodeb_id2.menbid_macro_enodeb_id;
+		ds_req->uli.macro_enodeb_id2.menbid_macro_enb_id2 =
+			context->uli.macro_enodeb_id2.menbid_macro_enb_id2;
+		len += sizeof(ds_req->uli.macro_enodeb_id2);
+	}
+	if (context->uli.extnded_macro_enb_id) {
+		ds_req->uli.extnded_macro_enb_id = context->uli.extnded_macro_enb_id;
+		ds_req->uli.extended_macro_enodeb_id2.emenbid_mcc_digit_1 =
+			context->uli.extended_macro_enodeb_id2.emenbid_mcc_digit_1;
+		ds_req->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_3 =
+			context->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_3;
+		ds_req->uli.extended_macro_enodeb_id2.emenbid_mcc_digit_3 =
+			context->uli.extended_macro_enodeb_id2.emenbid_mcc_digit_3;
+		ds_req->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_2 =
+			context->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_2;
+		ds_req->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_1 =
+			context->uli.extended_macro_enodeb_id2.emenbid_mnc_digit_1;
+		ds_req->uli.extended_macro_enodeb_id2.emenbid_smenb =
+			context->uli.extended_macro_enodeb_id2.emenbid_smenb;
+		ds_req->uli.extended_macro_enodeb_id2.emenbid_spare =
+			context->uli.extended_macro_enodeb_id2.emenbid_spare;
+		ds_req->uli.extended_macro_enodeb_id2.emenbid_extnded_macro_enb_id =
+			context->uli.extended_macro_enodeb_id2.emenbid_extnded_macro_enb_id;
+		ds_req->uli.extended_macro_enodeb_id2.emenbid_extnded_macro_enb_id2 =
+			context->uli.extended_macro_enodeb_id2.emenbid_extnded_macro_enb_id2;
+		len += sizeof(ds_req->uli.extended_macro_enodeb_id2);
+	}
+	len += 1;
+	set_ie_header(&ds_req->uli.header, GTP_IE_USER_LOC_INFO, IE_INSTANCE_ZERO,
+		len);
+}
+
+#endif
+
