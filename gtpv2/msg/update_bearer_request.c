@@ -3,6 +3,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+#include "tables/tables.h"
 #ifdef FUTURE_NEED
 // sgw - UPDATE_BEARER_PROC CONNECTED_STATE UPDATE_BEARER_REQ_RCVD_EVNT - process_update_bearer_request_handler
 // sgw - UPDATE_BEARER_PROC IDEL_STATE UPDATE_BEARER_REQ_RCVD_EVNT - process_update_bearer_request_handler 
@@ -63,7 +64,7 @@ process_update_bearer_request(upd_bearer_req_t *ubr)
 
 	pdn_cntxt = context->eps_bearers[ebi_index]->pdn;
 
-	if (get_sess_entry(pdn_cntxt->seid, &resp) != 0){
+	if (get_sess_entry_seid(pdn_cntxt->seid, &resp) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, pdn_cntxt->seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;

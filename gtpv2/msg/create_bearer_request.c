@@ -8,6 +8,7 @@
 #include "ue.h"
 #include "vepc_cp_dp_api.h"
 #include "gtpv2_ie_parsing.h"
+#include "tables/tables.h"
 
 extern uint32_t num_adc_rules;
 extern uint32_t adc_rule_id[];

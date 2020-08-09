@@ -7,40 +7,11 @@
 #ifndef _GTPV2_INTERFACE_H
 #define _GTPV2_INTERFACE_H 
 
-/**
- * @file
- *
- * Debug strings for Control Plane warning/error messages.
- *
- * Functions to return strings corresponding to value or error codes as
- * specified by 3gpp Technical Specifications.
- *
- */
-
 #include <stdint.h>
 #include "gtpv2_ie.h"
 #include "gtpv2_msg_struct.h"
 #include "ue.h"
 #include "sm_struct.h"
-
-/**
- * @brief  : Returns cause string from code value as defined by 3gpp TS 29.274.
- * @param  : cause
- *           The cause coded value as specified by Table 8.4-1, TS 29.274.
- * @return : String describing cause code value.
- */
-const char *
-cause_str(enum cause_value cause);
-
-/**
- * @brief  : Returns gtp message type string from type code value as defined by 3gpp TS
- *           29.274. Messages supported by this function may be incomplete.
- * @param  : type
- *           GTPv2 message type value as specified by table 6.1-1 in 3gpp TS 29.274.
- * @return : String describing GTPv2 message type.
- */
-const char *
-gtp_type_str(uint8_t type);
 
 /**
  * @brief  : Function to build GTP-U echo request
@@ -423,19 +394,6 @@ int process_sgwc_delete_handover(uint64_t seid,
 int
 ddn_by_session_id(uint64_t session_id);
 
-/**
- * @brief  : Decodes incoming create session request and store it in structure
- * @param  : gtpv2c_rx
- *           transmission buffer to contain 'create session request' message
- * @param  : csr
- *           buffer to store decoded information from create session request
- * @return : Returns nothing
- */
-int
-decode_check_csr(gtpv2c_header_t *gtpv2c_rx,
-		create_sess_req_t *csr);
-
-
 int msg_handler_s11(void);
 int msg_handler_s5s8(void);
 
@@ -448,9 +406,6 @@ void
 stats_update(uint8_t msg_type);
 
 void 
-process_create_bearer_request_pfcp_timeout(void *data);
-
-void 
 process_delete_bearer_resp_pfcp_timeout(void *data);
 
 void 
@@ -458,9 +413,6 @@ process_create_bearer_request_pfcp_timeout(void *data);
 
 void 
 process_pgwc_s5s8_create_session_request_pfcp_timeout(void *data);
-
-void
-process_delete_bearer_request_pfcp_timeout(void *data);
 
 void 
 process_delete_bearer_resp_pfcp_timeout(void *data);

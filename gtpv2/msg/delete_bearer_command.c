@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
+#include "tables/tables.h"
 #ifdef FUTURE_NEED
 // saegw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC CONNECTED_STATE DELETE_BER_CMD_RCVD_EVNT ==> process_delete_bearer_command_handler
 // pgw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC CONNECTED_STATE DELETE_BER_CMD_RCVD_EVNT - process_delete_bearer_command_handler
@@ -12,7 +13,13 @@ int handle_delete_bearer_cmd_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
     uint8_t ebi_index;
     ue_context_t *context = NULL;
-    RTE_SET_USED(gtpv2c_rx);
+    int ret;
+
+    if((ret = decode_del_bearer_cmd((uint8_t *) gtpv2c_rx,
+                    &msg->gtpc_msg.del_ber_cmd) == 0)) {
+        return -1;
+    }
+
 	gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
 
 	ebi_index = msg->gtpc_msg.del_ber_cmd.bearer_contexts[0].eps_bearer_id.ebi_ebi - 5;
@@ -161,12 +168,4 @@ process_delete_bearer_command_handler(void *data, void *unused_param)
 	return 0;
 }
 
-int handle_delete_bearer_cmd_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
-{ 
-    if((ret = decode_del_bearer_cmd((uint8_t *) gtpv2c_rx,
-                    &msg->gtpc_msg.del_ber_cmd) == 0)) {
-        return -1;
-    }
-}
-	
 #endif

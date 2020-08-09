@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
+#include "tables/tables.h"
 #ifdef FUTURE_NEED
 // saegw DED_BER_ACTIVATION_PROC CREATE_BER_REQ_SNT_STATE CREATE_BER_RESP_RCVD_EVNT => process_create_bearer_resp_handler
 // pgw - DED_BER_ACTIVATION_PROC CREATE_BER_REQ_SNT_STATE CREATE_BER_RESP_RCVD_EVNT => process_cbresp_handler
@@ -133,7 +134,7 @@ process_pgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp)
 	context->sequence = seq_no;
 	bearer->pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
-	if (get_sess_entry(context->pdns[0]->seid, &resp) != 0) {
+	if (get_sess_entry_seid(context->pdns[0]->seid, &resp) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "Failed to add response in entry in SM_HASH\n");
 		return -1;
 	}
@@ -226,7 +227,7 @@ process_pgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp)
 	context->sequence = seq_no;
 	bearer->pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
-	if (get_sess_entry(context->pdns[0]->seid, &resp) != 0) {
+	if (get_sess_entry_seid(context->pdns[0]->seid, &resp) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "Failed to add response in entry in SM_HASH\n");
 		return -1;
 	}
@@ -321,7 +322,7 @@ process_sgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp)
 	context->sequence = seq_no;
 	bearer->pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
-	if (get_sess_entry(bearer->pdn->seid, &resp) != 0) {
+	if (get_sess_entry_seid(bearer->pdn->seid, &resp) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "Failed to add response in entry in SM_HASH\n");
 		return -1;
 	}

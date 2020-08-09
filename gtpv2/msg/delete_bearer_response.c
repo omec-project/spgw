@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
+#include "tables/tables.h"
 #ifdef FUTURE_NEED
 // saegw - PDN_GW_INIT_BEARER_DEACTIVATION  DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT => process_delete_bearer_resp_handler  
 // saegw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT => process_delete_bearer_response_handler 
@@ -87,4 +88,106 @@ process_delete_bearer_resp_handler(void *data, void *unused_param)
 	return 0;
 }
 
+void 
+process_delete_bearer_resp_pfcp_timeout(void *data)
+{
+    RTE_SET_USED(data);
+    return;
+}
+
+int
+process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
+{
+	int ret;
+	uint8_t ebi_index = 5;
+	uint8_t bearer_cntr = 0;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
+	uint8_t default_bearer_id = 0;
+	eps_bearer_t *bearers[MAX_BEARERS];
+	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
+    RTE_SET_USED(is_del_bearer_cmd);
+
+	ret = get_ue_context(db_rsp->header.teid.has_teid.teid, &context);
+	if (ret) {
+		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
+				__LINE__, ret);
+		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+	}
+
+	s11_mme_sockaddr.sin_addr.s_addr =
+		context->s11_mme_gtpc_ipv4.s_addr;
+
+	if (db_rsp->lbi.header.len) {
+		default_bearer_id = db_rsp->lbi.ebi_ebi;
+		pdn = context->pdns[default_bearer_id];
+		bearers[default_bearer_id - 5] = context->eps_bearers[default_bearer_id - 5];
+		bearer_cntr = 1;
+	} else {
+		for (uint8_t iCnt = 0; iCnt < db_rsp->bearer_count; ++iCnt) {
+			ebi_index = db_rsp->bearer_contexts[iCnt].eps_bearer_id.ebi_ebi;
+			bearers[iCnt] = context->eps_bearers[ebi_index - 5];
+		}
+		pdn = context->eps_bearers[ebi_index - 5]->pdn;
+		bearer_cntr = db_rsp->bearer_count;
+
+	}
+
+	fill_pfcp_sess_mod_req_pgw_init_remove_pdr(&pfcp_sess_mod_req, pdn, bearers, bearer_cntr);
+
+	uint8_t pfcp_msg[512]={0};
+	int encoded = encode_pfcp_sess_mod_req_t(&pfcp_sess_mod_req, pfcp_msg);
+	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
+	header->message_len = htons(encoded - 4);
+
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0) {
+		clLog(sxlogger, eCLSeverityCritical,
+			"%s : Error in sending MBR to SGW-U. err_no: %i\n",
+			__func__, errno);
+	} else {
+		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
+				pfcp_sess_mod_req.header.message_type, SENT, SX);
+        transData_t *trans_entry;
+		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_delete_bearer_resp_pfcp_timeout);
+        pdn->trans_entry = trans_entry;
+	}
+
+#ifdef FUTURE_NEED
+	context->sequence = db_rsp->header.teid.has_teid.seq;
+#endif
+	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
+
+#if 0
+	if (get_sess_entry_seid(pdn->seid, &resp) != 0) {
+		clLog(sxlogger, eCLSeverityCritical,
+			"%s : Failed to add response in entry in SM_HASH\n",
+			__func__);
+		return -1;
+	}
+
+	if (db_rsp->lbi.header.len != 0) {
+		resp->linked_eps_bearer_id = db_rsp->lbi.ebi_ebi;
+		resp->bearer_count = 0;
+	} else {
+		resp->bearer_count = db_rsp->bearer_count;
+		for (uint8_t iCnt = 0; iCnt < db_rsp->bearer_count; ++iCnt) {
+			resp->eps_bearer_ids[iCnt] = db_rsp->bearer_contexts[iCnt].eps_bearer_id.ebi_ebi;
+		}
+	}
+	if(is_del_bearer_cmd == 0){
+		resp->msg_type = GTP_DELETE_BEARER_RSP;
+		resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
+		resp->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
+		pdn->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
+	}else{
+
+		resp->msg_type = GTP_DELETE_BEARER_RSP;
+		resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
+		resp->proc = MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC;
+		pdn->proc = MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC;
+	}
+#endif
+
+	return 0;
+}
 #endif

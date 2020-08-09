@@ -17,7 +17,6 @@
 #include "cp_peer.h"
 #include "sm_structs_api.h"
 #include "pfcp.h"
-#include "sm_pcnd.h"
 #include "cp_stats.h"
 #include "sm_struct.h"
 #include "cp_config.h"
@@ -29,7 +28,6 @@
 #include <unistd.h>
 
 extern udp_sock_t my_sock;
-extern struct rte_hash *heartbeat_recovery_hash;
 uint8_t pfcp_rx[1024]; /* TODO: Decide size */
 
  
@@ -59,10 +57,7 @@ msg_handler_sx_n4(void)
 	pfcp_header_t *pfcp_header = (pfcp_header_t *) pfcp_rx;
 	msg.msg_type = pfcp_header->message_type;
     msg.peer_addr = peer_addr;
-    msg.rx_interface = PGW_SXB; 
-    printf("pfcp_header->message_type = %d \n",pfcp_header->message_type);
-    printf("pfcp_header->message_type = %p \n",pfcp_msg_handler[pfcp_header->message_type]);
-    sleep(4);
+    msg.source_interface = GX_IFACE; 
     pfcp_msg_handler[pfcp_header->message_type](&msg, pfcp_header);
 	return 0;
 }

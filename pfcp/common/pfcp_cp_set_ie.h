@@ -63,7 +63,6 @@
 
 #define UPF_ENTRIES_DEFAULT (1 << 16)
 #define BUFFERED_ENTRIES_DEFAULT (1024)
-#define HEARTBEAT_ASSOCIATION_ENTRIES_DEFAULT  (1 << 6)
 #define SWGC_S5S8_HANDOVER_ENTRIES_DEFAULT     (50)
 
 
@@ -100,7 +99,6 @@ typedef struct upfs_dnsres_t {
 struct rte_hash *upflist_by_ue_hash;
 
 
-struct rte_hash *gx_context_by_sess_id_hash;
 
 
 /**
@@ -204,14 +202,6 @@ process_pfcp_sess_del_request_delete_bearer_rsp_timeout(void *data);
  */
 void
 set_pdn_type(pfcp_pdn_type_ie_t *pdn, pdn_type_ie *pdn_mme);
-
-/**
- * @brief  : Creates gx conetxt hash
- * @param  : No param
- * @return : Returns nothing
- */
-void
-create_gx_context_hash(void);
 
 /**
  * @brief  : Creates upf hash using ue
@@ -762,48 +752,6 @@ cause_check_delete_session(pfcp_sess_del_req_t
  */
 uint8_t
 add_node_id_hash(uint32_t *nodeid, uint64_t *data);
-
-/**
- * @brief  : Create recovery time hash table
- * @param  : No param
- * @return : Returns nothing
- */
-void
-create_heartbeat_hash_table(void);
-
-/**
- * @brief  : Add ip address to hearbeat hash
- * @param  : peer_addr, ip address to be added
- * @param  : recover_timei, recovery time stamp
- * @return : Returns nothing
- */
-void
-add_ip_to_heartbeat_hash(struct sockaddr_in *peer_addr, uint32_t recover_time);
-
-/**
- * @brief  : Delete ip address from heartbeat hash
- * @param  : peer_addr, ip address to be removed
- * @return : Returns nothing
- */
-void
-delete_entry_heartbeat_hash(struct sockaddr_in *peer_addr);
-
-/**
- * @brief  : Add data to hearbeat hash table
- * @param  : ip, ip address to be added
- * @param  : recov_time, recovery timestamp
- * @return : Returns nothing
- */
-int
-add_data_to_heartbeat_hash_table(uint32_t *ip, uint32_t *recov_time);
-
-/**
- * @brief  : Delete hearbeat hash table
- * @param  : No param
- * @return : Returns nothing
- */
-void
-clear_heartbeat_hash_table(void);
 
 /**
  * @brief  : Set values in create pdr ie

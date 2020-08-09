@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
+#include "tables/tables.h"
 #ifdef FUTURE_NEED_SGW
 // sgw : SGW_RELOCATION_PROC DDN_ACK_RCVD_STATE MB_RESP_RCVD_EVNT => process_mbr_resp_handover_handler  
 int handle_modify_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)

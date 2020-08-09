@@ -22,6 +22,7 @@
 #include "gx_interface.h"
 #include "sm_enum.h"
 #include "ipc_api.h"
+#include "tables/tables.h"
 
 extern udp_sock_t my_sock;
 
@@ -128,9 +129,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	gx_context_t *gx_context = NULL;
 
 	/* Retrive Gx_context based on Sess ID. */
-	ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
-			(const void*)(pdn->gx_sess_id),
-			(void **)&gx_context);
+	ret = get_gx_context((uint8_t *)pdn->gx_sess_id, &gx_context);
 	if (ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
 				pdn->gx_sess_id);
@@ -218,9 +217,7 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 	int ret = 0;
 	ue_context_t *context = NULL;
 
-	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-	    (const void *) &teid,
-	    (void **) &context);
+	ret = get_ue_context(teid, &context);
 
 	if (ret < 0 || !context)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -264,7 +261,7 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 	}
 
 	/* Delete UE context entry from IMSI Hash */
-	if (rte_hash_del_key(ue_context_by_imsi_hash, &context->imsi) < 0) {
+	if (ue_context_delete_entry_imsiKey(context->imsi) < 0) {
 		clLog(clSystemLog, eCLSeverityCritical,
 				"%s %s - Error on ue_context_by_imsi_hash del\n",__file__,
 				strerror(ret));
@@ -299,7 +296,7 @@ cleanup_sess_by_csid_entry(fqcsid_t *csids, uint8_t iface)
 			}
 
 			/* Delete UE context entry from UE Hash */
-			if (rte_hash_del_key(ue_context_by_fteid_hash, &teid_key) < 0) {
+			if (ue_context_delete_entry_teidKey(teid_key) < 0) {
 				clLog(clSystemLog, eCLSeverityCritical,
 						"%s - Error on ue_context_by_fteid_hash del\n", __file__);
 			}
@@ -675,42 +672,6 @@ process_del_pdn_conn_set_rsp_t(del_pdn_conn_set_rsp_t *del_pdn_rsp)
 	return 0;
 }
 
-int8_t
-process_upd_pdn_conn_set_req_t(upd_pdn_conn_set_req_t *upd_pdn_req)
-{
-	RTE_SET_USED(upd_pdn_req);
-	return 0;
-}
 
-int8_t
-process_upd_pdn_conn_set_rsp_t(upd_pdn_conn_set_rsp_t *upd_pdn_rsp)
-{
-	RTE_SET_USED(upd_pdn_rsp);
-	return 0;
-}
 
-/* Function */
-int
-process_pfcp_sess_set_del_req_t(pfcp_sess_set_del_req_t *del_set_req,
-		gtpv2c_header_t *gtpv2c_tx)
-{
-	RTE_SET_USED(del_set_req);
-	RTE_SET_USED(gtpv2c_tx);
-	return 0;
-}
-
-/* Function */
-int
-process_pfcp_sess_set_del_rsp_t(pfcp_sess_set_del_rsp_t *del_set_rsp)
-{
-	if(del_set_rsp->cause.cause_value != REQUESTACCEPTED){
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"ERROR:Cause received Session Set deletion response is %d\n",
-				ERR_MSG, del_set_rsp->cause.cause_value);
-
-		/* TODO: Add handling to send association to next upf
-		 * for each buffered CSR */
-		return -1;
-	}
-	return 0;
-}
 

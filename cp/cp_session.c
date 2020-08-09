@@ -22,6 +22,7 @@
 #include "sm_structs_api.h"
 #include "pfcp.h"
 #include "cp_transactions.h"
+#include "tables/tables.h"
 
 extern udp_sock_t my_sock;
 extern socklen_t s5s8_sockaddr_len;
@@ -44,9 +45,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 	ue_context_t *context = NULL;
 	static uint32_t process_pgwc_s5s8_ds_req_cnt;
 
-	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-			(const void *) &ds_req->header.teid.has_teid.teid,
-			(void **) &context);
+	ret = get_ue_context(ds_req->header.teid.has_teid.teid, &context);
 	if (ret < 0 || !context) {
 
 		clLog(s5s8logger, eCLSeverityDebug, "NGIC- delete_s5s8_session.c::"

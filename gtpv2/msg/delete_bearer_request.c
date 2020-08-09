@@ -14,6 +14,8 @@
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_interface.h"
 #include "cp_config_defs.h"
+#include "tables/tables.h"
+#include "util.h"
 
 /**
  * @brief  : Maintatins data from parsed delete bearer response
@@ -49,9 +51,8 @@ parse_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx,
 	gtpv2c_ie *limit_ie;
 	gtpv2c_ie *limit_group_ie;
 
-	int ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-	    (const void *) &gtpv2c_rx->teid.has_teid.teid,
-	    (void **) &dbr->context);
+	int ret = get_ue_context(gtpv2c_rx->teid.has_teid.teid,
+	                                          &dbr->context);
 
 	if (ret < 0 || !dbr->context)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -321,6 +322,113 @@ int process_delete_bearer_req_handler(void *data, void *unused_param)
 	}
 
 	RTE_SET_USED(unused_param);
+	return 0;
+}
+
+void
+process_delete_bearer_request_pfcp_timeout(void *data)
+{
+    RTE_SET_USED(data);
+    return;
+}
+
+int
+process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
+{
+	int ret;
+	uint8_t ebi_index = 5;
+	uint8_t bearer_cntr = 0;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
+	uint8_t default_bearer_id = 0;
+	eps_bearer_t *bearers[MAX_BEARERS];
+	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
+
+	ret = get_ue_context_by_sgw_s5s8_teid(db_req->header.teid.has_teid.teid, &context);
+	if (ret) {
+		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
+				__LINE__, ret);
+		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+	}
+
+	s11_mme_sockaddr.sin_addr.s_addr =
+		context->s11_mme_gtpc_ipv4.s_addr;
+
+	if (db_req->lbi.header.len != 0) {
+
+		default_bearer_id = db_req->lbi.ebi_ebi;
+		pdn = context->pdns[default_bearer_id - 5];
+
+		for (uint8_t iCnt = 0; iCnt < MAX_BEARERS; ++iCnt) {
+			if (NULL != pdn->eps_bearers[iCnt]) {
+				bearers[iCnt] = pdn->eps_bearers[iCnt];
+			}
+		}
+
+		bearer_cntr = pdn->num_bearer;
+	} else {
+		for (uint8_t iCnt = 0; iCnt < db_req->bearer_count; ++iCnt) {
+			ebi_index = db_req->eps_bearer_ids[iCnt].ebi_ebi;
+			bearers[iCnt] = context->eps_bearers[ebi_index - 5];
+		}
+
+		pdn = context->eps_bearers[ebi_index - 5]->pdn;
+		bearer_cntr = db_req->bearer_count;
+	}
+
+	if(is_del_bear_cmd)
+		fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(&pfcp_sess_mod_req, pdn, bearers, bearer_cntr);
+	else
+		fill_pfcp_sess_mod_req_pgw_init_update_far(&pfcp_sess_mod_req, pdn, bearers, bearer_cntr);
+
+	uint8_t pfcp_msg[512]={0};
+	int encoded = encode_pfcp_sess_mod_req_t(&pfcp_sess_mod_req, pfcp_msg);
+	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
+	header->message_len = htons(encoded - 4);
+
+	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0) {
+		clLog(sxlogger, eCLSeverityCritical,
+			"%s : Error in sending MBR to SGW-U. err_no: %i\n",
+			__func__, errno);
+	} else {
+		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
+				pfcp_sess_mod_req.header.message_type, SENT, SX);
+        transData_t *trans_entry;
+		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_delete_bearer_request_pfcp_timeout);
+        pdn->trans_entry = trans_entry;
+	}
+
+	context->sequence = db_req->header.teid.has_teid.seq;
+	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
+
+	if (get_sess_entry_seid(pdn->seid, &resp) != 0) {
+		clLog(sxlogger, eCLSeverityCritical,
+			"%s : Failed to add response in entry in SM_HASH\n", __func__);
+		return -1;
+	}
+		if (db_req->lbi.header.len != 0) {
+			resp->linked_eps_bearer_id = db_req->lbi.ebi_ebi;
+			resp->bearer_count = 0;
+		} else {
+			resp->bearer_count = db_req->bearer_count;
+			for (uint8_t iCnt = 0; iCnt < db_req->bearer_count; ++iCnt) {
+				resp->eps_bearer_ids[iCnt] = db_req->eps_bearer_ids[iCnt].ebi_ebi;
+			}
+		}
+
+	if (is_del_bear_cmd == 0){
+		resp->msg_type = GTP_DELETE_BEARER_REQ;
+		resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
+		resp->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
+		pdn->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
+	}else {
+
+		resp->msg_type = GTP_DELETE_BEARER_REQ;
+		resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
+		resp->proc = MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC;
+		pdn->proc = MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC;
+
+	}
 	return 0;
 }
 

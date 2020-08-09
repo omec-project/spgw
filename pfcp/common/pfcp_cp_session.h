@@ -141,15 +141,6 @@ fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod
 		pdn_connection_t *pdn, eps_bearer_t *bearers[], uint8_t bearer_cntr);
 
 /**
- * @brief  : Process pfcp session modification response for handover scenario
- * @param  : sess_id, session id
- * @param  : gtpv2c_tx, holds info in gtpv2c header
- * @retrun : Returns 0 in case of success
- */
-uint8_t
-process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx);
-
-/**
  * @brief  : Process pfcp session modification response
  * @param  : sess_id, session id
  * @param  : gtpv2c_tx, holds info in gtpv2c header

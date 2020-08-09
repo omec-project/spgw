@@ -12,6 +12,7 @@
 #include "stdio.h"
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_interface.h"
+#include "util.h"
 
 
 static

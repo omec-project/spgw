@@ -22,12 +22,12 @@
 #include "cp_peer.h"
 #include "gw_adapter.h"
 #include "clogger.h"
-#include "sm_pcnd.h"
 #include "sm_struct.h"
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_internal.h"
 #include "cp_timer.h"
 #include "cp_init.h"
+#include "util.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -95,7 +95,6 @@ msg_handler_s11(void)
             gtpv2c_rx->gtpc.message_type,RCVD,S11);
 
     msg.source_interface = S11_IFACE;
-    msg.rx_interface = SGW_S11_S4; 
 	msg.msg_type = gtpv2c_rx->gtpc.message_type;
 
 	if ((unsigned)bytes_rx != (ntohs(gtpv2c_rx->gtpc.message_len) + sizeof(gtpv2c_rx->gtpc))) {
@@ -127,43 +126,6 @@ msg_handler_s11(void)
 		}
 	}
     gtp_msg_handler[gtpv2c_rx->gtpc.message_type](&msg, gtpv2c_rx);
-
-#if 0
-    /* Reset periodic timers */
-     process_response(s11_peer_sockaddr.sin_addr.s_addr);
-
-    // in case of response - procerue is already part of transaction 
-    // So now we have context. procedure, event, call sm handler  
-    // keep procedure/transaction in UE context...
-
-    // decode message and return error in case of bad length/invalid GTP version
-    if ((ret = gtpc_pcnd_check(gtpv2c_s11_rx, &msg, bytes_s11_rx)) != 0)
-    {
-        printf("gtpc_pcnd_check failed\n");
-        return 0;
-    }
-
-    // validate message content - validate the presence of IEs
-    ret = validate_gtpv2_message_content(&msg);
-    if(ret !=  0) 
-    {
-        printf("Message %d validation failed \n", msg.msg_type);
-        // validatation failed;
-        return 0;
-    }
-
-    if(gtpv2c_s11_rx->gtpc.message_type == GTP_DOWNLINK_DATA_NOTIFICATION_ACK) {
-        update_cli_stats((uint32_t)s11_peer_sockaddr.sin_addr.s_addr,
-                gtpv2c_s11_rx->gtpc.message_type,ACC,S11);
-    }
-
-    /* Event set depending on msg type 
-     * Proc  found from user context and message content, message type 
-     * State is on the pdn connection (for now)..Need some more attention here later   
-     */
-    msg.rx_interface = SGW_S11_S4; 
-    process_gtp_message(gtpv2c_s11_rx, &msg);
-#endif
 
 #if 0
     if (bytes_s11_rx > 0) {
@@ -431,7 +393,7 @@ msg_handler_s5s8(void)
          * Proc  found from user context and message content, message type 
          * State is on the pdn connection (for now)..Need some more attention here later   
          */
-        msg.rx_interface = PGW_S5_S8; 
+        msg.source_interface = S5S8_IFACE;
         process_gtp_message(gtpv2c_s5s8_rx, &msg);
 
 	}

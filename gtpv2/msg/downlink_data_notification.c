@@ -23,6 +23,8 @@
 #include "cp_peer.h"
 #include "spgw_cpp_wrapper.h"
 #include "sm_structs_api.h"
+#include "tables/tables.h"
+#include "util.h"
 
 extern struct cp_stats_t cp_stats;
 extern udp_sock_t my_sock;
@@ -82,9 +84,7 @@ ddn_by_session_id(uint64_t session_id)
 	clLog(clSystemLog, eCLSeverityDebug, "%s: sgw_s11_gtpc_teid:%u\n",
 			__func__, sgw_s11_gtpc_teid);
 
-	int ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-			(const void *) &sgw_s11_gtpc_teid,
-			(void **) &context);
+	int ret = get_ue_context(sgw_s11_gtpc_teid, &context);
 
 	if (ret < 0 || !context)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -152,9 +152,7 @@ parse_downlink_data_notification_ack(gtpv2c_header_t *gtpv2c_rx,
 	gtpv2c_ie *limit_ie;
 
 	uint32_t teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
-	int ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-	    (const void *) &teid,
-	    (void **) &ddn_ack->context);
+	int ret = get_ue_context(teid, &ddn_ack->context);
 
 	if (ret < 0 || !ddn_ack->context)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -233,7 +231,7 @@ process_ddn_ack(downlink_data_notification_t ddn_ack, uint8_t *delay, msg_info_t
 
 	/* Lookup entry in hash table on the basis of session id*/
 	uint64_t ebi_index = 0;   /*ToDo : Need to revisit this.*/
-	if (get_sess_entry((ddn_ack.context)->pdns[ebi_index]->seid, &context) != 0){
+	if (get_sess_entry_seid((ddn_ack.context)->pdns[ebi_index]->seid, &context) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for sess ID:%lu\n",
 				(ddn_ack.context)->pdns[ebi_index]->seid);
 		return -1;
@@ -262,6 +260,31 @@ process_ddn_ack(downlink_data_notification_t ddn_ack, uint8_t *delay, msg_info_t
 	}
 	return 0;
 
+}
+
+static int
+process_ddn_ack_resp_handler(void *data, void *unused_param)
+{
+    int ret = 0;
+	msg_info_t *msg = (msg_info_t *)data;
+
+	uint8_t delay = 0; /*TODO move this when more implemented?*/
+	ret = process_ddn_ack(msg->gtpc_msg.ddn_ack, &delay, data);
+	if (ret) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d:Error"
+				"\n\tprocess_ddn_ack_resp_hand "
+				"%s: (%d) %s\n", __func__, __LINE__,
+				gtp_type_str(msg->msg_type), ret,
+				(ret < 0 ? strerror(-ret) : cause_str(ret)));
+		/* Error handling not implemented */
+		return ret;
+	}
+
+	/* TODO something with delay if set */
+	/* TODO Implemente the PFCP Session Report Resp message sent to dp */
+
+	RTE_SET_USED(unused_param);
+	return 0;
 }
 
 // saegw - CONN_SUSPEND_PROC DDN_REQ_SNT_STATE DDN_ACK_RESP_RCVD_EVNT ==> process_ddn_ack_resp_handler
@@ -338,28 +361,4 @@ handle_ddn_ack(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     return 0;
 }
 
-int
-process_ddn_ack_resp_handler(void *data, void *unused_param)
-{
-    int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-
-	uint8_t delay = 0; /*TODO move this when more implemented?*/
-	ret = process_ddn_ack(msg->gtpc_msg.ddn_ack, &delay, data);
-	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d:Error"
-				"\n\tprocess_ddn_ack_resp_hand "
-				"%s: (%d) %s\n", __func__, __LINE__,
-				gtp_type_str(msg->msg_type), ret,
-				(ret < 0 ? strerror(-ret) : cause_str(ret)));
-		/* Error handling not implemented */
-		return ret;
-	}
-
-	/* TODO something with delay if set */
-	/* TODO Implemente the PFCP Session Report Resp message sent to dp */
-
-	RTE_SET_USED(unused_param);
-	return 0;
-}
 

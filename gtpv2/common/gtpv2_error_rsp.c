@@ -23,6 +23,8 @@
 #include "pfcp.h"
 #include "cp_transactions.h"
 #include "spgw_cpp_wrapper.h"
+#include "tables/tables.h"
+#include "util.h"
 
 extern udp_sock_t my_sock;
 extern socklen_t s5s8_sockaddr_len;

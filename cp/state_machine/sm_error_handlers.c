@@ -32,10 +32,70 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
 #include "tables/tables.h"
+#include "util.h"
 
-extern struct rte_hash *bearer_by_fteid_hash;
 extern udp_sock_t my_sock;
 
+void
+get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
+{
+	//pdn_connection_t *pdn = NULL;
+
+	switch(msg->msg_type){
+        case GTP_CREATE_SESSION_REQ: {
+                info_resp->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
+                info_resp->teid =  msg->gtpc_msg.csr.header.teid.has_teid.teid;
+                break;
+            }
+
+        case GTP_RESERVED: {
+                ue_context_t *ue_context = msg->ue_context; 
+			    info_resp->teid = ue_context->s11_sgw_gtpc_teid;
+                // assumed to be triggered due to CSReq 
+                info_resp->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
+                break;
+            }
+
+		case PFCP_ASSOCIATION_SETUP_RESPONSE:{
+            ue_context_t  *ue = msg->ue_context; 
+            pdn_connection_t *pdn = msg->pdn_context;
+			info_resp->sender_teid = ue->s11_mme_gtpc_teid;
+            // TODO - Need more thought 
+			// info_resp->seq = ue->sequence;
+			info_resp->ebi_index = pdn->default_bearer_id - 5;
+			info_resp->teid = ue->s11_sgw_gtpc_teid;
+			break;
+		}
+
+		case PFCP_SESSION_ESTABLISHMENT_RESPONSE: {
+            ue_context_t  *ue = msg->ue_context; 
+            pdn_connection_t *pdn = msg->pdn_context;
+			info_resp->sender_teid = ue->s11_mme_gtpc_teid;
+            // TODO - Need more thought 
+			//info_resp->seq = ue->sequence;
+			info_resp->ebi_index = pdn->default_bearer_id - 5;
+			info_resp->teid = ue->s11_sgw_gtpc_teid;
+			break;
+		}
+
+		case GTP_CREATE_SESSION_RSP:{
+
+			if(msg->gtpc_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi)
+				info_resp->ebi_index = msg->gtpc_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi - 5;
+			info_resp->teid = msg->gtpc_msg.cs_rsp.header.teid.has_teid.teid;
+			break;
+		}
+
+		case PFCP_SESSION_DELETION_RESPONSE: {
+
+			info_resp->teid = UE_SESS_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
+			info_resp->ebi_index = UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid) - 5;
+
+			break;
+		}
+
+	}
+}
 // case1 : pfcp association setup failure
 int
 process_error_occured_handler_new(void *data, void *unused_param)
@@ -66,7 +126,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
     ebi_index = info_resp.ebi_index;
     pdn = GET_PDN(context ,ebi_index);
 
-    del_sess_entry(pdn->seid); 
+    del_sess_entry_seid(pdn->seid); 
 
     for(int8_t idx = 0; idx < MAX_BEARERS; idx++) {
         if(context->eps_bearers[idx] != NULL){
@@ -82,10 +142,9 @@ process_error_occured_handler_new(void *data, void *unused_param)
     printf("Delete all bearers \n");
     // if all bearers released then release pdn context 
     if(pdn->num_bearer == 0) {
-        rte_hash_del_key(pdn_by_fteid_hash, (const void*) &teid);
+        pdn_context_delete_entry_teidKey(teid);
         if(pdn->s5s8_sgw_gtpc_teid != 0) {
-            rte_hash_del_key(bearer_by_fteid_hash, (const void *)
-                    &(pdn->s5s8_sgw_gtpc_teid));
+            bearer_context_delete_entry_teidKey(pdn->s5s8_sgw_gtpc_teid);
         }
         rte_free(pdn);
         context->num_pdns --;
@@ -97,8 +156,8 @@ process_error_occured_handler_new(void *data, void *unused_param)
 
     // if all PDNs released then release user context 
     if (context->num_pdns == 0) {
-        rte_hash_del_key(ue_context_by_imsi_hash,(const void *) &(*context).imsi);
-        rte_hash_del_key(ue_context_by_fteid_hash,(const void *) &teid);
+        ue_context_delete_entry_imsiKey((*context).imsi);
+        ue_context_delete_entry_teidKey(teid);
         rte_free(context);
         context = NULL;
     }
@@ -177,7 +236,7 @@ process_error_occured_handler(void *data, void *unused_param)
             }
         }
 
-        del_sess_entry(pdn->seid); 
+        del_sess_entry_seid(pdn->seid); 
 
         for(int8_t idx = 0; idx < MAX_BEARERS; idx++) {
             if(context->eps_bearers[idx] != NULL){
@@ -191,18 +250,17 @@ process_error_occured_handler(void *data, void *unused_param)
         }
 
         if(pdn->num_bearer == 0) {
-            rte_hash_del_key(pdn_by_fteid_hash, (const void*) &teid);
+            pdn_context_delete_entry_teidKey(teid);
             if(pdn->s5s8_sgw_gtpc_teid != 0) {
-                rte_hash_del_key(bearer_by_fteid_hash, (const void *)
-                        &(pdn->s5s8_sgw_gtpc_teid));
+                bearer_context_delete_entry_teidKey(pdn->s5s8_sgw_gtpc_teid);
             }
             rte_free(pdn);
             context->num_pdns --;
         }
 
         if (context->num_pdns == 0) {
-            rte_hash_del_key(ue_context_by_imsi_hash,(const void *) &(*context).imsi);
-            rte_hash_del_key(ue_context_by_fteid_hash,(const void *) &teid);
+            ue_context_delete_entry_imsiKey((*context).imsi);
+            ue_context_delete_entry_teidKey(teid);
             rte_free(context);
             context = NULL;
         }
@@ -236,7 +294,7 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 				&& context->eps_bearers[ebi_index]->pdn != NULL) {
 				pdn = context->eps_bearers[ebi_index]->pdn;
 				if (pdn){
-					if (get_sess_entry(pdn->seid, &resp) == 0) {
+					if (get_sess_entry_seid(pdn->seid, &resp) == 0) {
 						if (cp_config->cp_type == SGWC){
 							if(resp->state == PFCP_SESS_DEL_REQ_SNT_STATE) {
 								goto del_ue_cntx_imsi;
@@ -270,14 +328,13 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 					 else {
 						if(*imsi_val > 0 && imsi_len > 0) {
 							memcpy(&imsi, imsi_val, imsi_len);
-							ret = rte_hash_lookup_data(ue_context_by_imsi_hash,&imsi,
-										(void **) &(*context));
+							ret = ue_context_entry_lookup_imsiKey(imsi, &context);
 
 							if (ret == -ENOENT){
 								return -1;
 							}else {
-								rte_hash_del_key(ue_context_by_imsi_hash,(const void *) &imsi);
-								rte_hash_del_key(ue_context_by_fteid_hash,(const void *) &teid);
+								ue_context_delete_entry_imsiKey(imsi);
+								ue_context_delete_entry_teidKey(teid);
 								rte_free(context);
 								context = NULL;
 							}
@@ -303,11 +360,10 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 									}
 								}
 							}
-							ret = rte_hash_del_key(ue_context_by_imsi_hash,
-											(const void *) &context->imsi);
+							ret = ue_context_delete_entry_imsiKey(context->imsi);
 							if(ret < 0)
 								return -1;
-							ret = rte_hash_del_key(ue_context_by_fteid_hash,(const void *) &teid);
+							ret = ue_context_delete_entry_teidKey(teid);
 							if (context != NULL)
 								rte_free(context);
 							context = NULL;
@@ -324,13 +380,13 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 	 else {
 		del_ue_cntx_imsi:
 		memcpy(&imsi, imsi_val, imsi_len);
-		ret = rte_hash_lookup_data(ue_context_by_imsi_hash,&imsi,(void **) &(*context));
+		ret = ue_context_entry_lookup_imsiKey(imsi,&context);
 
 		if (ret == -ENOENT)
 			return -1;
 
-		rte_hash_del_key(ue_context_by_imsi_hash,(const void *) &imsi);
-		rte_hash_del_key(ue_context_by_fteid_hash,(const void *) &teid); // TODO - teid should be taken from context 
+		ue_context_delete_entry_imsiKey(imsi);
+		ue_context_delete_entry_teidKey(teid); // TODO - teid should be taken from context 
 		rte_free(context);
 		context = NULL;
 	}

@@ -7,6 +7,7 @@
 #include "gw_adapter.h"
 #include "pfcp_messages_decoder.h"
 #include "clogger.h"
+#include "pfcp_association_setup_proc.h"
 
 int 
 handle_pfcp_association_setup_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)

@@ -229,12 +229,12 @@ void init_cp(void)
 		rte_exit(EXIT_FAILURE, "Error:can't catch SIGSEGV\n");
 
 	create_ue_hash();
-
+	create_pdn_hash();
+	create_bearer_hash();
 	create_upf_context_hash();
-
 	create_gx_context_hash();
-
 	create_upf_by_ue_hash();
+    create_pdn_callid_hash(); 
 
 }
 

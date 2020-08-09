@@ -8,6 +8,7 @@
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
 #include "sm_structs_api.h"
+#include "tables/tables.h"
 
 // saegw - CONN_SUSPEND_PROC CONNECTED_STATE PFCP_SESS_RPT_REQ_RCVD_EVNT ==> process_rpt_req_handler 
 // saegw - CONN_SUSPEND_PROC IDEL_STATE PFCP_SESS_RPT_REQ_RCVD_EVNT ==> process_rpt_req_handler
@@ -24,7 +25,7 @@ int handle_pfcp_session_report_req_msg(msg_info_t *msg)
      * handler new event  
      */
 	/* Retrive the session information based on session id. */
-	if (get_sess_entry(msg->pfcp_msg.pfcp_sess_rep_req.header.seid_seqno.has_seid.seid,
+	if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_rep_req.header.seid_seqno.has_seid.seid,
 				&context) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u, Sess ID:%lu\n",
 				__func__, msg->msg_type,

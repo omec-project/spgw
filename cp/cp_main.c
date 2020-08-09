@@ -29,6 +29,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_timer.h"
 #include "cp_peer.h"
+#include "tables/tables.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -134,7 +135,6 @@ parse_arg(int argc, char **argv)
         strcpy(config_update_base_folder, CP_CONFIG_FOLDER);
         native_config_folder = true;
     }
-    printf("Command line argument parsing done \n");
 }
 
 /**
@@ -168,9 +168,6 @@ main(int argc, char **argv)
 {
     int ret;
 
-    printf("CP: Control-Plane start \n");
-    //set_signal_mask();
-
     start_time = current_ntp_timestamp();
 
     /* VS: Increment the restart counter value after starting control plane */
@@ -200,8 +197,8 @@ main(int argc, char **argv)
 
     init_cpp_tables(); 
 
-    /* TODO: Need to Re-arrange the hash initialize */
     create_heartbeat_hash_table();
+
     create_associated_upf_hash();
 
     /* Make a connection between control-plane and gx_app */
@@ -228,8 +225,6 @@ main(int argc, char **argv)
 
 
     init_pfcp_tables();
-
-    init_transaction_hash();
 
 #ifdef USE_CSID
     init_fqcsid_hash_tables();

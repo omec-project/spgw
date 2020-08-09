@@ -34,13 +34,5 @@ void del_entry_from_hash(uint32_t ipAddr);
 uint8_t
 add_node_conn_entry(uint32_t dstIp, uint8_t portId);
 
-/**
- * @brief  : Initiatizes peer echo table 
- * @param  : No param
- * @return : Returns nothing
- */
-
-void echo_table_init(void);
-
 
 #endif

@@ -3,6 +3,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+#include "tables/tables.h"
 #ifdef FUTURE_NEED
 // saegw - UPDATE_BEARER_PROC UPDATE_BEARER_REQ_SNT_STATE UPDATE_BEARER_RSP_RCVD_EVNT process_update_bearer_response_handler  
 // pgw - UPDATE_BEARER_PROC UPDATE_BEARER_REQ_SNT_STATE UPDATE_BEARER_RSP_RCVD_EVNT process_update_bearer_response_handler 
@@ -52,14 +53,14 @@ process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
-	ret = get_pdn(ub_rsp->header.teid.has_teid.teid, &pdn_cntxt);
+	ret = get_pdn_context(ub_rsp->header.teid.has_teid.teid, &pdn_cntxt);
 
 	if ( ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical,"%s:Entry not found for teid:%x...\n", __func__, ub_rsp->header.teid.has_teid.teid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
-	if (get_sess_entry(pdn_cntxt->seid, &resp) != 0){
+	if (get_sess_entry_seid(pdn_cntxt->seid, &resp) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, pdn_cntxt->seid);
 		return -1;
@@ -136,7 +137,7 @@ process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	uint32_t seq = 0;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
-	ret = get_pdn(ub_rsp->header.teid.has_teid.teid, &pdn_cntxt);
+	ret = get_pdn_context(ub_rsp->header.teid.has_teid.teid, &pdn_cntxt);
 
 	if ( ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical,"%s:Entry not found for teid:%x...\n", __func__,
@@ -144,7 +145,7 @@ process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
-	if (get_sess_entry(pdn_cntxt->seid, &resp) != 0){
+	if (get_sess_entry_seid(pdn_cntxt->seid, &resp) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 										__func__, __LINE__, pdn_cntxt->seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;

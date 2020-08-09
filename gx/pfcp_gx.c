@@ -29,6 +29,8 @@
 #include "gtpv2_interface.h"
 #include "gen_utils.h"
 #include "cp_transactions.h"
+#include "tables/tables.h"
+#include "util.h"
 
 #define PRESENT 1
 #define NUM_VALS 9
@@ -714,7 +716,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 
 	upd_bearer_req_t ubr_req = {0};
 
-	if (get_sess_entry(pdn->seid, &context) != 0){
+	if (get_sess_entry_seid(pdn->seid, &context) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, pdn->seid);
 		return DIAMETER_ERROR_USER_UNKNOWN;
@@ -793,9 +795,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 
 	gx_context_t *gx_context = NULL;
 	/* Retrive Gx_context based on Sess ID. */
-	ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
-			(const void*)(pdn->gx_sess_id),
-			(void **)&gx_context);
+	ret = get_gx_context((uint8_t*)pdn->gx_sess_id, &gx_context);
 	if (ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
 				pdn->gx_sess_id);
@@ -844,6 +844,77 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	return 0;
 }
 
+
+void
+get_charging_rule_remove_bearer_info(pdn_connection_t *pdn,
+	uint8_t *lbi, uint8_t *ded_ebi, uint8_t *ber_cnt)
+{
+	int8_t bearer_id;
+	uint8_t idx_offset =  pdn->policy.num_charg_rule_install + pdn->policy.num_charg_rule_modify;
+
+	for (int idx = 0; idx < pdn->policy.num_charg_rule_delete; idx++) {
+		if(RULE_ACTION_DELETE == pdn->policy.pcc_rule[idx + idx_offset].action)
+		{
+			rule_name_key_t rule_name = {0};
+			memcpy(&rule_name.rule_name, &(pdn->policy.pcc_rule[idx + idx_offset].dyn_rule.rule_name),
+				   sizeof(pdn->policy.pcc_rule[idx + idx_offset].dyn_rule.rule_name));
+			sprintf(rule_name.rule_name, "%s%d",
+					rule_name.rule_name, pdn->call_id);
+
+			bearer_id = get_rule_name_entry(rule_name);
+			if (-1 == bearer_id) {
+				/* TODO: Error handling bearer not found */
+				return;
+			}
+			if (pdn->default_bearer_id == (bearer_id + 5)) {
+				*lbi = pdn->default_bearer_id;
+				*ber_cnt = pdn->num_bearer;
+				for (int8_t iCnt = 0; iCnt < MAX_BEARERS; ++iCnt) {
+					if (NULL != pdn->eps_bearers[iCnt]) {
+						*ded_ebi = pdn->eps_bearers[iCnt]->eps_bearer_id;
+						ded_ebi++;
+					}
+				}
+				return;
+			} else {
+				*ded_ebi = bearer_id + 5;
+				ded_ebi++;
+				*ber_cnt = *ber_cnt + 1;
+			}
+		}
+	}
+
+	return;
+}
+
+int8_t
+get_bearer_info_install_rules(pdn_connection_t *pdn,
+	uint8_t *ebi)
+{
+	int8_t ret = 0;
+
+	for (int idx = 0; idx < pdn->policy.num_charg_rule_install; idx++) {
+		if(RULE_ACTION_ADD == pdn->policy.pcc_rule[idx].action)
+		{
+			rule_name_key_t rule_name = {0};
+			memcpy(&rule_name.rule_name, &(pdn->policy.pcc_rule[idx].dyn_rule.rule_name),
+				   sizeof(pdn->policy.pcc_rule[idx].dyn_rule.rule_name));
+			sprintf(rule_name.rule_name, "%s%d",
+					rule_name.rule_name, pdn->call_id);
+			ret = get_rule_name_entry(rule_name);
+			if (-1 == ret) {
+				/* TODO: Error handling bearer not found */
+				return ret;
+			}
+
+			*ebi = ret;
+
+			return 0;
+		}
+	}
+
+	return 0;
+}
 void pfcp_modify_rar_trigger_timeout(void *data)
 {
     RTE_SET_USED(data);
@@ -935,9 +1006,7 @@ parse_gx_rar_msg(GxRAR *rar)
     }
 
 	/* Retrive Gx_context based on Sess ID. */
-	ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
-			(const void*)(pdn_cntxt->gx_sess_id),
-			(void **)&gx_context);
+	ret = get_gx_context((uint8_t*)pdn_cntxt->gx_sess_id, &gx_context);
 	if (ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
 				pdn_cntxt->gx_sess_id);
@@ -948,7 +1017,7 @@ parse_gx_rar_msg(GxRAR *rar)
 	pdn_cntxt->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
 	/*Retrive the session information based on session id. */
-	if (get_sess_entry(pdn_cntxt->seid, &ue_context) != 0){
+	if (get_sess_entry_seid(pdn_cntxt->seid, &ue_context) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, (pdn_cntxt->context)->pdns[bearer_id]->seid);
 		return -1;
@@ -978,77 +1047,6 @@ parse_gx_rar_msg(GxRAR *rar)
 	}
 
 	pdn_cntxt->rqst_ptr = gx_context->rqst_ptr;
-
-	return 0;
-}
-
-void
-get_charging_rule_remove_bearer_info(pdn_connection_t *pdn,
-	uint8_t *lbi, uint8_t *ded_ebi, uint8_t *ber_cnt)
-{
-	int8_t bearer_id;
-	uint8_t idx_offset =  pdn->policy.num_charg_rule_install + pdn->policy.num_charg_rule_modify;
-
-	for (int idx = 0; idx < pdn->policy.num_charg_rule_delete; idx++) {
-		if(RULE_ACTION_DELETE == pdn->policy.pcc_rule[idx + idx_offset].action)
-		{
-			rule_name_key_t rule_name = {0};
-			memcpy(&rule_name.rule_name, &(pdn->policy.pcc_rule[idx + idx_offset].dyn_rule.rule_name),
-				   sizeof(pdn->policy.pcc_rule[idx + idx_offset].dyn_rule.rule_name));
-			sprintf(rule_name.rule_name, "%s%d",
-					rule_name.rule_name, pdn->call_id);
-
-			bearer_id = get_rule_name_entry(rule_name);
-			if (-1 == bearer_id) {
-				/* TODO: Error handling bearer not found */
-				return;
-			}
-			if (pdn->default_bearer_id == (bearer_id + 5)) {
-				*lbi = pdn->default_bearer_id;
-				*ber_cnt = pdn->num_bearer;
-				for (int8_t iCnt = 0; iCnt < MAX_BEARERS; ++iCnt) {
-					if (NULL != pdn->eps_bearers[iCnt]) {
-						*ded_ebi = pdn->eps_bearers[iCnt]->eps_bearer_id;
-						ded_ebi++;
-					}
-				}
-				return;
-			} else {
-				*ded_ebi = bearer_id + 5;
-				ded_ebi++;
-				*ber_cnt = *ber_cnt + 1;
-			}
-		}
-	}
-
-	return;
-}
-
-int8_t
-get_bearer_info_install_rules(pdn_connection_t *pdn,
-	uint8_t *ebi)
-{
-	int8_t ret = 0;
-
-	for (int idx = 0; idx < pdn->policy.num_charg_rule_install; idx++) {
-		if(RULE_ACTION_ADD == pdn->policy.pcc_rule[idx].action)
-		{
-			rule_name_key_t rule_name = {0};
-			memcpy(&rule_name.rule_name, &(pdn->policy.pcc_rule[idx].dyn_rule.rule_name),
-				   sizeof(pdn->policy.pcc_rule[idx].dyn_rule.rule_name));
-			sprintf(rule_name.rule_name, "%s%d",
-					rule_name.rule_name, pdn->call_id);
-			ret = get_rule_name_entry(rule_name);
-			if (-1 == ret) {
-				/* TODO: Error handling bearer not found */
-				return ret;
-			}
-
-			*ebi = ret;
-
-			return 0;
-		}
-	}
 
 	return 0;
 }

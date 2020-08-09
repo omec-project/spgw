@@ -555,10 +555,6 @@ typedef struct eps_bearer {
 
 } eps_bearer_t;
 
-extern struct rte_hash *ue_context_by_imsi_hash;
-extern struct rte_hash *ue_context_by_fteid_hash;
-extern struct rte_hash *pdn_by_fteid_hash;
-
 /**
  * @brief  : sets base teid value given range by DP
  * @param  : val

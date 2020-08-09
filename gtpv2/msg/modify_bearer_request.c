@@ -23,6 +23,7 @@
 #include "sm_structs_api.h"
 #include "gtpv2_error_rsp.h"
 #include "tables/tables.h"
+#include "util.h"
 
 /**
  * @brief  : Maintains parsed data from modify bearer request
@@ -161,9 +162,8 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 
 	decode_mod_bearer_req((uint8_t *) gtpv2c_rx, &mb_req);
 
-	int ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-	    (const void *) &mb_req.header.teid.has_teid.teid,
-	    (void **) &context);
+	int ret = get_ue_context(mb_req.header.teid.has_teid.teid,
+	                                          &context);
 
 	if (ret < 0 || !context)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -516,9 +516,8 @@ int validate_mbreq_msg(msg_info_t *msg, mod_bearer_req_t *mb_req)
     int ret;
     ue_context_t *context = NULL;
 
-	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-			(const void *) &mb_req->header.teid.has_teid.teid,
-			(void **) &context);
+	ret = get_ue_context(mb_req->header.teid.has_teid.teid,
+			                              &context);
 
 	if (ret < 0 || !context)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;

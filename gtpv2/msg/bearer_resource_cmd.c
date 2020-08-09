@@ -12,6 +12,8 @@
 #include "gtpv2_set_ie.h"
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_interface.h"
+#include "tables/tables.h"
+#include "util.h"
 
 #define DEFAULT_BEARER_QOS_PRIORITY (15)
 
@@ -45,9 +47,8 @@ parse_bearer_resource_cmd(gtpv2c_header_t *gtpv2c_rx,
 	gtpv2c_ie *current_ie;
 	gtpv2c_ie *limit_ie;
 
-	int ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-	    (const void *) &gtpv2c_rx->teid.has_teid.teid,
-	    (void **) &brc->context);
+	int ret = get_ue_context(gtpv2c_rx->teid.has_teid.teid,
+	                                          &brc->context);
 
 	if (ret < 0 || !brc->context)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;

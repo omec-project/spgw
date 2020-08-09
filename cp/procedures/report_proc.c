@@ -17,6 +17,7 @@
 #include "pfcp_cp_association.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_util.h"
+#include "tables/tables.h"
 
 extern udp_sock_t my_sock;
 
@@ -32,6 +33,22 @@ process_rpt_req_handler(void *data, void *unused_param)
 
 	RTE_SET_USED(unused_param);
 	return 0;
+}
+
+static void
+fill_pfcp_sess_report_resp(pfcp_sess_rpt_rsp_t *pfcp_sess_rep_resp,
+		 uint32_t seq)
+{
+	memset(pfcp_sess_rep_resp, 0, sizeof(pfcp_sess_rpt_rsp_t));
+
+	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_sess_rep_resp->header),
+		PFCP_SESSION_REPORT_RESPONSE, HAS_SEID, seq);
+
+	set_cause(&(pfcp_sess_rep_resp->cause), REQUESTACCEPTED);
+
+	//pfcp_sess_rep_resp->header.message_len = pfcp_sess_rep_resp->cause.header.len + 4;
+
+	//pfcp_sess_rep_resp->header.message_len += sizeof(pfcp_sess_rep_resp->header.seid_seqno.has_seid);
 }
 
 uint8_t
@@ -50,7 +67,7 @@ process_pfcp_report_req(pfcp_sess_rpt_req_t *pfcp_sess_rep_req)
 	uint32_t s11_sgw_gtpc_teid = UE_SESS_ID(sess_id);
 
 	/* Stored the session information*/
-	if (get_sess_entry(sess_id, &context) != 0) {
+	if (get_sess_entry_seid(sess_id, &context) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "Failed to add response in entry in SM_HASH\n");
 		return -1;
 	}

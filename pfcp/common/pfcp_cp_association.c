@@ -32,7 +32,6 @@
 
 
 #if defined(USE_DNS_QUERY)
-#include "sm_pcnd.h"
 #include "cdnsutil.h"
 #endif /* USE_DNS_QUERY */
 
@@ -338,23 +337,6 @@ get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 }
 #endif /* USE_DNS_QUERY */
 
-upf_context_t *get_upf_context(uint32_t upf_ip)
-{
-    int ret = 0;
-    upf_context_t *upf_context = NULL;
-    struct in_addr test; test.s_addr = upf_ip;
-    printf("%s find UPF address %s \n", __FUNCTION__,inet_ntoa(test));
-	ret = upf_context_entry_lookup((upf_ip), &(upf_context));
-
-	if (ret >= 0) {
-        printf("Found upf context \n");
-        return upf_context;
-    } else {
-        printf("UPF Context not found \n");
-    }
-    return NULL;
-}
-
 void
 fill_pfcp_node_report_req(pfcp_node_rpt_req_t *pfcp_node_rep_req)
 {
@@ -375,24 +357,6 @@ fill_pfcp_node_report_req(pfcp_node_rpt_req_t *pfcp_node_rep_req)
 
 	set_user_plane_path_failure_report(&(pfcp_node_rep_req->user_plane_path_fail_rpt));
 }
-
-void
-fill_pfcp_sess_report_resp(pfcp_sess_rpt_rsp_t *pfcp_sess_rep_resp,
-		 uint32_t seq)
-{
-	memset(pfcp_sess_rep_resp, 0, sizeof(pfcp_sess_rpt_rsp_t));
-
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_sess_rep_resp->header),
-		PFCP_SESSION_REPORT_RESPONSE, HAS_SEID, seq);
-
-	set_cause(&(pfcp_sess_rep_resp->cause), REQUESTACCEPTED);
-
-	//pfcp_sess_rep_resp->header.message_len = pfcp_sess_rep_resp->cause.header.len + 4;
-
-	//pfcp_sess_rep_resp->header.message_len += sizeof(pfcp_sess_rep_resp->header.seid_seqno.has_seid);
-}
-
-
 
 void
 fill_pfcp_heartbeat_req(pfcp_hrtbeat_req_t *pfcp_heartbeat_req, uint32_t seq)

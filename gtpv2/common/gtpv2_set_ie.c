@@ -16,6 +16,7 @@
 #include "gtpv2_set_ie.h"
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_internal.h"
+#include "util.h"
 
 
 extern uint8_t rstCnt;

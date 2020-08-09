@@ -22,6 +22,9 @@
 #include "cp_peer.h"
 #include "cp_config_defs.h"
 #include "cp_timer.h"
+#include "tables/tables.h"
+#include "spgw_cpp_wrapper.h"
+#include "util.h"
 
 
 uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
@@ -42,7 +45,6 @@ static uint16_t gtpu_sx_seqnb	= 1;
  *
  * hash handles connection for S1U, SGI and PFCP
  */
-struct rte_hash *conn_hash_handle;
 
 void timerCallback( gstimerinfo_t *ti, const void *data_t )
 {
@@ -112,7 +114,16 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		}
 
 		/* TODO: Flush sessions */
-		if (md->portId == SX_PORT_ID) {
+        if (md->portId == SX_PORT_ID) {
+            upf_context_t *upf_context = NULL; 
+            upf_context_entry_lookup(dest_addr.sin_addr.s_addr, &upf_context);
+            if(upf_context != NULL)
+            {
+                upf_context->state = 0;
+            }
+
+            invalidate_upf_dns_results(dest_addr.sin_addr.s_addr);
+
 			delete_entry_heartbeat_hash(&dest_addr);
             // invalidate dns results  
 #ifdef USE_CSID
@@ -263,8 +274,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 	int ret;
 	peerData_t *conn_data = NULL;
 
-	ret = rte_hash_lookup_data(conn_hash_handle,
-				&dstIp, (void **)&conn_data);
+	ret = get_peer_entry(dstIp, &conn_data);
 
 	if ( ret < 0) {
 
@@ -288,8 +298,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 		conn_data->rcv_time = 0;
 
 		/* Add peer node entry in connection hash table */
-		if ((rte_hash_add_key_data(conn_hash_handle,
-				&dstIp, conn_data)) < 0 ) {
+		if ((add_peer_entry(dstIp, conn_data)) < 0 ) {
 			clLog(clSystemLog, eCLSeverityCritical, "Failed to add entry in hash table");
 		}
 
@@ -328,32 +337,6 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 	return 0;
 }
 
-void echo_table_init(void)
-{
-    struct rte_hash_parameters
-        conn_hash_params = {
-            .name = "CONN_TABLE",
-            .entries = NUM_CONN,
-            .reserved = 0,
-            .key_len = sizeof(uint32_t),
-            .hash_func = rte_jhash,
-            .hash_func_init_val = 0
-        };
-
-    /* Create conn_hash for maintain each port peer connection details */
-    /* Create arp_hash for each port */
-    conn_hash_params.socket_id = rte_socket_id();
-    conn_hash_handle = rte_hash_create(&conn_hash_params);
-    if (!conn_hash_handle) {
-        rte_panic("%s::"
-                "\n\thash create failed::"
-                "\n\trte_strerror= %s; rte_errno= %u\n",
-                conn_hash_params.name,
-                rte_strerror(rte_errno),
-                rte_errno);
-    }
-    return;
-}
 
 
 uint8_t process_response(uint32_t dstIp)
@@ -363,8 +346,7 @@ uint8_t process_response(uint32_t dstIp)
 
 	// TODO : Common peer table is not good..Currently conn_hash_handle is common for all peers
 	// e.g. gtp, pfcp, ....
-	ret = rte_hash_lookup_data(conn_hash_handle,
-			&dstIp, (void **)&conn_data);
+	ret = get_peer_entry(dstIp, &conn_data);
 
 	if ( ret < 0) {
 		clLog(clSystemLog, eCLSeverityDebug, " Entry not found for NODE :%s\n",
@@ -386,26 +368,4 @@ uint8_t process_response(uint32_t dstIp)
 	return 0;
 }
 
-void del_entry_from_hash(uint32_t ipAddr)
-{
-
-	int ret = 0;
-
-	clLog(clSystemLog, eCLSeverityDebug, " Delete entry from connection table of ip:%s\n",
-			inet_ntoa(*(struct in_addr *)&ipAddr));
-
-	/* Delete entry from connection hash table */
-	ret = rte_hash_del_key(conn_hash_handle,
-			&ipAddr);
-
-	if (ret == -ENOENT)
-		clLog(clSystemLog, eCLSeverityDebug, "key is not found\n");
-	if (ret == -EINVAL)
-		clLog(clSystemLog, eCLSeverityDebug, "Invalid Params: Failed to del from hash table\n");
-	if (ret < 0)
-		clLog(clSystemLog, eCLSeverityDebug, "VS: Failed to del entry from hash table\n");
-
-	//conn_cnt--; ajay
-
-}
 

@@ -46,7 +46,6 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
 
     if(doc.HasMember("subscriber-selection-rules"))
     {
-        std::cout << "Subscriber selection rules Array ? "<<doc["subscriber-selection-rules"].IsArray() << std::endl;
         for(uint32_t i=0; i< doc["subscriber-selection-rules"].Size();i++) 
         {
             sub_selection_rule_t *sub_rule = new (sub_selection_rule_t);
@@ -73,7 +72,6 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
                 key->apn.is_valid = false;
                 sub_rule->keys = key;
                 const rapidjson::Value& ruleKeys = subRuleSection["keys"];
-                std::cout<<"\t\tSubscriber selection rule has keys "<<key<<std::endl;
                 if(ruleKeys.HasMember("imsi-range") && ruleKeys["imsi-range"].IsObject())
                 {
                     std::cout<<"\t\t\tkeys has imsi-range Object "<<std::endl;
@@ -128,8 +126,6 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
                         mnc_dig_2 = mnc % 10;
                     }
 
-                    std::cout<<"MCC : "<<mcc_dig_1<<" "<<mcc_dig_2<<" "<<mcc_dig_3<<std::endl;
-                    std::cout<<"MNC : "<<mnc_dig_1<<" "<<mnc_dig_2<<" "<<mnc_dig_3<<std::endl;
                     key->plmn.plmn[0] = (mcc_dig_2 << 4) | (mcc_dig_1); 
                     key->plmn.plmn[1] = (mnc_dig_1 << 4) | (mcc_dig_3);
                     key->plmn.plmn[2] = (mnc_dig_3 << 4) | (mnc_dig_2);
@@ -143,11 +139,7 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
                     strcpy(key->apn.requested_apn,temp);
                     
                 }
-                std::cout<<"Sub key imsi "<<key->imsi.is_valid<<std::endl;
-                std::cout<<"Sub key plmn "<<key->plmn.is_valid<<std::endl;
-                std::cout<<"Sub key apn "<<key->apn.is_valid<<std::endl;
             }
-            std::cout<<"rule->keys "<<sub_rule->keys<<std::endl;
             std::cout<<"\t\tSelected Profiles"<<std::endl;
             if(subRuleSection.HasMember("selected-apn-profile"))
             {
@@ -182,8 +174,6 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
                 }
             }            
             config_store->sub_sel_rules.push_back(sub_rule);
-            std::cout<<"Number of selection rules "<<config_store->sub_sel_rules.size()<<std::endl;
-            std::cout<<std::endl;
         }
         config_store->sub_sel_rules.sort(compare_sub_rules);
         std::list<sub_selection_rule_t *>::iterator it;

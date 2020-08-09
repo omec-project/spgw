@@ -58,7 +58,6 @@ extern void print_perf_statistics(void);
 #endif /* TIMER_STATS */
 
 extern pcap_dumper_t *pcap_dumper;
-extern struct rte_hash *heartbeat_recovery_hash;
 
 struct rte_hash *node_id_hash;
 

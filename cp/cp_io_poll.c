@@ -17,17 +17,18 @@
 #include <rte_cfgfile.h>
 #include <rte_errno.h>
 #include <errno.h>
-
 #include "cp_interface.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_util.h"
-#include "../cp/cp_stats.h"
-#include "../cp/cp_config.h"
-#include "../cp/state_machine/sm_struct.h"
+#include "cp_stats.h"
+#include "cp_config.h"
+#include "sm_struct.h"
 #include "gtpv2_interface.h"
 #include "pfcp_cp_interface.h"
 #include "gx_interface.h"
 #include "cp_events.h"
+#include "gw_adapter.h"
+#include "clogger.h"
 
 udp_sock_t my_sock = {0};
 
@@ -78,7 +79,7 @@ void iface_process_ipc_msgs(void)
 	} else if (rv > 0) {
 		/* one or both of the descriptors have data */
         if (FD_ISSET(my_sock.sock_fd_pfcp, &readfds)) {
-            printf("N4 Packet read event received \n");
+			clLog(clSystemLog, eCLSeverityCritical,"N4 Packet read event received ");
             ret = 0;
             while(ret == 0) {
                 ret = msg_handler_sx_n4();
@@ -86,18 +87,18 @@ void iface_process_ipc_msgs(void)
                 event  = (stack_event_t *)get_stack_unwind_event();
                 while(event != NULL)
                 {
-                    printf("handle stack unwind event %d \n",event->event);
+                    clLog(clSystemLog, eCLSeverityCritical,"handle stack unwind event %d \n",event->event);
                     event->cb(event->data, event->event);
                     free(event);
                     event  = (stack_event_t *)get_stack_unwind_event();
                 }
             }
-            printf("N4 Packet read complete\n");
+            clLog(clSystemLog, eCLSeverityCritical,"N4 Packet read complete\n");
         }
 
         if ((cp_config->cp_type  == SGWC) || (cp_config->cp_type == SAEGWC)) {
             if (FD_ISSET(my_sock.sock_fd_s11, &readfds)) {
-                printf("S11 Packet read event received \n");
+                clLog(clSystemLog, eCLSeverityCritical,"S11 Packet read event received");
                 ret = 0;
                 while(ret == 0) {
                     ret = msg_handler_s11();
@@ -105,13 +106,13 @@ void iface_process_ipc_msgs(void)
                     event  = (stack_event_t *)get_stack_unwind_event();
                     while(event != NULL)
                     {
-                        printf("handle stack unwind event %d \n",event->event);
+                        clLog(clSystemLog, eCLSeverityCritical,"handle stack unwind event %d \n",event->event);
                         event->cb(event->data, event->event);
                         free(event);
                         event  = (stack_event_t *)get_stack_unwind_event();
                     }
                 }
-                printf("S11 Packet read complete\n");
+                clLog(clSystemLog, eCLSeverityCritical,"S11 Packet read complete\n");
             }
         }
 

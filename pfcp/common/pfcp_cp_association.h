@@ -124,15 +124,6 @@ void
 fill_pfcp_heartbeat_req(pfcp_hrtbeat_req_t *pfcp_heartbeat_req, uint32_t seq);
 
 /**
- * @brief  : This is a function to fill pfcp session report request
- * @param  : pfcp_sess_req_resp is pointer to structure of pfcp session report request
- * @param  : seq indicates the sequence number
- * @return : This function dose not return anything
- */
-void
-fill_pfcp_sess_report_resp(pfcp_sess_rpt_rsp_t *pfcp_sess_rep_resp, uint32_t seq);
-
-/**
  * @brief  : Process pfcp heartbeat request
  * @param  : peer_addr, peer node address
  * @param  : seq, sequence number
@@ -154,8 +145,5 @@ get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 		uint32_t **upf_ip);
 
 #endif /* USE_DNS_QUERY */
-
-upf_context_t *get_upf_context(uint32_t upf_ip);
-
 
 #endif /* PFCP_ASSOC_H */

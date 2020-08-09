@@ -18,6 +18,7 @@
 #include "ipc_api.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp.h"
+#include "tables/tables.h"
 extern udp_sock_t my_sock;
 
 void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid) 
@@ -44,9 +45,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 			uint16_t msglen = 0;
 			char *buffer = NULL;
 			/* Retrive Gx_context based on Sess ID. */
-			ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
-									(const void*)(pdn->gx_sess_id),
-									(void **)&gx_context);
+			ret = get_gx_context((uint8_t *)pdn->gx_sess_id,&gx_context);
 			if (ret < 0) {
 				clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
 					pdn->gx_sess_id);
@@ -86,7 +85,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 
 				send_to_ipc_channel(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type));
 
-				if(rte_hash_del_key(gx_context_by_sess_id_hash, pdn->gx_sess_id) < 0){
+				if(remove_gx_context((uint8_t*)pdn->gx_sess_id) < 0){
 					clLog(clSystemLog, eCLSeverityCritical, "%s %s - Error on gx_context_by_sess_id_hash deletion\n"
 									,__file__, strerror(ret));
 				}

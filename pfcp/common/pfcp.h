@@ -18,7 +18,6 @@ struct rte_hash *pfcp_cntxt_hash;
 struct rte_hash *pdr_entry_hash;
 struct rte_hash *qer_entry_hash;
 struct rte_hash *urr_entry_hash;
-struct rte_hash *pdn_conn_hash;
 struct rte_hash *rule_name_bearer_id_map_hash;
 
 /**
@@ -73,15 +72,6 @@ void
 init_pfcp_tables(void);
 
 /**
- * @brief  : Add PDN Connection information in the table.
- * @param  : call_id
- * @param  : pdn connection details
- * @return : Returns 0 on success , -1 otherwise
- */
-uint8_t
-add_pdn_conn_entry(uint32_t call_id, pdn_connection_t *pdn);
-
-/**
  * @brief  : Add Rule name and bearer information in the table.
  * @param  : rule_key
  * @param  : bearer
@@ -125,13 +115,6 @@ add_qer_entry(uint32_t qer_id, qer_t *cntxt);
  */
 uint8_t
 add_urr_entry(uint32_t urr_id, urr_t *cntxt);
-
-/**
- * @brief  : Retrive PDN connection entry.
- * @param  : call id
- * @return : Returns pointer to pdn entry on success , NULL otherwise
- */
-pdn_connection_t *get_pdn_conn_entry(uint32_t call_id);
 
 /**
  * @brief  : Retrive Rule Name entry.
@@ -182,28 +165,12 @@ qer_t *get_qer_entry(uint32_t qer_id);
 urr_t *get_urr_entry(uint32_t urr_id);
 
 /**
- * @brief  : Delete PDN connection entry from PDN conn table.
- * @param  : call_id
- * @return : Returns 0 on success , -1 otherwise
- */
-uint8_t
-del_pdn_conn_entry(uint32_t call_id);
-
-/**
  * @brief  : Delete Rule Name entry from Rule and Bearer Map table.
  * @param  : rule key
  * @return : Returns 0 on success , -1 otherwise
  */
 uint8_t
 del_rule_name_entry(const rule_name_key_t rule_key);
-
-/**
- * @brief  : Delete context entry from pfcp context table.
- * @param  : session id
- * @return : Returns 0 on success , -1 otherwise
- */
-uint8_t
-del_pfcp_cntxt_entry(uint64_t session_id);
 
 /**
  * @brief  : Delete PDR entry from QER table.

@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
+#include "tables/tables.h"
 #ifdef FUTURE_NEED_SGW
 // saegw DETACH_PROC DS_REQ_SNT_STATE DS_RESP_RCVD_EVNT => process_ds_resp_handler
 // sgw DETACH_PROC DS_REQ_SNT_STATE DS_RESP_RCVD_EVNT : process_ds_resp_handler 
@@ -95,13 +96,13 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *dsr, uint8_t *gtpv2c_t
 			inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
 
 	/* Delete entry from session entry */
-	if (del_sess_entry(seid) != 0){
+	if (del_sess_entry_seid(seid) != 0){
 		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for Key sess ID:%lu\n", seid);
 		return -1;
 	}
 
 	/* Delete UE context entry from UE Hash */
-	if (rte_hash_del_key(ue_context_by_imsi_hash, &context->imsi) < 0){
+	if (ue_context_delete_entry_imsiKey(context->imsi) < 0){
 	clLog(clSystemLog, eCLSeverityCritical,
 			"%s %s - Error on ue_context_by_fteid_hash deletion\n",__file__,
 			strerror(ret));
@@ -172,7 +173,7 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
 	bearer->pdn->state = PFCP_SESS_DEL_REQ_SNT_STATE;
 
 	/* VS: Stored/Update the session information. */
-	if (get_sess_entry(bearer->pdn->seid, &resp) != 0) {
+	if (get_sess_entry_seid(bearer->pdn->seid, &resp) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Failed to get response entry in SM_HASH\n", __file__
 				,__func__, __LINE__);
 		return -1;
@@ -209,6 +210,47 @@ process_ds_resp_handler(void *data, void *unused_param)
 	return 0;
 }
 
+//int
+//process_sgwc_s5s8_delete_session_response(gtpv2c_header *gtpv2c_rx,
+//	gtpv2c_header *gtpv2c_tx)
+//{
+//	uint16_t msg_len = 0;
+//	uint64_t seid = 0;
+//	ue_context_t *context = NULL;
+//	del_sess_rsp_t del_resp = {0};
+//
+//	int ret = delete_sgwc_context(gtpv2c_rx, &context, &seid);
+//	if (ret)
+//		return ret;
+//
+//	gtpv2c_rx->teid_u.has_teid.seq = bswap_32(gtpv2c_rx->teid_u.has_teid.seq) >> 8 ;
+//	/*VS: Encode the S11 delete session response message. */
+//	set_gtpv2c_teid_header((gtpv2c_header *) &del_resp, GTP_DELETE_SESSION_RSP,
+//			context->s11_mme_gtpc_teid, gtpv2c_rx->teid_u.has_teid.seq);
+//	set_cause_accepted_ie((gtpv2c_header *) &del_resp, IE_INSTANCE_ZERO);
+//
+//	del_resp.cause.header.len = ntohs(del_resp.cause.header.len);
+//	/*VS: Encode the S11 delete session response message. */
+//	msg_len = encode_del_sess_rsp(&del_resp, (uint8_t *)gtpv2c_tx);
+//
+//	gtpv2c_tx->gtpc.length = htons(msg_len - 4);
+//
+//	s11_mme_sockaddr.sin_addr.s_addr =
+//					htonl(context->s11_mme_gtpc_ipv4.s_addr);
+//
+//	clLog(clSystemLog, eCLSeverityDebug, "%s: s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__,
+//				inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
+//
+//	/* Delete entry from session entry */
+//	if (del_sess_entry_seid(seid) != 0){
+//		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for Key sess ID:%lu\n", seid);
+//		return -1;
+//	}
+//
+//	/* Delete UE context entry from UE Hash */
+//	/*rte_free(context);*/
+//	return 0;
+//}
 #endif
 
 

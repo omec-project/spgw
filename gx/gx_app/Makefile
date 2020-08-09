@@ -17,7 +17,7 @@ BUILDDIR := $(ROOT)/obj
 SRCEXT := c
 
 SOURCES := $(shell find $(SRCDIR) -type f -name '*.$(SRCEXT)')
-SOURCES += ../ipc_api.c
+SOURCES += ../../cp/ipc_api.c
 
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 
@@ -32,7 +32,7 @@ else
 	CFLAGS += -O3
 endif
 
-INCS := -I$(ROOT)/include -I$(ROOT)/../ -I$(ROOT)/../../pfcp_messages/
+INCS := -I$(ROOT)/include -I$(ROOT)/../ -I$(ROOT)/../../pfcp_messages/ -I$(ROOT)/../../cp
 LIB_PATH :=/usr/local/lib
 LIBS := -lfdproto -lfdcore
 

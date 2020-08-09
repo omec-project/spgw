@@ -17,7 +17,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include "assert.h"
-
+#include "cp_config_apis.h"
 #include "clogger.h"
 #include "cp_init.h"
 #include "cp_config.h"
@@ -28,9 +28,11 @@
 #include "cp_config_apis.h"
 #include "cp_stats.h"
 #include "upf_struct.h"
+#include "ue.h"
 #include "pfcp_cp_association.h"
 #include "ip_pool.h"
 #include "spgw_cpp_wrapper.h"
+#include "tables/tables.h"
 
 
 #define GLOBAL_ENTRIES			"GLOBAL"
@@ -813,12 +815,12 @@ get_upf_context_for_key(sub_selection_keys_t *key, sub_profile_t **sub_prof)
 
     if(upf_profile->upf_addr != 0) 
     {
-        upf_context_t *upf_context = get_upf_context(upf_profile->upf_addr);
-        if(upf_context != NULL)
+        upf_context_t *upf_context = NULL;
+        upf_context_entry_lookup(upf_profile->upf_addr, &upf_context);
+        if(upf_context == NULL)
         {
-            return upf_context;
+            create_upf_context(upf_profile->upf_addr, &upf_context);
         }
-        create_upf_context(upf_profile->upf_addr, &upf_context);
         return upf_context;
     }
     printf("DNS Resolution failed Profile - %s and Service name  %s \n",upf_profile->user_plane_profile_name, upf_profile->user_plane_service);

@@ -1,3 +1,9 @@
+// Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+
 #include "tables/tables.h"
 #include <rte_hash.h>
 #include <rte_jhash.h>
@@ -34,11 +40,11 @@ create_upf_context_hash(void)
 	}
 }
 
+// should return int instead of uint... TODO
 uint8_t
 upf_context_entry_add(uint32_t *upf_ip, upf_context_t *entry)
 {
-    struct in_addr test; test.s_addr = *upf_ip;
-    printf("%s UPF context entry add UPF address %s \n", __FUNCTION__,inet_ntoa(test));
+    printf("%s UPF context entry add UPF address %s \n", __FUNCTION__,inet_ntoa(*((struct in_addr *)upf_ip)));
 	int ret = 0;
 	ret = rte_hash_add_key_data(upf_context_by_ip_hash,
 			(const void *)upf_ip , (void *)entry);
@@ -55,8 +61,7 @@ upf_context_entry_add(uint32_t *upf_ip, upf_context_t *entry)
 int
 upf_context_entry_lookup(uint32_t upf_ip, upf_context_t **entry)
 {
-    struct in_addr test; test.s_addr = upf_ip;
-    printf("%s UPF context entry find UPF address %s \n", __FUNCTION__,inet_ntoa(test));
+    printf("%s UPF context entry find UPF address %s \n", __FUNCTION__,inet_ntoa(*((struct in_addr *)&upf_ip)));
 	int ret = rte_hash_lookup_data(upf_context_by_ip_hash,
 			(const void*) &(upf_ip), (void **) entry);
 

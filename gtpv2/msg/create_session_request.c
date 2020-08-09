@@ -30,6 +30,8 @@
 #include "cp_peer.h"
 #include "gtpv2_error_rsp.h"
 #include "initial_attach_proc.h"
+#include "tables/tables.h"
+#include "util.h"
 
 extern uint32_t num_adc_rules;
 extern uint32_t adc_rule_id[];
@@ -470,11 +472,15 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	}
 
 	if (cp_config->cp_type == SGWC) {
+        ret = 0;
+        RTE_SET_USED(gtpv2c_s5s8_tx);
+#ifdef FUTURE_NEED
 		char sgwu_fqdn[MAX_HOSTNAME_LENGTH] = {0};
 		ret =
 			gen_sgwc_s5s8_create_session_request(gtpv2c_rx,
 				gtpv2c_s5s8_tx, csr.header.teid.has_teid.seq,
 				pdn, bearer, sgwu_fqdn);
+#endif
 
 		 clLog(s5s8logger, eCLSeverityDebug, "NGIC- create_session.c::"
 				"\n\tprocess_create_session_request::case= %d;"
@@ -618,6 +624,22 @@ int validate_csreq_msg(create_sess_req_t *csr)
     return 0;
 }
 
+static int
+decode_check_csr(gtpv2c_header_t *gtpv2c_rx,
+		create_sess_req_t *csr)
+{
+	int ret = 0;
+	ret = decode_create_sess_req((uint8_t *) gtpv2c_rx,
+			csr);
+
+	if (!ret){
+		clLog(clSystemLog, eCLSeverityCritical, "Decoding for csr req failed");
+		return -1;
+	}
+
+	return 0;
+}
+
 int
 handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
@@ -647,8 +669,7 @@ handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 
     // update statistics ??
 
-    // use source interface instead of this rx_interface 
-    msg->rx_interface = SGW_S11_S4; 
+    msg->source_interface = S11_IFACE; 
 
     RTE_SET_USED(gtpv2c_rx);
     assert(msg->msg_type == GTP_CREATE_SESSION_REQ);
@@ -677,8 +698,8 @@ handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     ue_context_t *context = NULL; 
     uint64_t imsi;
     imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
-    ret = rte_hash_lookup_data(ue_context_by_imsi_hash, &imsi, (void **) &(context));
-    if(ret >= 0)
+    ret = ue_context_entry_lookup_imsiKey(imsi, &(context));
+    if(context != NULL)
     {
         printf("Detected context replacement of the call \n");
         msg->msg_type = GTP_RESERVED; 
@@ -690,7 +711,7 @@ handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     }
    
 #ifdef TEMP
-    if(msg->rx_interface == PGW_S5_S8) 
+    if(msg->source_interface == S5S8_IFACE) 
     {
         /* when CSR received from SGWC add it as a peer*/
 	    add_node_conn_entry(ntohl(msg->gtpc_msg.csr.sender_fteid_ctl_plane.ipv4_address),
@@ -698,7 +719,7 @@ handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     }
     else 
 #endif
-    if(msg->rx_interface == SGW_S11_S4) 
+    if(msg->source_interface == S11_IFACE) 
     {
         /* when CSR received from MME add it as a peer*/
 	    add_node_conn_entry(ntohl(msg->gtpc_msg.csr.sender_fteid_ctl_plane.ipv4_address),

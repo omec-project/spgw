@@ -10,41 +10,6 @@
 #include "sm_struct.h"
 
 struct ue_context;
-/**
- * @brief  : Create a session hash table to maintain the session information.
- * @param  : No param
- * @return : Returns nothing
- */
-void
-init_transaction_hash(void);
-
-/**
- * @brief  : Add session entry in session table.
- * @param  : sess_id, session id
- * @param  : context, structure to store ue_context info
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-add_sess_entry(uint64_t sess_id, struct ue_context *context);
-
-/**
- * @brief  : Retrive session entry from session table.
- * @param  : sess_id, session id
- * @param  : resp, structure to store session info
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-get_sess_entry(uint64_t sess_id, struct ue_context **context);
-
-
-
-/**
- * @brief  : Delete session entry from session table.
- * @param  : sess_id, session id
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-del_sess_entry(uint64_t sess_id);
 
 /**
  * @brief  : Update UE state in UE Context.
@@ -66,38 +31,14 @@ uint8_t
 get_ue_state(uint32_t teid_key ,uint8_t ebi_index);
 
 /**
- * Retrive Bearer entry from Bearer table.
- */
-int8_t
-get_bearer_by_teid(uint32_t teid_key, eps_bearer_t **bearer);
-
-/**
  * Retrive ue context entry from Bearer table,using sgwc s5s8 teid.
  */
 int8_t
 get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context_t **context);
 
-/**
- * @brief  : Retrive UE Context entry from UE Context table.
- * @param  : teid_key, key to search context
- * @param  : context, structure to store retrived context
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int8_t
-get_ue_context(uint32_t teid_key, ue_context_t **context);
-
 /* This function use only in clean up while error */
 int8_t
 get_ue_context_while_error(uint32_t teid_key, ue_context_t **context);
-
-/**
- * @brief  : Retrive PDN entry from PDN table.
- * @param  : teid_key, key for search
- * @param  : pdn, structure to store retrived pdn
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-get_pdn(uint32_t teid_key, pdn_connection_t **pdn);
 
 /**
  * @brief  : Get proc name from enum
@@ -129,15 +70,6 @@ const char * get_event_string(int value);
  */
 uint8_t
 update_ue_proc(uint32_t teid_key, uint8_t proc, uint8_t ebi_index);
-
-/**
- * @brief  : Retrive UE Context.
- * @param  : teid_key, key for search
- * @param  : context, structure to store retrived ue context
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int8_t
-get_ue_context(uint32_t teid_key, ue_context_t **context);
 
 /**
  * @brief  : Update Procedure according to indication flags

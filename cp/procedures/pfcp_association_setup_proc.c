@@ -39,6 +39,7 @@
 #include "cp_peer.h"
 #include "pfcp_association_setup_proc.h"
 #include "tables/tables.h"
+#include "util.h"
 
 
 extern udp_sock_t my_sock;
@@ -107,7 +108,7 @@ association_setup_handler(void *data, void *unused_param)
 	pdn = context->pdns[ebi_index];
     upf_context = context->upf_context;
 	if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
- 		ret = get_sess_entry(pdn->seid, &resp);
+ 		ret = get_sess_entry_seid(pdn->seid, &resp);
 		if(ret != -1 && resp != NULL){
 			resp->gtpc_msg.csr = msg->gtpc_msg.csr;
 		}
@@ -195,7 +196,8 @@ handle_pfcp_association_setup_response(void *msg_t)
         }
 		clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. using workaround to find transaction for  UPF IP:%s\n",
 		__func__, inet_ntoa(peer_addr->sin_addr));
-        upf_context = get_upf_context(peer_addr->sin_addr.s_addr);
+        upf_context = NULL; 
+        upf_context_entry_lookup(peer_addr->sin_addr.s_addr, &upf_context);
         pfcp_trans = upf_context->trans_entry;
         // hack for pfcp which sends 0 sequence number in ack 
 	    if (pfcp_trans == NULL ) {
@@ -328,9 +330,8 @@ assoication_setup_request(upf_context_t *upf_context)
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
     uint32_t seq_num;
     pfcp_assn_setup_req_t pfcp_ass_setup_req = {0};
-    struct in_addr test; test.s_addr = upf_context->upf_sockaddr.sin_addr.s_addr;
 
-    printf("Initiate PFCP setup to peer address = %s \n", inet_ntoa(test));
+    printf("Initiate PFCP setup to peer address = %s \n", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
 
     seq_num = fill_pfcp_association_setup_req(&pfcp_ass_setup_req);
     RTE_SET_USED(seq_num);

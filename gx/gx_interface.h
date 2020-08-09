@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
@@ -21,8 +22,7 @@
 #include "gx_app/include/gx_struct.h"
 #include "gx_app/include/gx.h"
 #include "ue.h"
-
-#include "ue.h"
+#include "sm_struct.h"
 
 /* VG1 Temp inlude remove this after handling of CSR on gx*/
 #include "../libgtpv2c/include/gtp_messages.h"
@@ -66,14 +66,6 @@ typedef struct gx_context_t {
 } gx_context_t;
  
 #pragma pack()
-
-/**
- * @brief  : Handles processing of gx rar message
- * @param  : recv_buf, Received data from incoming message
- * @return : Returns nothing
- */
-void
-handle_gx_rar( unsigned char *recv_buf);
 
 /**
  * @brief  : Handles processing of gx cca message
@@ -172,24 +164,6 @@ bin_to_str(unsigned char *b_val, char *s_val, int b_len, int s_len);
 int
 gen_reauth_response(ue_context_t *context, uint8_t ebi_index);
 
-/**
-- * @brief  : Add entry into gx context hash
-- * @param  : sess_id , key to add entry
-- * @param  : entry , entry to be added
-- * @return : Returns 0 in case of success , -1 otherwise
-- */
-int
-gx_context_entry_add(char *sess_id, gx_context_t *entry);
-
-/**
-- * @brief  : search entry in gx context hash
-- * @param  : sess_id , key to add entry
-- * @param  : entry , entry to be added
-- * @return : Returns 0 in case of success , -1 otherwise
-- */
-int
-gx_context_entry_lookup(char *sess_id, gx_context_t **entry);
-
 int
 gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr);
 
@@ -198,4 +172,9 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 
 int
 ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer);
+
+int handle_cca_update_msg(msg_info_t *msg);
+int handle_cca_initial_msg(msg_info_t *msg);
+int handle_ccr_terminate_msg(msg_info_t *msg);
+int handle_rar_msg(msg_info_t *msg);
 #endif /* CP_APP_H_ */

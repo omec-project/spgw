@@ -126,6 +126,13 @@ typedef enum
 	END_EVNT
 }sm_event;
 
+enum source_interface {
+	GX_IFACE = 1,
+	S11_IFACE = 2,
+	S5S8_IFACE = 3,
+	PFCP_IFACE = 4,
+};
+
 typedef enum 
 {
     PFCP_ASSOCIATION_SETUP = 1,

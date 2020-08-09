@@ -28,6 +28,8 @@
 #include "pfcp_cp_util.h"
 #include "pfcp_messages_encoder.h"
 #include "gtpv2_set_ie.h"
+#include "tables/tables.h"
+#include "util.h"
 
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
@@ -259,7 +261,7 @@ process_service_request_pfcp_mod_sess_rsp(msg_info_t *msg)
         return ;
     }
     /* Retrive the session information based on session id. */
-    if (get_sess_entry(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
+    if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
                 &context) != 0) {
         clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u,"
                 "Sess ID:%lu, n",

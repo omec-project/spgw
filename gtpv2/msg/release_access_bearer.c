@@ -27,6 +27,8 @@
 #include "gtpv2_error_rsp.h"
 #include "rab_proc.h"
 #include "sm_structs_api.h"
+#include "tables/tables.h"
+#include "util.h"
 
 extern udp_sock_t my_sock;
 /**

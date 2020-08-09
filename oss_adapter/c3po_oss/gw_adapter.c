@@ -17,15 +17,12 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <stdbool.h>
-
-
 #include "../../cp/cp_stats.h"
 #include "../../cp/cp_init.h"
 #include "../../cp/cp_config.h"
-
 #include "cp_interface.h"
 #include "../../cp/ue.h"
-
+#include "util.h"
 #include "gw_adapter.h"
 #include "crest.h"
 #include "clogger.h"

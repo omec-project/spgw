@@ -24,6 +24,8 @@
 #include "spgw_cpp_wrapper.h"
 #include "rab_proc.h"
 #include "gtpv2_error_rsp.h"
+#include "tables/tables.h"
+#include "util.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 extern udp_sock_t my_sock;
@@ -176,7 +178,7 @@ process_release_access_bearer_request(rel_acc_bearer_req_t *rel_acc_ber_req_t, u
 		}
 
 #if 0
-		if (get_sess_entry((rel_acc_ber_req_t->context)->pdns[ebi_index]->seid, &resp) != 0) {
+		if (get_sess_entry_seid((rel_acc_ber_req_t->context)->pdns[ebi_index]->seid, &resp) != 0) {
 			clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Failed to add response in entry in SM_HASH\n",__file__,
 					__func__, __LINE__);
 			return -1;
@@ -240,7 +242,7 @@ process_rab_proc_pfcp_mod_sess_rsp(msg_info_t *msg)
 
 	/* Retrive the session information based on session id. */
     ue_context_t *temp_context = NULL; 
-	if (get_sess_entry(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
+	if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 				&temp_context) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u,"
 				"Sess ID:%lu, n",
@@ -302,7 +304,7 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
     uint32_t teid = UE_SESS_ID(sess_id);
 
     /* Retrive the session information based on session id. */
-    if (get_sess_entry(sess_id, &context) != 0){
+    if (get_sess_entry_seid(sess_id, &context) != 0){
         clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
                 __func__, __LINE__, sess_id);
         return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;

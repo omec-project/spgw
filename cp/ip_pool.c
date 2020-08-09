@@ -12,6 +12,7 @@
 #include "ue.h"
 #include "cp_config.h"
 #include "clogger.h"
+#include "util.h"
 
 struct ip_table *static_addr_pool = NULL;
 

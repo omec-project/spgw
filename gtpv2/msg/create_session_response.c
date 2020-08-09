@@ -11,7 +11,8 @@
 // sgw   INITIAL_PDN_ATTACH_PROC CS_REQ_SNT_STATE CS_RESP_RCVD_EVNT ==> process_cs_resp_handler
 // sgw SGW_RELOCATION_PROC CS_REQ_SNT_STATE CS_RESP_RCVD_EVNT ==> process_cs_resp_handler 
 
-#ifdef FUTURE_NEED_SGW
+#include "tables/tables.h"
+#ifdef FUTURE_NEED
 int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
     ue_context_t *context = NULL;
@@ -282,7 +283,7 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
 	/* Lookup Stored the session information. */
-	if (get_sess_entry(context->pdns[ebi_index]->seid, &resp) != 0) {
+	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Failed to add response in entry in SM_HASH\n", __file__
 				,__func__, __LINE__);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;

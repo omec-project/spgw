@@ -9,12 +9,8 @@
 #include "cp_interface.h"
 #include "clogger.h"
 #include "cp_config.h"
-
-/* LOOKUP TABLE */
-struct rte_hash *ue_context_by_imsi_hash;
-struct rte_hash *ue_context_by_fteid_hash;
-struct rte_hash *pdn_by_fteid_hash;
-struct rte_hash *bearer_by_fteid_hash;
+#include "tables/tables.h"
+#include "util.h"
 
 /* base value and offset for seid generation */
 const uint32_t s11_sgw_gtpc_base_teid = 0xC0FFEE;
@@ -114,53 +110,6 @@ set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer_t *bearer, pdn_connection_t *pdn)
 }
 
 void
-create_ue_hash(void)
-{
-    struct rte_hash_parameters rte_hash_params = {
-        .name = "ue_context_by_imsi_hash",
-        .entries = LDB_ENTRIES_DEFAULT,
-        .key_len = sizeof(uint64_t),
-        .hash_func = rte_jhash,
-        .hash_func_init_val = 0,
-        .socket_id = rte_socket_id(),
-    };
-
-    ue_context_by_imsi_hash = rte_hash_create(&rte_hash_params);
-    if (!ue_context_by_imsi_hash) {
-        rte_panic("%s hash create failed: %s (%u)\n.",
-                rte_hash_params.name,
-                rte_strerror(rte_errno), rte_errno);
-    }
-
-    rte_hash_params.name = "ue_context_by_fteid_hash";
-    rte_hash_params.key_len = sizeof(uint32_t);
-    ue_context_by_fteid_hash = rte_hash_create(&rte_hash_params);
-    if (!ue_context_by_fteid_hash) {
-        rte_panic("%s hash create failed: %s (%u)\n.",
-                rte_hash_params.name,
-                rte_strerror(rte_errno), rte_errno);
-    }
-
-    rte_hash_params.name = "pdn_by_fteid_hash";
-    rte_hash_params.key_len = sizeof(uint32_t);
-    pdn_by_fteid_hash = rte_hash_create(&rte_hash_params);
-    if (!pdn_by_fteid_hash) {
-        rte_panic("%s hash create failed: %s (%u)\n.",
-                rte_hash_params.name,
-                rte_strerror(rte_errno), rte_errno);
-    }
-
-    rte_hash_params.name = "bearer_by_teid_hash";
-    rte_hash_params.key_len = sizeof(uint32_t);
-    bearer_by_fteid_hash = rte_hash_create(&rte_hash_params);
-    if (!bearer_by_fteid_hash) {
-        rte_panic("%s hash create failed: %s (%u)\n.",
-                rte_hash_params.name,
-                rte_strerror(rte_errno), rte_errno);
-    }
-}
-
-void
 print_ue_context_by(struct rte_hash *h, ue_context_t *context)
 {
 	uint64_t *key;
@@ -206,8 +155,7 @@ int
 add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, eps_bearer_t **bearer)
 {
 	int8_t ret = 0;
-	ret = rte_hash_add_key_data(bearer_by_fteid_hash,
-	    (const void *) &fteid_key, (void *) (*bearer));
+	ret = bearer_context_entry_add_teidKey(fteid_key, (*bearer));
 	
 	if (ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical,
@@ -235,10 +183,9 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 
 	memcpy(&imsi, imsi_val, imsi_len);
 
-	ret = rte_hash_lookup_data(ue_context_by_imsi_hash, &imsi,
-	    (void **) &(*context));
+	ret = ue_context_entry_lookup_imsiKey(imsi, &(*context));
 
-	if (ret == -ENOENT) {
+	if (ret == -1) {
 		(*context) = rte_zmalloc_socket(NULL, sizeof(ue_context_t),
 		    RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (*context == NULL) {
@@ -251,8 +198,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		}
 		(*context)->imsi = imsi;
 		(*context)->imsi_len = imsi_len;
-		ret = rte_hash_add_key_data(ue_context_by_imsi_hash,
-		    (const void *) &(*context)->imsi, (void *) (*context));
+		ret = ue_context_entry_add_imsiKey(*context); 
 		if (ret < 0) {
 			clLog(clSystemLog, eCLSeverityCritical,
 				"%s - Error on rte_hash_add_key_data add\n",
@@ -305,16 +251,13 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			+ s5s8_pgw_gtpc_teid_offset;
 	}
 
-	ret = rte_hash_add_key_data(ue_context_by_fteid_hash,
-	    (const void *) &(*context)->s11_sgw_gtpc_teid,
-	    (void *) (*context));
+	ret = ue_context_entry_add_teidKey((*context)->s11_sgw_gtpc_teid, (*context));
 
 	if (ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical,
 			"%s - Error on ue_context_by_fteid_hash add\n",
 			strerror(ret));
-		rte_hash_del_key(ue_context_by_imsi_hash,
-		    (const void *) &(*context)->imsi);
+		ue_context_delete_entry_imsiKey((*context)->imsi);
 		if (ret < 0) {
 			/* If we get here something bad happened. The
 			 * context that was added to
@@ -414,16 +357,13 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 	pdn = (*context)->pdns[ebi_index];
 	bearer = (*context)->eps_bearers[ebi_index];
 
-	ret = rte_hash_add_key_data(pdn_by_fteid_hash,
-	    (const void *) &(*context)->s11_sgw_gtpc_teid,
-	    (void *) pdn);
+	ret = pdn_context_entry_add_teidKey((*context)->s11_sgw_gtpc_teid, pdn);
 
 	if (ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical,
-			"%s - Error on pdn_by_fteid_hash add\n",
+			"%s - Error on pdn by fteid hash add\n",
 			strerror(ret));
-		rte_hash_del_key(pdn_by_fteid_hash,
-		    (const void *) &(*context)->s11_sgw_gtpc_teid);
+		pdn_context_delete_entry_teidKey((*context)->s11_sgw_gtpc_teid);
 		if (ret < 0) {
 			/* If we get here something bad happened. The
 			 * context that was added to
@@ -431,7 +371,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			 * to be removed.
 			 */
 			rte_panic("%s - Error on "
-				"pdn_by_fteid_hash del\n",
+				"pdn by fteid hash del\n",
 				strerror(ret));
 		}
 		rte_free((*context));
