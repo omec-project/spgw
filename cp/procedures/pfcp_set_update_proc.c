@@ -1,3 +1,7 @@
+// Copyright 2020-present Open Networking Foundation
+//
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+
 #ifdef FUTURE_NEED
 /* Function */
 // ajay - unhandled fsm - RESTORATION_RECOVERY_PROC CONNECTED_STATE UPD_PDN_CONN_SET_REQ_RCVD_EVNT => process_upd_pdn_conn_set_req

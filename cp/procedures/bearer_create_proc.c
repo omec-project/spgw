@@ -1,3 +1,7 @@
+// Copyright 2020-present Open Networking Foundation
+//
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+
 #ifdef FUTURE_NEED
 int
 process_pfcp_sess_mod_resp_cbr_handler(void *data, void *unused_param)
