@@ -9,7 +9,6 @@ $(error "Please define RTE_SDK environment variable")
 endif
 
 MAKEFLAGS += -j
-
 # Default target, can be overriden by command line or environment
 RTE_TARGET ?= x86_64-native-linuxapp-gcc
 
