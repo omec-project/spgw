@@ -120,6 +120,7 @@ SRCS-y += $(SRCDIR)/../gx/msg/rar_handler.o
 SRCS-y += $(SRCDIR)/../gx/gx_app/src/gx_pack.o
 
 
+
 #ifneq (,$(findstring C3PO_OSS, $(CFLAGS)))
 #SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/cp_adapter.o
 #CFLAGS += -I$(SRCDIR)/../oss_adapter/c3po_oss
@@ -199,10 +200,12 @@ endif
 
 ifneq (,$(findstring USE_CSID, $(CFLAGS), $(EXTRA_CFLAGS)))
  #VS:Support partial failure FQ-CSID m/c
+
  SRCS-y += $(SRCDIR)/../pfcp/common/csid_init.o
  SRCS-y += $(SRCDIR)/../pfcp/common/csid_api.o
  SRCS-y += $(SRCDIR)/../pfcp/common/csid_peer_init.o
  SRCS-y += $(SRCDIR)/../pfcp/common/csid_cp_cleanup.o
+
 endif
 
 # Un-comment below line to read fake cp config.
