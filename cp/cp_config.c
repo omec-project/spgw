@@ -12,25 +12,27 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
-#include <rte_log.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include "assert.h"
-
+#include "cp_config_apis.h"
 #include "clogger.h"
-#include "gw_adapter.h"
+#include "cp_init.h"
+#include "cp_config.h"
 #include "cp_config_defs.h"
-#include "cp_log.h"
 #include "monitor_config.h"
+#include "gw_adapter.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"
 #include "cp_stats.h"
 #include "upf_struct.h"
+#include "ue.h"
 #include "pfcp_cp_association.h"
 #include "ip_pool.h"
 #include "spgw_cpp_wrapper.h"
+#include "tables/tables.h"
 
 
 #define GLOBAL_ENTRIES			"GLOBAL"
@@ -109,7 +111,7 @@ void init_config(void)
     char file[128] = {'\0'};
     strcat(file, config_update_base_folder);
     strcat(file, "subscriber_mapping.json");
-    RTE_LOG_DP(DEBUG, CP, "Config file to monitor %s ", file);
+    clLog(clSystemLog, eCLSeverityDebug, "Config file to monitor %s \n", file);
     register_config_updates(file);
 
     return;
@@ -716,16 +718,14 @@ parse_apn_args(char *temp, char *ptr[3])
 void
 config_change_cbk(char *config_file, uint32_t flags)
 {
-	printf("%s %d \n",__FUNCTION__,__LINE__);
-	RTE_LOG_DP(INFO, CP, "Received %s. File %s flags: %x\n",
-		   __FUNCTION__, config_file, flags);
-
+    clLog(clSystemLog, eCLSeverityCritical, "Config change trigger function - %s" 
+                " - file %s and flags = %x \n", __FUNCTION__, config_file, flags);
 	if (native_config_folder == false) {
 		/* Move the updated config to standard path */
 		char cmd[256];
 		sprintf(cmd, "cp %s %s", config_file, CP_CONFIG_SUB_RULES);
 		int ret = system(cmd);
-		RTE_LOG_DP(INFO, CP, "system call return value: %d \n", ret);
+        clLog(clSystemLog, eCLSeverityDebug, "System call return value %d", ret);
     }
  
 	/* We dont expect quick updates from configmap..One update per interval. Typically 
@@ -815,12 +815,12 @@ get_upf_context_for_key(sub_selection_keys_t *key, sub_profile_t **sub_prof)
 
     if(upf_profile->upf_addr != 0) 
     {
-        upf_context_t *upf_context = get_upf_context(upf_profile->upf_addr);
-        if(upf_context != NULL)
+        upf_context_t *upf_context = NULL;
+        upf_context_entry_lookup(upf_profile->upf_addr, &upf_context);
+        if(upf_context == NULL)
         {
-            return upf_context;
+            create_upf_context(upf_profile->upf_addr, &upf_context);
         }
-        create_upf_context(upf_profile->upf_addr, &upf_context);
         return upf_context;
     }
     printf("DNS Resolution failed Profile - %s and Service name  %s \n",upf_profile->user_plane_profile_name, upf_profile->user_plane_service);

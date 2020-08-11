@@ -124,6 +124,7 @@ push_sdf_rules(uint16_t index)
 {
 	struct dp_id dp_id = { .id = DPN_ID };
 
+    RTE_SET_USED(dp_id);
 	char local_ip[INET_ADDRSTRLEN];
 	char remote_ip[INET_ADDRSTRLEN];
 
@@ -168,8 +169,10 @@ push_sdf_rules(uint16_t index)
 	    direction_str[sdf_filters[index]->direction], index,
 		pktf.u.rule_str);
 
+#ifdef OBSOLETE_APIS
 	if (sdf_filter_entry_add(dp_id, pktf) < 0)
 		rte_exit(EXIT_FAILURE,"SDF filter entry add fail !!!");
+#endif
 }
 
 /**
@@ -217,6 +220,7 @@ static int
 install_pcc_rules(struct pcc_rules new_pcc_entry)
 {
 	struct dp_id dp_id = { .id = DPN_ID };
+    RTE_SET_USED(dp_id);
 
 	if (num_pcc_filter >= PCC_TABLE_SIZE)
 		return -ENOMEM;
@@ -239,8 +243,10 @@ install_pcc_rules(struct pcc_rules new_pcc_entry)
 	new_pcc_entry.rule_id = num_pcc_filter;
 	num_pcc_filter++;
 
+#ifdef OBSOLETE_APIS
 	if (pcc_entry_add(dp_id, new_pcc_entry) < 0 )
 		rte_exit(EXIT_FAILURE,"PCC entry add fail !!!");
+#endif
 	return num_pcc_filter;
 }
 
@@ -253,6 +259,8 @@ install_pcc_rules(struct pcc_rules new_pcc_entry)
 static int
 install_meter_profiles(struct dp_id dp_id, struct mtr_entry new_mtr_entry)
 {
+    RTE_SET_USED(dp_id);
+
 	if (num_mtr_profiles >= METER_PROFILE_SDF_TABLE_SIZE)
 		return -ENOMEM;
 
@@ -273,7 +281,9 @@ install_meter_profiles(struct dp_id dp_id, struct mtr_entry new_mtr_entry)
 	mtr_profiles[num_mtr_profiles] = mtr_profile;
 	num_mtr_profiles++;
 
+#ifdef OBSOLETE_APIS
 	meter_profile_entry_add(dp_id, new_mtr_entry);
+#endif
 	return num_mtr_profiles;
 }
 
@@ -699,6 +709,7 @@ parse_adc_rules(void)
 	const char *entry = NULL;
 	struct dp_id dp_id = { .id = DPN_ID };
 	struct rte_cfgfile *file = rte_cfgfile_load(ADC_RULE_FILE, 0);
+    RTE_SET_USED(dp_id);
 
 	if (file == NULL)
 		rte_panic("Cannot load configuration file %s\n",
@@ -774,8 +785,10 @@ parse_adc_rules(void)
 		/* Add Default rule */
 		adc_rule_id[rule_id - 1] = rule_id;
 		tmp_adc.rule_id = rule_id++;
+#ifdef OBSOLETE_APIS
 		if (adc_entry_add(dp_id, tmp_adc) < 0)
 			rte_exit(EXIT_FAILURE, "ADC entry add fail !!!");
+#endif
 		print_adc_rule(tmp_adc);
 
 	}

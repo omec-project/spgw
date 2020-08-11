@@ -22,11 +22,11 @@
 #include <rte_malloc.h>
 #include <rte_jhash.h>
 #include <rte_hash.h>
-#include "gtpv2c_ie.h"
+#include "gtpv2_ie.h"
 #include "cp_interface.h"
 #include "packet_filters.h"
 #include "pfcp_cp_struct.h"
-#include "timer.h"
+#include "cp_timer.h"
 #include "cp_peer_struct.h"
 #include "upf_struct.h"
 #include "spgw_config_struct.h"
@@ -409,7 +409,7 @@ typedef struct ue_context {
 
     /* UE association with UPF context */
     upf_context_t  *upf_context;
-    sub_profile_t  *sub_prof;
+    sub_profile_t  *sub_prof; /* Requirement. - Bug - free the sub */
 
     /* Temp - need to find right place to put this */
     void *pco; /* Received PCO from the UE during attach. Once CSRsp sent, release this */
@@ -554,10 +554,6 @@ typedef struct eps_bearer {
 	dynamic_rule_t *dynamic_rules[16];
 
 } eps_bearer_t;
-
-extern struct rte_hash *ue_context_by_imsi_hash;
-extern struct rte_hash *ue_context_by_fteid_hash;
-extern struct rte_hash *pdn_by_fteid_hash;
 
 /**
  * @brief  : sets base teid value given range by DP

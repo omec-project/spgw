@@ -14,16 +14,10 @@
 #include "gtp_messages.h"
 #include <sys/queue.h>
 #include "gx_struct.h"
-#include "gx_interface.h"
-#include "gtpv2c_msg_struct.h"
+#include "gtpv2_msg_struct.h"
+#include "ue.h"
 
 
-enum source_interface {
-	GX_IFACE = 1,
-	S11_IFACE = 2,
-	S5S8_IFACE = 3,
-	PFCP_IFACE = 4,
-};
 
 //extern enum source_interface iface;
 
@@ -66,6 +60,7 @@ typedef struct msg_info {
 	}gtpc_msg;
 	union pfcp_msg_info_t {
 		pfcp_pfd_mgmt_rsp_t pfcp_pfd_resp;
+		pfcp_assn_setup_req_t pfcp_ass_req;
 		pfcp_assn_setup_rsp_t pfcp_ass_resp;
 		pfcp_sess_estab_rsp_t pfcp_sess_est_resp;
 		pfcp_sess_mod_rsp_t pfcp_sess_mod_resp;
@@ -80,7 +75,7 @@ typedef struct msg_info {
 		GxRAR rar;
 	}gx_msg;
 
-    uint8_t rx_interface;
+    uint32_t source_interface;
     upf_context_t *upf_context;
     ue_context_t *ue_context;
     pdn_connection_t *pdn_context;
@@ -89,6 +84,7 @@ typedef struct msg_info {
     proc_context_t *proc_context;
 }msg_info_t;
 
+/* Requirement : cleanup rsp_info */
 /**
  * @brief  : Structure for handling CS/MB/DS request synchoronusly.
  */
@@ -120,6 +116,5 @@ struct resp_info {
 		del_bearer_cmd_t del_bearer_cmd;
 	}gtpc_msg;
 }__attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
-
 
 #endif

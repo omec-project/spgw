@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <sys/queue.h>
 #include <netinet/in.h>
-#include "timer.h"
+#include "cp_timer.h"
 #include "cp_peer_struct.h"
 #include "trans_struct.h"
 struct dp_info;

@@ -9,7 +9,7 @@
 #ifndef __TRANS_STRUCT_H
 #define __TRANS_STRUCT_H
 #include <stdint.h>
-#include "timer.h"
+#include "cp_timer.h"
 #include <netinet/ip.h>
 
 /**

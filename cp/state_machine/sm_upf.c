@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include "rte_common.h"
+#include "rte_errno.h"
 #include "pfcp.h"
 #include "gx_interface.h"
 #include "sm_enum.h"
@@ -18,8 +19,8 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_cp_association.h"
-#include "gtpv2c_error_rsp.h"
-#include "gtpc_session.h"
+#include "gtpv2_error_rsp.h"
+#include "gtpv2_session.h"
 #include "cp_config.h"
 #include "clogger.h"
 #include "csid_cp_cleanup.h"
@@ -36,6 +37,7 @@
 #include "pfcp_enum.h"
 #include "cp_transactions.h"
 #include "cp_peer.h"
+#include "tables/tables.h"
 
 
 int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt) 

@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
-#include "timer.h"
+#include "cp_timer.h"
 
 
 

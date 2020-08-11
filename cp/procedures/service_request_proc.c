@@ -7,8 +7,7 @@
 #include "gtp_messages.h"
 #include "cp_config.h"
 #include "sm_enum.h"
-#include "gtpv2_evt_handler.h"
-#include "gtpv2c_error_rsp.h"
+#include "gtpv2_error_rsp.h"
 #include "assert.h"
 #include "clogger.h"
 #include "cp_peer.h"
@@ -23,13 +22,14 @@
 #include "pfcp_enum.h"
 #include "pfcp.h"
 #include "pfcp_cp_association.h"
-#include "cp_log.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
 #include "service_request_proc.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_messages_encoder.h"
-#include "gtpv2c_set_ie.h"
+#include "gtpv2_set_ie.h"
+#include "tables/tables.h"
+#include "util.h"
 
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
@@ -261,7 +261,7 @@ process_service_request_pfcp_mod_sess_rsp(msg_info_t *msg)
         return ;
     }
     /* Retrive the session information based on session id. */
-    if (get_sess_entry(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
+    if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
                 &context) != 0) {
         clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u,"
                 "Sess ID:%lu, n",

@@ -11,106 +11,18 @@
 #include "ue.h"
 #include "sm_struct.h"
 #include "cp_config.h"
-#include "cp_log.h"
 #include "gen_utils.h"
 #include "clogger.h"
 #include "sm_structs_api.h"
+#include "tables/tables.h"
 
-struct rte_hash *seid_session_hash=NULL;
-extern struct rte_hash *bearer_by_fteid_hash;
 
-#define SM_HASH_SIZE (1 << 18)
 
 char proc_name [64];
 char state_name[64];
 char event_name[64];
 
-/**
- * @brief  : Add session entry in state machine hash table.
- * @param  : sess_id, key.
- * @param  : resp_info Resp
- * @return : 0 or 1.
- */
-uint8_t
-add_sess_entry(uint64_t sess_id, ue_context_t *context)
-{
-	int ret;
-	ue_context_t *temp = NULL;
 
-	/* Lookup for session entry. */
-	ret = rte_hash_lookup_data(seid_session_hash,
-				&sess_id, (void **)&temp);
-
-	if ( ret < 0) {
-		/* No session entry for sess_id
-		 * Add session entry for sess_id at seid_session_hash.
-		 */
-		ret = rte_hash_add_key_data(seid_session_hash,
-						&sess_id, context);
-		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to add entry = %lu"
-					"\n\tError= %s\n",
-					__func__, sess_id,
-					rte_strerror(abs(ret)));
-			return -1;
-		}
-	} else {
-        assert(0); 
-	}
-
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Sess Entry add for Sess ID:%lu\n",
-			__func__, sess_id);
-	return 0;
-}
-
-uint8_t
-get_sess_entry(uint64_t sess_id, ue_context_t **context)
-{
-	int ret = 0;
-	ret = rte_hash_lookup_data(seid_session_hash,
-				&sess_id, (void **)context);
-
-	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Entry not found for sess_id:%lu...\n",__func__,
-				__file__, __LINE__,sess_id);
-		return -1;
-	}
-
-	clLog(clSystemLog, eCLSeverityDebug, "%s %s %d Entry found for sess_id:%lu...\n",__func__,
-				__file__, __LINE__,sess_id);
-	return 0;
-
-}
-
-/* Requirement : Not sure why we lookup 2 tables. Need to understand this code and clean */
-uint8_t
-del_sess_entry(uint64_t sess_id)
-{
-	int ret = 0;
-	struct resp_info *resp = NULL;
-
-	/* Check Session Entry is present or Not */
-	ret = rte_hash_lookup_data(seid_session_hash,
-					&sess_id, (void **)resp);
-	if (ret) {
-		/* Session Entry is present. Delete Session Entry */
-		ret = rte_hash_del_key(seid_session_hash, &sess_id);
-
-		if ( ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s %s %d:Entry not found for sess_id:%lu...\n",
-						__func__, __file__, __LINE__, sess_id);
-			return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-		}
-	}
-
-	/* Free data from hash */
-	rte_free(resp);
-
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Sess ID:%lu\n",
-			__func__, sess_id);
-
-	return 0;
-}
 
 uint8_t
 update_ue_state(uint32_t teid_key, uint8_t state,  uint8_t ebi_index)
@@ -118,8 +30,7 @@ update_ue_state(uint32_t teid_key, uint8_t state,  uint8_t ebi_index)
 	int ret = 0;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
-	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-				&teid_key, (void **)&context);
+	ret = get_ue_context(teid_key, &context);
 
 	if ( ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s:Failed to update UE State for Teid:%x...\n", __func__,
@@ -141,8 +52,7 @@ get_ue_state(uint32_t teid_key, uint8_t ebi_index)
 	int ret = 0;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
-	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-				&teid_key, (void **)&context);
+	ret = get_ue_context(teid_key, &context);
 
 	if ( ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, teid_key);
@@ -152,43 +62,6 @@ get_ue_state(uint32_t teid_key, uint8_t ebi_index)
 	clLog(clSystemLog, eCLSeverityDebug, "%s: Teid:%u, State:%s\n",
 			__func__, teid_key, get_state_string(pdn->state));
 	return pdn->state;
-}
-
-int
-get_pdn(uint32_t teid_key, pdn_connection_t **pdn)
-{
-	int ret = 0;
-	ret = rte_hash_lookup_data(pdn_by_fteid_hash,
-				&teid_key, (void **)pdn);
-
-	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, teid_key);
-		return -1;
-	}
-
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Teid:%u\n",
-			__func__, teid_key);
-	return 0;
-
-}
-
-int8_t
-get_bearer_by_teid(uint32_t teid_key, eps_bearer_t **bearer)
-{
-	int ret = 0;
-        ret = rte_hash_lookup_data(bearer_by_fteid_hash,
-                                        &teid_key, (void **)bearer);
-
-
-        if ( ret < 0) {
-               // clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, teid_key);
-                return -1;
-        }
-
-
-        clLog(clSystemLog, eCLSeverityDebug, "%s: Teid %u\n",
-                        __func__, teid_key);
-        return 0;
 }
 
 int8_t
@@ -215,8 +88,7 @@ get_ue_context_while_error(uint32_t teid_key, ue_context_t **context)
 	int ret = 0;
 	eps_bearer_t *bearer = NULL;
 	/* If teid key is sgwc s11 */
-	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-                                        &teid_key, (void **)context);
+	ret = get_ue_context(teid_key, context);
 	if( ret < 0) {
 		/* If teid key is sgwc s5s8 */
 		ret = get_bearer_by_teid(teid_key, &bearer);
@@ -230,51 +102,6 @@ get_ue_context_while_error(uint32_t teid_key, ue_context_t **context)
 	return 0;
 }
 
-/* LOOKUP - TEID to session */
-int8_t
-get_ue_context(uint32_t teid_key, ue_context_t **context)
-{
-
-	int ret = 0;
-	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-					&teid_key, (void **)context);
-
-
-	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, teid_key);
-		return -1;
-	}
-
-
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Teid %u\n",
-			__func__, teid_key);
-	return 0;
-
-}
-/**
- * @brief  : Initializes the hash table used to account for CS/MB/DS req and resp handle sync.
- * @param  : No param
- * @return : Returns nothing
- */
-void
-init_transaction_hash(void)
-{
-	struct rte_hash_parameters rte_hash_params = {
-		.name = "state_machine_hash",
-	    .entries = SM_HASH_SIZE,
-	    .key_len = sizeof(uint64_t),
-	    .hash_func = rte_hash_crc,
-	    .hash_func_init_val = 0,
-	    .socket_id = rte_socket_id(),
-	};
-
-	seid_session_hash = rte_hash_create(&rte_hash_params);
-	if (!seid_session_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n",
-				rte_hash_params.name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
-}
 
 /**
  * @brief  : It return procedure name from enum
@@ -595,8 +422,7 @@ update_ue_proc(uint32_t teid_key, uint8_t proc, uint8_t ebi_index)
 	int ret = 0;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
-	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
-				&teid_key, (void **)&context);
+	ret = get_ue_context(teid_key, &context);
 
 	if ( ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s:Failed to update UE State for Teid:%x...\n", __func__,

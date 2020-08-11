@@ -96,17 +96,6 @@ and interface for communication needed by the applications:
 In below file uncomment one of the section for configurating as SPGW, SGW or PGW.
 cp_config.cfg - Configure port IPs and other parameters needed by control
                 plane application
-dp_config.cfg - Configure port IPs and MACs needed by data plane app
-interface.cfg - To add interface details between CP and DP. For example, for
-                UDP set ip address and ports.
-
-Following config files are referenced only for specific use case:
-rules_ipv4.cfg - Set ACL ipv4 filter if ACL_READ_CFG is to be used
-rules_ipv6.cfg - Set ACL ipv6 filter if ACL_READ_CFG is to be used
-simu_cp.cfg - Use this to set info in simulated control plane testing.
-                See `Simulated CP config'
-static_arp.cfg - Configure IP to MAC address mapping for devices whose address will not be
-				resolved through ARP dynamically.
 
 #### 2.2 CP Configuration
 `static_pcc.cfg` contains packet filters and policy, charging, & control information

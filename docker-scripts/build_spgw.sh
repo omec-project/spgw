@@ -56,7 +56,7 @@ build_fd_lib()
 
 build_gxapp()
 {
-	pushd $CUR_DIR/cp/gx_app
+	pushd $CUR_DIR/gx/gx_app
 	make clean
 	make || { echo -e "\nGxApp: Make GxApp failed\n"; }
 	popd

@@ -11,29 +11,6 @@
 #include "trans_struct.h"
 #include "upf_struct.h"
 
-/* Function */
-/**
- * @brief  : Handles association setuo request
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int 
-association_setup_handler(void *arg1, void *arg2);
-
-void
-process_assoc_resp_timeout_handler(void *data);
-
-/* Function */
-/**
- * @brief  : Handles processing of pfcp association response
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_assoc_resp_handler(void *arg1, void *arg2);
-
-/* Function */
 /**
  * @brief  : Handles processing of create session response
  * @param  : arg1, data contained in message
@@ -54,39 +31,12 @@ int process_sess_est_resp_handler(void *arg1, void *arg2);
 
 /* Function */
 /**
- * @brief  : Handles processing of delete session request
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_ds_req_handler(void *arg1, void *arg2);
-
-/* Function */
-/**
- * @brief  : Handles processing of ddn acknowledge response
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_ddn_ack_resp_handler(void *arg1, void *arg2);
-
-/* Function */
-/**
  * @brief  : Handles processing of report request
  * @param  : arg1, data contained in message
  * @param  : arg2, optional parameter
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int process_rpt_req_handler(void *arg1, void *arg2);
-
-/* Function */
-/**
- * @brief  : Default handler
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_default_handler(void *t1, void *t2);
 
 /* Function */
 /**
@@ -297,8 +247,6 @@ int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt);
 
 int
 process_error_occured_handler_new(void *data, void *unused_param);
-
-int handle_pfcp_association_setup_response(void *msg);
 
 void upf_pfcp_setup_success(void *data, uint16_t event);
 #endif

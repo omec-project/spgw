@@ -12,9 +12,6 @@
  */
 #define MAX_LEN 128
 
-/* VS: Number of connection can maitain in the hash */
-#define NUM_CONN	500
-
 #ifdef USE_CSID
 /* Configure the local csid */
 extern uint16_t local_csid;

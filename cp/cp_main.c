@@ -22,14 +22,14 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp.h"
 #include <sys/stat.h>
-#include "cp_log.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"
 #include "cp_config_defs.h"
 #include "ipc_api.h"
 #include "spgw_cpp_wrapper.h"
-#include "timer.h"
+#include "cp_timer.h"
 #include "cp_peer.h"
+#include "tables/tables.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -65,28 +65,6 @@ clock_t cp_stats_execution_time;
 _timer_t st_time;
 
 /**
- * @brief  : Setting/enable CP RTE LOG_LEVEL.
- * @param  : log_level, log level to be set
- * @return : Returns nothing
- */
-static void
-set_log_level(uint8_t log_level)
-{
-
-/** Note :In dpdk set max log level is INFO, here override the
- *  max value of RTE_LOG_INFO for enable DEBUG logs (dpdk-16.11.4
- *  and dpdk-18.02).
- */
-	if (log_level == NGIC_DEBUG)
-		rte_log_set_level(RTE_LOGTYPE_CP, RTE_LOG_DEBUG);
-	else if (log_level == NOTICE)
-		rte_log_set_global_level(RTE_LOG_NOTICE);
-	else 
-        rte_log_set_global_level(RTE_LOG_INFO);
-
-}
-
-/**
  *
  * @brief  : Parses non-dpdk command line program arguments for control plane
  * @param  : argc, number of arguments
@@ -97,7 +75,6 @@ static void
 parse_arg(int argc, char **argv)
 {
     char errbuff[PCAP_ERRBUF_SIZE];
-    int args_set = 0;
     int c = 0;
     pcap_t *pcap;
 
@@ -134,14 +111,6 @@ parse_arg(int argc, char **argv)
                     break;
                 }
 
-            case 'l':
-                {
-                    // ajay - How to change DPDK log level
-                    set_log_level((uint8_t)atoi(optarg));
-                    args_set |= LOG_LEVEL_SET;
-                    break;
-                }
-
             case 'f':
                 {
                     config_update_base_folder = calloc(1, 128);
@@ -166,7 +135,6 @@ parse_arg(int argc, char **argv)
         strcpy(config_update_base_folder, CP_CONFIG_FOLDER);
         native_config_folder = true;
     }
-    printf("Command line argument parsing done \n");
 }
 
 /**
@@ -200,9 +168,6 @@ main(int argc, char **argv)
 {
     int ret;
 
-    printf("CP: Control-Plane start \n");
-    //set_signal_mask();
-
     start_time = current_ntp_timestamp();
 
     /* VS: Increment the restart counter value after starting control plane */
@@ -232,8 +197,8 @@ main(int argc, char **argv)
 
     init_cpp_tables(); 
 
-    /* TODO: Need to Re-arrange the hash initialize */
     create_heartbeat_hash_table();
+
     create_associated_upf_hash();
 
     /* Make a connection between control-plane and gx_app */
@@ -260,8 +225,6 @@ main(int argc, char **argv)
 
 
     init_pfcp_tables();
-
-    init_transaction_hash();
 
 #ifdef USE_CSID
     init_fqcsid_hash_tables();

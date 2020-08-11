@@ -13,7 +13,7 @@
  */
 #include "cp_interface.h"
 #include "cp_main.h"
-#include "gtpv2c_msg_struct.h"
+#include "gtpv2_msg_struct.h"
 
 /**
  * @brief udp socket structure.
@@ -101,17 +101,6 @@ struct msgbuf rbuf;
  */
 void iface_process_ipc_msgs(void);
 
-
-/**
- * @brief Functino to init rte hash tables.
- *
- * @param none
- * Return
- *  None
- */
-
-int
-simu_cp(__rte_unused void *ptr);
 
 /**
  * @brief callback to handle downlink data notification messages from the

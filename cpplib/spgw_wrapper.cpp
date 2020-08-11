@@ -17,7 +17,6 @@ extern "C"
     spgw_config_profile_t *parse_subscriber_profiles_c(const char *file)
     {
         spgw_config_profile_t *new_config;
-        printf("parse_config [%s] called in the library \n", file);
         new_config = spgwConfig::parse_subscriber_profiles_cpp(file);
         return new_config;
     }
@@ -54,43 +53,37 @@ extern "C"
 
     bool add_pfcp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq, void *trans)
     {
-        struct in_addr test; test.s_addr = addr;
-        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(test), htons(port), msg_seq); 
+        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(*((struct in_addr *)&addr)), htons(port), msg_seq); 
         return table->add_pfcp_trans(addr, port, msg_seq, trans); 
     }
 
     void* find_pfcp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq)
     {
-        struct in_addr test; test.s_addr = addr;
-        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(test), htons(port), msg_seq); 
+        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(*((struct in_addr *)&addr)), htons(port), msg_seq); 
         return table->find_pfcp_trans(addr, port, msg_seq); 
     }
 
     void* delete_pfcp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq) 
     {
-        struct in_addr test; test.s_addr = addr;
-        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(test), htons(port), msg_seq); 
+        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(*((struct in_addr *)&addr)), htons(port), msg_seq); 
         return table->delete_pfcp_trans(addr, port, msg_seq); 
     }
 
     bool add_gtp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq, void *trans)
     {
-        struct in_addr test; test.s_addr = addr;
-        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(test), htons(port), msg_seq); 
+        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(*((struct in_addr *)&addr)), htons(port), msg_seq); 
         return table->add_gtp_trans(addr, port, msg_seq, trans); 
     }
 
     void* find_gtp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq)
     {
-        struct in_addr test; test.s_addr = addr;
-        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(test), htons(port), msg_seq); 
+        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(*((struct in_addr *)&addr)), htons(port), msg_seq); 
         return table->find_gtp_trans(addr, port, msg_seq); 
     }
 
     void* delete_gtp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq) 
     {
-        struct in_addr test; test.s_addr = addr;
-        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(test), htons(port), msg_seq); 
+        printf("%s  Addr -  %s, Port - %d, Sequence = %d \n",__FUNCTION__,inet_ntoa(*((struct in_addr *)&addr)), htons(port), msg_seq); 
         return table->delete_gtp_trans(addr, port, msg_seq); 
     }
 

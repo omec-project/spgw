@@ -10,6 +10,13 @@ alloc_pfcp_association_setup_proc(msg_info_t *msg);
 void 
 pfcp_association_event_handler(void *proc, uint32_t event, void *data);
 
+/**
+ * @brief  : Handles association setuo request
+ * @param  : arg1, data contained in message
+ * @param  : arg2, optional parameter
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+
 int
 association_setup_handler(void *data, void *unused_param);
 
@@ -21,6 +28,7 @@ buffer_csr_request(proc_context_t *proc_context);
 
 int 
 handle_pfcp_association_setup_response(void *msg_t);
+
 void
 process_assoc_resp_timeout_handler(void *data1);
 

@@ -9,13 +9,14 @@
 #include <rte_udp.h>
 #include <rte_hash_crc.h>
 #include <errno.h>
+#include "cp_init.h"
 #include "clogger.h"
 #include "gw_adapter.h"
 #include "cp_stats.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_cp_association.h"
-#include "timer.h"
+#include "cp_timer.h"
 #include "sm_struct.h"
 #include "cp_config_apis.h"
 #include "cp_config.h"
@@ -23,6 +24,9 @@
 #include "cp_transactions.h"
 #include "gtpv2_internal.h"
 #include "cp_io_poll.h"
+#include "gtpv2_interface.h"
+#include "pfcp_cp_interface.h"
+#include "tables/tables.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -36,13 +40,10 @@ extern pcap_dumper_t *pcap_dumper;
 cp_config_t *cp_config;
 
 uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
-
 uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
 struct sockaddr_in s5s8_sockaddr;
 socklen_t s5s8_sockaddr_len = sizeof(s5s8_sockaddr);
-
-
 uint8_t pfcp_tx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -176,46 +177,6 @@ static void init_s5s8(void)
     my_sock.s5s8_recv_sockaddr = s5s8_recv_sockaddr;
 }
 
-#ifdef CP_DP_TABLE_CONFIG
-static void initialize_tables_on_dp(void)
-{
-	struct dp_id dp_id = { .id = DPN_ID };
-
-	sprintf(dp_id.name, SDF_FILTER_TABLE);
-	if (sdf_filter_table_create(dp_id, SDF_FILTER_TABLE_SIZE))
-		rte_panic("sdf_filter_table creation failed\n");
-
-	sprintf(dp_id.name, ADC_TABLE);
-	if (adc_table_create(dp_id, ADC_TABLE_SIZE))
-		rte_panic("adc_table creation failed\n");
-
-	sprintf(dp_id.name, PCC_TABLE);
-	if (pcc_table_create(dp_id, PCC_TABLE_SIZE))
-		rte_panic("pcc_table creation failed\n");
-
-	sprintf(dp_id.name, METER_PROFILE_SDF_TABLE);
-	if (meter_profile_table_create(dp_id, METER_PROFILE_SDF_TABLE_SIZE))
-		rte_panic("meter_profile_sdf_table creation failed\n");
-
-	sprintf(dp_id.name, SESSION_TABLE);
-
-	if (session_table_create(dp_id, LDB_ENTRIES_DEFAULT))
-		rte_panic("session_table creation failed\n");
-
-}
-#endif
-
-void init_dp_rule_tables(void)
-{
-
-#ifdef CP_DP_TABLE_CONFIG
-	initialize_tables_on_dp();
-#endif
-
-	init_packet_filters();
-	parse_adc_rules();
-
-}
 /**
  * @brief  : Initializes Control Plane data structures, packet filters, and calls for the
  *           Data Plane to create required tables
@@ -223,7 +184,11 @@ void init_dp_rule_tables(void)
 void init_cp(void)
 {
 
+    init_pfcp_interface();
+
 	init_pfcp();
+
+    init_gtp_interface();
 
 	switch (cp_config->cp_type) {
 	case SGWC:
@@ -264,12 +229,12 @@ void init_cp(void)
 		rte_exit(EXIT_FAILURE, "Error:can't catch SIGSEGV\n");
 
 	create_ue_hash();
-
+	create_pdn_hash();
+	create_bearer_hash();
 	create_upf_context_hash();
-
 	create_gx_context_hash();
-
 	create_upf_by_ue_hash();
+    create_pdn_callid_hash(); 
 
 }
 

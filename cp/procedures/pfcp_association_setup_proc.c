@@ -19,8 +19,8 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_cp_association.h"
-#include "gtpv2c_error_rsp.h"
-#include "gtpc_session.h"
+#include "gtpv2_error_rsp.h"
+#include "gtpv2_session.h"
 #include "cp_config.h"
 #include "clogger.h"
 #include "csid_cp_cleanup.h"
@@ -38,6 +38,8 @@
 #include "cp_transactions.h"
 #include "cp_peer.h"
 #include "pfcp_association_setup_proc.h"
+#include "tables/tables.h"
+#include "util.h"
 
 
 extern udp_sock_t my_sock;
@@ -106,7 +108,7 @@ association_setup_handler(void *data, void *unused_param)
 	pdn = context->pdns[ebi_index];
     upf_context = context->upf_context;
 	if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
- 		ret = get_sess_entry(pdn->seid, &resp);
+ 		ret = get_sess_entry_seid(pdn->seid, &resp);
 		if(ret != -1 && resp != NULL){
 			resp->gtpc_msg.csr = msg->gtpc_msg.csr;
 		}
@@ -192,13 +194,18 @@ handle_pfcp_association_setup_response(void *msg_t)
         if(pfcp_trans != NULL) { 
             break;
         }
-		clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. using workaround to find transaction for  UPF IP:%s\n",
+		clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. using workaround to find transaction for  UPF IP:%s",
 		__func__, inet_ntoa(peer_addr->sin_addr));
-        upf_context = get_upf_context(peer_addr->sin_addr.s_addr);
+        upf_context = NULL; 
+        upf_context_entry_lookup(peer_addr->sin_addr.s_addr, &upf_context);
+        if(upf_context == NULL) {
+            clLog(clSystemLog, eCLSeverityCritical, "UPF not found. Ignore setup response ");
+            return -1;
+        }
         pfcp_trans = upf_context->trans_entry;
         // hack for pfcp which sends 0 sequence number in ack 
 	    if (pfcp_trans == NULL ) {
-		    clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. Dropping association response message. from UPF IP:%s\n",
+		    clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. Dropping association response message. from UPF IP:%s",
 				__func__, inet_ntoa(peer_addr->sin_addr));
 		    return -1;
 	    }
@@ -313,6 +320,31 @@ handle_pfcp_association_setup_response(void *msg_t)
     return 0;
 }
 
+static uint32_t 
+fill_pfcp_association_setup_req(pfcp_assn_setup_req_t *pfcp_ass_setup_req)
+{
+
+    uint32_t seq  = 1;
+    char node_addr[INET_ADDRSTRLEN] = {0};
+
+    memset(pfcp_ass_setup_req, 0, sizeof(pfcp_assn_setup_req_t)) ;
+
+    seq = get_pfcp_sequence_number(PFCP_ASSOCIATION_SETUP_REQUEST, seq);
+    set_pfcp_seid_header((pfcp_header_t *) &(pfcp_ass_setup_req->header),
+            PFCP_ASSOCIATION_SETUP_REQUEST, NO_SEID, seq);
+
+    inet_ntop(AF_INET, &(cp_config->pfcp_ip), node_addr, INET_ADDRSTRLEN);
+
+    unsigned long node_value = inet_addr(node_addr);
+    set_node_id(&(pfcp_ass_setup_req->node_id), node_value);
+
+    set_recovery_time_stamp(&(pfcp_ass_setup_req->rcvry_time_stmp));
+
+    /* As we are not supporting this feature
+       set_cpf_features(&(pfcp_ass_setup_req->cp_func_feat)); */
+    return seq;
+}
+
 /**
  * @brief  : This function creates association setup request and sends to peer
  * @param  : context holds information of ue
@@ -327,9 +359,8 @@ assoication_setup_request(upf_context_t *upf_context)
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
     uint32_t seq_num;
     pfcp_assn_setup_req_t pfcp_ass_setup_req = {0};
-    struct in_addr test; test.s_addr = upf_context->upf_sockaddr.sin_addr.s_addr;
 
-    printf("Initiate PFCP setup to peer address = %s \n", inet_ntoa(test));
+    printf("Initiate PFCP setup to peer address = %s \n", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
 
     seq_num = fill_pfcp_association_setup_req(&pfcp_ass_setup_req);
     RTE_SET_USED(seq_num);
@@ -401,7 +432,7 @@ upf_pfcp_setup_failure(void *data, uint16_t event)
     }
     // ajay - check upf address carefully
     printf("Deleting UPF context %s",inet_ntoa(upf_context->upf_sockaddr.sin_addr));
-    rte_hash_del_key(upf_context_by_ip_hash, (const void *) &upf_context->upf_sockaddr.sin_addr.s_addr);
+    upf_context_delete_entry(upf_context->upf_sockaddr.sin_addr.s_addr);
     rte_free(upf_context);
 }
 

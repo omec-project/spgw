@@ -15,7 +15,7 @@
 #include <rte_ether.h>
 #include <rte_ethdev.h>
 #include "cp_main.h"
-#include "timer.h"
+#include "cp_timer.h"
 
 
 /**
@@ -39,14 +39,6 @@ extern struct cp_params cp_params;
  */
 void
 init_cp(void);
-
-/**
- * @brief  : Initialize dp rule table
- * @param  : void
- * @return : Void
- */
-void
-init_dp_rule_tables(void);
 
 /**
  * @brief  : Updates restart counter Value

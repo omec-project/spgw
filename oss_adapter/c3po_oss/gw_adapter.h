@@ -8,12 +8,6 @@
 #ifndef GW_ADAPTER_H
 #define GW_ADAPTER_H
 
-/* TODO: Verify */
-#ifdef CP_BUILD
-#include "cp_init.h"
-#include "cp_config.h"
-#endif /* CP_BUILD */
-
 #define REST_SUCESSS  200
 #define REST_FAIL     400
 #define LAST_TIMER_SIZE 80
@@ -208,9 +202,6 @@ extern int s5s8logger;
 extern int gxlogger;
 extern int apilogger;
 extern int epclogger;
-extern int s_one_u_logger;
-extern int sgilogger;
-extern int knilogger;
 
 extern cli_node_t *cli_node_ptr; // OSS cli node ptr
 
@@ -226,10 +217,6 @@ extern char ossInterfaceStr[][10];
 extern char ossInterfaceProtocolStr[][10];
 extern char ossGatewayStr[][10];
 extern uint64_t oss_reset_time;
-
-#ifndef CP_BUILD
-extern struct app_params app;
-#endif /* CP_BUILD */
 
 void init_cli_module(uint8_t gw_logger);
 int update_cli_stats(uint32_t ip_addr, uint8_t mgs_type,int dir,CLIinterface it);
