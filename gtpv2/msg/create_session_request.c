@@ -599,8 +599,6 @@ int validate_csreq_msg(create_sess_req_t *csr)
 		return GTPV2C_CAUSE_MANDATORY_IE_MISSING;
 	}
 
-    printf("bc = %d fteid = %d imsi %d apn_ambr = %d pdn_type = %d bc qos = %d rat %d pdn type = %d \n", csr->bearer_contexts_to_be_created.header.len, csr->sender_fteid_ctl_plane.header.len, csr->imsi.header.len, csr->apn_ambr.header.len, csr->pdn_type.header.len, csr->bearer_contexts_to_be_created.bearer_lvl_qos.header.len, csr->rat_type.header.len, (csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4));
-
 	if (/*!csr->max_apn_rstrct.header.len
 			||*/ !csr->bearer_contexts_to_be_created.header.len
 			|| !csr->sender_fteid_ctl_plane.header.len

@@ -48,14 +48,6 @@ void
 fill_pfcp_association_update_resp(pfcp_assn_upd_rsp_t *pfcp_asso_update_resp);
 
 /**
- * @brief  : This is a function to fill pfcp association setup request
- * @param  : pfcp_asso_setup_req is pointer to structure of pfcp association setup request
- * @return : This function dose not return anything
- */
-uint32_t
-fill_pfcp_association_setup_req(pfcp_assn_setup_req_t *pfcp_ass_setup_req);
-
-/**
  * @brief  : This is a function to fill pfcp association update request
  * @param  : pfcp_asso_update_req is pointer to structure of pfcp association update request
  * @return : This function dose not return anything

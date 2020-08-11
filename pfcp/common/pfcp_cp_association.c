@@ -82,30 +82,6 @@ fill_pfcp_association_update_req(pfcp_assn_upd_req_t *pfcp_ass_update_req)
 
 }
 
-uint32_t 
-fill_pfcp_association_setup_req(pfcp_assn_setup_req_t *pfcp_ass_setup_req)
-{
-
-	uint32_t seq  = 1;
-	char node_addr[INET_ADDRSTRLEN] = {0};
-
-	memset(pfcp_ass_setup_req, 0, sizeof(pfcp_assn_setup_req_t)) ;
-
-	seq = get_pfcp_sequence_number(PFCP_ASSOCIATION_SETUP_REQUEST, seq);
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_ass_setup_req->header),
-			PFCP_ASSOCIATION_SETUP_REQUEST, NO_SEID, seq);
-
-	inet_ntop(AF_INET, &(cp_config->pfcp_ip), node_addr, INET_ADDRSTRLEN);
-
-	unsigned long node_value = inet_addr(node_addr);
-	set_node_id(&(pfcp_ass_setup_req->node_id), node_value);
-
-	set_recovery_time_stamp(&(pfcp_ass_setup_req->rcvry_time_stmp));
-
-	/* As we are not supporting this feature
-	set_cpf_features(&(pfcp_ass_setup_req->cp_func_feat)); */
-    return seq;
-}
 
 /* Fill pfd mgmt cstm ie */
 uint16_t

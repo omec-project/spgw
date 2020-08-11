@@ -87,13 +87,13 @@ void iface_process_ipc_msgs(void)
                 event  = (stack_event_t *)get_stack_unwind_event();
                 while(event != NULL)
                 {
-                    clLog(clSystemLog, eCLSeverityCritical,"handle stack unwind event %d \n",event->event);
+                    clLog(clSystemLog, eCLSeverityCritical,"handle stack unwind event %d ",event->event);
                     event->cb(event->data, event->event);
                     free(event);
                     event  = (stack_event_t *)get_stack_unwind_event();
                 }
             }
-            clLog(clSystemLog, eCLSeverityCritical,"N4 Packet read complete\n");
+            clLog(clSystemLog, eCLSeverityCritical,"N4 Packet read complete");
         }
 
         if ((cp_config->cp_type  == SGWC) || (cp_config->cp_type == SAEGWC)) {
@@ -106,13 +106,13 @@ void iface_process_ipc_msgs(void)
                     event  = (stack_event_t *)get_stack_unwind_event();
                     while(event != NULL)
                     {
-                        clLog(clSystemLog, eCLSeverityCritical,"handle stack unwind event %d \n",event->event);
+                        clLog(clSystemLog, eCLSeverityCritical,"handle stack unwind event %d ",event->event);
                         event->cb(event->data, event->event);
                         free(event);
                         event  = (stack_event_t *)get_stack_unwind_event();
                     }
                 }
-                clLog(clSystemLog, eCLSeverityCritical,"S11 Packet read complete\n");
+                clLog(clSystemLog, eCLSeverityCritical,"S11 Packet read complete");
             }
         }
 

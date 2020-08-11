@@ -97,7 +97,7 @@ ue_context_entry_lookup_imsiKey(uint64_t imsi, ue_context_t **entry)
 			(const void*) &(imsi), (void **) entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN UE HASH [%u]\n",
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN UE HASH [%u]",
 				__func__, __LINE__, imsi);
 		return -1;
 	}
@@ -137,7 +137,7 @@ get_ue_context(uint32_t teid, ue_context_t **entry)
 			(const void*) &(teid), (void **) entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN UE HASH [%u]\n",
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN UE HASH [%u]",
 				__func__, __LINE__, teid);
 		return -1;
 	}

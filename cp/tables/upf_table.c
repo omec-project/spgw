@@ -66,7 +66,7 @@ upf_context_entry_lookup(uint32_t upf_ip, upf_context_t **entry)
 			(const void*) &(upf_ip), (void **) entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN UPF HASH [%u]\n",
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN UPF HASH [%u]",
 				__func__, __LINE__, upf_ip);
 		return -1;
 	}

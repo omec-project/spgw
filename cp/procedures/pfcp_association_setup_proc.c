@@ -194,14 +194,18 @@ handle_pfcp_association_setup_response(void *msg_t)
         if(pfcp_trans != NULL) { 
             break;
         }
-		clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. using workaround to find transaction for  UPF IP:%s\n",
+		clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. using workaround to find transaction for  UPF IP:%s",
 		__func__, inet_ntoa(peer_addr->sin_addr));
         upf_context = NULL; 
         upf_context_entry_lookup(peer_addr->sin_addr.s_addr, &upf_context);
+        if(upf_context == NULL) {
+            clLog(clSystemLog, eCLSeverityCritical, "UPF not found. Ignore setup response ");
+            return -1;
+        }
         pfcp_trans = upf_context->trans_entry;
         // hack for pfcp which sends 0 sequence number in ack 
 	    if (pfcp_trans == NULL ) {
-		    clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. Dropping association response message. from UPF IP:%s\n",
+		    clLog(clSystemLog, eCLSeverityCritical, "%s: transaction not found. Dropping association response message. from UPF IP:%s",
 				__func__, inet_ntoa(peer_addr->sin_addr));
 		    return -1;
 	    }
@@ -314,6 +318,31 @@ handle_pfcp_association_setup_response(void *msg_t)
     }
     queue_stack_unwind_event(UPF_CONNECTION_SETUP_SUCCESS, (void *)upf_context, upf_pfcp_setup_success);
     return 0;
+}
+
+static uint32_t 
+fill_pfcp_association_setup_req(pfcp_assn_setup_req_t *pfcp_ass_setup_req)
+{
+
+    uint32_t seq  = 1;
+    char node_addr[INET_ADDRSTRLEN] = {0};
+
+    memset(pfcp_ass_setup_req, 0, sizeof(pfcp_assn_setup_req_t)) ;
+
+    seq = get_pfcp_sequence_number(PFCP_ASSOCIATION_SETUP_REQUEST, seq);
+    set_pfcp_seid_header((pfcp_header_t *) &(pfcp_ass_setup_req->header),
+            PFCP_ASSOCIATION_SETUP_REQUEST, NO_SEID, seq);
+
+    inet_ntop(AF_INET, &(cp_config->pfcp_ip), node_addr, INET_ADDRSTRLEN);
+
+    unsigned long node_value = inet_addr(node_addr);
+    set_node_id(&(pfcp_ass_setup_req->node_id), node_value);
+
+    set_recovery_time_stamp(&(pfcp_ass_setup_req->rcvry_time_stmp));
+
+    /* As we are not supporting this feature
+       set_cpf_features(&(pfcp_ass_setup_req->cp_func_feat)); */
+    return seq;
 }
 
 /**

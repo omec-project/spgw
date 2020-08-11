@@ -73,7 +73,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		it = S5S8;
 	}
 
-	clLog(clSystemLog, eCLSeverityCritical, "%s - %s:%s:%u.%s (%dms) has expired\n", getPrintableTime(),
+	clLog(clSystemLog, eCLSeverityCritical, "%s - %s:%s:%u.%s (%dms) has expired", getPrintableTime(),
 		md->name, inet_ntoa(*(struct in_addr *)&md->dstIP), md->portId,
 		ti == &md->pt ? "Periodic_Timer" :
 		ti == &md->tt ? "Transmit_Timer" : "unknown",

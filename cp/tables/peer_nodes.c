@@ -47,7 +47,10 @@ int
 add_peer_entry(uint32_t ipaddr, peerData_t *peer)
 {
 	int ret;
-    printf("%s Peer entry add %s \n", __FUNCTION__, inet_ntoa(*((struct in_addr *)&ipaddr)));
+
+	clLog(clSystemLog, eCLSeverityDebug, "Add entry to connection table  ip:%s",
+			inet_ntoa(*(struct in_addr *)&ipaddr));
+
 	ret = rte_hash_add_key_data(conn_hash_handle,
 			(const void *)&ipaddr, (void *)peer);
 
@@ -69,7 +72,7 @@ get_peer_entry(uint32_t ipaddr, peerData_t **entry)
 			(const void*) &(ipaddr), (void **) entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN PEER HASH HASH [%s]\n",
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN PEER HASH HASH [%s]",
 				__func__, __LINE__, inet_ntoa(*((struct in_addr *)&ipaddr)));
 		return -1;
 	}
@@ -81,7 +84,7 @@ void del_entry_from_hash(uint32_t ipAddr)
 
 	int ret = 0;
 
-	clLog(clSystemLog, eCLSeverityDebug, " Delete entry from connection table of ip:%s\n",
+	clLog(clSystemLog, eCLSeverityDebug, " Delete entry from connection table of ip:%s",
 			inet_ntoa(*(struct in_addr *)&ipAddr));
 
 	/* Delete entry from connection hash table */

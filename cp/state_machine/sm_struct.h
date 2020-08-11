@@ -60,6 +60,7 @@ typedef struct msg_info {
 	}gtpc_msg;
 	union pfcp_msg_info_t {
 		pfcp_pfd_mgmt_rsp_t pfcp_pfd_resp;
+		pfcp_assn_setup_req_t pfcp_ass_req;
 		pfcp_assn_setup_rsp_t pfcp_ass_resp;
 		pfcp_sess_estab_rsp_t pfcp_sess_est_resp;
 		pfcp_sess_mod_rsp_t pfcp_sess_mod_resp;

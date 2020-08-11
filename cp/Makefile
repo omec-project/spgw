@@ -101,6 +101,7 @@ SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_cp_set_ie.o
 SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_cp_util.o
 SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_init.o
 SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_interface.o
+SRCS-y += $(SRCDIR)/../pfcp/msg/pfcp_association_setup_request.o
 SRCS-y += $(SRCDIR)/../pfcp/msg/pfcp_association_setup_response.o
 SRCS-y += $(SRCDIR)/../pfcp/msg/pfcp_session_est_response.o
 SRCS-y += $(SRCDIR)/../pfcp/msg/pfcp_session_delete_response.o

@@ -19,6 +19,7 @@ void init_pfcp_interface(void)
 
     pfcp_msg_handler[PFCP_HEARTBEAT_REQUEST] =  handle_pfcp_heartbit_req_msg;
     pfcp_msg_handler[PFCP_HEARTBEAT_RESPONSE] =  handle_pfcp_heartbit_rsp_msg;
+    pfcp_msg_handler[PFCP_ASSOCIATION_SETUP_REQUEST] =  handle_pfcp_association_setup_request_msg;
     pfcp_msg_handler[PFCP_ASSOCIATION_SETUP_RESPONSE] =  handle_pfcp_association_setup_response_msg;
     pfcp_msg_handler[PFCP_SESSION_ESTABLISHMENT_RESPONSE] =  handle_pfcp_session_est_response_msg;
     pfcp_msg_handler[PFCP_SESSION_MODIFICATION_RESPONSE] =  handle_pfcp_session_mod_response_msg;

@@ -37,6 +37,9 @@ int
 handle_pfcp_heartbit_req_msg(msg_info_t *msg, pfcp_header_t *pfcp_header);
 
 int 
+handle_pfcp_association_setup_request_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
+
+int 
 handle_pfcp_association_setup_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
 
 int 

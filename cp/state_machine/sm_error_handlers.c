@@ -173,7 +173,6 @@ process_error_occured_handler_new(void *data, void *unused_param)
         }
     }
 
-    printf("Delete Proc if any \n");
     if(proc != NULL) {
         if(proc->gtpc_trans != NULL) {
             printf("Delete gtpc procs \n");

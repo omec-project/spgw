@@ -179,7 +179,7 @@ process_create_sess_req(create_sess_req_t *csr,
         // caller sends out csrsp 
         return GTPV2C_CAUSE_MISSING_UNKNOWN_APN; 
     }
-// DNS would need changes here 
+    // DNS would need changes here 
     /* TODO - IE presense should be validated before accessing them */
     sub_profile_t *sub_prof=NULL;
     sub_selection_keys_t dpkey = {0}; 
@@ -271,7 +271,6 @@ process_create_sess_req(create_sess_req_t *csr,
     }
 
     if(csr->pco_new.header.len != 0) {
-        printf("%s %d - PCO length = %d \n", __FUNCTION__, __LINE__, csr->pco_new.header.len);
         context->pco = calloc(1, sizeof(pco_ie_t));
         memcpy(context->pco, (void *)(&csr->pco_new), sizeof(pco_ie_t));
     }
