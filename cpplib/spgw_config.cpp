@@ -414,4 +414,3 @@ spgwConfig::invalidate_user_plane_address(uint32_t addr)
     }
     return ;
 }
-
