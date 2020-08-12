@@ -40,6 +40,8 @@ fill_pfcp_association_setup_rsp(pfcp_assn_setup_rsp_t *pfcp_ass_setup_rsp, uint3
 
 	set_recovery_time_stamp(&(pfcp_ass_setup_rsp->rcvry_time_stmp));
 
+	set_cause(&(pfcp_ass_setup_rsp->cause), REQUESTACCEPTED);
+
     return;
 }
 int 
