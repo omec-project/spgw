@@ -28,6 +28,7 @@ typedef struct udp_sock_t {
     int gx_app_sock;
     int select_max_fd;
 } udp_sock_t;
+extern udp_sock_t my_sock;
 
 /* message types */
 enum dp_msg_type {
@@ -86,12 +87,9 @@ struct msgbuf {
 		struct mtr_entry mtr_entry;
 		struct cb_args_table msg_table;
 		struct msg_ue_cdr ue_cdr;
-
 		struct downlink_data_notification dl_ddn;	/** Downlink data notification info */
 	} msg_union;
 };
-struct msgbuf sbuf;
-struct msgbuf rbuf;
 
 
 /**

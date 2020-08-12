@@ -11,10 +11,7 @@
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
 #include "tables/tables.h"
-
-extern udp_sock_t my_sock;
-
-
+#include "cp_io_poll.h"
 
 // saegw, INITIAL_PDN_ATTACH_PROC,PFCP_SESS_MOD_REQ_SNT_STATE,PFCP_SESS_MOD_RESP_RCVD_EVNT => process_sess_mod_resp_handler
 // saegw SGW_RELOCATION_PROC PFCP_SESS_MOD_REQ_SNT_STATE PFCP_SESS_MOD_RESP_RCVD_EVNT => process_sess_mod_resp_handler

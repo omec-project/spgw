@@ -28,23 +28,19 @@
 #include "cp_timer.h"
 #include "cp_init.h"
 #include "util.h"
+#include "cp_io_poll.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
 #endif /* USE_DNS_QUERY */
 
-extern udp_sock_t my_sock;
 uint8_t s11_rx_buf[MAX_GTPV2C_UDP_LEN];
 
 uint32_t start_time;
 
 /* S5S8 */
-extern socklen_t s5s8_sockaddr_len;
 extern uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
 extern uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
-
-struct cp_params cp_params;
-extern struct cp_stats_t cp_stats;
 
 
 uint16_t payload_length;
@@ -265,7 +261,7 @@ msg_handler_s5s8(void)
 	bytes_s5s8_rx = recvfrom(my_sock.sock_fd_s5s8, s5s8_rx_buf,
 			MAX_GTPV2C_UDP_LEN, MSG_DONTWAIT,
 			(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-			&s5s8_sockaddr_len);
+            sizeof(struct sockaddr_in));
 
 	if (bytes_s5s8_rx == 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "s5s8 recvfrom error:"

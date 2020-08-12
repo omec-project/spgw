@@ -15,7 +15,6 @@
 #include "ue.h"
 #include "gtp_ies.h"
 #include "gtp_messages.h"
-#include "cp_io_poll.h"
 #include "cp_timer.h"
 #include "gtpv2_internal.h"
 #include <sys/queue.h>
@@ -65,6 +64,7 @@
 #define BUFFERED_ENTRIES_DEFAULT (1024)
 #define SWGC_S5S8_HANDOVER_ENTRIES_DEFAULT     (50)
 
+struct msgbuf;
 
 #pragma pack(1)
 

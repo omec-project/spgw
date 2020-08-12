@@ -20,14 +20,13 @@
 #include "cp_stats.h"
 #include "sm_struct.h"
 #include "cp_config.h"
-#include "cp_config.h"
 #include "gtpv2_error_rsp.h"
 #include "cp_config_defs.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
 #include <unistd.h>
+#include "cp_io_poll.h"
 
-extern udp_sock_t my_sock;
 uint8_t pfcp_rx[1024]; /* TODO: Decide size */
 
  

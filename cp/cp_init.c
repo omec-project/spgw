@@ -33,7 +33,6 @@
 #endif /* USE_DNS_QUERY */
 
 int s11_pcap_fd = -1;
-extern udp_sock_t my_sock;
 extern pcap_t *pcap_reader;
 extern pcap_dumper_t *pcap_dumper;
 
@@ -43,7 +42,6 @@ uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
 struct sockaddr_in s5s8_sockaddr;
-socklen_t s5s8_sockaddr_len = sizeof(s5s8_sockaddr);
 uint8_t pfcp_tx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 

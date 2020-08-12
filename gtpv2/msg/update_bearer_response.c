@@ -106,7 +106,7 @@ process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	//send S5S8 interface update bearer response.
 	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
    	      		(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-       			s5s8_sockaddr_len);
+                sizeof(struct sockaddr_in));
 
 	/* Update UE State */
 	pdn_cntxt->state = CONNECTED_STATE;

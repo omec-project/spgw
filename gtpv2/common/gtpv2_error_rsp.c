@@ -25,11 +25,8 @@
 #include "spgw_cpp_wrapper.h"
 #include "tables/tables.h"
 #include "util.h"
+#include "cp_io_poll.h"
 
-extern udp_sock_t my_sock;
-extern socklen_t s5s8_sockaddr_len;
-
-extern uint16_t payload_length;
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 void
@@ -159,6 +156,8 @@ void get_error_csrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface) 
 {
     int ret = 0;
+    uint16_t payload_length;
+
     create_sess_rsp_t cs_resp = {0};
     err_rsp_info rsp_info = {0};
 
@@ -240,7 +239,8 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
         update_cli_stats(msg->peer_addr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
     }else{
         gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
-                (struct sockaddr *)(&my_sock.s5s8_recv_sockaddr),s5s8_sockaddr_len);
+                (struct sockaddr *)(&my_sock.s5s8_recv_sockaddr),
+		        sizeof(struct sockaddr_in));
 
         struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)&(my_sock.s5s8_recv_sockaddr);
 
@@ -335,6 +335,7 @@ void get_error_mbrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 void mbr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 {
+    uint16_t payload_length;
 
 	err_rsp_info rsp_info = {0};
 
@@ -387,7 +388,8 @@ void mbr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 		update_cli_stats(msg->peer_addr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
 	}else{
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
-				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), s5s8_sockaddr_len);
+				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), 
+                sizeof(struct sockaddr_in));
 
 		struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)(&my_sock.s5s8_recv_sockaddr);
 
@@ -444,6 +446,7 @@ void get_error_dsrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 {
+    uint16_t payload_length;
 	err_rsp_info rsp_info = {0};
 
 	get_error_dsrsp_info(msg, &rsp_info); // dsrsp
@@ -494,7 +497,8 @@ void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 		update_cli_stats(msg->peer_addr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
 	}else{
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
-				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), s5s8_sockaddr_len);
+				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), 
+		        sizeof(struct sockaddr_in));
 
 		struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)(&my_sock.s5s8_recv_sockaddr);
 		update_cli_stats(s5s8_ip->sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S5S8);
@@ -537,6 +541,8 @@ void get_error_rabrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 void rab_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 {
+    uint16_t payload_length;
+
     RTE_SET_USED(iface);
 	err_rsp_info rsp_info = {0};
 
@@ -649,6 +655,7 @@ void ubr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 	int ret = 0;
 	err_rsp_info rsp_info = {0};
 	int ebi_index = 0;
+    uint16_t payload_length;
 
 	get_error_ubrsp_info(msg, &rsp_info); // ubrsp 
 
@@ -686,7 +693,7 @@ void ubr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 			//send S5S8 interface update bearer response.
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 		   	  		(struct sockaddr *) (&my_sock.s5s8_recv_sockaddr),
-					s5s8_sockaddr_len);
+		            sizeof(struct sockaddr_in));
 	}else{
 		ebi_index = rsp_info.bearer_id[0] - 5;
 		ue_context_t *context = NULL;
@@ -744,7 +751,8 @@ void send_version_not_supported(struct sockaddr_in *peer_addr, int iface, uint32
 
     }else{
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
-				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), s5s8_sockaddr_len);
+				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), 
+                sizeof(struct sockaddr_in));
 
 	}
 

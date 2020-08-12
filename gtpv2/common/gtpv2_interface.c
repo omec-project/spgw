@@ -14,7 +14,6 @@
 #include "rte_common.h"
 #include "util.h"
 
-extern struct cp_stats_t cp_stats;
 gtp_handler gtp_msg_handler[256];
 
 void init_gtp_interface(void)

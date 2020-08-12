@@ -9,7 +9,6 @@
 #include "cp_config.h"
 
 
-extern cp_config_t *cp_config;
 pfcp_handler pfcp_msg_handler[256];
 
 void init_pfcp_interface(void)

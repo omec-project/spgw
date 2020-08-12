@@ -38,8 +38,8 @@
 #include "cp_transactions.h"
 #include "tables/tables.h"
 #include "util.h"
+#include "cp_io_poll.h"
 
-extern udp_sock_t my_sock;
 
 #define size sizeof(pfcp_sess_mod_req_t) /* ajay - clean this */
 /* Header Size of set_upd_forwarding_param ie */

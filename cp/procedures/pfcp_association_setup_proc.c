@@ -40,9 +40,8 @@
 #include "pfcp_association_setup_proc.h"
 #include "tables/tables.h"
 #include "util.h"
+#include "cp_io_poll.h"
 
-
-extern udp_sock_t my_sock;
 
 static int
 assoication_setup_request(upf_context_t *upf_context);

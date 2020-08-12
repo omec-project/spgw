@@ -31,6 +31,7 @@
 #include "cp_transactions.h"
 #include "tables/tables.h"
 #include "util.h"
+#include "cp_io_poll.h"
 
 #define PRESENT 1
 #define NUM_VALS 9
@@ -42,9 +43,7 @@
 
 #define SET_EVENT(val,event) (val |=  (1<<event))
 
-extern udp_sock_t my_sock;
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
-extern socklen_t s5s8_sockaddr_len;
 
 /**
  * @brief  : Fill UE context default bearer information of default_eps_bearer_qos from CCA
@@ -829,7 +828,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 			//send S5S8 or on S11  interface update bearer request.
 			gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 	    		      		(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-	        				s5s8_sockaddr_len);
+                            sizeof(struct sockaddr_in));
 		}else{
             assert(0); 
 #ifdef FUTURE_NEED

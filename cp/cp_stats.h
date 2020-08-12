@@ -47,13 +47,6 @@ struct cp_stats_t {
 
 extern struct cp_stats_t cp_stats;
 
-extern int s11logger;
-extern int s5s8logger;
-extern int sxlogger;
-extern int gxlogger;
-extern int apilogger;
-extern int epclogger;
-
 /**
  * @brief  : Prints control plane signaling message statistics
  * @param  : Currently not being used
