@@ -160,7 +160,7 @@ process_delete_bearer_command_handler(void *data, void *unused_param)
 
 	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 			(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-				   s5s8_sockaddr_len);
+            sizeof(struct sockaddr_in));
 	}
 
 	RTE_SET_USED(unused_param);

@@ -30,11 +30,10 @@
 #include "gtpv2_set_ie.h"
 #include "tables/tables.h"
 #include "util.h"
+#include "cp_io_poll.h"
 
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
-extern udp_sock_t my_sock;
-
 
 proc_context_t*
 alloc_service_req_proc(msg_info_t *msg)

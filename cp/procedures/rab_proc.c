@@ -26,9 +26,9 @@
 #include "gtpv2_error_rsp.h"
 #include "tables/tables.h"
 #include "util.h"
+#include "cp_io_poll.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
-extern udp_sock_t my_sock;
 
 proc_context_t*
 alloc_rab_proc(msg_info_t *msg)

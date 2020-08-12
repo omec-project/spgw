@@ -41,7 +41,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *unused_param)
 			(resp->msg_type == GX_RAR_MSG))){
 	    gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 	            (struct sockaddr *) (&my_sock.s5s8_recv_sockaddr),
-	            s5s8_sockaddr_len);
+		        sizeof(struct sockaddr_in));
 		if(resp->msg_type != GTP_CREATE_BEARER_RSP){
 			add_gtpv2c_if_timer_entry(
 					UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),

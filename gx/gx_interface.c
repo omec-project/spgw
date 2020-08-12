@@ -17,10 +17,9 @@
 #include "gen_utils.h"
 #include "tables/tables.h"
 #include "cp_config.h"
+#include "cp_io_poll.h"
 
-extern cp_config_t *cp_config;
 static uint32_t cc_request_number = 0;
-extern udp_sock_t my_sock;
 int g_cp_sock ;
 int ret ;
 

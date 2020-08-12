@@ -18,8 +18,7 @@
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_util.h"
 #include "tables/tables.h"
-
-extern udp_sock_t my_sock;
+#include "cp_io_poll.h"
 
 int
 process_rpt_req_handler(void *data, void *unused_param)

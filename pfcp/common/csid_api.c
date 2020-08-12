@@ -13,8 +13,7 @@
 #include "gw_adapter.h"
 #include "csid_api.h"
 #include "cp_init.h"
-
-extern udp_sock_t my_sock;
+#include "cp_io_poll.h"
 
 /* PFCP: Create and Fill the FQ-CSIDs */
 void

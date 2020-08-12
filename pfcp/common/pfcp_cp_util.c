@@ -19,6 +19,7 @@
 #include "cp_config.h"
 #include "cp_stats.h"
 #include "cp_config_defs.h"
+#include "cp_io_poll.h"
 
 #if defined(USE_DNS_QUERY)
 #include "cdnshelper.h"
@@ -26,7 +27,6 @@
 #define FAILED_ENB_FILE "logs/failed_enb_queries.log"
 #endif
 
-extern udp_sock_t my_sock;
 #define QUERY_RESULT_COUNT 16
 
 struct rte_hash *node_id_hash;

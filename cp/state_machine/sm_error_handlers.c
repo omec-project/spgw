@@ -33,8 +33,7 @@
 #include "cp_transactions.h"
 #include "tables/tables.h"
 #include "util.h"
-
-extern udp_sock_t my_sock;
+#include "cp_io_poll.h"
 
 void
 get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)

@@ -25,9 +25,7 @@
 #include "sm_structs_api.h"
 #include "tables/tables.h"
 #include "util.h"
-
-extern struct cp_stats_t cp_stats;
-extern udp_sock_t my_sock;
+#include "cp_io_poll.h"
 
 #if 0
 /**

@@ -19,9 +19,7 @@
 #include "tables/tables.h"
 #include "cp_peer.h"
 #include "pfcp_cp_util.h"
-
-extern cp_config_t *cp_config;
-extern udp_sock_t my_sock ;
+#include "cp_io_poll.h"
 
 static void
 fill_pfcp_association_setup_rsp(pfcp_assn_setup_rsp_t *pfcp_ass_setup_rsp, uint32_t seq)
@@ -40,8 +38,11 @@ fill_pfcp_association_setup_rsp(pfcp_assn_setup_rsp_t *pfcp_ass_setup_rsp, uint3
 
 	set_recovery_time_stamp(&(pfcp_ass_setup_rsp->rcvry_time_stmp));
 
+	set_cause(&(pfcp_ass_setup_rsp->cause), REQUESTACCEPTED);
+
     return;
 }
+
 int 
 handle_pfcp_association_setup_request_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
 {

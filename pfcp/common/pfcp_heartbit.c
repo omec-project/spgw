@@ -19,8 +19,7 @@
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_util.h"
-
-extern udp_sock_t my_sock;
+#include "cp_io_poll.h"
 
 static void
 fill_pfcp_heartbeat_resp(pfcp_hrtbeat_rsp_t *pfcp_heartbeat_resp)

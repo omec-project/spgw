@@ -23,12 +23,9 @@
 #include "sm_enum.h"
 #include "ipc_api.h"
 #include "tables/tables.h"
-
-extern udp_sock_t my_sock;
+#include "cp_io_poll.h"
 
 extern uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
-
-extern socklen_t s5s8_sockaddr_len;
 
 static uint16_t sequence = 0;
 
@@ -412,7 +409,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 			//		MOD);
 				gtpv2c_send(my_sock.sock_fd_s5s8, tx_buf, payload_length,
 						(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-						s5s8_sockaddr_len);
+                         sizeof(struct sockaddr_in));
 		}
 	} else {
 		if (iface != S11_SGW_PORT_ID) {
@@ -430,7 +427,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 			if (iface != S5S8_SGWC_PORT_ID) {
 				gtpv2c_send(my_sock.sock_fd_s5s8, tx_buf, payload_length,
 						(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-						s5s8_sockaddr_len);
+                        sizeof(struct sockaddr_in));
 			}
 		}
 	}

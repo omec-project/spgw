@@ -10,8 +10,7 @@
 #include "cp_io_poll.h"
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
-
-extern udp_sock_t my_sock;
+#include "cp_io_poll.h"
 
 
 // saegw - DETACH_PROC PFCP_SESS_DEL_REQ_SNT_STATE PFCP_SESS_DEL_RESP_RCVD_EVNT => process_sess_del_resp_handler

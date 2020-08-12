@@ -36,8 +36,8 @@
 #include "gtp_ies.h"
 #include "tables/tables.h"
 #include "util.h"
+#include "cp_io_poll.h"
 
-extern udp_sock_t my_sock;
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 proc_context_t*
@@ -198,7 +198,7 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 		/* Forward s11 delete_session_request on s5s8 */
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-				s5s8_sockaddr_len);
+		        sizeof(struct sockaddr_in));
 
 		update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
 						gtpv2c_tx->gtpc.message_type, SENT,S5S8);

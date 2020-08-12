@@ -19,7 +19,7 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp.h"
 #include "tables/tables.h"
-extern udp_sock_t my_sock;
+#include "cp_io_poll.h"
 
 void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid) 
 {

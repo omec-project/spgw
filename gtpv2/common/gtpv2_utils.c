@@ -29,10 +29,7 @@
 #include "rab_proc.h"
 #include "detach_proc.h"
 #include "service_request_proc.h"
-
-extern int s11logger;
-extern int s5s8logger;
-extern udp_sock_t my_sock;
+#include "cp_io_poll.h"
 
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
 int

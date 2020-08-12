@@ -38,7 +38,7 @@ process_sess_est_resp_sgw_reloc_handler(void *data, void *unused_param)
 
 	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &(my_sock.s5s8_recv_sockaddr),
-				s5s8_sockaddr_len);
+		        sizeof(struct sockaddr_in));
 
 	update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
 						gtpv2c_tx->gtpc.message_type, SENT,S5S8);
@@ -172,7 +172,7 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 
 	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 		       (struct sockaddr *) (&my_sock.s5s8_recv_sockaddr),
-		          s5s8_sockaddr_len);
+		        sizeof(struct sockaddr_in));
 
 	update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
 						gtpv2c_tx->gtpc.message_type, SENT,S5S8);

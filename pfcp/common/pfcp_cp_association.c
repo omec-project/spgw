@@ -29,13 +29,12 @@
 #include "spgw_cpp_wrapper.h"
 #include "assert.h"
 #include "tables/tables.h"
+#include "cp_io_poll.h"
 
 
 #if defined(USE_DNS_QUERY)
 #include "cdnsutil.h"
 #endif /* USE_DNS_QUERY */
-
-extern udp_sock_t my_sock;
 
 void
 fill_pfcp_association_release_req(pfcp_assn_rel_req_t *pfcp_ass_rel_req)

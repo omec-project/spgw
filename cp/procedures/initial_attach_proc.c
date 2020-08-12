@@ -30,12 +30,9 @@
 #include "rte_errno.h"
 #include "ipc_api.h"
 #include "util.h"
+#include "cp_io_poll.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
-
-extern int s11logger;
-extern int s5s8logger;
-extern udp_sock_t my_sock;
 
 static uint32_t s5s8_sgw_gtpc_teid_offset;
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
@@ -576,7 +573,7 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == PGWC)) {
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
-				s5s8_sockaddr_len);
+		        sizeof(struct sockaddr_in));
 
 
 		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,

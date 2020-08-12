@@ -25,11 +25,10 @@
 #include "tables/tables.h"
 #include "spgw_cpp_wrapper.h"
 #include "util.h"
+#include "cp_io_poll.h"
 
 
 uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
-extern socklen_t s5s8_sockaddr_len;
-extern udp_sock_t my_sock;
 
 int32_t conn_cnt = 0;
 
@@ -195,7 +194,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 
 		gtpv2c_send(my_sock.sock_fd_s5s8, echo_tx_buf, payload_length,
 		                (struct sockaddr *) &dest_addr,
-		                s5s8_sockaddr_len);
+		                sizeof(struct sockaddr_in));
 
 		if (ti == &md->tt)
 		{
@@ -205,7 +204,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 	} else if (md->portId == S5S8_PGWC_PORT_ID) {
 		gtpv2c_send(my_sock.sock_fd_s5s8, echo_tx_buf, payload_length,
 		                (struct sockaddr *) &dest_addr,
-		                s5s8_sockaddr_len);
+		                sizeof(struct sockaddr_in));
 
 		if (ti == &md->tt)
 		{

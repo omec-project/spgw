@@ -21,7 +21,6 @@
 #include "trans_struct.h"
 #include "ue.h"
 
-extern udp_sock_t my_sock;
 extern pcap_dumper_t *pcap_dumper;
 
 static transData_t* start_transaction_timer(void *cb_data, 

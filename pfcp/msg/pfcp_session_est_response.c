@@ -10,7 +10,6 @@
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
 #include "cp_io_poll.h"
-extern udp_sock_t my_sock;
 
 // SAEGW - INITIAL_PDN_ATTACH_PROC PFCP_SESS_EST_REQ_SNT_STATE, PFCP_SESS_EST_RESP_RCVD_EVNT => process_sess_est_resp_handler
 // saegw - SGW_RELOCATION_PROC PFCP_SESS_EST_REQ_SNT_STATE PFCP_SESS_EST_RESP_RCVD_EVNT ==> process_sess_est_resp_sgw_reloc_handler

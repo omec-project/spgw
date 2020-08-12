@@ -116,7 +116,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 		if (cp_config->cp_type == SGWC ) {
 			gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 					(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-					s5s8_sockaddr_len);
+		            sizeof(struct sockaddr_in));
 
 		}
 		memset(gtpv2c_tx, 0, sizeof(gtpv2c_header_t));
@@ -138,7 +138,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 		/* Send response to PGW */
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-				s5s8_sockaddr_len);
+		        sizeof(struct sockaddr_in));
 	}
 
 	if (msg->gtpc_msg.del_pdn_req.mme_fqcsid.number_of_csids) {
@@ -200,7 +200,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 //	/* Send response to PGW */
 //	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 //			(struct sockaddr *) &s5s8_recv_sockaddr,
-//			s5s8_sockaddr_len);
+//		        sizeof(struct sockaddr_in));
 //#else
 //	RTE_SET_USED(data);
 //#endif /* USE_CSID */

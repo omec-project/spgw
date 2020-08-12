@@ -30,6 +30,7 @@
 #include "cp_timer.h"
 #include "cp_peer.h"
 #include "tables/tables.h"
+#include "cp_io_poll.h"
 
 #ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
@@ -44,7 +45,6 @@
 #define IP_POOL_MASK_SET   (0x0100)
 #define APN_NAME_SET	   (0x0200)
 
-extern udp_sock_t my_sock;
 pcap_t *pcap_reader;
 pcap_dumper_t *pcap_dumper;
 uint32_t start_time;

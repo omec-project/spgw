@@ -29,8 +29,8 @@
 #include "sm_structs_api.h"
 #include "tables/tables.h"
 #include "util.h"
+#include "cp_io_poll.h"
 
-extern udp_sock_t my_sock;
 /**
  * @brief  : from parameters, populates gtpv2c message 'release access bearer response'
  *           and populates required information elements as defined by
