@@ -20,6 +20,7 @@
 #include "cp_stats.h"
 #include "cp_config_defs.h"
 #include "cp_io_poll.h"
+#include "tables/tables.h"
 
 #if defined(USE_DNS_QUERY)
 #include "cdnshelper.h"

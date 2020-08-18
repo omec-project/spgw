@@ -10,6 +10,7 @@
 #include "ue.h"
 #include "cp_peer_struct.h"
 #include "gx_interface.h"
+#include "pfcp_cp_set_ie.h"
 /**
  * @brief  : Creates upf context hash
  * @param  : No param
@@ -242,5 +243,43 @@ del_pfcp_cntxt_entry(uint64_t session_id);
 uint8_t
 del_pdn_conn_entry(uint32_t call_id);
 
+/**
+ * @brief  : Creates upf hash using ue
+ * @param  : No param
+ * @return : Returns nothing
+ */
+void
+create_upf_by_ue_hash(void);
+
+/**
+ * @brief  : Add entry to upflist hash
+ * @param  : imsi_val, imsi value
+ * @param  : imsi_len, imsi length
+ * @param  : entry, entry to be added in hash
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+int
+upflist_by_ue_hash_entry_add(uint64_t *imsi_val, uint16_t imsi_len,
+		upfs_dnsres_t *entry);
+
+/**
+ * @brief  : search entry in upflist hash
+ * @param  : imsi_val, imsi value
+ * @param  : imsi_len, imsi length
+ * @param  : entry, entry to be filled with search result
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+int
+upflist_by_ue_hash_entry_lookup(uint64_t *imsi_val, uint16_t imsi_len,
+		upfs_dnsres_t **entry);
+
+/**
+ * @brief  : delete entry in upflist hash
+ * @param  : imsi_val, imsi value
+ * @param  : imsi_len, imsi length
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+int
+upflist_by_ue_hash_entry_delete(uint64_t *imsi_val, uint16_t imsi_len);
 
 #endif

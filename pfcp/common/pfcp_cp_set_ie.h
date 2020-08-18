@@ -95,12 +95,6 @@ typedef struct upfs_dnsres_t {
 
 #pragma pack()
 
-/* upflist returned via DNS query */
-struct rte_hash *upflist_by_ue_hash;
-
-
-
-
 /**
  * @brief  : Generates sequence number
  * @param  : No parameters
@@ -202,14 +196,6 @@ process_pfcp_sess_del_request_delete_bearer_rsp_timeout(void *data);
  */
 void
 set_pdn_type(pfcp_pdn_type_ie_t *pdn, pdn_type_ie *pdn_mme);
-
-/**
- * @brief  : Creates upf hash using ue
- * @param  : No param
- * @return : Returns nothing
- */
-void
-create_upf_by_ue_hash(void);
 
 /**
  * @brief  : Processes pfcp session report request
@@ -921,37 +907,6 @@ fill_pfcp_pfd_mgmt_req(pfcp_pfd_mgmt_req_t *pfcp_pfd_req, uint16_t len);
  */
 int
 process_pfcp_pfd_mgmt_request(void);
-
-/**
- * @brief  : Add entry to upflist hash
- * @param  : imsi_val, imsi value
- * @param  : imsi_len, imsi length
- * @param  : entry, entry to be added in hash
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-upflist_by_ue_hash_entry_add(uint64_t *imsi_val, uint16_t imsi_len,
-		upfs_dnsres_t *entry);
-
-/**
- * @brief  : search entry in upflist hash
- * @param  : imsi_val, imsi value
- * @param  : imsi_len, imsi length
- * @param  : entry, entry to be filled with search result
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-upflist_by_ue_hash_entry_lookup(uint64_t *imsi_val, uint16_t imsi_len,
-		upfs_dnsres_t **entry);
-
-/**
- * @brief  : delete entry in upflist hash
- * @param  : imsi_val, imsi value
- * @param  : imsi_len, imsi length
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-upflist_by_ue_hash_entry_delete(uint64_t *imsi_val, uint16_t imsi_len);
 
 /**
  * @brief  : Create s5s8 hash table in sgwc
