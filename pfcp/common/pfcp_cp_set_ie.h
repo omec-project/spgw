@@ -739,15 +739,6 @@ cause_check_delete_session(pfcp_sess_del_req_t
 		*pfcp_session_delete_req, uint8_t *cause_id, int *offend_id);
 
 /**
- * @brief  : Add new node in node id hash
- * @param  : nodeid, node id value
- * @param  : data, node type ipv4 or ipv6
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-add_node_id_hash(uint32_t *nodeid, uint64_t *data);
-
-/**
  * @brief  : Set values in create pdr ie
  * @param  : create_pdr, ie structure to be filled
  * @param  : source_iface_value, interface type
@@ -831,7 +822,7 @@ set_far_id(pfcp_far_id_ie_t *far_id);
  * @param  : far_id, ie structure to be filled
  * @return : Returns nothing
  */
-void
+int
 set_far_id_mbr(pfcp_far_id_ie_t *far_id);
 
 /**

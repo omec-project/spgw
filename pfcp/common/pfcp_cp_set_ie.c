@@ -35,8 +35,6 @@ static uint32_t pfcp_seq_no_offset;
 
 static uint32_t pfcp_sgwc_seid_offset;
 
-//static uint16_t pdn_conn_set_id;
-extern struct rte_hash *node_id_hash;
 const uint64_t pfcp_sgwc_base_seid = 0xC0FFEE;
 
 
@@ -51,7 +49,8 @@ set_pfcp_header(pfcp_header_t *pfcp, uint8_t type, bool flag )
 }
 
 uint32_t
-generate_seq_no(void){
+generate_seq_no(void) 
+{
 	uint32_t id = 0;
 	id = pfcp_base_seq_no + (++pfcp_seq_no_offset);
 	return id;
@@ -224,12 +223,13 @@ set_far_id(pfcp_far_id_ie_t *far_id)
 
 }
 
-void
+int
 set_far_id_mbr(pfcp_far_id_ie_t *far_id)
 {
+    int size = sizeof(pfcp_far_id_ie_t);
 	pfcp_set_ie_header(&(far_id->header), PFCP_IE_FAR_ID, sizeof(uint32_t));
 	far_id->far_id_value = 0;
-
+    return size;
 }
 
 int
@@ -1091,8 +1091,7 @@ void
 updating_far(pfcp_update_far_ie_t *up_far)
 {
 	uint16_t len = 0;
-	set_far_id_mbr(&(up_far->far_id));
-	len += sizeof(pfcp_far_id_ie_t);
+	len += set_far_id_mbr(&(up_far->far_id));
 	len += set_apply_action(&(up_far->apply_action));
 	/* Currently take as hardcoded value */
 	len += 4; /* Header Size of set_apply_action */
@@ -1511,38 +1510,6 @@ void cause_check_sess_estab(pfcp_sess_estab_req_t *pfcp_session_request,
 
 
 }
-
-uint8_t
-add_node_id_hash(uint32_t *nodeid, uint64_t *data )
-{
-	int ret = 0;
-	uint32_t key = UINT32_MAX;
-	uint64_t *temp = NULL;
-	memcpy(&key ,nodeid, sizeof(uint32_t));
-
-	temp =(uint64_t *) rte_zmalloc_socket(NULL, sizeof(uint64_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
-	if (temp == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate ue context "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
-		return 1;
-	}
-	*temp = *data;
-	ret = rte_hash_add_key_data(node_id_hash,
-			(const void *)&key , (void *)temp);
-	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s - Error on rte_hash_add_key_data add\n",
-				strerror(ret));
-		rte_free((temp));
-		return 1;
-	}
-	return 0;
-}
-
 
 void
 cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,

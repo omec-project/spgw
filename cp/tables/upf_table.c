@@ -24,7 +24,7 @@ void
 create_upf_context_hash(void)
 {
 	struct rte_hash_parameters rte_hash_params = {
-			.name = "upf_context_by_ip_hash",
+        .name = "upf_context_by_ip_hash",
 	    .entries = UPF_ENTRIES_DEFAULT,
 	    .key_len = sizeof(uint32_t),
 	    .hash_func = rte_jhash,
@@ -39,6 +39,30 @@ create_upf_context_hash(void)
 		    rte_strerror(rte_errno), rte_errno);
 	}
 }
+
+#ifdef DELETE
+struct rte_hash *associated_upf_hash;
+void
+create_associated_upf_hash(void)
+{
+	struct rte_hash_parameters rte_hash_params = {
+		.name = "associated_upf_hash",
+		.entries = 50,
+		.key_len = sizeof(uint32_t),
+		.hash_func = rte_jhash,
+		.hash_func_init_val = 0,
+		.socket_id = rte_socket_id(),
+	};
+
+	associated_upf_hash = rte_hash_create(&rte_hash_params);
+	if (!associated_upf_hash) {
+		rte_panic("%s Associated UPF hash create failed: %s (%u)\n.",
+				rte_hash_params.name,
+				rte_strerror(rte_errno), rte_errno);
+	}
+
+}
+#endif
 
 // should return int instead of uint... TODO
 uint8_t

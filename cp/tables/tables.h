@@ -18,6 +18,16 @@
  */
 void
 create_upf_context_hash(void);
+#ifdef DELETE
+/**
+ * @brief  : creates associated upf hash
+ * @param  : No param
+ * @return : Returns nothing
+ */
+void
+create_associated_upf_hash(void );
+#endif
+
 
 
 /**
@@ -281,5 +291,24 @@ upflist_by_ue_hash_entry_lookup(uint64_t *imsi_val, uint16_t imsi_len,
  */
 int
 upflist_by_ue_hash_entry_delete(uint64_t *imsi_val, uint16_t imsi_len);
+
+/**
+ * @brief  : Creates node id hash
+ * @param  : No param
+ * @return : Returns nothing
+ */
+void
+create_node_id_hash(void );
+
+/**
+ * @brief  : Add new node in node id hash
+ * @param  : nodeid, node id value
+ * @param  : data, node type ipv4 or ipv6
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+uint8_t
+add_node_id_hash(uint32_t *nodeid, uint64_t *data);
+
+
 
 #endif

@@ -53,6 +53,7 @@ SRCS-y += tables/pfcp_heartbeat.o
 SRCS-y += tables/gx_context_table.o
 SRCS-y += tables/callid_table.o
 SRCS-y += tables/dns_upf.o
+SRCS-y += tables/nodeid_table.o
 SRCS-y += procedures/report_proc.o
 SRCS-y += procedures/initial_attach_proc.o
 SRCS-y += procedures/pfcp_association_setup_proc.o

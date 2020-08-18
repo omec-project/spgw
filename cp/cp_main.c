@@ -199,7 +199,9 @@ main(int argc, char **argv)
 
     create_heartbeat_hash_table();
 
+#ifdef DELETE
     create_associated_upf_hash();
+#endif
 
     /* Make a connection between control-plane and gx_app */
     if(cp_config->gx_enabled == true)

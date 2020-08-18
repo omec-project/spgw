@@ -15,7 +15,6 @@
 #include "gtp_messages.h"
 
 extern uint32_t start_time;
-extern struct rte_hash *node_id_hash;
 extern struct rte_hash *heartbeat_recovery_hash;
 
 #if defined(USE_DNS_QUERY)
@@ -57,22 +56,6 @@ pfcp_send(int fd,void *msg_payload, uint32_t size,
  */
 long
 uptime(void);
-
-/**
- * @brief  : Creates node id hash
- * @param  : No param
- * @return : Returns nothing
- */
-void
-create_node_id_hash(void );
-
-/**
- * @brief  : creates associated upf hash
- * @param  : No param
- * @return : Returns nothing
- */
-void
-create_associated_upf_hash(void );
 
 /**
  * @brief  : Checks current ntp timestamp

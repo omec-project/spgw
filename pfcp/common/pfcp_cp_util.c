@@ -30,8 +30,6 @@
 
 #define QUERY_RESULT_COUNT 16
 
-struct rte_hash *node_id_hash;
-struct rte_hash *associated_upf_hash;
 
 #if defined(USE_DNS_QUERY)
 
@@ -394,52 +392,12 @@ uptime(void)
 	return s_info.uptime;
 }
 
-void
-create_node_id_hash(void)
-{
-
-	struct rte_hash_parameters rte_hash_params = {
-		.name = "node_id_hash",
-		.entries = LDB_ENTRIES_DEFAULT,
-		.key_len = sizeof(uint32_t),
-		.hash_func = rte_hash_crc,
-		.hash_func_init_val = 0,
-		.socket_id = rte_socket_id()
-	};
-
-	node_id_hash = rte_hash_create(&rte_hash_params);
-	if (!node_id_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-				rte_strerror(rte_errno), rte_errno);
-	}
-
-}
 
 
-void
-create_associated_upf_hash(void)
-{
-	struct rte_hash_parameters rte_hash_params = {
-		.name = "associated_upf_hash",
-		.entries = 50,
-		.key_len = sizeof(uint32_t),
-		.hash_func = rte_jhash,
-		.hash_func_init_val = 0,
-		.socket_id = rte_socket_id(),
-	};
-
-	associated_upf_hash = rte_hash_create(&rte_hash_params);
-	if (!associated_upf_hash) {
-		rte_panic("%s Associated UPF hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-				rte_strerror(rte_errno), rte_errno);
-	}
-
-}
 
 uint32_t
-current_ntp_timestamp(void) {
+current_ntp_timestamp(void) 
+{
 
 	struct timeval tim;
 	uint8_t ntp_time[8] = {0};
