@@ -167,7 +167,7 @@ int encode_pfcp_sbsqnt_vol_quota_ie_t(pfcp_sbsqnt_vol_quota_ie_t *value,
     ENCODE_UPLINK_VOLUME_COND_5(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
     ENCODE_DOWNLINK_VOLUME_COND_5(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -229,7 +229,7 @@ int encode_pfcp_linked_urr_id_ie_t(pfcp_linked_urr_id_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->lnkd_urr_id_val, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -528,7 +528,7 @@ int encode_pfcp_sbsqnt_evnt_quota_ie_t(pfcp_sbsqnt_evnt_quota_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->sbsqnt_evnt_quota, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -701,7 +701,7 @@ int encode_pfcp_time_quota_ie_t(pfcp_time_quota_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->time_quota_val, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -818,7 +818,7 @@ int encode_pfcp_meas_period_ie_t(pfcp_meas_period_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->meas_period, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -858,7 +858,7 @@ int encode_pfcp_inact_det_time_ie_t(pfcp_inact_det_time_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->inact_det_time, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -912,7 +912,7 @@ int encode_pfcp_meas_mthd_ie_t(pfcp_meas_mthd_ie_t *value,
     encoded += encode_bits(value->volum, 1, buf + (encoded/8), encoded % CHAR_SIZE);
     encoded += encode_bits(value->durat, 1, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -975,7 +975,7 @@ int encode_pfcp_time_quota_mech_ie_t(pfcp_time_quota_mech_ie_t *value,
     encoded += encode_bits(value->btit, 2, buf + (encoded/8), encoded % CHAR_SIZE);
     encoded += encode_bits(value->base_time_int, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -995,7 +995,7 @@ int encode_pfcp_quota_hldng_time_ie_t(pfcp_quota_hldng_time_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->quota_hldng_time_val, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -1083,7 +1083,7 @@ int encode_pfcp_volume_quota_ie_t(pfcp_volume_quota_ie_t *value,
     ENCODE_UPLINK_VOLUME_COND_4(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
     ENCODE_DOWNLINK_VOLUME_COND_4(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -1103,7 +1103,7 @@ int encode_pfcp_event_quota_ie_t(pfcp_event_quota_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->sbsqnt_evnt_quota, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -1143,7 +1143,7 @@ int encode_pfcp_sbsqnt_time_quota_ie_t(pfcp_sbsqnt_time_quota_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->time_quota_val, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -1268,7 +1268,7 @@ int encode_pfcp_rptng_triggers_ie_t(pfcp_rptng_triggers_ie_t *value,
     encoded += encode_bits(value->timqu, 1, buf + (encoded/8), encoded % CHAR_SIZE);
     encoded += encode_bits(value->volqu, 1, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -1308,7 +1308,7 @@ int encode_pfcp_monitoring_time_ie_t(pfcp_monitoring_time_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->monitoring_time, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -1499,7 +1499,7 @@ int encode_pfcp_event_threshold_ie_t(pfcp_event_threshold_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->event_threshold, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -1543,7 +1543,7 @@ int encode_pfcp_drpd_dl_traffic_thresh_ie_t(pfcp_drpd_dl_traffic_thresh_ie_t *va
     ENCODE_DNLNK_PCKTS_COND_1(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
     ENCODE_NBR_OF_BYTES_OF_DNLNK_DATA_COND_1(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -1609,7 +1609,7 @@ int encode_pfcp_sbsqnt_vol_thresh_ie_t(pfcp_sbsqnt_vol_thresh_ie_t *value,
     ENCODE_UPLINK_VOLUME_COND_2(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
     ENCODE_DOWNLINK_VOLUME_COND_2(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -1766,7 +1766,7 @@ int encode_pfcp_sbsqnt_evnt_thresh_ie_t(pfcp_sbsqnt_evnt_thresh_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->sbsqnt_evnt_thresh, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -1910,7 +1910,7 @@ int encode_pfcp_sbsqnt_time_thresh_ie_t(pfcp_sbsqnt_time_thresh_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->sbsqnt_time_thresh, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -2431,7 +2431,7 @@ int encode_pfcp_vol_thresh_ie_t(pfcp_vol_thresh_ie_t *value,
     ENCODE_UPLINK_VOLUME_COND_1(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
     ENCODE_DOWNLINK_VOLUME_COND_1(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -2595,7 +2595,7 @@ int encode_pfcp_time_threshold_ie_t(pfcp_time_threshold_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->time_threshold, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -2673,7 +2673,7 @@ int encode_pfcp_eth_inact_timer_ie_t(pfcp_eth_inact_timer_ie_t *value,
     encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
     encoded += encode_bits(value->eth_inact_timer, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 
@@ -2697,7 +2697,7 @@ int encode_pfcp_meas_info_ie_t(pfcp_meas_info_ie_t *value,
     encoded += encode_bits(value->inam, 1, buf + (encoded/8), encoded % CHAR_SIZE);
     encoded += encode_bits(value->mbqe, 1, buf + (encoded/8), encoded % CHAR_SIZE);
 
-    return encoded/CHAR_SIZE;
+    return encoded;
 }
 
 

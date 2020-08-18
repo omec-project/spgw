@@ -2190,6 +2190,8 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	if (upf_ctx->up_supp_features & UP_TRACE)
 		set_trace_info(&(pfcp_sess_est_req->trc_info));
 
+    pfcp_sess_est_req->create_urr_count = 1;
+    creating_urr(&pfcp_sess_est_req->create_urr[0]);
 }
 
 

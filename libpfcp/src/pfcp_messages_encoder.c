@@ -164,94 +164,94 @@ int encode_pfcp_create_urr_ie_t(pfcp_create_urr_ie_t *value,
     enc_len += encode_pfcp_ie_header_t(&value->header, buf + (enc_len/CHAR_SIZE));
 
     if (value->urr_id.header.len)
-        enc_len += encode_pfcp_urr_id_ie_t(&(value->urr_id), buf + enc_len);
+        enc_len += encode_pfcp_urr_id_ie_t(&(value->urr_id), buf + enc_len/CHAR_SIZE);
 
     if (value->meas_mthd.header.len)
-        enc_len += encode_pfcp_meas_mthd_ie_t(&(value->meas_mthd), buf + enc_len);
+        enc_len += encode_pfcp_meas_mthd_ie_t(&(value->meas_mthd), buf + enc_len/CHAR_SIZE);
 
     if (value->rptng_triggers.header.len)
-        enc_len += encode_pfcp_rptng_triggers_ie_t(&(value->rptng_triggers), buf + enc_len);
+        enc_len += encode_pfcp_rptng_triggers_ie_t(&(value->rptng_triggers), buf + enc_len/CHAR_SIZE);
 
     if (value->meas_period.header.len)
-        enc_len += encode_pfcp_meas_period_ie_t(&(value->meas_period), buf + enc_len);
+        enc_len += encode_pfcp_meas_period_ie_t(&(value->meas_period), buf + enc_len/CHAR_SIZE);
 
     if (value->vol_thresh.header.len)
-        enc_len += encode_pfcp_vol_thresh_ie_t(&(value->vol_thresh), buf + enc_len);
+        enc_len += encode_pfcp_vol_thresh_ie_t(&(value->vol_thresh), buf + enc_len/CHAR_SIZE);
 
     if (value->volume_quota.header.len)
-        enc_len += encode_pfcp_volume_quota_ie_t(&(value->volume_quota), buf + enc_len);
+        enc_len += encode_pfcp_volume_quota_ie_t(&(value->volume_quota), buf + enc_len/CHAR_SIZE);
 
     if (value->event_threshold.header.len)
-        enc_len += encode_pfcp_event_threshold_ie_t(&(value->event_threshold), buf + enc_len);
+        enc_len += encode_pfcp_event_threshold_ie_t(&(value->event_threshold), buf + enc_len/CHAR_SIZE);
 
     if (value->event_quota.header.len)
-        enc_len += encode_pfcp_event_quota_ie_t(&(value->event_quota), buf + enc_len);
+        enc_len += encode_pfcp_event_quota_ie_t(&(value->event_quota), buf + enc_len/CHAR_SIZE);
 
     if (value->time_threshold.header.len)
-        enc_len += encode_pfcp_time_threshold_ie_t(&(value->time_threshold), buf + enc_len);
+        enc_len += encode_pfcp_time_threshold_ie_t(&(value->time_threshold), buf + enc_len/CHAR_SIZE);
 
     if (value->time_quota.header.len)
-        enc_len += encode_pfcp_time_quota_ie_t(&(value->time_quota), buf + enc_len);
+        enc_len += encode_pfcp_time_quota_ie_t(&(value->time_quota), buf + enc_len/CHAR_SIZE);
 
     if (value->quota_hldng_time.header.len)
-        enc_len += encode_pfcp_quota_hldng_time_ie_t(&(value->quota_hldng_time), buf + enc_len);
+        enc_len += encode_pfcp_quota_hldng_time_ie_t(&(value->quota_hldng_time), buf + enc_len/CHAR_SIZE);
 
     if (value->drpd_dl_traffic_thresh.header.len)
-        enc_len += encode_pfcp_drpd_dl_traffic_thresh_ie_t(&(value->drpd_dl_traffic_thresh), buf + enc_len);
+        enc_len += encode_pfcp_drpd_dl_traffic_thresh_ie_t(&(value->drpd_dl_traffic_thresh), buf + enc_len/CHAR_SIZE);
 
     if (value->monitoring_time.header.len)
-        enc_len += encode_pfcp_monitoring_time_ie_t(&(value->monitoring_time), buf + enc_len);
+        enc_len += encode_pfcp_monitoring_time_ie_t(&(value->monitoring_time), buf + enc_len/CHAR_SIZE);
 
     if (value->sbsqnt_vol_thresh.header.len)
-        enc_len += encode_pfcp_sbsqnt_vol_thresh_ie_t(&(value->sbsqnt_vol_thresh), buf + enc_len);
+        enc_len += encode_pfcp_sbsqnt_vol_thresh_ie_t(&(value->sbsqnt_vol_thresh), buf + enc_len/CHAR_SIZE);
 
     if (value->sbsqnt_time_thresh.header.len)
-        enc_len += encode_pfcp_sbsqnt_time_thresh_ie_t(&(value->sbsqnt_time_thresh), buf + enc_len);
+        enc_len += encode_pfcp_sbsqnt_time_thresh_ie_t(&(value->sbsqnt_time_thresh), buf + enc_len/CHAR_SIZE);
 
     if (value->sbsqnt_vol_quota.header.len)
-        enc_len += encode_pfcp_sbsqnt_vol_quota_ie_t(&(value->sbsqnt_vol_quota), buf + enc_len);
+        enc_len += encode_pfcp_sbsqnt_vol_quota_ie_t(&(value->sbsqnt_vol_quota), buf + enc_len/CHAR_SIZE);
 
     if (value->sbsqnt_time_quota.header.len)
-        enc_len += encode_pfcp_sbsqnt_time_quota_ie_t(&(value->sbsqnt_time_quota), buf + enc_len);
+        enc_len += encode_pfcp_sbsqnt_time_quota_ie_t(&(value->sbsqnt_time_quota), buf + enc_len/CHAR_SIZE);
 
     if (value->sbsqnt_evnt_thresh.header.len)
-        enc_len += encode_pfcp_sbsqnt_evnt_thresh_ie_t(&(value->sbsqnt_evnt_thresh), buf + enc_len);
+        enc_len += encode_pfcp_sbsqnt_evnt_thresh_ie_t(&(value->sbsqnt_evnt_thresh), buf + enc_len/CHAR_SIZE);
 
     if (value->sbsqnt_evnt_quota.header.len)
-        enc_len += encode_pfcp_sbsqnt_evnt_quota_ie_t(&(value->sbsqnt_evnt_quota), buf + enc_len);
+        enc_len += encode_pfcp_sbsqnt_evnt_quota_ie_t(&(value->sbsqnt_evnt_quota), buf + enc_len/CHAR_SIZE);
 
     if (value->inact_det_time.header.len)
-        enc_len += encode_pfcp_inact_det_time_ie_t(&(value->inact_det_time), buf + enc_len);
+        enc_len += encode_pfcp_inact_det_time_ie_t(&(value->inact_det_time), buf + enc_len/CHAR_SIZE);
 
     if (value->meas_info.header.len)
-        enc_len += encode_pfcp_meas_info_ie_t(&(value->meas_info), buf + enc_len);
+        enc_len += encode_pfcp_meas_info_ie_t(&(value->meas_info), buf + enc_len/CHAR_SIZE);
 
     if (value->time_quota_mech.header.len)
-        enc_len += encode_pfcp_time_quota_mech_ie_t(&(value->time_quota_mech), buf + enc_len);
+        enc_len += encode_pfcp_time_quota_mech_ie_t(&(value->time_quota_mech), buf + enc_len/CHAR_SIZE);
 
     if (value->far_id_for_quota_act.header.len)
-        enc_len += encode_pfcp_far_id_ie_t(&(value->far_id_for_quota_act), buf + enc_len);
+        enc_len += encode_pfcp_far_id_ie_t(&(value->far_id_for_quota_act), buf + enc_len/CHAR_SIZE);
 
     if (value->eth_inact_timer.header.len)
-        enc_len += encode_pfcp_eth_inact_timer_ie_t(&(value->eth_inact_timer), buf + enc_len);
+        enc_len += encode_pfcp_eth_inact_timer_ie_t(&(value->eth_inact_timer), buf + enc_len/CHAR_SIZE);
 
     for (uint8_t i = 0; i < value->linked_urr_id_count; i++) {
         if (value->linked_urr_id[i].header.len)
-            enc_len += encode_pfcp_linked_urr_id_ie_t(&(value->linked_urr_id[i]), buf + enc_len);
+            enc_len += encode_pfcp_linked_urr_id_ie_t(&(value->linked_urr_id[i]), buf + enc_len/CHAR_SIZE);
     }
 
     for (uint8_t i = 0; i < value->aggregated_urrs_count; i++) {
         if (value->aggregated_urrs[i].header.len)
-            enc_len += encode_pfcp_aggregated_urrs_ie_t(&(value->aggregated_urrs[i]), buf + enc_len);
+            enc_len += encode_pfcp_aggregated_urrs_ie_t(&(value->aggregated_urrs[i]), buf + enc_len/CHAR_SIZE);
     }
 
     for (uint8_t i = 0; i < value->add_mntrng_time_count; i++) {
         if (value->add_mntrng_time[i].header.len)
-            enc_len += encode_pfcp_add_mntrng_time_ie_t(&(value->add_mntrng_time[i]), buf + enc_len);
+            enc_len += encode_pfcp_add_mntrng_time_ie_t(&(value->add_mntrng_time[i]), buf + enc_len/CHAR_SIZE);
     }
 
 
-    return enc_len;
+	return enc_len/CHAR_SIZE;
 }
 
 /**

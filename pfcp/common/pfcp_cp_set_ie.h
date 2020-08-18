@@ -531,6 +531,14 @@ void
 updating_traffic_endpoint(pfcp_upd_traffic_endpt_ie_t *up_traffic_endpoint);
 
 /**
+ * @brief  : Set values in create qer ie
+ * @param  : qer, ie structure to be filled
+ * @return : Returns nothing
+ */
+void
+creating_urr(pfcp_create_urr_ie_t *qer);
+
+/**
  * @brief  : Set values in pfcpsmreq flags ie
  * @param  : pfcp_sm_req_flags, ie structure to be filled
  * @return : Returns nothing
@@ -841,14 +849,6 @@ void
 set_far_id_mbr(pfcp_far_id_ie_t *far_id);
 
 /**
- * @brief  : Set values in urr id ie
- * @param  : urr_id, ie structure to be filled
- * @return : Returns nothing
- */
-void
-set_urr_id(pfcp_urr_id_ie_t *urr_id);
-
-/**
  * @brief  : Set values in outer header removal ie
  * @param  : out_hdr_rem, ie structure to be filled
  * @return : Returns 0 in case of success , -1 otherwise
@@ -985,5 +985,32 @@ send_ccr_u_msg(mod_bearer_req_t *mb_req);
  */
 uint64_t
 get_rule_type(pfcp_pfd_contents_ie_t *pfd_conts, uint16_t *idx);
+
+int
+set_urr_id(pfcp_urr_id_ie_t *urr_id);
+
+int
+set_measurement_method(pfcp_meas_mthd_ie_t *m_method);
+
+int
+set_reporting_triggers(pfcp_rptng_triggers_ie_t *triggers);
+
+int
+set_measurement_period(pfcp_meas_period_ie_t *meas_period);
+
+int
+set_volume_threshold(pfcp_vol_thresh_ie_t *vol_thresh);
+
+int
+set_volume_quota(pfcp_volume_quota_ie_t *volume_quota);
+
+int
+set_quota_holding_time(pfcp_quota_hldng_time_ie_t *quota_hldng_time);
+
+int
+set_downlink_drop_traffic_threshold(pfcp_drpd_dl_traffic_thresh_ie_t *drpd_dl_traffic_thresh);
+
+int
+set_far_id_quota_action(pfcp_far_id_ie_t *far_id_for_quota_act);
 
 #endif /* PFCP_CP_SET_IE_H */
