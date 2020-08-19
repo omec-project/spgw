@@ -54,6 +54,7 @@ SRCS-y += tables/gx_context_table.o
 SRCS-y += tables/callid_table.o
 SRCS-y += tables/dns_upf.o
 SRCS-y += tables/nodeid_table.o
+SRCS-y += tables/pfcp_rules.o
 SRCS-y += procedures/report_proc.o
 SRCS-y += procedures/initial_attach_proc.o
 SRCS-y += procedures/pfcp_association_setup_proc.o
@@ -94,7 +95,6 @@ SRCS-y += $(SRCDIR)/../gtpv2/msg/delete_pdn_conn_set_response.o
 SRCS-y += $(SRCDIR)/../gtpv2/msg/update_pdn_conn_set_request.o
 SRCS-y += $(SRCDIR)/../gtpv2/msg/update_pdn_conn_set_response.o
 SRCS-y += $(SRCDIR)/../gtpv2/msg/pgw_restart_notification_ack.o
-SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_heartbit.o
 SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_cp_association.o
 SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_cp_msg_rx.o
 SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_cp_session.o
@@ -102,6 +102,7 @@ SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_cp_set_ie.o
 SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_cp_util.o
 SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_init.o
 SRCS-y += $(SRCDIR)/../pfcp/common/pfcp_interface.o
+SRCS-y += $(SRCDIR)/../pfcp/msg/pfcp_heartbeat.o
 SRCS-y += $(SRCDIR)/../pfcp/msg/pfcp_association_setup_request.o
 SRCS-y += $(SRCDIR)/../pfcp/msg/pfcp_association_setup_response.o
 SRCS-y += $(SRCDIR)/../pfcp/msg/pfcp_session_est_response.o
@@ -187,15 +188,6 @@ CFLAGS += -DPERF_TEST
 
 CFLAGS += $(WERROR_FLAGS)
 CFLAGS_config.o := -D_GNU_SOURCE
-
-#un-comment below line to generate req and resp timer stats in between
-#CP<-->DP(ZMQ) and CP<-->FPC<-->DP.
-#Note: Req and Resp timer stats is not supported for CP <--> DP direct comm over UDP.
-#CFLAGS += -DSYNC_STATS
-
-ifneq (,$(findstring SYNC_STATS, $(CFLAGS), $(EXTRA_CFLAGS)))
-	SRCS-y += stats_sync.c
-endif
 
 #un-comment below line to enable FQ-CSID support in the control-plane
 #CFLAGS += -DUSE_CSID

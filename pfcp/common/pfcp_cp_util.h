@@ -15,7 +15,6 @@
 #include "gtp_messages.h"
 
 extern uint32_t start_time;
-extern struct rte_hash *heartbeat_recovery_hash;
 
 #if defined(USE_DNS_QUERY)
 /**

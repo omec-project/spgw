@@ -29,6 +29,12 @@
 #include "cstats.h"
 
 #include "pfcp_cp_set_ie.h"
+static int get_peer_index(uint32_t ip_addr);
+static void get_current_time_oss(char *last_time_stamp);
+static bool is_last_activity_update(uint8_t msg_type, CLIinterface it);
+static void add_cli_peer(uint32_t ip_addr,CLIinterface it);
+static int get_first_index(void);
+static int update_last_activity(uint32_t ip_addr, char *time_stamp);
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -694,15 +700,6 @@ get_current_time_oss(char *last_time_stamp)
 
 /////////////////////////////////////////////////////////////////////////////////
 
-void
-init_rest_methods(int port_no, size_t thread_count)
-{
-	crInit(clGetAuditLogger(), port_no, thread_count);
-
-	crStart();
-
-}
-
 void init_cli_module(uint8_t gw_logger)
 {
 	clSetOption(eCLOptLogFileName, "logs/cp.log");
@@ -741,6 +738,5 @@ void init_cli_module(uint8_t gw_logger)
 	csStart();
 	cli_node.upsecs = &oss_reset_time;
 	cli_init(&cli_node,&cnt_peer);
-	init_rest_methods(12997, 1);
 }
 

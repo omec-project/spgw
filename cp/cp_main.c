@@ -212,10 +212,6 @@ main(int argc, char **argv)
         }
     }
 
-#ifdef SYNC_STATS
-    stats_init();
-    init_stats_hash();
-#endif /* SYNC_STATS */
 
     if (cp_params.stats_core_id != RTE_MAX_LCORE)
         rte_eal_remote_launch(do_stats, NULL, cp_params.stats_core_id);
@@ -245,10 +241,6 @@ void sig_handler(int signo)
     if (signo == SIGINT) {
         if (my_sock.gx_app_sock > 0)
             close_ipc_channel(my_sock.gx_app_sock);
-#ifdef SYNC_STATS
-        retrive_stats_entry();
-        close_stats();
-#endif /* SYNC_STATS */
 
         gst_deinit();
 
