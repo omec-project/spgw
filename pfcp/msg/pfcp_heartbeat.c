@@ -20,6 +20,7 @@
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_util.h"
 #include "cp_io_poll.h"
+#include "tables/tables.h"
 
 static void
 fill_pfcp_heartbeat_resp(pfcp_hrtbeat_rsp_t *pfcp_heartbeat_resp)
@@ -94,10 +95,9 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	process_response((uint32_t)peer_addr->sin_addr.s_addr);
 	pfcp_hrtbeat_rsp_t pfcp_hearbeat_resp = {0};
 	decode_pfcp_hrtbeat_rsp_t(buf_rx, &pfcp_hearbeat_resp);
-	uint32_t *recov_time ;
+	uint32_t recov_time;
 
-	int ret = rte_hash_lookup_data(heartbeat_recovery_hash , &peer_addr->sin_addr.s_addr ,
-			(void **) &(recov_time));
+	int ret = peer_heartbeat_entry_lookup(peer_addr->sin_addr.s_addr, &recov_time);
 
 	if (ret == -ENOENT) {
 		clLog(clSystemLog, eCLSeverityDebug, "No entry found for the heartbeat!!\n");
@@ -107,13 +107,10 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		uint32_t update_recov_time = 0;
 		update_recov_time =  (pfcp_hearbeat_resp.rcvry_time_stmp.rcvry_time_stmp_val);
 
-		if(update_recov_time > *recov_time) {
+		if(update_recov_time > recov_time) {
 
-			ret = rte_hash_add_key_data (heartbeat_recovery_hash,
-					&peer_addr->sin_addr.s_addr, &update_recov_time);
+			ret = add_data_to_heartbeat_hash_table(&peer_addr->sin_addr.s_addr, &update_recov_time);
 
-			ret = rte_hash_lookup_data(heartbeat_recovery_hash , &peer_addr->sin_addr.s_addr,
-					(void **) &(recov_time));
 		}
 	}
 

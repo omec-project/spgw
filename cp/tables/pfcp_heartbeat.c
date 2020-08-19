@@ -39,6 +39,22 @@ create_heartbeat_hash_table(void)
 }
 
 int
+peer_heartbeat_entry_lookup(uint32_t peer_ip, uint32_t *recov_time)
+{
+    printf("%s peer entry find heartbeat_recovery_hash address %s \n", __FUNCTION__,inet_ntoa(*((struct in_addr *)&peer_ip)));
+	int ret = rte_hash_lookup_data(heartbeat_recovery_hash,
+			(const void*) &(peer_ip), (void **)recov_time);
+
+	if (ret < 0) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN PEER heartbeat HASH [%u]",
+				__func__, __LINE__, peer_ip);
+		return -1;
+	}
+
+	return 0;
+}
+
+int
 add_data_to_heartbeat_hash_table(uint32_t *ip, uint32_t *recov_time)
 {
 	int ret = 0;
