@@ -3,32 +3,6 @@
 # SPDX-FileCopyrightText: 2020-present Open Networking Foundation <info@opennetworking.org>
 # Copyright (c) 2019 Intel Corporation
 
-source ./git_url.cfg
-THIRD_PARTY_SW_PATH="third_party"
-OSS_UTIL_DIR="oss-util"
-C3PO_OSS_DIR="oss_adapter/c3po_oss"
-
-export SPGW_DIR=$PWD
-
-SERVICE_NAME="CP"
-SERVICE=1
-
-SUDO=''
-[[ $EUID -ne 0 ]] && SUDO=sudo
-
-CUR_DIR=$PWD
-
-function finish() 
-{
-	cd $CUR_DIR
-}
-trap finish EXIT
-
-#OSDIST=`lsb_release -is`
-#OSVER=`lsb_release -rs`
-
-DEPS_DIR=${DEPS_DIR:-"$PWD/$THIRD_PARTY_SW_PATH"}
-
 build_c_ares()
 {
   pushd modules/c-ares
@@ -147,10 +121,4 @@ install_oss_util()
    popd
 }
 
-
 (return 2>/dev/null) && echo "Sourced" && return
-
-set -o errexit
-set -o pipefail
-set -o nounset
-
