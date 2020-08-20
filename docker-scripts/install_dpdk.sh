@@ -3,31 +3,7 @@
 # SPDX-FileCopyrightText: 2020-present Open Networking Foundation <info@opennetworking.org>
 # Copyright (c) 2019 Intel Corporation
 
-source ./git_url.cfg
-THIRD_PARTY_SW_PATH="third_party"
-OSS_UTIL_DIR="oss-util"
-C3PO_OSS_DIR="oss_adapter/c3po_oss"
-
-export SPGW_DIR=$PWD
-
-SERVICE_NAME="CP"
-SERVICE=1
-
-SUDO=''
-[[ $EUID -ne 0 ]] && SUDO=sudo
-
-CUR_DIR=$PWD
-
-function finish() 
-{
-	cd $CUR_DIR
-}
-trap finish EXIT
-
-DEPS_DIR=${DEPS_DIR:-"$PWD/$THIRD_PARTY_SW_PATH"}
 CPUS=${CPUS:-'5'}
-
-# Install DPDK
 DPDK_VER=${DPDK_VER:-'18.02.2'}
 export RTE_SDK=${RTE_SDK:-$DEPS_DIR/dpdk}
 export RTE_TARGET=${RTE_TARGET:-'x86_64-native-linuxapp-gcc'}
@@ -52,18 +28,10 @@ install_dpdk()
 	fi
 
 	cd ${RTE_SDK}
-	#cp $SPGW_DIR/dpdk-18.02_common_linuxapp config/common_linuxapp
-#	sed -ri 's,(KNI_KMOD=).*,\1n,' config/common_linuxapp
-    sed -ri 's,(IGB_UIO=).*,\1n,' config/common_linuxapp
-    sed -ri 's,(KNI_KMOD=).*,\1n,' config/common_linuxapp
+	sed -ri 's,(IGB_UIO=).*,\1n,' config/common_linuxapp
+	sed -ri 's,(KNI_KMOD=).*,\1n,' config/common_linuxapp
 	make --trace --debug -j $CPUS install T=${RTE_TARGET} RTE_MACHINE=${RTE_MACHINE} 
 	echo "Installed DPDK at $RTE_SDK"
-
 }
 
 (return 2>/dev/null) && echo "Sourced" && return
-
-set -o errexit
-set -o pipefail
-set -o nounset
-
