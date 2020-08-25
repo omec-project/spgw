@@ -122,7 +122,7 @@ build_spgw()
 
 	if [ $SERVICE == 2 ] || [ $SERVICE == 3 ] ; then
 		echo "Building Libs..."
-		make build-lib || { echo -e "\nmake lib failed\n"; }
+		#make build-lib || { echo -e "\nmake lib failed\n"; }
 		echo "Building DP..."
 		#make build-dp -j 10 EXTRA_CFLAGS='-DUSE_AF_PACKET -ggdb -O2' || { echo -e "\nmake failed\n"; }
 	fi

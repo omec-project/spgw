@@ -11,6 +11,7 @@
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
 #include "cp_io_poll.h"
+#include "spgw_cpp_wrapper.h"
 
 
 // saegw - DETACH_PROC PFCP_SESS_DEL_REQ_SNT_STATE PFCP_SESS_DEL_RESP_RCVD_EVNT => process_sess_del_resp_handler
@@ -68,13 +69,10 @@ handle_pfcp_session_delete_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
         clLog(sxlogger, eCLSeverityDebug, "DECODED bytes in Sess Del Resp is %d\n",
                 decoded);
 
-        update_cli_stats(peer_addr.sin_addr.s_addr,
-                pfcp_rx->message_type, REJ,SX);
+        increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP_DROP, peer_addr.sin_addr.s_addr);
         return -1;
     }
-    update_cli_stats(peer_addr.sin_addr.s_addr,
-            pfcp_rx->message_type, ACC,SX);
-
+    increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP, peer_addr.sin_addr.s_addr);
     handle_pfcp_session_delete_response(msg);
     return 0;
 }

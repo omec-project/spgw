@@ -12,6 +12,7 @@
 #include "pfcp_messages_decoder.h"
 #include "tables/tables.h"
 #include "cp_io_poll.h"
+#include "spgw_cpp_wrapper.h"
 
 // saegw, INITIAL_PDN_ATTACH_PROC,PFCP_SESS_MOD_REQ_SNT_STATE,PFCP_SESS_MOD_RESP_RCVD_EVNT => process_sess_mod_resp_handler
 // saegw SGW_RELOCATION_PROC PFCP_SESS_MOD_REQ_SNT_STATE PFCP_SESS_MOD_RESP_RCVD_EVNT => process_sess_mod_resp_handler
@@ -81,15 +82,12 @@ handle_pfcp_session_mod_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
     {
         clLog(sxlogger, eCLSeverityDebug, "DECODED bytes in Sess Modify Resp is %d\n",
                 decoded);
-        update_cli_stats(peer_addr.sin_addr.s_addr,
-                pfcp_rx->message_type, REJ,SX);
-
+        // TODOSTATISTICS
+        // increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP_REJ, peer_addr.sin_addr.s_addr);
         return -1;
     }
 
-    update_cli_stats(peer_addr.sin_addr.s_addr,
-            pfcp_rx->message_type, ACC,SX);
-
+    increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP, peer_addr.sin_addr.s_addr);
 
     handle_pfcp_session_modification_response(msg);
     return 0;

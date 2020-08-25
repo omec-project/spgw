@@ -20,6 +20,7 @@
 #include "gen_utils.h"
 #include "pfcp_association_setup_proc.h"
 #include "gtpv2_error_rsp.h"
+#include "spgw_cpp_wrapper.h"
 
 
 static 
@@ -69,7 +70,7 @@ int handle_cca_initial_msg(msg_info_t *msg)
     inet_aton("127.0.0.1", &(saddr_in.sin_addr));
 
 
-    update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCA_INITIAL, RCVD, GX);
+    increment_gx_peer_stats(MSG_RX_DIAMETER_GX_CCA_I, saddr_in.sin_addr.s_addr);
 
     pdn_connection_t *pdn_cntxt = NULL;
     /* Retrive Gx_context based on Sess ID. */

@@ -20,7 +20,6 @@
 #include "cp_interface.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_util.h"
-#include "cp_stats.h"
 #include "cp_config.h"
 #include "sm_struct.h"
 #include "gtpv2_interface.h"

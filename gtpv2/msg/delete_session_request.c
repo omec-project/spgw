@@ -747,8 +747,6 @@ struct gw_info {
 //				&context->upf_context.upf_sockaddr) < 0 )
 //		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 //	else {
-//		cp_stats.session_deletion_req_sent++;
-//		get_current_time(cp_stats.session_deletion_req_sent_time);
 //	}
 //
 //	/* Update the sequence number */

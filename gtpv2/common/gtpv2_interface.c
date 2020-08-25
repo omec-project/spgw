@@ -9,7 +9,6 @@
 #include "gtp_messages_decoder.h"
 #include "cp_interface.h"
 #include "cp_config.h"
-#include "cp_stats.h"
 #include "gtp_ies.h"
 #include "rte_common.h"
 #include "util.h"
@@ -85,58 +84,3 @@ gtpv2c_send(int gtpv2c_if_fd, uint8_t *gtpv2c_tx_buf,
 		}
 	}
 }
-
-
-void
-stats_update(uint8_t msg_type)
-{
-    switch (cp_config->cp_type) {
-        case SGWC:
-        case SAEGWC:
-            switch (msg_type) {
-                case GTP_CREATE_SESSION_REQ:
-                    cp_stats.create_session++;
-                    break;
-                case GTP_DELETE_SESSION_REQ:
-                    cp_stats.delete_session++;
-                    break;
-                case GTP_MODIFY_BEARER_REQ:
-                    cp_stats.modify_bearer++;
-                    break;
-                case GTP_RELEASE_ACCESS_BEARERS_REQ:
-                    cp_stats.rel_access_bearer++;
-                    break;
-                case GTP_BEARER_RESOURCE_CMD:
-                    cp_stats.bearer_resource++;
-                    break;
-
-                case GTP_DELETE_BEARER_RSP:
-                    cp_stats.delete_bearer++;
-                    return;
-                case GTP_DOWNLINK_DATA_NOTIFICATION_ACK:
-                    cp_stats.ddn_ack++;
-                    break;
-                case GTP_ECHO_REQ:
-                    cp_stats.echo++;
-                    break;
-            }
-            break;
-
-        case PGWC:
-            switch (msg_type) {
-                case GTP_CREATE_SESSION_REQ:
-                    cp_stats.create_session++;
-                    break;
-
-                case GTP_DELETE_SESSION_REQ:
-                    cp_stats.delete_session++;
-                    break;
-            }
-            break;
-        default:
-            rte_panic("main.c::control_plane::cp_stats-"
-                    "Unknown spgw_cfg= %d.", cp_config->cp_type);
-            break;
-    }
-}
-

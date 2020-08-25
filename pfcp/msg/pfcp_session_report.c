@@ -9,6 +9,7 @@
 #include "pfcp_messages_decoder.h"
 #include "sm_structs_api.h"
 #include "tables/tables.h"
+#include "spgw_cpp_wrapper.h"
 
 // saegw - CONN_SUSPEND_PROC CONNECTED_STATE PFCP_SESS_RPT_REQ_RCVD_EVNT ==> process_rpt_req_handler 
 // saegw - CONN_SUSPEND_PROC IDEL_STATE PFCP_SESS_RPT_REQ_RCVD_EVNT ==> process_rpt_req_handler
@@ -69,12 +70,12 @@ handle_session_report_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
 
         clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Sess Report Request is %d\n",
                 decoded);
-        update_cli_stats(peer_addr.sin_addr.s_addr,
-                pfcp_rx->message_type, REJ,SX);
+        // TODOSTATISTICS
+        // increment_userplane_stats(MSG_RX_PFCP_REPORT_DECODE_ERR, peer_addr.sin_addr.s_addr);
+        return -1;
     }
 
-    update_cli_stats(peer_addr.sin_addr.s_addr,
-            pfcp_rx->message_type, RCVD,SX);
+    increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSREPORTREQ, peer_addr.sin_addr.s_addr);
 
     handle_pfcp_session_report_req_msg(msg);
     return 0;

@@ -17,7 +17,6 @@
 #include "pfcp_messages.h"
 #include "clogger.h"
 #include "cp_config.h"
-#include "cp_stats.h"
 #include "cp_config_defs.h"
 #include "cp_io_poll.h"
 #include "tables/tables.h"

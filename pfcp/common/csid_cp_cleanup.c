@@ -185,7 +185,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	struct sockaddr_in saddr_in;
 	saddr_in.sin_family = AF_INET;
 	inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-	update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
+    increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_T, saddr_in.sin_addr.s_addr);
 
 	return 0;
 }
@@ -266,8 +266,7 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 	rte_free(context);
 	context = NULL;
 
-	update_sys_stat(number_of_users, DECREMENT);
-	update_sys_stat(number_of_active_session, DECREMENT);
+    decrement(NUM_UE_SPGW_ACTIVE_SUBSCRIBERS);
 
 
 	return 0;

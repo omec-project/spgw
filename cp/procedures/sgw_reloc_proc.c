@@ -40,8 +40,7 @@ process_sess_est_resp_sgw_reloc_handler(void *data, void *unused_param)
 				(struct sockaddr *) &(my_sock.s5s8_recv_sockaddr),
 		        sizeof(struct sockaddr_in));
 
-	update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
-						gtpv2c_tx->gtpc.message_type, SENT,S5S8);
+    increment_pgw_peer_stats(MSG_TX_GTPV2_MBREQ, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 
 	if (SGWC == cp_config->cp_type) {
 		add_gtpv2c_if_timer_entry(
@@ -174,9 +173,7 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 		       (struct sockaddr *) (&my_sock.s5s8_recv_sockaddr),
 		        sizeof(struct sockaddr_in));
 
-	update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
-						gtpv2c_tx->gtpc.message_type, SENT,S5S8);
-
+    increment_mme_peer_stats(MSG_TX_GTPV2_MBRSP, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 
 	if (SGWC == cp_config->cp_type) {
 		add_gtpv2c_if_timer_entry(
@@ -245,10 +242,8 @@ int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 			(struct sockaddr *) &s11_mme_sockaddr,
 			sizeof(struct sockaddr_in));
 
-	update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,
-						gtpv2c_tx->gtpc.message_type, ACC,S11);
-	update_sys_stat(number_of_users, INCREMENT);
-	update_sys_stat(number_of_active_session, INCREMENT);
+    increment_mme_peer_stats(MSG_TX_GTPV2_CSRSP, s11_mme_sockaddr.sin_addr.s_addr);
+	increment_stat(NUM_UE_SGW_ACTIVE_SUBSCRIBERS);
 
 	RTE_SET_USED(data);
 	RTE_SET_USED(rx_buf);
@@ -882,7 +877,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 	struct sockaddr_in saddr_in;
 	saddr_in.sin_family = AF_INET;
 	inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-	update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_INITIAL, SENT, GX);
+    increment_gx_peer_stats(MSG_TX_DIAMETER_CCR_U, saddr_in.sin_addr.s_addr);
 
 
 	/* Update UE State */

@@ -4,6 +4,9 @@
 
 #include "spgw_config.h"
 #include "spgw_tables.h"
+#include "spgwStatsPromClient.h"
+#include <thread>
+#include <sstream>
 static spgwTables *table = nullptr; 
 
 extern "C"
@@ -13,6 +16,7 @@ extern "C"
      #include <arpa/inet.h>
      #include <stdio.h>
      #include "spgw_cpp_wrapper.h"
+     #include "spgwStatsPromEnum.h"
 
     spgw_config_profile_t *parse_subscriber_profiles_c(const char *file)
     {
@@ -96,4 +100,72 @@ extern "C"
     {
         return table->pop_event();
     }
+
+    void setup_prometheus(void)
+    {
+        std::thread prom(spgwStatsSetupPrometheusThread);
+        prom.detach();
+    }
+
+    void increment_mme_peer_stats(int stat_id, uint32_t peer_addr)
+    {
+       spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+       
+	   spgwStats::Instance()->increment(id, {{"mme_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}});
+    }
+
+    void increment_sgw_peer_stats(int stat_id, uint32_t peer_addr)
+    {
+       spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+       
+	   spgwStats::Instance()->increment(id, {{"sgw_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}});
+    }
+
+    void increment_pgw_peer_stats(int stat_id, uint32_t peer_addr)
+    {
+       spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+       
+	   spgwStats::Instance()->increment(id, {{"pgw_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}});
+    }
+
+    void increment_userplane_stats(int stat_id, uint32_t peer_addr)
+    {
+       spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+       
+	   spgwStats::Instance()->increment(id, {{"spgwu_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}});
+    }
+
+    void increment_gx_peer_stats(int stat_id, uint32_t peer_addr)
+    {
+       spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+	   spgwStats::Instance()->increment(id, {{"pcrf_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}});
+    }
+
+
+    void decrement_stat(int stat_id) 
+    {
+       spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+	   spgwStats::Instance()->decrement(id);
+    }
+
+    void increment_stat(int stat_id)
+    {
+       spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+	   spgwStats::Instance()->increment(id);
+    }
+
+    void increment_proc_mme_peer_stats_reason(int stat_id, uint32_t peer_addr, uint32_t reason)
+    {
+       spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+       std::stringstream r_string;
+       r_string<<reason;
+	   spgwStats::Instance()->increment(id, {{"mme_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}, {"reason", r_string.str()}});
+    }
+
+    void increment_proc_mme_peer_stats(int stat_id, uint32_t peer_addr)
+    {
+       spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+	   spgwStats::Instance()->increment(id, {{"mme_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}});
+    }
+
 }

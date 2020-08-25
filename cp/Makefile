@@ -30,7 +30,6 @@ SRCS-y := cp_main.c
 SRCS-y += ue.c
 SRCS-y += ip_pool.c
 SRCS-y += cp_init.c
-SRCS-y += cp_stats.c
 SRCS-y += monitor_config.c
 SRCS-y += cp_config.c
 SRCS-y += packet_filters.c

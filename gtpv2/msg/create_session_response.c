@@ -46,8 +46,7 @@ int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 	/*Set the appropriate event type.*/
 	msg->event = CS_RESP_RCVD_EVNT;
 
-	update_sys_stat(number_of_users, INCREMENT);
-	update_sys_stat(number_of_active_session, INCREMENT);
+    increment_stat(NUM_UE_SGW_ACTIVE_SUBSCRIBERS);
 
 	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
 					"Msg_Type:%s[%u], Teid:%u, "
@@ -272,8 +271,7 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
-		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-				pfcp_sess_mod_req.header.message_type,SENT,SX);
+        increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
 		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_create_sess_rsp_pfcp_timeout);
         pdn->trans_entry = trans_entry; 

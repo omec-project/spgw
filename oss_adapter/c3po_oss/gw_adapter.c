@@ -17,8 +17,6 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <stdbool.h>
-#include "../../cp/cp_stats.h"
-#include "../../cp/cp_init.h"
 #include "../../cp/cp_config.h"
 #include "cp_interface.h"
 #include "../../cp/ue.h"
@@ -30,11 +28,6 @@
 
 #include "pfcp_cp_set_ie.h"
 static int get_peer_index(uint32_t ip_addr);
-static void get_current_time_oss(char *last_time_stamp);
-static bool is_last_activity_update(uint8_t msg_type, CLIinterface it);
-static void add_cli_peer(uint32_t ip_addr,CLIinterface it);
-static int get_first_index(void);
-static int update_last_activity(uint32_t ip_addr, char *time_stamp);
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -340,222 +333,6 @@ int gxMessageTypes [] = {
 };
 
 
-bool is_last_activity_update(uint8_t msg_type, CLIinterface it)
-{
-    EInterfaceType it_cli;
-    if(it == SX) {
-        if(cp_config->cp_type == SGWC)
-            it_cli = itSxa;
-        else if(cp_config->cp_type == PGWC)
-            it_cli = itSxb;
-        else
-            it_cli = itSxaSxb;
-    } else if(it == GX)
-        it_cli = itGx;
-    else if(it == S1U)
-        it_cli = itS1U;
-    else if(it == SGI)
-        it_cli = itSGI;
-    else if(it == S5S8)
-        it_cli = itS5S8;
-    else
-        it_cli = itS11;
-
-    switch(it_cli) {
-    case itS11:
-        if((ossS11MessageDefs[s11MessageTypes[msg_type]].dir == dIn) ||
-            (ossS11MessageDefs[s11MessageTypes[msg_type]].dir == dRespRcvd))
-            return true;
-        break;
-
-    case itS5S8:
-        if((ossS5s8MessageDefs[s5s8MessageTypes[msg_type]].dir == dIn) ||
-            (ossS5s8MessageDefs[s5s8MessageTypes[msg_type]].dir == dRespRcvd))
-            return true;
-        break;
-
-    case itSxa:
-        if((ossSxaMessageDefs[sxaMessageTypes[msg_type]].dir == dIn) ||
-            (ossSxaMessageDefs[sxaMessageTypes[msg_type]].dir == dRespRcvd))
-            return true;
-        break;
-
-    case itSxb:
-        if((ossSxbMessageDefs[sxbMessageTypes[msg_type]].dir == dIn) ||
-            (ossSxbMessageDefs[sxbMessageTypes[msg_type]].dir == dRespRcvd))
-            return true;
-        break;
-
-    case itSxaSxb:
-        if((ossSxaSxbMessageDefs[sxasxbMessageTypes[msg_type]].dir == dIn) ||
-            (ossSxaSxbMessageDefs[sxasxbMessageTypes[msg_type]].dir == dRespRcvd))
-            return true;
-        break;
-
-    case itGx:
-        if((ossGxMessageDefs[gxMessageTypes[msg_type]].dir == dIn) ||
-            (ossGxMessageDefs[gxMessageTypes[msg_type]].dir == dRespRcvd))
-            return true;
-        break;
-
-    case itS1U:
-        /*TODO*/
-        break;
-
-    case itSGI:
-        /*TODO*/
-        break;
-    }
-
-    return false;
-}
-
-
-
-
-int update_cli_stats(uint32_t ip_addr, uint8_t msg_type, int dir, CLIinterface it)
-{
-	int ret = 0;
-	int index = -1;
-
-	static char stat_timestamp[LAST_TIMER_SIZE];
-	add_cli_peer(ip_addr,it);
-
-	get_current_time_oss(stat_timestamp);
-
-	if(is_last_activity_update(msg_type,it))
-			update_last_activity(ip_addr, stat_timestamp);
-
-	clLog(clSystemLog, eCLSeverityTrace, "Updating update_cli_stats\n"
-										"msg_type:%d,"
-										"dir:%d,"
-										"ip_addr is :%s\n",
-											msg_type,dir,
-											inet_ntoa(*((struct in_addr*)&ip_addr)));
-
-	index = get_peer_index(ip_addr);
-
-	if(index == -1) {
-		clLog(clSystemLog, eCLSeverityTrace, "peer not found\n");
-		return -1;
-	}
-	if(msg_type == PFCP_HEARTBEAT_REQUEST || msg_type == GTP_ECHO_REQ) {
-		__sync_add_and_fetch(&cli_node.peer[index]->hcrequest[dir], 1);
-		if (dir == RCVD)
-			update_last_activity(ip_addr, stat_timestamp);
-
-	} else if(msg_type == PFCP_HEARTBEAT_RESPONSE || msg_type == GTP_ECHO_RSP) {
-		__sync_add_and_fetch(&cli_node.peer[index]->hcresponse[dir], 1);
-		if (dir == RCVD)
-			update_last_activity(ip_addr, stat_timestamp);
-	} else {
-
-		switch(cli_node.peer[index]->intfctype) {
-			case itS11:
-				__sync_add_and_fetch(&cli_node.peer[index]->stats.s11[s11MessageTypes[msg_type]].cnt[dir], 1);
-				strcpy(cli_node.peer[index]->stats.s11[s11MessageTypes[msg_type]].ts, stat_timestamp);
-				break;
-			case itS5S8:
-				__sync_add_and_fetch(&cli_node.peer[index]->stats.s5s8[s5s8MessageTypes[msg_type]].cnt[dir], 1);
-				strcpy(cli_node.peer[index]->stats.s5s8[s5s8MessageTypes[msg_type]].ts, stat_timestamp);
-				break;
-			case itSxa:
-				__sync_add_and_fetch(&cli_node.peer[index]->stats.sxa[sxaMessageTypes[msg_type]].cnt[dir], 1);
-				strcpy(cli_node.peer[index]->stats.sxa[sxaMessageTypes[msg_type]].ts, stat_timestamp);
-				break;
-			case itSxb:
-				__sync_add_and_fetch(&cli_node.peer[index]->stats.sxb[sxbMessageTypes[msg_type]].cnt[dir], 1);
-				strcpy(cli_node.peer[index]->stats.sxb[sxbMessageTypes[msg_type]].ts, stat_timestamp);
-				break;
-			case itSxaSxb:
-				__sync_add_and_fetch(&cli_node.peer[index]->stats.sxasxb[sxasxbMessageTypes[msg_type]].cnt[dir], 1);
-				strcpy(cli_node.peer[index]->stats.sxasxb[sxasxbMessageTypes[msg_type]].ts, stat_timestamp);
-				break;
-               		case itGx:
-                                __sync_add_and_fetch(&cli_node.peer[index]->stats.gx[gxMessageTypes[msg_type]].cnt[dir], 1);
-                                strcpy(cli_node.peer[index]->stats.gx[gxMessageTypes[msg_type]].ts, stat_timestamp);
-                                break;
-			default:
-				clLog(clSystemLog, eCLSeverityCritical, "CLI:No such a interface");
-				break;
-
-		}
-	}
-	return ret;
-}
-
-void add_cli_peer(uint32_t ip_addr,CLIinterface it)
-{
-    int index = -1;
-    SPeer temp_peer;
-
-    EInterfaceType it_cli;
-
-    /*NK:need to optimize*/
-    if (it == SX)
-    {
-        if (cp_config->cp_type == SGWC){
-            it_cli = itSxa;
-        } else if (cp_config->cp_type == PGWC){
-            it_cli = itSxb;
-        } else{
-            it_cli = itSxaSxb;
-        }
-    } else if (it == GX)
-    {
-        it_cli = itGx;
-    } else if (it == S1U)
-    {
-        it_cli = itS1U;
-    } else if (it == SGI)
-    {
-        it_cli = itSGI;
-    }else if (it == S5S8)
-    {
-        it_cli = itS5S8;
-    }else
-    {
-        it_cli = itS11;
-    }
-
-    clLog(clSystemLog, eCLSeverityTrace,
-            "CLI:Request rcvd for ip addr:%s\n",
-            inet_ntoa(*((struct in_addr *)&ip_addr)));
-
-    /*Check peer is allready added or not*/
-    index = get_peer_index(ip_addr);
-
-    if (index == -1)  /*peer is not added yet*/
-    {
-        index = get_first_index(); /*find the postn*/
-        cli_node.peer[index] = calloc(1,sizeof(temp_peer));
-
-        //Initialization
-        cli_node.peer[index]->ipaddr = (*(struct in_addr *)&ip_addr);
-        cli_node.peer[index]->intfctype = it_cli;
-        cli_node.peer[index]->status = FALSE;
-
-        cli_node.peer[index]->response_timeout = cp_config->transmit_timer;
-        cli_node.peer[index]->maxtimeout = cp_config->transmit_cnt + 1;
-
-        cli_node.peer[index]->timeouts = 0;
-
-        clLog(clSystemLog, eCLSeverityTrace,
-                "Interface type is : %d\n",it);
-        clLog(clSystemLog, eCLSeverityTrace,
-                "Added peer with ip addr : %s\n\n",
-                inet_ntoa(cli_node.peer[index]->ipaddr));
-
-        nbr_of_peer++; /*peer count incremented*/
-
-        if (index == cnt_peer)
-            cnt_peer++;
-    }
-    else {
-        clLog(clSystemLog, eCLSeverityTrace,"CLI:peer already exist\n");
-    }
-}
-
 int get_peer_index(uint32_t ip_addr)
 {
 	int i;
@@ -570,20 +347,6 @@ int get_peer_index(uint32_t ip_addr)
 	}
 
 	return -1;
-}
-
-int get_first_index(void)
-{
-	int i;
-
-	for(i = 0; i < cnt_peer ; i++)
-	{
-		if(cli_node.peer[i] == NULL)
-		{
-				return i;
-		}
-	}
-	return i;
 }
 
 int update_peer_timeouts(uint32_t ip_addr,uint8_t val)
@@ -653,52 +416,6 @@ int delete_cli_peer(uint32_t ip_addr)
 	return 0;
 
 }
-
-int update_last_activity(uint32_t ip_addr, char *time_stamp)
-{
-	int index = -1;
-
-	index = get_peer_index(ip_addr);
-
-	if(index == -1)
-	{
-		clLog(clSystemLog, eCLSeverityTrace,"peer not found\n");
-		return -1;
-	}
-
-	strcpy(cli_node.peer[index]->lastactivity, time_stamp);
-
-	return 0;
-}
-
-int update_sys_stat(int index, int operation)
-{
-	if(operation)
-		__sync_add_and_fetch(&cli_node.stats[index],1);
-	else
-		__sync_add_and_fetch(&cli_node.stats[index],-1);
-
-	return 0;
-}
-
-///////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-void
-get_current_time_oss(char *last_time_stamp)
-{
-        struct tm * last_timer;
-        time_t rawtime;
-        time (&rawtime);
-        last_timer = localtime (&rawtime);
-        strftime (last_time_stamp,LAST_TIMER_SIZE,"%FT%T",last_timer);
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////
 
 void init_cli_module(uint8_t gw_logger)
 {

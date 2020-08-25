@@ -49,15 +49,14 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *unused_param)
 					UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
 					S5S8_IFACE);
 		}
+        // standalone sgw case 
 		if (resp->msg_type == GTP_CREATE_BEARER_RSP) {
 
-			update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
-						gtpv2c_tx->gtpc.message_type, ACC,S5S8);
+            increment_mme_peer_stats(MSG_RX_GTPV2_S11_CBRSP, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 		}
 		else {
-
-			update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
-						gtpv2c_tx->gtpc.message_type, SENT,S5S8);
+            // peer address needs to be corrected 
+            increment_mme_peer_stats(MSG_TX_GTPV2_S11_CBRSP, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 		}
 
 	} else {
@@ -72,8 +71,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *unused_param)
 					UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
 					S11_IFACE);
 
-			update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,
-				gtpv2c_tx->gtpc.message_type, SENT,S11);
+            increment_mme_peer_stats(MSG_TX_GTPV2_S11_CBREQ, s11_mme_sockaddr.sin_addr.s_addr);
 		}
 	}
 
@@ -211,8 +209,7 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 	else
 	{
 
-		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-				pfcp_sess_mod_req.header.message_type,SENT,SX);
+        increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
 		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_create_bearer_request_pfcp_timeout);
         pdn->trans_entry = trans_entry;

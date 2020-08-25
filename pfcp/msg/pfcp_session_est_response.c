@@ -10,6 +10,7 @@
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
 #include "cp_io_poll.h"
+#include "spgw_cpp_wrapper.h"
 
 // SAEGW - INITIAL_PDN_ATTACH_PROC PFCP_SESS_EST_REQ_SNT_STATE, PFCP_SESS_EST_RESP_RCVD_EVNT => process_sess_est_resp_handler
 // saegw - SGW_RELOCATION_PROC PFCP_SESS_EST_REQ_SNT_STATE PFCP_SESS_EST_RESP_RCVD_EVNT ==> process_sess_est_resp_sgw_reloc_handler
@@ -71,14 +72,11 @@ handle_pfcp_session_est_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
     if(decoded <= 0) 
     {
         clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp precondition check\n", __func__);
-
-        update_cli_stats(peer_addr.sin_addr.s_addr,
-                pfcp_rx->message_type, REJ,SX);
-
+        // TODOSTASTICS 
+        // increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSESTRSP_DECODE_ERR, peer_addr.sin_addr.s_addr);
         return -1;
     }
-    update_cli_stats(peer_addr.sin_addr.s_addr,
-            pfcp_rx->message_type, ACC,SX);
+    increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSESTRSP, peer_addr.sin_addr.s_addr);
 
     handle_pfcp_session_est_response(msg);
     return 0;

@@ -18,7 +18,6 @@
 #include "pfcp_cp_set_ie.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"  /* fetch APIs to build PCO */
-#include "cp_stats.h"
 #include "csid_api.h"
 #include "stdint.h"
 #include "stdbool.h"
@@ -350,8 +349,9 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 	ret = decode_create_sess_req((uint8_t *) gtpv2c_rx,
 			&csr);
-	if (!ret)
+	if (!ret) {
 		 return ret;
+    }
 
 	if (csr.indctn_flgs.header.len &&
 			csr.indctn_flgs.indication_uimsi) {

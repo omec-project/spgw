@@ -36,6 +36,9 @@ FROM hyperscanbuild as ossutil
 COPY docker-scripts/install_oss_util.sh ./docker-scripts/
 RUN source ./docker-scripts/install_oss_util.sh && install_oss_util 
 
+COPY docker-scripts/install_prometheus.sh ./docker-scripts/
+RUN ./docker-scripts/install_prometheus.sh
+
 COPY . ./
 ARG EXTRA_CFLAGS='-DUSE_AF_PACKET -ggdb -O2'
 FROM ossutil as spgw
@@ -58,3 +61,4 @@ COPY --from=spgw /spgw/third_party/freediameter/build/libfdproto/libfdproto.so /
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/cpp-driver/build/libcassandra.so /usr/local/lib/
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/c-ares/.libs/libcares.so /usr/local/lib/
 COPY --from=spgw /spgw/cpplib/target/lib/libspgwcpputil.so /usr/local/lib/
+COPY --from=spgw /tmp/prometheus/_build/deploy/usr/local/lib /usr/local/lib

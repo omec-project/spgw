@@ -14,7 +14,6 @@
 #include "clogger.h"
 #include "cp_init.h"
 #include "cp_main.h"
-#include "cp_stats.h"
 #include "sm_struct.h"
 #include "sm_structs_api.h"
 #include "cp_io_poll.h"
@@ -61,7 +60,6 @@ uint16_t local_csid = 0;
 #endif /* USE_CSID */
 
 struct cp_params cp_params;
-clock_t cp_stats_execution_time;
 _timer_t st_time;
 
 /**
@@ -188,6 +186,8 @@ main(int argc, char **argv)
 
     parse_arg(argc - ret, argv + ret);
 
+    setup_prometheus(); 
+
     // this parses file and allocates cp_config  
     init_config();
 
@@ -204,23 +204,13 @@ main(int argc, char **argv)
 #endif
 
     /* Make a connection between control-plane and gx_app */
-    if(cp_config->gx_enabled == true)
-    {
-        if(cp_config->cp_type != SGWC)
-        {
-            start_cp_app();
-        }
+    if((cp_config->gx_enabled == true) && (cp_config->cp_type != SGWC)) {
+        start_cp_app();
     }
-
-
-    if (cp_params.stats_core_id != RTE_MAX_LCORE)
-        rte_eal_remote_launch(do_stats, NULL, cp_params.stats_core_id);
 
 	echo_table_init();
 
-    /* Create thread for handling for sending echo req to its peer node */
     rest_thread_init();
-
 
     init_pfcp_tables();
 

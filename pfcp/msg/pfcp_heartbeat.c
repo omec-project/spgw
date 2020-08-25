@@ -18,7 +18,7 @@
 #include "pfcp_messages_decoder.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_util.h"
-#include "pfcp_cp_util.h"
+#include "spgw_cpp_wrapper.h"
 #include "cp_io_poll.h"
 #include "tables/tables.h"
 
@@ -61,8 +61,7 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, peer_addr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityDebug, "Error sending in heartbeat request: %i\n",errno);
 	} else {
-		update_cli_stats(peer_addr->sin_addr.s_addr,
-						PFCP_HEARTBEAT_RESPONSE,SENT,SX);
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_ECHORSP, peer_addr->sin_addr.s_addr);
 	}
 	free(pfcp_heartbeat_req);
 	return 0;
@@ -71,12 +70,10 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 int handle_pfcp_heartbit_req_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
 {
     int ret;
-	struct sockaddr_in peer_addr = msg->peer_addr;
-    printf("Heartbit request received from UP %s \n",inet_ntoa(peer_addr.sin_addr));
-    update_cli_stats(peer_addr.sin_addr.s_addr,
-            pfcp_rx->message_type,RCVD,SX);
+	struct sockaddr_in *peer_addr = &msg->peer_addr;
+    increment_userplane_stats(MSG_RX_PFCP_SXASXB_ECHOREQ, peer_addr->sin_addr.s_addr);
 
-    ret = process_heartbeat_request((uint8_t*)pfcp_rx, &peer_addr);
+    ret = process_heartbeat_request((uint8_t*)pfcp_rx, peer_addr);
     if(ret != 0){
         clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat request\n", __func__);
     }
@@ -119,16 +116,13 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 
 int handle_pfcp_heartbit_rsp_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
 {
-	struct sockaddr_in peer_addr = msg->peer_addr;
+	struct sockaddr_in *peer_addr = &msg->peer_addr;
     int ret;
-
-    printf("Heartbit response received from UP %s \n",inet_ntoa(peer_addr.sin_addr));
-    ret = process_heartbeat_response((uint8_t *)pfcp_rx, &peer_addr);
+    ret = process_heartbeat_response((uint8_t *)pfcp_rx, peer_addr);
     if(ret != 0){
         clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat response\n", __func__);
     } else {
-        update_cli_stats(peer_addr.sin_addr.s_addr,
-                PFCP_HEARTBEAT_RESPONSE,RCVD,SX);
+        increment_userplane_stats(MSG_RX_PFCP_SXASXB_ECHORSP, peer_addr->sin_addr.s_addr);
     }
     return 0;
 }

@@ -11,7 +11,6 @@
 #include "gx_interface.h"
 #include "sm_enum.h"
 #include "sm_hand.h"
-#include "cp_stats.h"
 #include "pfcp_cp_util.h"
 #include "sm_struct.h"
 #include "sm_structs_api.h"
@@ -376,7 +375,7 @@ assoication_setup_request(upf_context_t *upf_context)
         return GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER;
     } else {
 
-        update_cli_stats(GET_UPF_ADDR(upf_context), pfcp_ass_setup_req.header.message_type, SENT, SX);
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_ASSOCSETUPREQ, GET_UPF_ADDR(upf_context));
 
         trans_entry = start_pfcp_node_timer((void *)upf_context, pfcp_msg, encoded,  
                                             process_assoc_resp_timeout_handler);

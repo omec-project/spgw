@@ -5,6 +5,7 @@
 #ifndef __SPGW__CPP_WRAPPER__H
 #define __SPGW__CPP_WRAPPER__H
 #include "spgw_config_struct.h"
+#include "spgwStatsPromEnum.h"
 
 spgw_config_profile_t* parse_subscriber_profiles_c(const char *);
 
@@ -32,4 +33,17 @@ void* find_gtp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq);
 void* delete_gtp_transaction(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq);
 void queue_stack_unwind_event_cpp(void *context); 
 void *get_stack_unwind_event_cpp(void);
+
+/* Prometheus APIs */
+void decrement_stat(int stat_id);
+void increment_stat(int stat_id);
+void setup_prometheus(void);
+void increment_userplane_stats(int stat_id, uint32_t peer_addr);
+void increment_mme_peer_stats(int stat_id, uint32_t peer_addr);
+void increment_sgw_peer_stats(int stat_id, uint32_t peer_addr);
+void increment_pgw_peer_stats(int stat_id, uint32_t peer_addr);
+void increment_gx_peer_stats(int stat_id, uint32_t peer_addr);
+void increment_proc_mme_peer_stats_reason(int stat_id, uint32_t peer_addr, uint32_t reason);
+void increment_proc_mme_peer_stats(int stat_id, uint32_t peer_addr);
+
 #endif

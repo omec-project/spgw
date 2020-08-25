@@ -226,8 +226,7 @@ process_pfcp_sess_mod_request(msg_info_t *msg)
         clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
         // Assume that its success and let retry take care of error handling  
     } 
-    update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-            pfcp_sess_mod_req.header.message_type,SENT,SX);
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
     transData_t *trans_entry;
     trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_mod_request_timeout);
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
@@ -304,8 +303,7 @@ process_service_request_pfcp_mod_sess_rsp(msg_info_t *msg)
             (struct sockaddr *) &trans->peer_sockaddr,
             sizeof(struct sockaddr_in));
 
-    update_cli_stats(trans->peer_sockaddr.sin_addr.s_addr,
-            gtpv2c_tx->gtpc.message_type,ACC,S11);
+    increment_mme_peer_stats(MSG_TX_GTPV2_S11_MBRSP, trans->peer_sockaddr.sin_addr.s_addr);
 
     proc_service_request_complete(proc_context);
 

@@ -18,7 +18,7 @@
 #include "tables/tables.h"
 #include "gw_adapter.h"
 #include "gx_error_rsp.h"
-
+#include "spgw_cpp_wrapper.h"
 
 static 
 void dispatch_rar(msg_info_t *msg)
@@ -81,7 +81,7 @@ int handle_rar_msg(msg_info_t *msg)
     struct sockaddr_in saddr_in;
     saddr_in.sin_family = AF_INET;
     inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-    update_cli_stats(saddr_in.sin_addr.s_addr, OSS_RAR, RCVD, GX);
+    increment_gx_peer_stats(MSG_RX_DIAMETER_GX_RAR,saddr_in.sin_addr.s_addr);
     ret = retrieve_call_id((char *)&msg->gx_msg.rar.session_id.val, &call_id);
     if (ret < 0) {
         clLog(clSystemLog, eCLSeverityCritical, "%s:No Call Id found from session id:%s\n", __func__,

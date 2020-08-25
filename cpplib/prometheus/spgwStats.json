@@ -1,0 +1,935 @@
+{
+    "num_ue" : {
+        "name": "mme_number_of_ue_attached",
+        "help": "Number of UE attached",
+        "type": "Gauge",
+        "family_labels": [
+            { "spgw_num_ue": "subscribers" }
+        ],
+        "gauges": [
+        {
+            "name": "number_of_subscribers",
+            "help": "number of subscribers ",
+            "label_0": [
+                { "cp_mode": "spgw" },
+                { "cp_mode": "pgw" },
+                { "cp_mode": "sgw" }
+            ],
+            "label_1": [
+                {"state":"active"}, 
+                {"state":"idle"} 
+            ],
+            "label_2": [
+                {"level":"subscribers"} 
+            ],
+            "dynamic_labels": [
+                { "mme_addr" :  "Subscriber attached from MME" },
+                { "spgwu_addr": "Subscriber using sgpwu value" },
+                { "apn_name" :  "Subscriber using apn value" }
+            ]
+        },        
+        {
+            "name": "number_of_pdns",
+            "help": "number of PDNs ",
+            "label_0": [
+                { "cp_mode": "spgw" },
+                { "cp_mode": "pgw" },
+                { "cp_mode": "sgw" }
+            ],
+            "label_1": [
+                {"state":"active"}, 
+                {"state":"idle"} 
+            ],
+            "label_2": [
+                {"level":"pdns"} 
+            ],
+            "dynamic_labels": [
+                { "mme_addr" :  "Subscriber attached from MME" },
+                { "spgwu_addr": "Subscriber using sgpwu value" },
+                { "apn_name" :  "Subscriber using apn value" }
+            ]
+        }
+        ]
+    },
+    "msg_rx": {
+        "name": "number_of_messages_received",
+        "help": "Number of messages received by SPGW",
+        "type": "Counter",
+        "family_labels": [
+                {"direction": "incoming"}
+        ],
+        "counters":[
+        {
+            "name" : "create_session_request",
+            "help" : "number of CSReq received by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "CSReq"},
+                { "msg_drop": "CSReq_drop"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "},
+                {"reason" : "drop reason"}
+            ]
+        },
+        { 
+            "name" : "modify_bearer_request",
+            "help" : "number of MBReq received by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "mbreq" },
+                { "msg_drop": "mbreq_drop"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "},
+                {"reason" : "drop reason"}
+            ]
+        },
+        { 
+            "name" : "delete_session_request",
+            "help" : "number of DSReq received by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "DSReq" },
+                { "msg_drop": "dsreq_drop"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "},
+                {"reason" : "drop reason"}
+            ]
+        },
+        { 
+            "name" : "release_access_bearer_request",
+            "help" : "number of RABReq received by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "RABReq" },
+                { "msg_drop": "rabreq_drop"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "},
+                {"reason" : "drop reason"}
+            ]
+        },
+        { 
+            "name" : "downlink_data_notification",
+            "help" : "number of DDNAck received by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "DDNAck" },
+                { "msg_drop": "ddnack_drop"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "},
+                {"reason" : "drop reason"}
+            ]
+        },
+        { 
+            "name" : "gtpc_echo_request",
+            "help" : "number of Echo Req received by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "ECHOReq" }
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "}
+            ]
+        },
+        { 
+            "name" : "gtpc_echo_response",
+            "help" : "number of Echo Rsp received by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "ECHORsp" }
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "}
+            ]
+        },
+        { 
+            "name" : "pfcp_association_setup_request",
+            "help" : "number of PFCP association setup request received by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "AssocSetupReq" },
+                { "msg_drop": "AssocSetupReq_drop"}
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "},
+                {"reason" : "drop reason "}
+            ]
+        },
+        {
+            "name" : "pfcp_association_setup_response",
+            "help" : "number of PFCP association setup response received by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "AssocSetupRsp" },
+                { "msg_drop": "AssocSetupRsq_drop"}
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "},
+                {"reason" : "drop reason"}
+            ]
+        },
+        { 
+            "name" : "pfcp_pfd_mgmt_response",
+            "help" : "number of PFCP PFD management response received by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "PFDMGMTRsp" },
+                { "msg_drop": "PFDMGMTRsp_drop"}
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "},
+                {"reason" : "drop reason"}
+            ]
+        },
+        { 
+            "name" : "pfcp_echo_request",
+            "help" : "number of PFCP Echo Req received by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "ECHOReq" }
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "}
+            ]
+        }, 
+        { 
+            "name" : "pfcp_echo_response",
+            "help" : "number of PFCP Echo Rsp received by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "ECHORsp" }
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "}
+            ]
+        }, 
+        { 
+            "name" : "pfcp_session_establishment_response",
+            "help" : "number of PFCP Sess Establishment received by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "SessEstRsp" },
+                { "msg_drop": "SessEstRsp_drop"}
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "},
+                {"reason" : "drop reason"}
+            ]
+        },
+        { 
+            "name" : "pfcp_session_modification_response",
+            "help" : "number of PFCP Sess Modification received by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "SessModRsp" },
+                { "msg_drop": "SessModRsp_drop"}
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "}
+            ]
+        },
+        { 
+            "name" : "pfcp_session_delete_response",
+            "help" : "number of PFCP Session delete Response received by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "SessDelRsp" },
+                { "msg_drop": "SessDelRsp_drop"}
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "},
+                {"reason": "drop reason"}
+            ]
+        },
+        { 
+            "name" : "pfcp_session_report_request",
+            "help" : "number of PFCP session report request received by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "SessReportReq" },
+                { "msg_drop": "SessReportReq_drop"},
+                { "msg_rej": "SessReportReq_rej"}
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "}
+            ]
+        },
+        { 
+            "name" : "gx_credit_control_answer",
+            "help" : "number of CCR Answers received by SPGW",
+            "label_0": [
+                { "protocol": "diameter" }
+            ],
+            "label_1": [
+                { "interface":"Gx"}
+            ],
+            "label_2": [
+                { "msg_type": "CCA_I" },
+                { "msg_drop": "CCA_I_DROP"},
+                { "msg_type": "CCA_U" },
+                { "msg_drop": "CCA_U_DROP"},
+                { "msg_type": "CCA_T" },
+                { "msg_drop": "CCA_T_DROP"}
+            ],
+            "runtime_dimensions": [
+                {"pcrf_addr" : "PCRF address of Gx connection "},
+                {"reason": "drop reason"}
+            ]
+        },
+        { 
+            "name" : "gx_reauthorization_request",
+            "help" : "number of RAR received by SPGW",
+            "label_0": [
+                { "protocol": "diameter" }
+            ],
+            "label_1": [
+                { "interface":"Gx"}
+            ],
+            "label_2": [
+                { "msg_type": "RAR" },
+                { "msg_drop": "RAR_DROP"}
+            ],
+            "runtime_dimensions": [
+                {"pcrf_addr" : "PCRF address of Gx connection "},
+                {"reason": "drop reason"}
+            ]
+        }
+        ]
+    }, 
+   "msg_tx": {
+        "name": "number_of_messages_sent",
+        "help": "Number of messages sent by SPGW",
+        "type": "Counter",
+        "family_labels": [
+                {"direction": "outgoing"}
+        ],
+        "counters":[
+        { 
+            "name" : "version_not_supported",
+            "help" : "number of version not supported sent by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "version_not_supported" }
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "}
+            ]
+        },
+        { 
+            "name" : "create_session_response",
+            "help" : "number of CSRsp sent by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "CSRsp" },
+                { "msg_rej": "CSRsp_REJ" }
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "},
+                {"reason" : "reason"}
+            ]
+        },
+        { 
+            "name" : "modify_bearer_response",
+            "help" : "number of CSRsp sent by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "MBRsp" },
+                { "msg_rej": "MBRsp_REJ" }
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "},
+                {"reason" : "reject reason"}
+            ]
+        },
+        { 
+            "name" : "delete_session_response",
+            "help" : "number of DSRsp sent by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "DSRsp" },
+                { "msg_rej": "DSRsp_rej" }
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "},
+                {"reason" : "reject reason"}
+            ]
+        },
+        { 
+            "name" : "release_access_bearer_response",
+            "help" : "number of RAB Rsp sent by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "RABRsp" },
+                { "msg_rej": "RABRSP_rej" }
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"reason" : "reject reason"}
+            ]
+        },
+        { 
+            "name" : "downlink_data_notification_req",
+            "help" : "number of DDN Req sent by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"}
+            ],
+            "label_2": [
+                { "msg_type": "DDNReq" }
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "}
+            ]
+        },
+        { 
+            "name" : "gtpc_echo_request",
+            "help" : "number of gtp Echo Request sent by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "ECHOReq" }
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "}
+            ]
+        },
+        { 
+            "name" : "gtpc_echo_response",
+            "help" : "number of gtp Echo Response sent by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"},
+                { "interface":"s5s8"}
+            ],
+            "label_2": [
+                { "msg_type": "ECHORsp" }
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "}
+            ]
+        },
+        { 
+            "name" : "pfcp_association_setup_request",
+            "help" : "number of PFCP association sent by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "AssocSetupReq" }
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "UP address of pfcp connection "}
+            ]
+        },
+        {
+            "name" : "pfcp_association_setup_response",
+            "help" : "number of PFCP association setup response sent by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "AssocSetupRsp" },
+                { "msg_rej": "AssocSetupRsp_rej" }
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "UP address of pfcp connection "},
+                {"reason" : "reject reason"}
+            ]
+        },
+        {
+            "name" : "pfcp_pfd_management_req",
+            "help" : "number of PFCP PFD management reques sent by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "PFDMGMTReq" }
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "UP address of pfcp connection "}
+            ]
+        },
+        { 
+            "name" : "pfcp_echo_request",
+            "help" : "number of pfcp Echo Request sent by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "ECHOReq" }
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "UP address of pfcp connection "}
+            ]
+        }, 
+        { 
+            "name" : "pfcp_echo_response",
+            "help" : "number of PFCP echo Response sent by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "ECHORsp" }
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "}
+            ]
+        }, 
+        { 
+            "name" : "pfcp_session_establishment_request",
+            "help" : "number of PFCP session est request sent by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "SessEstReq" }
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "}
+            ]
+        },
+        { 
+            "name" : "pfcp_session_modification_request",
+            "help" : "number of PFCP session modification request sent by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "SessModReq" }
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "}
+            ]
+        },
+        { 
+            "name" : "pfcp_session_delete_request",
+            "help" : "number of PFCP session delete request sent by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "SessDelReq" }
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "}
+            ]
+        },
+        { 
+            "name" : "pfcp_session_report_response",
+            "help" : "number of PFCP session report response sent by SPGW",
+            "label_0": [
+                { "protocol": "pfcp" }
+            ],
+            "label_1": [
+                { "interface":"Sxa"},
+                { "interface":"Sxb"},
+                { "interface":"SxaSxb"}
+            ],
+            "label_2": [
+                { "msg_type": "SessReportRsp" },
+                { "msg_rej": "SessReportRsp_rej" }
+            ],
+            "runtime_dimensions": [
+                {"spgwu_addr" : "SPGW-U address of n4 connection "},
+                {"reason" : "reject reason"}
+            ]
+        },
+        { 
+            "name" : "gx_credit_control_request",
+            "help" : "number of CCR sent by SPGW",
+            "label_0": [
+                { "protocol": "diameter" }
+            ],
+            "label_1": [
+                { "interface":"Gx"}
+            ],
+            "label_2": [
+                { "msg_type": "CCR_I" },
+                { "msg_type": "CCR_U" },
+                { "msg_type": "CCR_T" }
+            ],
+            "runtime_dimensions": [
+                {"pcrf_addr" : "PCRF address of Gx connection "}
+            ]
+        },
+        { 
+            "name" : "gx_reauthorization_answer",
+            "help" : "number of RAA sent by SPGW",
+            "label_0": [
+                { "protocol": "diameter" }
+            ],
+            "label_1": [
+                { "interface":"Gx"}
+            ],
+            "label_2": [
+                { "msg_type": "RAA" },
+                { "msg_rej": "RAA_rej" }
+            ],
+            "runtime_dimensions": [
+                {"pcrf_addr" : "PCRF address of Gx connection "},
+                {"reason" : "reject reason"}
+            ]
+        }
+        ]
+    },
+    "procedures": {
+        "name": "number_of_procedures",
+        "help": "Number of procedures executed/started by spgw",
+        "type": "Counter",
+        "family_labels": [
+                {"gw": "procedures"}
+        ],
+        "counters":[
+        { 
+            "name" : "initial_attach_proc",
+            "help" : "number of initial attach procedures started by SPGW",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "pgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure": "INITIAL_ATTACH" }
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "mme address of s11 connection "},
+                {"sgw_addr" : "sgw address of s5s8 connection "},
+                {"pgw_addr" : "pgw address of s5s8 connection "}
+            ]
+        },
+        { 
+            "name" : "initial_attach_proc_result",
+            "help" : "UE initial attach procedure results",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "pgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "proc_type": "INITIAL_ATTACH"}
+            ],
+            "label_2": [
+                {"result": "success"},
+                {"result": "failure"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "mme address of s11 connection "},
+                {"sgw_addr" : "sgw address of s5s8 connection "},
+                {"pgw_addr" : "pgw address of s5s8 connection "},
+                {"failure_reason" : "Put failure reason here.String without space  "}
+            ]
+        },
+        { 
+            "name" : "detach_ue_proc",
+            "help" : "number of UE detach procedure started by spgw",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "pgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                {"procedure": "mme_init_detach"},
+                {"procedure": "nw_init_detach"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "mme address of s11 connection "},
+                {"sgw_addr" : "sgw address of s5s8 connection "},
+                {"pgw_addr" : "pgw address of s5s8 connection "}
+            ]
+        },
+        { 
+            "name" : "detach_ue_proc_result",
+            "help" : "UE detach procedure results",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "pgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                {"procedure": "MME_INIT_DETACH"},
+                {"procedure": "NW_INIT_DETACH"}
+            ],
+            "label_2": [
+                {"result": "success"},
+                {"result": "failure"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "mme address of s11 connection "},
+                {"sgw_addr" : "sgw address of s5s8 connection "},
+                {"pgw_addr" : "pgw address of s5s8 connection "},
+                {"failure_reason" : "Put failure reason here.String without space  "}
+            ]
+        },
+        {
+            "name" : "s1_release_proc",
+            "help" : "number of S1 Release procedure started by SGW",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"S1_RELEASE"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "mme address of s11 connection "}
+            ]
+        },
+        {
+            "name" : "s1_release_proc_result",
+            "help" : "s1 release procedure results",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"S1_RELEASE"}
+            ],
+            "label_2": [
+                {"result": "success"},
+                {"result": "failure"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "mme address of s11 connection "},
+                {"failure_reason" : "Put failure reason here.String without space  "}
+            ]
+        },
+        {
+            "name" : "service_request_proc",
+            "help" : "number of service request procedure ",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"SERVICE_REQUEST_PROC"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "mme address of s11 connection "}
+            ]
+        },
+        {
+            "name" : "service_request_proc_result",
+            "help" : "service request procedure results",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"SERVICE_REQUEST_PROC"}
+            ],
+            "label_2": [
+                {"result": "success"},
+                {"result": "failure"}
+            ],
+            "runtime_dimensions": [
+                {"mme_addr" : "mme address of s11 connection "},
+                {"sgw_addr" : "sgw address of s5s8 connection "},
+                {"pgw_addr" : "pgw address of s5s8 connection "},
+                {"failure_reason" : "Put failure reason here.String without space  "}
+            ]
+        }
+        ]
+    }
+}
+

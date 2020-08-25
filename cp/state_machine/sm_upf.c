@@ -11,7 +11,6 @@
 #include "gx_interface.h"
 #include "sm_enum.h"
 #include "sm_hand.h"
-#include "cp_stats.h"
 #include "pfcp_cp_util.h"
 #include "sm_struct.h"
 #include "sm_structs_api.h"

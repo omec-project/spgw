@@ -7,7 +7,6 @@
 #include "gtp_messages_decoder.h"
 #include "gw_adapter.h"
 #include "ue.h"
-#include "cp_stats.h"
 #include "sm_struct.h"
 #include "clogger.h"
 #include "cp_io_poll.h"
@@ -120,11 +119,8 @@ ddn_by_session_id(uint64_t session_id)
 		}
 	}
 	ddn_sequence += 2;
-	++cp_stats.ddn;
-	
 
-	update_cli_stats(mme_s11_sockaddr_in.sin_addr.s_addr,
-					gtpv2c_tx->gtpc.message_type,SENT,S11);
+    increment_mme_peer_stats(MSG_TX_GTPV2_S11_DDNREQ, mme_s11_sockaddr_in.sin_addr.s_addr);
 
 	return 0;
 }

@@ -217,10 +217,8 @@ extern char ossGatewayStr[][10];
 extern uint64_t oss_reset_time;
 
 void init_cli_module(uint8_t gw_logger);
-int update_cli_stats(uint32_t ip_addr, uint8_t mgs_type,int dir,CLIinterface it);
 int update_peer_status(uint32_t ip_addr,bool val);
 int update_peer_timeouts(uint32_t ip_addr,uint8_t val);
 int delete_cli_peer(uint32_t ip_addr);
-int update_sys_stat(int index, int operation);
 
 #endif

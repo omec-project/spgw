@@ -12,7 +12,6 @@
 #include "cp_init.h"
 #include "clogger.h"
 #include "gw_adapter.h"
-#include "cp_stats.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_cp_association.h"
