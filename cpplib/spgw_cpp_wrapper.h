@@ -37,7 +37,7 @@ void *get_stack_unwind_event_cpp(void);
 /* Prometheus APIs */
 void decrement_stat(int stat_id);
 void increment_stat(int stat_id);
-void setup_prometheus(void);
+void setup_prometheus(uint16_t port);
 void increment_userplane_stats(int stat_id, uint32_t peer_addr);
 void increment_mme_peer_stats(int stat_id, uint32_t peer_addr);
 void increment_sgw_peer_stats(int stat_id, uint32_t peer_addr);

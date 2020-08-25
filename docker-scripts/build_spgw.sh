@@ -93,10 +93,29 @@ build_cpputil_lib()
 	popd
 }
 
+build_prometheus() 
+{
+    set -xe 
+    $SUDO apt-get install -y curl libcurl4-openssl-dev
+    pushd /tmp
+    wget $CMAKE_EXE 
+    tar -zxvf cmake-3.18.0-Linux-x86_64.tar.gz
+    $SUDO rm -rf /tmp/prometheus
+    git clone -q $PROMETHEUS_CLIENT /tmp/prometheus
+    pushd /tmp/prometheus
+    git submodule init
+    git submodule update
+    mkdir -p _build && cd _build
+    /tmp/cmake-3.18.0-Linux-x86_64/bin/cmake .. -DBUILD_SHARED_LIBS=ON && make -j 4 && $SUDO make install && $SUDO make DESTDIR=`pwd`/deploy install
+    popd
+    popd
+}
+
 build_spgw()
 {
 	pushd $SPGW_DIR
 	source setenv.sh
+    build_prometheus
 	build_cpputil_lib
    	build_c3po_util
 	build_pfcp_lib

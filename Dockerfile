@@ -33,10 +33,7 @@ RUN source ./docker-scripts/install_builddeps.sh && \
     source ./docker-scripts/install_oss_util.sh && \
     install_oss_util 
 
-FROM ossutil as prombuild
-RUN ./docker-scripts/install_prometheus.sh
-
-FROM prombuild as spgw
+FROM ossutil as spgw
 COPY . ./
 ARG CPUS
 ARG RTE_MACHINE=native

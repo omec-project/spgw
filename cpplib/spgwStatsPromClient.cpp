@@ -8,17 +8,20 @@
 #include <map>
 #include <memory>
 #include <thread>
+#include <sstream>
 #include "spgwStatsPromClient.h"
 
 using namespace prometheus;
 std::shared_ptr<Registry> registry;
 
-void spgwStatsSetupPrometheusThread(void)
+void spgwStatsSetupPrometheusThread(uint16_t port)
 {
+    std::stringstream ss;
+    ss << "0.0.0.0"<<":"<<port;
     registry = std::make_shared<Registry>();
     /* Create single instance */ 
     spgwStats::Instance(); 
-    Exposer exposer{"0.0.0.0:3081", 1};
+    Exposer exposer{ss.str(), 1};
     std::string metrics("/metrics");
     exposer.RegisterCollectable(registry, metrics);
     while(1)

@@ -16,7 +16,7 @@ using namespace prometheus;
 extern std::shared_ptr<Registry> registry;
 
 
-void spgwStatsSetupPrometheusThread(void);
+void spgwStatsSetupPrometheusThread(uint16_t port);
 
 enum class spgwStatsCounter {
 	NUM_UE_SPGW_ACTIVE_SUBSCRIBERS,

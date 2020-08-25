@@ -56,6 +56,7 @@
 #define MME_S11_PORTS			"MME_S11_PORT"
 #define UPF_PFCP_IPS			"UPF_PFCP_IP"
 #define UPF_PFCP_PORTS			"UPF_PFCP_PORT"
+#define PROMETHEUS_PORT			"PROMETHEUS_PORT"
 #define APN						"APN"
 #define NAMESERVER				"nameserver"
 #define IP_POOL_IP				"IP_POOL_IP"
@@ -89,6 +90,7 @@ void init_config(void)
     if (cp_config == NULL) {
         rte_exit(EXIT_FAILURE, "Can't allocate memory for cp_config!\n");
     }
+    
     config_cp_ip_port(cp_config);
 
 #ifdef USE_DNS_QUERY
@@ -134,7 +136,9 @@ config_cp_ip_port(cp_config_t *cp_config)
     struct rte_cfgfile_entry *ops_entries = NULL;
 
 
+    /* default valueas */
     cp_config->gx_enabled = 0;
+    cp_config->prom_port = 3082;
 
     struct rte_cfgfile *file = rte_cfgfile_load(STATIC_CP_FILE, 0);
     if (file == NULL) {
@@ -235,7 +239,19 @@ config_cp_ip_port(cp_config_t *cp_config)
             fprintf(stderr, "CP: PFCP_PORT   : %d\n",
                     cp_config->pfcp_port);
 
-        } /*else if (strncmp(MME_S11_IPS, global_entries[i].name,
+        } else if (strncmp(PROMETHEUS_PORT, global_entries[i].name,
+                    strlen(PROMETHEUS_PORT)) == 0) {
+
+            cp_config->prom_port =
+                (uint16_t)atoi(global_entries[i].value);
+
+            fprintf(stderr, "CP: PROMETHEUS_PORT   : %d\n",
+                    cp_config->prom_port);
+
+        }
+
+
+/*else if (strncmp(MME_S11_IPS, global_entries[i].name,
                     strlen(MME_S11_IPS)) == 0) {
 
             inet_aton(global_entries[i].value,

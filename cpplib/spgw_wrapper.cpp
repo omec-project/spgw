@@ -101,9 +101,9 @@ extern "C"
         return table->pop_event();
     }
 
-    void setup_prometheus(void)
+    void setup_prometheus(uint16_t port)
     {
-        std::thread prom(spgwStatsSetupPrometheusThread);
+        std::thread prom(spgwStatsSetupPrometheusThread, port);
         prom.detach();
     }
 

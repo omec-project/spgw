@@ -39,7 +39,7 @@ DOCKER_LABEL_BUILD_DATE  ?= $(shell date -u "+%Y-%m-%dT%H:%M:%SZ")
 
 # https://docs.docker.com/engine/reference/commandline/build/#specifying-target-build-stage---target
 docker-build:
-	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build --pull $(DOCKER_BUILD_ARGS) \
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build --pull --progress=plain $(DOCKER_BUILD_ARGS) \
 		--tag ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}spgw:${DOCKER_TAG} \
 		--label "org.label-schema.schema-version=1.0" \
 		--label "org.label-schema.name=spgw-$$target" \

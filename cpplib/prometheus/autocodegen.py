@@ -174,7 +174,7 @@ def add_namespace_variables(fh):
 def add_setup_function(fh):
     fh.write("\n") 
     fname = module_name + "SetupPrometheusThread"
-    declaration = "void " + fname + "(void);"
+    declaration = "void " + fname + "(uint16_t port);"
     fh.write(declaration)
     fh.write("\n") 
 
@@ -484,6 +484,7 @@ def add_stl_header(fh):
     fh.write("#include <map>\n")
     fh.write("#include <memory>\n")
     fh.write("#include <thread>\n")
+    fh.write("#include <sstream>\n")
     fh.write("#include \"" + module_name + "PromClient.h\"\n") 
     fh.write("\n") 
     fh.write("using namespace prometheus;\n")
@@ -492,12 +493,14 @@ def add_stl_header(fh):
 
 def add_prom_client_setup_function(fh):
     fname = module_name + "SetupPrometheusThread"
-    fh.write("void " + fname + "(void)\n")
+    fh.write("void " + fname + "(uint16_t port)\n")
     fh.write("{\n")
+    fh.write("    std::stringstream ss;\n");
+    fh.write("    ss << \"0.0.0.0\"<<\":\"<<port;\n");
     fh.write("    registry = std::make_shared<Registry>();\n")
     fh.write("    /* Create single instance */ \n")
     fh.write("    " + module_name + "::Instance(); \n")
-    fh.write("    Exposer exposer{\"0.0.0.0:3081\", 1};\n")
+    fh.write("    Exposer exposer{ss.str(), 1};\n")
     fh.write("    std::string metrics(\"/metrics\");\n")
     fh.write("    exposer.RegisterCollectable(registry, metrics);\n")
     fh.write("    while(1)\n")
