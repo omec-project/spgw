@@ -32,8 +32,7 @@ process_mod_resp_delete_handler(void *data, void *unused_param)
 				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 		        sizeof(struct sockaddr_in));
 
-		update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
-						gtpv2c_tx->gtpc.message_type, SENT,S5S8);
+        increment_pgw_peer_stats(MSG_TX_GTPV2_DBRSP, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 		add_gtpv2c_if_timer_entry(
 			UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
 			&my_sock.s5s8_recv_sockaddr, gtp_tx_buf, payload_length,
@@ -185,8 +184,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 	            (struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 		        sizeof(struct sockaddr_in));
 
-		update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
-				gtpv2c_tx->gtpc.message_type, SENT, S5S8);
+        increment_pgw_peer_stats(MSG_TX_GTPV2_DBRSP, my_sock.s5s8_recv_sockaddr);
 
 		if (resp->msg_type != GTP_DELETE_BEARER_RSP) {
 			add_gtpv2c_if_timer_entry(
@@ -207,9 +205,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 				UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
 				S11_IFACE);
 
-		update_cli_stats(s11_mme_sockaddr.sin_addr.s_addr,
-				gtpv2c_tx->gtpc.message_type, SENT,
-				S11);
+        increment_mme_peer_stats(MSG_TX_GTPV2_DBREQ, s11_mme_sockaddr.sin_addr.s_addr);
 	}
 
 	RTE_SET_USED(unused_param);
@@ -258,8 +254,7 @@ process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
 		            sizeof(struct sockaddr_in));
 
 		if (resp->msg_type == GTP_DELETE_BEARER_RSP) {
-			update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
-				gtpv2c_tx->gtpc.message_type, SENT, S5S8);
+            increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_DBRSP, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 		}
 	}
 
@@ -367,12 +362,11 @@ del_bearer_cmd_mbr_resp_handler(void *data, void *unused_param)
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 		        sizeof(struct sockaddr_in));
-		update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
-				gtpv2c_tx->gtpc.message_type, SENT,
-				S5S8);
+        increment_sgw_peer_stats(MSG_TX_GTPV2_DBREQ, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 	} else if ((SGWC == cp_config->cp_type) ||
 				(SAEGWC == cp_config->cp_type)) {
 
+        increment_mme_peer_stats(MSG_TX_GTPV2_DBREQ, s11_mme_sockaddr.sin_addr.s_addr);
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,  /* need change - future */
 				sizeof(struct sockaddr_in));
@@ -421,8 +415,7 @@ process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
 		return -1;
 	} else  {
 
-		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-				pfcp_sess_del_req.header.message_type, SENT, SX);
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSDELREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
 		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_del_request_delete_bearer_rsp_timeout);
         RTE_SET_USED(trans_entry);
@@ -542,7 +535,7 @@ process_sess_mod_req_del_cmd(pdn_connection_t *pdn)
 		ebi = resp->eps_bearer_ids[iCnt];
 		bearers[iCnt] = context->eps_bearers[ebi - 5];
 
-		}
+	}
 
 	fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(&pfcp_sess_mod_req ,pdn, bearers, resp->bearer_count);
 
@@ -555,9 +548,7 @@ process_sess_mod_req_del_cmd(pdn_connection_t *pdn)
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
 
-		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-				pfcp_sess_mod_req.header.message_type,SENT,SX);
-
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
         trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_mod_del_cmd_timeout);
         pdn->trans_entry = trans_entry;

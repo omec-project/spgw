@@ -191,8 +191,7 @@ process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 	else
 	{
-		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-				pfcp_sess_mod_req.header.message_type,SENT,SX);
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
 		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded,  process_s5s8_upd_bearer_response_pfcp_timeout);
         pdn_cntxt->trans_entry = trans_entry;

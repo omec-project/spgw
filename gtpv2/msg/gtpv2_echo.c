@@ -13,7 +13,8 @@
 #include "gw_adapter.h"
 #include "cp_io_poll.h"
 #include "gtpv2_internal.h"
-#include "cp_stats.h"
+#include "cp_config.h"
+#include "spgw_cpp_wrapper.h"
 
 extern uint8_t rstCnt;
 extern uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
@@ -25,15 +26,8 @@ process_echo_request(gtpv2c_header_t *gtpv2c_rx, gtpv2c_header_t *gtpv2c_tx)
 	/* Due to the union & structure alignments in the gtpv2c_header_t, the
 	 * sequence number would always be present in the has_teid.seq memory
 	 */
-	if (gtpv2c_rx->gtpc.teid_flag)
-		set_gtpv2c_echo(gtpv2c_tx,
-				gtpv2c_rx->gtpc.teid_flag, GTP_ECHO_RSP,
-				gtpv2c_rx->teid.has_teid.teid,
-				gtpv2c_rx->teid.has_teid.seq);
-	else
-		set_gtpv2c_echo(gtpv2c_tx,
-				gtpv2c_rx->gtpc.teid_flag, GTP_ECHO_RSP,
-				0, gtpv2c_rx->teid.no_teid.seq);
+    set_gtpv2c_echo(gtpv2c_tx, gtpv2c_rx->gtpc.teid_flag, GTP_ECHO_RSP,
+            0, gtpv2c_rx->teid.no_teid.seq);
 	return 0;
 }
 
@@ -89,7 +83,12 @@ handle_echo_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     peer_addr = &msg->peer_addr;
     gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) s11_tx_buf;
 
-	if((iface != S11_IFACE) && (iface != S5S8_IFACE)){
+	if(iface == S11_IFACE) {
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_ECHOREQ, peer_addr->sin_addr.s_addr);
+    } else if (iface == S5S8_IFACE) {
+        increment_sgw_peer_stats(MSG_RX_GTPV2_S5S8_ECHOREQ, peer_addr->sin_addr.s_addr);
+    } else {
+        // TODOSTATS
 		clLog(clSystemLog, eCLSeverityCritical, "%s: Invalid interface %d \n", __func__, iface);
 		return -1;
 	}
@@ -103,18 +102,11 @@ handle_echo_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 				(ret < 0 ? strerror(-ret) : cause_str(ret)));
 	}
 
-	/* Reset ECHO Timers */
-	if(iface == S11_IFACE){
-		ret = process_response(peer_addr->sin_addr.s_addr);
-		if (ret) {
-			/* TODO: Error handling not implemented */
-		}
-	}else {
-		ret = process_response(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
-		if (ret) {
-			/*TODO: Error handling not implemented */
-		}
-	}
+    /* Reset ECHO Timers */
+    ret = process_response(peer_addr->sin_addr.s_addr);
+    if (ret) {
+        /*TODO: Error handling not implemented */
+    }
 
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
@@ -123,18 +115,17 @@ handle_echo_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 		gtpv2c_send(my_sock.sock_fd_s11, s11_tx_buf, payload_length,
 				(struct sockaddr *) peer_addr,
 				sizeof(struct sockaddr_in));
-		cp_stats.echo++;
-		update_cli_stats(peer_addr->sin_addr.s_addr,
-					gtpv2c_tx->gtpc.message_type,SENT,S11);
-	}else{
-		gtpv2c_send(my_sock.sock_fd_s5s8, s5s8_tx_buf, payload_length,
-				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
+        increment_mme_peer_stats(MSG_TX_GTPV2_S11_ECHOREQ, peer_addr->sin_addr.s_addr);
+	} else {
+		gtpv2c_send(my_sock.sock_fd_s5s8, s11_tx_buf, payload_length,
+				(struct sockaddr *) peer_addr,
                 sizeof(struct sockaddr_in));
-		cp_stats.echo++;
-		update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
-					gtpv2c_tx->gtpc.message_type,SENT,S5S8);
+        if(cp_config->cp_type == PGWC) {
+            increment_sgw_peer_stats(MSG_TX_GTPV2_S5S8_ECHOREQ, peer_addr->sin_addr.s_addr);
+        } else {
+            increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_ECHOREQ, peer_addr->sin_addr.s_addr);
+        }
 	}
-    ++cp_stats.tx;
 	return 0;
 }
 
@@ -146,33 +137,26 @@ handle_echo_response(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     struct sockaddr_in *peer_addr;
     peer_addr = &msg->peer_addr;
 
-	if((iface != S11_IFACE) && (iface != S5S8_IFACE)){
+	if(iface == S11_IFACE) {
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_ECHORSP, peer_addr->sin_addr.s_addr);
+    } else if (iface == S5S8_IFACE && cp_config->cp_type == PGWC) {
+        increment_sgw_peer_stats(MSG_RX_GTPV2_S5S8_ECHORSP, peer_addr->sin_addr.s_addr);
+    } else if (iface == S5S8_IFACE && cp_config->cp_type == SGWC) {
+        increment_pgw_peer_stats(MSG_RX_GTPV2_S5S8_ECHORSP, peer_addr->sin_addr.s_addr);
+    } else { 
 		clLog(clSystemLog, eCLSeverityCritical, "%s: Invalid interface %d \n", __func__, iface);
 		return -1;
 	}
 
-	if(iface == S11_IFACE){
-		ret = process_response(peer_addr->sin_addr.s_addr);
-		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, "main.c::control_plane()::Error"
-					"\n\tprocess_echo_resp "
-					"%s: (%d) %s\n",
-					gtp_type_str(gtpv2c_rx->gtpc.message_type), ret,
-					(ret < 0 ? strerror(-ret) : cause_str(ret)));
-			/* Error handling not implemented */
-			return -1;
-		}
-	}else{
-		ret = process_response(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
-		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, "main.c::control_plane()::Error"
-					"\n\tprocess_echo_resp "
-					"%s: (%d) %s\n",
-					gtp_type_str(gtpv2c_rx->gtpc.message_type), ret,
-					(ret < 0 ? strerror(-ret) : cause_str(ret)));
-			/* Error handling not implemented */
-			return -1;
-		}
-	}
+    ret = process_response(peer_addr->sin_addr.s_addr);
+    if (ret) {
+        clLog(clSystemLog, eCLSeverityCritical, "main.c::control_plane()::Error"
+                "\n\tprocess_echo_resp "
+                "%s: (%d) %s\n",
+                gtp_type_str(gtpv2c_rx->gtpc.message_type), ret,
+                (ret < 0 ? strerror(-ret) : cause_str(ret)));
+        /* Error handling not implemented */
+        return -1;
+    }
 	return 0;
 }

@@ -12,7 +12,6 @@
 #include "cp_interface.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_association.h"
-#include "cp_stats.h"
 #include "cp_config.h"
 #include "gw_adapter.h"
 #include "sm_struct.h"
@@ -26,7 +25,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "util.h"
 #include "cp_io_poll.h"
-
+#include "spgwStatsPromEnum.h"
 
 uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -59,18 +58,6 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 	dest_addr.sin_family = AF_INET;
 	dest_addr.sin_addr.s_addr = md->dstIP;
 	dest_addr.sin_port = htons(GTPC_UDP_PORT);
-
-	CLIinterface it = S5S8;
-	if (md->portId == S11_SGW_PORT_ID)
-	{
-		it = S11;
-	} else if (md->portId == SX_PORT_ID)
-	{
-		it = SX;
-	} else if (md->portId == S5S8_SGWC_PORT_ID || md->portId == S5S8_PGWC_PORT_ID)
-	{
-		it = S5S8;
-	}
 
 	clLog(clSystemLog, eCLSeverityCritical, "%s - %s:%s:%u.%s (%dms) has expired", getPrintableTime(),
 		md->name, inet_ntoa(*(struct in_addr *)&md->dstIP), md->portId,
@@ -166,20 +153,10 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		if (ti == &md->pt)
 			gtpu_mme_seqnb++;
 		build_gtpv2_echo_request(gtpv2c_tx, gtpu_mme_seqnb);
-	} else if (md->portId == S5S8_SGWC_PORT_ID) {
-		if (ti == &md->pt)
-			gtpu_sgwc_seqnb++;
-		build_gtpv2_echo_request(gtpv2c_tx, gtpu_sgwc_seqnb);
-	} else if (md->portId == S5S8_PGWC_PORT_ID) {
-		if (ti == &md->pt)
-			gtpu_pgwc_seqnb++;
-		build_gtpv2_echo_request(gtpv2c_tx, gtpu_pgwc_seqnb);
-	}
 
-	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
-			+ sizeof(gtpv2c_tx->gtpc);
+        increment_mme_peer_stats(MSG_TX_GTPV2_S11_ECHOREQ, dest_addr.sin_addr.s_addr);
 
-	if (md->portId == S11_SGW_PORT_ID) {
+	    payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 		gtpv2c_send(my_sock.sock_fd_s11, echo_tx_buf, payload_length,
 		               (struct sockaddr *) &dest_addr,
 		               sizeof(struct sockaddr_in));
@@ -191,21 +168,31 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		}
 
 	} else if (md->portId == S5S8_SGWC_PORT_ID) {
+		if (ti == &md->pt)
+			gtpu_sgwc_seqnb++;
+		build_gtpv2_echo_request(gtpv2c_tx, gtpu_sgwc_seqnb);
+	    payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 
 		gtpv2c_send(my_sock.sock_fd_s5s8, echo_tx_buf, payload_length,
 		                (struct sockaddr *) &dest_addr,
 		                sizeof(struct sockaddr_in));
 
+        increment_sgw_peer_stats(MSG_TX_GTPV2_S5S8_ECHOREQ, dest_addr.sin_addr.s_addr);
 		if (ti == &md->tt)
 		{
 			(md->itr_cnt)++;
 		}
 
 	} else if (md->portId == S5S8_PGWC_PORT_ID) {
+		if (ti == &md->pt)
+			gtpu_pgwc_seqnb++;
+		build_gtpv2_echo_request(gtpv2c_tx, gtpu_pgwc_seqnb);
+	    payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 		gtpv2c_send(my_sock.sock_fd_s5s8, echo_tx_buf, payload_length,
 		                (struct sockaddr *) &dest_addr,
 		                sizeof(struct sockaddr_in));
 
+        increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_ECHOREQ, dest_addr.sin_addr.s_addr);
 		if (ti == &md->tt)
 		{
 			(md->itr_cnt)++;
@@ -223,21 +210,13 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		}
 
 		process_pfcp_heartbeat_req(&dest_addr, gtpu_sx_seqnb);
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_ECHOREQ, dest_addr.sin_addr.s_addr);
 
 		if (ti == &md->tt)
 		{
 			(md->itr_cnt)++;
 
 		}
-
-	}
-
-	/*CLI:update echo/hbt req sent count*/
-	if (md->portId != SX_PORT_ID)
-	{
-		update_cli_stats(md->dstIP,GTP_ECHO_REQ,SENT,it);
-	} else {
-		update_cli_stats(md->dstIP,PFCP_HEARTBEAT_REQUEST,SENT,it);
 	}
 
 	if(ti == &md->tt)

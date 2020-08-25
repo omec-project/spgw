@@ -20,6 +20,7 @@
 #include "cp_peer.h"
 #include "pfcp_cp_util.h"
 #include "cp_io_poll.h"
+#include "spgw_cpp_wrapper.h"
 
 static void
 fill_pfcp_association_setup_rsp(pfcp_assn_setup_rsp_t *pfcp_ass_setup_rsp, uint32_t seq)
@@ -57,13 +58,10 @@ handle_pfcp_association_setup_request_msg(msg_info_t *msg, pfcp_header_t *pfcp_r
     {
         clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp precondition check\n", __func__);
 
-        update_cli_stats(peer_addr->sin_addr.s_addr,
-                pfcp_rx->message_type, REJ,SX);
-
+        increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPREQ_DROP, peer_addr->sin_addr.s_addr);
         return -1;
     }
-    update_cli_stats(peer_addr->sin_addr.s_addr,
-            pfcp_rx->message_type, ACC,SX);
+    increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPREQ, peer_addr->sin_addr.s_addr);
 
     uint32_t seq_num = msg->pfcp_msg.pfcp_ass_req.header.seid_seqno.no_seid.seq_no; 
 
@@ -143,7 +141,7 @@ handle_pfcp_association_setup_request_msg(msg_info_t *msg, pfcp_header_t *pfcp_r
         clLog(clSystemLog, eCLSeverityDebug,"Error sending\n\n");
         return -1;
     } else {
-        update_cli_stats(GET_UPF_ADDR(upf_context), pfcp_ass_setup_rsp.header.message_type, SENT, SX);
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_ASSOCSETUPRSP, GET_UPF_ADDR(upf_context));
         upf_context->state = PFCP_ASSOC_RESP_RCVD_STATE;
     }
     return 0;

@@ -35,8 +35,6 @@ static uint32_t pfcp_seq_no_offset;
 
 static uint32_t pfcp_sgwc_seid_offset;
 
-//static uint16_t pdn_conn_set_id;
-extern struct rte_hash *node_id_hash;
 const uint64_t pfcp_sgwc_base_seid = 0xC0FFEE;
 
 
@@ -51,7 +49,8 @@ set_pfcp_header(pfcp_header_t *pfcp, uint8_t type, bool flag )
 }
 
 uint32_t
-generate_seq_no(void){
+generate_seq_no(void) 
+{
 	uint32_t id = 0;
 	id = pfcp_base_seq_no + (++pfcp_seq_no_offset);
 	return id;
@@ -224,20 +223,111 @@ set_far_id(pfcp_far_id_ie_t *far_id)
 
 }
 
-void
+int
 set_far_id_mbr(pfcp_far_id_ie_t *far_id)
 {
+    int size = sizeof(pfcp_far_id_ie_t);
 	pfcp_set_ie_header(&(far_id->header), PFCP_IE_FAR_ID, sizeof(uint32_t));
 	far_id->far_id_value = 0;
-
+    return size;
 }
 
-void
+int
 set_urr_id(pfcp_urr_id_ie_t *urr_id)
 {
+    int size = sizeof(pfcp_urr_id_ie_t);
 	pfcp_set_ie_header(&(urr_id->header), PFCP_IE_URR_ID, sizeof(uint32_t));
 	urr_id->urr_id_value = 3;
+    return size;
 }
+
+int
+set_measurement_method(pfcp_meas_mthd_ie_t *m_method)
+{
+    int size = sizeof(pfcp_meas_mthd_ie_t);
+	pfcp_set_ie_header(&(m_method->header), PFCP_IE_MEAS_MTHD, 1);
+	m_method->volum = 1;
+    return size;
+}
+
+int
+set_reporting_triggers(pfcp_rptng_triggers_ie_t *triggers)
+{
+    int size = sizeof(pfcp_rptng_triggers_ie_t);
+	pfcp_set_ie_header(&(triggers->header), PFCP_IE_USAGE_RPT_TRIG, 2);
+    triggers->droth = 1; /* report when drop exceede */
+    triggers->perio = 1; /* report periodically */
+    triggers->volth = 1; /* report when volume threshold reaches */
+    return size;
+}
+
+int
+set_measurement_period(pfcp_meas_period_ie_t *meas_period)
+{
+    int size = sizeof(pfcp_meas_period_ie_t);
+	pfcp_set_ie_header(&(meas_period->header), PFCP_IE_MEAS_PERIOD, sizeof(uint32_t));
+    meas_period->meas_period = 100; /* periodic measurement period */ 
+    return size;
+}
+
+int
+set_volume_threshold(pfcp_vol_thresh_ie_t *vol_thresh)
+{
+    int size = sizeof(pfcp_vol_thresh_ie_t);
+	pfcp_set_ie_header(&(vol_thresh->header), PFCP_IE_VOL_THRESH, 25);
+    vol_thresh->dlvol = 1; 
+    vol_thresh->downlink_volume = 2000;
+    vol_thresh->ulvol = 1; 
+    vol_thresh->uplink_volume = 2000;
+    vol_thresh->tovol = 1; 
+    vol_thresh->total_volume = 4000;
+    return size;
+}
+
+int
+set_volume_quota(pfcp_volume_quota_ie_t *volume_quota)
+{
+    int size = sizeof(pfcp_volume_quota_ie_t);
+	pfcp_set_ie_header(&(volume_quota->header), PFCP_IE_VOLUME_QUOTA, 25);
+    volume_quota->dlvol = 1; 
+    volume_quota->downlink_volume = 2000;
+    volume_quota->ulvol = 1; 
+    volume_quota->uplink_volume = 2000;
+    volume_quota->tovol = 1; 
+    volume_quota->total_volume = 4000;
+    return size;
+}
+
+int 
+set_quota_holding_time(pfcp_quota_hldng_time_ie_t *quota_hldng_time)
+{
+    int size = sizeof(pfcp_quota_hldng_time_ie_t);
+	pfcp_set_ie_header(&(quota_hldng_time->header), PFCP_IE_QUOTA_HLDNG_TIME, sizeof(uint32_t));
+    quota_hldng_time->quota_hldng_time_val = 100; // how long this quota is valid ?
+    return size;
+}
+
+int 
+set_downlink_drop_traffic_threshold(pfcp_drpd_dl_traffic_thresh_ie_t *drpd_dl_traffic_thresh)
+{
+    int size = sizeof(pfcp_drpd_dl_traffic_thresh_ie_t);
+	pfcp_set_ie_header(&(drpd_dl_traffic_thresh->header), PFCP_IE_DRPD_DL_TRAFFIC_THRESH, 17);
+    drpd_dl_traffic_thresh->dlby = 1; 
+    drpd_dl_traffic_thresh->nbr_of_bytes_of_dnlnk_data = 20000;
+    drpd_dl_traffic_thresh->dlpa = 1;
+    drpd_dl_traffic_thresh->dnlnk_pckts = 100;
+    return size;
+}
+
+int 
+set_far_id_quota_action(pfcp_far_id_ie_t *far_id_for_quota_act)
+{
+    int size = sizeof(pfcp_far_id_ie_t);
+	pfcp_set_ie_header(&(far_id_for_quota_act->header), PFCP_IE_FAR_ID, sizeof(uint32_t));
+    far_id_for_quota_act->far_id_value = 1;
+    return size;
+}
+
 int
 set_precedence(pfcp_precedence_ie_t *prec)
 {
@@ -317,6 +407,7 @@ set_activate_predefined_rules(pfcp_actvt_predef_rules_ie_t *act_predef_rule)
 						sizeof(pfcp_actvt_predef_rules_ie_t) - sizeof(pfcp_ie_header_t));
 	memcpy(&(act_predef_rule->predef_rules_nm), "PCC_RULE",8);
 }
+
 int
 creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value)
 {
@@ -1000,8 +1091,7 @@ void
 updating_far(pfcp_update_far_ie_t *up_far)
 {
 	uint16_t len = 0;
-	set_far_id_mbr(&(up_far->far_id));
-	len += sizeof(pfcp_far_id_ie_t);
+	len += set_far_id_mbr(&(up_far->far_id));
 	len += set_apply_action(&(up_far->apply_action));
 	/* Currently take as hardcoded value */
 	len += 4; /* Header Size of set_apply_action */
@@ -1421,38 +1511,6 @@ void cause_check_sess_estab(pfcp_sess_estab_req_t *pfcp_session_request,
 
 }
 
-uint8_t
-add_node_id_hash(uint32_t *nodeid, uint64_t *data )
-{
-	int ret = 0;
-	uint32_t key = UINT32_MAX;
-	uint64_t *temp = NULL;
-	memcpy(&key ,nodeid, sizeof(uint32_t));
-
-	temp =(uint64_t *) rte_zmalloc_socket(NULL, sizeof(uint64_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
-	if (temp == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate ue context "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
-		return 1;
-	}
-	*temp = *data;
-	ret = rte_hash_add_key_data(node_id_hash,
-			(const void *)&key , (void *)temp);
-	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s - Error on rte_hash_add_key_data add\n",
-				strerror(ret));
-		rte_free((temp));
-		return 1;
-	}
-	return 0;
-}
-
-
 void
 cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 		uint8_t *cause_id, int *offend_id)
@@ -1623,25 +1681,6 @@ cause_check_delete_session(pfcp_sess_del_req_t *pfcp_session_delete_req,
 
 
 
-void
-create_upf_by_ue_hash(void)
-{
-	struct rte_hash_parameters rte_hash_params = {
-			.name = "upflist_by_ue_hash",
-	    .entries = BUFFERED_ENTRIES_DEFAULT,
-	    .key_len = sizeof(uint64_t),
-	    .hash_func = rte_jhash,
-	    .hash_func_init_val = 0,
-	    .socket_id = rte_socket_id(),
-	};
-
-	upflist_by_ue_hash = rte_hash_create(&rte_hash_params);
-	if (!upflist_by_ue_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
-}
 
 void
 set_pdn_type(pfcp_pdn_type_ie_t *pdn, pdn_type_ie *pdn_mme)
@@ -1661,72 +1700,6 @@ set_pdn_type(pfcp_pdn_type_ie_t *pdn, pdn_type_ie *pdn_mme)
 }
 
 
-int
-upflist_by_ue_hash_entry_add(uint64_t *imsi_val, uint16_t imsi_len,
-		upfs_dnsres_t *entry)
-{
-	uint64_t imsi = UINT64_MAX;
-	memcpy(&imsi, imsi_val, imsi_len);
-
-	/* TODO: Check before adding */
-	int ret = rte_hash_add_key_data(upflist_by_ue_hash, &imsi,
-			entry);
-
-	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failed to add entry in upflist_by_ue_hash"
-				"hash table");
-		return -1;
-	}
-
-	return 0;
-}
-
-int
-upflist_by_ue_hash_entry_lookup(uint64_t *imsi_val, uint16_t imsi_len,
-		upfs_dnsres_t **entry)
-{
-	uint64_t imsi = UINT64_MAX;
-	memcpy(&imsi, imsi_val, imsi_len);
-
-	/* TODO: Check before adding */
-	int ret = rte_hash_lookup_data(upflist_by_ue_hash, &imsi,
-			(void **)entry);
-
-	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failed to search entry in upflist_by_ue_hash"
-				"hash table");
-		return ret;
-	}
-
-	return 0;
-}
-
-int
-upflist_by_ue_hash_entry_delete(uint64_t *imsi_val, uint16_t imsi_len)
-{
-	uint64_t imsi = UINT64_MAX;
-	upfs_dnsres_t *entry = NULL;
-	memcpy(&imsi, imsi_val, imsi_len);
-
-	int ret = rte_hash_lookup_data(upflist_by_ue_hash, &imsi,
-			(void **)&entry);
-	if (ret) {
-		/* PDN Conn Entry is present. Delete PDN Conn Entry */
-		ret = rte_hash_del_key(upflist_by_ue_hash, &imsi);
-
-		if ( ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"IMSI entry is not found:%lu...\n",
-						ERR_MSG, imsi);
-			return -1;
-		}
-	}
-
-	/* Free data from hash */
-	if (entry != NULL)
-		rte_free(entry);
-
-	return 0;
-}
 
 /*get msg type from cstm ie string */
 uint64_t
@@ -1741,5 +1714,32 @@ get_rule_type(pfcp_pfd_contents_ie_t *pfd_conts, uint16_t *idx)
 	*idx += 1;
 	Temp_buf[*idx] = '\0';
 	return atoi(Temp_buf);
+}
+
+void
+creating_urr(pfcp_create_urr_ie_t *urr)
+{
+	int size = 0;
+	//set urr id
+	size += set_urr_id(&(urr->urr_id));
+
+	size += set_measurement_method(&(urr->meas_mthd));
+
+	size += set_reporting_triggers(&(urr->rptng_triggers));
+
+	size += set_measurement_period(&(urr->meas_period));
+
+	size += set_volume_threshold(&(urr->vol_thresh));
+
+	size += set_volume_quota(&(urr->volume_quota));
+
+	size += set_quota_holding_time(&(urr->quota_hldng_time));
+
+	size += set_downlink_drop_traffic_threshold(&(urr->drpd_dl_traffic_thresh));
+
+	size += set_far_id_quota_action(&(urr->far_id_for_quota_act));
+
+	pfcp_set_ie_header(&(urr->header), PFCP_IE_CREATE_URR , size);
+
 }
 

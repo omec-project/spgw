@@ -163,8 +163,7 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
 	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded, &context->upf_context->upf_sockaddr) < 0 )
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	else {
-		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-				pfcp_sess_del_req.header.message_type,SENT,SX);
+        increment_userplane_stats(MSG_TX_PFCP_SXA_SESSDELREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
 		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_delete_session_request_pfcp_timeout);
         bearer->pdn->trans_entry = trans_entry; 

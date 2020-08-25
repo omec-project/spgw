@@ -6,7 +6,6 @@
 
 #include "pfcp.h"
 #include "cp_config.h"
-#include "cp_stats.h"
 #include <rte_ip.h>
 #include <rte_udp.h>
 #include <rte_cfgfile.h>
@@ -15,11 +14,10 @@
 #include "gw_adapter.h"
 #include "clogger.h"
 #include "sm_structs_api.h"
+#include "spgw_cpp_wrapper.h"
 //REVIEW: Need to check this: No need to add this header files
 #include "pfcp.h"
 #include "sm_enum.h"
-#include "cp_stats.h"
-#include "sm_struct.h"
 #include "pfcp_cp_util.h"
 #include "cp_config.h"
 #include "pfcp_cp_session.h"
@@ -985,8 +983,7 @@ parse_gx_rar_msg(GxRAR *rar)
 	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &ue_context->upf_context->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
-		update_cli_stats((uint32_t)ue_context->upf_context->upf_sockaddr.sin_addr.s_addr,
-					pfcp_sess_mod_req.header.message_type,SENT,SX);
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(ue_context->upf_context));
         transData_t *trans_entry = NULL;
         if(cp_config->cp_type == PGWC){
             trans_entry = start_pfcp_session_timer(ue_context,

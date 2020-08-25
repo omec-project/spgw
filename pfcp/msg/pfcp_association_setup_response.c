@@ -8,6 +8,7 @@
 #include "pfcp_messages_decoder.h"
 #include "clogger.h"
 #include "pfcp_association_setup_proc.h"
+#include "spgw_cpp_wrapper.h"
 
 int 
 handle_pfcp_association_setup_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
@@ -24,13 +25,11 @@ handle_pfcp_association_setup_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_
     {
         clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp precondition check\n", __func__);
 
-        update_cli_stats(peer_addr.sin_addr.s_addr,
-                pfcp_rx->message_type, REJ,SX);
+        increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPRSP, peer_addr.sin_addr.s_addr);
 
         return -1;
     }
-    update_cli_stats(peer_addr.sin_addr.s_addr,
-            pfcp_rx->message_type, ACC,SX);
+    increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPRSP, peer_addr.sin_addr.s_addr);
 
     handle_pfcp_association_setup_response(msg);
     return 0;

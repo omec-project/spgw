@@ -31,6 +31,7 @@
 #include "ipc_api.h"
 #include "util.h"
 #include "cp_io_poll.h"
+#include "spgwStatsPromEnum.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -94,6 +95,7 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
 	ue_context_t *context = NULL;
     pdn_connection_t *pdn = NULL;
 
+    increment_stat(PROCEDURES_SPGW_INITIAL_ATTACH);
 	ret = process_create_sess_req(&msg->gtpc_msg.csr,
 			                      &context, &pdn, msg);
 	if (ret) {
@@ -570,14 +572,13 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 		+ sizeof(gtpv2c_tx->gtpc);
 
 #ifdef FUTURE_NEED
-	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == PGWC)) {
+	if (cp_config->cp_type == SGWC) {
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s5s8_recv_sockaddr,
 		        sizeof(struct sockaddr_in));
 
 
-		update_cli_stats(s5s8_recv_sockaddr.sin_addr.s_addr,
-							gtpv2c_tx->gtpc.message_type,SENT,S5S8);
+        increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_CSREQ, s5s8_recv_sockaddr.sin_addr.s_addr);
 
 		if (SGWC == cp_config->cp_type) {
 			add_gtpv2c_if_timer_entry(
@@ -588,6 +589,15 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 		}
 
 		//s5s8_sgwc_msgcnt++;
+	} else (cp_config->cp_type == PGWC) {
+		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
+				(struct sockaddr *) &s5s8_recv_sockaddr,
+		        sizeof(struct sockaddr_in));
+
+
+        increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_CSRSP, s5s8_recv_sockaddr.sin_addr.s_addr);
+
+		//s5s8_sgwc_msgcnt++;
 	} else {
 #endif
         transData_t *trans_rec = proc_context->gtpc_trans;
@@ -596,8 +606,8 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 				(struct sockaddr *) &trans_rec->peer_sockaddr,
 				sizeof(struct sockaddr_in));
 
-		update_cli_stats(trans_rec->peer_sockaddr.sin_addr.s_addr,
-				gtpv2c_tx->gtpc.message_type, ACC,S11);
+        increment_mme_peer_stats(MSG_TX_GTPV2_S11_CSRSP, trans_rec->peer_sockaddr.sin_addr.s_addr);
+        increment_sgw_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH_SUCCESS, trans_rec->peer_sockaddr.sin_addr.s_addr);
     
         proc_initial_attach_complete(proc_context);
         
@@ -992,16 +1002,24 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 
 }
 
+// TODO : need to define local cause above 255. That way we can increment stats 
 void proc_initial_attach_failure(msg_info_t *msg, int cause)
 {
+    proc_context_t *proc_context = msg->proc_context;
+    transData_t *trans_rec = proc_context->gtpc_trans;
     if(cause != -1) {
+        increment_proc_mme_peer_stats_reason(PROCEDURES_SPGW_INITIAL_ATTACH_FAILURE, 
+                                    trans_rec->peer_sockaddr.sin_addr.s_addr, cause);
         // send cs response 
         cs_error_response(msg, cause,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+    } else {
+        increment_proc_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH_FAILURE, 
+                                 trans_rec->peer_sockaddr.sin_addr.s_addr);
     }
+    
     if(msg->proc_context != NULL && msg->ue_context == NULL)
     {
-        proc_context_t *proc_context = msg->proc_context;
         if(proc_context->gtpc_trans != NULL) {
             printf("Delete gtpc procs \n");
             /* Only MME initiated transactions as of now */
@@ -1561,9 +1579,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		clLog(clSystemLog, eCLSeverityCritical, "Error in sending CSR to PGW-U. err_no: %i\n", errno);
 	} else {
 
-		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-				pfcp_sess_est_req.header.message_type,SENT,SX);
-
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSESTREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
 		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pgwc_s5s8_create_session_request_pfcp_timeout);
         pdn->trans_entry = trans_entry;
@@ -1791,8 +1807,6 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 //	else
 //	{
-//		cp_stats.session_modification_req_sent++;
-//		get_current_time(cp_stats.session_modification_req_sent_time);
 //	}
 //	/* Update UE State */
 //	context->state = PFCP_SESS_MOD_REQ_SNT_STATE;
@@ -1938,9 +1952,9 @@ gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr
 	}
 
 	struct sockaddr_in saddr_in;
-    	saddr_in.sin_family = AF_INET;
-    	inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-    	update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_INITIAL, SENT, GX);
+   	saddr_in.sin_family = AF_INET;
+   	inet_aton("127.0.0.1", &(saddr_in.sin_addr));
+    increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_I, saddr_in.sin_addr.s_addr);
 
 
 	/* Update UE State */

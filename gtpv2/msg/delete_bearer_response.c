@@ -145,8 +145,7 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 			"%s : Error in sending MBR to SGW-U. err_no: %i\n",
 			__func__, errno);
 	} else {
-		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-				pfcp_sess_mod_req.header.message_type, SENT, SX);
+        increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
 		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_delete_bearer_resp_pfcp_timeout);
         pdn->trans_entry = trans_entry;

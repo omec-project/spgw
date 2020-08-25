@@ -19,8 +19,6 @@
  * @param thread_count - number of threads
  * @return void
  */
-void init_rest_methods(int port_no, size_t thread_count);
-
 typedef long long int _timer_t;
 
 #define TIMER_GET_CURRENT_TP(now)                                             \
@@ -219,16 +217,8 @@ extern char ossGatewayStr[][10];
 extern uint64_t oss_reset_time;
 
 void init_cli_module(uint8_t gw_logger);
-int update_cli_stats(uint32_t ip_addr, uint8_t mgs_type,int dir,CLIinterface it);
-void add_cli_peer(uint32_t ip_addr,CLIinterface it);
-int get_peer_index(uint32_t ip_addr);
 int update_peer_status(uint32_t ip_addr,bool val);
 int update_peer_timeouts(uint32_t ip_addr,uint8_t val);
 int delete_cli_peer(uint32_t ip_addr);
-int get_first_index(void);
-int update_last_activity(uint32_t ip_addr, char *time_stamp);
-int update_sys_stat(int index, int operation);
-void get_current_time_oss(char *last_time_stamp);
-bool is_last_activity_update(uint8_t msg_type, CLIinterface it);
 
 #endif

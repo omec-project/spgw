@@ -15,7 +15,6 @@
 #include "clogger.h"
 #include "cp_main.h"
 #include "pfcp.h"
-#include "cp_stats.h"
 #include "cp_config.h"
 #include "cp_config.h"
 #include "gtpv2_error_rsp.h"
@@ -368,6 +367,7 @@ int process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq)
 				clLog(sxlogger, eCLSeverityDebug, "Error sending: %i\n", errno);
 	}
 
+     
 	return 0;
 
 }

@@ -9,7 +9,6 @@
 #include "gx_interface.h"
 #include "sm_enum.h"
 #include "sm_hand.h"
-#include "cp_stats.h"
 #include "pfcp_cp_util.h"
 #include "sm_struct.h"
 #include "sm_structs_api.h"
@@ -195,15 +194,12 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 
 #ifdef FUTURE_NEED
 	if ((cp_config->cp_type == PGWC) ) {
-		/* Forward s11 delete_session_request on s5s8 */
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 		        sizeof(struct sockaddr_in));
 
-		update_cli_stats(my_sock.s5s8_recv_sockaddr.sin_addr.s_addr,
-						gtpv2c_tx->gtpc.message_type, SENT,S5S8);
-		update_sys_stat(number_of_users, DECREMENT);
-		update_sys_stat(number_of_active_session, DECREMENT);
+        increment_sgw_peer_stat(MSG_TX_GTPV2_S5S8_DSRSP, peer_addr.sin_addr.s_addr);
+        decrement_stat(NUM_UE_PGW_ACTIVE_SUBSCRIBERS);
 		//s5s8_sgwc_msgcnt++;
 	} 
     else 
@@ -218,12 +214,9 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 				sizeof(struct sockaddr_in));
 
 		/*CLI:CSResp sent cnt*/
-		update_cli_stats(peer_addr.sin_addr.s_addr,
-				gtpv2c_tx->gtpc.message_type, ACC,S11);
-
-		update_sys_stat(number_of_users, DECREMENT);
-		update_sys_stat(number_of_active_session, DECREMENT);
-
+        increment_mme_peer_stats(MSG_TX_GTPV2_S11_DSRSP, peer_addr.sin_addr.s_addr);
+        decrement_stat(NUM_UE_SPGW_ACTIVE_SUBSCRIBERS);
+        increment_stat(PROCEDURES_SPGW_MME_INIT_DETACH_SUCCESS);
         proc_detach_complete(msg);
 
 	}
@@ -238,9 +231,8 @@ process_sess_del_resp_handler(void *data, void *unused_param)
     struct sockaddr_in saddr_in;
     saddr_in.sin_family = AF_INET;
     inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-    update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
+    increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_T, saddr_in.sin_addr.s_addr);
 #endif
-
 
 	RTE_SET_USED(unused_param);
 	return 0;
@@ -308,8 +300,7 @@ process_pfcp_sess_del_request(msg_info_t *msg, del_sess_req_t *ds_req)
 		clLog(clSystemLog, eCLSeverityDebug,"%s:%d Error sending: %i\n", __func__, __LINE__, errno);
         // Just logging is good enough, let timeout & retry take care further 
     } 
-    update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-            pfcp_sess_del_req.header.message_type,SENT,SX);
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSDELREQ, context->upf_context->upf_sockaddr.sin_addr.s_addr);
     transData_t *trans_entry;
     trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_del_request_timeout);
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
@@ -340,6 +331,7 @@ process_pfcp_sess_del_request(msg_info_t *msg, del_sess_req_t *ds_req)
 void
 proc_detach_failure(msg_info_t *msg, uint8_t cause)
 {
+    increment_stat(PROCEDURES_SPGW_MME_INIT_DETACH_FAILURE);
     ds_error_response(msg,
                       cause,
                       cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
@@ -413,8 +405,7 @@ process_sgwc_delete_session_request(msg_info_t *msg, del_sess_req_t *del_req)
 	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0 ){
 		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
 	} else {
-		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-				pfcp_sess_mod_req.header.message_type,SENT,SX);
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, context->upf_context->upf_sockaddr.sin_addr.s_addr);
         transData_t *trans_entry;
 		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_spgwc_delete_session_request_timeout);
         pdn->trans_entry = trans_entry;

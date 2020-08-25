@@ -24,12 +24,10 @@ handle_pfcp_set_deletion_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
     {
         clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Sess Set Deletion Resp is %d\n",
                 decoded);
-        update_cli_stats(peer_addr.sin_addr.s_addr,
-                pfcp_rx->message_type, REJ,SX);
+//        increment_userplane_stats(MSG_RX_PFCP_SXASXB_SET_DELETE_RSP_DECODE_ERR, peer_addr.sin_addr.s_addr);
         return -1;
     }
-    update_cli_stats(peer_addr.sin_addr.s_addr,
-            pfcp_rx->message_type, ACC,SX);
+//        increment_userplane_stats(MSG_RX_PFCP_SXASXB_SET_DELETE_RSP, peer_addr.sin_addr.s_addr);
 
     return 0;
 }

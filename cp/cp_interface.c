@@ -59,8 +59,6 @@ extern void print_perf_statistics(void);
 
 extern pcap_dumper_t *pcap_dumper;
 
-struct rte_hash *node_id_hash;
-
 /**
  * @brief  : Util to send or dump gtpv2c messages
  * @param  : fd, interface indentifier

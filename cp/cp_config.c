@@ -26,7 +26,6 @@
 #include "gw_adapter.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"
-#include "cp_stats.h"
 #include "upf_struct.h"
 #include "ue.h"
 #include "pfcp_cp_association.h"

@@ -18,6 +18,7 @@
 #include "tables/tables.h"
 #include "cp_config.h"
 #include "cp_io_poll.h"
+#include "spgw_cpp_wrapper.h"
 
 static uint32_t cc_request_number = 0;
 int g_cp_sock ;
@@ -587,10 +588,10 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 		return -1;
 	}
 
-	struct sockaddr_in saddr_in;
-    	saddr_in.sin_family = AF_INET;
-    	inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-    	update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_INITIAL, SENT, GX);
+    struct sockaddr_in saddr_in;
+    saddr_in.sin_family = AF_INET;
+    inet_aton("127.0.0.1", &(saddr_in.sin_addr));
+    increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_U, saddr_in.sin_addr.s_addr);
 
 
 	/* Update UE State */

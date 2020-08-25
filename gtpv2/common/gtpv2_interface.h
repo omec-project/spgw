@@ -397,14 +397,6 @@ ddn_by_session_id(uint64_t session_id);
 int msg_handler_s11(void);
 int msg_handler_s5s8(void);
 
-/**
- * @brief  : Update cli statistics
- * @param  : msg_type, msg for which cli stats to be updated
- * @return : Returns nothing
- */
-void
-stats_update(uint8_t msg_type);
-
 void 
 process_delete_bearer_resp_pfcp_timeout(void *data);
 

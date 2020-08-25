@@ -19,6 +19,7 @@
 #include "pfcp_cp_util.h"
 #include "tables/tables.h"
 #include "cp_io_poll.h"
+#include "spgw_cpp_wrapper.h"
 
 int
 process_rpt_req_handler(void *data, void *unused_param)
@@ -124,10 +125,6 @@ process_pfcp_report_req(pfcp_sess_rpt_req_t *pfcp_sess_rep_req)
 		clLog(sxlogger, eCLSeverityCritical, "Error REPORT REPONSE message: %i\n", errno);
 		return -1;
 	}
-	else {
-		update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-				pfcp_sess_rep_resp.header.message_type,ACC,SX);
-	}
-
+    increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSREPORTREQ, GET_UPF_ADDR(context->upf_context));
 	return 0;
 }

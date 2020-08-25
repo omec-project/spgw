@@ -18,8 +18,9 @@
 #include "pfcp_messages_decoder.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_util.h"
-#include "pfcp_cp_util.h"
+#include "spgw_cpp_wrapper.h"
 #include "cp_io_poll.h"
+#include "tables/tables.h"
 
 static void
 fill_pfcp_heartbeat_resp(pfcp_hrtbeat_rsp_t *pfcp_heartbeat_resp)
@@ -60,8 +61,7 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, peer_addr) < 0 ) {
 		clLog(clSystemLog, eCLSeverityDebug, "Error sending in heartbeat request: %i\n",errno);
 	} else {
-		update_cli_stats(peer_addr->sin_addr.s_addr,
-						PFCP_HEARTBEAT_RESPONSE,SENT,SX);
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_ECHORSP, peer_addr->sin_addr.s_addr);
 	}
 	free(pfcp_heartbeat_req);
 	return 0;
@@ -70,12 +70,10 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 int handle_pfcp_heartbit_req_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
 {
     int ret;
-	struct sockaddr_in peer_addr = msg->peer_addr;
-    printf("Heartbit request received from UP %s \n",inet_ntoa(peer_addr.sin_addr));
-    update_cli_stats(peer_addr.sin_addr.s_addr,
-            pfcp_rx->message_type,RCVD,SX);
+	struct sockaddr_in *peer_addr = &msg->peer_addr;
+    increment_userplane_stats(MSG_RX_PFCP_SXASXB_ECHOREQ, peer_addr->sin_addr.s_addr);
 
-    ret = process_heartbeat_request((uint8_t*)pfcp_rx, &peer_addr);
+    ret = process_heartbeat_request((uint8_t*)pfcp_rx, peer_addr);
     if(ret != 0){
         clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat request\n", __func__);
     }
@@ -94,10 +92,9 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	process_response((uint32_t)peer_addr->sin_addr.s_addr);
 	pfcp_hrtbeat_rsp_t pfcp_hearbeat_resp = {0};
 	decode_pfcp_hrtbeat_rsp_t(buf_rx, &pfcp_hearbeat_resp);
-	uint32_t *recov_time ;
+	uint32_t recov_time;
 
-	int ret = rte_hash_lookup_data(heartbeat_recovery_hash , &peer_addr->sin_addr.s_addr ,
-			(void **) &(recov_time));
+	int ret = peer_heartbeat_entry_lookup(peer_addr->sin_addr.s_addr, &recov_time);
 
 	if (ret == -ENOENT) {
 		clLog(clSystemLog, eCLSeverityDebug, "No entry found for the heartbeat!!\n");
@@ -107,13 +104,10 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		uint32_t update_recov_time = 0;
 		update_recov_time =  (pfcp_hearbeat_resp.rcvry_time_stmp.rcvry_time_stmp_val);
 
-		if(update_recov_time > *recov_time) {
+		if(update_recov_time > recov_time) {
 
-			ret = rte_hash_add_key_data (heartbeat_recovery_hash,
-					&peer_addr->sin_addr.s_addr, &update_recov_time);
+			ret = add_data_to_heartbeat_hash_table(&peer_addr->sin_addr.s_addr, &update_recov_time);
 
-			ret = rte_hash_lookup_data(heartbeat_recovery_hash , &peer_addr->sin_addr.s_addr,
-					(void **) &(recov_time));
 		}
 	}
 
@@ -122,16 +116,13 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 
 int handle_pfcp_heartbit_rsp_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
 {
-	struct sockaddr_in peer_addr = msg->peer_addr;
+	struct sockaddr_in *peer_addr = &msg->peer_addr;
     int ret;
-
-    printf("Heartbit response received from UP %s \n",inet_ntoa(peer_addr.sin_addr));
-    ret = process_heartbeat_response((uint8_t *)pfcp_rx, &peer_addr);
+    ret = process_heartbeat_response((uint8_t *)pfcp_rx, peer_addr);
     if(ret != 0){
         clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat response\n", __func__);
     } else {
-        update_cli_stats(peer_addr.sin_addr.s_addr,
-                PFCP_HEARTBEAT_RESPONSE,RCVD,SX);
+        increment_userplane_stats(MSG_RX_PFCP_SXASXB_ECHORSP, peer_addr->sin_addr.s_addr);
     }
     return 0;
 }

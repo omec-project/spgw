@@ -7,7 +7,6 @@
 #ifndef GTPC_SESSION_H
 #define GTPC_SESSION_H
 #include "cp_main.h"
-#include "cp_stats.h"
 #include "ue.h"
 #include "gtp_messages.h"
 #include "gtpv2_set_ie.h"

@@ -31,6 +31,7 @@ SPGW_LIBNAME = libspgwcpputil.so
 
 SPGWLIB_SRCS := ./spgw_config.cpp \
 				./spgw_tables.cpp \
+				./spgwStatsPromClient.cpp \
 				./spgw_wrapper.cpp 
 
 SRCDIR := .
@@ -44,7 +45,7 @@ all : buildCommonLIBS install
 buildCommonLIBS : $(OBJS)
 	@echo "Linking"
 	@mkdir -p $(LIBDIR)
-	$(CC) $(CFLAGS) $(SPGW_CPP_OBJS) -shared -o $(SPGW_LIBNAME)
+	$(CC) $(CFLAGS) $(SPGW_CPP_OBJS) -lprometheus-cpp-pull -lprometheus-cpp-core -lz -shared -o $(SPGW_LIBNAME)
 
 $(OBJS) : $(OBJDIR)/%.o : $(SRCDIR)/%.cpp
 	@mkdir -p $(OBJDIR)/

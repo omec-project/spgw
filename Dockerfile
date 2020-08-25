@@ -33,7 +33,10 @@ RUN source ./docker-scripts/install_builddeps.sh && \
     source ./docker-scripts/install_oss_util.sh && \
     install_oss_util 
 
-FROM ossutil as spgw
+FROM ossutil as prombuild
+RUN ./docker-scripts/install_prometheus.sh
+
+FROM prombuild as spgw
 COPY . ./
 ARG CPUS
 ARG RTE_MACHINE=native
@@ -58,3 +61,4 @@ COPY --from=spgw /spgw/third_party/freediameter/build/libfdproto/libfdproto.so /
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/cpp-driver/build/libcassandra.so /usr/local/lib/
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/c-ares/.libs/libcares.so /usr/local/lib/
 COPY --from=spgw /spgw/cpplib/target/lib/libspgwcpputil.so /usr/local/lib/
+COPY --from=spgw /tmp/prometheus/_build/deploy/usr/local/lib /usr/local/lib

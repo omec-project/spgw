@@ -20,7 +20,6 @@
 #include "cp_main.h"
 #include "pfcp.h"
 #include "ipc_api.h"
-#include "cp_stats.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"
 #include "gtpv2_session.h"
@@ -2190,6 +2189,8 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	if (upf_ctx->up_supp_features & UP_TRACE)
 		set_trace_info(&(pfcp_sess_est_req->trc_info));
 
+    pfcp_sess_est_req->create_urr_count = 1;
+    creating_urr(&pfcp_sess_est_req->create_urr[0]);
 }
 
 
@@ -2394,8 +2395,8 @@ process_pfcp_sess_est_request(pdn_connection_t *pdn, upf_context_t *upf_ctx)
 	} 
 
     /*pfcp-session-estab-req-sent*/
-    update_cli_stats((uint32_t)context->upf_context->upf_sockaddr.sin_addr.s_addr,
-            pfcp_sess_est_req.header.message_type,SENT,SX);
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSESTREQ,GET_UPF_ADDR(context->upf_context)); 
+
     trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_est_request_timeout);
     trans_entry->sequence = sequence;
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
@@ -2594,7 +2595,9 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 	bearer = context->eps_bearers[ebi_index];
     assert(bearer != NULL);
 	pdn->dp_seid = dp_sess_id;
-	printf("%s %d DP session id %lu. UE address = %s  \n", __FUNCTION__, __LINE__, dp_sess_id, inet_ntoa(pdn->ipv4));
+    struct in_addr temp_addr = pdn->ipv4; 
+    temp_addr.s_addr = htonl(temp_addr.s_addr);
+	printf("%s %d DP session id %lu. UE address = %s  \n", __FUNCTION__, __LINE__, dp_sess_id, inet_ntoa(temp_addr));
 
 	/* Update the UE state */
 	pdn->state = PFCP_SESS_EST_RESP_RCVD_STATE;
@@ -2720,8 +2723,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 	}
 #endif
 
-	update_sys_stat(number_of_users,INCREMENT);
-	update_sys_stat(number_of_active_session, INCREMENT);
+    increment_stat(NUM_UE_SPGW_ACTIVE_SUBSCRIBERS);
 
 	/* Update the UE state */
 	pdn->state = CONNECTED_STATE;
@@ -2786,8 +2788,7 @@ int send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
 
 	/* Update UE State */
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-	update_cli_stats((uint32_t)pdn->context->upf_context->upf_sockaddr.sin_addr.s_addr,
-            pfcp_sess_mod_req.header.message_type,SENT,SX);
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(pdn->context->upf_context)); 
     transData_t *trans_entry;
 	trans_entry = start_pfcp_session_timer(pdn->context, pfcp_msg, encoded, send_pfcp_sess_mod_req_handover_timeout);
     pdn->trans_entry = trans_entry;
@@ -2930,8 +2931,7 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 		}
 		return 0;
 
-	} 
-    else if (resp->msg_type == GTP_CREATE_SESSION_RSP) {
+	} else if (resp->msg_type == GTP_CREATE_SESSION_RSP) {
 		/* Fill the Create session response */
 		set_create_session_response(
 				gtpv2c_tx, context->sequence, context, bearer->pdn, bearer);
@@ -2983,7 +2983,7 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 			struct sockaddr_in saddr_in;
 			saddr_in.sin_family = AF_INET;
 			inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-			update_cli_stats(saddr_in.sin_addr.s_addr, OSS_RAA, SENT, GX);
+            increment_gx_peer_stats(MSG_TX_DIAMETER_GX_RAA, saddr_in.sin_addr.s_addr);
 
 			resp->msg_type = GX_RAA_MSG;
 			resp->state = CONNECTED_STATE;

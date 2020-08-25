@@ -10,6 +10,8 @@
 #include "ue.h"
 #include "cp_peer_struct.h"
 #include "gx_interface.h"
+#include "pfcp_cp_set_ie.h"
+#include "pfcp.h"
 /**
  * @brief  : Creates upf context hash
  * @param  : No param
@@ -17,6 +19,16 @@
  */
 void
 create_upf_context_hash(void);
+#ifdef DELETE
+/**
+ * @brief  : creates associated upf hash
+ * @param  : No param
+ * @return : Returns nothing
+ */
+void
+create_associated_upf_hash(void );
+#endif
+
 
 
 /**
@@ -102,6 +114,9 @@ int bearer_context_delete_entry_teidKey(uint32_t teid);
  */
 void
 create_heartbeat_hash_table(void);
+
+int
+peer_heartbeat_entry_lookup(uint32_t peer_ip, uint32_t *recov_time);
 
 /**
  * @brief  : Add ip address to hearbeat hash
@@ -241,6 +256,185 @@ del_pfcp_cntxt_entry(uint64_t session_id);
  */
 uint8_t
 del_pdn_conn_entry(uint32_t call_id);
+
+/**
+ * @brief  : Creates upf hash using ue
+ * @param  : No param
+ * @return : Returns nothing
+ */
+void
+create_upf_by_ue_hash(void);
+
+/**
+ * @brief  : Add entry to upflist hash
+ * @param  : imsi_val, imsi value
+ * @param  : imsi_len, imsi length
+ * @param  : entry, entry to be added in hash
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+int
+upflist_by_ue_hash_entry_add(uint64_t *imsi_val, uint16_t imsi_len,
+		upfs_dnsres_t *entry);
+
+/**
+ * @brief  : search entry in upflist hash
+ * @param  : imsi_val, imsi value
+ * @param  : imsi_len, imsi length
+ * @param  : entry, entry to be filled with search result
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+int
+upflist_by_ue_hash_entry_lookup(uint64_t *imsi_val, uint16_t imsi_len,
+		upfs_dnsres_t **entry);
+
+/**
+ * @brief  : delete entry in upflist hash
+ * @param  : imsi_val, imsi value
+ * @param  : imsi_len, imsi length
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+int
+upflist_by_ue_hash_entry_delete(uint64_t *imsi_val, uint16_t imsi_len);
+
+/**
+ * @brief  : Creates node id hash
+ * @param  : No param
+ * @return : Returns nothing
+ */
+void
+create_node_id_hash(void );
+
+/**
+ * @brief  : Add new node in node id hash
+ * @param  : nodeid, node id value
+ * @param  : data, node type ipv4 or ipv6
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+uint8_t
+add_node_id_hash(uint32_t *nodeid, uint64_t *data);
+
+/**
+ * @brief  : Create a  hash table to maintain the PDR, QER, FAR and BAR information.
+ * @param  : void
+ * @return : Does not return anything
+ */
+void
+init_pfcp_tables(void);
+
+/**
+ * @brief  : Add Rule name and bearer information in the table.
+ * @param  : rule_key
+ * @param  : bearer
+ * @return : Returns 0 on success , -1 otherwise
+ */
+uint8_t
+add_rule_name_entry(const rule_name_key_t rule_key, bearer_id_t *bearer);
+
+/**
+ * @brief  : Add pfcp context information in the table.
+ * @param  : session_id
+ * @param  : resp, pfcp context details
+ * @return : Returns 0 on success , -1 otherwise
+ */
+uint8_t
+add_pfcp_cntxt_entry(uint64_t session_id, struct pfcp_cntxt *resp);
+
+/**
+ * @brief  : Add PDR information in the table.
+ * @param  : rule id
+ * @param  : pdr context
+ * @return : Returns 0 on success , -1 otherwise
+ */
+uint8_t
+add_pdr_entry(uint16_t rule_id, pdr_t *cntxt);
+
+/**
+ * @brief  : Add QER information in the table.
+ * @param  : qer id
+ * @param  : qer context
+ * @return : Returns 0 on success , -1 otherwise
+ */
+uint8_t
+add_qer_entry(uint32_t qer_id, qer_t *cntxt);
+
+/**
+ * @brief  : Add URR information in the table.
+ * @param  : urr id
+ * @param  : urr context
+ * @return : Returns 0 on success , -1 otherwise
+ */
+uint8_t
+add_urr_entry(uint32_t urr_id, urr_t *cntxt);
+
+/**
+ * @brief  : Retrive Rule Name entry.
+ * @param  : rule_key
+ * @return : Return bearer id on success , -1 otherwise
+ */
+int8_t
+get_rule_name_entry(const rule_name_key_t rule_key);
+
+/**
+ * @brief  : Retrive pfcp context entry.
+ * @param  : session id
+ * @return : Returns pointer to pfcp context, NULL otherwise
+ */
+struct pfcp_cntxt *
+get_pfcp_cntxt_entry(uint64_t session_id);
+
+/**
+ * @brief  : Retrive PDR entry.
+ * @param  : rule id
+ * @return : Returns pointer to pdr context, NULL otherwise
+ */
+pdr_t *get_pdr_entry(uint16_t rule_id);
+
+/**
+ * @brief  : Retrive QER entry.
+ * @param  : qer_id
+ * @return : Returns pointer to qer context on success , NULL otherwise
+ */
+qer_t *get_qer_entry(uint32_t qer_id);
+
+/**
+ * @brief  : Retrive URR entry.
+ * @param  : urr_id
+ * @return : Returns pointer to urr context on success , NULL otherwise
+ */
+urr_t *get_urr_entry(uint32_t urr_id);
+
+/**
+ * @brief  : Delete Rule Name entry from Rule and Bearer Map table.
+ * @param  : rule key
+ * @return : Returns 0 on success , -1 otherwise
+ */
+uint8_t
+del_rule_name_entry(const rule_name_key_t rule_key);
+
+/**
+ * @brief  : Delete PDR entry from QER table.
+ * @param  : pdr id
+ * @return : Returns 0 on success , -1 otherwise
+ */
+uint8_t
+del_pdr_entry(uint16_t pdr_id);
+
+/**
+ * @brief  : Delete QER entry from QER table.
+ * @param  : qer id
+ * @return : Returns 0 on success , -1 otherwise
+ */
+uint8_t
+del_qer_entry(uint32_t qer_id);
+
+/**
+ * @brief  : Delete URR entry from URR table.
+ * @param  : urr id
+ * @return : Returns 0 on success , -1 otherwise
+ */
+uint8_t
+del_urr_entry(uint32_t urr_id);
+
 
 
 #endif

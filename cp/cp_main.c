@@ -14,7 +14,6 @@
 #include "clogger.h"
 #include "cp_init.h"
 #include "cp_main.h"
-#include "cp_stats.h"
 #include "sm_struct.h"
 #include "sm_structs_api.h"
 #include "cp_io_poll.h"
@@ -61,7 +60,6 @@ uint16_t local_csid = 0;
 #endif /* USE_CSID */
 
 struct cp_params cp_params;
-clock_t cp_stats_execution_time;
 _timer_t st_time;
 
 /**
@@ -188,6 +186,8 @@ main(int argc, char **argv)
 
     parse_arg(argc - ret, argv + ret);
 
+    setup_prometheus(); 
+
     // this parses file and allocates cp_config  
     init_config();
 
@@ -199,30 +199,18 @@ main(int argc, char **argv)
 
     create_heartbeat_hash_table();
 
+#ifdef DELETE
     create_associated_upf_hash();
+#endif
 
     /* Make a connection between control-plane and gx_app */
-    if(cp_config->gx_enabled == true)
-    {
-        if(cp_config->cp_type != SGWC)
-        {
-            start_cp_app();
-        }
+    if((cp_config->gx_enabled == true) && (cp_config->cp_type != SGWC)) {
+        start_cp_app();
     }
-
-#ifdef SYNC_STATS
-    stats_init();
-    init_stats_hash();
-#endif /* SYNC_STATS */
-
-    if (cp_params.stats_core_id != RTE_MAX_LCORE)
-        rte_eal_remote_launch(do_stats, NULL, cp_params.stats_core_id);
 
 	echo_table_init();
 
-    /* Create thread for handling for sending echo req to its peer node */
     rest_thread_init();
-
 
     init_pfcp_tables();
 
@@ -243,10 +231,6 @@ void sig_handler(int signo)
     if (signo == SIGINT) {
         if (my_sock.gx_app_sock > 0)
             close_ipc_channel(my_sock.gx_app_sock);
-#ifdef SYNC_STATS
-        retrive_stats_entry();
-        close_stats();
-#endif /* SYNC_STATS */
 
         gst_deinit();
 

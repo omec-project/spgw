@@ -8,7 +8,6 @@
 #include "clogger.h"
 #include "gw_adapter.h"
 #include "sm_structs_api.h"
-#include "cp_stats.h"
 #include "cp_config.h"
 #include "sm_struct.h"
 #include "pfcp_cp_util.h"
@@ -27,6 +26,7 @@
 #include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
+#include "spgw_cpp_wrapper.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -202,9 +202,8 @@ process_release_access_bearer_request(rel_acc_bearer_req_t *rel_acc_ber_req_t, u
 			clLog(sxlogger, eCLSeverityCritical,"Error sending: %i\n",errno);
             return -1;
         }
-        update_cli_stats((uint32_t)ue_context->upf_context->upf_sockaddr.sin_addr.s_addr,
-                pfcp_sess_mod_req.header.message_type,SENT,SX);
 
+        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(ue_context->upf_context));
 
         transData_t *trans_entry;
         trans_entry = start_pfcp_session_timer(ue_context, pfcp_msg, encoded, process_release_access_bearer_request_pfcp_timeout);
@@ -283,8 +282,7 @@ process_rab_proc_pfcp_mod_sess_rsp(msg_info_t *msg)
 			(struct sockaddr *) &gtpc_trans->peer_sockaddr,
 			sizeof(struct sockaddr_in));
 
-	update_cli_stats(gtpc_trans->peer_sockaddr.sin_addr.s_addr,
-				gtpv2c_tx->gtpc.message_type,ACC,S11);
+    increment_mme_peer_stats(MSG_TX_GTPV2_S11_RABRSP,gtpc_trans->peer_sockaddr.sin_addr.s_addr);
 
     proc_rab_complete(proc_context);
 	return;

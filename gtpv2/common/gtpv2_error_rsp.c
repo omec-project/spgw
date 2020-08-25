@@ -165,7 +165,6 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 
     assert(msg->peer_addr.sin_port != 0);
 
-#ifdef TEMP
     // Sending CCR-T in case of failure
     /* we should check if subscriber has gx session..this does not look good */
     if ((cp_config->gx_enabled) &&  
@@ -174,9 +173,8 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
         struct sockaddr_in saddr_in;
         saddr_in.sin_family = AF_INET;
         inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-        update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
+        increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_T,saddr_in.sin_addr.s_addr);
     }
-#endif
     bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 
     gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
@@ -236,16 +234,13 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
     if(iface == S11_IFACE){
         gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
                 (struct sockaddr *) &msg->peer_addr, sizeof(struct sockaddr_in));
-        update_cli_stats(msg->peer_addr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
+        increment_mme_peer_stats(MSG_TX_GTPV2_S11_CSRSP,msg->peer_addr.sin_addr.s_addr);
     }else{
         gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
                 (struct sockaddr *)(&my_sock.s5s8_recv_sockaddr),
 		        sizeof(struct sockaddr_in));
 
-        struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)&(my_sock.s5s8_recv_sockaddr);
-
-        update_cli_stats(s5s8_ip->sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S5S8);
-
+        increment_mme_peer_stats(MSG_TX_GTPV2_S5S8_CSRSP,msg->peer_addr.sin_addr.s_addr);
     }
 
     /* Cleanup transaction and cross references  */
@@ -385,15 +380,13 @@ void mbr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &msg->peer_addr, sizeof(struct sockaddr_in));
 
-		update_cli_stats(msg->peer_addr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
+        increment_mme_peer_stats(MSG_TX_GTPV2_S11_MBRSP, msg->peer_addr.sin_addr.s_addr);
 	}else{
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), 
                 sizeof(struct sockaddr_in));
 
-		struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)(&my_sock.s5s8_recv_sockaddr);
-
-		update_cli_stats(s5s8_ip->sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S5S8);
+        increment_mme_peer_stats(MSG_TX_GTPV2_S5S8_MBRSP, msg->peer_addr.sin_addr.s_addr);
 	}
 }
 
@@ -462,7 +455,7 @@ void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
         struct sockaddr_in saddr_in;
 		saddr_in.sin_family = AF_INET;
 		inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-		update_cli_stats(saddr_in.sin_addr.s_addr, OSS_CCR_TERMINATE, SENT, GX);
+        increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_T,saddr_in.sin_addr.s_addr);
 	}
 #endif
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
@@ -494,14 +487,13 @@ void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 	if(iface == S11_IFACE){
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &msg->peer_addr, sizeof(struct sockaddr_in));
-		update_cli_stats(msg->peer_addr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
+        increment_mme_peer_stats(MSG_TX_GTPV2_S11_DSRSP, msg->peer_addr.sin_addr.s_addr);
 	}else{
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), 
 		        sizeof(struct sockaddr_in));
 
-		struct sockaddr_in *s5s8_ip = (struct sockaddr_in *)(&my_sock.s5s8_recv_sockaddr);
-		update_cli_stats(s5s8_ip->sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S5S8);
+        increment_sgw_peer_stats(MSG_TX_GTPV2_S5S8_DSRSP, msg->peer_addr.sin_addr.s_addr);
 	}
 
 }
@@ -576,7 +568,7 @@ void rab_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 #endif
     gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
             (struct sockaddr *) &msg->peer_addr, sizeof(struct sockaddr_in));
-    update_cli_stats(msg->peer_addr.sin_addr.s_addr,gtpv2c_tx->gtpc.message_type,REJ,S11);
+    increment_mme_peer_stats(MSG_TX_GTPV2_S11_RABRSP, msg->peer_addr.sin_addr.s_addr);
 }
 
 #ifdef UPDATE_BEARER_SUPPORT
@@ -743,13 +735,13 @@ void send_version_not_supported(struct sockaddr_in *peer_addr, int iface, uint32
                 (struct sockaddr *) peer_addr,
                 sizeof(struct sockaddr_in));
 
-        update_cli_stats(peer_addr->sin_addr.s_addr,
-                gtpv2c_tx->gtpc.message_type,REJ,S11);
+        increment_mme_peer_stats(MSG_TX_GTPV2_S11_VERSION_NOT_SUPPORTED,peer_addr->sin_addr.s_addr);
 
         gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
                 (struct sockaddr *) peer_addr, sizeof(struct sockaddr_in));
 
     }else{
+        increment_sgw_peer_stats(MSG_TX_GTPV2_S5S8_VERSION_NOT_SUPPORTED, peer_addr->sin_addr.s_addr);
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *)(&my_sock.s5s8_recv_sockaddr), 
                 sizeof(struct sockaddr_in));

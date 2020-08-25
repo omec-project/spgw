@@ -17,7 +17,6 @@
 #include "cp_peer.h"
 #include "sm_structs_api.h"
 #include "pfcp.h"
-#include "cp_stats.h"
 #include "sm_struct.h"
 #include "cp_config.h"
 #include "gtpv2_error_rsp.h"
