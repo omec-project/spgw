@@ -186,10 +186,11 @@ main(int argc, char **argv)
 
     parse_arg(argc - ret, argv + ret);
 
-    setup_prometheus(); 
 
     // this parses file and allocates cp_config  
     init_config();
+
+    setup_prometheus(cp_config->prom_port);
 
     init_cp();
 

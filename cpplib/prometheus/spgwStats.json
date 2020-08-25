@@ -22,9 +22,11 @@
             "label_2": [
                 {"level":"subscribers"} 
             ],
-            "dynamic_labels": [
+            "dynamic_label_0": [
                 { "mme_addr" :  "Subscriber attached from MME" },
-                { "spgwu_addr": "Subscriber using sgpwu value" },
+                { "spgwu_addr": "Subscriber using sgpwu value" }
+            ],
+            "dynamic_label_1": [
                 { "apn_name" :  "Subscriber using apn value" }
             ]
         },        

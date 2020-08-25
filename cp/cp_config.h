@@ -76,6 +76,8 @@ typedef struct cp_config
 	uint16_t upf_pfcp_port;  
 	struct in_addr upf_pfcp_ip;
 
+	uint16_t prom_port;
+
 	/* logger parameter */
 	uint8_t cp_logger;
 
