@@ -607,7 +607,7 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 				sizeof(struct sockaddr_in));
 
         increment_mme_peer_stats(MSG_TX_GTPV2_S11_CSRSP, trans_rec->peer_sockaddr.sin_addr.s_addr);
-        increment_sgw_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH_SUCCESS, trans_rec->peer_sockaddr.sin_addr.s_addr);
+        increment_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH_SUCCESS, trans_rec->peer_sockaddr.sin_addr.s_addr);
     
         proc_initial_attach_complete(proc_context);
         

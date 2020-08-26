@@ -253,14 +253,46 @@ class DynamicMetricObject {
 };
 
 
-class num_ue_DynamicMetricObject : public DynamicMetricObject {
+class num_ue_DynamicMetricObject1 : public DynamicMetricObject {
 	public:
-		num_ue_DynamicMetricObject(Family<Gauge> &num_ue_family,std::string labelk0, std::string labelv0,std::string labelk1, std::string labelv1,std::string labelk2, std::string labelv2,std::string labelk, std::string labelv):
+		num_ue_DynamicMetricObject1(Family<Gauge> &num_ue_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string label_k2, std::string label_v2,std::string dlabel_k0, std::string dlabel_v0):
 		 DynamicMetricObject(),
-		 gauge(num_ue_family.Add({{labelk0, labelv0},{labelk1, labelv1},{labelk2, labelv2},{labelk, labelv}}))
+		 gauge(num_ue_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}}))
 		{
 		}
-		~num_ue_DynamicMetricObject()
+		~num_ue_DynamicMetricObject1()
+		{
+		}
+		Gauge &gauge;
+};
+
+
+
+
+class num_ue_DynamicMetricObject2 : public DynamicMetricObject {
+	public:
+		num_ue_DynamicMetricObject2(Family<Gauge> &num_ue_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string label_k2, std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1):
+		 DynamicMetricObject(),
+		 gauge(num_ue_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}}))
+		{
+		}
+		~num_ue_DynamicMetricObject2()
+		{
+		}
+		Gauge &gauge;
+};
+
+
+class num_ue_DynamicMetricObject3 : public DynamicMetricObject {
+	public:
+
+
+		num_ue_DynamicMetricObject3(Family<Gauge> &num_ue_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string label_k2, std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1, std::string dlabel_k2, std::string dlabel_v2):
+		 DynamicMetricObject(),
+		 gauge(num_ue_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}, {dlabel_k2, dlabel_v2}}))
+		{
+		}
+		~num_ue_DynamicMetricObject3()
 		{
 		}
 		Gauge &gauge;
@@ -283,22 +315,58 @@ class num_ue_gauges {
 	Gauge &current__sgw_active_pdns;
 	Gauge &current__sgw_idle_pdns;
 
-	num_ue_DynamicMetricObject* add_dynamic(std::string labelk0, std::string labelv0,std::string labelk1, std::string labelv1,std::string labelk2, std::string labelv2,std::string labelk, std::string labelv) {
-		return new num_ue_DynamicMetricObject(num_ue_family,labelk0, labelv0,labelk1, labelv1,labelk2, labelv2,labelk, labelv);
+	num_ue_DynamicMetricObject1* add_dynamic1(std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string label_k2, std::string label_v2,std::string dlabel_k0, std::string dlabel_v0) {
+		return new num_ue_DynamicMetricObject1(num_ue_family,label_k0, label_v0,label_k1, label_v1,label_k2, label_v2,dlabel_k0, dlabel_v0);
+ 	}
+
+	num_ue_DynamicMetricObject2* add_dynamic2(std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string label_k2, std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1) {
+		return new num_ue_DynamicMetricObject2(num_ue_family,label_k0, label_v0,label_k1, label_v1,label_k2, label_v2,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1);
+ 	}
+
+	num_ue_DynamicMetricObject3* add_dynamic3(std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string label_k2, std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1, std::string dlabel_k2, std::string dlabel_v2) {
+		return new num_ue_DynamicMetricObject3(num_ue_family,label_k0, label_v0,label_k1, label_v1,label_k2, label_v2,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1, dlabel_k2, dlabel_v2);
  	}
 };
 
 
 
 
-class msg_rx_DynamicMetricObject : public DynamicMetricObject {
+class msg_rx_DynamicMetricObject1 : public DynamicMetricObject {
 	public:
-		msg_rx_DynamicMetricObject(Family<Counter> &msg_rx_family,std::string labelk0,std::string labelv0,std::string labelk1,std::string labelv1,std::string labelk2,std::string labelv2,std::string labelk, std::string labelv):
+		msg_rx_DynamicMetricObject1(Family<Counter> &msg_rx_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0):
 		 DynamicMetricObject(),
-		 counter(msg_rx_family.Add({{labelk0, labelv0},{labelk1, labelv1},{labelk2, labelv2},{labelk, labelv}}))
+		 counter(msg_rx_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}}))
 		{
 		}
-		~msg_rx_DynamicMetricObject()
+		~msg_rx_DynamicMetricObject1()
+		{
+		}
+		Counter &counter;
+};
+
+
+class msg_rx_DynamicMetricObject2 : public DynamicMetricObject {
+	public:
+		msg_rx_DynamicMetricObject2(Family<Counter> &msg_rx_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1):
+		 DynamicMetricObject(),
+		 counter(msg_rx_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}}))
+		{
+		}
+		~msg_rx_DynamicMetricObject2()
+		{
+		}
+		Counter &counter;
+};
+
+
+class msg_rx_DynamicMetricObject3 : public DynamicMetricObject {
+	public:
+		msg_rx_DynamicMetricObject3(Family<Counter> &msg_rx_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1,std::string dlabel_k2, std::string dlabel_v2):
+		 DynamicMetricObject(),
+		 counter(msg_rx_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0},{dlabel_k1, dlabel_v1},{dlabel_k2, dlabel_v2}}))
+		{
+		}
+		~msg_rx_DynamicMetricObject3()
 		{
 		}
 		Counter &counter;
@@ -392,21 +460,57 @@ class msg_rx_counters {
 	Counter &msg_rx_diameter_gx_rar;
 	Counter &msg_rx_diameter_gx_rar_drop;
 
-	msg_rx_DynamicMetricObject* add_dynamic(std::string labelk0,std::string labelv0,std::string labelk1,std::string labelv1,std::string labelk2,std::string labelv2,std::string labelk, std::string labelv) {
-		return new msg_rx_DynamicMetricObject(msg_rx_family,labelk0,labelv0,labelk1,labelv1,labelk2,labelv2,labelk, labelv);
+	msg_rx_DynamicMetricObject1* add_dynamic1(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0) {
+		return new msg_rx_DynamicMetricObject1(msg_rx_family,label_k0,label_v0,label_k1,label_v1,label_k2,label_v2,dlabel_k0, dlabel_v0);
+ 	}
+
+	msg_rx_DynamicMetricObject2* add_dynamic2(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1) {
+		return new msg_rx_DynamicMetricObject2(msg_rx_family,label_k0,label_v0,label_k1,label_v1,label_k2,label_v2,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1);
+ 	}
+
+	msg_rx_DynamicMetricObject3* add_dynamic3(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1,std::string dlabel_k2, std::string dlabel_v2) {
+		return new msg_rx_DynamicMetricObject3(msg_rx_family,label_k0,label_v0,label_k1,label_v1,label_k2,label_v2,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1,dlabel_k2, dlabel_v2);
  	}
 };
 
 
 
-class msg_tx_DynamicMetricObject : public DynamicMetricObject {
+class msg_tx_DynamicMetricObject1 : public DynamicMetricObject {
 	public:
-		msg_tx_DynamicMetricObject(Family<Counter> &msg_tx_family,std::string labelk0,std::string labelv0,std::string labelk1,std::string labelv1,std::string labelk2,std::string labelv2,std::string labelk, std::string labelv):
+		msg_tx_DynamicMetricObject1(Family<Counter> &msg_tx_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0):
 		 DynamicMetricObject(),
-		 counter(msg_tx_family.Add({{labelk0, labelv0},{labelk1, labelv1},{labelk2, labelv2},{labelk, labelv}}))
+		 counter(msg_tx_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}}))
 		{
 		}
-		~msg_tx_DynamicMetricObject()
+		~msg_tx_DynamicMetricObject1()
+		{
+		}
+		Counter &counter;
+};
+
+
+class msg_tx_DynamicMetricObject2 : public DynamicMetricObject {
+	public:
+		msg_tx_DynamicMetricObject2(Family<Counter> &msg_tx_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1):
+		 DynamicMetricObject(),
+		 counter(msg_tx_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}}))
+		{
+		}
+		~msg_tx_DynamicMetricObject2()
+		{
+		}
+		Counter &counter;
+};
+
+
+class msg_tx_DynamicMetricObject3 : public DynamicMetricObject {
+	public:
+		msg_tx_DynamicMetricObject3(Family<Counter> &msg_tx_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1,std::string dlabel_k2, std::string dlabel_v2):
+		 DynamicMetricObject(),
+		 counter(msg_tx_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0},{dlabel_k1, dlabel_v1},{dlabel_k2, dlabel_v2}}))
+		{
+		}
+		~msg_tx_DynamicMetricObject3()
 		{
 		}
 		Counter &counter;
@@ -478,26 +582,72 @@ class msg_tx_counters {
 	Counter &msg_tx_diameter_gx_raa;
 	Counter &msg_tx_diameter_gx_raa_rej;
 
-	msg_tx_DynamicMetricObject* add_dynamic(std::string labelk0,std::string labelv0,std::string labelk1,std::string labelv1,std::string labelk2,std::string labelv2,std::string labelk, std::string labelv) {
-		return new msg_tx_DynamicMetricObject(msg_tx_family,labelk0,labelv0,labelk1,labelv1,labelk2,labelv2,labelk, labelv);
+	msg_tx_DynamicMetricObject1* add_dynamic1(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0) {
+		return new msg_tx_DynamicMetricObject1(msg_tx_family,label_k0,label_v0,label_k1,label_v1,label_k2,label_v2,dlabel_k0, dlabel_v0);
+ 	}
+
+	msg_tx_DynamicMetricObject2* add_dynamic2(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1) {
+		return new msg_tx_DynamicMetricObject2(msg_tx_family,label_k0,label_v0,label_k1,label_v1,label_k2,label_v2,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1);
+ 	}
+
+	msg_tx_DynamicMetricObject3* add_dynamic3(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1,std::string dlabel_k2, std::string dlabel_v2) {
+		return new msg_tx_DynamicMetricObject3(msg_tx_family,label_k0,label_v0,label_k1,label_v1,label_k2,label_v2,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1,dlabel_k2, dlabel_v2);
  	}
 };
 
 
 
-class procedures_DynamicMetricObject : public DynamicMetricObject {
+class procedures_DynamicMetricObject1 : public DynamicMetricObject {
 	public:
-		procedures_DynamicMetricObject(Family<Counter> &procedures_family,std::string labelk0,std::string labelv0,std::string labelk1,std::string labelv1,std::string labelk, std::string labelv):
+		procedures_DynamicMetricObject1(Family<Counter> &procedures_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string dlabel_k0, std::string dlabel_v0):
 		 DynamicMetricObject(),
-		 counter(procedures_family.Add({{labelk0, labelv0},{labelk1, labelv1},{labelk, labelv}}))
+		 counter(procedures_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}}))
 		{
 		}
-		procedures_DynamicMetricObject(Family<Counter> &procedures_family,std::string labelk0,std::string labelv0,std::string labelk1,std::string labelv1,std::string labelk2,std::string labelv2,std::string labelk, std::string labelv):
+		procedures_DynamicMetricObject1(Family<Counter> &procedures_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0):
 		 DynamicMetricObject(),
-		 counter(procedures_family.Add({{labelk0, labelv0},{labelk1, labelv1},{labelk2, labelv2},{labelk, labelv}}))
+		 counter(procedures_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}}))
 		{
 		}
-		~procedures_DynamicMetricObject()
+		~procedures_DynamicMetricObject1()
+		{
+		}
+		Counter &counter;
+};
+
+
+class procedures_DynamicMetricObject2 : public DynamicMetricObject {
+	public:
+		procedures_DynamicMetricObject2(Family<Counter> &procedures_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1):
+		 DynamicMetricObject(),
+		 counter(procedures_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}}))
+		{
+		}
+		procedures_DynamicMetricObject2(Family<Counter> &procedures_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1):
+		 DynamicMetricObject(),
+		 counter(procedures_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}}))
+		{
+		}
+		~procedures_DynamicMetricObject2()
+		{
+		}
+		Counter &counter;
+};
+
+
+class procedures_DynamicMetricObject3 : public DynamicMetricObject {
+	public:
+		procedures_DynamicMetricObject3(Family<Counter> &procedures_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1,std::string dlabel_k2, std::string dlabel_v2):
+		 DynamicMetricObject(),
+		 counter(procedures_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0},{dlabel_k1, dlabel_v1},{dlabel_k2, dlabel_v2}}))
+		{
+		}
+		procedures_DynamicMetricObject3(Family<Counter> &procedures_family,std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1,std::string dlabel_k2, std::string dlabel_v2):
+		 DynamicMetricObject(),
+		 counter(procedures_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0},{dlabel_k1, dlabel_v1},{dlabel_k2, dlabel_v2}}))
+		{
+		}
+		~procedures_DynamicMetricObject3()
 		{
 		}
 		Counter &counter;
@@ -547,12 +697,28 @@ class procedures_counters {
 	Counter &procedures_spgw_service_request_proc_success;
 	Counter &procedures_spgw_service_request_proc_failure;
 
-	procedures_DynamicMetricObject* add_dynamic(std::string labelk0,std::string labelv0,std::string labelk1,std::string labelv1,std::string labelk, std::string labelv) {
-		return new procedures_DynamicMetricObject(procedures_family,labelk0,labelv0,labelk1,labelv1,labelk, labelv);
+	procedures_DynamicMetricObject1* add_dynamic1(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string dlabel_k0, std::string dlabel_v0) {
+		return new procedures_DynamicMetricObject1(procedures_family,label_k0,label_v0,label_k1,label_v1,dlabel_k0, dlabel_v0);
  	}
 
-	procedures_DynamicMetricObject* add_dynamic(std::string labelk0,std::string labelv0,std::string labelk1,std::string labelv1,std::string labelk2,std::string labelv2,std::string labelk, std::string labelv) {
-		return new procedures_DynamicMetricObject(procedures_family,labelk0,labelv0,labelk1,labelv1,labelk2,labelv2,labelk, labelv);
+	procedures_DynamicMetricObject1* add_dynamic1(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0) {
+		return new procedures_DynamicMetricObject1(procedures_family,label_k0,label_v0,label_k1,label_v1,label_k2,label_v2,dlabel_k0, dlabel_v0);
+ 	}
+
+	procedures_DynamicMetricObject2* add_dynamic2(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1) {
+		return new procedures_DynamicMetricObject2(procedures_family,label_k0,label_v0,label_k1,label_v1,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1);
+ 	}
+
+	procedures_DynamicMetricObject2* add_dynamic2(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1) {
+		return new procedures_DynamicMetricObject2(procedures_family,label_k0,label_v0,label_k1,label_v1,label_k2,label_v2,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1);
+ 	}
+
+	procedures_DynamicMetricObject3* add_dynamic3(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1,std::string dlabel_k2, std::string dlabel_v2) {
+		return new procedures_DynamicMetricObject3(procedures_family,label_k0,label_v0,label_k1,label_v1,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1,dlabel_k2, dlabel_v2);
+ 	}
+
+	procedures_DynamicMetricObject3* add_dynamic3(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string label_k2,std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1,std::string dlabel_k2, std::string dlabel_v2) {
+		return new procedures_DynamicMetricObject3(procedures_family,label_k0,label_v0,label_k1,label_v1,label_k2,label_v2,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1,dlabel_k2, dlabel_v2);
  	}
 };
 
