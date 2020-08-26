@@ -41,9 +41,9 @@ DOCKER_LABEL_BUILD_DATE  ?= $(shell date -u "+%Y-%m-%dT%H:%M:%SZ")
 # https://docs.docker.com/engine/reference/commandline/build/#specifying-target-build-stage---target
 docker-build:
 	# Enable compatibility with Docker versions without the --progress flag.
-	if (( $(echo "$DOCKER_VERSION >= 18.09" | bc -l) ))
-		then PROGRESS_TAG="--progress=plain"
-		else PROGRESS_TAG=""
+	if (( $(echo "$DOCKER_VERSION >= 18.09" | bc -l) ));\
+		then PROGRESS_TAG="--progress=plain";\
+		else PROGRESS_TAG=""; \
 	fi
 
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build --pull $(PROGRESS_TAG) $(DOCKER_BUILD_ARGS) \
