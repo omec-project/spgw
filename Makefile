@@ -25,6 +25,7 @@ DOCKER_TAG               ?= ${VERSION}
 DOCKER_REGISTRY          ?=
 DOCKER_REPOSITORY        ?=
 DOCKER_BUILDKIT          ?= 1
+DOCKER_VERSION		      = $(shell docker --version | awk '{ print $3 }' | cut -c1-5)
 # Note that we set the target platform of Docker images to Haswell
 # so that the images work on any platforms with Haswell CPUs or newer.
 # To get the best performance optimization to your target platform,
@@ -41,6 +42,7 @@ DOCKER_VERSION		      = $(shell docker --version | awk '{ print $3 }' | cut -c1-
 
 # https://docs.docker.com/engine/reference/commandline/build/#specifying-target-build-stage---target
 docker-build:
+	# Enable compatibility with Docker versions without the --progress flag.
 	if (( $(echo "$DOCKER_VERSION >= 18.09" | bc -l) ))
 	then PROGRESS_TAG="--progress=plain"
 	else PROGRESS_TAG=""
