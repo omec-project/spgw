@@ -50,7 +50,7 @@ The SPGW-C currently supports the following SAE-GW features:
 
 4.	High Level Design
 ----------------------
-Please read, more documentation under the docs directory. Those documents should give more details about the
+Please read, more documentation under the [docs directory](docs). Those documents should give more details about the
 supported features and design.
 
 5.	Build, install, configure and test
