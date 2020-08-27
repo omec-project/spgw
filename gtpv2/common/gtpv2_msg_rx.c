@@ -28,10 +28,7 @@
 #include "cp_init.h"
 #include "util.h"
 #include "cp_io_poll.h"
-
-#ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
-#endif /* USE_DNS_QUERY */
 
 uint8_t s11_rx_buf[MAX_GTPV2C_UDP_LEN];
 

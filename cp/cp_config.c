@@ -28,10 +28,13 @@
 #include "cp_config_apis.h"
 #include "upf_struct.h"
 #include "ue.h"
+#include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_association.h"
 #include "ip_pool.h"
 #include "spgw_cpp_wrapper.h"
 #include "tables/tables.h"
+#include "dns_config.h"
+#include "cdnshelper.h"
 
 
 #define GLOBAL_ENTRIES			"GLOBAL"
@@ -46,6 +49,7 @@
 #define CP_TYPE					"CP_TYPE"
 #define GX_CONFIG               "GX_CONFIG"
 #define CP_LOGGER				"CP_LOGGER"
+#define DNS_ENABLE				"DNS_ENABLE"
 #define S11_IPS					"S11_IP"
 #define S11_PORTS				"S11_PORT"
 #define S5S8_IPS				"S5S8_IP"
@@ -81,6 +85,7 @@ extern struct ip_table *static_addr_pool;
 extern char* config_update_base_folder; 
 extern bool native_config_folder;
 cp_config_t *cp_config = NULL;
+void set_dns_config(void);
 
 void init_config(void) 
 {
@@ -93,9 +98,9 @@ void init_config(void)
     
     config_cp_ip_port(cp_config);
 
-#ifdef USE_DNS_QUERY
-	set_dns_config();
-#endif /* USE_DNS_QUERY */
+    if(cp_config->dns_enable) {
+        set_dns_config();
+    }
 
     init_cli_module(cp_config->cp_logger);
 
@@ -137,6 +142,7 @@ config_cp_ip_port(cp_config_t *cp_config)
 
 
     /* default valueas */
+    cp_config->dns_enable = 0;
     cp_config->gx_enabled = 0;
     cp_config->prom_port = 3082;
 
@@ -248,35 +254,6 @@ config_cp_ip_port(cp_config_t *cp_config)
             fprintf(stderr, "CP: PROMETHEUS_PORT   : %d\n",
                     cp_config->prom_port);
 
-        }
-
-
-/*else if (strncmp(MME_S11_IPS, global_entries[i].name,
-                    strlen(MME_S11_IPS)) == 0) {
-
-            inet_aton(global_entries[i].value,
-                    &(cp_config->s11_mme_ip));
-
-            fprintf(stderr, "CP: MME_S11_IP  : %s\n",
-                    inet_ntoa(cp_config->s11_mme_ip));
-
-        } else if (strncmp(MME_S11_PORTS, global_entries[i].name,
-                    strlen(MME_S11_PORTS)) == 0) {
-            cp_config->s11_mme_port =
-                (uint16_t)atoi(global_entries[i].value);
-
-            fprintf(stderr, "CP: MME_S11_PORT: %d\n", cp_config->s11_mme_port);
-
-        } */else if (strncmp(UPF_PFCP_IPS , global_entries[i].name,
-                    strlen(UPF_PFCP_IPS)) == 0) {
-
-            /* This is used in case DNS is not used and MULTI UPF is not configured*/
-            inet_aton(global_entries[i].value,
-                    &(cp_config->upf_pfcp_ip));
-
-            fprintf(stderr, "CP: UPF_PFCP_IP : %s\n",
-                    inet_ntoa(cp_config->upf_pfcp_ip));
-
         } else if (strncmp(UPF_PFCP_PORTS, global_entries[i].name,
                     strlen(UPF_PFCP_PORTS)) == 0) {
 
@@ -290,6 +267,10 @@ config_cp_ip_port(cp_config_t *cp_config)
             cp_config->cp_logger = (uint8_t)atoi(global_entries[i].value);
             fprintf(stderr, "CP: CP_LOGGER: %d\n",
                     cp_config->cp_logger);
+        } else if (strncmp(DNS_ENABLE, global_entries[i].name, strlen(DNS_ENABLE)) == 0) {
+            cp_config->dns_enable = (uint8_t)atoi(global_entries[i].value);
+            fprintf(stderr, "CP: DNS_ENABLE : %d\n",
+                    cp_config->dns_enable);
         }
 
         /* Parse timer and counter values from cp.cfg */
@@ -595,7 +576,6 @@ config_cp_ip_port(cp_config_t *cp_config)
     return;
 }
 
-#ifdef USE_DNS_QUERY
 /**
  * @brief  : Set dns configurations parameters
  * @param  : void
@@ -632,7 +612,6 @@ set_dns_config(void)
 			cp_config->app_dns.freq_sec);
 	load_dns_queries(NS_APP, cp_config->app_dns.filename);
 }
-#endif /* USE_DNS_QUERY */
 
 
 int
@@ -806,34 +785,34 @@ struct in_addr native_linux_name_resolve(const char *name)
     return ip;
 }
 
-upf_context_t*
-get_upf_context_for_key(sub_selection_keys_t *key, sub_profile_t **sub_prof)
+sub_profile_t *
+get_subscriber_profile(sub_selection_keys_t *key)
 {
-    struct in_addr ip = {0};
     sub_profile_t *sub_profile = match_sub_selection(key);
     if(sub_profile == NULL)
     {
         return NULL;
     }
-    *sub_prof = sub_profile;
-    user_plane_profile_t *upf_profile = sub_profile->up_profile; 
-    if(upf_profile == NULL)
-    {
+    return sub_profile;
+}
+
+upf_context_t*
+get_upf_context(user_plane_profile_t *upf_profile) 
+{
+    struct in_addr ip = {0};
+    if(upf_profile == NULL) {
         return NULL;
     }
 
-    if(upf_profile->upf_addr == 0)
-    {
+    if(upf_profile->upf_addr == 0) {
         ip = native_linux_name_resolve(upf_profile->user_plane_service); 
         upf_profile->upf_addr = ip.s_addr; 
     }
 
-    if(upf_profile->upf_addr != 0) 
-    {
+    if(upf_profile->upf_addr != 0) {
         upf_context_t *upf_context = NULL;
         upf_context_entry_lookup(upf_profile->upf_addr, &upf_context);
-        if(upf_context == NULL)
-        {
+        if(upf_context == NULL) {
             create_upf_context(upf_profile->upf_addr, &upf_context);
         }
         return upf_context;

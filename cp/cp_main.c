@@ -30,10 +30,7 @@
 #include "cp_peer.h"
 #include "tables/tables.h"
 #include "cp_io_poll.h"
-
-#ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
-#endif /* USE_DNS_QUERY */
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -235,11 +232,6 @@ void sig_handler(int signo)
 
         gst_deinit();
 
-#ifdef TIMER_STATS
-#ifdef AUTO_ANALYSIS
-        print_perf_statistics();
-#endif /* AUTO_ANALYSIS */
-#endif /* TIMER_STATS */
         rte_exit(EXIT_SUCCESS, "received SIGINT\n");
     }
     else if (signo == SIGSEGV)

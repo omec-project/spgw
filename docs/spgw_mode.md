@@ -1,3 +1,9 @@
+License & Copyright
+----
+
+#SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>
+#SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+
 ## Goal 
 - For each call cp-mode is set depending on SGW/PGW selection done by MME.
 - Call can move from saegw mode to PGW mode or PGW mode to SAEGW mode.

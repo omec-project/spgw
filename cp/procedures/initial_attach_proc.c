@@ -32,6 +32,7 @@
 #include "util.h"
 #include "cp_io_poll.h"
 #include "spgwStatsPromEnum.h"
+#include "pfcp_cp_util.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -110,28 +111,6 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
     csreq_proc->pdn_context = (void *)pdn;
     context->current_proc = csreq_proc;
     
-#ifdef TEMP
-	if (pdn->upf_ipv4.s_addr == 0) {
-#ifdef USE_DNS_QUERY
-		uint32_t *upf_ip = NULL;
-		upf_ip = &upf_ipv4.s_addr;
-
-		/* VS: Select the UPF based on DNS */
-		ret = dns_query_lookup(pdn, &upf_ip);
-		if (ret) {
-			clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Error: %d \n",
-					__file__, __func__, __LINE__, ret);
-			return ret;
-		}
-
-		pdn->upf_ipv4.s_addr = *upf_ip;
-#else
-		// if name is nit already resolved and no DNS enabled then use the configured
-		// upf address 
-		pdn->upf_ipv4.s_addr = cp_config->upf_pfcp_ip.s_addr;
-#endif /* USE_DNS_QUERY */
-	}
-#endif
 	upf_context_t *upf_context = context->upf_context;
     if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
         printf("UPF association already formed \n");
@@ -171,6 +150,8 @@ process_create_sess_req(create_sess_req_t *csr,
     struct in_addr upf_ipv4 = {0};
     /* ajay - Should we get default context ?*/
     upf_context_t *upf_context=NULL; 
+    sub_profile_t *sub_profile = NULL;
+    sub_selection_keys_t dpkey = {0}; 
 
 	apn_profile_t *apn_requested = match_apn_profile((char *)csr->apn.apn, csr->apn.header.len);
 
@@ -180,8 +161,6 @@ process_create_sess_req(create_sess_req_t *csr,
     }
     // DNS would need changes here 
     /* TODO - IE presense should be validated before accessing them */
-    sub_profile_t *sub_prof=NULL;
-    sub_selection_keys_t dpkey = {0}; 
 
     dpkey.imsi.is_valid = true;
     dpkey.imsi.from_imsi = csr->imsi.imsi64; 
@@ -196,16 +175,29 @@ process_create_sess_req(create_sess_req_t *csr,
                 csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, 
                 csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
     
-    upf_context = get_upf_context_for_key(&dpkey, &sub_prof); 
+    sub_profile = get_subscriber_profile(&dpkey); 
     
     // no upf available 
-    if(upf_context == NULL) 
+    if(sub_profile == NULL) 
     {
         // caller sends out csrsp 
         return GTPV2C_CAUSE_REQUEST_REJECTED ; 
     }
-
-    upf_ipv4 = upf_context->upf_sockaddr.sin_addr;
+    if(cp_config->dns_enable) {
+		/* VS: Select the UPF based on DNS */
+		ret = dns_query_lookup(pdn, &upf_ipv4.s_addr);
+		if (ret) {
+			clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Error: %d \n",
+					__file__, __func__, __LINE__, ret);
+			return ret;
+		}
+    } else {
+        upf_context = get_upf_context(sub_profile->up_profile); 
+        if(upf_context == NULL) {
+            return GTPV2C_CAUSE_REQUEST_REJECTED ; 
+        }
+        upf_ipv4 = upf_context->upf_sockaddr.sin_addr;
+    }
 
     printf("Selected UPF address  %s \n", inet_ntoa(upf_ipv4));
 	if(csr->mapped_ue_usage_type.header.len > 0) {
@@ -259,7 +251,8 @@ process_create_sess_req(create_sess_req_t *csr,
 		return ret;
     }
 
-    context->sub_prof = sub_prof;
+    context->dns_enable = cp_config->dns_enable;
+    context->sub_prof = sub_profile;
 	if (csr->mei.header.len)
 		memcpy(&context->mei, &csr->mei.mei, csr->mei.header.len);
 
@@ -521,9 +514,6 @@ process_create_sess_req(create_sess_req_t *csr,
     msg->ue_context  = context;
 
     pdn->upf_ipv4 = upf_ipv4; 
-#ifdef SINGLE_UPF
-	pdn->upf_ipv4.s_addr = cp_config->upf_pfcp_ip.s_addr;
-#endif
     return 0;
 }
 

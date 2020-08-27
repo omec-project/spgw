@@ -124,7 +124,6 @@ fill_pfcp_heartbeat_req(pfcp_hrtbeat_req_t *pfcp_heartbeat_req, uint32_t seq);
 int
 process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq);
 
-#ifdef USE_DNS_QUERY
 /**
  * @brief  : Retrive upf entry from hash
  * @param  : ctxt, ue context
@@ -136,6 +135,5 @@ int
 get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 		uint32_t **upf_ip);
 
-#endif /* USE_DNS_QUERY */
 
 #endif /* PFCP_ASSOC_H */
