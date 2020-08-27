@@ -7,7 +7,7 @@ SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 Copyright (c) 2017 Intel Corporation
 
-Next Generation Infrastructure Core (NGIC) VNF
+SPGW-C
 ==============================================
 
 1. Introduction
