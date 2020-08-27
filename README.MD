@@ -12,50 +12,51 @@ Next Generation Infrastructure Core (NGIC) VNF
 
 1. Introduction
 -------------------------------------------
-Evolved Packet Core (EPC) is a critical node in the wireless infrastructure,
-which provides the data services to the end users. The NGIC is a
-virtualized application providing the same service as the standalone node.
-The SAE-GW (S-GW and P-GW)is the user plane node for the EPC which deals with
-converged voice and data services on Long Term Evolution (LTE) networks. This project
-implements SPGWC. 
+The OMEC project is an open source LTE EPC development under Open Networking Foundation (ONF) consortium. 
+Under OMEC, there are a suite of projects working together to create EPC solutions. The ‘spgwc’ project provides 
+Gateway components of the EPC. This project provides sgw-c, pgw-c components. 
 
 2.  Scope
 ----------
-NGIC can be run on variety of servers running as a standalone application. 
+spgwc can be run on variety of servers running as a standalone application. It can run as POD in K8s deployment.
 
 3.	Feature List
 ----------------
 The NGIC VNF currently supports the following SAE-GW features:
+* All developement is based on 3gpp release 15 specifications
 * CUPS compliant 
 * Supports multiple SPGWU connectivity. 
 * PFCP & GTP heartbeat support
-* Enable command line or display stats periodically.
+* KPIs exported in prometheus.
 * IPv4 support
+* UPF selection based on DNS, local policy,
+* Multiple APN Support
+* Configuration update support
+* Initial Attach support
+* MME/HSS initiated detach support
+* PFCP - session create,modify,delete
+* S1 Release procedure
+* Service Request procedure
+* Dedicated bearer create/modify/delete
+* Bearer Update 
+* SGW relocation
+* WIP - Gx interface. Testing in progress. CCR-I,CCR-U,CCR-T,RAR support
+* Restoration procedure support
+* GTPC, PFCP Echo support
+
+
+
+
 
 4.	High Level Design
 ----------------------
-Please refer to Figure 1 for the basic blocks in the NGIC VNG.
-
-```text
-        +----------------+
-        |                |
-+-----> |    Control     |---------->
- S11    |    Plane       | Gx
-<-----+ |                |<---------
-        |                |
-        +-------+--------+
-                |
-                |
-                | PFCP
-                |
-                v
-```
+Please read, more documentation under the docs directory. Those documents should give more details about the
+supported features and design.
 
 5.	Build, install, configure and test
 ------------------------------------------
 
 Please refer to [install_notes] (INSTALL.MD)
 
-6.	Test Plan
-------------------
+
 
