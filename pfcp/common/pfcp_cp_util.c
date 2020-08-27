@@ -20,17 +20,15 @@
 #include "cp_config_defs.h"
 #include "cp_io_poll.h"
 #include "tables/tables.h"
-
-#if defined(USE_DNS_QUERY)
+#include "util.h"
+#include "pfcp_cp_association.h"
+#include "gw_adapter.h"
 #include "cdnshelper.h"
 
 #define FAILED_ENB_FILE "logs/failed_enb_queries.log"
-#endif
 
 #define QUERY_RESULT_COUNT 16
 
-
-#if defined(USE_DNS_QUERY)
 
 /**
  * @brief  : Add canonical result entry in upflist hash
@@ -190,7 +188,8 @@ get_upf_list(pdn_connection_t *pdn)
 
 	//memcpy(apn_name,(char *)ctxt->apn.apn + 1, apn_requested->apn_name_length -1);
 	/* VS: Need to revist this */
-	memcpy(apn_name, (pdn->apn_in_use)->apn_name_label + 1, (pdn->apn_in_use)->apn_name_length -1);
+    // TODO : BUG - Handle any encoded apn 
+	memcpy(apn_name, &(pdn->apn_in_use)->apn_name[1], (pdn->apn_in_use)->apn_name_length-1);
 
 	if (cp_config->cp_type == SAEGWC || cp_config->cp_type == SGWC) {
 
@@ -344,7 +343,7 @@ get_upf_list(pdn_connection_t *pdn)
 
 
 int
-dns_query_lookup(pdn_connection_t *pdn, uint32_t **upf_ip)
+dns_query_lookup(pdn_connection_t *pdn, uint32_t *upf_ip)
 {
 	upfs_dnsres_t *entry = NULL;
 
@@ -355,7 +354,7 @@ dns_query_lookup(pdn_connection_t *pdn, uint32_t **upf_ip)
 	}
 
 	/* Fill msg->upf_ipv4 address */
-	if ((get_upf_ip(pdn->context, &entry, upf_ip)) != 0) {
+	if ((get_upf_ip(pdn->context, &entry, &upf_ip)) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "Failed to get upf ip address\n");
 		return GTPV2C_CAUSE_REQUEST_REJECTED;
 	}
@@ -363,8 +362,6 @@ dns_query_lookup(pdn_connection_t *pdn, uint32_t **upf_ip)
 					strlen(entry->upf_fqdn[entry->current_upf]));
 	return 0;
 }
-
-#endif /* USE_DNS_QUERY */
 
 int
 pfcp_send(int fd, void *msg_payload, uint32_t size,

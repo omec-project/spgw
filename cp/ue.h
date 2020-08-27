@@ -410,6 +410,7 @@ typedef struct ue_context {
     /* UE association with UPF context */
     upf_context_t  *upf_context;
     sub_profile_t  *sub_prof; /* Requirement. - Bug - free the sub */
+    uint32_t       dns_enable;
 
     /* Temp - need to find right place to put this */
     void *pco; /* Received PCO from the UE during attach. Once CSRsp sent, release this */

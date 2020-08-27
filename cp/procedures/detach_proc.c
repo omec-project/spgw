@@ -553,14 +553,12 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
                         strerror(ret));
             }
 
-#ifdef USE_DNS_QUERY
             /* Delete UPFList entry from UPF Hash */
-            if ((upflist_by_ue_hash_entry_delete(&context->imsi, sizeof(context->imsi))) < 0){
+            if ((context->dns_enable && upflist_by_ue_hash_entry_delete(&context->imsi, sizeof(context->imsi))) < 0){
                 clLog(clSystemLog, eCLSeverityCritical,
                         "%s %s - Error on upflist_by_ue_hash deletion of IMSI \n",__file__,
                         strerror(ret));
             }
-#endif /* USE_DNS_QUERY */
 
 #ifdef USE_CSID
             fqcsid_t *csids = context->pgw_fqcsid;
@@ -674,14 +672,12 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
         ue_context_delete_entry_teidKey(temp_teid);
 
 
-#ifdef USE_DNS_QUERY
         /* Delete UPFList entry from UPF Hash */
-        if ((upflist_by_ue_hash_entry_delete(&context->imsi, sizeof(context->imsi))) < 0){
+        if ((context->dns_enable && upflist_by_ue_hash_entry_delete(&context->imsi, sizeof(context->imsi))) < 0){
             clLog(clSystemLog, eCLSeverityCritical,
                     "%s %s - Error on upflist_by_ue_hash deletion of IMSI \n",__file__,
                     strerror(ret));
         }
-#endif /* USE_DNS_QUERY */
 
 #ifdef USE_CSID
         fqcsid_t *csids = context->sgw_fqcsid;

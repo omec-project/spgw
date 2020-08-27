@@ -40,9 +40,11 @@ int
 check_cp_req_tries_config(char *value);
 
 
-/* Application can pass the dp_key and get back one of the selected DPname in return.
-*/
-upf_context_t *get_upf_context_for_key(sub_selection_keys_t*, sub_profile_t **dpInfo);
+sub_profile_t*
+get_subscriber_profile(sub_selection_keys_t*);
+
+upf_context_t*
+get_upf_context(user_plane_profile_t *upf_profile); 
 
 
 /* Callback function which is received when config file is updated 

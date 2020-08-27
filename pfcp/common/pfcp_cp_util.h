@@ -16,7 +16,6 @@
 
 extern uint32_t start_time;
 
-#if defined(USE_DNS_QUERY)
 /**
  * @brief  : Get upf list
  * @param  : pdn, pdn connection information
@@ -33,8 +32,7 @@ get_upf_list(pdn_connection_t *pdn);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-dns_query_lookup(pdn_connection_t *pdn, uint32_t **upf_ip);
-#endif
+dns_query_lookup(pdn_connection_t *pdn, uint32_t *upf_ip);
 
 /**
  * @brief  : Send data to peer node

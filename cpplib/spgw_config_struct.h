@@ -52,13 +52,14 @@ typedef struct user_plane_profile
     uint32_t upf_addr; /* run time information */
 }user_plane_profile_t;
 
+#define MAX_NETCAP_LEN               (64)
 typedef struct apn_profile 
 {
     char apn_profile_name[64];
     char apn_name[64];
     uint8_t apn_name_length;
-    uint16_t apn_usage_type;
-    char apn_network_cap[16];
+    int apn_usage_type;
+    char apn_net_cap[MAX_NETCAP_LEN];
     bool gx_enabled;
     uint32_t dns_primary;
     uint32_t dns_secondary;

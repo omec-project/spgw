@@ -209,7 +209,7 @@ endif
 
 # Comment below line to read UPF ip from cp.cfg instead of DNS query.
 #ajay - add ticket to support DNS in SPGW 
-#CFLAGS += -DUSE_DNS_QUERY
+CFLAGS += -DUSE_DNS_QUERY
 
 #ifneq (,$(findstring USE_DNS_QUERY, $(CFLAGS)))
 	LIBDNSCLIENT_ROOT = $(SRCDIR)/../oss_adapter/c3po_oss/oss-util
