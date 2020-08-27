@@ -56,7 +56,7 @@ supported features and design.
 5.	Build, install, configure and test
 ------------------------------------------
 
-Please refer to [install_notes] (INSTALL.MD)
+Please refer to [install_notes](INSTALL.MD)
 
 
 
