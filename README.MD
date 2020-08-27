@@ -22,7 +22,7 @@ spgwc can be run on variety of servers running as a standalone application. It c
 
 3.	Feature List
 ----------------
-The NGIC VNF currently supports the following SAE-GW features:
+The SPGW-C currently supports the following SAE-GW features:
 * All developement is based on 3gpp release 15 specifications
 * CUPS compliant 
 * Supports multiple SPGWU connectivity. 
