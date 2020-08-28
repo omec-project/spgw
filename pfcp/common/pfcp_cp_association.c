@@ -29,11 +29,7 @@
 #include "assert.h"
 #include "tables/tables.h"
 #include "cp_io_poll.h"
-
-
-#if defined(USE_DNS_QUERY)
 #include "cdnsutil.h"
-#endif /* USE_DNS_QUERY */
 
 void
 fill_pfcp_association_release_req(pfcp_assn_rel_req_t *pfcp_ass_rel_req)
@@ -287,7 +283,6 @@ fill_pfcp_pfd_mgmt_req(pfcp_pfd_mgmt_req_t *pfcp_pfd_req, uint16_t len)
 	}
 }
 
-#ifdef USE_DNS_QUERY
 int
 get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 		uint32_t **upf_ip)
@@ -309,7 +304,6 @@ get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 	*_entry = entry;
 	return 0;
 }
-#endif /* USE_DNS_QUERY */
 
 void
 fill_pfcp_node_report_req(pfcp_node_rpt_req_t *pfcp_node_rep_req)

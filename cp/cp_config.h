@@ -74,7 +74,6 @@ typedef struct cp_config
 
 	/* User-Plane IPs and Ports Params. */
 	uint16_t upf_pfcp_port;  
-	struct in_addr upf_pfcp_ip;
 
 	uint16_t prom_port;
 
@@ -100,8 +99,7 @@ typedef struct cp_config
 	struct in_addr static_ip_pool_ip;
 	struct in_addr static_ip_pool_mask;
 
-	/* APN */
-	uint32_t num_apn;
+    uint32_t dns_enable;
 
 	dns_cache_params_t dns_cache;
 	dns_config_t ops_dns;

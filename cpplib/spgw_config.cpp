@@ -214,14 +214,14 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
                     std::cout<<"\t\tAPN name after encode ["<<apn_profile->apn_name<<"]"<<std::endl;
                 }
                 if(apnSection.HasMember("usage")) {
-                    uint16_t usage = apnSection["usage"].GetInt();
+                    int usage = apnSection["usage"].GetInt();
                     std::cout<<"\t\tUsage type  "<<usage<<std::endl;
                     apn_profile->apn_usage_type = usage;
                 }
                 if(apnSection.HasMember("network")) {
                     const char *temp = apnSection["network"].GetString();
                     std::cout<<"\t\tNetwork type "<<temp<<std::endl;
-                    strcpy(apn_profile->apn_network_cap, temp);
+                    strcpy(apn_profile->apn_net_cap, temp);
                 }
                 if(apnSection.HasMember("gx_enabled")) {
                     bool gx_enabled = apnSection["gx_enabled"].GetBool();

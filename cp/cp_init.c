@@ -26,10 +26,7 @@
 #include "gtpv2_interface.h"
 #include "pfcp_cp_interface.h"
 #include "tables/tables.h"
-
-#ifdef USE_DNS_QUERY
 #include "cdnshelper.h"
-#endif /* USE_DNS_QUERY */
 
 int s11_pcap_fd = -1;
 extern pcap_t *pcap_reader;

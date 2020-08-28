@@ -38,9 +38,6 @@
 #define PCAP_TTL           (64)
 #define PCAP_VIHL          (0x0045)
 
-#ifdef USE_AF_PACKET
-#include <libmnl/libmnl.h>
-#endif
 #ifdef SGX_CDR
 	#define DEALERIN_IP "dealer_in_ip"
 	#define DEALERIN_PORT "dealer_in_port"
@@ -50,12 +47,6 @@
 	#define DP_CERT_PATH "dp_cert_path"
 	#define DP_PKEY_PATH "dp_pkey_path"
 #endif /* SGX_CDR */
-
-#ifdef TIMER_STATS
-#ifdef AUTO_ANALYSIS
-extern void print_perf_statistics(void);
-#endif /* AUTO_ANALYSIS */
-#endif /* TIMER_STATS */
 
 extern pcap_dumper_t *pcap_dumper;
 
