@@ -24,6 +24,8 @@
 static
 int handle_pfcp_session_delete_response(msg_info_t *msg)
 {
+    struct sockaddr_in *peer_addr = &msg->peer_addr;
+
     assert(msg->msg_type == PFCP_SESSION_DELETION_RESPONSE);
     uint32_t seq_num = msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seq_no; 
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
@@ -34,6 +36,7 @@ int handle_pfcp_session_delete_response(msg_info_t *msg)
 	/* Retrive the session information based on session id. */
     if(pfcp_trans == NULL) {
         clLog(sxlogger, eCLSeverityCritical, "Received PFCP response and transaction not found \n");
+        increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP_DROP, peer_addr->sin_addr.s_addr);
 		return -1;
     }
 
@@ -42,12 +45,11 @@ int handle_pfcp_session_delete_response(msg_info_t *msg)
 	stop_transaction_timer(pfcp_trans);
     proc_context_t *proc_context = (proc_context_t *)pfcp_trans->proc_context; 
     proc_context->pfcp_trans = NULL; 
+    free(pfcp_trans);
     msg->proc_context = pfcp_trans->proc_context;
-    msg->ue_context = proc_context->ue_context; 
-    msg->pdn_context = proc_context->pdn_context; 
-
     msg->event = PFCP_SESS_DEL_RESP_RCVD_EVNT;
-    proc_context->handler((void *)proc_context, msg->event, (void *)msg);
+    proc_context->msg_info = (void *)msg;
+    proc_context->handler((void *)proc_context, msg); 
 
     return 0;
 }
@@ -56,10 +58,9 @@ int handle_pfcp_session_delete_response(msg_info_t *msg)
 int
 handle_pfcp_session_delete_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
 {
-    struct sockaddr_in peer_addr = {0};
-    peer_addr = msg->peer_addr;
+    struct sockaddr_in *peer_addr = &msg->peer_addr;
 
-    process_response(peer_addr.sin_addr.s_addr);
+    process_response(peer_addr->sin_addr.s_addr);
 
     /* Decode pfcp session delete response*/
     int decoded = decode_pfcp_sess_del_rsp_t((uint8_t*)pfcp_rx, &msg->pfcp_msg.pfcp_sess_del_resp);
@@ -69,10 +70,10 @@ handle_pfcp_session_delete_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
         clLog(sxlogger, eCLSeverityDebug, "DECODED bytes in Sess Del Resp is %d\n",
                 decoded);
 
-        increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP_DROP, peer_addr.sin_addr.s_addr);
+        increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP_DROP, peer_addr->sin_addr.s_addr);
         return -1;
     }
-    increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP, peer_addr.sin_addr.s_addr);
+    increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP, peer_addr->sin_addr.s_addr);
     handle_pfcp_session_delete_response(msg);
     return 0;
 }

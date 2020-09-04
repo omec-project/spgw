@@ -39,7 +39,7 @@ typedef struct upf_context {
 	uint32_t s5s8_pgwu_ip;
 	uint8_t  state;
     transData_t *trans_entry; /* association setup req/rsp transaction */
-    LIST_HEAD(pendingprochead, pending_proc_key) pendingProcs;
+    LIST_HEAD(pending_sub_procs_head, pending_proc_key) pending_sub_procs;
+    TAILQ_HEAD(upf_procs_head, proc_context) pending_node_procs;
 } upf_context_t;
-
 #endif

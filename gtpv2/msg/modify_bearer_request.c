@@ -19,7 +19,7 @@
 #include "cp_peer.h"
 #include "cp_config.h"
 #include "spgw_cpp_wrapper.h"
-#include "service_request_proc.h"
+#include "proc_service_request.h"
 #include "sm_structs_api.h"
 #include "gtpv2_error_rsp.h"
 #include "tables/tables.h"
@@ -254,7 +254,6 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 }
 
 
-#ifdef FUTURE_NEED
 void set_modify_bearer_request(gtpv2c_header_t *gtpv2c_tx, /*create_sess_req_t *csr,*/
 		pdn_connection_t *pdn, eps_bearer_t *bearer)
 {
@@ -262,8 +261,9 @@ void set_modify_bearer_request(gtpv2c_header_t *gtpv2c_tx, /*create_sess_req_t *
 	mod_bearer_req_t mbr = {0};
 	ue_context_t *context = NULL;
 
+    uint32_t sequence = 0; // TODO BUG - add transaction support
 	set_gtpv2c_teid_header((gtpv2c_header_t *)&mbr.header, GTP_MODIFY_BEARER_REQ,
-			0, pdn->context->sequence);
+			0, sequence);
 
 	mbr.header.teid.has_teid.teid = pdn->s5s8_pgw_gtpc_teid;
 	bearer->s5s8_sgw_gtpu_ipv4.s_addr = htonl(bearer->s5s8_sgw_gtpu_ipv4.s_addr);
@@ -446,7 +446,6 @@ void set_modify_bearer_request(gtpv2c_header_t *gtpv2c_tx, /*create_sess_req_t *
 	gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
 
 }
-#endif
 
 
 #if 0
@@ -576,9 +575,11 @@ handle_modify_bearer_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
     int ret;
     struct sockaddr_in s11_peer_sockaddr = {0};
+    ue_context_t *context = NULL;
+    pdn_connection_t *pdn = NULL;
+    uint8_t ebi_index ;
 
     s11_peer_sockaddr = msg->peer_addr;
-
 
     /* Reset periodic timers */
     process_response(s11_peer_sockaddr.sin_addr.s_addr);
@@ -593,15 +594,12 @@ handle_modify_bearer_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     if(ret != 0 ) {
         mbr_error_response(msg, ret,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+        return -1; 
     }
 
     // update CLI stats ??
 
-    ue_context_t *context = NULL;
-    pdn_connection_t *pdn = NULL;
-    uint8_t ebi_index ;
 
-    RTE_SET_USED(gtpv2c_rx);
     assert(msg->msg_type == GTP_MODIFY_BEARER_REQ);
 
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
@@ -615,7 +613,6 @@ handle_modify_bearer_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
 
-#ifdef FUTURE_NEED
 	if(cp_config->cp_type == PGWC) {
 		msg->proc = SGW_RELOCATION_PROC;  /* ajay - not correct */
 
@@ -623,11 +620,13 @@ handle_modify_bearer_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 
 		uint8_t ebi_index = msg->gtpc_msg.mbr.bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
 
+#if 0
 		if (update_ue_proc(gtpv2c_rx->teid.has_teid.teid, msg->proc ,ebi_index) != 0) {
 				mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
 						    cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 				return -1;
 		}
+#endif
 
 		if(get_ue_context(msg->gtpc_msg.mbr.header.teid.has_teid.teid, &context) != 0) {
 			mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
@@ -636,15 +635,13 @@ handle_modify_bearer_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 		}
 		pdn = GET_PDN(context, ebi_index);
 		msg->state = pdn->state;
-		msg->proc = pdn->proc;
+		//msg->proc = pdn->proc;
 		msg->event = MB_REQ_RCVD_EVNT;
 		add_node_conn_entry(ntohl(msg->gtpc_msg.mbr.sender_fteid_ctl_plane.ipv4_address),
 									S5S8_PGWC_PORT_ID);
 
         assert(NULL); /* ajay - add function */ 
-	} else 
-#endif
-    {
+	} else {
 		/*Retrive UE state. */
 		if(get_ue_context(msg->gtpc_msg.mbr.header.teid.has_teid.teid, &context) != 0) {
 
@@ -657,17 +654,18 @@ handle_modify_bearer_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
         msg->pdn_context = pdn;
         msg->ue_context = context;
 		msg->state = pdn->state; 
+#ifdef TEMP
 		if((pdn->proc == INITIAL_PDN_ATTACH_PROC) || (CONN_SUSPEND_PROC == pdn->proc)){
 			msg->proc = pdn->proc;
 		} 
+#endif
 
 		/*Set the appropriate event type.*/
 		msg->event = MB_REQ_RCVD_EVNT;
+        msg->proc  = SERVICE_REQUEST_PROC;
 
         /* Allocate new Proc */
-        proc_context_t *mbreq_proc = alloc_service_req_proc(msg);
-        context->current_proc = mbreq_proc;
-
+        proc_context_t *mbreq_proc = alloc_service_req_proc(&msg);
         /* Find new transaction */
         transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
         add_gtp_transaction(source_addr, source_port, seq_num, trans);
@@ -678,7 +676,7 @@ handle_modify_bearer_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
         trans->proc_context = (void *)mbreq_proc;
         mbreq_proc->gtpc_trans = trans;
         
-        mbreq_proc->handler((void *)mbreq_proc, msg->event, (void *)msg);
+        start_procedure(mbreq_proc, msg);
 
 #ifdef FUTURE_NEED
         else {

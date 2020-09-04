@@ -68,7 +68,28 @@ int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt)
 		return -1;
 	}
 
-    LIST_INIT(&upf_context->pendingProcs);
+    LIST_INIT(&upf_context->pending_sub_procs);
+    TAILQ_INIT(&upf_context->pending_node_procs);
     return 0;
 
 } 
+
+/* We should queue the event if required */
+void
+start_upf_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
+{
+    upf_context_t *upf_context = (upf_context_t *)proc_ctxt->upf_context;
+    TAILQ_INSERT_TAIL(&upf_context->pending_node_procs, proc_ctxt, next_node_proc); 
+    /* Logic here to decide if we want to run the procedure right away or delay
+     * the execution */
+    proc_ctxt = TAILQ_FIRST(&upf_context->pending_node_procs);
+    printf("procedure number = %d \n",proc_ctxt->proc_type);
+    switch(proc_ctxt->proc_type) {
+        case PFCP_ASSOC_SETUP_PROC: {
+            proc_ctxt->handler(proc_ctxt, msg);
+            TAILQ_REMOVE(&upf_context->pending_node_procs, proc_ctxt,next_node_proc);
+        }
+    }
+    return;
+}
+

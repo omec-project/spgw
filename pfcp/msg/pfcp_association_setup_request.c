@@ -8,7 +8,7 @@
 #include "pfcp_messages_decoder.h"
 #include "pfcp_messages_encoder.h"
 #include "clogger.h"
-#include "pfcp_association_setup_proc.h"
+#include "proc_pfcp_assoc_setup.h"
 #include "sm_struct.h"
 #include "gw_adapter.h"
 #include "upf_struct.h"
@@ -71,7 +71,6 @@ handle_pfcp_association_setup_request_msg(msg_info_t *msg, pfcp_header_t *pfcp_r
         clLog(clSystemLog, eCLSeverityCritical, "Received PFCP association setup request from UPF %s ",inet_ntoa(peer_addr->sin_addr));
         create_upf_context(peer_addr->sin_addr.s_addr, &upf_context);
     }
-    upf_context->state = PFCP_ASSOC_RESP_RCVD_STATE;
 
     upf_context->up_supp_features =
         msg->pfcp_msg.pfcp_ass_req.up_func_feat.sup_feat;

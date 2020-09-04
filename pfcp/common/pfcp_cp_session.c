@@ -2276,15 +2276,22 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
 void
 process_pfcp_sess_est_request_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    proc_context_t *proc_context = (proc_context_t *)data;
+    msg_info_t msg = {0};
+
+    proc_context->msg_info = &msg;
+    msg.event = PFCP_SESS_EST_RESP_TIMEOUT_EVNT;
+    msg.proc_context = proc_context;
+    proc_context->handler(proc_context, &msg); 
     return;
 }
 
 transData_t*
-process_pfcp_sess_est_request(pdn_connection_t *pdn, upf_context_t *upf_ctx)
+process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_ctx)
 {
 	eps_bearer_t *bearer = NULL;
-	ue_context_t *context = pdn->context;
+	pdn_connection_t *pdn = proc_context->pdn_context;
+	ue_context_t *context = proc_context->ue_context;
 	pfcp_sess_estab_req_t pfcp_sess_est_req = {0};
 	uint32_t sequence = 0;
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
@@ -2377,7 +2384,6 @@ process_pfcp_sess_est_request(pdn_connection_t *pdn, upf_context_t *upf_ctx)
 	//resp->s11_sgw_gtpc_teid = context->s11_sgw_gtpc_teid;
 	//resp->context = context;
 	//proc_context->msg_type = GTP_CREATE_SESSION_REQ;
-    proc_context_t *proc_context = context->current_proc;
 	proc_context->state = PFCP_SESS_EST_REQ_SNT_STATE;
 	//proc->proc = context->pdns[pdn->default_bearer_id - 5]->proc;
 
@@ -2397,7 +2403,7 @@ process_pfcp_sess_est_request(pdn_connection_t *pdn, upf_context_t *upf_ctx)
     /*pfcp-session-estab-req-sent*/
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSESTREQ,GET_UPF_ADDR(context->upf_context)); 
 
-    trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_est_request_timeout);
+    trans_entry = start_response_wait_timer(proc_context, pfcp_msg, encoded, process_pfcp_sess_est_request_timeout);
     trans_entry->sequence = sequence;
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
 
@@ -2429,8 +2435,6 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 
 	printf("%s %d - sess_id %lu teid = %u \n", __FUNCTION__, __LINE__, sess_id, teid);
     proc_context_t *proc_context;
-    assert(msg->ue_context != NULL);
-    assert(msg->pdn_context != NULL);
 
 	/* Retrieve the UE context */
 	ret = get_ue_context(teid, &context);
@@ -2441,7 +2445,6 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
     assert(context != NULL);
-    assert(msg->ue_context == context);
     proc_context = msg->proc_context; 
     assert(proc_context != NULL);
 	proc_context->state = PFCP_SESS_EST_RESP_RCVD_STATE;
@@ -2585,13 +2588,13 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 
 #endif /* USE_CSID */
 
-    pdn = msg->pdn_context;
+    pdn = proc_context->pdn_context;
     assert(pdn != NULL);
     assert(sess_id == pdn->seid);
     uint8_t ebi_index = pdn->default_bearer_id - 5; 
     assert(context->eps_bearers[ebi_index] != NULL);
 	pdn = context->eps_bearers[ebi_index]->pdn;
-    assert(msg->pdn_context == pdn);
+    assert(proc_context->pdn_context == pdn);
 	bearer = context->eps_bearers[ebi_index];
     assert(bearer != NULL);
 	pdn->dp_seid = dp_sess_id;
@@ -2607,7 +2610,6 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		set_create_session_response(
 				gtpv2c_tx, gtpc_trans->sequence, context, pdn, bearer);
 	}
-#ifdef FUTURE_NEED
     else if (cp_config->cp_type == PGWC) {
 		/*TODO: This needs to be change after support libgtpv2 on S5S8*/
 		/* set_pgwc_s5s8_create_session_response(gtpv2c_tx,
@@ -2618,8 +2620,9 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		//uint32_t  seq_no = 0;
 		//seq_no = bswap_32(resp->sequence);
 		//seq_no = seq_no >> 8;
+        uint32_t sequence = 0; // TODO...use transactions 
 		fill_pgwc_create_session_response(&cs_resp,
-			context->sequence, context, ebi_index);
+			sequence, context, ebi_index);
 
 #ifdef USE_CSID
 		if ((context->pgw_fqcsid)->num_csid) {
@@ -2662,9 +2665,9 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 			my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
 				htonl(pdn->s5s8_pgw_gtpc_ipv4.s_addr);
 
-			resp->state = MBR_REQ_SNT_STATE;
-			pdn->state = resp->state;
-			pdn->proc = SGW_RELOCATION_PROC;
+			//resp->state = MBR_REQ_SNT_STATE;
+			//pdn->state = resp->state;
+			//pdn->proc = SGW_RELOCATION_PROC;
 			return 0;
 		}
 
@@ -2712,16 +2715,17 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
 				htonl(context->pdns[ebi_index]->s5s8_pgw_gtpc_ipv4.s_addr);
 
+#ifdef TEMP
 		/* Update the session state */
 		resp->state = CS_REQ_SNT_STATE;
 		/* stored teid in csr header for clean up */
 		resp->gtpc_msg.csr.header.teid.has_teid.teid = context->pdns[ebi_index]->s5s8_sgw_gtpc_teid;
+#endif
 
 		/* Update the UE state */
 		pdn->state = CS_REQ_SNT_STATE;
 		return 0;
 	}
-#endif
 
     increment_stat(NUM_UE_SPGW_ACTIVE_SUBSCRIBERS);
 
@@ -2730,149 +2734,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 	return 0;
 }
 
-#ifdef FUTURE_NEED
-void 
-send_pfcp_sess_mod_req_handover_timeout(void *data)
-{
-    RTE_SET_USED(data);
-    return;
-}
 
-
-int send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
-		mod_bearer_req_t *mb_req)
-{
-	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
-
-	int ebi_index = mb_req->bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5 ;
-	if (!(pdn->context->bearer_bitmap & (1 << ebi_index))) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"Received modify bearer on non-existent EBI - "
-				"Dropping packet\n");
-		return -EPERM;
-	}
-	pfcp_update_far_ie_t update_far[MAX_LIST_SIZE];
-	pfcp_sess_mod_req.update_far_count = 0;
-
-	if (mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.header.len  != 0){
-		/* SGW Relocation */
-		bearer->s5s8_sgw_gtpu_ipv4.s_addr =
-			mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.ipv4_address;
-		bearer->s5s8_sgw_gtpu_teid =
-			mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.teid_gre_key;
-		update_far[pfcp_sess_mod_req.update_far_count].upd_frwdng_parms.outer_hdr_creation.teid =
-			bearer->s5s8_sgw_gtpu_teid;
-		update_far[pfcp_sess_mod_req.update_far_count].upd_frwdng_parms.outer_hdr_creation.ipv4_address =
-			bearer->s5s8_sgw_gtpu_ipv4.s_addr;
-		update_far[pfcp_sess_mod_req.update_far_count].upd_frwdng_parms.dst_intfc.interface_value =
-			check_interface_type(mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.interface_type);
-		if ( cp_config->cp_type != PGWC) {
-			update_far[pfcp_sess_mod_req.update_far_count].apply_action.forw = PRESENT;
-		}
-		pfcp_sess_mod_req.update_far_count++;
-	}
-
-	//context->pdns[ebi_index]->seid = SESS_ID(context->s11_sgw_gtpc_teid, bearer->eps_bearer_id);
-	pdn->seid = SESS_ID(pdn->context->s11_sgw_gtpc_teid, bearer->eps_bearer_id);
-
-	fill_pfcp_sess_mod_req(&pfcp_sess_mod_req, &mb_req->header, bearer, pdn, update_far, 0);
-
-	uint8_t pfcp_msg[size]={0};
-	int encoded = encode_pfcp_sess_mod_req_t(&pfcp_sess_mod_req, pfcp_msg);
-	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
-	header->message_len = htons(encoded - 4);
-
-	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &pdn->context->upf_context->upf_sockaddr) < 0 ){
-		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
-	}
-
-	/* Update UE State */
-	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(pdn->context->upf_context)); 
-    transData_t *trans_entry;
-	trans_entry = start_pfcp_session_timer(pdn->context, pfcp_msg, encoded, send_pfcp_sess_mod_req_handover_timeout);
-    pdn->trans_entry = trans_entry;
-
-	/*Retrive the session information based on session id. */
-	//if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0)
-	//
-	//
-	if (get_sess_entry_seid(pdn->seid, &context) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for sess ID:%lu\n", pdn->seid);
-		return -1;
-	}
-
-	/* Set create session response */
-	resp->eps_bearer_id = mb_req->bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi -5 ;
-	resp->msg_type = GTP_MODIFY_BEARER_REQ;
-	resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-	pdn->proc= SGW_RELOCATION_PROC;//GTP_MODIFY_BEARER_REQ;
-	resp->proc = pdn->proc;
-	return 0;
-}
-
-#endif
-
-#ifdef FUTURE_NEED
-int
-process_delete_bearer_cmd_request(del_bearer_cmd_t *del_bearer_cmd, gtpv2c_header_t *gtpv2c_tx)
-{
-	int ret = 0;
-	ue_context_t *context = NULL;
-	eps_bearer_t *bearer = NULL;
-	pdn_connection_t *pdn = NULL;
-	int ebi_index = 0;
-
-	ret = get_ue_context(del_bearer_cmd->header.teid.has_teid.teid, &context);
-
-	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
-	                     __func__, __LINE__,
-	                  del_bearer_cmd->header.teid.has_teid.teid);
-	}
-	ebi_index = del_bearer_cmd->bearer_contexts[ebi_index].eps_bearer_id.ebi_ebi -5;
-
-	bearer = context->eps_bearers[ebi_index];
-	pdn = bearer->pdn;
-
-
-    if (SAEGWC == cp_config->cp_type || PGWC == cp_config->cp_type) {
-        if(cp_config->gx_enabled) {
-            if (ccru_req_for_bear_termination(pdn , bearer)) {
-                clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
-                        strerror(errno));
-                return -1;
-            }
-        }
-    } else if(SGWC == cp_config->cp_type) {
-
-		set_delete_bearer_command(del_bearer_cmd, pdn, gtpv2c_tx);
-		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
-			               htonl(pdn->s5s8_pgw_gtpc_ipv4.s_addr);
-
-	}
-    pdn->state = CONNECTED_STATE;
-    if (get_sess_entry_seid(pdn->seid, &resp) != 0){
-        clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-                __func__, __LINE__, pdn->seid);
-        return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-    }
-
-    resp->eps_bearer_id = ebi_index;
-    resp->msg_type = GTP_DELETE_BEARER_CMD;
-    resp->state = CONNECTED_STATE;//need to see this
-    resp->gtpc_msg.del_bearer_cmd = *del_bearer_cmd;
-    resp->gtpc_msg.del_bearer_cmd.header.teid.has_teid.seq = del_bearer_cmd->header.teid.has_teid.seq;
-    resp->proc = pdn->proc;
-    resp->bearer_count = del_bearer_cmd->bearer_count;
-    for (uint8_t iCnt = 0; iCnt < del_bearer_cmd->bearer_count; ++iCnt) {
-        resp->eps_bearer_ids[iCnt] = del_bearer_cmd->bearer_contexts[iCnt].eps_bearer_id.ebi_ebi;
-    }
-
-	return 0;
-}
-#endif
 
 #ifdef FUTURE_NEED
 // some of the required code is rleady moved under service request and rab release procedure 

@@ -29,7 +29,7 @@
 #include "cp_main.h"
 #include "trans_struct.h"
 #include "spgw_cpp_wrapper.h"
-#include "detach_proc.h"
+#include "proc_detach.h"
 #include "pfcp_messages_encoder.h"
 #include "cp_transactions.h"
 #include "gtp_ies.h"
@@ -40,32 +40,38 @@
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 proc_context_t*
-alloc_detach_proc(msg_info_t *msg)
+alloc_detach_proc(msg_info_t **msg)
 {
-    proc_context_t *detach_proc = calloc(1, sizeof(proc_context_t));
-    detach_proc->proc_type = msg->proc; 
-    detach_proc->handler = detach_event_handler;
-    detach_proc->ue_context = msg->ue_context;
-    detach_proc->pdn_context = msg->pdn_context;
+    /* Now onwards only refer msg_info coming from proc_context */
+    msg_info_t *new_msg = calloc(1, sizeof(msg_info_t));
+    memcpy(new_msg, *msg, sizeof(msg_info_t));
 
-    msg->proc_context = detach_proc;
+    proc_context_t *detach_proc = calloc(1, sizeof(proc_context_t));
+    detach_proc->proc_type = new_msg->proc; 
+    detach_proc->handler = detach_event_handler;
+    detach_proc->ue_context = new_msg->ue_context;
+    detach_proc->pdn_context = new_msg->pdn_context;
+
+    new_msg->proc_context = detach_proc;
+    detach_proc->msg_info = (void *) new_msg;
+    *msg = new_msg;
     return detach_proc;
 }
 
 void 
-detach_event_handler(void *proc, uint32_t event, void *data)
+detach_event_handler(void *proc, void *msg_info)
 {
     proc_context_t *proc_context = (proc_context_t *)proc;
-    RTE_SET_USED(proc_context);
+    msg_info_t *msg = (msg_info_t *) msg_info;
+    uint8_t event = msg->event;
 
     switch(event) {
         case DS_REQ_RCVD_EVNT: {
-            msg_info_t *msg = (msg_info_t *)data;
-            process_ds_req_handler(msg, NULL);
+            process_ds_req_handler(proc_context, msg);
             break;
         } 
         case PFCP_SESS_DEL_RESP_RCVD_EVNT: {
-            process_sess_del_resp_handler(data, NULL);
+            process_sess_del_resp_handler(proc_context, msg);
             break;
         }
         default:
@@ -74,11 +80,17 @@ detach_event_handler(void *proc, uint32_t event, void *data)
     return;
 }
 
+// saegw - DETACH_PROC CONNECTED_STATE DS_REQ_RCVD_EVNT => process_ds_req_handler
+// saegw - DETACH_PROC IDEL_STATE  DS_REQ_RCVD_EVNT => process_ds_req_handler
+// pgw - DETACH_PROC CONNECTED_STATE DS_REQ_RCVD_EVNT ==> process_ds_req_handler
+// pgw - DETACH_PROC IDEL_STATE DS_REQ_RCVD_EVNT ==> process_ds_req_handler 
+// sgw DETACH_PROC CONNECTED_STATE DS_REQ_RCVD_EVNT : process_ds_req_handler 
+// sgw DETACH_PROC IDEL_STATE DS_REQ_RCVD_EVNT : process_ds_req_handler 
 int
-process_ds_req_handler(void *data, void *unused_param)
+process_ds_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
+    RTE_SET_USED(proc_context);
     int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
     gtpv2c_header_t *dsr_header = &msg->gtpc_msg.dsr.header;
 	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
 					"Msg_Type:%s[%u], Teid:%u, "
@@ -89,13 +101,10 @@ process_ds_req_handler(void *data, void *unused_param)
 					get_state_string(msg->state), get_event_string(msg->event));
 
 
-#ifdef FUTURE_NEED
 	if (cp_config->cp_type == SGWC && msg->gtpc_msg.dsr.indctn_flgs.indication_oi == 1) {
 		/* Indication flag 1 mean dsr needs to be sent to PGW otherwise dont send it to PGW */
 		ret = process_sgwc_delete_session_request(msg, &msg->gtpc_msg.dsr);
-	} else 
-#endif
-    {
+	} else {
 		ret = process_pfcp_sess_del_request(msg, &msg->gtpc_msg.dsr);
 	}
 
@@ -106,35 +115,32 @@ process_ds_req_handler(void *data, void *unused_param)
 		return ret;
 	}
 
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 
 int
-process_sess_del_resp_handler(void *data, void *unused_param)
+process_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     int ret = 0;
 	uint16_t payload_length = 0;
-	msg_info_t *msg = (msg_info_t *)data;
 	uint16_t msglen = 0;
 	char *buffer = NULL;
 	gx_msg ccr_request = {0};
-    proc_context_t *proc_context = msg->proc_context;
+    pfcp_sess_del_rsp_t *pfcp_sess_del_resp = &msg->pfcp_msg.pfcp_sess_del_resp;
     
 
 	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
 			"Msg_Type:PFCP_SESSION_DELETION_RESPONSE[%u], Seid:%lu, "
 			"Procedure:%s, State:%s, Event:%s\n",
 			__func__, msg->msg_type,
-			msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
+			pfcp_sess_del_resp->header.seid_seqno.has_seid.seid,
 			get_proc_string(proc_context->proc_type),
 			get_state_string(msg->state), get_event_string(msg->event));
 
 
-	if(msg->pfcp_msg.pfcp_sess_del_resp.cause.cause_value != REQUESTACCEPTED) {
-
-		clLog(sxlogger, eCLSeverityCritical, "Cause received Del response is %d\n",
-				msg->pfcp_msg.pfcp_sess_del_resp.cause.cause_value);
+	if(pfcp_sess_del_resp->cause.cause_value != REQUESTACCEPTED) {
+		clLog(sxlogger, eCLSeverityCritical, "Cause received in pfcp delete response is %d\n",
+				pfcp_sess_del_resp->cause.cause_value);
 
 		proc_detach_failure(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
 		return -1;
@@ -143,69 +149,57 @@ process_sess_del_resp_handler(void *data, void *unused_param)
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
-    if( cp_config->cp_type != SGWC ) {
-        /* Lookup value in hash using session id and fill pfcp response and delete entry from hash*/
-        if(cp_config->gx_enabled) {
-            ret = process_pfcp_sess_del_resp(
-                    msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
-                    gtpv2c_tx, &ccr_request, &msglen, proc_context);
-
-            buffer = rte_zmalloc_socket(NULL, msglen + sizeof(ccr_request.msg_type),
-                    RTE_CACHE_LINE_SIZE, rte_socket_id());
-            if (buffer == NULL) {
-                clLog(sxlogger, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
-                        "structure: %s (%s:%d)\n",
-                        rte_strerror(rte_errno),
-                        __FILE__,
-                        __LINE__);
-                return -1;
-            }
-
-            memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
-
-            if (gx_ccr_pack(&(ccr_request.data.ccr),
-                        (unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msglen) == 0) {
-                clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
-                return -1;
-            }
-        } else {
-            ret = process_pfcp_sess_del_resp(
-                    msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
-                    gtpv2c_tx, NULL, NULL, proc_context);
-
-        }
-    }  else {
-		/**/
-		ret = process_pfcp_sess_del_resp(
-				msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
-				gtpv2c_tx, NULL, NULL, proc_context);
-	}
+    ret = process_pfcp_sess_del_resp(
+            pfcp_sess_del_resp->header.seid_seqno.has_seid.seid,
+            gtpv2c_tx, &ccr_request, &msglen, proc_context);
 
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
-				__func__, __LINE__, ret);
-
+		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__, __LINE__, ret);
 		proc_detach_failure(msg, ret); 
 		return -1;
 	}
 
-	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
-		+ sizeof(gtpv2c_tx->gtpc);
 
-#ifdef FUTURE_NEED
+    /* Lookup value in hash using session id and fill pfcp response and delete entry from hash*/
+    if((cp_config->cp_type != SGWC ) &&  (cp_config->gx_enabled)) {
+        buffer = rte_zmalloc_socket(NULL, msglen + sizeof(ccr_request.msg_type),
+                RTE_CACHE_LINE_SIZE, rte_socket_id());
+        if (buffer == NULL) {
+            clLog(sxlogger, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
+                    "structure: %s (%s:%d)\n", rte_strerror(rte_errno),
+                    __FILE__, __LINE__);
+            return -1;
+        }
+
+        memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
+
+        if (gx_ccr_pack(&(ccr_request.data.ccr),
+                    (unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msglen) == 0) {
+            clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
+            return -1;
+        }
+		send_to_ipc_channel(my_sock.gx_app_sock, buffer,
+				msglen + sizeof(ccr_request.msg_type));
+        struct sockaddr_in saddr_in;
+        saddr_in.sin_family = AF_INET;
+        inet_aton("127.0.0.1", &(saddr_in.sin_addr));
+        increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_T, saddr_in.sin_addr.s_addr);
+    }
+
+
+	payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
+
 	if ((cp_config->cp_type == PGWC) ) {
+        transData_t *gtpc_trans = proc_context->gtpc_trans; 
+        struct sockaddr_in peer_addr = gtpc_trans->peer_sockaddr; 
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 		        sizeof(struct sockaddr_in));
 
-        increment_sgw_peer_stat(MSG_TX_GTPV2_S5S8_DSRSP, peer_addr.sin_addr.s_addr);
+        increment_sgw_peer_stats(MSG_TX_GTPV2_S5S8_DSRSP, peer_addr.sin_addr.s_addr);
         decrement_stat(NUM_UE_PGW_ACTIVE_SUBSCRIBERS);
-		//s5s8_sgwc_msgcnt++;
-	} 
-    else 
-#endif
-    {
-
+        increment_stat(PROCEDURES_PGW_MME_INIT_DETACH_SUCCESS);
+	} else {
         transData_t *gtpc_trans = proc_context->gtpc_trans; 
         struct sockaddr_in peer_addr = gtpc_trans->peer_sockaddr; 
 		/* Send response on s11 interface */
@@ -217,33 +211,16 @@ process_sess_del_resp_handler(void *data, void *unused_param)
         increment_mme_peer_stats(MSG_TX_GTPV2_S11_DSRSP, peer_addr.sin_addr.s_addr);
         decrement_stat(NUM_UE_SPGW_ACTIVE_SUBSCRIBERS);
         increment_stat(PROCEDURES_SPGW_MME_INIT_DETACH_SUCCESS);
-        proc_detach_complete(msg);
 
 	}
-	/* VS: Write or Send CCR -T msg to Gx_App */
-	if ((cp_config->gx_enabled) && 
-       (cp_config->cp_type != SGWC)) {
-		send_to_ipc_channel(my_sock.gx_app_sock, buffer,
-				msglen + sizeof(ccr_request.msg_type));
-	}
-
-#ifdef FUTURE_NEED
-    struct sockaddr_in saddr_in;
-    saddr_in.sin_family = AF_INET;
-    inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-    increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_T, saddr_in.sin_addr.s_addr);
-#endif
-
-	RTE_SET_USED(unused_param);
+    proc_detach_complete(msg);
 	return 0;
 }
 
 void
 process_pfcp_sess_del_request_timeout(void *data)
 {
-    RTE_SET_USED(data);
-    ue_context_t *ue_context = (ue_context_t *)data;
-    proc_context_t *proc_context = ue_context->current_proc;
+    proc_context_t *proc_context = (proc_context_t *)data;
 
     msg_info_t msg = {0};
     msg.msg_type = PFCP_SESSION_DELETION_RESPONSE;
@@ -302,7 +279,7 @@ process_pfcp_sess_del_request(msg_info_t *msg, del_sess_req_t *ds_req)
     } 
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSDELREQ, context->upf_context->upf_sockaddr.sin_addr.s_addr);
     transData_t *trans_entry;
-    trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_del_request_timeout);
+    trans_entry = start_response_wait_timer(proc_context, pfcp_msg, encoded, process_pfcp_sess_del_request_timeout);
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
     trans_entry->sequence = sequence;
 
@@ -355,11 +332,10 @@ proc_detach_complete(msg_info_t *msg)
     gtpc_trans->cb_data = NULL;
     proc_context->gtpc_trans = NULL;
     free(gtpc_trans);
-    free(proc_context);
+    end_procedure(proc_context);
     return;
 }
 
-#ifdef FUTURE_NEED
 void process_spgwc_delete_session_request_timeout(void *data)
 {
     RTE_SET_USED(data);
@@ -397,7 +373,7 @@ process_sgwc_delete_session_request(msg_info_t *msg, del_sess_req_t *del_req)
 
 	fill_pfcp_sess_mod_req_delete(&pfcp_sess_mod_req, &del_req->header, context, pdn);
 
-	uint8_t pfcp_msg[size]={0};
+	uint8_t pfcp_msg[512]={0};
 	int encoded = encode_pfcp_sess_mod_req_t(&pfcp_sess_mod_req, pfcp_msg);
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
@@ -407,16 +383,17 @@ process_sgwc_delete_session_request(msg_info_t *msg, del_sess_req_t *del_req)
 	} else {
         increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, context->upf_context->upf_sockaddr.sin_addr.s_addr);
         transData_t *trans_entry;
-		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_spgwc_delete_session_request_timeout);
+		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_spgwc_delete_session_request_timeout);
         pdn->trans_entry = trans_entry;
 	}
 
 	/* Update UE State */
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
+#ifdef TRANS_SUPPORT
 	/* Update the sequence number */
-	context->sequence =
-		del_req->header.teid.has_teid.seq;
+	 context->sequence = del_req->header.teid.has_teid.seq;
+
 
 	/*Retrive the session information based on session id. */
 	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0){
@@ -430,10 +407,10 @@ process_sgwc_delete_session_request(msg_info_t *msg, del_sess_req_t *del_req)
 	resp->msg_type = GTP_DELETE_SESSION_REQ;
 	resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 	resp->proc = pdn->proc;
+#endif
 
 	return 0;
 }
-#endif
 
 int8_t
 process_pfcp_sess_del_resp(uint64_t sess_id, 
@@ -442,38 +419,20 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
                            uint16_t *msglen,
                            proc_context_t *proc_context )
 {
+    RTE_SET_USED(sess_id);
 	int ret = 0;
 	uint8_t ebi_index = 0;
 	uint16_t msg_len = 0;
-	ue_context_t *context = NULL;
+	ue_context_t *context = proc_context->ue_context;
 	del_sess_rsp_t del_resp = {0};
-	uint32_t teid = UE_SESS_ID(sess_id);
-
-	//eps_bearer_t *bearer  = NULL;
 	pdn_connection_t *pdn =  NULL;
-	/* Lookup entry in hash table on the basis of session id*/
-	if (get_sess_entry_seid(sess_id, &context) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-				__func__, __LINE__, sess_id);
-		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-	}
-
-	/* Retrieve the UE context */
-	ret = get_ue_context(teid, &context);
-	if (ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
-					__func__, __LINE__,
-					teid);
-	}
-
 
 	pdn = proc_context->pdn_context; 
     ebi_index = pdn->default_bearer_id - 5;
 
 	/* Update the UE state */
 	pdn->state = PFCP_SESS_DEL_RESP_RCVD_STATE;
-	if ((cp_config->gx_enabled) && 
-	    (cp_config->cp_type != SGWC)) {
+	if ((cp_config->gx_enabled) && (cp_config->cp_type != SGWC)) {
 
 		gx_context_t *gx_context = NULL;
 
@@ -506,248 +465,37 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 
 		/* VS: Set the Gx State for events */
 		gx_context->state = CCR_SNT_STATE;
-		gx_context->proc = pdn->proc;
+		//gx_context->proc = pdn->proc;
 
 		/* VS: Calculate the max size of CCR msg to allocate the buffer */
 		*msglen = gx_ccr_calc_length(&ccr_request->data.ccr);
 
 	}
-#ifdef FUTURE_NEED
-    if ( cp_config->cp_type == PGWC) {
 
-        fill_pgwc_ds_sess_rsp(&del_resp, context->sequence,
-                pdn->s5s8_sgw_gtpc_teid);
+    /* Block to create DSRSP message */
+    {
+        transData_t *gtpc_trans = proc_context->gtpc_trans; 
 
-        uint16_t msg_len = encode_del_sess_rsp(&del_resp, (uint8_t *)gtpv2c_tx);
-
-        gtpv2c_header_t *header = (gtpv2c_header_t *) gtpv2c_tx;
-        header->gtpc.message_len = htons(msg_len -4);
-
-        my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
-            htonl(context->pdns[ebi_index]->s5s8_sgw_gtpc_ipv4.s_addr);
-
-        /* Delete entry from session entry */
-        if (del_sess_entry_seid(sess_id) != 0){
-            clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for Key sess ID:%lu\n",
-                    __func__, __LINE__, sess_id);
-            return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+        if(cp_config->cp_type == PGWC) {
+            /* Fill gtpv2c structure for sending on s11 interface */
+            set_gtpv2c_teid_header((gtpv2c_header_t *) &del_resp, GTP_DELETE_SESSION_RSP,
+                    pdn->s5s8_sgw_gtpc_teid, gtpc_trans->sequence);
+        } else {
+            /* Fill gtpv2c structure for sending on s11 interface */
+            set_gtpv2c_teid_header((gtpv2c_header_t *) &del_resp, GTP_DELETE_SESSION_RSP,
+                    context->s11_mme_gtpc_teid, gtpc_trans->sequence);
         }
 
-        clLog(sxlogger, eCLSeverityDebug, "PGWC:%s:%d "
-                "s5s8_recv_sockaddr.sin_addr.s_addr :%s\n", __func__, __LINE__,
-                inet_ntoa(*((struct in_addr *)&my_sock.s5s8_recv_sockaddr.sin_addr.s_addr)));
+        set_cause_accepted(&del_resp.cause, IE_INSTANCE_ZERO);
 
-        if ( del_rule_entries(context, ebi_index) != 0 ){
-            clLog(clSystemLog, eCLSeverityCritical,
-                    "%s %s - Error on delete rule entries\n",__file__,
-                    strerror(ret));
-        }
-        ret = delete_sgwc_context(teid, &context, &sess_id);
-        if (ret)
-            return ret;
-        if(context->num_pdns == 0){
-            /* Delete UE context entry from UE Hash */
-            if (ue_context_delete_entry_imsiKey(context->imsi) < 0){
-                clLog(clSystemLog, eCLSeverityCritical,
-                        "%s %s - Error on ue_context_by_fteid_hash deletion\n",__file__,
-                        strerror(ret));
-            }
+        /*Encode the S11 delete session response message. */
+        msg_len = encode_del_sess_rsp(&del_resp, (uint8_t *)gtpv2c_tx);
 
-            /* Delete UPFList entry from UPF Hash */
-            if ((context->dns_enable && upflist_by_ue_hash_entry_delete(&context->imsi, sizeof(context->imsi))) < 0){
-                clLog(clSystemLog, eCLSeverityCritical,
-                        "%s %s - Error on upflist_by_ue_hash deletion of IMSI \n",__file__,
-                        strerror(ret));
-            }
-
-#ifdef USE_CSID
-            fqcsid_t *csids = context->pgw_fqcsid;
-
-            /* Get the session ID by csid */
-            for (uint16_t itr = 0; itr < csids->num_csid; itr++) {
-                sess_csid *tmp = NULL;
-
-                tmp = get_sess_csid_entry(csids->local_csid[itr]);
-                if (tmp == NULL)
-                    continue;
-
-                /* VS: Delete sess id from csid table */
-                for(uint16_t cnt = 0; cnt < tmp->seid_cnt; cnt++) {
-                    if (sess_id == tmp->cp_seid[cnt]) {
-                        for(uint16_t pos = cnt; pos < (tmp->seid_cnt - 1); pos++ )
-                            tmp->cp_seid[pos] = tmp->cp_seid[pos + 1];
-
-                        tmp->seid_cnt--;
-                        clLog(clSystemLog, eCLSeverityDebug, "Session Deleted from csid table sid:%lu\n",
-                                sess_id);
-                    }
-                }
-
-                if (tmp->seid_cnt == 0) {
-                    /* Cleanup Internal data structures */
-                    ret = del_peer_csid_entry(&csids->local_csid[itr], S5S8_PGWC_PORT_ID);
-                    if (ret) {
-                        clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-                                strerror(errno));
-                        return -1;
-                    }
-
-                    /* Clean MME FQ-CSID */
-                    if (context->mme_fqcsid != 0) {
-                        ret = del_peer_csid_entry(&(context->mme_fqcsid)->local_csid[itr], S5S8_PGWC_PORT_ID);
-                        if (ret) {
-                            clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-                                    strerror(errno));
-                            return -1;
-                        }
-                        if (!(context->mme_fqcsid)->num_csid)
-                            rte_free(context->mme_fqcsid);
-                    }
-
-                    /* Clean UP FQ-CSID */
-                    if (context->up_fqcsid != 0) {
-                        ret = del_peer_csid_entry(&(context->up_fqcsid)->local_csid[itr],
-                                SX_PORT_ID);
-                        if (ret) {
-                            clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-                                    strerror(errno));
-                            return -1;
-                        }
-                        if (!(context->up_fqcsid)->num_csid)
-                            rte_free(context->up_fqcsid);
-                    }
-                }
-
-            }
-
-#endif /* USE_CSID */
-            rte_free(context);
-        }
-
-        return 0;
-    }
-#endif
-
-
-    transData_t *gtpc_trans = proc_context->gtpc_trans; 
-	/* Fill gtpv2c structure for sending on s11 interface */
-	set_gtpv2c_teid_header((gtpv2c_header_t *) &del_resp, GTP_DELETE_SESSION_RSP,
-			context->s11_mme_gtpc_teid, gtpc_trans->sequence);
-	set_cause_accepted_ie((gtpv2c_header_t *) &del_resp, IE_INSTANCE_ZERO);
-
-	del_resp.cause.header.len = ntohs(del_resp.cause.header.len);
-
-	/*Encode the S11 delete session response message. */
-	msg_len = encode_del_sess_rsp(&del_resp, (uint8_t *)gtpv2c_tx);
-
-	gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
-
-	/* Delete entry from session entry */
-    printf("Delete session from the pfcp seid table \n");
-	if (del_sess_entry_seid(sess_id) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for Key sess ID:%lu\n",
-				__func__, __LINE__, sess_id);
-		return -1;
-	}
-
-	if (del_rule_entries(context, ebi_index) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s %s - Error on delete rule entries\n",__file__,
-				strerror(ret));
-	}
-	ret = delete_sgwc_context(teid, &context, &sess_id);
-	if (ret)
-		return ret;
-    printf("%s %d : number of PDNS = %d  \n",__FUNCTION__, __LINE__,context->num_pdns);
-    if(context->num_pdns == 0) {
-        /* Delete UE context entry from UE Hash */
-        if (ue_context_delete_entry_imsiKey(context->imsi) < 0){
-            clLog(clSystemLog, eCLSeverityCritical,
-                    "%s %s - Error on ue_context_by_fteid_hash del\n",__file__,
-                    strerror(ret));
-        }
-
-        /* delete context from user context */
-        uint32_t temp_teid = context->s11_sgw_gtpc_teid;
-        ue_context_delete_entry_teidKey(temp_teid);
-
-
-        /* Delete UPFList entry from UPF Hash */
-        if ((context->dns_enable && upflist_by_ue_hash_entry_delete(&context->imsi, sizeof(context->imsi))) < 0){
-            clLog(clSystemLog, eCLSeverityCritical,
-                    "%s %s - Error on upflist_by_ue_hash deletion of IMSI \n",__file__,
-                    strerror(ret));
-        }
-
-#ifdef USE_CSID
-        fqcsid_t *csids = context->sgw_fqcsid;
-
-        /* Get the session ID by csid */
-        for (uint16_t itr = 0; itr < csids->num_csid; itr++) {
-            sess_csid *tmp = NULL;
-
-            tmp = get_sess_csid_entry(csids->local_csid[itr]);
-            if (tmp == NULL)
-                continue;
-
-            /* VS: Delete sess id from csid table */
-            for(uint16_t cnt = 0; cnt < tmp->seid_cnt; cnt++) {
-                if (sess_id == tmp->cp_seid[cnt]) {
-                    for(uint16_t pos = cnt; pos < (tmp->seid_cnt - 1); pos++ )
-                        tmp->cp_seid[pos] = tmp->cp_seid[pos + 1];
-
-                    tmp->seid_cnt--;
-                    clLog(clSystemLog, eCLSeverityDebug, "Session Deleted from csid table sid:%lu\n",
-                            sess_id);
-                }
-            }
-
-            if (tmp->seid_cnt == 0) {
-                /* Cleanup Internal data structures */
-                ret = del_peer_csid_entry(&csids->local_csid[itr], S5S8_PGWC_PORT_ID);
-                if (ret) {
-                    clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-                            strerror(errno));
-                    return -1;
-                }
-
-                /* Clean MME FQ-CSID */
-                if (context->mme_fqcsid != 0) {
-                    ret = del_peer_csid_entry(&(context->mme_fqcsid)->local_csid[itr], S5S8_PGWC_PORT_ID);
-                    if (ret) {
-                        clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-                                strerror(errno));
-                        return -1;
-                    }
-                    if (!(context->mme_fqcsid)->num_csid)
-                        rte_free(context->mme_fqcsid);
-                }
-
-                /* Clean UP FQ-CSID */
-                if (context->up_fqcsid != 0) {
-                    ret = del_peer_csid_entry(&(context->up_fqcsid)->local_csid[itr],
-                            SX_PORT_ID);
-                    if (ret) {
-                        clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-                                strerror(errno));
-                        return -1;
-                    }
-                    if (!(context->up_fqcsid)->num_csid)
-                        rte_free(context->up_fqcsid);
-                }
-            }
-
-        }
-
-#endif /* USE_CSID */
-
-        //Free UE context
-        rte_free(context);
+        gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
     }
 	return 0;
 }
 
-#ifdef FUTURE_NEED
 void
 fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		gtpv2c_header_t *header, ue_context_t *context, pdn_connection_t *pdn)
@@ -824,5 +572,3 @@ fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		pfcp_sess_mod_req->pfcpsmreq_flags.header.len = 0;
 	}
 }
-#endif
-

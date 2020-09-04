@@ -7,6 +7,7 @@
 #include "clogger.h"
 #include "pfcp_messages_decoder.h"
 #include "cp_config.h"
+#include "rte_common.h"
 
 
 pfcp_handler pfcp_msg_handler[256];

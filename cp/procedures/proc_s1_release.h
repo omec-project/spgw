@@ -7,10 +7,10 @@
 #include "gtp_messages.h"
 
 proc_context_t*
-alloc_rab_proc(msg_info_t *msg);
+alloc_rab_proc(msg_info_t **msg);
 
 void 
-rab_event_handler(void *proc, uint32_t event, void *data);
+rab_event_handler(void *proc, void *msg);
 
 void 
 proc_rab_complete(proc_context_t *proc_context);
@@ -20,16 +20,16 @@ proc_rab_failed(msg_info_t *msg, uint8_t cause);
 
 
 int
-process_rel_access_ber_req_handler(void *data, void *unused_param);
+process_rel_access_ber_req_handler(proc_context_t *proc_context, msg_info_t *data);
 
 int
-process_release_access_bearer_request(rel_acc_bearer_req_t *rel_acc_ber_req_t, uint8_t proc, msg_info_t *data);
+process_release_access_bearer_request(proc_context_t *proc_context, msg_info_t *data);
 
 void
 process_release_access_bearer_request_pfcp_timeout(void *data);
 
 void 
-process_rab_proc_pfcp_mod_sess_rsp(msg_info_t *msg);
+process_rab_proc_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg);
 
 uint8_t
 process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context, 

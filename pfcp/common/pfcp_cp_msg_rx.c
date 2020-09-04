@@ -55,7 +55,7 @@ msg_handler_sx_n4(void)
 	pfcp_header_t *pfcp_header = (pfcp_header_t *) pfcp_rx;
 	msg.msg_type = pfcp_header->message_type;
     msg.peer_addr = peer_addr;
-    msg.source_interface = GX_IFACE; 
+    msg.source_interface = PFCP_IFACE; 
     pfcp_msg_handler[pfcp_header->message_type](&msg, pfcp_header);
 	return 0;
 }

@@ -30,12 +30,12 @@ static transData_t* start_transaction_timer(void *cb_data,
                         gstimercallback cb_retry);
 
 transData_t*
-start_pfcp_session_timer(void *ue_context, 
+start_response_wait_timer(void *ue_context, 
                         uint8_t *buf, 
                         uint16_t buf_len, 
                         timeout_handler_t cb)
 {
-    return start_transaction_timer(ue_context, buf, buf_len, cb, pfcp_session_transaction_retry_callback);
+    return start_transaction_timer(ue_context, buf, buf_len, cb, transaction_retry_callback);
 }
 
 transData_t*
@@ -121,7 +121,7 @@ pfcp_node_transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
 }
 
 void
-pfcp_session_transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
+transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
 {
     RTE_SET_USED(ti);
 
@@ -129,19 +129,11 @@ pfcp_session_transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
 #pragma GCC diagnostic ignored "-Wcast-qual"
     transData_t *data =  (transData_t *) data_t;
 #pragma GCC diagnostic pop   /* require GCC 4.6 */
-
-    if (data->itr_cnt >= 3) {
-        if(data->rt.ti_id != 0) {
-             stoptimer(&data->rt.ti_id);
-             deinittimer(&data->rt.ti_id);
-        }
-        data->timeout_function(data);
-        return;
+    if(data->rt.ti_id != 0) {
+        stoptimer(&data->rt.ti_id);
+        deinittimer(&data->rt.ti_id);
     }
-    ue_context_t *ue_context = (ue_context_t *)(data->cb_data);
-    upf_context_t *upf_context = ue_context->upf_context;
-    pfcp_timer_retry_send(my_sock.sock_fd_pfcp, data, &upf_context->upf_sockaddr);
-    data->itr_cnt++;
+    data->timeout_function(data);
     return;
 }
 
@@ -169,3 +161,4 @@ void pfcp_timer_retry_send(int fd, transData_t *t_tx, struct sockaddr_in *peer)
         }
     }
 }
+

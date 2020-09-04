@@ -78,16 +78,6 @@ void
 fill_ds_request(del_sess_req_t *ds_req, ue_context_t *context,
 		 uint8_t ebi_index);
 /**
- * @brief  : Fill delete session response on pgwc
- * @param  : ds_resp, response structure to be filled
- * @param  : sequence, sequence number
- * @param  : has_teid, teid info
- * @return : Returns nothing
- */
-void
-fill_pgwc_ds_sess_rsp(del_sess_rsp_t *ds_resp, uint32_t sequence, uint32_t has_teid);
-
-/**
  * @brief  : Process delete session request received on s5s8 interface , on pgwc
  * @param  : ds_req, holds info from request
  * @return : Returns 0 in case of success , -1 otherwise

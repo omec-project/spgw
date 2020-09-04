@@ -147,7 +147,7 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 	} else {
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
-		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_delete_bearer_resp_pfcp_timeout);
+		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_delete_bearer_resp_pfcp_timeout);
         pdn->trans_entry = trans_entry;
 	}
 

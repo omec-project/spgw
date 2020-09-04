@@ -11,6 +11,9 @@
 #include "cp_config.h"
 #include "tables/tables.h"
 #include "util.h"
+#include "pfcp_cp_session.h"
+#include "gen_utils.h"
+#include "gtpv2_session.h"
 
 /* base value and offset for seid generation */
 const uint32_t s11_sgw_gtpc_base_teid = 0xC0FFEE;
@@ -251,6 +254,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			+ s5s8_pgw_gtpc_teid_offset;
 	}
 
+    TAILQ_INIT(&((*context)->pending_sub_procs));
 	ret = ue_context_entry_add_teidKey((*context)->s11_sgw_gtpc_teid, (*context));
 
 	if (ret < 0) {
@@ -380,4 +384,254 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 	pdn->apn_in_use = apn_requested;
 
 	return 0;
+}
+
+/* We should queue the event if required */
+void
+start_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
+{
+    ue_context_t *context = NULL;
+    context = (ue_context_t *)proc_ctxt->ue_context;
+
+    if(context != NULL) {
+        assert(TAILQ_EMPTY(&context->pending_sub_procs)); // empty 
+        TAILQ_INSERT_TAIL(&context->pending_sub_procs, proc_ctxt, next_sub_proc); 
+        assert(!TAILQ_EMPTY(&context->pending_sub_procs)); // not empty
+        /* Decide if we wish to run procedure now... If yes move on ...*/
+        proc_ctxt = TAILQ_FIRST(&context->pending_sub_procs);
+    }
+    assert(proc_ctxt != NULL);
+    printf("procedure number = %d \n",proc_ctxt->proc_type);
+    switch(proc_ctxt->proc_type) {
+        case INITIAL_PDN_ATTACH_PROC: {
+            /* Change UE/PDN state if needed and call procedure event */
+            proc_ctxt->handler(proc_ctxt, msg);
+            break;
+        } 
+
+        case S1_RELEASE_PROC: {
+            /* Change UE/PDN state if needed and call procedure event */
+            ue_context_t *context = proc_ctxt->ue_context;
+            context->state = UE_STATE_IDLE_PENDING;
+            pdn_connection_t *pdn = proc_ctxt->pdn_context;
+            pdn->state = PDN_STATE_IDLE_PENDING;
+            proc_ctxt->handler(proc_ctxt, msg);
+            break;
+        }
+
+        case SERVICE_REQUEST_PROC: {
+            proc_ctxt->handler(proc_ctxt, msg);
+            break;
+        }
+
+        case DETACH_PROC: {
+            /* Change UE/PDN state if needed and call procedure event */
+            ue_context_t *context = proc_ctxt->ue_context;
+            context->state = UE_STATE_DETACH_PENDING;
+            pdn_connection_t *pdn = proc_ctxt->pdn_context;
+            pdn->state = PDN_STATE_DETACH_PENDING;
+            proc_ctxt->handler(proc_ctxt, msg);
+            break;
+        }
+
+        case PAGING_PROC: { 
+            /* Change UE/PDN state if needed and call procedure event */
+            ue_context_t *context = proc_ctxt->ue_context;
+            context->state = UE_STATE_PAGING_PENDING;
+            pdn_connection_t *pdn = proc_ctxt->pdn_context;
+            pdn->state = PDN_STATE_PAGING_PENDING;
+            proc_ctxt->handler(proc_ctxt, msg);
+            break;
+        }
+    }
+    return;
+}
+
+static int cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
+{
+    uint64_t sess_id = pdn->seid;
+	uint64_t ebi_index = pdn->default_bearer_id - 5;
+    ue_context_t *context = pdn->context;
+    int ret;
+
+	/* Delete entry from session entry */
+    printf("Delete session from the pfcp seid table \n");
+	if (del_sess_entry_seid(sess_id) != 0) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for Key sess ID:%lu\n",
+				__func__, __LINE__, sess_id);
+		return -1;
+	}
+
+	if (del_rule_entries(context, ebi_index) != 0) {
+		clLog(clSystemLog, eCLSeverityCritical,
+				"%s - Error on delete rule entries\n",__file__);
+	}
+	uint32_t teid = UE_SESS_ID(sess_id);
+	ret = delete_sgwc_context(teid, &context, &sess_id);
+	if (ret)
+		return ret;
+    printf("%s %d : number of PDNS = %d  \n",__FUNCTION__, __LINE__,context->num_pdns);
+    if(context->num_pdns == 0) {
+        /* Delete UE context entry from UE Hash */
+        if (ue_context_delete_entry_imsiKey(context->imsi) < 0){
+            clLog(clSystemLog, eCLSeverityCritical,
+                    "%s %s - Error on ue_context_by_fteid_hash del\n",__file__,
+                    strerror(ret));
+        }
+
+        /* delete context from user context */
+        uint32_t temp_teid = context->s11_sgw_gtpc_teid;
+        ue_context_delete_entry_teidKey(temp_teid);
+
+
+        /* Delete UPFList entry from UPF Hash */
+        if ((context->dns_enable && upflist_by_ue_hash_entry_delete(&context->imsi, sizeof(context->imsi))) < 0){
+            clLog(clSystemLog, eCLSeverityCritical,
+                    "%s %s - Error on upflist_by_ue_hash deletion of IMSI \n",__file__,
+                    strerror(ret));
+        }
+
+#ifdef USE_CSID
+        
+        fqcsid_t *csids
+
+        if (cp_config->cp_type == PGWC) {
+            csids  = context->pgw_fqcsid;
+        } else {
+            csids  = context->sgw_fqcsid;
+        }
+
+        /* Get the session ID by csid */
+        for (uint16_t itr = 0; itr < csids->num_csid; itr++) {
+            sess_csid *tmp = NULL;
+
+            tmp = get_sess_csid_entry(csids->local_csid[itr]);
+            if (tmp == NULL)
+                continue;
+
+            /* VS: Delete sess id from csid table */
+            for(uint16_t cnt = 0; cnt < tmp->seid_cnt; cnt++) {
+                if (sess_id == tmp->cp_seid[cnt]) {
+                    for(uint16_t pos = cnt; pos < (tmp->seid_cnt - 1); pos++ )
+                        tmp->cp_seid[pos] = tmp->cp_seid[pos + 1];
+
+                    tmp->seid_cnt--;
+                    clLog(clSystemLog, eCLSeverityDebug, "Session Deleted from csid table sid:%lu\n",
+                            sess_id);
+                }
+            }
+
+            if (tmp->seid_cnt == 0) {
+                /* Cleanup Internal data structures */
+                ret = del_peer_csid_entry(&csids->local_csid[itr], S5S8_PGWC_PORT_ID);
+                if (ret) {
+                    clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
+                            strerror(errno));
+                    return -1;
+                }
+
+                /* Clean MME FQ-CSID */
+                if (context->mme_fqcsid != 0) {
+                    ret = del_peer_csid_entry(&(context->mme_fqcsid)->local_csid[itr], S5S8_PGWC_PORT_ID);
+                    if (ret) {
+                        clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
+                                strerror(errno));
+                        return -1;
+                    }
+                    if (!(context->mme_fqcsid)->num_csid)
+                        rte_free(context->mme_fqcsid);
+                }
+
+                /* Clean UP FQ-CSID */
+                if (context->up_fqcsid != 0) {
+                    ret = del_peer_csid_entry(&(context->up_fqcsid)->local_csid[itr],
+                            SX_PORT_ID);
+                    if (ret) {
+                        clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
+                                strerror(errno));
+                        return -1;
+                    }
+                    if (!(context->up_fqcsid)->num_csid)
+                        rte_free(context->up_fqcsid);
+                }
+            }
+
+        }
+
+#endif /* USE_CSID */
+        //Free UE context
+        rte_free(context);
+        *context_t = NULL;
+    }
+
+    return 0;
+}
+
+void
+end_procedure(proc_context_t *proc_ctxt) 
+{
+    ue_context_t *context = NULL;
+    pdn_connection_t *pdn = NULL;
+
+    assert(proc_ctxt != NULL);
+    context = proc_ctxt->ue_context;
+    assert(context != NULL);
+
+    TAILQ_REMOVE(&context->pending_sub_procs, proc_ctxt, next_sub_proc);
+    assert(TAILQ_EMPTY(&context->pending_sub_procs)); // empty
+    switch(proc_ctxt->proc_type) {
+        case INITIAL_PDN_ATTACH_PROC: {
+            context = proc_ctxt->ue_context;
+            context->state = UE_STATE_ACTIVE;
+            pdn = proc_ctxt->pdn_context;
+            assert(pdn != NULL);
+            pdn->state = PDN_STATE_ACTIVE;
+            free(proc_ctxt);
+            break;
+        }
+        case S1_RELEASE_PROC: {
+            context = proc_ctxt->ue_context;
+            context->state = UE_STATE_IDLE;
+            pdn = proc_ctxt->pdn_context;
+            pdn->state = PDN_STATE_IDLE;
+            free(proc_ctxt);
+            break;
+        }
+        case SERVICE_REQUEST_PROC: {
+            // No state change 
+            free(proc_ctxt);
+            context = proc_ctxt->ue_context;
+            break;
+        }
+        case DETACH_PROC: {
+            context = proc_ctxt->ue_context;
+            assert(context  != NULL);
+            context->state = UE_STATE_DETACH;
+            pdn = proc_ctxt->pdn_context;
+            assert(pdn != NULL);
+            pdn->state = PDN_STATE_DETACH;
+            free(proc_ctxt);
+            cleanup_pdn(pdn, &context);
+            break;
+        }
+        case PAGING_PROC : {
+            context = proc_ctxt->ue_context;
+            context->state = UE_STATE_ACTIVE;
+            pdn = proc_ctxt->pdn_context;
+            pdn->state = PDN_STATE_ACTIVE;
+            free(proc_ctxt);
+            break;
+        }
+    }
+
+    if(context != NULL) {
+        // start new procedure if something is pending 
+        printf("Continue with subscriber \n");
+    } else {
+        printf("Released subscriber \n");
+    }
+    // result_success - schedule next proc
+    // result_fail_call_del - abort all outstanding procs and delete the call
+    // result_fail_keep_call - continue with call as is and schedule new proc if any  
+    return;
 }

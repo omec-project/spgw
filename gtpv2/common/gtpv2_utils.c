@@ -25,10 +25,10 @@
 #include "pfcp_cp_association.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
-#include "initial_attach_proc.h"
-#include "rab_proc.h"
-#include "detach_proc.h"
-#include "service_request_proc.h"
+#include "proc_initial_attach.h"
+#include "proc_s1_release.h"
+#include "proc_detach.h"
+#include "proc_service_request.h"
 #include "cp_io_poll.h"
 
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */

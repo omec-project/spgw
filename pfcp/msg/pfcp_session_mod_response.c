@@ -57,12 +57,10 @@ int handle_pfcp_session_modification_response(msg_info_t *msg)
     proc_context->pfcp_trans = NULL;
 
     msg->proc_context = proc_context;
-    msg->ue_context = proc_context->ue_context; 
-    msg->pdn_context = proc_context->pdn_context; /* can be null in case of rab release */ 
-    assert(msg->ue_context != NULL);
     msg->event = PFCP_SESS_MOD_RESP_RCVD_EVNT;
+    proc_context->msg_info = (void *) msg;
 
-    proc_context->handler((void*)proc_context, msg->event, (void *)msg);
+    proc_context->handler((void*)proc_context, msg);
     return 0;
 }
 

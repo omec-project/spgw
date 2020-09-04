@@ -153,29 +153,9 @@ pfcp_set_ie_header(pfcp_ie_header_t *header, uint8_t type, uint16_t length);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 transData_t *
-process_pfcp_sess_est_request(pdn_connection_t *pdn,  upf_context_t *upf_ctx);
+process_pfcp_sess_est_request(proc_context_t *proc_context,  upf_context_t *upf_ctx);
+
 void process_pfcp_sess_est_request_timeout(void *data);
-
-/**
- * @brief  : Process pfcp session modification request for handover scenario
- * @param  : mbr, holds information in session modification request
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-process_pfcp_sess_mod_req_handover(mod_bearer_req_t *mbr);
-
-/**
- * @brief  : Process pfcp session modification request for handover scenario
- * @param  : mbr, holds information in session modification request
- * @return : Returns 0 in case of success , -1 otherwise
- */
-
-int
-send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
-			mod_bearer_req_t *mbr);
-
-int
-process_sgwc_delete_session_request(msg_info_t *msg, del_sess_req_t *ds_req);
 
 /**
  * @brief  : Process delete session request on sgwc
@@ -197,15 +177,6 @@ process_pfcp_sess_del_request_delete_bearer_rsp_timeout(void *data);
  */
 void
 set_pdn_type(pfcp_pdn_type_ie_t *pdn, pdn_type_ie *pdn_mme);
-
-/**
- * @brief  : Processes pfcp session report request
- * @param  : pfcp_sess_rep_req, holds information in pfcp session report request
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-process_pfcp_report_req(pfcp_sess_rpt_req_t *pfcp_sess_rep_req);
-
 
 /**
  * @brief  : Set values in node id ie

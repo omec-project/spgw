@@ -24,7 +24,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_peer.h"
 #include "gtpv2_error_rsp.h"
-#include "rab_proc.h"
+#include "proc_s1_release.h"
 #include "sm_structs_api.h"
 #include "tables/tables.h"
 #include "util.h"
@@ -59,8 +59,10 @@ int handle_rab_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
     int ret;
     struct sockaddr_in s11_peer_sockaddr = {0};
+    ue_context_t *context = NULL;
 
     s11_peer_sockaddr = msg->peer_addr;
+
     /* Reset periodic timers */
     process_response(s11_peer_sockaddr.sin_addr.s_addr);
 
@@ -70,10 +72,6 @@ int handle_rab_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 
     /* validate RAB request content */
 
-    /* update CLi stats ?*/
-    ue_context_t *context = NULL;
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
 
     /* Find old transaction */
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
@@ -94,14 +92,20 @@ int handle_rab_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
     msg->ue_context = context;
-	msg->proc = CONN_SUSPEND_PROC;
-    assert(context->current_proc == NULL);
+	msg->proc = S1_RELEASE_PROC;
 
+    for(uint8_t ebi_index = 0; ebi_index <= 11; ebi_index++) {
+        pdn_connection_t *pdn = GET_PDN(context, ebi_index);
+        if(pdn != NULL) {
+            msg->pdn_context = pdn;
+            break;
+        }
+    }
 	/*Set the appropriate event type.*/
 	msg->event = REL_ACC_BER_REQ_RCVD_EVNT;
 
     /* Allocate new Proc */
-    proc_context_t *rab_proc = alloc_rab_proc(msg);
+    proc_context_t *rab_proc = alloc_rab_proc(&msg);
 
     /* Create new transaction */
     transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
@@ -111,9 +115,6 @@ int handle_rab_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     trans->sequence = seq_num;
     trans->peer_sockaddr = msg->peer_addr;
 
-    // set cross references in context 
-    context->current_proc = rab_proc;
-
-    rab_proc->handler(rab_proc, msg->event, (void *)msg);
+    start_procedure(rab_proc, msg);
     return 0;
 }

@@ -12,6 +12,7 @@
 #include "gtpv2_msg_struct.h"
 #include "ue.h"
 #include "sm_struct.h"
+#include "cp_proc.h"
 
 /**
  * @brief  : Function to build GTP-U echo request
@@ -54,22 +55,6 @@ parse_release_access_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 		rel_acc_ber_req *rel_acc_ber_req_t);
 #endif
 
-
-/**
- * @brief  : parses gtpv2c message and populates downlink_data_notification_ack_t
- *           structure
- * @param  : gtpv2c_rx
- *           buffer containing received downlink data notification ack message
- * @param  : ddn_ack
- *           structure to contain parsed information from message
- * @return : - 0 if successful
- *           - > 0 if error occurs during packet filter parsing corresponds to 3gpp
- *           specified cause error value
- *           - < 0 for all other errors
- */
-int
-parse_downlink_data_notification_ack(gtpv2c_header_t *gtpv2c_rx,
-			downlink_data_notification_t *ddn_ack);
 
 int
 process_delete_bearer_resp(del_bearer_rsp_t *db_rsp , uint8_t flag);
@@ -320,23 +305,6 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 
 
 /**
- * @brief  : Processes a Downlink Data Notification Acknowledgement message
- *           (29.274 Section 7.2.11.2).  Populates the delay value @delay
- * @param  : downlink_data_notification_t
- *           Containing the Downlink Data Notification Acknowledgement
- * @param  : delay
- *           - 0 if no delay IE present
- *           - > 0 The delay value to be parsed and set as specified in 29.274
- *           Table 7.2.11.2-1
- * @return : - 0 if successful
- *           - > 0 if error occurs during packet filter parsing corresponds to 3gpp
- *           specified cause error value
- *           - < 0 for all other errors
- */
-int
-process_ddn_ack(downlink_data_notification_t ddn_ack, uint8_t *delay, msg_info_t *data);
-
-/**
  * @brief  : Creates a Downlink Data Notification message
  * @param  : context
  *           the UE context for the DDN
@@ -367,15 +335,6 @@ void
 build_gtpv2_echo_request(gtpv2c_header_t *echo_pkt, uint16_t gtpu_seqnb);
 
 /**
- * @brief  : Process modify bearer response received on s5s8 interface at sgwc
- * @param  : mb_rsp, buffer containing response data
- * @param  : gtpv2c_tx, gtpv2c message transmission buffer to response message
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-process_sgwc_s5s8_modify_bearer_response(mod_bearer_rsp_t *mb_rsp, gtpv2c_header_t *gtpv2c_tx);
-
-/**
  * @brief  : Process delete request on sgwc for handover scenario
  * @param  : seid, session id
  * @param  : gtpv2c_tx, gtpv2c message transmission buffer to response message
@@ -392,7 +351,7 @@ int process_sgwc_delete_handover(uint64_t seid,
  * @return : 0 - indicates success, failure otherwise
  */
 int
-ddn_by_session_id(uint64_t session_id);
+send_ddn_indication(proc_context_t *ctt, uint8_t ebi_index);
 
 int msg_handler_s11(void);
 int msg_handler_s5s8(void);
@@ -451,15 +410,14 @@ void process_sgwc_s5s8_create_sess_rsp_pfcp_timeout(void *data);
 
 
 /* Slowly delete following block under if 1*/
-#if 1
+int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx);
 int validate_gtpv2_message_content(msg_info_t *msg);
-int handle_create_session_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_modify_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_delete_session_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_ddn_ack_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 
 
 #ifdef FUTURE_NEEDS
+int handle_modify_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_delete_session_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
+int handle_ddn_ack_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_update_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_update_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_create_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
@@ -476,4 +434,3 @@ int handle_pgw_restart_notf_ack(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 
 #endif
 
-#endif 

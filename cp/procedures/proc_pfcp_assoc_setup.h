@@ -5,10 +5,10 @@
 #ifndef __PFCP_ASSOCIATION_SETUP_PROC_H 
 #define __PFCP_ASSOCIATION_SETUP_PROC_H
 proc_context_t*
-alloc_pfcp_association_setup_proc(msg_info_t *msg);
+alloc_pfcp_association_setup_proc(void *upf);
 
 void 
-pfcp_association_event_handler(void *proc, uint32_t event, void *data);
+pfcp_association_event_handler(void *proc, void *msg);
 
 /**
  * @brief  : Handles association setuo request
@@ -18,10 +18,7 @@ pfcp_association_event_handler(void *proc, uint32_t event, void *data);
  */
 
 int
-association_setup_handler(void *data, void *unused_param);
-
-int
-process_pfcp_assoication_request(ue_context_t *ue_context);
+association_setup_handler(proc_context_t *proc, msg_info_t *msg);
 
 int
 buffer_csr_request(proc_context_t *proc_context);

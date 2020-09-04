@@ -193,7 +193,7 @@ process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	{
         increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
-		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded,  process_s5s8_upd_bearer_response_pfcp_timeout);
+		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded,  process_s5s8_upd_bearer_response_pfcp_timeout);
         pdn_cntxt->trans_entry = trans_entry;
 	}
 	/* Update UE State */

@@ -157,12 +157,11 @@
                 { "protocol": "gtpv2" }
             ],
             "label_1": [
-                { "interface":"s11"},
-                { "interface":"s5s8"}
+                { "interface":"s11"}
             ],
             "label_2": [
                 { "msg_type": "DDNAck" },
-                { "msg_drop": "ddnack_drop"}
+                { "msg_drop": "DDNAck_drop"}
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "},
@@ -397,6 +396,9 @@
             ],
             "dynamic_label_1": [
                 {"reason" : "drop reason"}
+            ],
+            "dynamic_label_2": [
+                {"report_type" : "report type"}
             ]
         },
         {

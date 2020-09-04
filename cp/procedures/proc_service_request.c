@@ -24,7 +24,7 @@
 #include "pfcp_cp_association.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
-#include "service_request_proc.h"
+#include "proc_service_request.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_messages_encoder.h"
 #include "gtpv2_set_ie.h"
@@ -36,75 +36,53 @@
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 proc_context_t*
-alloc_service_req_proc(msg_info_t *msg)
+alloc_service_req_proc(msg_info_t **msg)
 {
+    /* Now onwards only refer msg_info coming from proc_context */
+    msg_info_t *new_msg = calloc(1, sizeof(msg_info_t));
+    memcpy(new_msg, *msg, sizeof(msg_info_t));
+
     proc_context_t *service_req_proc;
 
     service_req_proc = calloc(1, sizeof(proc_context_t));
-    service_req_proc->proc_type = msg->proc; 
-    service_req_proc->ue_context = (void *)msg->ue_context;
-    service_req_proc->pdn_context = (void *)msg->pdn_context; 
-
+    service_req_proc->proc_type = new_msg->proc; 
+    service_req_proc->ue_context = (void *)new_msg->ue_context;
+    service_req_proc->pdn_context = (void *)new_msg->pdn_context; 
     service_req_proc->handler = service_req_event_handler;
 
-    // set cross references in msg 
-    msg->proc_context = service_req_proc;
-
+    new_msg->proc_context = service_req_proc;
+    service_req_proc->msg_info = (void *) new_msg;
+ 
+    *msg = new_msg;
     return service_req_proc;
 }
 
-    void 
-service_req_event_handler(void *proc, uint32_t event, void *data)
+void 
+service_req_event_handler(void *proc, void *msg_info) 
 {
     proc_context_t *proc_context = (proc_context_t *)proc;
-    RTE_SET_USED(proc_context);
+    msg_info_t *msg = (msg_info_t *) msg_info;
+    uint8_t event = msg->event;
 
     switch(event) {
         case MB_REQ_RCVD_EVNT: {
-            msg_info_t *msg = (msg_info_t *)data;
-            process_mb_req_handler(msg, NULL);
+            process_mb_req_handler(proc_context, msg);
             break;
         } 
         case PFCP_SESS_MOD_RESP_RCVD_EVNT: {
-            msg_info_t *msg = (msg_info_t *)data;
-            process_service_request_pfcp_mod_sess_rsp(msg);
+            process_service_request_pfcp_mod_sess_rsp(proc_context, msg);
             break;
         }
         default:
-            assert(0); // unknown event 
+            rte_panic("wrong event");
     }
     return;
-}
-
-int
-process_mb_req_handler(void *data, void *unused_param)
-{
-    int ret = 0;
-    msg_info_t *msg = (msg_info_t *)data;
-    gtpv2c_header_t *mbr_header = &msg->gtpc_msg.mbr.header;
-
-    clLog(s11logger, eCLSeverityDebug, "%s: Msg_Type:%s[%u], Teid:%u, "
-            "Procedure:%s, State:%s, Event:%s\n",
-            __func__, gtp_type_str(msg->msg_type), msg->msg_type,
-            mbr_header->teid.has_teid.teid,
-            get_proc_string(msg->proc),
-            get_state_string(msg->state), get_event_string(msg->event));
-
-    ret = process_pfcp_sess_mod_request(msg);
-    if (ret != 0) {
-        // function never returns failure 
-        assert(0);
-    }
-
-    RTE_SET_USED(unused_param);
-    return 0;
 }
 
 void
 process_pfcp_sess_mod_request_timeout(void *data)
 {
-    ue_context_t *ue_context = (ue_context_t *)data;
-    proc_context_t *proc_context = ue_context->current_proc;
+    proc_context_t *proc_context = (proc_context_t *)data;
     msg_info_t msg = {0};
 
     msg.msg_type = PFCP_SESSION_MODIFICATION_RESPONSE;
@@ -114,7 +92,7 @@ process_pfcp_sess_mod_request_timeout(void *data)
 }
 
 int
-process_pfcp_sess_mod_request(msg_info_t *msg)
+process_mb_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     mod_bearer_req_t *mb_req = &msg->gtpc_msg.mbr;
     uint8_t ebi_index = 0;
@@ -176,9 +154,11 @@ process_pfcp_sess_mod_request(msg_info_t *msg)
         }
 
         /* Bug 370. No need to send end marker packet in DDN */
+#ifdef TEMP
         if (CONN_SUSPEND_PROC == pdn->proc) {
             x2_handover = 0;
         }
+#endif
 
         bearer->s1u_enb_gtpu_ipv4.s_addr =
             mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.ipv4_address;
@@ -228,11 +208,10 @@ process_pfcp_sess_mod_request(msg_info_t *msg)
     } 
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
     transData_t *trans_entry;
-    trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_mod_request_timeout);
+    trans_entry = start_response_wait_timer(proc_context, pfcp_msg, encoded, process_pfcp_sess_mod_request_timeout);
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
     trans_entry->sequence = sequence;
 
-    proc_context_t *proc_context = context->current_proc;
     proc_context->pfcp_trans = trans_entry;
     trans_entry->proc_context = (void *)proc_context;
 
@@ -243,13 +222,11 @@ process_pfcp_sess_mod_request(msg_info_t *msg)
 }
 
 void 
-process_service_request_pfcp_mod_sess_rsp(msg_info_t *msg)
+process_service_request_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg)
 {
     ue_context_t *context = NULL;
     int ret = 0;
     uint16_t payload_length = 0;
-
-    proc_context_t *proc_context = msg->proc_context;
 
     /*Validate the modification is accepted or not. */
     if(msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value != REQUESTACCEPTED){
@@ -376,7 +353,6 @@ proc_service_request_failure(msg_info_t *msg, uint8_t cause)
 void
 proc_service_request_complete(proc_context_t *proc_context)
 {
-    ue_context_t *ue_context = proc_context->ue_context; 
     assert(proc_context->gtpc_trans != NULL);
     transData_t *trans = proc_context->gtpc_trans;
 
@@ -391,15 +367,12 @@ proc_service_request_complete(proc_context_t *proc_context)
      * in subscriber 
      */
     assert(gtpc_trans == trans);
-
     proc_context->gtpc_trans =  NULL;
+    free(gtpc_trans);
 
     /* PFCP transaction is already complete. */
     assert(proc_context->pfcp_trans == NULL);
 
-    free(gtpc_trans);
-    free(proc_context);
-    ue_context->current_proc = NULL;
-
+    end_procedure(proc_context);
     return;
 }

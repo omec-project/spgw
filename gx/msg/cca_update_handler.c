@@ -20,6 +20,7 @@
 #include "spgw_cpp_wrapper.h"
 
 
+#if 0
 static 
 void dispatch_cca(msg_info_t *msg)
 {
@@ -69,6 +70,7 @@ void dispatch_cca(msg_info_t *msg)
 #endif
     return;
 }
+#endif
 
 int handle_cca_update_msg(msg_info_t *msg)
 {
@@ -111,9 +113,8 @@ int handle_cca_update_msg(msg_info_t *msg)
         return -1;
     }
     /* Retrive the Session state and set the event */
-    msg->state = gx_context->state;
+    proc_context_t *proc_context = (proc_context_t *)gx_context->proc_context;
     msg->event = CCA_RCVD_EVNT;
-    msg->proc = gx_context->proc;
     clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
             "Msg_Type:%s[%u], Session Id:%s, "
             "State:%s, Event:%s\n",
@@ -121,7 +122,9 @@ int handle_cca_update_msg(msg_info_t *msg)
             msg->gx_msg.cca.session_id.val,
             get_state_string(msg->state), get_event_string(msg->event));
 
-    dispatch_cca(msg); 
+    proc_context->msg_info = msg;
+    msg->proc_context = proc_context;
+    proc_context->handler(proc_context, msg);
     return 0;
 
 }
@@ -158,8 +161,10 @@ int cca_u_msg_handler_handover(void *data, void *unused)
 	      return -1;
 	}
 
+#ifdef TEMP
     proc_context_t *proc_context = pdn->context->current_proc;
     RTE_SET_USED(proc_context);
+#endif
 
 	ebi_index = pdn->default_bearer_id - 5; 
 

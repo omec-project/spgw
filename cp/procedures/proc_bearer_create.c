@@ -211,7 +211,7 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 
         increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
-		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_create_bearer_request_pfcp_timeout);
+		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_create_bearer_request_pfcp_timeout);
         pdn->trans_entry = trans_entry;
 	}
 

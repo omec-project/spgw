@@ -7,7 +7,7 @@
 #include "gw_adapter.h"
 #include "pfcp_messages_decoder.h"
 #include "clogger.h"
-#include "pfcp_association_setup_proc.h"
+#include "proc_pfcp_assoc_setup.h"
 #include "spgw_cpp_wrapper.h"
 
 int 

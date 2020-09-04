@@ -5,6 +5,12 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "tables/tables.h"
+
+#include "gtp_messages.h"
+#include "util.h"
+#include "gtpv2_set_ie.h"
+#include "gtpv2_session.h"
+
 #ifdef FUTURE_NEED_SGW
 // saegw DETACH_PROC DS_REQ_SNT_STATE DS_RESP_RCVD_EVNT => process_ds_resp_handler
 // sgw DETACH_PROC DS_REQ_SNT_STATE DS_RESP_RCVD_EVNT : process_ds_resp_handler 
@@ -112,15 +118,6 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *dsr, uint8_t *gtpv2c_t
 	return 0;
 }
 
-void
-fill_pgwc_ds_sess_rsp(del_sess_rsp_t *ds_resp, uint32_t sequence, uint32_t has_teid)
-{
-	    set_gtpv2c_header(&ds_resp->header, 1, GTP_DELETE_SESSION_RSP,
-				                                 has_teid, sequence);
-
-		    set_cause_accepted(&ds_resp->cause, IE_INSTANCE_ZERO);
-
-}
 
 int
 process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
@@ -165,7 +162,7 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
 	else {
         increment_userplane_stats(MSG_TX_PFCP_SXA_SESSDELREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
-		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_delete_session_request_pfcp_timeout);
+		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_delete_session_request_pfcp_timeout);
         bearer->pdn->trans_entry = trans_entry; 
 	}
 	/* Update UE State */

@@ -599,7 +599,7 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 
 	/* VS: Set the Gx State for events */
 	gx_context->state = CCRU_SNT_STATE;
-	gx_context->proc = pdn->proc;
+	//gx_context->proc = pdn->proc;
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
 	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type),

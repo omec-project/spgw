@@ -14,7 +14,7 @@
 
 transData_t *start_pfcp_node_timer(void *upf, uint8_t *buf, uint16_t buf_len,timeout_handler_t cb);
 
-transData_t *start_pfcp_session_timer(void *ue, uint8_t *buf, uint16_t buf_len, timeout_handler_t cb);
+transData_t *start_response_wait_timer(void *ue, uint8_t *buf, uint16_t buf_len, timeout_handler_t cb);
 
 void stop_transaction_timer(transData_t *data);
 
@@ -23,7 +23,7 @@ void
 pfcp_node_transaction_retry_callback(gstimerinfo_t *ti, const void *data_t);
 
 void
-pfcp_session_transaction_retry_callback(gstimerinfo_t *ti, const void *data_t);
+transaction_retry_callback(gstimerinfo_t *ti, const void *data_t);
 
 void 
 pfcp_timer_retry_send(int fd, transData_t *t_tx, struct sockaddr_in *peer);
