@@ -417,7 +417,7 @@ process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
 
         increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSDELREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
-		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_del_request_delete_bearer_rsp_timeout);
+		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pfcp_sess_del_request_delete_bearer_rsp_timeout);
         RTE_SET_USED(trans_entry);
         pdn->trans_entry = trans_entry;
 	}
@@ -550,7 +550,7 @@ process_sess_mod_req_del_cmd(pdn_connection_t *pdn)
 
         increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
-        trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pfcp_sess_mod_del_cmd_timeout);
+        trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pfcp_sess_mod_del_cmd_timeout);
         pdn->trans_entry = trans_entry;
 
 	}

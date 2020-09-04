@@ -21,7 +21,7 @@
 #include "gen_utils.h"
 #include "cp_transactions.h"
 #include "spgw_cpp_wrapper.h"
-#include "rab_proc.h"
+#include "proc_s1_release.h"
 #include "gtpv2_error_rsp.h"
 #include "tables/tables.h"
 #include "util.h"
@@ -33,39 +33,32 @@ extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 proc_context_t*
 alloc_rab_proc(msg_info_t *msg)
 {
-    ue_context_t *context;
-    proc_context_t *rab_proc;
-    context = msg->ue_context;
-
-    rab_proc = calloc(1, sizeof(proc_context_t));
+    proc_context_t *rab_proc = calloc(1, sizeof(proc_context_t));
     rab_proc->proc_type = msg->proc; 
     rab_proc->handler = rab_event_handler;
-    rab_proc->ue_context = context;
-    rab_proc->pdn_context = NULL;
+    rab_proc->ue_context = msg->ue_context;
+    rab_proc->pdn_context = msg->pdn_context;
 
-    // set cross references in msg 
     msg->proc_context = rab_proc;
-    msg->ue_context = msg->ue_context;
-    msg->pdn_context = NULL;
-
+    SET_PROC_MSG(rab_proc, msg);
+ 
     return rab_proc;
 }
 
 void 
-rab_event_handler(void *proc, uint32_t event, void *data)
+rab_event_handler(void *proc, void *msg_info)
 {
     proc_context_t *proc_context = (proc_context_t *)proc;
-    RTE_SET_USED(proc_context);
+    msg_info_t *msg = (msg_info_t *) msg_info;
+    uint8_t event = msg->event;
 
     switch(event) {
         case REL_ACC_BER_REQ_RCVD_EVNT: {
-            msg_info_t *msg = (msg_info_t *)data;
-            process_rel_access_ber_req_handler(msg, NULL);
+            process_rel_access_ber_req_handler(proc_context, msg);
             break;
         } 
         case PFCP_SESS_MOD_RESP_RCVD_EVNT: {
-            msg_info_t *msg = (msg_info_t *)data;
-            process_rab_proc_pfcp_mod_sess_rsp(msg);
+            process_rab_proc_pfcp_mod_sess_rsp(proc_context, msg);
             break;
         }
         default:
@@ -75,10 +68,9 @@ rab_event_handler(void *proc, uint32_t event, void *data)
 }
 
 int
-process_rel_access_ber_req_handler(void *data, void *unused_param)
+process_rel_access_ber_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
     gtpv2c_header_t *rab_header = &msg->gtpc_msg.rab.header;
 
 	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
@@ -91,43 +83,40 @@ process_rel_access_ber_req_handler(void *data, void *unused_param)
 
 
 	/* TODO: Check return type and do further processing */
-	ret = process_release_access_bearer_request(&msg->gtpc_msg.rab, msg->proc, msg);
+	ret = process_release_access_bearer_request(proc_context, msg); 
     if (ret) {
         clLog(s11logger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
         return -1;
     }
 
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 
 void 
 process_release_access_bearer_request_pfcp_timeout(void *data)
 {
-    ue_context_t *ue_context = (ue_context_t *)data;
-    proc_context_t *proc_context = ue_context->current_proc;
+    proc_context_t *proc_context = (proc_context_t *)data;
 
-    msg_info_t msg = {0};
-    msg.msg_type = PFCP_SESSION_MODIFICATION_RESPONSE;
-    msg.proc_context = proc_context;
-
-    proc_rab_failed(&msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
+    msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+    msg->msg_type = PFCP_SESSION_MODIFICATION_RESPONSE;
+    msg->proc_context = proc_context;
+    SET_PROC_MSG(proc_context, msg);
+    proc_rab_failed(msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
     return;
 }
 
 int
-process_release_access_bearer_request(rel_acc_bearer_req_t *rel_acc_ber_req_t, uint8_t proc, msg_info_t *msg)
+process_release_access_bearer_request(proc_context_t *rab_proc, msg_info_t *msg) 
 {
-    RTE_SET_USED(proc);
 	uint8_t ebi_index = 0;
 	eps_bearer_t *bearer  = NULL;
 	pdn_connection_t *pdn =  NULL;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
-    proc_context_t *rab_proc = msg->proc_context;
 	uint32_t sequence = 0;
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
     ue_context_t *ue_context = msg->ue_context;
+    rel_acc_bearer_req_t *rel_acc_ber_req_t = &msg->gtpc_msg.rab;
 
 	for (int i = 0; i < MAX_BEARERS; ++i) {
 		if (ue_context->eps_bearers[i] == NULL)
@@ -206,7 +195,7 @@ process_release_access_bearer_request(rel_acc_bearer_req_t *rel_acc_ber_req_t, u
         increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(ue_context->upf_context));
 
         transData_t *trans_entry;
-        trans_entry = start_pfcp_session_timer(ue_context, pfcp_msg, encoded, process_release_access_bearer_request_pfcp_timeout);
+        trans_entry = start_response_wait_timer(rab_proc, pfcp_msg, encoded, process_release_access_bearer_request_pfcp_timeout);
 
         /* add transaction into transaction table */
         add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
@@ -222,13 +211,12 @@ process_release_access_bearer_request(rel_acc_bearer_req_t *rel_acc_ber_req_t, u
 }
 
 void 
-process_rab_proc_pfcp_mod_sess_rsp(msg_info_t *msg)
+process_rab_proc_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg)
 {
     int ret = 0;
 	uint16_t payload_length = 0;
-    ue_context_t *ue_context = msg->ue_context; 
-    proc_context_t *proc_context = msg->proc_context;
     transData_t *gtpc_trans = proc_context->gtpc_trans;
+    ue_context_t *ue_context = proc_context->ue_context; 
 
 
 	/*Validate the modification is accepted or not. */
@@ -264,7 +252,7 @@ process_rab_proc_pfcp_mod_sess_rsp(msg_info_t *msg)
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
-	ret = process_rab_pfcp_sess_mod_resp(msg->proc_context,
+	ret = process_rab_pfcp_sess_mod_resp(proc_context,
 			msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 			gtpv2c_tx);
 	if (ret != 0) {
@@ -365,25 +353,5 @@ proc_rab_failed(msg_info_t *msg, uint8_t cause )
 void 
 proc_rab_complete(proc_context_t *proc_context)
 {
-    ue_context_t *ue_context = proc_context->ue_context; 
-    transData_t *trans_rec = proc_context->gtpc_trans;
-
-    uint16_t port_num = trans_rec->peer_sockaddr.sin_port; 
-    uint32_t sender_addr = trans_rec->peer_sockaddr.sin_addr.s_addr; 
-    uint32_t seq_num = trans_rec->sequence; 
-    transData_t *temp_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
-    assert(temp_trans != NULL);
-
-    /* Let's cross check if transaction from the table is matchig with the one we have 
-     * in subscriber 
-     */
-    assert(proc_context->gtpc_trans == temp_trans);
-    proc_context->gtpc_trans =  NULL;
-
-    /* PFCP transaction is already complete. */
-    assert(proc_context->pfcp_trans == NULL);
-    free(temp_trans);
-    proc_context->gtpc_trans = NULL;
-    free(proc_context);
-    ue_context->current_proc = NULL;
+    end_procedure(proc_context);
 }

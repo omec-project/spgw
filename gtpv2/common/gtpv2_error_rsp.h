@@ -78,7 +78,8 @@ void get_error_mbrsp_info(msg_info_t *msg, err_rsp_info *err_rsp_info);
  * @param  : iface, interface on which response to be sent
  * @return : Returns nothing
  */
-void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface);
+void 
+ds_error_response(proc_context_t *ds_proc, msg_info_t *msg, uint8_t cause_value, int iface);
 
 /**
  * @brief  : Gets information related to error and fills error response structure
@@ -87,7 +88,7 @@ void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface);
  * @param  : index, index of csr message in pending_csr array if parant message is csr
  * @return : Returns nothing
  */
-void get_error_dsrsp_info(msg_info_t *msg, err_rsp_info *err_rsp_info);
+void get_error_dsrsp_info(proc_context_t *ds_proc, msg_info_t *msg, err_rsp_info *err_rsp_info);
 
 
 /**

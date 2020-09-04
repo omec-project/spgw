@@ -57,19 +57,18 @@ int handle_pfcp_session_modification_response(msg_info_t *msg)
     proc_context->pfcp_trans = NULL;
 
     msg->proc_context = proc_context;
-    msg->ue_context = proc_context->ue_context; 
-    msg->pdn_context = proc_context->pdn_context; /* can be null in case of rab release */ 
-    assert(msg->ue_context != NULL);
     msg->event = PFCP_SESS_MOD_RESP_RCVD_EVNT;
+    SET_PROC_MSG(proc_context, msg);
 
-    proc_context->handler((void*)proc_context, msg->event, (void *)msg);
+    proc_context->handler((void*)proc_context, msg);
     return 0;
 }
 
 
 int
-handle_pfcp_session_mod_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
+handle_pfcp_session_mod_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {
+    msg_info_t *msg = *msg_p;
     struct sockaddr_in peer_addr = {0};
     peer_addr = msg->peer_addr;
 

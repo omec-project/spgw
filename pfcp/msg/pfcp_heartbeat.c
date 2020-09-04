@@ -67,8 +67,9 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	return 0;
 }
 
-int handle_pfcp_heartbit_req_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
+int handle_pfcp_heartbit_req_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {
+    msg_info_t *msg = *msg_p;
     int ret;
 	struct sockaddr_in *peer_addr = &msg->peer_addr;
     increment_userplane_stats(MSG_RX_PFCP_SXASXB_ECHOREQ, peer_addr->sin_addr.s_addr);
@@ -114,8 +115,9 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	return 0;
 }
 
-int handle_pfcp_heartbit_rsp_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
+int handle_pfcp_heartbit_rsp_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {
+    msg_info_t *msg = *msg_p;
 	struct sockaddr_in *peer_addr = &msg->peer_addr;
     int ret;
     ret = process_heartbeat_response((uint8_t *)pfcp_rx, peer_addr);

@@ -25,157 +25,85 @@
 #include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
+#include "proc_session_report.h"
+#include "cp_transactions.h"
 
-#if 0
-/**
- * @brief  : Maintains downlink data notification acknowledgement information
- */
-struct downlink_data_notification_ack_t {
-	ue_context_t *context;
+extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
-	gtpv2c_ie *cause_ie;
-	uint8_t *delay;
-	/* TODO! More to implement... See table 7.2.11.2-1
-	 * 'Recovery: This IE shall be included if contacting the peer
-	 * for the first time'
-	 */
-};
-#endif
-
-/**
- * @brief  : callback to handle downlink data notification messages from the
- *           data plane
- * @param  : msg_payload
- *           message payload received by control plane from the data plane
- * @return : 0 inicates success, error otherwise
- */
+// saegw - CONN_SUSPEND_PROC DDN_REQ_SNT_STATE DDN_ACK_RESP_RCVD_EVNT ==> process_ddn_ack_resp_handler
+// sgw  CONN_SUSPEND_PROC DDN_REQ_SNT_STATE DDN_ACK_RESP_RCVD_EVNT ==> process_ddn_ack_resp_handler 
 int
-cb_ddn(struct msgbuf *msg_payload)
+handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 {
-	int ret = ddn_by_session_id(msg_payload->msg_union.sess_entry.sess_id);
+    msg_info_t *msg = *msg_p;
+    int ret = 0;
+    struct sockaddr_in *peer_addr = &msg->peer_addr;
+    ue_context_t *context = NULL;
+    dnlnk_data_notif_ack_t *ddn_ack = &msg->gtpc_msg.ddn_ack;
+	// uint8_t delay = 0; /*TODO move this when more implemented?*/
 
-	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, "Error on DDN Handling %s: (%d) %s\n",
-				gtp_type_str(ret), ret,
-				(ret < 0 ? strerror(-ret) : cause_str(ret)));
-	}
-	return ret;
-}
+    increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK, peer_addr->sin_addr.s_addr);
+    /* Reset periodic timers */
+    process_response(peer_addr->sin_addr.s_addr);
 
-/**
- * @brief  : creates and sends downlink data notification according to session
- *           identifier
- * @param  : session_id - session identifier pertaining to downlink data packets
- *           arrived at data plane
- * @return : 0 - indicates success, failure otherwise
- */
-int
-ddn_by_session_id(uint64_t session_id)
-{
-	uint8_t tx_buf[MAX_GTPV2C_UDP_LEN] = { 0 };
-	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) tx_buf;
-	uint32_t sgw_s11_gtpc_teid = UE_SESS_ID(session_id);
-	ue_context_t *context = NULL;
-	static uint32_t ddn_sequence = 1;
+    ret = decode_dnlnk_data_notif_ack((uint8_t*)gtpv2c_rx, ddn_ack); 
+    if (!ret) {
+        printf("\n DDN decode failure ");
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
+        return ret;
+    }
 
-	clLog(clSystemLog, eCLSeverityDebug, "%s: sgw_s11_gtpc_teid:%u\n",
-			__func__, sgw_s11_gtpc_teid);
+    if (gtpv2c_rx->teid.has_teid.teid && get_ue_context(ddn_ack->header.teid.has_teid.teid, &context) != 0) {
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
+        return -1;
+    }
+ 
+    // validate message 
 
-	int ret = get_ue_context(sgw_s11_gtpc_teid, &context);
+    uint32_t local_addr = my_sock.s11_sockaddr.sin_addr.s_addr;
+    uint16_t port_num = my_sock.s11_sockaddr.sin_port;
+    uint32_t seq_num = gtpv2c_rx->teid.has_teid.seq;
 
-	if (ret < 0 || !context)
-		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+    transData_t *gtpc_trans = delete_gtp_transaction(local_addr, port_num, seq_num);
 
-	ret = create_downlink_data_notification(context,
-			UE_BEAR_ID(session_id),
-			ddn_sequence,
-			gtpv2c_tx);
+    /* Retrive the session information based on session id. */
+    if(gtpc_trans == NULL) {
+        printf("Unsolicitated DDN Ack response \n");
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
+        return -1;
+    }
 
-	if (ret)
-		return ret;
+	/* stop and delete timer entry for pfcp sess del req */
+	stop_transaction_timer(gtpc_trans);
 
-	struct sockaddr_in mme_s11_sockaddr_in = {
-		.sin_family = AF_INET,
-		.sin_port = htons(GTPC_UDP_PORT),
-		.sin_addr.s_addr = htonl(context->s11_mme_gtpc_ipv4.s_addr),
-		.sin_zero = {0},
-	};
+    proc_context_t *proc_context = gtpc_trans->proc_context;
 
+    if(context == NULL) {
+        context = proc_context->ue_context;
+    } else {
+        assert(proc_context->ue_context == context);
+    }
 
-	uint16_t payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
-			+ sizeof(gtpv2c_tx->gtpc);
+    // check cause from peer node...
+    // if MME accepted then good..
+    // if MME rejects DDN with context not found then cleanup our UE context 
+    // If accept then take delay/buffer count values and pass it to user plane 
 
-	if (pcap_dumper) {
-		dump_pcap(payload_length, tx_buf);
-	} else {
-		uint32_t bytes_tx = sendto(my_sock.sock_fd_s11, tx_buf, payload_length, 0,
-		    (struct sockaddr *) &mme_s11_sockaddr_in,
-		    sizeof(mme_s11_sockaddr_in));
+    msg->proc_context = gtpc_trans->proc_context;
+    msg->event = DDN_ACK_RESP_RCVD_EVNT;
+    msg->proc  = proc_context->state;
+    SET_PROC_MSG(proc_context, msg);
 
-		if (bytes_tx != (int) payload_length) {
-			clLog(clSystemLog, eCLSeverityCritical, "Transmitted Incomplete GTPv2c Message:"
-					"%u of %u tx bytes\n",
-					payload_length, bytes_tx);
-		}
-	}
-	ddn_sequence += 2;
+    clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
+            "Msg_Type:%s[%u], Teid:%u, "
+            "Procedure:%s, State:%s, Event:%s\n",
+            __func__, gtp_type_str(msg->msg_type), msg->msg_type,
+            gtpv2c_rx->teid.has_teid.teid,
+            get_proc_string(msg->proc),
+            get_state_string(msg->state), get_event_string(msg->event));
 
-    increment_mme_peer_stats(MSG_TX_GTPV2_S11_DDNREQ, mme_s11_sockaddr_in.sin_addr.s_addr);
+    proc_context->handler(proc_context, msg);
 
-	return 0;
-}
-
-/**
- * @brief  : parses gtpv2c message and populates downlink_data_notification_ack_t
- *           structure
- * @param  : gtpv2c_rx
- *           buffer containing received downlink data notification ack message
- * @param  : ddn_ack
- *           structure to contain parsed information from message
- * @return : - 0 if successful
- *           - > 0 if error occurs during packet filter parsing corresponds to 3gpp
- *             specified cause error value
- *           - < 0 for all other errors
- */
-int
-parse_downlink_data_notification_ack(gtpv2c_header_t *gtpv2c_rx,
-			downlink_data_notification_t *ddn_ack)
-{
-
-	gtpv2c_ie *current_ie;
-	gtpv2c_ie *limit_ie;
-
-	uint32_t teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
-	int ret = get_ue_context(teid, &ddn_ack->context);
-
-	if (ret < 0 || !ddn_ack->context)
-		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-
-
-	/** TODO: we should fully verify mandatory fields within received
-	 * message */
-	FOR_EACH_GTPV2C_IE(gtpv2c_rx, current_ie, limit_ie)
-	{
-		if (current_ie->type == GTP_IE_CAUSE &&
-				current_ie->instance == IE_INSTANCE_ZERO) {
-			ddn_ack->cause_ie = current_ie;
-		} else if (current_ie->type == GTP_IE_DELAY_VALUE &&
-				current_ie->instance == IE_INSTANCE_ZERO) {
-			ddn_ack->delay =
-					&IE_TYPE_PTR_FROM_GTPV2C_IE(delay_ie,
-					current_ie)->delay_value;
-		}
-		/* TODO implement conditional IE "Recovery" */
-	}
-
-	/* Verify that cause is accepted */
-	if (IE_TYPE_PTR_FROM_GTPV2C_IE(cause_ie,
-			ddn_ack->cause_ie)->cause_ie_hdr.cause_value
-	    != GTPV2C_CAUSE_REQUEST_ACCEPTED) {
-		clLog(clSystemLog, eCLSeverityCritical, "Cause not accepted for DDNAck\n");
-		return IE_TYPE_PTR_FROM_GTPV2C_IE(cause_ie,
-				ddn_ack->cause_ie)->cause_ie_hdr.cause_value;
-	}
 	return 0;
 }
 
@@ -217,142 +145,75 @@ create_downlink_data_notification(ue_context_t *context, uint8_t eps_bearer_id,
 	return 0;
 }
 
-int
-process_ddn_ack(downlink_data_notification_t ddn_ack, uint8_t *delay, msg_info_t *data)
+void ddn_indication_timeout(void *data)
 {
-	int ret = 0;
-    ue_context_t *context = NULL;
-
-	/* Lookup entry in hash table on the basis of session id*/
-	uint64_t ebi_index = 0;   /*ToDo : Need to revisit this.*/
-	if (get_sess_entry_seid((ddn_ack.context)->pdns[ebi_index]->seid, &context) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for sess ID:%lu\n",
-				(ddn_ack.context)->pdns[ebi_index]->seid);
-		return -1;
-	}
-    assert(context == data->ue_context);
-
-#ifdef DDN_STATES
-	/* VS: Update the session state */
-	resp->msg_type = GTP_DOWNLINK_DATA_NOTIFICATION_ACK;
-	resp->state = DDN_ACK_RCVD_STATE;
-#endif
-
-	/* check for conditional delay value, set if necessary,
-	 * or indicate no delay */
-	if (ddn_ack.delay != NULL)
-		*delay = *ddn_ack.delay;
-	else
-		*delay = 0;
-
-	/* VS: Update the UE State */
-	ret = update_ue_state((ddn_ack.context)->s11_sgw_gtpc_teid,
-			DDN_ACK_RCVD_STATE ,ebi_index);
-	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:Failed to update UE State for teid: %u\n", __func__,
-				(ddn_ack.context)->s11_sgw_gtpc_teid);
-	}
-	return 0;
+    proc_context_t *proc_context = (proc_context_t *)data;
+    // Option 1 - Retry few times 
+    // Opton  2 - after configurable retry, generate timeout event for fsm  
+    msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+    msg->event = DDN_TIMEOUT;
+    msg->proc_context = proc_context;
+    SET_PROC_MSG(proc_context, msg);
+    proc_context->handler(proc_context, msg);
 
 }
-
-static int
-process_ddn_ack_resp_handler(void *data, void *unused_param)
-{
-    int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-
-	uint8_t delay = 0; /*TODO move this when more implemented?*/
-	ret = process_ddn_ack(msg->gtpc_msg.ddn_ack, &delay, data);
-	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d:Error"
-				"\n\tprocess_ddn_ack_resp_hand "
-				"%s: (%d) %s\n", __func__, __LINE__,
-				gtp_type_str(msg->msg_type), ret,
-				(ret < 0 ? strerror(-ret) : cause_str(ret)));
-		/* Error handling not implemented */
-		return ret;
-	}
-
-	/* TODO something with delay if set */
-	/* TODO Implemente the PFCP Session Report Resp message sent to dp */
-
-	RTE_SET_USED(unused_param);
-	return 0;
-}
-
-// saegw - CONN_SUSPEND_PROC DDN_REQ_SNT_STATE DDN_ACK_RESP_RCVD_EVNT ==> process_ddn_ack_resp_handler
-// sgw  CONN_SUSPEND_PROC DDN_REQ_SNT_STATE DDN_ACK_RESP_RCVD_EVNT ==> process_ddn_ack_resp_handler 
+/**
+ * @brief  : creates and sends downlink data notification according to session
+ *           identifier
+ * @param  : session_id - session identifier pertaining to downlink data packets
+ *           arrived at data plane
+ * @return : 0 - indicates success, failure otherwise
+ */
 int
-handle_ddn_ack(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
+send_ddn_indication(proc_context_t *proc_ctxt, uint8_t ebi_index)
 {
+    ue_context_t *context = (ue_context_t *)proc_ctxt->ue_context;
+	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
+	static uint32_t ddn_sequence = 1; /* TODO : Requirement, sequence number management */
     int ret;
-    struct sockaddr_in s11_peer_sockaddr = {0};
 
-    s11_peer_sockaddr = msg->peer_addr;
-    /* Reset periodic timers */
-    process_response(s11_peer_sockaddr.sin_addr.s_addr);
+	ret = create_downlink_data_notification(context,
+			ebi_index,
+			ddn_sequence,
+			gtpv2c_tx);
 
-    ret = parse_downlink_data_notification_ack(gtpv2c_rx,
-            &msg->gtpc_msg.ddn_ack);
-    if (ret)
-        return ret;
+	if (ret) {
+		return ret;
+    }
 
-    // update CLCI stats 
-    // validate message 
-    ue_context_t *context = NULL;
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
+	struct sockaddr_in mme_s11_sockaddr_in = {
+		.sin_family = AF_INET,
+		.sin_port = htons(GTPC_UDP_PORT),
+		.sin_addr.s_addr = htonl(context->s11_mme_gtpc_ipv4.s_addr),
+		.sin_zero = {0},
+	};
+
+
+	uint16_t payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
+			+ sizeof(gtpv2c_tx->gtpc);
+
+    /* Send response on s11 interface */
+    gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
+            (struct sockaddr *) &mme_s11_sockaddr_in,
+            sizeof(struct sockaddr_in));
 
     uint32_t local_addr = my_sock.s11_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.s11_sockaddr.sin_port;
-    uint32_t seq_num = gtpv2c_rx->teid.has_teid.seq;
 
-    transData_t *gtpc_trans = delete_gtp_transaction(local_addr, port_num, seq_num);
+    transData_t *gtpc_trans;
+    gtpc_trans = start_response_wait_timer(proc_ctxt, (uint8_t *)gtp_tx_buf, 
+                                            payload_length, 
+                                            ddn_indication_timeout);
 
-    /* Retrive the session information based on session id. */
-    if(gtpc_trans == NULL) {
-        printf("Unsolicitated DDN Ack responnse \n");
-        return -1;
-    }
+    gtpc_trans->proc_context = (void *)proc_ctxt;
+    proc_ctxt->gtpc_trans = gtpc_trans;
+    gtpc_trans->sequence = ddn_sequence;
+    gtpc_trans->peer_sockaddr = mme_s11_sockaddr_in;
+    add_gtp_transaction(local_addr, port_num, ddn_sequence, gtpc_trans);
 
-    proc_context_t *proc_context = gtpc_trans->proc_context;
-    ue_context_t *context1 = proc_context->ue_context;
+    increment_mme_peer_stats(MSG_TX_GTPV2_S11_DDNREQ, mme_s11_sockaddr_in.sin_addr.s_addr);
 
+	ddn_sequence += 2;
 
-    /*Retrive UE state. */
-    if (get_ue_context(ntohl(gtpv2c_rx->teid.has_teid.teid), &context) != 0) {
-        return -1;
-    }
-    assert(context != context1); // no cross connection 
-
-    msg->proc_context = gtpc_trans->proc_context;
-    msg->ue_context = proc_context->ue_context; 
-    msg->pdn_context = proc_context->pdn_context; 
-
-    for(int i=0; i < MAX_BEARERS; i++){
-        if(context->pdns[i] == NULL){
-            continue;
-        }
-        else{
-            msg->state = context->pdns[i]->state;
-            msg->proc = context->pdns[i]->proc;
-        }
-    }
-
-    /*Set the appropriate event type.*/
-    msg->event = DDN_ACK_RESP_RCVD_EVNT;
-
-    clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
-            "Msg_Type:%s[%u], Teid:%u, "
-            "Procedure:%s, State:%s, Event:%s\n",
-            __func__, gtp_type_str(msg->msg_type), msg->msg_type,
-            gtpv2c_rx->teid.has_teid.teid,
-            get_proc_string(msg->proc),
-            get_state_string(msg->state), get_event_string(msg->event));
-
-    process_ddn_ack_resp_handler(msg, NULL);
-    return 0;
+	return 0;
 }
-
-

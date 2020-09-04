@@ -5,6 +5,12 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "tables/tables.h"
+
+#include "gtp_messages.h"
+#include "util.h"
+#include "gtpv2_set_ie.h"
+#include "gtpv2_session.h"
+
 #ifdef FUTURE_NEED_SGW
 // saegw DETACH_PROC DS_REQ_SNT_STATE DS_RESP_RCVD_EVNT => process_ds_resp_handler
 // sgw DETACH_PROC DS_REQ_SNT_STATE DS_RESP_RCVD_EVNT : process_ds_resp_handler 
@@ -25,7 +31,7 @@ int handle_delete_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 	if(get_ue_context_by_sgw_s5s8_teid(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid, &context) != 0)
 	 {
 
-		ds_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
+		ds_error_response(proc_context, msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
 						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 		return -1;
 	}
@@ -34,7 +40,7 @@ int handle_delete_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 		clLog(clSystemLog, eCLSeverityCritical, "Cause Req Error : (%s:%d)msg type :%u, cause ie : %u \n", __func__, __LINE__,
 				msg->msg_type, msg->gtpc_msg.ds_rsp.cause.cause_value);
 
-		 ds_error_response(msg, msg->gtpc_msg.ds_rsp.cause.cause_value,
+		 ds_error_response(proc_context, msg, msg->gtpc_msg.ds_rsp.cause.cause_value,
 						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 		return -1;
 	}
@@ -112,15 +118,6 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *dsr, uint8_t *gtpv2c_t
 	return 0;
 }
 
-void
-fill_pgwc_ds_sess_rsp(del_sess_rsp_t *ds_resp, uint32_t sequence, uint32_t has_teid)
-{
-	    set_gtpv2c_header(&ds_resp->header, 1, GTP_DELETE_SESSION_RSP,
-				                                 has_teid, sequence);
-
-		    set_cause_accepted(&ds_resp->cause, IE_INSTANCE_ZERO);
-
-}
 
 int
 process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
@@ -165,7 +162,7 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
 	else {
         increment_userplane_stats(MSG_TX_PFCP_SXA_SESSDELREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
-		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_delete_session_request_pfcp_timeout);
+		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_delete_session_request_pfcp_timeout);
         bearer->pdn->trans_entry = trans_entry; 
 	}
 	/* Update UE State */
@@ -194,7 +191,7 @@ process_ds_resp_handler(void *data, void *unused_param)
 		ret = process_sgwc_s5s8_delete_session_response(&msg->gtpc_msg.ds_rsp);
 		if (ret) {
 			if(ret  != -1)
-				ds_error_response(msg, ret,
+				ds_error_response(proc_context, msg, ret,
 						           cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
 			/* Error handling not implemented */
 			clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);

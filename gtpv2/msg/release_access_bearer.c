@@ -24,7 +24,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_peer.h"
 #include "gtpv2_error_rsp.h"
-#include "rab_proc.h"
+#include "proc_s1_release.h"
 #include "sm_structs_api.h"
 #include "tables/tables.h"
 #include "util.h"
@@ -55,25 +55,25 @@ set_release_access_bearer_response(gtpv2c_header_t *gtpv2c_tx,
 
 // saegw - CONN_SUSPEND_PROC CONNECTED_STATE REL_ACC_BER_REQ_RCVD_EVNT => process_rel_access_ber_req_handler  
 // sgw   - CONN_SUSPEND_PROC CONNECTED_STATE REL_ACC_BER_REQ_RCVD_EVNT => process_rel_access_ber_req_handler 
-int handle_rab_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
+int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 {
+    msg_info_t *msg = *msg_p;
     int ret;
-    struct sockaddr_in s11_peer_sockaddr = {0};
+    struct sockaddr_in *s11_peer_sockaddr;
+    ue_context_t *context = NULL;
 
-    s11_peer_sockaddr = msg->peer_addr;
+    s11_peer_sockaddr = &msg->peer_addr;
+
+    increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ, s11_peer_sockaddr->sin_addr.s_addr);
     /* Reset periodic timers */
-    process_response(s11_peer_sockaddr.sin_addr.s_addr);
+    process_response(s11_peer_sockaddr->sin_addr.s_addr);
 
     ret = decode_rel_acc_bearer_req((uint8_t *)gtpv2c_rx, &msg->gtpc_msg.rab);
-    if (ret == 0)
+    if (ret == 0) {
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ_DROP, s11_peer_sockaddr->sin_addr.s_addr);
         return -1;
+    }
 
-    /* validate RAB request content */
-
-    /* update CLi stats ?*/
-    ue_context_t *context = NULL;
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
 
     /* Find old transaction */
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
@@ -84,19 +84,28 @@ int handle_rab_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     if(old_trans != NULL)
     {
         printf("Retransmitted RAB received. Old RAB is in progress\n");
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ_DROP, s11_peer_sockaddr->sin_addr.s_addr);
         return -1;
     }
 
     if(get_ue_context(msg->gtpc_msg.rab.header.teid.has_teid.teid,
                 &context) != 0) {
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ_REJ, s11_peer_sockaddr->sin_addr.s_addr);
         rab_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
         return -1;
     }
     msg->ue_context = context;
-	msg->proc = CONN_SUSPEND_PROC;
-    assert(context->current_proc == NULL);
 
+	msg->proc = S1_RELEASE_PROC;
+
+    for(uint8_t ebi_index = 0; ebi_index <= 11; ebi_index++) {
+        pdn_connection_t *pdn = GET_PDN(context, ebi_index);
+        if(pdn != NULL) {
+            msg->pdn_context = pdn;
+            break;
+        }
+    }
 	/*Set the appropriate event type.*/
 	msg->event = REL_ACC_BER_REQ_RCVD_EVNT;
 
@@ -111,9 +120,6 @@ int handle_rab_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     trans->sequence = seq_num;
     trans->peer_sockaddr = msg->peer_addr;
 
-    // set cross references in context 
-    context->current_proc = rab_proc;
-
-    rab_proc->handler(rab_proc, msg->event, (void *)msg);
+    start_procedure(rab_proc, msg);
     return 0;
 }

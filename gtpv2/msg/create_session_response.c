@@ -12,17 +12,34 @@
 // sgw SGW_RELOCATION_PROC CS_REQ_SNT_STATE CS_RESP_RCVD_EVNT ==> process_cs_resp_handler 
 
 #include "tables/tables.h"
-#ifdef FUTURE_NEED
+#include "gtpv2_set_ie.h"
+#include "gtpv2_interface.h"
+#include "clogger.h"
+#include "ue.h"
+#include "pfcp_enum.h"
+#include "spgw_cpp_wrapper.h"
+#include "util.h"
+#include "gw_adapter.h"
+#include "gtpv2_error_rsp.h"
+#include "cp_transactions.h"
+#include "cp_io_poll.h"
+#include "pfcp_cp_util.h"
+#include "pfcp_messages_encoder.h"
+#include "cp_config.h"
+#include "sm_structs_api.h"
+#include "pfcp_cp_session.h"
+#include "cp_peer.h"
+
 int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
     ue_context_t *context = NULL;
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
-    ret = decode_create_sess_rsp((uint8_t *)gtpv2c_rx, &msg->gtpc_msg.cs_rsp);
-    if(!ret)
+    int ret = decode_create_sess_rsp((uint8_t *)gtpv2c_rx, &msg->gtpc_msg.cs_rsp);
+    if(!ret) {
+        // Match transaction and generate response on s11 interface 
         return -1;
+    }
 
-	gtpc_delete_timer_entry(msg->gtpc_msg.cs_rsp.header.teid.has_teid.teid);
+	//gtpc_delete_timer_entry(msg->gtpc_msg.cs_rsp.header.teid.has_teid.teid);
 
 	if(msg->gtpc_msg.cs_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
 		cs_error_response(msg, msg->gtpc_msg.cs_rsp.cause.cause_value,
@@ -41,7 +58,7 @@ int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 	uint8_t ebi_index = msg->gtpc_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi - 5;
 	pdn_connection_t *pdn = GET_PDN(context, ebi_index);
 	msg->state = pdn->state;
-	msg->proc = pdn->proc;
+	//msg->proc = pdn->proc;
 
 	/*Set the appropriate event type.*/
 	msg->event = CS_RESP_RCVD_EVNT;
@@ -80,7 +97,7 @@ int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 					get_state_string(msg->state), get_event_string(msg->event));
 
 #endif
-
+    process_cs_resp_handler(msg, NULL);
     return 0;
 }
 
@@ -273,13 +290,14 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 	{
         increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
-		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_create_sess_rsp_pfcp_timeout);
+		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_create_sess_rsp_pfcp_timeout);
         pdn->trans_entry = trans_entry; 
 	}
 
 	/* Update UE State */
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
+#ifdef OBSOLTE
 	/* Lookup Stored the session information. */
 	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Failed to add response in entry in SM_HASH\n", __file__
@@ -294,6 +312,7 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 	//resp->context = context;
 	resp->msg_type = GTP_CREATE_SESSION_RSP;
 	resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
+#endif
 
 	return 0;
 }
@@ -391,4 +410,3 @@ process_cs_resp_handler(void *data, void *unused_param)
 	return 0;
 }
 
-#endif

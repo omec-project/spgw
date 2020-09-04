@@ -19,24 +19,6 @@
  */
 int process_cs_resp_handler(void *arg1, void *arg2);
 
-/* Function */
-/**
- * @brief  : Handles processing of pfcp session establishment response
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_sess_est_resp_handler(void *arg1, void *arg2);
-
-
-/* Function */
-/**
- * @brief  : Handles processing of report request
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_rpt_req_handler(void *arg1, void *arg2);
 
 /* Function */
 /**
@@ -46,24 +28,6 @@ int process_rpt_req_handler(void *arg1, void *arg2);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int process_error_occured_handler(void *t1, void *t2);
-
-/* Function */
-/**
- * @brief  : Handles processing of cca message
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int cca_msg_handler(void *t1 , void *t2);
-
-/* Function */
-/**
- * @brief  : Handles create session request if gx is enabled
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int gx_setup_handler(void *arg1, void *arg2);
 
 /* Function */
 /**
@@ -128,40 +92,6 @@ int pfd_management_handler(void *arg1, void *arg2);
  */
 int process_mod_resp_delete_handler(void *arg1, void *arg2);
 
-/* Function */
-/**
- * @brief  : Handles processing of session modification response received in case of sgw relocation
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_sess_mod_resp_sgw_reloc_handler(void *arg1, void *arg2);
-
-/* Function */
-/**
- * @brief  : Handles processing of session establishment response received in case of sgw relocation
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_sess_est_resp_sgw_reloc_handler(void *arg1, void *arg2);
-
-/* Function */
-/**
- * @brief  : Handles processing of modify bearer request received in case of sgw relocation
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_mb_req_sgw_reloc_handler(void *arg1, void *arg2);
-
-/**
- * @brief  : Handles processing of modify bearer response in handover scenario
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_mbr_resp_handover_handler(void *arg1, void *arg2);
 
 /**
  * @brief  : Handles processing of pfcp session delete response in handover scenario

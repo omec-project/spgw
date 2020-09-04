@@ -119,7 +119,6 @@ process_error_occured_handler_new(void *data, void *unused_param)
         RTE_SET_USED(ret);
         return -1;
     }
-    assert(context == msg->ue_context); 
 
     ebi_index = info_resp.ebi_index;
     pdn = GET_PDN(context ,ebi_index);
@@ -149,7 +148,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
     }
 
     printf("Delete all PDNs \n");
-    proc_context_t *proc = context->current_proc;
+    proc_context_t *proc = TAILQ_FIRST(&context->pending_sub_procs);
     upf_context_t *upf_context = context->upf_context;
 
     // if all PDNs released then release user context 
@@ -162,7 +161,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
 
     if(upf_context != NULL) {
 	    pending_proc_key_t *key = NULL;
-        LIST_FOREACH(key, &upf_context->pendingProcs, procentries) {
+        LIST_FOREACH(key, &upf_context->pending_sub_procs, procentries) {
             if(key != NULL && (key->proc_context == (void *)proc) ) {
                 LIST_REMOVE(key, procentries);
                 rte_free(key);
@@ -194,7 +193,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
             assert(pfcp_trans != NULL);
             assert(pfcp_trans == proc->pfcp_trans);
             stop_transaction_timer(proc->pfcp_trans);
-            free(proc->pfcp_trans);
+            free(pfcp_trans);
             proc->pfcp_trans = NULL;
         }
         free(proc);
@@ -222,11 +221,11 @@ process_error_occured_handler(void *data, void *unused_param)
             if(upf_ctx->state < PFCP_ASSOC_RESP_RCVD_STATE){
                 upf_context_delete_entry(&pdn->upf_ipv4.s_addr);
                 pending_proc_key_t *key;
-                key = LIST_FIRST(&upf_ctx->pendingProcs);
+                key = LIST_FIRST(&upf_ctx->pending_sub_procs);
                 while (key != NULL) {
                     LIST_REMOVE(key, procentries);
                     rte_free(key);
-                    key = LIST_FIRST(&upf_ctx->pendingProcs);
+                    key = LIST_FIRST(&upf_ctx->pending_sub_procs);
                 }
                 rte_free(upf_ctx);
                 upf_ctx = NULL;
@@ -310,7 +309,7 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 										__FILE__, __func__, __LINE__, errno);
 							}else {
                             transData_t *trans_entry;
-							trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, clean_up_while_error_pfcp_timeout);
+							trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, clean_up_while_error_pfcp_timeout);
                             pdn->trans_entry = trans_entry;
 							}
 						} else {
@@ -341,14 +340,14 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 								if ((upf_context_entry_lookup(pdn->upf_ipv4.s_addr,&upf_context)) ==  0) {
 									if(upf_context->state < PFCP_ASSOC_RESP_RCVD_STATE){
 										if(ret >= 0) {
-                                            LIST_FOREACH(key, &upf_context->pendingProcs, procentries) {
+                                            LIST_FOREACH(key, &upf_context->pending_sub_procs, procentries) {
 												if(key != NULL && key->teid == context->s11_sgw_gtpc_teid ) {
                                                     LIST_REMOVE(key, procentries);
                                                     rte_free(key);
                                                     break;
                                                 }
                                             }
-                                            if(LIST_EMPTY(&upf_context->pendingProcs)) {
+                                            if(LIST_EMPTY(&upf_context->pending_sub_procs)) {
 									        	ret = upf_context_delete_entry(&pdn->upf_ipv4.s_addr);
 												rte_free(upf_context);
 												upf_context  = NULL;

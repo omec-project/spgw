@@ -73,8 +73,9 @@ void dispatch_rar(msg_info_t *msg)
     return;
 }
 
-int handle_rar_msg(msg_info_t *msg)
+int handle_rar_msg(msg_info_t **msg_p)
 {
+    msg_info_t *msg = *msg_p;
     int ret;
     uint32_t call_id;
 	gx_context_t *gx_context = NULL;

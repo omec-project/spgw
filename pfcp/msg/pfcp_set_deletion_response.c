@@ -9,8 +9,9 @@
 #include "pfcp_messages_decoder.h"
 
 int 
-handle_pfcp_set_deletion_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
+handle_pfcp_set_deletion_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {
+    msg_info_t *msg = *msg_p;
     struct sockaddr_in peer_addr = {0};
     peer_addr = msg->peer_addr;
 
