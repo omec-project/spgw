@@ -83,13 +83,10 @@ msg_rx_gtpv2_s11_dsreq_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface"
 msg_rx_gtpv2_s5s8_dsreq(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s5s8"},{"msg_type","DSReq"}})),
 msg_rx_gtpv2_s5s8_dsreq_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s5s8"},{"msg_drop","dsreq_drop"}})),
 msg_rx_gtpv2_s11_rabreq(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","RABReq"}})),
-msg_rx_gtpv2_s11_rabreq_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","rabreq_drop"}})),
-msg_rx_gtpv2_s5s8_rabreq(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s5s8"},{"msg_type","RABReq"}})),
-msg_rx_gtpv2_s5s8_rabreq_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s5s8"},{"msg_drop","rabreq_drop"}})),
+msg_rx_gtpv2_s11_rabreq_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","RABReq_drop"}})),
+msg_rx_gtpv2_s11_rabreq_rej(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","RABReq_rej"}})),
 msg_rx_gtpv2_s11_ddnack(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","DDNAck"}})),
-msg_rx_gtpv2_s11_ddnack_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","ddnack_drop"}})),
-msg_rx_gtpv2_s5s8_ddnack(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s5s8"},{"msg_type","DDNAck"}})),
-msg_rx_gtpv2_s5s8_ddnack_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s5s8"},{"msg_drop","ddnack_drop"}})),
+msg_rx_gtpv2_s11_ddnack_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","DDNAck_drop"}})),
 msg_rx_gtpv2_s11_echoreq(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","ECHOReq"}})),
 msg_rx_gtpv2_s5s8_echoreq(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s5s8"},{"msg_type","ECHOReq"}})),
 msg_rx_gtpv2_s11_echorsp(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","ECHORsp"}})),
@@ -1582,7 +1579,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
 		    obj->counter.Increment();
 		} else {
-		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_drop","rabreq_drop",it->first, it->second);
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_drop","RABReq_drop",it->first, it->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->counter.Increment();
@@ -1596,7 +1593,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
 		    obj->counter.Increment();
 		} else {
-		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_drop","rabreq_drop",it1->first, it1->second, it2->first, it2->second);
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_drop","RABReq_drop",it1->first, it1->second, it2->first, it2->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->counter.Increment();
@@ -1611,7 +1608,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
 		    obj->counter.Increment();
 		} else {
-		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","rabreq_drop",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","RABReq_drop",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->counter.Increment();
@@ -1619,9 +1616,9 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		}
 		break;
 	}
-	case spgwStatsCounter::MSG_RX_GTPV2_S5S8_RABREQ:
+	case spgwStatsCounter::MSG_RX_GTPV2_S11_RABREQ_REJ:
 	{
-		msg_rx_m->msg_rx_gtpv2_s5s8_rabreq.Increment();
+		msg_rx_m->msg_rx_gtpv2_s11_rabreq_rej.Increment();
 		if(labels.size() == 0) {
 		break;
 		}
@@ -1633,7 +1630,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
 		    obj->counter.Increment();
 		} else {
-		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s5s8","msg_type","RABReq",it->first, it->second);
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_drop","RABReq_rej",it->first, it->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->counter.Increment();
@@ -1647,7 +1644,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
 		    obj->counter.Increment();
 		} else {
-		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s5s8","msg_type","RABReq",it1->first, it1->second, it2->first, it2->second);
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_drop","RABReq_rej",it1->first, it1->second, it2->first, it2->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->counter.Increment();
@@ -1662,58 +1659,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
 		    obj->counter.Increment();
 		} else {
-		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s5s8","msg_type","RABReq",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
-		    auto p1 = std::make_pair(s1, obj);
-		    metrics_map.insert(p1);
-		    obj->counter.Increment();
-		}
-		}
-		break;
-	}
-	case spgwStatsCounter::MSG_RX_GTPV2_S5S8_RABREQ_DROP:
-	{
-		msg_rx_m->msg_rx_gtpv2_s5s8_rabreq_drop.Increment();
-		if(labels.size() == 0) {
-		break;
-		}
-		if(labels.size() == 1) {
-		auto it = labels. begin();
-		struct Node s1 = {name, it->first, it->second};
-		auto it1 = metrics_map.find(s1);
-		if(it1 != metrics_map.end()) {
-		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
-		    obj->counter.Increment();
-		} else {
-		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s5s8","msg_drop","rabreq_drop",it->first, it->second);
-		    auto p1 = std::make_pair(s1, obj);
-		    metrics_map.insert(p1);
-		    obj->counter.Increment();
-		}
-		} else if (labels.size() == 2) {
-		auto it1 = labels. begin();
-		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
-		auto itf = metrics_map.find(s1);
-		if(itf != metrics_map.end()) {
-		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
-		    obj->counter.Increment();
-		} else {
-		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s5s8","msg_drop","rabreq_drop",it1->first, it1->second, it2->first, it2->second);
-		    auto p1 = std::make_pair(s1, obj);
-		    metrics_map.insert(p1);
-		    obj->counter.Increment();
-		} 
-		} else if (labels.size() == 3) {
-		auto it1 = labels. begin();
-		auto it2 = it1++;
-		auto it3 = it2++;
-		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
-		auto itf = metrics_map.find(s1);
-		if(itf != metrics_map.end()) {
-		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
-		    obj->counter.Increment();
-		} else {
-		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s5s8","msg_drop","rabreq_drop",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","RABReq_rej",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->counter.Increment();
@@ -1786,7 +1732,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
 		    obj->counter.Increment();
 		} else {
-		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_drop","ddnack_drop",it->first, it->second);
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_drop","DDNAck_drop",it->first, it->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->counter.Increment();
@@ -1800,7 +1746,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
 		    obj->counter.Increment();
 		} else {
-		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_drop","ddnack_drop",it1->first, it1->second, it2->first, it2->second);
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_drop","DDNAck_drop",it1->first, it1->second, it2->first, it2->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->counter.Increment();
@@ -1815,109 +1761,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
 		    obj->counter.Increment();
 		} else {
-		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","ddnack_drop",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
-		    auto p1 = std::make_pair(s1, obj);
-		    metrics_map.insert(p1);
-		    obj->counter.Increment();
-		}
-		}
-		break;
-	}
-	case spgwStatsCounter::MSG_RX_GTPV2_S5S8_DDNACK:
-	{
-		msg_rx_m->msg_rx_gtpv2_s5s8_ddnack.Increment();
-		if(labels.size() == 0) {
-		break;
-		}
-		if(labels.size() == 1) {
-		auto it = labels. begin();
-		struct Node s1 = {name, it->first, it->second};
-		auto it1 = metrics_map.find(s1);
-		if(it1 != metrics_map.end()) {
-		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
-		    obj->counter.Increment();
-		} else {
-		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s5s8","msg_type","DDNAck",it->first, it->second);
-		    auto p1 = std::make_pair(s1, obj);
-		    metrics_map.insert(p1);
-		    obj->counter.Increment();
-		}
-		} else if (labels.size() == 2) {
-		auto it1 = labels. begin();
-		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
-		auto itf = metrics_map.find(s1);
-		if(itf != metrics_map.end()) {
-		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
-		    obj->counter.Increment();
-		} else {
-		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s5s8","msg_type","DDNAck",it1->first, it1->second, it2->first, it2->second);
-		    auto p1 = std::make_pair(s1, obj);
-		    metrics_map.insert(p1);
-		    obj->counter.Increment();
-		} 
-		} else if (labels.size() == 3) {
-		auto it1 = labels. begin();
-		auto it2 = it1++;
-		auto it3 = it2++;
-		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
-		auto itf = metrics_map.find(s1);
-		if(itf != metrics_map.end()) {
-		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
-		    obj->counter.Increment();
-		} else {
-		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s5s8","msg_type","DDNAck",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
-		    auto p1 = std::make_pair(s1, obj);
-		    metrics_map.insert(p1);
-		    obj->counter.Increment();
-		}
-		}
-		break;
-	}
-	case spgwStatsCounter::MSG_RX_GTPV2_S5S8_DDNACK_DROP:
-	{
-		msg_rx_m->msg_rx_gtpv2_s5s8_ddnack_drop.Increment();
-		if(labels.size() == 0) {
-		break;
-		}
-		if(labels.size() == 1) {
-		auto it = labels. begin();
-		struct Node s1 = {name, it->first, it->second};
-		auto it1 = metrics_map.find(s1);
-		if(it1 != metrics_map.end()) {
-		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
-		    obj->counter.Increment();
-		} else {
-		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s5s8","msg_drop","ddnack_drop",it->first, it->second);
-		    auto p1 = std::make_pair(s1, obj);
-		    metrics_map.insert(p1);
-		    obj->counter.Increment();
-		}
-		} else if (labels.size() == 2) {
-		auto it1 = labels. begin();
-		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
-		auto itf = metrics_map.find(s1);
-		if(itf != metrics_map.end()) {
-		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
-		    obj->counter.Increment();
-		} else {
-		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s5s8","msg_drop","ddnack_drop",it1->first, it1->second, it2->first, it2->second);
-		    auto p1 = std::make_pair(s1, obj);
-		    metrics_map.insert(p1);
-		    obj->counter.Increment();
-		} 
-		} else if (labels.size() == 3) {
-		auto it1 = labels. begin();
-		auto it2 = it1++;
-		auto it3 = it2++;
-		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
-		auto itf = metrics_map.find(s1);
-		if(itf != metrics_map.end()) {
-		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
-		    obj->counter.Increment();
-		} else {
-		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s5s8","msg_drop","ddnack_drop",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","DDNAck_drop",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->counter.Increment();

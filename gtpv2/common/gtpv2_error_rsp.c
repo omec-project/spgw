@@ -244,17 +244,17 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
     }
 
     /* Cleanup transaction and cross references  */
-    transData_t *trans = (transData_t *)delete_gtp_transaction(msg->peer_addr.sin_addr.s_addr,         
+    transData_t *gtpc_trans = (transData_t *)delete_gtp_transaction(msg->peer_addr.sin_addr.s_addr,         
                                         msg->peer_addr.sin_port,
                                         rsp_info.seq);
 
-    assert(trans != NULL);
-    trans->cb_data = NULL;
-    proc_context_t *trans_proc = trans->proc_context; 
+    assert(gtpc_trans != NULL);
+    gtpc_trans->cb_data = NULL;
+    proc_context_t *trans_proc = gtpc_trans->proc_context; 
     proc_context_t *msg_proc = msg->proc_context; 
     assert(trans_proc == msg_proc);
     msg_proc->gtpc_trans = NULL;
-    free(trans);
+    free(gtpc_trans);
     RTE_SET_USED(ret);
 }
 
@@ -390,12 +390,17 @@ void mbr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 	}
 }
 
-void get_error_dsrsp_info(msg_info_t *msg, err_rsp_info *rsp_info) 
+void get_error_dsrsp_info(proc_context_t *detach_proc, msg_info_t *msg, err_rsp_info *rsp_info) 
 {
 	ue_context_t *context = NULL;
+    // immediate rejection of dsreq ( validation of msg, ....)
+    // pfcp timeout
+    // user plane rejection 
+    // in case of SGW mode -- DSRsp from pgw  
 
 	switch(msg->msg_type) {
 		case GTP_DELETE_SESSION_REQ: {
+            // immediate rejection 
 			rsp_info->seq = msg->gtpc_msg.dsr.header.teid.has_teid.seq;
 			rsp_info->teid = msg->gtpc_msg.dsr.header.teid.has_teid.teid;
 
@@ -409,7 +414,6 @@ void get_error_dsrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 		}
 
 		case PFCP_SESSION_DELETION_RESPONSE: {
-            proc_context_t *detach_proc = (proc_context_t *)msg->proc_context;
             ue_context_t *ue_context = detach_proc->ue_context;
             transData_t *gtpc_trans = detach_proc->gtpc_trans;
             msg->peer_addr = gtpc_trans->peer_sockaddr; 
@@ -420,16 +424,14 @@ void get_error_dsrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 		}
 
 		case GTP_DELETE_SESSION_RSP: {
-#ifdef FUTURE_NEED
 			if(get_ue_context_while_error(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid, &context) != 0) {
 				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 				return;
 
 			}
+            transData_t *gtpc_trans = detach_proc->gtpc_trans;
 			rsp_info->sender_teid = context->s11_mme_gtpc_teid;
-			rsp_info->seq = context->sequence;
-			rsp_info->teid = msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid;
-#endif
+			rsp_info->seq = gtpc_trans->sequence;
 			break;
 		}
         default:
@@ -437,12 +439,15 @@ void get_error_dsrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 	}
 }
 
-void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
+void 
+ds_error_response(proc_context_t *ds_proc, msg_info_t *msg, uint8_t cause_value, int iface)
 {
+	del_sess_rsp_t ds_resp = {0};
+	uint16_t msg_len = 0;
     uint16_t payload_length;
 	err_rsp_info rsp_info = {0};
 
-	get_error_dsrsp_info(msg, &rsp_info); // dsrsp
+	get_error_dsrsp_info(ds_proc, msg, &rsp_info); // dsrsp
 
     assert(msg->peer_addr.sin_port != 0);
 
@@ -458,10 +463,10 @@ void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
         increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_T,saddr_in.sin_addr.s_addr);
 	}
 #endif
+
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
 
-	del_sess_rsp_t ds_resp = {0};
 
     set_gtpv2c_teid_header(&ds_resp.header,
                            GTP_DELETE_SESSION_RSP,
@@ -470,20 +475,12 @@ void ds_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 
 	set_cause_error_value(&ds_resp.cause, IE_INSTANCE_ZERO, cause_value);
 
-	uint16_t msg_len = 0;
 	msg_len = encode_del_sess_rsp(&ds_resp,(uint8_t *)gtpv2c_tx);
 	gtpv2c_header_t *header = (gtpv2c_header_t *) gtpv2c_tx;
 	header->gtpc.message_len = htons(msg_len - 4);
 
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 
-#ifdef FUTURE_NEED
-	int ret = 0;
-	ret = clean_up_while_error(eps_bearer_id, rsp_info.teid, &context->imsi, context->imsi_len, rsp_info.seq);
-	if( ret < 0 ) {
-		return;
-	}
-#endif
 	if(iface == S11_IFACE){
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &msg->peer_addr, sizeof(struct sockaddr_in));

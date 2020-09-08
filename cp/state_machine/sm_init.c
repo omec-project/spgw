@@ -414,39 +414,3 @@ const char * get_event_string(int value)
     }
     return event_name;
 }
-
-
-uint8_t
-update_ue_proc(uint32_t teid_key, uint8_t proc, uint8_t ebi_index)
-{
-	int ret = 0;
-	ue_context_t *context = NULL;
-	pdn_connection_t *pdn = NULL;
-	ret = get_ue_context(teid_key, &context);
-
-	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:Failed to update UE State for Teid:%x...\n", __func__,
-				teid_key);
-		return -1;
-	}
-
-	if (context == NULL)
-		return -1;
-
-	pdn = GET_PDN(context, ebi_index);
-
-	if (pdn == NULL)
-		return -1;
-
-	pdn->proc = proc;
-
-	clLog(clSystemLog, eCLSeverityDebug,
-			"%s: Change UE State for Teid:%u, Procedure:%s, State:%s\n",
-			__func__, teid_key, get_proc_string(pdn->proc),
-			get_state_string(pdn->state));
-
-	return 0;
-
-}
-
-

@@ -63,6 +63,7 @@ typedef struct gx_context_t {
 	uint8_t proc;
 	char gx_sess_id[MAX_LEN];
 	unsigned long  rqst_ptr; /*In Case of RAA, need to store RAR pointer*/
+    void *proc_context;
 } gx_context_t;
  
 #pragma pack()
@@ -165,7 +166,7 @@ int
 gen_reauth_response(ue_context_t *context, uint8_t ebi_index);
 
 int
-gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr);
+gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req_t *csr);
 
 int
 gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t *mb_req, uint8_t flag_check);
@@ -173,8 +174,8 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 int
 ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer);
 
-int handle_cca_update_msg(msg_info_t *msg);
-int handle_cca_initial_msg(msg_info_t *msg);
-int handle_ccr_terminate_msg(msg_info_t *msg);
-int handle_rar_msg(msg_info_t *msg);
+int handle_cca_update_msg(msg_info_t **msg);
+int handle_cca_initial_msg(msg_info_t **msg);
+int handle_ccr_terminate_msg(msg_info_t **msg);
+int handle_rar_msg(msg_info_t **msg);
 #endif /* CP_APP_H_ */

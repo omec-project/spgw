@@ -47,8 +47,9 @@ void init_gtp_interface(void)
 }
 
 int 
-handle_unknown_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_s11_rx)
+handle_unknown_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_s11_rx)
 {
+    msg_info_t *msg = *msg_p;
     RTE_SET_USED(msg);
 	clLog(clSystemLog, eCLSeverityCritical, "Unhandled GTP message = %d\n", gtpv2c_s11_rx->gtpc.message_type);
     return -1;

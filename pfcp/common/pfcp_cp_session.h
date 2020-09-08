@@ -114,10 +114,6 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		pdn_connection_t *pdn);
 
 void
-fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
-		gtpv2c_header_t *header, ue_context_t *context, pdn_connection_t *pdn);
-
-void
 fill_pfcp_sess_mod_req_pgw_init_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		pdn_connection_t *pdn, eps_bearer_t *bearers[], uint8_t bearer_cntr);
 

@@ -806,9 +806,9 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	pdn->state = UPDATE_BEARER_REQ_SNT_STATE;
 
 	/* Update UE Proc */
-	pdn->proc = UPDATE_BEARER_PROC;
 
 #ifdef FUTURE_NEED
+	pdn->proc = UPDATE_BEARER_PROC;
 	/* Set GX rar message */
 	resp->msg_type = GTP_UPDATE_BEARER_REQ;
 	resp->state =  UPDATE_BEARER_REQ_SNT_STATE;
@@ -986,14 +986,14 @@ parse_gx_rar_msg(GxRAR *rar)
         increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(ue_context->upf_context));
         transData_t *trans_entry = NULL;
         if(cp_config->cp_type == PGWC){
-            trans_entry = start_pfcp_session_timer(ue_context,
+            trans_entry = start_response_wait_timer(ue_context,
                     pfcp_msg, encoded, 
                     pfcp_modify_rar_trigger_timeout);
             RTE_SET_USED(trans_entry);
         }
         if(cp_config->cp_type == SAEGWC)
         {
-            trans_entry = start_pfcp_session_timer(ue_context, 
+            trans_entry = start_response_wait_timer(ue_context, 
                     pfcp_msg, encoded, pfcp_modify_rar_trigger_timeout);
         }
 #ifdef FUTURE_NEED
@@ -1026,21 +1026,19 @@ parse_gx_rar_msg(GxRAR *rar)
 	resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 #endif
 
+#ifdef FUTURE_NEED
 	if(rar->charging_rule_remove.count != 0) {
 		/* Update UE Proc */
-		pdn_cntxt->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
 
-#ifdef FUTURE_NEED
+		pdn_cntxt->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
 		resp->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
-#endif
 	} else {
 		/* Update UE Proc */
-		pdn_cntxt->proc = DED_BER_ACTIVATION_PROC;
 
-#ifdef FUTURE_NEED
+		pdn_cntxt->proc = DED_BER_ACTIVATION_PROC;
 		resp->proc = DED_BER_ACTIVATION_PROC;
-#endif
 	}
+#endif
 
 	pdn_cntxt->rqst_ptr = gx_context->rqst_ptr;
 

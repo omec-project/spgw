@@ -87,7 +87,6 @@ struct msgbuf {
 		struct mtr_entry mtr_entry;
 		struct cb_args_table msg_table;
 		struct msg_ue_cdr ue_cdr;
-		struct downlink_data_notification dl_ddn;	/** Downlink data notification info */
 	} msg_union;
 };
 
@@ -98,18 +97,6 @@ struct msgbuf {
  * This function is not thread safe and should only be called once by DP.
  */
 void iface_process_ipc_msgs(void);
-
-
-/**
- * @brief callback to handle downlink data notification messages from the
- * data plane
- * @param msg_payload
- * message payload received by control plane from the data plane
- * @return
- * 0 inicates success, error otherwise
- */
-int
-cb_ddn(struct msgbuf *msg_payload);
 
 
 #endif /* _CP_IO_POLL_H_ */

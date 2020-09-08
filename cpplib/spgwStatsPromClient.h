@@ -45,12 +45,9 @@ enum class spgwStatsCounter {
 	MSG_RX_GTPV2_S5S8_DSREQ_DROP,
 	MSG_RX_GTPV2_S11_RABREQ,
 	MSG_RX_GTPV2_S11_RABREQ_DROP,
-	MSG_RX_GTPV2_S5S8_RABREQ,
-	MSG_RX_GTPV2_S5S8_RABREQ_DROP,
+	MSG_RX_GTPV2_S11_RABREQ_REJ,
 	MSG_RX_GTPV2_S11_DDNACK,
 	MSG_RX_GTPV2_S11_DDNACK_DROP,
-	MSG_RX_GTPV2_S5S8_DDNACK,
-	MSG_RX_GTPV2_S5S8_DDNACK_DROP,
 	MSG_RX_GTPV2_S11_ECHOREQ,
 	MSG_RX_GTPV2_S5S8_ECHOREQ,
 	MSG_RX_GTPV2_S11_ECHORSP,
@@ -390,12 +387,9 @@ class msg_rx_counters {
 	Counter &msg_rx_gtpv2_s5s8_dsreq_drop;
 	Counter &msg_rx_gtpv2_s11_rabreq;
 	Counter &msg_rx_gtpv2_s11_rabreq_drop;
-	Counter &msg_rx_gtpv2_s5s8_rabreq;
-	Counter &msg_rx_gtpv2_s5s8_rabreq_drop;
+	Counter &msg_rx_gtpv2_s11_rabreq_rej;
 	Counter &msg_rx_gtpv2_s11_ddnack;
 	Counter &msg_rx_gtpv2_s11_ddnack_drop;
-	Counter &msg_rx_gtpv2_s5s8_ddnack;
-	Counter &msg_rx_gtpv2_s5s8_ddnack_drop;
 	Counter &msg_rx_gtpv2_s11_echoreq;
 	Counter &msg_rx_gtpv2_s5s8_echoreq;
 	Counter &msg_rx_gtpv2_s11_echorsp;

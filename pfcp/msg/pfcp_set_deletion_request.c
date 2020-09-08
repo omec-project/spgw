@@ -31,8 +31,9 @@ int handle_pfcp_session_set_delete_request(msg_info_t *msg)
 }
 
 int 
-handle_pfcp_session_delete_request_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
+handle_pfcp_session_delete_request_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {
+    msg_info_t *msg = *msg_p;
     struct sockaddr_in peer_addr = {0};
     peer_addr = msg->peer_addr;
 

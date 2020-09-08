@@ -11,6 +11,7 @@
 #include "pfcp_messages_decoder.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
+#include "cp_proc.h"
 
 // SAEGW - INITIAL_PDN_ATTACH_PROC PFCP_SESS_EST_REQ_SNT_STATE, PFCP_SESS_EST_RESP_RCVD_EVNT => process_sess_est_resp_handler
 // saegw - SGW_RELOCATION_PROC PFCP_SESS_EST_REQ_SNT_STATE PFCP_SESS_EST_RESP_RCVD_EVNT ==> process_sess_est_resp_sgw_reloc_handler
@@ -31,6 +32,7 @@ int handle_pfcp_session_est_response(msg_info_t *msg)
 	/* Retrive the session information based on session id. */
     if(pfcp_trans == NULL) {
         clLog(sxlogger, eCLSeverityCritical, "Received PFCP response and transaction not found \n");
+        // TODOSTATS
 		return -1;
     }
     /*
@@ -46,19 +48,16 @@ int handle_pfcp_session_est_response(msg_info_t *msg)
     proc_context->pfcp_trans = NULL; 
     msg->proc_context = pfcp_trans->proc_context;
     free(pfcp_trans); /* EST Response */
-
-    msg->ue_context = proc_context->ue_context; 
-    msg->pdn_context = proc_context->pdn_context; 
-    assert(msg->ue_context != NULL);
-    assert(msg->pdn_context != NULL);
     msg->event = PFCP_SESS_EST_RESP_RCVD_EVNT;
-    proc_context->handler((void*)proc_context, msg->event, (void *)msg);
+    SET_PROC_MSG(proc_context, msg);
+    proc_context->handler((void*)proc_context, msg);
     return 0;
 }
 
 int 
-handle_pfcp_session_est_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
+handle_pfcp_session_est_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {
+    msg_info_t *msg = *msg_p;
     struct sockaddr_in peer_addr = {0};
     peer_addr = msg->peer_addr;
 

@@ -28,11 +28,13 @@ int handle_delete_bearer_cmd_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 		return -1;
 	}
 	msg->proc = MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC;
+#if 0
 	if (update_ue_proc(context->s11_sgw_gtpc_teid,
 					msg->proc ,ebi_index) != 0) {
 			clLog(clSystemLog, eCLSeverityCritical, "%s failed\n", __func__);
 			return -1;
 	}
+#endif
 	context->eps_bearers[ebi_index]->pdn->proc =  msg->proc;
 
 //		msg->state = context->eps_bearers[ebi_index]->pdn->state;
@@ -164,6 +166,64 @@ process_delete_bearer_command_handler(void *data, void *unused_param)
 	}
 
 	RTE_SET_USED(unused_param);
+
+	return 0;
+}
+
+int
+process_delete_bearer_cmd_request(del_bearer_cmd_t *del_bearer_cmd, gtpv2c_header_t *gtpv2c_tx)
+{
+	int ret = 0;
+	ue_context_t *context = NULL;
+	eps_bearer_t *bearer = NULL;
+	pdn_connection_t *pdn = NULL;
+	int ebi_index = 0;
+
+	ret = get_ue_context(del_bearer_cmd->header.teid.has_teid.teid, &context);
+
+	if (ret < 0) {
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
+	                     __func__, __LINE__,
+	                  del_bearer_cmd->header.teid.has_teid.teid);
+	}
+	ebi_index = del_bearer_cmd->bearer_contexts[ebi_index].eps_bearer_id.ebi_ebi -5;
+
+	bearer = context->eps_bearers[ebi_index];
+	pdn = bearer->pdn;
+
+
+    if (SAEGWC == cp_config->cp_type || PGWC == cp_config->cp_type) {
+        if(cp_config->gx_enabled) {
+            if (ccru_req_for_bear_termination(pdn , bearer)) {
+                clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
+                        strerror(errno));
+                return -1;
+            }
+        }
+    } else if(SGWC == cp_config->cp_type) {
+
+		set_delete_bearer_command(del_bearer_cmd, pdn, gtpv2c_tx);
+		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
+			               htonl(pdn->s5s8_pgw_gtpc_ipv4.s_addr);
+
+	}
+    pdn->state = CONNECTED_STATE;
+    if (get_sess_entry_seid(pdn->seid, &resp) != 0){
+        clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
+                __func__, __LINE__, pdn->seid);
+        return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+    }
+
+    resp->eps_bearer_id = ebi_index;
+    resp->msg_type = GTP_DELETE_BEARER_CMD;
+    resp->state = CONNECTED_STATE;//need to see this
+    resp->gtpc_msg.del_bearer_cmd = *del_bearer_cmd;
+    resp->gtpc_msg.del_bearer_cmd.header.teid.has_teid.seq = del_bearer_cmd->header.teid.has_teid.seq;
+    resp->proc = pdn->proc;
+    resp->bearer_count = del_bearer_cmd->bearer_count;
+    for (uint8_t iCnt = 0; iCnt < del_bearer_cmd->bearer_count; ++iCnt) {
+        resp->eps_bearer_ids[iCnt] = del_bearer_cmd->bearer_contexts[iCnt].eps_bearer_id.ebi_ebi;
+    }
 
 	return 0;
 }

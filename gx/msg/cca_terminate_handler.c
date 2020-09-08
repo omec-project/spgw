@@ -61,8 +61,9 @@ void dispatch_cca(msg_info_t *msg)
     return;
 }
 
-int handle_ccr_terminate_msg(msg_info_t *msg)
+int handle_ccr_terminate_msg(msg_info_t **msg_p)
 {
+    msg_info_t *msg = *msg_p;
     int ret;
     gx_context_t *gx_context = NULL;
     struct sockaddr_in saddr_in;

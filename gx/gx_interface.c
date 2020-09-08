@@ -336,7 +336,7 @@ int
 msg_handler_gx( void )
 {
 	int bytes_rx = 0;
-	msg_info_t msg = {0};
+	msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
 	gx_msg *gx_rx = NULL;
 	char recv_buf[BUFFSIZE] = {0};
 
@@ -351,25 +351,25 @@ msg_handler_gx( void )
     struct sockaddr_in saddr_in;
     saddr_in.sin_family = AF_INET;
     inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-    msg.msg_type = gx_rx->msg_type;
-    msg.source_interface = GX_IFACE;
-    switch(msg.msg_type) {
+    msg->msg_type = gx_rx->msg_type;
+    msg->source_interface = GX_IFACE;
+    switch(msg->msg_type) {
         case GX_CCA_MSG: {
             if (gx_cca_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type),
-                        &msg.gx_msg.cca) <= 0) {
+                        &msg->gx_msg.cca) <= 0) {
                 return -1;
             }
-            if(msg.gx_msg.cca.cc_request_type == INITIAL_REQUEST) {
+            if(msg->gx_msg.cca.cc_request_type == INITIAL_REQUEST) {
                 handle_cca_initial_msg(&msg);
-            } else if (msg.gx_msg.cca.cc_request_type == UPDATE_REQUEST) {
+            } else if (msg->gx_msg.cca.cc_request_type == UPDATE_REQUEST) {
                handle_cca_update_msg(&msg); 
-            } else if (msg.gx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
+            } else if (msg->gx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
                 handle_ccr_terminate_msg(&msg);
             }
         }
         case GX_RAR_MSG: {
             if (gx_rar_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type),
-                        &msg.gx_msg.rar) <= 0) {
+                        &msg->gx_msg.rar) <= 0) {
                 return -1;
             }
             handle_rar_msg(&msg);
@@ -381,9 +381,13 @@ msg_handler_gx( void )
                     "\n\tReceived Gx Message : "
                     "%d not supported... Discarding\n", __func__,
                     cp_config->cp_type, gx_rx->msg_type);
+            free(msg);
             return -1;
         }
     }
+    // nobody took ownership...
+    if(msg->refCnt == 0)
+        free(msg);
 	return 0;
 
 #if 0
@@ -599,7 +603,7 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 
 	/* VS: Set the Gx State for events */
 	gx_context->state = CCRU_SNT_STATE;
-	gx_context->proc = pdn->proc;
+	//gx_context->proc = pdn->proc;
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
 	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type),

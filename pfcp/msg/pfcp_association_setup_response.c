@@ -7,12 +7,13 @@
 #include "gw_adapter.h"
 #include "pfcp_messages_decoder.h"
 #include "clogger.h"
-#include "pfcp_association_setup_proc.h"
+#include "proc_pfcp_assoc_setup.h"
 #include "spgw_cpp_wrapper.h"
 
 int 
-handle_pfcp_association_setup_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
+handle_pfcp_association_setup_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {
+    msg_info_t *msg = *msg_p;
     struct sockaddr_in peer_addr = {0};
     peer_addr = msg->peer_addr;
  

@@ -31,6 +31,8 @@
 #include "upf_struct.h"
 #include "spgw_config_struct.h"
 #include "cp_proc.h"
+#include <sys/queue.h>
+#include "sm_struct.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -358,6 +360,7 @@ typedef struct indication_flag_t {
  * @brief  : Maintains ue related information
  */
 typedef struct ue_context {
+	uint8_t state;
 	uint64_t imsi;
 	uint8_t imsi_len;
 	uint8_t unathenticated_imsi;
@@ -411,12 +414,12 @@ typedef struct ue_context {
     upf_context_t  *upf_context;
     sub_profile_t  *sub_prof; /* Requirement. - Bug - free the sub */
     uint32_t       dns_enable;
+    void    *gx_context;
 
     /* Temp - need to find right place to put this */
     void *pco; /* Received PCO from the UE during attach. Once CSRsp sent, release this */
-    uint32_t dpId;
 
-    proc_context_t *current_proc;
+    TAILQ_HEAD(proc_sub_head, proc_context) pending_sub_procs;
 } ue_context_t;
 
 typedef struct ue_tz_t
@@ -434,7 +437,6 @@ typedef struct ue_tz_t
  * @brief  : Maintains pdn connection information
  */
 typedef struct pdn_connection {
-	uint8_t proc;
 	uint8_t state;
 	uint8_t bearer_control_mode;
 
@@ -679,5 +681,9 @@ add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, eps_bearer_t **bearer);
  */
 void
 print_ue_context_by(struct rte_hash *h, ue_context_t *context);
+
+void start_procedure(proc_context_t *proc, msg_info_t *msg);
+
+void end_procedure(proc_context_t *proc);
 
 #endif /* UE_H */

@@ -35,7 +35,7 @@ msg_handler_sx_n4(void)
 {
 	socklen_t addr_len = sizeof(struct sockaddr_in);
 	int bytes_pfcp_rx = 0;
-	msg_info_t msg = {0};
+	msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
 	struct sockaddr_in peer_addr = {0};
 
 	bytes_pfcp_rx = recvfrom(my_sock.sock_fd_pfcp, pfcp_rx, 512, MSG_DONTWAIT,
@@ -53,9 +53,11 @@ msg_handler_sx_n4(void)
     }
 
 	pfcp_header_t *pfcp_header = (pfcp_header_t *) pfcp_rx;
-	msg.msg_type = pfcp_header->message_type;
-    msg.peer_addr = peer_addr;
-    msg.source_interface = GX_IFACE; 
+	msg->msg_type = pfcp_header->message_type;
+    msg->peer_addr = peer_addr;
+    msg->source_interface = PFCP_IFACE; 
     pfcp_msg_handler[pfcp_header->message_type](&msg, pfcp_header);
+    if(msg->refCnt == 0)
+        free(msg);
 	return 0;
 }

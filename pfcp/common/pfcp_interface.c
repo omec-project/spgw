@@ -7,6 +7,7 @@
 #include "clogger.h"
 #include "pfcp_messages_decoder.h"
 #include "cp_config.h"
+#include "rte_common.h"
 
 
 pfcp_handler pfcp_msg_handler[256];
@@ -31,8 +32,9 @@ void init_pfcp_interface(void)
 }
 
 int 
-handle_unknown_pfcp_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx)
+handle_unknown_pfcp_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {
+    msg_info_t *msg = *msg_p;
     RTE_SET_USED(msg);
     clLog(clSystemLog, eCLSeverityCritical, "%s::process_msgs-"
             "\n\tcase: spgw_cfg= %d;"

@@ -15,14 +15,7 @@
 #include <sys/queue.h>
 #include "gx_struct.h"
 #include "gtpv2_msg_struct.h"
-#include "ue.h"
 
-
-
-//extern enum source_interface iface;
-
-
-/* TODO: Need to optimized generic structure. */
 /**
  * @brief  : Maintains decoded message from different messages
  */
@@ -44,7 +37,7 @@ typedef struct msg_info {
 		del_sess_req_t dsr;
 		del_sess_rsp_t ds_rsp;
 		rel_acc_bearer_req_t rab;
-		downlink_data_notification_t ddn_ack;
+		dnlnk_data_notif_ack_t ddn_ack;
 		create_bearer_req_t cb_req;
 		create_bearer_rsp_t cb_rsp;
 		del_bearer_req_t db_req;
@@ -76,45 +69,12 @@ typedef struct msg_info {
 	}gx_msg;
 
     uint32_t source_interface;
-    upf_context_t *upf_context;
-    ue_context_t *ue_context;
-    pdn_connection_t *pdn_context;
-    eps_bearer_t *bearer_context;
     struct sockaddr_in peer_addr;
-    proc_context_t *proc_context;
+    void *ue_context;
+    void *pdn_context;
+    void *bearer_context;
+    void *proc_context;
+    uint32_t refCnt;
 }msg_info_t;
-
-/* Requirement : cleanup rsp_info */
-/**
- * @brief  : Structure for handling CS/MB/DS request synchoronusly.
- */
-struct resp_info {
-	uint8_t proc;
-	uint8_t state;
-	uint8_t msg_type;
-	uint8_t num_of_bearers;
-	uint8_t eps_bearer_id;
-	uint8_t list_bearer_ids[MAX_BEARERS];
-
-	/* Default Bearer Id */
-	uint8_t linked_eps_bearer_id;
-
-	/* Dedicated Bearer Id */
-	uint8_t bearer_count;
-	uint8_t eps_bearer_ids[MAX_BEARERS];
-
-	uint32_t s5s8_sgw_gtpc_teid;
-	uint32_t s5s8_pgw_gtpc_ipv4;
-
-	uint8_t eps_bearer_lvl_tft[257];
-	uint8_t tft_header_len;
-
-	union gtpc_msg {
-		create_sess_req_t csr;
-		mod_bearer_req_t mbr;
-		del_sess_req_t dsr;
-		del_bearer_cmd_t del_bearer_cmd;
-	}gtpc_msg;
-}__attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
 
 #endif

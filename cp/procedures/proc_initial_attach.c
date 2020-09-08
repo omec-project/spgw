@@ -24,8 +24,8 @@
 #include "pfcp_cp_association.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
-#include "initial_attach_proc.h"
-#include "pfcp_association_setup_proc.h"
+#include "proc_initial_attach.h"
+#include "proc_pfcp_assoc_setup.h"
 #include "tables/tables.h"
 #include "rte_errno.h"
 #include "ipc_api.h"
@@ -33,29 +33,34 @@
 #include "cp_io_poll.h"
 #include "spgwStatsPromEnum.h"
 #include "pfcp_cp_util.h"
+#include "gtpv2_ie_parsing.h"
+#include "gtpv2_set_ie.h"
+#include "pfcp_messages_encoder.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
-
 static uint32_t s5s8_sgw_gtpc_teid_offset;
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
 
 /* local functions. Need to find suitable place for declarations  */
 
-static int
+int
 fill_uli_info(gtp_user_loc_info_ie_t *uli, ue_context_t *context);
 
-static int
+int
 fill_context_info(create_sess_req_t *csr, ue_context_t *context);
 
-static int
+int
 fill_pdn_info(create_sess_req_t *csr, pdn_connection_t *pdn);
 
-static int
+int
 fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 		ue_context_t *context, pdn_connection_t *pdn);
 
 void
 fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn);
+
+void 
+initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg); 
 
 proc_context_t*
 alloc_initial_proc(msg_info_t *msg)
@@ -65,26 +70,43 @@ alloc_initial_proc(msg_info_t *msg)
     csreq_proc->proc_type = msg->proc; 
     csreq_proc->handler = initial_attach_event_handler;
     msg->proc_context = csreq_proc;
-
+    SET_PROC_MSG(csreq_proc, msg);
     return csreq_proc;
 }
 
 void 
-initial_attach_event_handler(void *proc, uint32_t event, void *data)
+initial_attach_event_handler(void *proc, void *msg_info)
 {
     proc_context_t *proc_context = (proc_context_t *)proc;
+    msg_info_t *msg = (msg_info_t *) msg_info;
+    uint8_t event = msg->event;
+
+    printf("Received event %d in %s \n",event, __FUNCTION__);
     switch(event) {
         case CS_REQ_RCVD_EVNT: {
-            msg_info_t *msg = (msg_info_t *)data;
             handle_csreq_msg(proc_context, msg);
             break;
         }
+        case PFCP_SESS_EST_EVNT: {
+            initiate_upf_session(proc_context, msg);
+            break;
+        } 
         case PFCP_SESS_EST_RESP_RCVD_EVNT: {
-            process_sess_est_resp_handler(data, NULL);
+            process_sess_est_resp_handler(proc_context, msg);
             break; 
         }
-        default:
+        case PFCP_ASSOC_SETUP_FAILED:
+        case PFCP_SESS_EST_RESP_TIMEOUT_EVNT: {
+            process_sess_est_resp_timeout_handler(proc_context, msg);
+            break; 
+        }
+        case CCA_RCVD_EVNT: {
+            cca_msg_handler(proc_context, msg); 
+            break;
+        }
+        default: {
             assert(0); // unknown event 
+        }
     }
     return;
 }
@@ -104,32 +126,66 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
         // -1 : just cleanup call locally 
 		clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Error: %d \n",
 				__file__, __func__, __LINE__, ret);
-        proc_initial_attach_failure(msg, ret);
+        proc_initial_attach_failure(csreq_proc, ret);
 		return -1;
 	}
     csreq_proc->ue_context = (void *)context;
     csreq_proc->pdn_context = (void *)pdn;
-    context->current_proc = csreq_proc;
-    
+    TAILQ_INSERT_TAIL(&context->pending_sub_procs, csreq_proc, next_sub_proc);
+
+    if ((cp_config->cp_type == PGWC) || (cp_config->cp_type == SAEGWC)) {
+        if(cp_config->gx_enabled) {
+            if (gen_ccr_request(csreq_proc, pdn->default_bearer_id-5, &msg->gtpc_msg.csr)) {
+                clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
+                        strerror(errno));
+                return -1;
+            }
+            // Wait for CCA-I from Gx before initiating any further messages 
+            return 0; 
+        } else {
+            fill_rule_and_qos_inform_in_pdn(pdn);
+        }
+    }
+    msg->event = PFCP_SESS_EST_EVNT;
+    csreq_proc->handler(csreq_proc, msg); 
+    return 0;
+}
+
+void 
+initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg) 
+{
+    RTE_SET_USED(msg);
+    ue_context_t *context = csreq_proc->ue_context;
 	upf_context_t *upf_context = context->upf_context;
-    if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
+
+    if (upf_context->state == PFCP_ASSOC_REQ_SNT_STATE) {
+        printf("UPF association formation in progress. Buffer new CSReq  \n");
+        // After every setup timeout we would flush the buffered entries..
+        // dont worry about #of packets in buffer for now 
+        buffer_csr_request(csreq_proc);
+        csreq_proc->flags |= UPF_ASSOCIATION_PENDING;
+        return;
+    } else if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
         printf("UPF association already formed \n");
-        transData_t *pfcp_trans = process_pfcp_sess_est_request(pdn, upf_context);
+        transData_t *pfcp_trans = process_pfcp_sess_est_request(csreq_proc, upf_context);
         if (pfcp_trans == NULL) {
             clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: pfcp send error \n",
                     __func__, __LINE__);
-            proc_initial_attach_failure(msg, GTPV2C_CAUSE_INVALID_PEER);
-            return -1;
+            proc_initial_attach_failure(csreq_proc, GTPV2C_CAUSE_INVALID_PEER);
+            return;
         }
         csreq_proc->pfcp_trans = pfcp_trans;
-        return 0;
+        return;
     } else {
         // create PFCP association setup proccedure 
         // we are not modifying original msg content. This msg has ue/pdn context
-        proc_context_t *proc_context = alloc_pfcp_association_setup_proc(msg); 
-        proc_context->handler((void *)proc_context, (uint32_t)PFCP_ASSOCIATION_SETUP, (void *)msg);
+        buffer_csr_request(csreq_proc);
+        csreq_proc->flags |= UPF_ASSOCIATION_PENDING;
+        proc_context_t *proc_context = alloc_pfcp_association_setup_proc((void *)context->upf_context); 
+        start_upf_procedure(proc_context, proc_context->msg_info);
+        return;
     }
-    return 0;
+    return;
 }
 
 // return values > 0 : - GTP cause 
@@ -274,7 +330,6 @@ process_create_sess_req(create_sess_req_t *csr,
 
 	/* Retrive procedure of CSR */
 	pdn = context->eps_bearers[ebi_index]->pdn;
-	pdn->proc = msg->proc; 
     if(static_addr_pdn == true)
         SET_PDN_ADDR_STATIC(pdn);
 
@@ -352,18 +407,6 @@ process_create_sess_req(create_sess_req_t *csr,
 
 	}
 	context->pdns[ebi_index]->dp_seid = 0;
-
-    if ((cp_config->cp_type == PGWC) || (cp_config->cp_type == SAEGWC)) {
-        if(cp_config->gx_enabled) {
-            if (gen_ccr_request(context, ebi_index, csr)) {
-                clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
-                        strerror(errno));
-                return -1;
-            }
-        } else {
-            fill_rule_and_qos_inform_in_pdn(pdn);
-        }
-	}
 
 #ifdef USE_CSID
 	/* Parse and stored MME and SGW FQ-CSID in the context */
@@ -509,7 +552,6 @@ process_create_sess_req(create_sess_req_t *csr,
 
     context->upf_context = upf_context;
 
-    msg->upf_context = upf_context;
     msg->pdn_context = pdn;
     msg->ue_context  = context;
 
@@ -518,12 +560,19 @@ process_create_sess_req(create_sess_req_t *csr,
 }
 
 int
-process_sess_est_resp_handler(void *data, void *unused_param)
+process_sess_est_resp_timeout_handler(proc_context_t *proc_context, msg_info_t *msg)
+{
+    RTE_SET_USED(msg);
+	clLog(sxlogger, eCLSeverityDebug, "PFCP sess establishment request timeout \n");
+    proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
+    return 0;
+}
+
+int
+process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     int ret = 0;
 	uint16_t payload_length = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-    proc_context_t *proc_context = msg->proc_context;
 
 	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
 			"Msg_Type:PFCP_SESSION_ESTABLISHMENT_RESPONSE[%u], Seid:%lu, "
@@ -537,7 +586,7 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 	if(msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value != REQUESTACCEPTED) {
 		clLog(sxlogger, eCLSeverityDebug, "Cause received Est response is %d\n",
 				msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value);
-        proc_initial_attach_failure(msg, GTPV2C_CAUSE_REQUEST_REJECTED);
+        proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REQUEST_REJECTED);
 		return -1;
 	}
 
@@ -547,49 +596,47 @@ process_sess_est_resp_handler(void *data, void *unused_param)
 
 	ret = process_pfcp_sess_est_resp(msg,
 			&msg->pfcp_msg.pfcp_sess_est_resp, gtpv2c_tx);
-	//ret = process_pfcp_sess_est_resp(
-	//		msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid,
-	//		gtpv2c_tx,
-	//		msg->pfcp_msg.pfcp_sess_est_resp.up_fseid.seid);
 
 	if (ret) {
 		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
-        proc_initial_attach_failure(msg, ret);
+        proc_initial_attach_failure(proc_context, ret);
 		return -1;
 	}
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-#ifdef FUTURE_NEED
 	if (cp_config->cp_type == SGWC) {
+        transData_t *trans_rec = proc_context->gtpc_trans;
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
-				(struct sockaddr *) &s5s8_recv_sockaddr,
+				(struct sockaddr *) &trans_rec->peer_sockaddr,
 		        sizeof(struct sockaddr_in));
 
 
-        increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_CSREQ, s5s8_recv_sockaddr.sin_addr.s_addr);
+//        increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_CSREQ, trans_rec->s5s8_recv_sockaddr.sin_addr.s_addr);
 
 		if (SGWC == cp_config->cp_type) {
+#if 0
 			add_gtpv2c_if_timer_entry(
 				UE_SESS_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid),
 				&s5s8_recv_sockaddr, gtp_tx_buf, payload_length,
 				UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid) - 5,
 				S5S8_IFACE);
+#endif
 		}
 
 		//s5s8_sgwc_msgcnt++;
-	} else (cp_config->cp_type == PGWC) {
+	} else if (cp_config->cp_type == PGWC) {
+        transData_t *trans_rec = proc_context->gtpc_trans;
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
-				(struct sockaddr *) &s5s8_recv_sockaddr,
+				(struct sockaddr *) &trans_rec->peer_sockaddr,
 		        sizeof(struct sockaddr_in));
 
 
-        increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_CSRSP, s5s8_recv_sockaddr.sin_addr.s_addr);
+//        increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_CSRSP, trans_rec->s5s8_recv_sockaddr.sin_addr.s_addr);
 
 		//s5s8_sgwc_msgcnt++;
 	} else {
-#endif
         transData_t *trans_rec = proc_context->gtpc_trans;
 		/* Send response on s11 interface */
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
@@ -600,11 +647,9 @@ process_sess_est_resp_handler(void *data, void *unused_param)
         increment_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH_SUCCESS, trans_rec->peer_sockaddr.sin_addr.s_addr);
     
         proc_initial_attach_complete(proc_context);
+        // Dont access proc_context now onward 
         
-#ifdef FUTURE_NEED
 	}
-#endif
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 
@@ -614,7 +659,7 @@ process_sess_est_resp_handler(void *data, void *unused_param)
  * @param  : context is a pointer to ue context structure
  * @return : Returns 0 in case of success , -1 otherwise
  */
-static int
+int
 fill_uli_info(gtp_user_loc_info_ie_t *uli, ue_context_t *context)
 {
 	if (uli->lai) {
@@ -741,7 +786,7 @@ fill_uli_info(gtp_user_loc_info_ie_t *uli, ue_context_t *context)
  * @param  : context , pointer to ue context structure
  * @return : Returns 0 in case of success , -1 otherwise
  */
-static int
+int
 fill_context_info(create_sess_req_t *csr, ue_context_t *context)
 {
  	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
@@ -775,7 +820,7 @@ fill_context_info(create_sess_req_t *csr, ue_context_t *context)
  * @param  : pdn , pointer to pdn connction structure
  * @return : Returns 0 in case of success , -1 otherwise
  */
-static int
+int
 fill_pdn_info(create_sess_req_t *csr, pdn_connection_t *pdn)
 {
 
@@ -856,7 +901,7 @@ fill_pdn_info(create_sess_req_t *csr, pdn_connection_t *pdn)
  * @param  : pdn , pointer to pdn connction structure
  * @return : Returns 0 in case of success , -1 otherwise
  */
-static int
+int
 fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 		ue_context_t *context, pdn_connection_t *pdn)
 {
@@ -993,9 +1038,9 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 }
 
 // TODO : need to define local cause above 255. That way we can increment stats 
-void proc_initial_attach_failure(msg_info_t *msg, int cause)
+void proc_initial_attach_failure(proc_context_t *proc_context, int cause)
 {
-    proc_context_t *proc_context = msg->proc_context;
+    msg_info_t *msg = proc_context->msg_info;
     transData_t *trans_rec = proc_context->gtpc_trans;
     if(cause != -1) {
         increment_proc_mme_peer_stats_reason(PROCEDURES_SPGW_INITIAL_ATTACH_FAILURE, 
@@ -1008,55 +1053,18 @@ void proc_initial_attach_failure(msg_info_t *msg, int cause)
                                  trans_rec->peer_sockaddr.sin_addr.s_addr);
     }
     
-    if(msg->proc_context != NULL && msg->ue_context == NULL)
-    {
-        if(proc_context->gtpc_trans != NULL) {
-            printf("Delete gtpc procs \n");
-            /* Only MME initiated transactions as of now */
-            uint16_t port_num = proc_context->gtpc_trans->peer_sockaddr.sin_port; 
-            uint32_t sender_addr = proc_context->gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
-            uint32_t seq_num = proc_context->gtpc_trans->sequence; 
-            transData_t *gtpc_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
-            assert(gtpc_trans == proc_context->gtpc_trans);
-            stop_transaction_timer(proc_context->gtpc_trans);
-            free(proc_context->gtpc_trans);
-            proc_context->gtpc_trans = NULL;
-        }
-        msg->proc_context = NULL;
-        free(proc_context); 
-    }
-    // cleanup call locally 
-    process_error_occured_handler_new((void *)msg, NULL);
+    // UE context is not allocated and message is rejected
+    proc_context->result = PROC_RESULT_FAILURE;
+    proc_initial_attach_complete(proc_context);
     return;
 }
 
 void proc_initial_attach_complete(proc_context_t *proc_context)
 {
-    transData_t *gtpc_trans = proc_context->gtpc_trans;
-    ue_context_t *ue_context = proc_context->ue_context;
-
-    uint16_t port_num = gtpc_trans->peer_sockaddr.sin_port; 
-    uint32_t sender_addr = gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
-    uint32_t seq_num = gtpc_trans->sequence; 
-
-    transData_t *temp_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
-    assert(temp_trans != NULL);
-
-    /* Let's cross check if transaction from the table is matchig with the one we have 
-     * in subscriber 
-     */
-    assert(gtpc_trans == temp_trans);
-    proc_context->gtpc_trans =  NULL;
-
-    /* PFCP transaction is already complete. */
-    assert(proc_context->pfcp_trans == NULL);
-    free(gtpc_trans);
-    free(proc_context);
-    ue_context->current_proc = NULL;
+    end_procedure(proc_context);
     return;
 }
 
-#ifdef FUTURE_NEED
 /**
  * @brief  : parses gtpv2c message and populates parse_sgwc_s5s8_create_session_response_t structure
  * @param  : gtpv2c_rx
@@ -1369,6 +1377,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	pdn_connection_t *pdn = NULL;
 	eps_bearer_t *bearer = NULL;
 	create_sess_req_t csr = {0};
+    RTE_SET_USED(proc);
 
 	struct parse_pgwc_s5s8_create_session_request_t create_s5s8_session_request = { 0 };
 
@@ -1483,13 +1492,14 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		bearer->pdn = pdn;
 	}
 
+#ifdef TEMP
 	/* Update the sequence number */
 	context->sequence = gtpv2c_rx->teid.has_teid.seq;
+#endif
 
 	/* Update UE State */
 	pdn->state = PFCP_SESS_EST_REQ_SNT_STATE;
-	pdn->proc = proc;
-
+#ifdef TEMP
 	/* VS: Allocate the memory for response
 	 */
 	resp = rte_malloc_socket(NULL,
@@ -1504,6 +1514,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	resp->msg_type = GTP_CREATE_SESSION_REQ;
 	resp->state = PFCP_SESS_EST_REQ_SNT_STATE;
 	resp->proc = proc;
+#endif
 
 	if (create_s5s8_session_request.uli_ie) {
 		csr.uli = *(gtp_user_loc_info_ie_t *)create_s5s8_session_request.uli_ie;
@@ -1571,15 +1582,17 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
         increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSESTREQ, GET_UPF_ADDR(context->upf_context));
         transData_t *trans_entry;
-		trans_entry = start_pfcp_session_timer(context, pfcp_msg, encoded, process_pgwc_s5s8_create_session_request_pfcp_timeout);
+		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pgwc_s5s8_create_session_request_pfcp_timeout);
         pdn->trans_entry = trans_entry;
 	}
 
+#ifdef TEMP
 	if (add_sess_entry_seid(context->pdns[ebi_index]->seid, resp) != 0) {
 		clLog(clSystemLog, eCLSeverityCritical, " %s %s %d Failed to add response in entry in SM_HASH\n",__file__,
 				__func__, __LINE__);
 		return -1;
 	}
+#endif
 
 	return 0;
 }
@@ -1819,16 +1832,16 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //
 //	return 0;
 //}
-#endif
 
 int
-gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr)
+gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req_t *csr)
 {
 	/* VS: Initialize the Gx Parameters */
 	uint16_t msg_len = 0;
 	char *buffer = NULL;
 	gx_msg ccr_request = {0};
 	gx_context_t *gx_context = NULL;
+    ue_context_t *context = proc_context->ue_context;
 
 	/* VS: Generate unique call id per PDN connection */
 	context->pdns[ebi_index]->call_id = generate_call_id();
@@ -1839,6 +1852,8 @@ gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr
 					sizeof(gx_context_t),
 					RTE_CACHE_LINE_SIZE, rte_socket_id());
 
+    context->gx_context = gx_context;
+    gx_context->proc_context = proc_context;
 	/* VS: Generate unique session id for communicate over the Gx interface */
 	if (gen_sess_id_for_ccr(gx_context->gx_sess_id,
 				context->pdns[ebi_index]->call_id)) {
@@ -1947,12 +1962,13 @@ gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr
     increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_I, saddr_in.sin_addr.s_addr);
 
 
+    #ifdef TEMP
 	/* Update UE State */
 	context->pdns[ebi_index]->state = CCR_SNT_STATE;
+    #endif
 
 	/* VS: Set the Gx State for events */
 	gx_context->state = CCR_SNT_STATE;
-	gx_context->proc = context->pdns[ebi_index]->proc;
 
 	/* VS: Maintain the Gx context mapping with Gx Session id */
 	if (gx_context_entry_add((uint8_t*)gx_context->gx_sess_id, gx_context) < 0) {
@@ -1990,29 +2006,31 @@ gen_ccr_request(ue_context_t *context, uint8_t ebi_index, create_sess_req_t *csr
 	return 0;
 }
 
-#ifdef FUTURE_NEED
+/*
+This function Handles the msgs received from PCEF
+*/
 int
-gx_setup_handler(void *data, void *unused_param)
+cca_msg_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-	ue_context_t *context = NULL;
-    pdn_connection_t *pdn = NULL;
+	pdn_connection_t *pdn = NULL;
 
-	ret = process_create_sess_req(&msg->gtpc_msg.csr, &context, &pdn, msg);
-	if (ret != 0 && ret != -2) {
-		if (ret != -1){
-
-			cs_error_response(msg, ret,
-								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-			process_error_occured_handler_new(data, unused_param);
-		}
-		clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Error: %d \n",
-				__file__, __func__, __LINE__, ret);
-		return -1;
+	/* Handle the CCR-T Message */
+	if (msg->gx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
+		clLog(gxlogger, eCLSeverityDebug, FORMAT"Received GX CCR-T Response..!! \n",
+				ERR_MSG);
+		return 0;
 	}
 
-	RTE_SET_USED(unused_param);
-	return ret;
+	/* VS: Retrive the ebi index */
+	ret = parse_gx_cca_msg(&msg->gx_msg.cca, &pdn);
+	if (ret) {
+		clLog(clSystemLog, eCLSeverityCritical, "Failed to establish session on PGWU, Send Failed CSResp back to SGWC\n");
+		return ret;
+	}
+
+    msg->event = PFCP_SESS_EST_EVNT;
+    SET_PROC_MSG(proc_context,msg);
+    proc_context->handler(proc_context, msg); 
+	return 0;
 }
-#endif

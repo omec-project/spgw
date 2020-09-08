@@ -28,16 +28,17 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_peer.h"
 #include "gtpv2_error_rsp.h"
-#include "initial_attach_proc.h"
+#include "proc_initial_attach.h"
 #include "tables/tables.h"
 #include "util.h"
+#include "gtpv2_session.h"
+#include "proc_sgw_relocation.h"
 
 extern uint32_t num_adc_rules;
 extern uint32_t adc_rule_id[];
 
 /*
  * @param: req_pco : this is the received PCO in the Request message (e.g. CSReq)
- * @dpId : This is DP id of the user context. 
  * @pco_buf : should have encoded pco which can be sent towards UE in GTP message (e.g. CSRsp)
  @ return : length of the PCO buf 
  */
@@ -474,13 +475,11 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	if (cp_config->cp_type == SGWC) {
         ret = 0;
         RTE_SET_USED(gtpv2c_s5s8_tx);
-#ifdef FUTURE_NEED
 		char sgwu_fqdn[MAX_HOSTNAME_LENGTH] = {0};
 		ret =
 			gen_sgwc_s5s8_create_session_request(gtpv2c_rx,
 				gtpv2c_s5s8_tx, csr.header.teid.has_teid.seq,
 				pdn, bearer, sgwu_fqdn);
-#endif
 
 		 clLog(s5s8logger, eCLSeverityDebug, "NGIC- create_session.c::"
 				"\n\tprocess_create_session_request::case= %d;"
@@ -639,14 +638,17 @@ decode_check_csr(gtpv2c_header_t *gtpv2c_rx,
 }
 
 int
-handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
+handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 {
+    msg_info_t *msg = *msg_p;
     int ret;
-    struct sockaddr_in s11_peer_sockaddr = {0};
-    s11_peer_sockaddr = msg->peer_addr;
+    struct sockaddr_in *peer_addr;
+    proc_context_t *csreq_proc = NULL;
+
+    peer_addr = &msg->peer_addr;
 
     /* Reset periodic timers */
-    process_response(s11_peer_sockaddr.sin_addr.s_addr);
+    process_response(peer_addr->sin_addr.s_addr);
 
     // check for invalid length and invalid version 
 
@@ -663,15 +665,11 @@ handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     if(ret != 0 ) {
         cs_error_response(msg, ret,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+        return -1;
     }
 
     // update statistics ??
-
-    msg->source_interface = S11_IFACE; 
-
-    RTE_SET_USED(gtpv2c_rx);
     assert(msg->msg_type == GTP_CREATE_SESSION_REQ);
-    proc_context_t *csreq_proc = NULL;
 
     /* Find old transaction */
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
@@ -685,7 +683,6 @@ handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
 
-
     /*
      * Requirement1 : Create transaction. If new CSReq is received and previous
      *                CSreq is already in progress then drop retransmitted CSReq 
@@ -697,8 +694,7 @@ handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     uint64_t imsi;
     imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
     ret = ue_context_entry_lookup_imsiKey(imsi, &(context));
-    if(context != NULL)
-    {
+    if(context != NULL) {
         printf("Detected context replacement of the call \n");
         msg->msg_type = GTP_RESERVED; 
         msg->ue_context = context;
@@ -708,39 +704,31 @@ handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
         msg->ue_context = NULL;
     }
    
-#ifdef TEMP
-    if(msg->source_interface == S5S8_IFACE) 
-    {
+    if(msg->source_interface == S5S8_IFACE) {
         /* when CSR received from SGWC add it as a peer*/
 	    add_node_conn_entry(ntohl(msg->gtpc_msg.csr.sender_fteid_ctl_plane.ipv4_address),
 								S5S8_SGWC_PORT_ID);
-    }
-    else 
-#endif
-    if(msg->source_interface == S11_IFACE) 
-    {
+    } else if(msg->source_interface == S11_IFACE) {
         /* when CSR received from MME add it as a peer*/
 	    add_node_conn_entry(ntohl(msg->gtpc_msg.csr.sender_fteid_ctl_plane.ipv4_address),
 								S11_SGW_PORT_ID );
     }
 
-#ifdef FUTURE_NEED
-	if (1 == msg->gtpc_msg.csr.indctn_flgs.indication_oi) {
-				/*Set SGW Relocation Case */
-		msg->proc = SGW_RELOCATION_PROC;
-	} 
-#endif
-    /* SGW + PGW + SAEGW case */
-    msg->proc = INITIAL_PDN_ATTACH_PROC;
-
-	/*Set the appropriate event type.*/
-	msg->event = CS_REQ_RCVD_EVNT;
     /* Create new transaction */
     transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
     add_gtp_transaction(source_addr, source_port, seq_num, trans);
 
-    if(INITIAL_PDN_ATTACH_PROC == msg->proc) {
+	/*Set the appropriate event type.*/
+	msg->event = CS_REQ_RCVD_EVNT;
+
+    if (1 == msg->gtpc_msg.csr.indctn_flgs.indication_oi) {
+        /*Set SGW Relocation Case */
+        msg->proc = SGW_RELOCATION_PROC;
         /* Allocate new Proc */
+        csreq_proc = alloc_sgw_relocation_proc(msg);
+    } else { 
+        /* SGW + PGW + SAEGW case */
+        msg->proc = INITIAL_PDN_ATTACH_PROC;
         csreq_proc = alloc_initial_proc(msg);
     }
 
@@ -749,74 +737,18 @@ handle_create_session_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     csreq_proc->gtpc_trans = trans;
     trans->sequence = seq_num;
     trans->peer_sockaddr = msg->peer_addr;
-
-    csreq_proc->handler((void *)csreq_proc, (uint32_t)msg->event, (void *)msg);
-    return 0;
-
-#ifdef FUTURE_NEEDS
-
-	if (INITIAL_PDN_ATTACH_PROC == msg->proc) {
-		if (cp_config->cp_type == SGWC) {
-			/*Set the appropriate state for the SGWC */
-			msg->state = SGWC_NONE_STATE;
-            int ret = process_csreq((void*)msg);
-            if(ret != 0) {
-                return ret;
-            }
-            /* Send PFCP Establishment Req OR 
-             * Send PFCP Setup + Buffer CSReq proc 
-             * */
-            association_setup_handler((void *)msg, NULL);
-        } else {
-		    msg->state = PGWC_NONE_STATE;
-            /*Set the appropriate state for the SAEGWC and PGWC*/
-            if(cp_config->gx_enabled) {
-                clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
-                        "Msg_Type:%s[%u], Teid:%u, "
-                        "Procedure:%s, State:%s, Event:%s\n",
-                        __func__, gtp_type_str(msg->msg_type), msg->msg_type,
-                        gtpv2c_rx->teid.has_teid.teid,
-                        get_proc_string(msg->proc),
-                        get_state_string(msg->state), get_event_string(msg->event));
-
-                gx_setup_handler((void*)msg, NULL);
-            } else {
-                clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
-                        "Msg_Type:%s[%u], Teid:%u, "
-                        "Procedure:%s, State:%s, Event:%s\n",
-                        __func__, gtp_type_str(msg->msg_type), msg->msg_type,
-                        gtpv2c_rx->teid.has_teid.teid,
-                        get_proc_string(msg->proc),
-                        get_state_string(msg->state), get_event_string(msg->event));
-
-                int ret = process_csreq((void*)msg);
-                if(ret != 0) {
-                    return ret;
-                }
-                association_setup_handler((void *)msg, NULL);
-            }
-        }
-	} else if (SGW_RELOCATION_PROC == msg->proc) {
-		/* SGW Relocation */
-		msg->state = SGWC_NONE_STATE;
-        int ret = process_csreq((void*)msg);
-        if(ret != 0)
-            return ret;
-        association_setup_handler((void *)msg, NULL);
-	}
-    return 0;
-#endif
+    start_procedure(csreq_proc, msg);
     return 0;
 }
 
-#ifdef FUTURE_NEEDS
 int
 fill_cs_request(create_sess_req_t *cs_req, ue_context_t *context,
 		uint8_t ebi_index)
 {
 	int len = 0 ;
+    int sequence = 0; // take it from proc ???
 	set_gtpv2c_header(&cs_req->header, 1, GTP_CREATE_SESSION_REQ,
-			0, context->sequence);
+			0, sequence);
 
 	cs_req->imsi.imsi_number_digits = context->imsi;
 	set_ie_header(&cs_req->imsi.header, GTP_IE_IMSI, IE_INSTANCE_ZERO,
@@ -1093,5 +1025,4 @@ fill_cs_request(create_sess_req_t *cs_req, ue_context_t *context,
 
 	return 0;
 }
-#endif
 

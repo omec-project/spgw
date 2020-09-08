@@ -23,43 +23,43 @@ int msg_handler_sx_n4(void);
 
 void init_pfcp_interface(void);
 
-typedef int (*pfcp_handler)(msg_info_t *msg, pfcp_header_t *); 
+typedef int (*pfcp_handler)(msg_info_t **msg, pfcp_header_t *); 
 
 extern pfcp_handler pfcp_msg_handler[256];
 
 int 
-handle_unknown_pfcp_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
+handle_unknown_pfcp_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 
 int 
-handle_pfcp_heartbit_rsp_msg(msg_info_t *msg, pfcp_header_t *pfcp_header);
+handle_pfcp_heartbit_rsp_msg(msg_info_t **msg, pfcp_header_t *pfcp_header);
 
 int 
-handle_pfcp_heartbit_req_msg(msg_info_t *msg, pfcp_header_t *pfcp_header);
+handle_pfcp_heartbit_req_msg(msg_info_t **msg, pfcp_header_t *pfcp_header);
 
 int 
-handle_pfcp_association_setup_request_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
+handle_pfcp_association_setup_request_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 
 int 
-handle_pfcp_association_setup_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
+handle_pfcp_association_setup_response_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 
 int 
-handle_pfcp_session_est_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
+handle_pfcp_session_est_response_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 
 int
-handle_pfcp_session_mod_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
+handle_pfcp_session_mod_response_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 
 int
-handle_pfcp_session_delete_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
+handle_pfcp_session_delete_response_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 
 int 
-handle_session_report_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
+handle_session_report_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 
 int 
-handle_pfcp_pfd_management_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
+handle_pfcp_pfd_management_response_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 
 int 
-handle_pfcp_set_deletion_response_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
+handle_pfcp_set_deletion_response_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 
 int 
-handle_pfcp_session_delete_request_msg(msg_info_t *msg, pfcp_header_t *pfcp_rx);
+handle_pfcp_session_delete_request_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 #endif

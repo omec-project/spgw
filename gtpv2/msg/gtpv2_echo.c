@@ -74,8 +74,9 @@ build_gtpv2_echo_request(gtpv2c_header_t *echo_pkt, uint16_t gtpu_seqnb)
 }
 
 int 
-handle_echo_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
+handle_echo_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 {
+    msg_info_t *msg = *msg_p;
 	uint16_t payload_length = 0;
 	int ret = 0;
     uint32_t iface = msg->source_interface; 
@@ -130,8 +131,9 @@ handle_echo_request(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 }
 
 int 
-handle_echo_response(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
+handle_echo_response(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 {
+    msg_info_t *msg = *msg_p;
 	int ret = 0;
     uint32_t iface = msg->source_interface; 
     struct sockaddr_in *peer_addr;

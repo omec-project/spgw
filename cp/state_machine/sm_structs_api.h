@@ -8,8 +8,7 @@
 #ifndef _SM_STRUCT_API_H
 #define _SM_STRUCT_API_H
 #include "sm_struct.h"
-
-struct ue_context;
+#include "ue.h"
 
 /**
  * @brief  : Update UE state in UE Context.
@@ -62,21 +61,14 @@ const char * get_state_string(int value);
 const char * get_event_string(int value);
 
 /**
- * @brief  : Update UE proc in UE Context.
- * @param  : teid_key, key for search
- * @param  : proc, procedure
- * @param  : ebi_index, index of bearer id stored in array
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-update_ue_proc(uint32_t teid_key, uint8_t proc, uint8_t ebi_index);
-
-/**
  * @brief  : Update Procedure according to indication flags
  * @param  : msg, message data
  * @return : Returns 0 in case of success , -1 otherwise
  */
 uint8_t
 get_procedure(msg_info_t *msg);
+
+void
+start_upf_procedure(proc_context_t *proc, msg_info_t *msg);
 
 #endif

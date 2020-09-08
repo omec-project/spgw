@@ -193,6 +193,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf)
 				pfd_conts->len_of_cstm_pfd_cntnt = sizeof(struct mtr_entry) + struct_len;
 				break;
 			case MSG_DDN_ACK:
+#if 0
 				pfd_conts->cstm_pfd_cntnt = malloc(sizeof(struct downlink_data_notification));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
@@ -201,6 +202,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf)
 				memcpy(pfd_conts->cstm_pfd_cntnt + struct_len ,
 			          (uint8_t *)&cstm_buf->msg_union.mtr_entry, sizeof(struct downlink_data_notification));
 				pfd_conts->len_of_cstm_pfd_cntnt = sizeof(struct downlink_data_notification) + struct_len;
+#endif
 				break;
 			default:
 				clLog(apilogger, eCLSeverityCritical, "build_dp_msg: Invalid msg type\n");
