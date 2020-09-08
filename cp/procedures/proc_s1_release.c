@@ -38,10 +38,8 @@ alloc_rab_proc(msg_info_t *msg)
     rab_proc->handler = rab_event_handler;
     rab_proc->ue_context = msg->ue_context;
     rab_proc->pdn_context = msg->pdn_context;
-
     msg->proc_context = rab_proc;
     SET_PROC_MSG(rab_proc, msg);
- 
     return rab_proc;
 }
 
@@ -96,7 +94,6 @@ void
 process_release_access_bearer_request_pfcp_timeout(void *data)
 {
     proc_context_t *proc_context = (proc_context_t *)data;
-
     msg_info_t *msg = calloc(1, sizeof(msg_info_t));
     msg->msg_type = PFCP_SESSION_MODIFICATION_RESPONSE;
     msg->proc_context = proc_context;

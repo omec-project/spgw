@@ -87,6 +87,42 @@ proc_session_report_success(msg_info_t *msg)
 void
 proc_session_report_complete(proc_context_t *proc_context)
 {
+    assert(proc_context->gtpc_trans != NULL);
+    transData_t *gtpc_trans = proc_context->gtpc_trans;
+
+    if(gtpc_trans != NULL) {
+        uint16_t port_num = gtpc_trans->peer_sockaddr.sin_port; 
+        uint32_t sender_addr = gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
+        uint32_t seq_num = gtpc_trans->sequence; 
+
+        transData_t *temp= delete_gtp_transaction(sender_addr, port_num, seq_num);
+        if(temp != NULL) {
+            /* Let's cross check if transaction from the table is matchig with the one we have 
+            * in subscriber 
+            */
+            assert(gtpc_trans == temp);
+        }
+        free(gtpc_trans);
+    }
+    proc_context->gtpc_trans =  NULL;
+
+    transData_t *pfcp_trans = proc_context->pfcp_trans;
+    if(pfcp_trans != NULL) {
+        uint16_t port_num = pfcp_trans->peer_sockaddr.sin_port; 
+        uint32_t sender_addr = pfcp_trans->peer_sockaddr.sin_addr.s_addr; 
+        uint32_t seq_num = pfcp_trans->sequence; 
+
+        transData_t *temp = delete_gtp_transaction(sender_addr, port_num, seq_num);
+        if(temp != NULL) {
+            /* Let's cross check if transaction from the table is matchig with the one we have 
+            * in subscriber 
+            */
+            assert(pfcp_trans == temp);
+        }
+        free(pfcp_trans);
+    }
+    proc_context->pfcp_trans = NULL;
+    /* PFCP transaction is already complete. */
     end_procedure(proc_context);
     return;
 }

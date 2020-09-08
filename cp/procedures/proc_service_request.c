@@ -46,11 +46,9 @@ alloc_service_req_proc(msg_info_t *msg)
     service_req_proc->pdn_context = (void *)msg->pdn_context; 
     service_req_proc->bearer_context = (void *)msg->bearer_context;
     service_req_proc->handler = service_req_event_handler;
-
     msg->proc_context = service_req_proc;
     SET_PROC_MSG(service_req_proc, msg);
  
-
     return service_req_proc;
 }
 

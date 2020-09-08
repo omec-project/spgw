@@ -48,7 +48,7 @@ alloc_detach_proc(msg_info_t *msg)
     detach_proc->ue_context = msg->ue_context;
     detach_proc->pdn_context = msg->pdn_context;
     msg->proc_context = detach_proc;
-    SET_PROC_MSG(detach_proc,msg);
+    SET_PROC_MSG(detach_proc, msg);
     return detach_proc;
 }
 
@@ -219,22 +219,23 @@ process_pfcp_sess_del_request_timeout(void *data)
     msg_info_t *msg = calloc(1, sizeof(msg_info_t));
     msg->msg_type = PFCP_SESSION_DELETION_RESPONSE;
     msg->proc_context = proc_context;
-    SET_PROC_MSG(proc_context, msg);
+
     proc_detach_failure(proc_context, msg, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
     return;
 }
 
 int
-process_pfcp_sess_del_request(proc_context_t *proc_context, msg_info_t *msg)
+process_pfcp_sess_del_request(proc_context_t *proc_context, msg_info_t *msg) 
 {
 
-    del_sess_req_t *ds_req = &msg->gtpc_msg.dsr;
+	RTE_SET_USED(msg);  
 	int ret = 0;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
 	uint32_t s5s8_pgw_gtpc_teid = 0;
 	uint32_t s5s8_pgw_gtpc_ipv4 = 0;
 	pfcp_sess_del_req_t pfcp_sess_del_req = {0};
+    del_sess_req_t *ds_req = &msg->gtpc_msg.dsr;
 	uint64_t ebi_index = ds_req->lbi.ebi_ebi - 5;
     uint32_t sequence;
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
@@ -242,6 +243,7 @@ process_pfcp_sess_del_request(proc_context_t *proc_context, msg_info_t *msg)
 	uint8_t pfcp_msg[512]={0};
 
     pdn = proc_context->pdn_context;
+
 
 	/* Lookup and get context of delete request */
 	ret = delete_context(ds_req->lbi, ds_req->header.teid.has_teid.teid,
@@ -280,6 +282,15 @@ process_pfcp_sess_del_request(proc_context_t *proc_context, msg_info_t *msg)
 
 	pdn->state = PFCP_SESS_DEL_REQ_SNT_STATE;
 
+#ifdef DELETE_THIS
+	/* Lookup entry in hash table on the basis of session id*/
+	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &context) != 0){
+		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
+				__func__, __LINE__, context->pdns[ebi_index]->seid);
+		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+	}
+#endif
+
 	return 0;
 }
 
@@ -291,6 +302,7 @@ void
 proc_detach_failure(proc_context_t *proc_context, msg_info_t *msg, uint8_t cause)
 {
     increment_stat(PROCEDURES_SPGW_MME_INIT_DETACH_FAILURE);
+
     ds_error_response(proc_context, msg,
                       cause,
                       cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
@@ -318,13 +330,13 @@ process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *ms
 {
     RTE_SET_USED(proc_context);
 	uint8_t ebi_index = 0;
-    del_sess_req_t *ds_req = &msg->gtpc_msg.dsr;
 	ue_context_t *context = msg->ue_context;
 	eps_bearer_t *bearer  = NULL;
 	pdn_connection_t *pdn =  NULL;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
+    del_sess_req_t *del_req = &msg->gtpc_msg.dsr;
 
-	ebi_index = ds_req->lbi.ebi_ebi - 5;
+	ebi_index = del_req->lbi.ebi_ebi - 5;
 	if (!(context->bearer_bitmap & (1 << ebi_index))) {
 		clLog(clSystemLog, eCLSeverityCritical,
 				"Received delete session on non-existent EBI - "
@@ -342,9 +354,9 @@ process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *ms
 
 	pdn = bearer->pdn;
 
-	bearer->eps_bearer_id = ds_req->lbi.ebi_ebi;
+	bearer->eps_bearer_id = del_req->lbi.ebi_ebi;
 
-	fill_pfcp_sess_mod_req_delete(&pfcp_sess_mod_req, &ds_req->header, context, pdn);
+	fill_pfcp_sess_mod_req_delete(&pfcp_sess_mod_req, &del_req->header, context, pdn);
 
 	uint8_t pfcp_msg[512]={0};
 	int encoded = encode_pfcp_sess_mod_req_t(&pfcp_sess_mod_req, pfcp_msg);
@@ -365,7 +377,7 @@ process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *ms
 
 #ifdef TRANS_SUPPORT
 	/* Update the sequence number */
-	 context->sequence = ds_req->header.teid.has_teid.seq;
+	 context->sequence = del_req->header.teid.has_teid.seq;
 
 
 	/*Retrive the session information based on session id. */
@@ -374,8 +386,8 @@ process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *ms
 		return -1;
 	}
 
-	resp->gtpc_msg.dsr = *ds_req;
-	resp->eps_bearer_id = ds_req->lbi.ebi_ebi;
+	resp->gtpc_msg.dsr = *del_req;
+	resp->eps_bearer_id = del_req->lbi.ebi_ebi;
 	resp->s5s8_pgw_gtpc_ipv4 = htonl(pdn->s5s8_pgw_gtpc_ipv4.s_addr);
 	resp->msg_type = GTP_DELETE_SESSION_REQ;
 	resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;

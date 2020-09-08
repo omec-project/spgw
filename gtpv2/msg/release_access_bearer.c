@@ -74,7 +74,6 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
 
-
     /* Find old transaction */
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
     uint16_t source_port = msg->peer_addr.sin_port;
@@ -96,7 +95,6 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
     msg->ue_context = context;
-
 	msg->proc = S1_RELEASE_PROC;
 
     for(uint8_t ebi_index = 0; ebi_index <= 11; ebi_index++) {

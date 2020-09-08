@@ -71,7 +71,6 @@ alloc_initial_proc(msg_info_t *msg)
     csreq_proc->handler = initial_attach_event_handler;
     msg->proc_context = csreq_proc;
     SET_PROC_MSG(csreq_proc, msg);
- 
     return csreq_proc;
 }
 

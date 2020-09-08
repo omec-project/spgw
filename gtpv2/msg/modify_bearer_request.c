@@ -615,7 +615,6 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         }
         return -1; 
     }
-
     assert(msg->msg_type == GTP_MODIFY_BEARER_REQ);
 
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
@@ -675,7 +674,6 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         mbreq_proc->gtpc_trans = trans;
         
         start_procedure(mbreq_proc, msg);
-
 	}
     return 0;
 }
