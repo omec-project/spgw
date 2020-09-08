@@ -610,6 +610,8 @@ end_procedure(proc_context_t *proc_ctxt)
         proc_ctxt->pfcp_trans = NULL;
     }
 
+    free(proc_ctxt->msg_info);
+
     context = proc_ctxt->ue_context;
     if(context != NULL) {
         TAILQ_REMOVE(&context->pending_sub_procs, proc_ctxt, next_sub_proc);
