@@ -143,11 +143,15 @@ int gx_cca_cb
 #endif
 	gx_resp.msg_type = GX_CCA_MSG;
 	/* retrieve the original query associated with the answer */
+    struct msg_hdr *hdr=NULL;
+    CHECK_FCT( fd_msg_hdr(ans, &hdr) );
+    printf("\n end to end id = %d \n", hdr->msg_eteid);
 	CHECK_FCT(fd_msg_answ_getq (ans, &qry));
 	ret = gx_cca_parse(*msg, &(gx_resp.data.cp_cca));
 
 	if (ret != FD_REASON_OK)
 	{
+        printf("parsing failed gx_cca_parse\n");
 		goto err;
 	}
 	/* Cal the length of buffer needed */

@@ -15,6 +15,7 @@
 extern "C" {
 #endif
 
+#pragma pack(push, 1)
 /******************************************************************************/
 /***** OctetString Structures                                             *****/
 /******************************************************************************/
@@ -2034,6 +2035,7 @@ typedef struct Gx_msg {
 		GxCCA cp_cca;
 	}data;
 }gx_msg;
+#pragma pack(pop)
 
 enum e_BUF_HDR {
 	GX_RAR_MSG,

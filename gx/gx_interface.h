@@ -178,4 +178,5 @@ int handle_cca_update_msg(msg_info_t **msg);
 int handle_cca_initial_msg(msg_info_t **msg);
 int handle_ccr_terminate_msg(msg_info_t **msg);
 int handle_rar_msg(msg_info_t **msg);
+void gx_msg_proc_failure(proc_context_t *proc_ctxt);
 #endif /* CP_APP_H_ */

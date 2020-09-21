@@ -345,6 +345,7 @@ upf_pfcp_setup_failure(void *data, uint16_t event)
         proc_context_t *proc = (proc_context_t *)key->proc_context;
         msg = calloc(1, sizeof(msg_info_t));
         msg->msg_type = PFCP_ASSOC_SETUP_FAILED;
+        msg->event = PFCP_ASSOC_SETUP_FAILED;
         msg->proc_context = key->proc_context; 
         SET_PROC_MSG(proc, msg);
         proc->handler(proc, msg);

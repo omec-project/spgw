@@ -52,7 +52,6 @@ void iface_process_ipc_msgs(void)
 	if (my_sock.sock_fd_s11) {
 		FD_SET(my_sock.sock_fd_s11, &readfds);
 	}
-#ifdef FUTURE_NEED
 	/* Add S5S8_FD in the set */
 	if (my_sock.sock_fd_s5s8) {
 		FD_SET(my_sock.sock_fd_s5s8, &readfds);
@@ -62,7 +61,6 @@ void iface_process_ipc_msgs(void)
 	if (my_sock.gx_app_sock) {
 		FD_SET(my_sock.gx_app_sock, &readfds);
 	}
-#endif
 
 	n = my_sock.select_max_fd;
 
@@ -115,26 +113,29 @@ void iface_process_ipc_msgs(void)
             }
         }
 
-#ifdef FUTURE_NEED
 		if (cp_config->cp_type != SAEGWC) {
 			if (FD_ISSET(my_sock.sock_fd_s5s8, &readfds)) {
                 ret = 0;
+                clLog(clSystemLog, eCLSeverityCritical,"S5 Packet read event received");
                 while(ret == 0) {
-					ret = msg_handler_s5s8(void);
+					ret = msg_handler_s5s8();
                     /* After processing each message see if any stack unwind events */
                     event  = (stack_event_t *)get_stack_unwind_event();
                     while(event != NULL)
                     {
+                        clLog(clSystemLog, eCLSeverityCritical,"handle stack unwind event %d ",event->event);
                         event->cb(event->data, event->event);
                         free(event);
                         event  = (stack_event_t *)get_stack_unwind_event();
                     }
                 }
+                clLog(clSystemLog, eCLSeverityCritical,"S5 Packet read complete");
 			}
 		}
 		/* Refer - cp/Makefile. For now this is disabled. */
 		if ((cp_config->cp_type == PGWC) || (cp_config->cp_type == SAEGWC)) {
 			if (FD_ISSET(my_sock.gx_app_sock, &readfds)) {
+                clLog(clSystemLog, eCLSeverityCritical,"Gx Packet read event received");
                 ret = 0;
                 while(ret == 0) {
 					ret = msg_handler_gx();
@@ -142,14 +143,16 @@ void iface_process_ipc_msgs(void)
                     event  = (stack_event_t *)get_stack_unwind_event();
                     while(event != NULL)
                     {
+                        clLog(clSystemLog, eCLSeverityCritical,"handle stack unwind event %d ",event->event);
                         event->cb(event->data, event->event);
                         free(event);
                         event  = (stack_event_t *)get_stack_unwind_event();
                     }
+                    break;
                 }
+                clLog(clSystemLog, eCLSeverityCritical,"Gx Packet read complete");
 			}
 		}
-#endif
 	}
 }
 

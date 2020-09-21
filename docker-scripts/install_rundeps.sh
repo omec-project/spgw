@@ -9,17 +9,15 @@ SUDO=''
 install_run_cp_deps() {
 	$SUDO apt-get update && $SUDO apt-get -y install \
 		libnuma1 \
+		openssl \
+		libidn11 \
+		libgnutls30 \
+		libsctp1 \
+		netbase\
+		openssh-server\
+		sshpass \
 		libpcap0.8 
 
-}
-
-install_run_dp_deps() {
-	$SUDO apt-get update && $SUDO apt-get -y install \
-		libhyperscan4 \
-		libmnl0 \
-		libnuma1 \
-		libssl1.1 \
-		libzmq5
 }
 
 install_run_utils() {

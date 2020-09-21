@@ -570,9 +570,6 @@ config_cp_ip_port(cp_config_t *cp_config)
     }
 
     rte_free(static_ip_pool_entries);
-
-    cp_config->gx_enabled = false;
-
     return;
 }
 

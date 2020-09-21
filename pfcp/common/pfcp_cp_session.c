@@ -1797,13 +1797,13 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	set_fseid(&(pfcp_sess_est_req->cp_fseid), pdn->seid, node_value);
 
 	if ((cp_config->cp_type == PGWC) ||
-		(SAEGWC == cp_config->cp_type))
+		(cp_config->cp_type == SAEGWC))
 	{
-		printf("[%s]-%d. Num Rules in pdn policy  = %d \n",__FUNCTION__,__LINE__,pdn->policy.num_charg_rule_install);
 		pfcp_sess_est_req->create_pdr_count = pdn->policy.num_charg_rule_install * 2;
 		/*
 		 * For pgw create pdf, far and qer while handling pfcp messages
 		 */
+        printf("\n pdn->policy.num_charg_rule_install %d \n",pdn->policy.num_charg_rule_install);
 		for (int idx=0; idx <  pdn->policy.num_charg_rule_install; idx++)
 		{
 			bearer = NULL;
@@ -1818,6 +1818,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			}
 			else
 			{
+				printf("[%s]-%d. dedicated bearer \n",__FUNCTION__,__LINE__);
 				uint8_t bearer_id = 0;
 				/*
 				 * dedicated bearer

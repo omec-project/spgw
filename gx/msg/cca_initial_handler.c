@@ -23,6 +23,16 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_proc.h"
 
+void gx_msg_proc_failure(proc_context_t *proc_ctxt)
+{
+    msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+    msg->msg_type = GX_CCAI_FAILED;
+    msg->event = GX_CCAI_FAILED;
+    msg->proc_context = proc_ctxt; 
+    SET_PROC_MSG(proc_ctxt, msg);
+    proc_ctxt->handler(proc_ctxt, msg);
+    return;
+}
 
 int handle_cca_initial_msg(msg_info_t **msg_p)
 {
@@ -43,11 +53,13 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
                 msg->gx_msg.cca.session_id.val);
         return -1;
     }
+    proc_context_t *proc_context = (proc_context_t *)gx_context->proc_context;
 
     if(msg->gx_msg.cca.presence.result_code &&
             msg->gx_msg.cca.result_code != 2001){
         clLog(clSystemLog, eCLSeverityCritical, "%s:Received CCA with DIAMETER Failure [%d]\n", __func__,
                 msg->gx_msg.cca.result_code);
+        gx_msg_proc_failure(proc_context); 
         return -1;
     }
 
@@ -57,6 +69,7 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
     if (ret < 0) {
         clLog(clSystemLog, eCLSeverityCritical, "%s:No Call Id found from session id:%s\n", __func__,
                 msg->gx_msg.cca.session_id.val);
+        gx_msg_proc_failure(proc_context); 
         return -1;
     }
     /* Retrieve PDN context based on call id */
@@ -65,9 +78,9 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
     {
         clLog(clSystemLog, eCLSeverityCritical, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
                 __func__, call_id);
+        gx_msg_proc_failure(proc_context); 
         return -1;
     }
-    proc_context_t *proc_context = (proc_context_t *)gx_context->proc_context;
     msg->event = CCA_RCVD_EVNT;
     clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
             "Msg_Type:%s[%u], Session Id:%s, "
@@ -80,6 +93,8 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
     proc_context->handler(proc_context, msg);
     return 0;
 }
+
+
 
 
 
