@@ -56,6 +56,8 @@ struct comp
     }
 };
 
+#define CONFIG_CHANGE_NOTIFICATION   0x01
+
 class spgwTables
 {
    public:
@@ -75,6 +77,7 @@ class spgwTables
      std::map<transKey_t, void *, comp> spgw_pfcp_transaction_map; 
      std::map<transKey_t, void *, comp> spgw_gtp_transaction_map; 
      std::queue<void *> stack_events_queue;
+     std::queue<void *> t2tmsg_queue;
 
      bool add_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans); 
      void *find_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq); 
@@ -84,6 +87,15 @@ class spgwTables
      void *delete_gtp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq); 
      void  queue_event(void *context); 
      void  *pop_event(void); 
+     void  queue_t2t_msg_event(void *context) { t2tmsg_queue.push(context);} 
+     void  *pop_t2t_msg_event(void) 
+     {
+        if(t2tmsg_queue.empty())
+           return NULL;
+        void *context = t2tmsg_queue.front();
+        t2tmsg_queue.pop();
+        return context;
+     }
 };
 
 #endif

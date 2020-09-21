@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+
 spgwConfigStore *config;
 
 bool 
@@ -22,6 +23,7 @@ compare_sub_rules(const sub_selection_rule_t *rule1, const sub_selection_rule_t 
         return true;
     return false;
 }
+
 spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jsonFile)
 {
     std::cout<<"parsing config in class function "<<std::endl;
@@ -32,14 +34,20 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
     }
     char readBuffer[65536];
     rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    fclose(fp);
     rapidjson::Document doc;
     doc.ParseStream(is);
-    fclose(fp);
-
     if(!doc.IsObject()) {
         std::cout << "Error parsing the json config file" << std::endl;
         return nullptr;
     }
+    spgw_config_profile_t *config = spgwConfig::parse_json_doc(doc);
+    return config;
+}
+
+spgw_config_profile_t*
+spgwConfig::parse_json_doc(rapidjson::Document &doc)
+{
     spgw_config_profile_t *temp_config = new (spgw_config_profile_t);
     spgwConfigStore *config_store = new (spgwConfigStore);
     temp_config->config = (void *)config_store;
@@ -316,6 +324,10 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
 {
     sub_selection_rule_t *rule = nullptr;
     std::list<sub_selection_rule_t *>::iterator it;
+    if(config == NULL) {
+        std::cout<<"Configuration not available..."<<std::endl;
+        return NULL;
+    }
     for (it=config->sub_sel_rules.begin(); it!=config->sub_sel_rules.end(); ++it)
     {
         rule = *it;
@@ -367,6 +379,7 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
     return nullptr;
 }
 
+// set config reference in global variable 
 void spgwConfig::set_cp_config_cpp(spgw_config_profile_t *new_config)
 {
     config = reinterpret_cast<spgwConfigStore *>(new_config->config); 

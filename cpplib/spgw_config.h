@@ -4,6 +4,7 @@
 
 #ifndef __SPGW_CONFIG_H__
 #define __SPGW_CONFIG_H__
+#include "rapidjson/document.h"
 #include "spgw_config_struct.h"
 #include <list>
 #include "string.h"
@@ -105,6 +106,7 @@ class spgwConfig
 {
    public:
     static spgw_config_profile_t *parse_subscriber_profiles_cpp(const char *); 
+    static spgw_config_profile_t *parse_json_doc(rapidjson::Document &doc);
     static void set_cp_config_cpp(spgw_config_profile_t *);
     static void switch_config_cpp(spgw_config_profile_t *);
     static sub_profile_t* match_sub_selection_cpp(sub_selection_keys_t *key);

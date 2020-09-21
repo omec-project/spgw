@@ -7,16 +7,18 @@
 #include "spgwStatsPromClient.h"
 #include <thread>
 #include <sstream>
-static spgwTables *table = nullptr; 
+#include "spgw_webserver.h"
+
+spgwTables *table = nullptr; 
 
 extern "C"
 {
-     #include <sys/socket.h>
-     #include <netinet/in.h>
-     #include <arpa/inet.h>
-     #include <stdio.h>
-     #include "spgw_cpp_wrapper.h"
-     #include "spgwStatsPromEnum.h"
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <stdio.h>
+    #include "spgw_cpp_wrapper.h"
+    #include "spgwStatsPromEnum.h"
 
     spgw_config_profile_t *parse_subscriber_profiles_c(const char *file)
     {
@@ -50,7 +52,7 @@ extern "C"
         spgwConfig::invalidate_user_plane_address(ip);
     }
 
-    void init_cpp_tables(void)
+    void init_cpp_tables()
     {
         table = new spgwTables();
     }
@@ -100,12 +102,24 @@ extern "C"
     {
         return table->pop_event();
     }
+    
+    void *get_t2tMsg() 
+    {
+        return table->pop_t2t_msg_event();
+    }
 
     void setup_prometheus(uint16_t port)
     {
         std::thread prom(spgwStatsSetupPrometheusThread, port);
         prom.detach();
     }
+
+    void setup_webserver(uint16_t port)
+    {
+        std::thread webserver(spgwWebserverThread, port);
+        webserver.detach();
+    }
+
 
     void increment_mme_peer_stats(int stat_id, uint32_t peer_addr)
     {

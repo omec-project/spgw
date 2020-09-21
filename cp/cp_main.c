@@ -189,6 +189,8 @@ main(int argc, char **argv)
 
     setup_prometheus(cp_config->prom_port);
 
+    setup_webserver(cp_config->webserver_port);
+
     init_cp();
 
     init_cp_params();

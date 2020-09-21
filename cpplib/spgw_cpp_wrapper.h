@@ -33,11 +33,13 @@ void* find_gtp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq);
 void* delete_gtp_transaction(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq);
 void queue_stack_unwind_event_cpp(void *context); 
 void *get_stack_unwind_event_cpp(void);
+void *get_t2tMsg(void);
 
 /* Prometheus APIs */
 void decrement_stat(int stat_id);
 void increment_stat(int stat_id);
 void setup_prometheus(uint16_t port);
+void setup_webserver(uint16_t port);
 void increment_userplane_stats(int stat_id, uint32_t peer_addr);
 void increment_mme_peer_stats(int stat_id, uint32_t peer_addr);
 void increment_sgw_peer_stats(int stat_id, uint32_t peer_addr);

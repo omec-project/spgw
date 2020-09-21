@@ -22,6 +22,8 @@ typedef struct udp_sock_t {
     struct sockaddr_in s5s8_recv_sockaddr;
     struct sockaddr_in pfcp_sockaddr;
     struct sockaddr_in s11_sockaddr;
+    struct sockaddr_in loopback_sockaddr;
+    int sock_fd_local;
 	int sock_fd_pfcp;
 	int sock_fd_s11;
 	int sock_fd_s5s8;
@@ -98,6 +100,7 @@ struct msgbuf {
  */
 void iface_process_ipc_msgs(void);
 
+void update_max_fd(void);
 
 #endif /* _CP_IO_POLL_H_ */
 

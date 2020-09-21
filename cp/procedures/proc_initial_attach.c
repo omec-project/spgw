@@ -235,11 +235,10 @@ process_create_sess_req(create_sess_req_t *csr,
                 csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, 
                 csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
     
-    sub_profile = get_subscriber_profile(&dpkey); 
+    sub_profile = match_sub_selection(&dpkey); 
     
     // no upf available 
-    if(sub_profile == NULL) 
-    {
+    if(sub_profile == NULL) {
         // caller sends out csrsp 
         return GTPV2C_CAUSE_REQUEST_REJECTED ; 
     }

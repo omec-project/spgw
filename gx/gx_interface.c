@@ -442,11 +442,7 @@ start_cp_app(void )
 
 	/* Accept incomming connection request receive on socket */
 	my_sock.gx_app_sock  = accept_from_ipc_channel( g_cp_sock, gx_app_sockaddr);
-	if((my_sock.gx_app_sock > my_sock.sock_fd_pfcp) &&
-	   (my_sock.gx_app_sock > my_sock.sock_fd_s11) &&
-	   (my_sock.gx_app_sock > my_sock.sock_fd_s5s8)) {
-        my_sock.select_max_fd = my_sock.gx_app_sock + 1;
-    }
+    update_max_fd();
 }
 
 const char *

@@ -77,6 +77,8 @@ typedef struct cp_config
 
 	uint16_t prom_port;
 
+    uint16_t webserver_port;
+
 	/* logger parameter */
 	uint8_t cp_logger;
 

@@ -17,7 +17,7 @@ CFLAGS += -Werror=format-security
 
 
 CC := g++
-CFLAGS += -std=c++11 
+CFLAGS += -std=c++14
 
 DEBUG = true
 ifeq ($(DEBUG),true)
@@ -27,12 +27,14 @@ ifeq ($(DEBUG),false)
         CFLAGS += -O3
 endif
 
-SPGW_LIBNAME = libspgwcpputil.so 
+SPGW_STATIC_LIBNAME = libspgwcpputil.a 
 
 SPGWLIB_SRCS := ./spgw_config.cpp \
 				./spgw_tables.cpp \
 				./spgwStatsPromClient.cpp \
-				./spgw_wrapper.cpp 
+				./spgw_wrapper.cpp \
+				./spgw_webserver.cpp 
+                 
 
 SRCDIR := .
 SRCEXT := cpp
@@ -45,7 +47,8 @@ all : buildCommonLIBS install
 buildCommonLIBS : $(OBJS)
 	@echo "Linking"
 	@mkdir -p $(LIBDIR)
-	$(CC) $(CFLAGS) $(SPGW_CPP_OBJS) -lprometheus-cpp-pull -lprometheus-cpp-core -lz -shared -o $(SPGW_LIBNAME)
+	ar rvs $(SPGW_STATIC_LIBNAME) $(SPGW_CPP_OBJS) 
+
 
 $(OBJS) : $(OBJDIR)/%.o : $(SRCDIR)/%.cpp
 	@mkdir -p $(OBJDIR)/
@@ -54,14 +57,15 @@ $(OBJS) : $(OBJDIR)/%.o : $(SRCDIR)/%.cpp
 install:
 	@echo "Installing"
 	-@mkdir -p $(TARGET_DIR)/lib
-	-@cp $(SPGW_LIBNAME) $(TARGET_DIR)/lib
+	-@cp $(SPGW_STATIC_LIBNAME) $(TARGET_DIR)/lib
+	-@ls -l $(TARGET_DIR)/lib
 
 clean:
 	@echo " Cleaning...";
 	-@rm -rf a.out
 	-@rm -rf $(OBJDIR)/
-	-@rm -f $(SPGW_LIBNAME)
-	-@rm -f $(TARGET_DIR)/lib/$(SPGW_LIBNAME)
+	-@rm -f $(SPGW_STATIC_LIBNAME)
+	-@rm -f $(TARGET_DIR)/lib/$(SPGW_STATIC_LIBNAME)
 
 test: 
 	gcc -g test_main.c -L/users/ajayonf/spgw.ajay/cpplib -lspgwcpputil
