@@ -30,6 +30,7 @@ queue_stack_unwind_event(uint16_t event, void *context, stack_event_handler cb)
     queue_stack_unwind_event_cpp((void*)event_p);
     return;
 }
+
 inline void*
 get_stack_unwind_event(void)
 {

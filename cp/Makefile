@@ -164,6 +164,7 @@ endif
 LDLIBS += -L$(LIBGTPV2C_ROOT)/lib -lgtpv2c
 LDLIBS += -L$(LIBPFCP_ROOT)/lib -lpfcp
 LDLIBS += -L$(CPPUTILLIB_ROOT)/lib -lspgwcpputil
+LDLIBS += -L/usr/local/lib -lprometheus-cpp-pull -lprometheus-cpp-core -lpistache
 $(info LDLIBS is $(LDLIBS))
 LDLIBS += -lpcap
 LDFLAGS += -lstdc++
@@ -215,7 +216,7 @@ CFLAGS += -DUSE_DNS_QUERY
 #ifneq (,$(findstring USE_DNS_QUERY, $(CFLAGS)))
 	LIBDNSCLIENT_ROOT = $(SRCDIR)/../oss_adapter/c3po_oss/oss-util
 	CFLAGS += -I$(LIBDNSCLIENT_ROOT)/include
-	LDLIBS += $(LIBDNSCLIENT_ROOT)/lib/liboss-util.a -lstdc++ -lpistache
+	LDLIBS += $(LIBDNSCLIENT_ROOT)/lib/liboss-util.a -lstdc++
 	LDLIBS += -L$(LIBDNSCLIENT_ROOT)/modules/c-ares -lcares
 #endif
 

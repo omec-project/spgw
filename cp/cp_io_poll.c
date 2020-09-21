@@ -28,6 +28,8 @@
 #include "cp_events.h"
 #include "gw_adapter.h"
 #include "clogger.h"
+#include "cp_config_apis.h"
+#include "spgw_cpp_wrapper.h"
 
 udp_sock_t my_sock = {0};
 
@@ -62,6 +64,10 @@ void iface_process_ipc_msgs(void)
 		FD_SET(my_sock.gx_app_sock, &readfds);
 	}
 
+    if(my_sock.sock_fd_local) {
+		FD_SET(my_sock.sock_fd_local, &readfds);
+    }
+ 
 	n = my_sock.select_max_fd;
 
 	/* wait until either socket has data
@@ -153,6 +159,47 @@ void iface_process_ipc_msgs(void)
                 clLog(clSystemLog, eCLSeverityCritical,"Gx Packet read complete");
 			}
 		}
+        if(FD_ISSET(my_sock.sock_fd_local, &readfds)) {
+            printf("Read event received on thread to thread communication socket \n");
+            int bytes_rx;
+            uint8_t rx_buf[128];
+            bytes_rx = recv(my_sock.sock_fd_local, rx_buf, sizeof(rx_buf), MSG_DONTWAIT);
+            if(bytes_rx != 0) {
+                printf("Read the config read event \n");
+                /* After processing each message see if any stack unwind events */
+                struct t2tMsg *evt  = (struct t2tMsg *)get_t2tMsg();
+                while(evt != NULL) {
+                    update_subscriber_analyzer_config(evt->data, evt->event);
+                    free(evt);
+                    evt  = (struct t2tMsg *)get_t2tMsg();
+                }
+            }
+        }
+
+
 	}
 }
 
+void update_max_fd(void)
+{
+	if(my_sock.sock_fd_s11 >= my_sock.select_max_fd) {
+        my_sock.select_max_fd = my_sock.sock_fd_s11 + 1;
+    }
+
+	if(my_sock.sock_fd_pfcp >= my_sock.select_max_fd) {
+        my_sock.select_max_fd = my_sock.sock_fd_pfcp + 1;
+    }
+
+	if(my_sock.sock_fd_s5s8 >= my_sock.select_max_fd) {
+        my_sock.select_max_fd = my_sock.sock_fd_s5s8 + 1;
+    }
+
+	if(my_sock.gx_app_sock >= my_sock.select_max_fd) {
+        my_sock.select_max_fd = my_sock.gx_app_sock + 1;
+    } 
+
+    if(my_sock.sock_fd_local >= my_sock.select_max_fd) {
+        my_sock.select_max_fd = my_sock.sock_fd_local + 1;
+    }
+    return;
+}
