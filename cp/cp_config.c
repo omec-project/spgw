@@ -104,22 +104,19 @@ void init_config(void)
 
     init_cli_module(cp_config->cp_logger);
 
-    /* start - dynamic config */
-    cp_config->subscriber_rulebase = (spgw_config_profile_t *) calloc(1, sizeof(spgw_config_profile_t));
-    if (cp_config->subscriber_rulebase == NULL) {
-        rte_exit(EXIT_FAILURE, "Can't allocate memory for subscriber_rulebase!\n");
-    }
-
     /* Parse initial configuration file */
     cp_config->subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
-    set_cp_config(cp_config->subscriber_rulebase);
+    if(cp_config->subscriber_rulebase != NULL) {
+        set_cp_config(cp_config->subscriber_rulebase);
+    } else {
+        // parse error ? or file does not exist  
+    }
 
     char file[128] = {'\0'};
     strcat(file, config_update_base_folder);
     strcat(file, "subscriber_mapping.json");
     clLog(clSystemLog, eCLSeverityDebug, "Config file to monitor %s \n", file);
     register_config_updates(file);
-
     return;
 }
 
@@ -145,6 +142,7 @@ config_cp_ip_port(cp_config_t *cp_config)
     cp_config->dns_enable = 0;
     cp_config->gx_enabled = 0;
     cp_config->prom_port = 3082;
+    cp_config->webserver_port = 8080; //default webserver port
 
     struct rte_cfgfile *file = rte_cfgfile_load(STATIC_CP_FILE, 0);
     if (file == NULL) {
@@ -725,10 +723,17 @@ config_change_cbk(char *config_file, uint32_t flags)
 	 */
 	watch_config_change(config_file, config_change_cbk);
 
-	cp_config->subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
-    
+    spgw_config_profile_t *subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
+
+    update_subscriber_analyzer_config((void *)subscriber_rulebase, 0);
+     
+}
+
+void update_subscriber_analyzer_config(void *config, uint16_t event)
+{
+    (void)(event);
+    cp_config->subscriber_rulebase = (spgw_config_profile_t *)config;
     switch_config(cp_config->subscriber_rulebase);
-    
 }
 
 void 
@@ -780,17 +785,6 @@ struct in_addr native_linux_name_resolve(const char *name)
     }
     printf("Function [%s] - Line - %d - %s - name resolution failed \n",__FUNCTION__,__LINE__,name);
     return ip;
-}
-
-sub_profile_t *
-get_subscriber_profile(sub_selection_keys_t *key)
-{
-    sub_profile_t *sub_profile = match_sub_selection(key);
-    if(sub_profile == NULL)
-    {
-        return NULL;
-    }
-    return sub_profile;
 }
 
 upf_context_t*

@@ -28,7 +28,13 @@ RUN source ./docker-scripts/install_builddeps.sh && \
     source ./docker-scripts/install_hyperscan.sh && \
     install_hyperscan 
 
-FROM hyperscanbuild as ossutil
+FROM hyperscanbuild as webutils 
+RUN source ./docker-scripts/install_builddeps.sh && \
+    source ./docker-scripts/install_webutils.sh && \
+    build_prometheus && build_pistache 
+
+
+FROM webutils as ossutil
 RUN source ./docker-scripts/install_builddeps.sh && \
     source ./docker-scripts/install_oss_util.sh && \
     install_oss_util 
@@ -58,6 +64,7 @@ COPY --from=spgw /spgw/third_party/freediameter/build/libfdcore/libfdcore.so /us
 COPY --from=spgw /spgw/third_party/freediameter/build/libfdproto/libfdproto.so /usr/local/lib
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/cpp-driver/build/libcassandra.so /usr/local/lib/
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/c-ares/.libs/lib*.so.* /usr/local/lib
-COPY --from=spgw /spgw/cpplib/target/lib/libspgwcpputil.so /usr/local/lib/
+COPY --from=spgw /spgw/cpplib/target/lib/libspgwcpputil.a /usr/local/lib/
 COPY --from=spgw /tmp/prometheus/_build/deploy/usr/local/lib/ /usr/local/lib/
 COPY --from=spgw /spgw/gx/gx_app/gx_app  /bin/
+COPY --from=spgw /tmp/pistache/installpath/lib/lib* /usr/local/lib/

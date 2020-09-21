@@ -44,6 +44,40 @@ uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 extern uint8_t rstCnt;
 
 static void 
+init_thread2ThreadSocket(void)
+{
+	int ret;
+    struct sockaddr_in local_sockaddr;
+    const char *loopback = "127.0.0.1"; 
+    struct in_addr local_ip;		/* Internet address.  */
+    inet_aton(loopback, &local_ip);
+
+	int local_fd = socket(AF_INET, SOCK_DGRAM, 0);
+	my_sock.sock_fd_local = local_fd;
+
+	if (local_fd < 0)
+		rte_panic("Socket call error : %s", strerror(errno));
+
+	bzero(local_sockaddr.sin_zero, sizeof(local_sockaddr.sin_zero));
+	local_sockaddr.sin_family = AF_INET;
+	local_sockaddr.sin_port = htons(9090); // any random port is good enough  
+	local_sockaddr.sin_addr = local_ip;
+
+	ret = bind(local_fd, (struct sockaddr *) &local_sockaddr, sizeof(struct sockaddr_in));
+
+	clLog(clSystemLog, eCLSeverityCritical,  "init_local()" "\n\tlocal_fd = %d :: "
+			"\n\tlocal_ip = %s : local_port = %d\n",
+			local_fd, inet_ntoa(local_ip), local_sockaddr.sin_addr);
+	if (ret < 0) {
+		rte_panic("Bind error for %s:%u - %s\n",
+				inet_ntoa(local_sockaddr.sin_addr),
+				ntohs(local_sockaddr.sin_port),
+				strerror(errno));
+	}
+    my_sock.loopback_sockaddr = local_sockaddr; 
+}
+
+static void 
 init_pfcp(void)
 {
 	int ret;
@@ -200,21 +234,9 @@ void init_cp(void)
 		break;
 	}
 
-	if((my_sock.sock_fd_s11 > my_sock.sock_fd_pfcp) &&
-	   (my_sock.sock_fd_s11 > my_sock.gx_app_sock) &&
-	   (my_sock.sock_fd_s11 > my_sock.sock_fd_s5s8)) {
-        my_sock.select_max_fd = my_sock.sock_fd_s11 + 1;
-    }
-	else if((my_sock.sock_fd_pfcp > my_sock.sock_fd_s11) &&
-	   (my_sock.sock_fd_pfcp > my_sock.gx_app_sock) &&
-	   (my_sock.sock_fd_pfcp > my_sock.sock_fd_s5s8)) {
-        my_sock.select_max_fd = my_sock.sock_fd_pfcp + 1;
-    }
-	else if((my_sock.sock_fd_s5s8 > my_sock.sock_fd_s11) &&
-	   (my_sock.sock_fd_s5s8 > my_sock.gx_app_sock) &&
-	   (my_sock.sock_fd_s5s8 > my_sock.sock_fd_pfcp)) {
-        my_sock.select_max_fd = my_sock.sock_fd_s5s8 + 1;
-    }
+    init_thread2ThreadSocket();
+
+    update_max_fd();
 
 	if (signal(SIGINT, sig_handler) == SIG_ERR)
 		rte_exit(EXIT_FAILURE, "Error:can't catch SIGINT\n");
@@ -222,6 +244,7 @@ void init_cp(void)
 	if (signal(SIGSEGV, sig_handler) == SIG_ERR)
 		rte_exit(EXIT_FAILURE, "Error:can't catch SIGSEGV\n");
 
+    
 	create_ue_hash();
 	create_pdn_hash();
 	create_bearer_hash();

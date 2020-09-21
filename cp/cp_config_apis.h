@@ -40,9 +40,6 @@ int
 check_cp_req_tries_config(char *value);
 
 
-sub_profile_t*
-get_subscriber_profile(sub_selection_keys_t*);
-
 upf_context_t*
 get_upf_context(user_plane_profile_t *upf_profile); 
 
@@ -64,4 +61,7 @@ void register_config_updates(char *file);
 
 
 struct in_addr native_linux_name_resolve(const char *name);
+
+void update_subscriber_analyzer_config(void *config, uint16_t n );
+
 #endif

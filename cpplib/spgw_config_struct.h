@@ -93,6 +93,10 @@ typedef struct spgw_config_profile
    void *config; /* C code should not typecast this to any structure. */ 
 }spgw_config_profile_t;
 
-// typical cyle - parse, set_new_config... library to keep one pointer to config at any time. 
+struct t2tMsg 
+{
+    uint16_t event;
+    void     *data;
+};
 
 #endif
