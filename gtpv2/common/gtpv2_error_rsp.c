@@ -146,8 +146,18 @@ void get_error_csrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 #endif
 			break;
 		}
-        default:
-            assert(0);
+        default: {
+            proc_context_t *csreq_proc = (proc_context_t *)msg->proc_context;
+            ue_context_t  *ue = (ue_context_t *)csreq_proc->ue_context; 
+            pdn_connection_t *pdn = (pdn_connection_t *)csreq_proc->pdn_context;
+            transData_t *gtpc_trans = csreq_proc->gtpc_trans;
+            msg->peer_addr = gtpc_trans->peer_sockaddr; 
+			rsp_info->sender_teid = ue->s11_mme_gtpc_teid;
+			rsp_info->seq = gtpc_trans->sequence; 
+			rsp_info->ebi_index = pdn->default_bearer_id;
+			rsp_info->teid = ue->s11_sgw_gtpc_teid;
+			break;
+		}
 	}
 }
 /* Requirement : msg should have upf_context set before calling this API.
@@ -167,8 +177,7 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 
     // Sending CCR-T in case of failure
     /* we should check if subscriber has gx session..this does not look good */
-    if ((cp_config->gx_enabled) &&  
-            (cp_config->cp_type != SGWC)){
+    if ((cp_config->gx_enabled) &&  (cp_config->cp_type != SGWC) && (msg->msg_type != GX_CCAI_FAILED)){
         send_ccr_t_req(msg, rsp_info.ebi_index, rsp_info.teid);
         struct sockaddr_in saddr_in;
         saddr_in.sin_family = AF_INET;

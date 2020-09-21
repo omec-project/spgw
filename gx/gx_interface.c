@@ -342,9 +342,10 @@ msg_handler_gx( void )
 
 	bytes_rx = recv_from_ipc_channel(my_sock.gx_app_sock, recv_buf);
 	if(bytes_rx <= 0 ){
-			close_ipc_channel(my_sock.gx_app_sock);
-			/* Greacefull Exit */
-			exit(0);
+		close_ipc_channel(my_sock.gx_app_sock);
+		/* Greacefull Exit */
+		exit(0);
+        return -1;
 	}
 
 	gx_rx = (gx_msg *)recv_buf;
@@ -355,19 +356,30 @@ msg_handler_gx( void )
     msg->source_interface = GX_IFACE;
     switch(msg->msg_type) {
         case GX_CCA_MSG: {
+            printf("\n Received CCA length %d \n", bytes_rx);
             if (gx_cca_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type),
                         &msg->gx_msg.cca) <= 0) {
+                printf("\n unpack failed \n");
                 return -1;
             }
+            printf("\n Received CCA session id  %s \n", msg->gx_msg.cca.session_id.val);
             if(msg->gx_msg.cca.cc_request_type == INITIAL_REQUEST) {
+                printf("\n Received CCA-initial \n");
                 handle_cca_initial_msg(&msg);
             } else if (msg->gx_msg.cca.cc_request_type == UPDATE_REQUEST) {
+                printf("\n Received CCA-update\n");
                handle_cca_update_msg(&msg); 
             } else if (msg->gx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
+                printf("\n Received CCA-terminate \n");
                 handle_ccr_terminate_msg(&msg);
+            } else {
+                printf("\n Received unknown CCA...treating initial..worst \n");
+                handle_cca_initial_msg(&msg);
             }
         }
+        break;
         case GX_RAR_MSG: {
+            printf("\n Received RAR length %d \n", bytes_rx);
             if (gx_rar_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type),
                         &msg->gx_msg.rar) <= 0) {
                 return -1;

@@ -104,6 +104,10 @@ initial_attach_event_handler(void *proc, void *msg_info)
             cca_msg_handler(proc_context, msg); 
             break;
         }
+        case GX_CCAI_FAILED: {
+            process_gx_ccai_reject_handler(proc_context, msg);
+            break; 
+        }
         default: {
             assert(0); // unknown event 
         }
@@ -1929,15 +1933,11 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 	ccr_request.data.ccr.presence.network_request_support = PRESENT;
 	ccr_request.data.ccr.network_request_support = NETWORK_REQUEST_SUPPORTED;
 
-	/* TODO: Removing this ie as it is not require.
-	 * It's showing padding in pcap
+    uint32_t ip = htonl(context->pdns[ebi_index]->ipv4.s_addr);
 	ccr_request.data.ccr.presence.framed_ip_address = PRESENT;
+	memcpy(ccr_request.data.ccr.framed_ip_address.val, &ip, 4); 
+	ccr_request.data.ccr.framed_ip_address.len = 4;
 
-	ccr_request.data.ccr.framed_ip_address.len = inet_ntoa(ccr_request.data.ccr.framed_ip_address.val,
-			                                               context->pdns[ebi_index]);
-
-	char *temp = inet_ntoa(context->pdns[ebi_index]->ipv4);
-	memcpy(ccr_request.data.ccr.framed_ip_address.val, &temp, strlen(temp)); */
 
 	/*
 	 * nEED TO ADd following to Complete CCR_I, these are all mandatory IEs
@@ -2025,12 +2025,20 @@ cca_msg_handler(proc_context_t *proc_context, msg_info_t *msg)
 	/* VS: Retrive the ebi index */
 	ret = parse_gx_cca_msg(&msg->gx_msg.cca, &pdn);
 	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failed to establish session on PGWU, Send Failed CSResp back to SGWC\n");
+		clLog(clSystemLog, eCLSeverityCritical, "Failed to establish IPCAN session, Send Failed CSResp back to SGWC\n");
 		return ret;
 	}
 
     msg->event = PFCP_SESS_EST_EVNT;
-    SET_PROC_MSG(proc_context,msg);
     proc_context->handler(proc_context, msg); 
 	return 0;
+}
+
+int
+process_gx_ccai_reject_handler(proc_context_t *proc_context, msg_info_t *msg)
+{
+    RTE_SET_USED(msg);
+	clLog(sxlogger, eCLSeverityCritical, "Gx IP Can session setup failed \n");
+    proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
+    return 0;
 }

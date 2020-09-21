@@ -202,7 +202,8 @@ main(int argc, char **argv)
 #endif
 
     /* Make a connection between control-plane and gx_app */
-    if((cp_config->gx_enabled == true) && (cp_config->cp_type != SGWC)) {
+    if((cp_config->gx_enabled) && (cp_config->cp_type != SGWC)) {
+        printf("\n Opening up gx-app socket \n");
         start_cp_app();
     }
 

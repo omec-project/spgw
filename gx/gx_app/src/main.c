@@ -79,7 +79,7 @@ parse_fd_config(const char *filename, char *peer_name)
 int main(int argc, char **argv)
 {
 	int rval = 0;
-	const char *fdcfg = "gx.conf";
+	const char *fdcfg = "config/gx.conf";
 	char peer_name[256] = {0};
 
 	printf("Registering signal handler...");
@@ -144,7 +144,6 @@ int main(int argc, char **argv)
 		}
 	}
 	printf("complete\n");
-
 	printf("Opening unix socket...");
 	if ( (rval = unixsock()) != FD_REASON_OK )
 	{

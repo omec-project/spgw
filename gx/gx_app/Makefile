@@ -24,6 +24,8 @@ OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 #CFLAGS +=  -fPIC -Wall
 CFLAGS +=  -fPIC
 
+DEBUG = 1
+
 ifeq ($(DEBUG),1)
 	CFLAGS += -g3
 #un-comment below line to remove all Debug logs for testing.
@@ -42,6 +44,7 @@ $(TARGET_DIR)/$(TARGET): $(OBJECTS)
 	@echo " Linking..."
 	@mkdir -p $(BUILDDIR)
 	@mkdir -p $(TARGET_DIR)
+	@echo $(TARGET_DIR)
 
 	$(CC) $(LFLAGS) $^ -o $(TARGET_DIR)/$(TARGET) -L$(LIB_PATH) $(LIBS)
 
@@ -54,5 +57,12 @@ all:$(TARGET)
 clean:
 	@echo " Cleaning...";
 	@echo " $(RM) -r $(BUILDDIR) $(TARGET_DIR)/gx_app"; $(RM) -r $(BUILDDIR) $(TARGET_DIR)/gx_app
+
+install:
+	@mkdir -p $(TARGET_DIR)/bin
+	-@cp $(TARGET) $(TARGET_DIR)/bin
+	-@mkdir -p $(TARGET_DIR)/conf
+	-@cp conf/make_certs.sh $(TARGET_DIR)/conf/make_certs.sh
+
 
 .PHONY: clean

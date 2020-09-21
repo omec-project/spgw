@@ -283,124 +283,124 @@ static int
 fill_charging_rule_definition(dynamic_rule_t *dynamic_rule,
 					 GxChargingRuleDefinition *rule_definition)
 {
-	int32_t idx = 0;
+    int32_t idx = 0;
 
-	/* VS: Allocate memory for dynamic rule */
-//	dynamic_rule = rte_zmalloc_socket(NULL, sizeof(dynamic_rule_t),
-//	    RTE_CACHE_LINE_SIZE, rte_socket_id());
-//	if (dynamic_rule == NULL) {
-//		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate bearer id memory "
-//				"structure: %s (%s:%d)\n",
-//				rte_strerror(rte_errno),
-//				__file__,
-//				__LINE__);
-//		return -1;
-//	}
+    /* VS: Allocate memory for dynamic rule */
+    //	dynamic_rule = rte_zmalloc_socket(NULL, sizeof(dynamic_rule_t),
+    //	    RTE_CACHE_LINE_SIZE, rte_socket_id());
+    //	if (dynamic_rule == NULL) {
+    //		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate bearer id memory "
+    //				"structure: %s (%s:%d)\n",
+    //				rte_strerror(rte_errno),
+    //				__file__,
+    //				__LINE__);
+    //		return -1;
+    //	}
 
-	if (rule_definition->presence.online == PRESENT)
-	        dynamic_rule->online =  rule_definition->online;
+    if (rule_definition->presence.online == PRESENT)
+        dynamic_rule->online =  rule_definition->online;
 
-	if (rule_definition->presence.offline == PRESENT)
-	        dynamic_rule->offline = rule_definition->offline;
+    if (rule_definition->presence.offline == PRESENT)
+        dynamic_rule->offline = rule_definition->offline;
 
-	if (rule_definition->presence.flow_status == PRESENT)
-	        dynamic_rule->flow_status = rule_definition->flow_status;
+    if (rule_definition->presence.flow_status == PRESENT)
+        dynamic_rule->flow_status = rule_definition->flow_status;
 
-	if (rule_definition->presence.reporting_level == PRESENT)
-	        dynamic_rule->reporting_level = rule_definition->reporting_level;
+    if (rule_definition->presence.reporting_level == PRESENT)
+        dynamic_rule->reporting_level = rule_definition->reporting_level;
 
-	if (rule_definition->presence.precedence == PRESENT)
-	        dynamic_rule->precedence = rule_definition->precedence;
+    if (rule_definition->presence.precedence == PRESENT)
+        dynamic_rule->precedence = rule_definition->precedence;
 
-	if (rule_definition->presence.service_identifier == PRESENT)
-	        dynamic_rule->service_id = rule_definition->service_identifier;
+    if (rule_definition->presence.service_identifier == PRESENT)
+        dynamic_rule->service_id = rule_definition->service_identifier;
 
-	if (rule_definition->presence.rating_group == PRESENT)
-	        dynamic_rule->rating_group = rule_definition->rating_group;
+    if (rule_definition->presence.rating_group == PRESENT)
+        dynamic_rule->rating_group = rule_definition->rating_group;
 
-	if (rule_definition->presence.default_bearer_indication == PRESENT)
-	        dynamic_rule->def_bearer_indication = rule_definition->default_bearer_indication;
-	else
-	        dynamic_rule->def_bearer_indication = BIND_TO_APPLICABLE_BEARER;
-
-
-	if (rule_definition->presence.af_charging_identifier == PRESENT)
-	{
-	        /* CHAR*/
-	        memcpy(dynamic_rule->af_charging_id_string,
-	                        rule_definition->af_charging_identifier.val,
-	                        rule_definition->af_charging_identifier.len);
-	}
-
-	if (rule_definition->presence.flow_information == PRESENT) {
-			dynamic_rule->num_flw_desc = rule_definition->flow_information.count;
-
-	        for(idx = 0; idx < rule_definition->flow_information.count; idx++)
-	        {
-	                if ((rule_definition->flow_information).list[idx].presence.flow_direction
-	                                == PRESENT) {
-	                        dynamic_rule->flow_desc[idx].flow_direction =
-	                                (rule_definition->flow_information).list[idx].flow_direction;
-			}
-
-	                /* CHAR*/
-	                if ((rule_definition->flow_information).list[idx].presence.flow_description
-	                                == PRESENT) {
-	                        memcpy(dynamic_rule->flow_desc[idx].sdf_flow_description,
-	                                (rule_definition->flow_information).list[idx].flow_description.val,
-	                                (rule_definition->flow_information).list[idx].flow_description.len);
-							dynamic_rule->flow_desc[idx].flow_desc_len =
-								(rule_definition->flow_information).list[idx].flow_description.len;
-
-							fill_sdf_strctr(dynamic_rule->flow_desc[idx].sdf_flow_description,
-									&(dynamic_rule->flow_desc[idx].sdf_flw_desc));
-
-							/*VG assign direction in flow desc */
-							dynamic_rule->flow_desc[idx].sdf_flw_desc.direction =(uint8_t)
-	                                (rule_definition->flow_information).list[idx].flow_direction;
-
-	                }
-	        }
-	}
+    if (rule_definition->presence.default_bearer_indication == PRESENT)
+        dynamic_rule->def_bearer_indication = rule_definition->default_bearer_indication;
+    else
+        dynamic_rule->def_bearer_indication = BIND_TO_APPLICABLE_BEARER;
 
 
-	if(rule_definition->presence.qos_information == PRESENT)
-	{
-		GxQosInformation *qos = &(rule_definition->qos_information);
+    if (rule_definition->presence.af_charging_identifier == PRESENT)
+    {
+        /* CHAR*/
+        memcpy(dynamic_rule->af_charging_id_string,
+                rule_definition->af_charging_identifier.val,
+                rule_definition->af_charging_identifier.len);
+    }
 
-		dynamic_rule->qos.qci = qos->qos_class_identifier;
-		dynamic_rule->qos.arp.priority_level = qos->allocation_retention_priority.priority_level;
-		dynamic_rule->qos.arp.preemption_capability = qos->allocation_retention_priority.pre_emption_capability;
-		dynamic_rule->qos.arp.preemption_vulnerability = qos->allocation_retention_priority.pre_emption_vulnerability;
-		dynamic_rule->qos.ul_mbr =  qos->max_requested_bandwidth_ul;
-		dynamic_rule->qos.dl_mbr =  qos->max_requested_bandwidth_dl;
-		dynamic_rule->qos.ul_gbr =  qos->guaranteed_bitrate_ul;
-		dynamic_rule->qos.dl_gbr =  qos->guaranteed_bitrate_dl;
-	}
+    if (rule_definition->presence.flow_information == PRESENT) {
+        dynamic_rule->num_flw_desc = rule_definition->flow_information.count;
 
-	if (rule_definition->presence.charging_rule_name == PRESENT) {
-		rule_name_key_t key = {0};
-		/* Commenting for compliation error Need to check
-		id.bearer_id = bearer_id; */
+        for(idx = 0; idx < rule_definition->flow_information.count; idx++)
+        {
+            if ((rule_definition->flow_information).list[idx].presence.flow_direction
+                    == PRESENT) {
+                dynamic_rule->flow_desc[idx].flow_direction =
+                    (rule_definition->flow_information).list[idx].flow_direction;
+            }
 
-		strncpy(key.rule_name, (char *)(rule_definition->charging_rule_name.val),
-				rule_definition->charging_rule_name.len);
+            /* CHAR*/
+            if ((rule_definition->flow_information).list[idx].presence.flow_description
+                    == PRESENT) {
+                memcpy(dynamic_rule->flow_desc[idx].sdf_flow_description,
+                        (rule_definition->flow_information).list[idx].flow_description.val,
+                        (rule_definition->flow_information).list[idx].flow_description.len);
+                dynamic_rule->flow_desc[idx].flow_desc_len =
+                    (rule_definition->flow_information).list[idx].flow_description.len;
 
-		memset(dynamic_rule->rule_name, '\0', sizeof(dynamic_rule->rule_name));
-		strncpy(dynamic_rule->rule_name,
-				(char *)rule_definition->charging_rule_name.val,
-	            rule_definition->charging_rule_name.len);
+                fill_sdf_strctr(dynamic_rule->flow_desc[idx].sdf_flow_description,
+                        &(dynamic_rule->flow_desc[idx].sdf_flw_desc));
+
+                /*VG assign direction in flow desc */
+                dynamic_rule->flow_desc[idx].sdf_flw_desc.direction =(uint8_t)
+                    (rule_definition->flow_information).list[idx].flow_direction;
+
+            }
+        }
+    }
+
+
+    if(rule_definition->presence.qos_information == PRESENT)
+    {
+        GxQosInformation *qos = &(rule_definition->qos_information);
+
+        dynamic_rule->qos.qci = qos->qos_class_identifier;
+        dynamic_rule->qos.arp.priority_level = qos->allocation_retention_priority.priority_level;
+        dynamic_rule->qos.arp.preemption_capability = qos->allocation_retention_priority.pre_emption_capability;
+        dynamic_rule->qos.arp.preemption_vulnerability = qos->allocation_retention_priority.pre_emption_vulnerability;
+        dynamic_rule->qos.ul_mbr =  qos->max_requested_bandwidth_ul;
+        dynamic_rule->qos.dl_mbr =  qos->max_requested_bandwidth_dl;
+        dynamic_rule->qos.ul_gbr =  qos->guaranteed_bitrate_ul;
+        dynamic_rule->qos.dl_gbr =  qos->guaranteed_bitrate_dl;
+    }
+
+    if (rule_definition->presence.charging_rule_name == PRESENT) {
+        rule_name_key_t key = {0};
+        /* Commenting for compliation error Need to check
+           id.bearer_id = bearer_id; */
+
+        strncpy(key.rule_name, (char *)(rule_definition->charging_rule_name.val),
+                rule_definition->charging_rule_name.len);
+
+        memset(dynamic_rule->rule_name, '\0', sizeof(dynamic_rule->rule_name));
+        strncpy(dynamic_rule->rule_name,
+                (char *)rule_definition->charging_rule_name.val,
+                rule_definition->charging_rule_name.len);
 #if 0
-		/* VS: Maintain the Rule Name and Bearer ID  mapping with call id */
-		if (add_rule_name_entry(key, &id) != 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to add_rule_name_entry with rule_name\n",
-					__func__, __LINE__);
-			return -1;
-		}
+        /* VS: Maintain the Rule Name and Bearer ID  mapping with call id */
+        if (add_rule_name_entry(key, &id) != 0) {
+            clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to add_rule_name_entry with rule_name\n",
+                    __func__, __LINE__);
+            return -1;
+        }
 #endif
-	}
+    }
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -436,14 +436,14 @@ store_event_trigger(pdn_connection_t *pdn, GxEventTriggerList *event_trigger)
  */
 static int
 store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList * charging_rule_install,
-		GxChargingRuleRemoveList * charging_rule_remove)
+		GxChargingRuleRemoveList * charging_rule_remove, bool install_present, bool remove_present)
 {
 
 	int32_t idx = 0;
 	rule_name_key_t rule_name = {0};
 	GxChargingRuleDefinition *rule_definition = NULL;
 
-	if(charging_rule_install != NULL)
+	if(install_present && charging_rule_install != NULL)
 	{
 		for (int32_t idx1 = 0; idx1 < charging_rule_install->count; idx1++, pdn->policy.count++)
 		{
@@ -476,6 +476,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 					else
 					{
 						//TODO: Rule without name not possible; Log IT ?
+                        printf("Rule without name not allowed\n");
 						return -1;
 					}
 				}
@@ -483,7 +484,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 		}
 	}
 	uint8_t idx_offset =  pdn->policy.num_charg_rule_install + pdn->policy.num_charg_rule_modify;
-	if(charging_rule_remove != NULL)
+	if(remove_present && charging_rule_remove != NULL)
 	{
 		for(int32_t idx1 = 0; idx1 < charging_rule_remove->count; idx1++,pdn->policy.count++)
 		{
@@ -554,8 +555,7 @@ check_for_rules_on_default_bearer(pdn_connection_t *pdn)
 
 	for (idx = 0; idx < pdn->policy.num_charg_rule_install; idx++)
 	{
-		if ((BIND_TO_DEFAULT_BEARER ==
-				pdn->policy.pcc_rule[idx].dyn_rule.def_bearer_indication) ||
+		if ((BIND_TO_DEFAULT_BEARER == pdn->policy.pcc_rule[idx].dyn_rule.def_bearer_indication) ||
 			(compare_default_bearer_qos(&pdn->policy.default_bearer_qos,
 					&pdn->policy.pcc_rule[idx].dyn_rule.qos) == 0))
 		{
@@ -578,7 +578,8 @@ check_for_rules_on_default_bearer(pdn_connection_t *pdn)
 			return 0;
 		}
 	}
-	return -1;
+    printf("%s %d \n", __FUNCTION__, __LINE__);
+	return 0;
 }
 
 #if 0
@@ -667,8 +668,11 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 		return -1;
 	}
 	ret = store_default_bearer_qos_in_policy(pdn_cntxt, cca->default_eps_bearer_qos);
-	if (ret)
-	        return ret;
+	if (ret) {
+        clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:default_eps_bearer_qos failed to store \n",
+                __file__, __func__, __LINE__);
+        return ret;
+    }
 
 
 	/* VS: Compare the default qos and CCA charging rule qos info and retrieve the bearer identifier */
@@ -678,19 +682,30 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 
 
 	/* VS: Fill the dynamic rule from rule install structure of cca to policy */
-	ret = store_dynamic_rules_in_policy(pdn_cntxt, &(cca->charging_rule_install), &(cca->charging_rule_remove));
-	if (ret)
-	        return ret;
+    bool install_rule_present = (cca->presence.charging_rule_install == PRESENT);
+    bool remove_rule_present = (cca->presence.charging_rule_remove == PRESENT);
+	ret = store_dynamic_rules_in_policy(pdn_cntxt, &(cca->charging_rule_install), &(cca->charging_rule_remove), install_rule_present, remove_rule_present);
+    if (ret) {
+        printf("Failed at %s %d \n",__FUNCTION__, __LINE__);
+        return ret;
+    }
 
 	ret = check_for_rules_on_default_bearer(pdn_cntxt);
-	if (ret)
-	        return ret;
+    if (ret) {
+        printf("Failed at %s %d \n",__FUNCTION__, __LINE__);
+        return ret;
+    }
 	/* VS: Retrive the UE context to initiate the DNS and ASSOCIATION Request */
 	//*_pdn->context = pdn_cntxt->context;
 
-	ret = store_event_trigger(pdn_cntxt, &(cca->event_trigger));
-	if (ret)
-	        return ret;
+	if (cca->presence.event_trigger == PRESENT) {
+        printf("Trigger present in the message \n");
+        ret = store_event_trigger(pdn_cntxt, &(cca->event_trigger));
+        if (ret) {
+            printf("Failed at %s %d \n",__FUNCTION__, __LINE__);
+            return ret;
+        }
+    }
 
 	return ret;
 }
@@ -959,7 +974,10 @@ parse_gx_rar_msg(GxRAR *rar)
 		if (ret)
 			return ret;
 	}
-	ret = store_dynamic_rules_in_policy(pdn_cntxt, &(rar->charging_rule_install), &(rar->charging_rule_remove));
+
+    bool install_rule_present = (rar->presence.charging_rule_install == PRESENT);
+    bool remove_rule_present = (rar->presence.charging_rule_remove == PRESENT);
+	ret = store_dynamic_rules_in_policy(pdn_cntxt, &(rar->charging_rule_install), &(rar->charging_rule_remove), install_rule_present, remove_rule_present);
 	if (ret)
 	        return ret;
 

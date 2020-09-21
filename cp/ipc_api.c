@@ -36,15 +36,20 @@ connect_to_ipc_channel(int sock, struct sockaddr_un sock_addr, const char *path)
 
 	strncpy(sock_addr.sun_path, path, strlen(path));
 
-	rc = connect( sock, (struct sockaddr *) &sock_addr, len);
-	if ( rc == -1){
-		fprintf(stderr, "%s: Socket connect failed error: %s\n",
-				__func__, strerror(errno));
-		close_ipc_channel( sock );
-		/* Greacefull Exit */
-		exit(0);
-	}
-	fprintf(stderr, "GxApp: Gx_app client connection succesfully connected...!!!\n");
+    do {
+        rc = connect( sock, (struct sockaddr *) &sock_addr, len);
+        if ( rc == -1){
+            fprintf(stderr, "%s: Socket connect failed error: %s\n",
+                    __func__, strerror(errno));
+            //close_ipc_channel( sock );
+            /* Greacefull Exit */
+            //exit(0);
+            sleep(2);
+            continue;
+        }
+        fprintf(stderr, "GxApp: Gx_app client connection succesfully connected...!!!\n");
+        return;
+    } while(1);
 }
 
 void
@@ -142,12 +147,11 @@ recv_from_ipc_channel(int sock, char *buf)
 		if(errno != EINTR){
 			fprintf(stderr, "%s: Socket recv failed error: %s\n",
 					__func__, strerror(errno));
-			close_ipc_channel(sock);
-			/* Greacefull Exit */
-			exit(0);
+           close_ipc_channel(sock);
+           /* Greacefull Exit */
+           exit(0);
 		}
 	}
-
 	return bytes_recv;
 }
 

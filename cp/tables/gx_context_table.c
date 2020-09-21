@@ -60,7 +60,7 @@ int
 get_gx_context(uint8_t *sessid, gx_context_t **entry)
 {
 	int ret = rte_hash_lookup_data(gx_context_by_sess_id_hash,
-			(const void*) &(sessid), (void **) entry);
+			(const void*) (sessid), (void **) entry);
 
 	if (ret < 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN GX HASH [%lu]\n",

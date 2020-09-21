@@ -64,10 +64,7 @@ recv_msg_handler( int sock )
 	char buf[BUFFSIZE] = {0};
 
 	bytes_recv = recv_from_ipc_channel(sock, buf);
-#ifdef GX_DEBUG
 	hexDump(NULL, buf, bytes_recv);
-#endif
-
 	if(bytes_recv > 0){
 		//REVIEW: Need to check this.
 		gx_msg *req = (gx_msg*)buf;

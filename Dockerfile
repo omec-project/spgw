@@ -50,6 +50,7 @@ RUN source ./install_rundeps.sh && install_run_cp_deps && cleanup_image
 
 ENV LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
 FROM runtime as cp
+COPY --from=spgw /usr/local/lib /usr/local/lib
 COPY --from=spgw /spgw/cp/build/ngic_controlplane /bin/ngic_controlplane
 COPY --from=spgw /spgw/libgtpv2c/lib/libgtpv2c.so /usr/local/lib
 COPY --from=spgw /spgw/libpfcp/lib/libpfcp.so /usr/local/lib
@@ -59,3 +60,4 @@ COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/cpp-driver/build/li
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/c-ares/.libs/lib*.so.* /usr/local/lib
 COPY --from=spgw /spgw/cpplib/target/lib/libspgwcpputil.so /usr/local/lib/
 COPY --from=spgw /tmp/prometheus/_build/deploy/usr/local/lib/ /usr/local/lib/
+COPY --from=spgw /spgw/gx/gx_app/gx_app  /bin/

@@ -49,5 +49,7 @@ process_sess_est_resp_timeout_handler(proc_context_t *proc, msg_info_t *data);
  */
 int cca_msg_handler(proc_context_t *proc, msg_info_t *msg);
 
+int
+process_gx_ccai_reject_handler(proc_context_t *proc_context, msg_info_t *msg);
 
 #endif
