@@ -62,7 +62,20 @@ public:
         } else if (request.resource() == "/readiness") {
             switch(request.method()) {
                 case Http::Method::Get: {
-                    response.send(Pistache::Http::Code::Ok, "Hello World\n");
+                    response.send(Pistache::Http::Code::Ok);
+                    break;
+                }
+                default: {
+                }
+            }
+        } else if (request.resource() == "/startup") {
+            switch(request.method()) {
+                case Http::Method::Get: {
+                    if(spgwConfig::get_cp_config_cpp() != NULL) {
+                        response.send(Pistache::Http::Code::Ok);
+                    } else {
+                        response.send(Pistache::Http::Code::Bad_Request);
+                    }
                     break;
                 }
                 default: {

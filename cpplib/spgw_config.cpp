@@ -379,6 +379,12 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
     return nullptr;
 }
 
+// get config reference in global variable
+spgwConfigStore* spgwConfig::get_cp_config_cpp()
+{
+    return config;
+}
+
 // set config reference in global variable 
 void spgwConfig::set_cp_config_cpp(spgw_config_profile_t *new_config)
 {
