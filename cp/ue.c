@@ -625,7 +625,7 @@ end_procedure(proc_context_t *proc_ctxt)
                 context->state = UE_STATE_ACTIVE;
                 assert(pdn != NULL);
                 pdn->state = PDN_STATE_ACTIVE;
-            } else {
+            } else if (pdn != NULL && context != NULL){
                 cleanup_pdn(pdn, &context);
             }
             free(proc_ctxt);
