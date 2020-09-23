@@ -133,7 +133,7 @@ transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
         stoptimer(&data->rt.ti_id);
         deinittimer(&data->rt.ti_id);
     }
-    data->timeout_function(data);
+    data->timeout_function(data->cb_data);
     return;
 }
 

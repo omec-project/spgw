@@ -109,7 +109,7 @@ initial_attach_event_handler(void *proc, void *msg_info)
             break; 
         }
         default: {
-            assert(0); // unknown event 
+            rte_panic("unhandled event"); // unknown event 
         }
     }
     return;

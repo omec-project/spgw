@@ -2277,12 +2277,12 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
 void
 process_pfcp_sess_est_request_timeout(void *data)
 {
+    printf("%s %d ",__FUNCTION__, __LINE__);
     proc_context_t *proc_context = (proc_context_t *)data;
     msg_info_t *msg = calloc(1, sizeof(msg_info_t));
     SET_PROC_MSG(proc_context,msg);
     msg->proc_context = proc_context;
     msg->event = PFCP_SESS_EST_RESP_TIMEOUT_EVNT;
-    SET_PROC_MSG(proc_context, msg);
     proc_context->handler(proc_context, msg); 
     return;
 }
