@@ -148,55 +148,58 @@ process_error_occured_handler_new(void *data, void *unused_param)
     }
 
     printf("Delete all PDNs \n");
-    proc_context_t *proc = TAILQ_FIRST(&context->pending_sub_procs);
     upf_context_t *upf_context = context->upf_context;
 
+    proc_context_t *proc = TAILQ_FIRST(&context->pending_sub_procs);
+    while(proc != NULL) {
+      TAILQ_REMOVE(&context->pending_sub_procs, proc, next_sub_proc);
+      if(upf_context != NULL) {
+	      pending_proc_key_t *key = NULL;
+          LIST_FOREACH(key, &upf_context->pending_sub_procs, procentries) {
+              if(key != NULL && (key->proc_context == (void *)proc) ) {
+                  LIST_REMOVE(key, procentries);
+                  rte_free(key);
+                  break;
+              }
+          }
+      }
+
+      if(proc != NULL) {
+          if(proc->gtpc_trans != NULL) {
+              printf("Delete gtpc procs \n");
+              /* Only MME initiated transactions as of now */
+              uint16_t port_num = proc->gtpc_trans->peer_sockaddr.sin_port; 
+              uint32_t sender_addr = proc->gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
+              uint32_t seq_num = proc->gtpc_trans->sequence; 
+              transData_t *gtpc_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
+              assert(gtpc_trans == proc->gtpc_trans);
+              stop_transaction_timer(proc->gtpc_trans);
+              free(proc->gtpc_trans);
+              proc->gtpc_trans = NULL;
+          }
+          if(proc->pfcp_trans != NULL) {
+              // only self initiated transactions as of now 
+              printf("Delete pfcp procs \n");
+              uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
+              uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
+              uint32_t seq_num = proc->pfcp_trans->sequence; 
+              transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
+              assert(pfcp_trans != NULL);
+              assert(pfcp_trans == proc->pfcp_trans);
+              stop_transaction_timer(proc->pfcp_trans);
+              free(pfcp_trans);
+              proc->pfcp_trans = NULL;
+          }
+          free(proc);
+      }
+      proc = TAILQ_FIRST(&context->pending_sub_procs);
+    }
     // if all PDNs released then release user context 
     if (context->num_pdns == 0) {
         ue_context_delete_entry_imsiKey((*context).imsi);
         ue_context_delete_entry_teidKey(teid);
         rte_free(context);
         context = NULL;
-    }
-
-    if(upf_context != NULL) {
-	    pending_proc_key_t *key = NULL;
-        LIST_FOREACH(key, &upf_context->pending_sub_procs, procentries) {
-            if(key != NULL && (key->proc_context == (void *)proc) ) {
-                LIST_REMOVE(key, procentries);
-                rte_free(key);
-                break;
-            }
-        }
-    }
-
-    if(proc != NULL) {
-        if(proc->gtpc_trans != NULL) {
-            printf("Delete gtpc procs \n");
-            /* Only MME initiated transactions as of now */
-            uint16_t port_num = proc->gtpc_trans->peer_sockaddr.sin_port; 
-            uint32_t sender_addr = proc->gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
-            uint32_t seq_num = proc->gtpc_trans->sequence; 
-            transData_t *gtpc_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
-            assert(gtpc_trans == proc->gtpc_trans);
-            stop_transaction_timer(proc->gtpc_trans);
-            free(proc->gtpc_trans);
-            proc->gtpc_trans = NULL;
-        }
-        if(proc->pfcp_trans != NULL) {
-            // only self initiated transactions as of now 
-            printf("Delete pfcp procs \n");
-            uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
-            uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
-            uint32_t seq_num = proc->pfcp_trans->sequence; 
-            transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
-            assert(pfcp_trans != NULL);
-            assert(pfcp_trans == proc->pfcp_trans);
-            stop_transaction_timer(proc->pfcp_trans);
-            free(pfcp_trans);
-            proc->pfcp_trans = NULL;
-        }
-        free(proc);
     }
     return 0;
 }

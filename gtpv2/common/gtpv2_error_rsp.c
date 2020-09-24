@@ -402,14 +402,10 @@ void mbr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 void get_error_dsrsp_info(proc_context_t *detach_proc, msg_info_t *msg, err_rsp_info *rsp_info) 
 {
 	ue_context_t *context = NULL;
-    // immediate rejection of dsreq ( validation of msg, ....)
-    // pfcp timeout
-    // user plane rejection 
-    // in case of SGW mode -- DSRsp from pgw  
 
 	switch(msg->msg_type) {
 		case GTP_DELETE_SESSION_REQ: {
-            // immediate rejection 
+            // immediate rejection of dsreq ( validation of msg, ....)
 			rsp_info->seq = msg->gtpc_msg.dsr.header.teid.has_teid.seq;
 			rsp_info->teid = msg->gtpc_msg.dsr.header.teid.has_teid.teid;
 
@@ -423,6 +419,7 @@ void get_error_dsrsp_info(proc_context_t *detach_proc, msg_info_t *msg, err_rsp_
 		}
 
 		case PFCP_SESSION_DELETION_RESPONSE: {
+            // pfcp timeout OR user plane rejection 
             ue_context_t *ue_context = detach_proc->ue_context;
             transData_t *gtpc_trans = detach_proc->gtpc_trans;
             msg->peer_addr = gtpc_trans->peer_sockaddr; 
@@ -433,6 +430,7 @@ void get_error_dsrsp_info(proc_context_t *detach_proc, msg_info_t *msg, err_rsp_
 		}
 
 		case GTP_DELETE_SESSION_RSP: {
+            // in case of SGW mode -- DSRsp from pgw  
 			if(get_ue_context_while_error(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid, &context) != 0) {
 				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 				return;

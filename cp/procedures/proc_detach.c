@@ -83,7 +83,6 @@ detach_event_handler(void *proc, void *msg_info)
 int
 process_ds_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
-    RTE_SET_USED(proc_context);
     int ret = 0;
     gtpv2c_header_t *dsr_header = &msg->gtpc_msg.dsr.header;
 	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
@@ -216,6 +215,10 @@ process_pfcp_sess_del_request_timeout(void *data)
 {
     proc_context_t *proc_context = (proc_context_t *)data;
 
+    printf("%s %d : ",__FUNCTION__, __LINE__);
+    assert(proc_context->gtpc_trans != NULL);
+    assert(proc_context->pfcp_trans != NULL);
+
     msg_info_t *msg = calloc(1, sizeof(msg_info_t));
     msg->msg_type = PFCP_SESSION_DELETION_RESPONSE;
     msg->proc_context = proc_context;
@@ -228,7 +231,6 @@ int
 process_pfcp_sess_del_request(proc_context_t *proc_context, msg_info_t *msg) 
 {
 
-	RTE_SET_USED(msg);  
 	int ret = 0;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
@@ -281,15 +283,8 @@ process_pfcp_sess_del_request(proc_context_t *proc_context, msg_info_t *msg)
     trans_entry->proc_context = (void *)proc_context;
 
 	pdn->state = PFCP_SESS_DEL_REQ_SNT_STATE;
-
-#ifdef DELETE_THIS
-	/* Lookup entry in hash table on the basis of session id*/
-	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &context) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-				__func__, __LINE__, context->pdns[ebi_index]->seid);
-		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-	}
-#endif
+    assert(proc_context->gtpc_trans != NULL);
+    assert(proc_context->pfcp_trans != NULL);
 
 	return 0;
 }

@@ -1,3 +1,4 @@
+
 License & Copyright
 ----
 
@@ -6,14 +7,12 @@ License & Copyright
 
 # Detach Procedure
 
-# UE/MME/HSS Detach Procedure
+# UE/MME/HSS Detach Procedure Testing
 
-Handling DSReq message @ SPGW
-    1. Success case
-    2. Session delete validation
-    3. Session delete timeout
-    4. retransmitted DSReq
-    5. Context not found - DSReq received on wrong tunnel id.
+ - Successful handling of DSReq message and Sending back the Response to MME
+ - DSReq validation failure (e.g. IEs not correct, Context not found for the GTP tunnel..)
+ - Session delete timeout (PFCP Session delete failure,.. )
+ - Retransmitted DSReq ( If retransmitted DSReq is received then just drop it and log message)
 
 # PCRF/PDN-GW initiated detach
 
