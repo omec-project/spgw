@@ -63,6 +63,7 @@
  * */
 #define NUMBER_OF_PDR_PER_BEARER 2
 #define NUMBER_OF_QER_PER_BEARER 2
+#define NUMBER_OF_URR_PER_BEARER 2
 
 #define QER_INDEX_FOR_ACCESS_INTERFACE 0
 #define QER_INDEX_FOR_CORE_INTERFACE 1
@@ -417,7 +418,10 @@ typedef struct ue_context {
     void    *gx_context;
 
     /* Temp - need to find right place to put this */
-    void *pco; /* Received PCO from the UE during attach. Once CSRsp sent, release this */
+    /* Received PCO from the UE during attach. Once CSRsp sent, release this ? or should
+     * we keep it forever, since PCO may get updated over the period of time  
+     */
+    void *pco; 
 
     TAILQ_HEAD(proc_sub_head, proc_context) pending_sub_procs;
 } ue_context_t;
@@ -529,6 +533,10 @@ typedef struct eps_bearer {
 	/* As per discussion der will be only one qer per bearer */
 	uint8_t qer_count;
 	qer qer_id[NUMBER_OF_QER_PER_BEARER];
+
+	uint8_t urr_count;
+	urr urr_id[NUMBER_OF_URR_PER_BEARER];
+
 
 	bearer_qos_ie qos;
 

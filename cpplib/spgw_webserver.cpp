@@ -158,7 +158,7 @@ init_thread_socket(void)
 
 void spgwWebserverThread(uint16_t port)
 {
-    mainthread_port = port;
+    mainthread_port = 9090;
     init_thread_socket();
     
     Port p(port);

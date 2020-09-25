@@ -95,6 +95,14 @@ uint32_t
 generate_far_id(void);
 
 /*
+ * @brief  : Generate the URR ID
+ * @param  : void
+ * @return : Returns qer id  on success , 0 otherwise
+ */
+uint32_t
+generate_urr_id(void);
+
+/*
  * @brief  : Generate the QER ID
  * @param  : void
  * @return : Returns qer id  on success , 0 otherwise

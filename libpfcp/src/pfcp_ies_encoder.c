@@ -2427,10 +2427,14 @@ int encode_pfcp_vol_thresh_ie_t(pfcp_vol_thresh_ie_t *value,
     encoded += encode_bits(value->dlvol, 1, buf + (encoded/8), encoded % CHAR_SIZE);
     encoded += encode_bits(value->ulvol, 1, buf + (encoded/8), encoded % CHAR_SIZE);
     encoded += encode_bits(value->tovol, 1, buf + (encoded/8), encoded % CHAR_SIZE);
+    printf("total volume %d ", value->tovol);
+    printf("total ul volume %d ", value->ulvol);
+    printf("total dl volume %d ", value->dlvol);
     ENCODE_TOTAL_VOLUME_COND_1(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
     ENCODE_UPLINK_VOLUME_COND_1(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
     ENCODE_DOWNLINK_VOLUME_COND_1(value, 64, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
 
+    printf("encoded size %d \n", encoded);
     return encoded;
 }
 
