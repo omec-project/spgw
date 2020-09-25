@@ -237,7 +237,7 @@ set_urr_id(pfcp_urr_id_ie_t *urr_id)
 {
     int size = sizeof(pfcp_urr_id_ie_t);
 	pfcp_set_ie_header(&(urr_id->header), PFCP_IE_URR_ID, sizeof(uint32_t));
-	urr_id->urr_id_value = 3;
+	urr_id->urr_id_value = 0;
     return size;
 }
 
@@ -246,7 +246,7 @@ set_measurement_method(pfcp_meas_mthd_ie_t *m_method)
 {
     int size = sizeof(pfcp_meas_mthd_ie_t);
 	pfcp_set_ie_header(&(m_method->header), PFCP_IE_MEAS_MTHD, 1);
-	m_method->volum = 1;
+	m_method->volum = 0;
     return size;
 }
 
@@ -255,9 +255,9 @@ set_reporting_triggers(pfcp_rptng_triggers_ie_t *triggers)
 {
     int size = sizeof(pfcp_rptng_triggers_ie_t);
 	pfcp_set_ie_header(&(triggers->header), PFCP_IE_USAGE_RPT_TRIG, 2);
-    triggers->droth = 1; /* report when drop exceede */
-    triggers->perio = 1; /* report periodically */
-    triggers->volth = 1; /* report when volume threshold reaches */
+    triggers->droth = 0; /* report when drop exceede */
+    triggers->perio = 0; /* report periodically */
+    triggers->volth = 0; /* report when volume threshold reaches */
     return size;
 }
 
@@ -266,7 +266,7 @@ set_measurement_period(pfcp_meas_period_ie_t *meas_period)
 {
     int size = sizeof(pfcp_meas_period_ie_t);
 	pfcp_set_ie_header(&(meas_period->header), PFCP_IE_MEAS_PERIOD, sizeof(uint32_t));
-    meas_period->meas_period = 100; /* periodic measurement period */ 
+    meas_period->meas_period = 0; /* periodic measurement period */ 
     return size;
 }
 
@@ -274,28 +274,32 @@ int
 set_volume_threshold(pfcp_vol_thresh_ie_t *vol_thresh)
 {
     int size = sizeof(pfcp_vol_thresh_ie_t);
-	pfcp_set_ie_header(&(vol_thresh->header), PFCP_IE_VOL_THRESH, 25);
-    vol_thresh->dlvol = 1; 
-    vol_thresh->downlink_volume = 2000;
-    vol_thresh->ulvol = 1; 
-    vol_thresh->uplink_volume = 2000;
-    vol_thresh->tovol = 1; 
-    vol_thresh->total_volume = 4000;
-    return size;
+	pfcp_set_ie_header(&(vol_thresh->header), PFCP_IE_VOL_THRESH, 9);
+#if 0
+    vol_thresh->dlvol = 0; 
+    vol_thresh->downlink_volume = 0;
+    vol_thresh->ulvol = 0; 
+    vol_thresh->uplink_volume = 0;
+#endif
+    vol_thresh->tovol = 0; 
+    vol_thresh->total_volume = 0;
+    return size-16;
 }
 
 int
 set_volume_quota(pfcp_volume_quota_ie_t *volume_quota)
 {
     int size = sizeof(pfcp_volume_quota_ie_t);
-	pfcp_set_ie_header(&(volume_quota->header), PFCP_IE_VOLUME_QUOTA, 25);
-    volume_quota->dlvol = 1; 
-    volume_quota->downlink_volume = 2000;
-    volume_quota->ulvol = 1; 
-    volume_quota->uplink_volume = 2000;
-    volume_quota->tovol = 1; 
-    volume_quota->total_volume = 4000;
-    return size;
+	pfcp_set_ie_header(&(volume_quota->header), PFCP_IE_VOLUME_QUOTA, 9);
+#if 0
+    volume_quota->dlvol = 0; 
+    volume_quota->downlink_volume = 0;
+    volume_quota->ulvol = 0; 
+    volume_quota->uplink_volume = 0;
+#endif
+    volume_quota->tovol = 0; 
+    volume_quota->total_volume = 0;
+    return size-16;
 }
 
 int 
@@ -303,7 +307,7 @@ set_quota_holding_time(pfcp_quota_hldng_time_ie_t *quota_hldng_time)
 {
     int size = sizeof(pfcp_quota_hldng_time_ie_t);
 	pfcp_set_ie_header(&(quota_hldng_time->header), PFCP_IE_QUOTA_HLDNG_TIME, sizeof(uint32_t));
-    quota_hldng_time->quota_hldng_time_val = 100; // how long this quota is valid ?
+    quota_hldng_time->quota_hldng_time_val = 0; // how long this quota is valid ?
     return size;
 }
 
@@ -312,10 +316,10 @@ set_downlink_drop_traffic_threshold(pfcp_drpd_dl_traffic_thresh_ie_t *drpd_dl_tr
 {
     int size = sizeof(pfcp_drpd_dl_traffic_thresh_ie_t);
 	pfcp_set_ie_header(&(drpd_dl_traffic_thresh->header), PFCP_IE_DRPD_DL_TRAFFIC_THRESH, 17);
-    drpd_dl_traffic_thresh->dlby = 1; 
-    drpd_dl_traffic_thresh->nbr_of_bytes_of_dnlnk_data = 20000;
-    drpd_dl_traffic_thresh->dlpa = 1;
-    drpd_dl_traffic_thresh->dnlnk_pckts = 100;
+    drpd_dl_traffic_thresh->dlby = 0; 
+    drpd_dl_traffic_thresh->nbr_of_bytes_of_dnlnk_data = 0;
+    drpd_dl_traffic_thresh->dlpa = 0;
+    drpd_dl_traffic_thresh->dnlnk_pckts = 0;
     return size;
 }
 
@@ -324,7 +328,7 @@ set_far_id_quota_action(pfcp_far_id_ie_t *far_id_for_quota_act)
 {
     int size = sizeof(pfcp_far_id_ie_t);
 	pfcp_set_ie_header(&(far_id_for_quota_act->header), PFCP_IE_FAR_ID, sizeof(uint32_t));
-    far_id_for_quota_act->far_id_value = 1;
+    far_id_for_quota_act->far_id_value = 0;
     return size;
 }
 
@@ -425,11 +429,11 @@ creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value)
 			size += set_qer_id(&(create_pdr->qer_id[i]));
 		}
 	}
-	/* TODO: Revisit this for change in yang
+	/* TODO: Revisit this for change in yang*/
 	create_pdr->urr_id_count = 1;
 	for(int i=0; i < create_pdr->urr_id_count; i++ ) {
-		set_urr_id(&(create_pdr->urr_id[i]));
-	} */
+		size += set_urr_id(&(create_pdr->urr_id[i]));
+	} 
 
 	/* TODO: Revisit this for change in yang
 	create_pdr->actvt_predef_rules_count = 1;
@@ -1720,26 +1724,25 @@ void
 creating_urr(pfcp_create_urr_ie_t *urr)
 {
 	int size = 0;
-	//set urr id
 	size += set_urr_id(&(urr->urr_id));
 
 	size += set_measurement_method(&(urr->meas_mthd));
 
 	size += set_reporting_triggers(&(urr->rptng_triggers));
 
-	size += set_measurement_period(&(urr->meas_period));
+	//size += set_measurement_period(&(urr->meas_period));
 
 	size += set_volume_threshold(&(urr->vol_thresh));
 
 	size += set_volume_quota(&(urr->volume_quota));
 
-	size += set_quota_holding_time(&(urr->quota_hldng_time));
+	//size += set_quota_holding_time(&(urr->quota_hldng_time));
 
-	size += set_downlink_drop_traffic_threshold(&(urr->drpd_dl_traffic_thresh));
+	//size += set_downlink_drop_traffic_threshold(&(urr->drpd_dl_traffic_thresh));
 
-	size += set_far_id_quota_action(&(urr->far_id_for_quota_act));
+	//size += set_far_id_quota_action(&(urr->far_id_for_quota_act));
 
 	pfcp_set_ie_header(&(urr->header), PFCP_IE_CREATE_URR , size);
-
+    printf("setting size of URR %d ", size);
 }
 

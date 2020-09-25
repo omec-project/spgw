@@ -941,6 +941,12 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 		bearer->s5s8_sgw_gtpu_teid = csr->bearer_contexts_to_be_created.s5s8_u_sgw_fteid.teid_gre_key;
 	}
 
+    //Just set number of URRs in bearer and generate urr id for this bearer urr. 
+    bearer->urr_count = NUMBER_OF_URR_PER_BEARER;
+    for(uint8_t itr=0; itr < bearer->urr_count;itr++) {
+        bearer->urr_id[itr].urr_id = generate_urr_id();
+    }
+
 	/* TODO: Revisit this for change in yang*/
     if(cp_config->gx_enabled) {
         if (cp_config->cp_type != SGWC){
@@ -951,6 +957,7 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
             }
         }
     }
+
 	/*SP: As per discussion Per bearer two pdrs and fars will be there*/
 	/************************************************
 	 *  cp_type  count      FTEID_1        FTEID_2 *
@@ -960,7 +967,7 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 	 SAEGWC       2      s1u SAEGWU         NA
 	 ************************************************/
 
-	if (cp_config->cp_type == SGWC){
+	if (cp_config->cp_type == SGWC) {
 
 		bearer->pdr_count = NUMBER_OF_PDR_PER_BEARER;
 		for(uint8_t itr=0; itr < bearer->pdr_count; itr++){

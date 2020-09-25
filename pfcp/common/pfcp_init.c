@@ -27,6 +27,9 @@ const uint32_t far_base_rule_id = 0x00000000;
 static uint32_t far_rule_id_offset;
 const uint32_t qer_base_rule_id = 0x00000000;
 static uint32_t qer_rule_id_offset;
+const uint32_t urr_base_rule_id = 0x00000000;
+static uint32_t urr_rule_id_offset;
+
 /* VS: Need to decide the base value of call id */
 /* const uint32_t call_id_base_value = 0xFFFFFFFF; */
 const uint32_t call_id_base_value = 0x00000000;
@@ -70,6 +73,19 @@ generate_far_id(void)
 	uint32_t id = 0;
 
 	id = far_base_rule_id + (++far_rule_id_offset);
+
+	return id;
+}
+
+/**
+ * Generate the URR ID
+ */
+uint32_t
+generate_urr_id(void)
+{
+	uint32_t id = 0;
+
+	id = urr_base_rule_id + (++urr_rule_id_offset);
 
 	return id;
 }

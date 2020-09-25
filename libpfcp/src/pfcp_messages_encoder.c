@@ -2501,12 +2501,14 @@ int encode_pfcp_create_pdr_ie_t(pfcp_create_pdr_ie_t *value,
 		enc_len += encode_pfcp_far_id_ie_t(&(value->far_id), buf + (enc_len/CHAR_SIZE));
 
 	/* TODO: Revisit this for change in yang */
+    printf("\n urr_id_count %d \n",value->urr_id_count);
 	for (uint8_t i = 0; i < value->urr_id_count; i++) {
 		if (value->urr_id[i].header.len)
 			enc_len += encode_pfcp_urr_id_ie_t(&(value->urr_id[i]), buf + (enc_len/CHAR_SIZE));
 	}
 
 	/* TODO: Revisit this for change in yang */
+    printf("\n qer_id_count %d \n",value->qer_id_count);
 	for (uint8_t i = 0; i < value->qer_id_count; i++) {
 		if (value->qer_id[i].header.len)
 			enc_len += encode_pfcp_qer_id_ie_t(&(value->qer_id[i]), buf + (enc_len/CHAR_SIZE));

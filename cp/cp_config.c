@@ -97,6 +97,13 @@ void init_config(void)
         rte_exit(EXIT_FAILURE, "Can't allocate memory for cp_config!\n");
     }
     
+    char *pod_ip = getenv("POD_IP");
+    if(pod_ip != NULL) {
+        inet_aton(pod_ip, &(cp_config->s11_ip));
+        cp_config->s5s8_ip = cp_config->s11_ip;
+        cp_config->pfcp_ip = cp_config->s11_ip;
+    }
+
     config_cp_ip_port(cp_config);
 
     if(cp_config->dns_enable) {
@@ -137,6 +144,14 @@ config_cp_ip_port(cp_config_t *cp_config)
     struct rte_cfgfile_entry *cache_entries = NULL;
     struct rte_cfgfile_entry *app_entries = NULL;
     struct rte_cfgfile_entry *ops_entries = NULL;
+
+
+    fprintf(stderr, "CP: S11_IP      : %s\n",
+            inet_ntoa(cp_config->s11_ip));
+    fprintf(stderr, "CP: S5S8_IP     : %s\n",
+            inet_ntoa(cp_config->s5s8_ip));
+    fprintf(stderr, "CP: PFCP_IP     : %s\n",
+            inet_ntoa(cp_config->pfcp_ip));
 
 
     /* default valueas */
