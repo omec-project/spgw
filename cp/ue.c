@@ -438,6 +438,11 @@ start_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
             break;
         }
 
+        case USAGE_REPORT_PROC: {
+            // no change in procedures
+            proc_ctxt->handler(proc_ctxt, msg);
+            break;
+        }
         case PAGING_PROC: { 
             /* Change UE/PDN state if needed and call procedure event */
             ue_context_t *context = proc_ctxt->ue_context;
@@ -660,6 +665,8 @@ end_procedure(proc_context_t *proc_ctxt)
             cleanup_pdn(pdn, &context);
             break;
         }
+        case USAGE_REPORT_PROC:
+            //no special action as of now..follow paging proc
         case PAGING_PROC : {
             context = proc_ctxt->ue_context;
             context->state = UE_STATE_ACTIVE;

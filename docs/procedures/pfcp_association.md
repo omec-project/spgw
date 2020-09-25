@@ -13,3 +13,7 @@ License & Copyright
 ## Userplane initiated PFCP association setup
 - Userplane can pro-actively connect to control plane and exchange IP resources information.
 - Control plane can use the readily available user plane connection
+##PFCP Association Update
+- TODO
+##PFCP Association Release
+- TODO

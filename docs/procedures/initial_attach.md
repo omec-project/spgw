@@ -23,9 +23,10 @@ License & Copyright
     11. Second UE attach while PFCP session in progress 
     12. Second UE attach while PFCP session is already established 
    
-
-# Pending tasks
-    1. Graceful cleanup when context replacement. 
+# WIP
+- Enable gx config and setup initial call with PCRF. Some of the AVPs are not 
+  not correct. e.g. bearer identitier is sent as 35 instead of 5.
+- Graceful cleanup when context replacement. 
 
 # Special cases which needs more investigation
     1. setup response has different nodeid or FQDN. 

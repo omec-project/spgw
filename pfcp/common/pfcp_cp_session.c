@@ -1592,6 +1592,7 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 	return 0;
 }
 
+// ajay - URR
 pdr_t *
 fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 		eps_bearer_t *bearer, uint8_t iface, uint8_t itr)
@@ -1649,12 +1650,15 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 		 * Revist again in case of multiple rule support
 		 */
 		pdr_ctxt->qer_id_count = 1;
+		pdr_ctxt->urr_id_count = 1;
 
 		if(iface == SOURCE_INTERFACE_VALUE_ACCESS) {
 				pdr_ctxt->qer_id[0].qer_id = bearer->qer_id[QER_INDEX_FOR_ACCESS_INTERFACE].qer_id;
+				pdr_ctxt->urr_id[0].urr_id = bearer->urr_id[QER_INDEX_FOR_ACCESS_INTERFACE].urr_id;
 		} else if(iface == SOURCE_INTERFACE_VALUE_CORE)
 		{
 			pdr_ctxt->qer_id[0].qer_id = bearer->qer_id[QER_INDEX_FOR_CORE_INTERFACE].qer_id;
+			pdr_ctxt->urr_id[0].urr_id = bearer->urr_id[QER_INDEX_FOR_CORE_INTERFACE].urr_id;
 		}
 	}
 
@@ -1799,9 +1803,10 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	if ((cp_config->cp_type == PGWC) ||
 		(cp_config->cp_type == SAEGWC))
 	{
+        // 2 PDRs per rule 
 		pfcp_sess_est_req->create_pdr_count = pdn->policy.num_charg_rule_install * 2;
 		/*
-		 * For pgw create pdf, far and qer while handling pfcp messages
+		 * For pgw create pdr, far and qer while handling pfcp messages
 		 */
         printf("\n pdn->policy.num_charg_rule_install %d \n",pdn->policy.num_charg_rule_install);
 		for (int idx=0; idx <  pdn->policy.num_charg_rule_install; idx++)
@@ -1892,13 +1897,15 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
 
 			bearer->dynamic_rules[bearer->num_dynamic_filters]->pdr[1] = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, bearer->pdr_count++);
-			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id();
+			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id(); // ajay - URR..
 			fill_qer_entry(pdn, bearer, bearer->qer_count++);
 
 			f_status = bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
 			// assuming no of qer and pdr is same /*TODO*/
 			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
 			bearer->num_dynamic_filters++;
+			bearer->urr_id[bearer->urr_count].urr_id = generate_urr_id();
+			bearer->urr_id[bearer->urr_count].urr_id = generate_urr_id();
 		}
 
 		if (cp_config->cp_type == SAEGWC) {
@@ -1927,6 +1934,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 				for(uint8_t idx = 0; idx < bearer->pdr_count; idx++)
 				{
 					pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count = 1;
+                    // ajay
 					creating_pdr(&(pfcp_sess_est_req->create_pdr[pdr_idx]), bearer->pdrs[idx]->pdi.src_intfc.interface_value);
 					pfcp_sess_est_req->create_far_count++;
 					creating_far(&(pfcp_sess_est_req->create_far[pdr_idx]));
@@ -2003,6 +2011,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 					pfcp_sess_est_req->create_pdr[pdr_idx].pdi.src_intfc.interface_value =
 						bearer->pdrs[idx]->pdi.src_intfc.interface_value;
 
+                    //ADD FAR id in PDR, and FAR should be created with farid 
 					pfcp_sess_est_req->create_far[pdr_idx].far_id.far_id_value =
 						bearer->pdrs[idx]->far.far_id_value;
 					 pfcp_sess_est_req->create_pdr[pdr_idx].far_id.far_id_value =
@@ -2045,16 +2054,27 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 								DESTINATION_INTERFACE_VALUE_CORE;
 						}
 					}
+
+                    // filling qer id in PDR in the pdrpfcp_sess_est_req
 					if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC){
+                        printf("number of QERs on bearer = %d \n", bearer->pdrs[idx]->qer_id_count);
 						pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count =
 							bearer->pdrs[idx]->qer_id_count;
 						for(int itr1 = 0; itr1 < bearer->pdrs[idx]->qer_id_count; itr1++) {
-							pfcp_sess_est_req->create_pdr[pdr_idx].qer_id[itr1].qer_id_value =
-								//bearer->pdrs[idx]->qer_id[itr1].qer_id;
-								bearer->qer_id[idx].qer_id;
+							pfcp_sess_est_req->create_pdr[pdr_idx].qer_id[itr1].qer_id_value = bearer->qer_id[idx].qer_id;
 						}
 					}
 
+                    // filling urr id in PDR in the pdrpfcp_sess_est_req
+					if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC){
+                        printf("number of URRs on bearer = %d \n", bearer->pdrs[idx]->urr_id_count);
+						pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = bearer->pdrs[idx]->urr_id_count;
+						for(int itr1 = 0; itr1 < bearer->pdrs[idx]->urr_id_count; itr1++) {
+							pfcp_sess_est_req->create_pdr[pdr_idx].urr_id[itr1].urr_id_value = bearer->urr_id[idx].urr_id;
+						}
+					}
+
+                    // Creating FAR @msg level which is referenced in PDR 
 					if ((cp_config->cp_type == PGWC) || (SAEGWC == cp_config->cp_type)) {
 						pfcp_sess_est_req->create_far[pdr_idx].apply_action.forw = PRESENT;
 						if (pfcp_sess_est_req->create_far[pdr_idx].apply_action.forw == PRESENT) {
@@ -2097,6 +2117,8 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	} /*for loop*/
 
 	{
+        // fill QER details
+		uint8_t urr_idx = 0;
 		uint8_t qer_idx = 0;
 		qer_t *qer_context;
 		if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC)
@@ -2105,50 +2127,65 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			{
 				bearer = pdn->eps_bearers[i];
 				if(bearer != NULL)
-				{
-					pfcp_sess_est_req->create_qer_count += bearer->qer_count;
-						for(uint8_t idx = 0; idx < bearer->qer_count; idx++)
-						{
-							creating_qer(&(pfcp_sess_est_req->create_qer[qer_idx]));
-							pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value  =
-								bearer->qer_id[qer_idx].qer_id;
-							qer_context = get_qer_entry(pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value);
-							/* Assign the value from the PDR */
-							if(qer_context){
-								//pfcp_sess_est_req->create_pdr[qer_idx].qer_id[0].qer_id_value =
-								//	pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value;
-								pfcp_sess_est_req->create_qer[qer_idx].maximum_bitrate.ul_mbr  =
-									qer_context->max_bitrate.ul_mbr;
-								pfcp_sess_est_req->create_qer[qer_idx].maximum_bitrate.dl_mbr  =
-									qer_context->max_bitrate.dl_mbr;
-								pfcp_sess_est_req->create_qer[qer_idx].guaranteed_bitrate.ul_gbr  =
-									qer_context->guaranteed_bitrate.ul_gbr;
-								pfcp_sess_est_req->create_qer[qer_idx].guaranteed_bitrate.dl_gbr  =
-									qer_context->guaranteed_bitrate.dl_gbr;
-							}
-							qer_idx++;
-						}
-				}
+                {
+                    pfcp_sess_est_req->create_qer_count += bearer->qer_count;
+                    for(uint8_t idx = 0; idx < bearer->qer_count; idx++)
+                    {
+                        creating_qer(&(pfcp_sess_est_req->create_qer[qer_idx]));
+                        pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value  =
+                            bearer->qer_id[qer_idx].qer_id;
+                        qer_context = get_qer_entry(pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value);
+                        /* Assign the value from the PDR */
+                        if(qer_context){
+                            //pfcp_sess_est_req->create_pdr[qer_idx].qer_id[0].qer_id_value =
+                            //	pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value;
+                            pfcp_sess_est_req->create_qer[qer_idx].maximum_bitrate.ul_mbr  =
+                                qer_context->max_bitrate.ul_mbr;
+                            pfcp_sess_est_req->create_qer[qer_idx].maximum_bitrate.dl_mbr  =
+                                qer_context->max_bitrate.dl_mbr;
+                            pfcp_sess_est_req->create_qer[qer_idx].guaranteed_bitrate.ul_gbr  =
+                                qer_context->guaranteed_bitrate.ul_gbr;
+                            pfcp_sess_est_req->create_qer[qer_idx].guaranteed_bitrate.dl_gbr  =
+                                qer_context->guaranteed_bitrate.dl_gbr;
+                        }
+                        qer_idx++;
+                    }
+                    pfcp_sess_est_req->create_urr_count += bearer->urr_count;
+                    for(uint8_t idx = 0; idx < bearer->urr_count; idx++)
+                    {
+                        creating_urr(&pfcp_sess_est_req->create_urr[urr_idx]);
+                        pfcp_sess_est_req->create_urr[urr_idx].urr_id.urr_id_value  = bearer->urr_id[urr_idx].urr_id;
+                        pfcp_sess_est_req->create_urr[urr_idx].meas_mthd.volum = 1;
+                        pfcp_sess_est_req->create_urr[urr_idx].rptng_triggers.volth = 1;
+                        pfcp_sess_est_req->create_urr[urr_idx].rptng_triggers.volqu = 1;
+                        pfcp_sess_est_req->create_urr[urr_idx].vol_thresh.tovol = 1;
+                        pfcp_sess_est_req->create_urr[urr_idx].vol_thresh.total_volume = 1000000;
+                        pfcp_sess_est_req->create_urr[urr_idx].volume_quota.tovol = 1;
+                        pfcp_sess_est_req->create_urr[urr_idx].volume_quota.total_volume = 1000000000; // 1GB 
+                        urr_idx++;
+                    }
+
+                }
 			}
 		}
 	}
 
-		uint8_t pdr_idx = 0;
-		for(int itr1 = 0; itr1 <  pdn->policy.num_charg_rule_install; itr1++) {
-			/*
-			 * call fill_sdf_rules twice because one rule create 2 PDRs
-			 */
-			enum flow_status f_status = pdn->policy.pcc_rule[itr1].dyn_rule.flow_status;
+	uint8_t pdr_idx = 0;
+	for(int itr1 = 0; itr1 <  pdn->policy.num_charg_rule_install; itr1++) {
+		/*
+		 * call fill_sdf_rules twice because one rule create 2 PDRs
+		 */
+		enum flow_status f_status = pdn->policy.pcc_rule[itr1].dyn_rule.flow_status;
 
-			fill_sdf_rules(pfcp_sess_est_req, &pdn->policy.pcc_rule[itr1].dyn_rule, pdr_idx);
-			fill_gate_status(pfcp_sess_est_req, pdr_idx, f_status);
-			pdr_idx++;
+		fill_sdf_rules(pfcp_sess_est_req, &pdn->policy.pcc_rule[itr1].dyn_rule, pdr_idx);
+		fill_gate_status(pfcp_sess_est_req, pdr_idx, f_status);
+		pdr_idx++;
 
-			fill_sdf_rules(pfcp_sess_est_req, &pdn->policy.pcc_rule[itr1].dyn_rule, pdr_idx);
-			fill_gate_status(pfcp_sess_est_req, pdr_idx, f_status);
-			pdr_idx++;
+		fill_sdf_rules(pfcp_sess_est_req, &pdn->policy.pcc_rule[itr1].dyn_rule, pdr_idx);
+		fill_gate_status(pfcp_sess_est_req, pdr_idx, f_status);
+		pdr_idx++;
 
-		}
+	}
 
 
 	/* VS: Set the pdn connection type */
@@ -2190,8 +2227,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	if (upf_ctx->up_supp_features & UP_TRACE)
 		set_trace_info(&(pfcp_sess_est_req->trc_info));
 
-    pfcp_sess_est_req->create_urr_count = 1;
-    creating_urr(&pfcp_sess_est_req->create_urr[0]);
 }
 
 
