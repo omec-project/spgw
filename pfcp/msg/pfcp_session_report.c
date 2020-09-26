@@ -62,6 +62,7 @@ int handle_pfcp_session_report_req_msg(msg_info_t *msg)
         // usage report
         // error indication
         // UE inactivity indication 
+        msg->proc = USAGE_REPORT_PROC;
     }
 
     /* Create new transaction */
@@ -94,6 +95,7 @@ handle_session_report_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
     msg_info_t *msg = *msg_p;
     struct sockaddr_in *peer_addr = &msg->peer_addr;
  
+    printf("Received Session Report Msg from %s \n", inet_ntoa(peer_addr->sin_addr));
     process_response(peer_addr->sin_addr.s_addr);
 
     increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSREPORTREQ, peer_addr->sin_addr.s_addr);
@@ -104,7 +106,7 @@ handle_session_report_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 
     if(decoded <= 0)
     {
-        clLog(sxlogger, eCLSeverityDebug, "DECODED bytes in Sess Report Request is %d\n",
+        clLog(sxlogger, eCLSeverityCritical, "DECODED bytes in Sess Report Request is %d\n",
                 decoded);
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSREPORTREQ_DROP, peer_addr->sin_addr.s_addr);
         return -1;

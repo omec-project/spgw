@@ -32,6 +32,9 @@ proc_session_report_complete(proc_context_t *proc_context);
 void
 process_ddn_ack_rsp(proc_context_t *proc_context, msg_info_t *msg);
 
+void
+send_session_report_response(proc_context_t *proc_ctxt, msg_info_t *msg);
+
 void ddn_indication_timeout(void *);
 
 #endif 

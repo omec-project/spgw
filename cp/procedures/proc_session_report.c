@@ -55,7 +55,6 @@ session_report_event_handler(void *proc, void *msg_info)
             process_ddn_ack_rsp(proc_context, msg);
             break;
         }
-
         default: {
             rte_panic("wrong event");
         }
@@ -87,42 +86,6 @@ proc_session_report_success(msg_info_t *msg)
 void
 proc_session_report_complete(proc_context_t *proc_context)
 {
-    assert(proc_context->gtpc_trans != NULL);
-    transData_t *gtpc_trans = proc_context->gtpc_trans;
-
-    if(gtpc_trans != NULL) {
-        uint16_t port_num = gtpc_trans->peer_sockaddr.sin_port; 
-        uint32_t sender_addr = gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
-        uint32_t seq_num = gtpc_trans->sequence; 
-
-        transData_t *temp= delete_gtp_transaction(sender_addr, port_num, seq_num);
-        if(temp != NULL) {
-            /* Let's cross check if transaction from the table is matchig with the one we have 
-            * in subscriber 
-            */
-            assert(gtpc_trans == temp);
-        }
-        free(gtpc_trans);
-    }
-    proc_context->gtpc_trans =  NULL;
-
-    transData_t *pfcp_trans = proc_context->pfcp_trans;
-    if(pfcp_trans != NULL) {
-        uint16_t port_num = pfcp_trans->peer_sockaddr.sin_port; 
-        uint32_t sender_addr = pfcp_trans->peer_sockaddr.sin_addr.s_addr; 
-        uint32_t seq_num = pfcp_trans->sequence; 
-
-        transData_t *temp = delete_gtp_transaction(sender_addr, port_num, seq_num);
-        if(temp != NULL) {
-            /* Let's cross check if transaction from the table is matchig with the one we have 
-            * in subscriber 
-            */
-            assert(pfcp_trans == temp);
-        }
-        free(pfcp_trans);
-    }
-    proc_context->pfcp_trans = NULL;
-    /* PFCP transaction is already complete. */
     end_procedure(proc_context);
     return;
 }
@@ -147,7 +110,7 @@ process_rpt_req_handler(proc_context_t *proc_ctxt, msg_info_t *msg)
 		/* Update the Session state */
 		proc_ctxt->state = DDN_REQ_SNT_STATE;
 	} else {
-        // various other report triggers 
+        send_session_report_response(proc_ctxt, msg);
     }
 	return 0;
 }
@@ -170,6 +133,12 @@ fill_pfcp_sess_report_resp(pfcp_sess_rpt_rsp_t *pfcp_sess_rep_resp,
 
 void
 process_ddn_ack_rsp(proc_context_t *proc_ctxt, msg_info_t *msg)
+{
+    send_session_report_response(proc_ctxt, msg);
+}
+
+void
+send_session_report_response(proc_context_t *proc_ctxt, msg_info_t *msg)
 {
 	uint8_t pfcp_msg[250] = {0};
 	int encoded = 0;

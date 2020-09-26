@@ -17,8 +17,8 @@ License & Copyright
     8. Report Received on unknown FSEID
 
 # Usage Reporting
-- Not tested
+- Message is handled and response is generated. More details about usage reporting in the URR document.
 # Error indication
-- Not tested
+- Not supported 
 # User inactivity detection
-- Not tested
+- Not supported 
