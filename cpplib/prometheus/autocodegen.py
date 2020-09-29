@@ -652,6 +652,7 @@ def add_module_stats_class_declaration(fh):
     fh.write("\t\tvoid " + module_name + "promThreadSetup(void);\n")
     fh.write("\t\tvoid increment("+module_name+"Counter name, std::map<std::string, std::string> labels={}); \n")
     fh.write("\t\tvoid decrement("+module_name+"Counter name, std::map<std::string, std::string> labels={}); \n")
+    fh.write("\t\tvoid set("+module_name+"Counter name, double val, std::map<std::string, std::string> labels={}); \n")
     fh.write("\t public:\n")
     for gauge in gauges_family_object_list:
       fh.write("\t\t" + gauge.classname + " *" + gauge.moduleStatsMember + ";\n")
@@ -909,7 +910,7 @@ def add_increment_api(fh):
     fh.write("\t}\n")
     fh.write("}\n")
     fh.write("\n\n")
-      
+
 def add_decrement_api(fh):
     fh.write("\n\n")
     fh.write("void " + module_name + "::" + "decrement("+module_name+"Counter name,std::map<std::string,std::string> labels)\n") 
@@ -969,7 +970,83 @@ def add_decrement_api(fh):
     fh.write("\t}\n")
     fh.write("}\n")
     fh.write("\n\n")
- 
+
+def add_set_api(fh):
+    fh.write("\n\n")
+    fh.write("void " + module_name + "::" + "set("+module_name+"Counter name, double val, std::map<std::string,std::string> labels)\n") 
+    fh.write("{\n")
+    fh.write("\tswitch(name) {\n")
+    for gauge in gauges_family_object_list:
+      for metric in gauge.gaugeMetricList:
+        labels = ""
+        index = 0
+        for l in metric.labeldict:
+          if index != 0:
+            labels += ","
+          for k in l:
+             v = l[k]
+             labels += "\"" + k + "\"" + ",\"" + v + "\"" 
+          index += 1
+
+        fh.write("\tcase "+module_name+"Counter::" + metric.enum_name + ":\n")
+        fh.write("\t{\n")
+        fh.write("\t\t" + gauge.moduleStatsMember + "->" + metric.gauge_name + ".Set(val);\n")
+        fh.write("\t\tif(labels.size() == 0) {\n")
+        fh.write("\t\tbreak;\n")
+        fh.write("\t\t}\n")
+        fh.write("\t\tif(labels.size() == 1) {\n")
+        fh.write("\t\tauto it = labels. begin();\n")
+        fh.write("\t\tstruct Node s1 = {name, it->first, it->second};\n")
+        fh.write("\t\tauto it1 = metrics_map.find(s1);\n")
+        fh.write("\t\tif(it1 != metrics_map.end()) {\n")
+        fh.write("\t\t    "+gauge.family +"_DynamicMetricObject1 *obj = static_cast<"+gauge.family+"_DynamicMetricObject1 *>(it1->second);\n")
+        fh.write("\t\t    obj->gauge.Set(val);\n")
+        fh.write("\t\t} else {\n")
+        fh.write("\t\t    "+gauge.family+"_DynamicMetricObject1 *obj = " + gauge.moduleStatsMember + "->add_dynamic1(" + labels + ",it->first, it->second);\n")
+        fh.write("\t\t    auto p1 = std::make_pair(s1, obj);\n")
+        fh.write("\t\t    metrics_map.insert(p1);\n")
+        fh.write("\t\t    obj->gauge.Set(val);\n")
+        fh.write("\t\t}\n")
+        fh.write("\t\t} else if (labels.size() == 2) {\n")
+        fh.write("\t\tauto it1 = labels. begin();\n")
+        fh.write("\t\tauto it2 = it1++;\n")
+        fh.write("\t\tstruct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};\n")
+        fh.write("\t\tauto itf = metrics_map.find(s1);\n")
+        fh.write("\t\tif(itf != metrics_map.end()) {\n")
+        fh.write("\t\t    "+gauge.family +"_DynamicMetricObject2 *obj = static_cast<"+gauge.family+"_DynamicMetricObject2 *>(itf->second);\n")
+        fh.write("\t\t    obj->gauge.Set(val);\n")
+        fh.write("\t\t} else {\n")
+        fh.write("\t\t    "+gauge.family+"_DynamicMetricObject2 *obj = " + gauge.moduleStatsMember + "->add_dynamic2(" + labels + ",it1->first, it1->second, it2->first, it2->second);\n")
+        fh.write("\t\t    auto p1 = std::make_pair(s1, obj);\n")
+        fh.write("\t\t    metrics_map.insert(p1);\n")
+        fh.write("\t\t    obj->gauge.Set(val);\n")
+        fh.write("\t\t} \n")
+        fh.write("\t\t} else if (labels.size() == 3) {\n")
+        fh.write("\t\tauto it1 = labels. begin();\n")
+        fh.write("\t\tauto it2 = it1++;\n")
+        fh.write("\t\tauto it3 = it2++;\n")
+        fh.write("\t\tstruct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};\n")
+        fh.write("\t\tauto itf = metrics_map.find(s1);\n")
+        fh.write("\t\tif(itf != metrics_map.end()) {\n")
+        fh.write("\t\t    "+gauge.family +"_DynamicMetricObject3 *obj = static_cast<"+gauge.family+"_DynamicMetricObject3 *>(itf->second);\n")
+        fh.write("\t\t    obj->gauge.Set(val);\n")
+        fh.write("\t\t} else {\n")
+        fh.write("\t\t    "+gauge.family+"_DynamicMetricObject3 *obj = " + gauge.moduleStatsMember + "->add_dynamic3(" + labels + ",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);\n")
+        fh.write("\t\t    auto p1 = std::make_pair(s1, obj);\n")
+        fh.write("\t\t    metrics_map.insert(p1);\n")
+        fh.write("\t\t    obj->gauge.Set(val);\n")
+        fh.write("\t\t}\n")
+        fh.write("\t\t}\n")
+        fh.write("\t\tbreak;\n")
+        fh.write("\t}\n")
+
+    fh.write("\tdefault:\n");
+    fh.write("\t\tbreak;\n");
+    fh.write("\t}\n")
+    fh.write("}\n")
+    fh.write("\n\n")
+
+     
 def add_test_main_function(fh):
     fh.write("#ifdef TEST_PROMETHEUS \n")
     fh.write("#include <unistd.h>\n")
@@ -996,6 +1073,7 @@ def create_cpp_file():
     add_counter_class_defination(cpp_file)
     add_increment_api(cpp_file)
     add_decrement_api(cpp_file)
+    add_set_api(cpp_file)
     add_test_main_function(cpp_file)    
 
 def add_c_counter_enum(fh):

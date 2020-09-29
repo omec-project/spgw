@@ -31,6 +31,7 @@ enum class spgwStatsCounter {
 	NUM_UE_PGW_IDLE_PDNS,
 	NUM_UE_SGW_ACTIVE_PDNS,
 	NUM_UE_SGW_IDLE_PDNS,
+	DATA_USAGE_SPGW_PDN,
 	MSG_RX_GTPV2_S11_CSREQ,
 	MSG_RX_GTPV2_S11_CSREQ_DROP,
 	MSG_RX_GTPV2_S5S8_CSREQ,
@@ -322,6 +323,73 @@ class num_ue_gauges {
 
 	num_ue_DynamicMetricObject3* add_dynamic3(std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string label_k2, std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1, std::string dlabel_k2, std::string dlabel_v2) {
 		return new num_ue_DynamicMetricObject3(num_ue_family,label_k0, label_v0,label_k1, label_v1,label_k2, label_v2,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1, dlabel_k2, dlabel_v2);
+ 	}
+};
+
+
+
+
+class data_usage_DynamicMetricObject1 : public DynamicMetricObject {
+	public:
+		data_usage_DynamicMetricObject1(Family<Gauge> &data_usage_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0):
+		 DynamicMetricObject(),
+		 gauge(data_usage_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}}))
+		{
+		}
+		~data_usage_DynamicMetricObject1()
+		{
+		}
+		Gauge &gauge;
+};
+
+
+
+
+class data_usage_DynamicMetricObject2 : public DynamicMetricObject {
+	public:
+		data_usage_DynamicMetricObject2(Family<Gauge> &data_usage_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1):
+		 DynamicMetricObject(),
+		 gauge(data_usage_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}}))
+		{
+		}
+		~data_usage_DynamicMetricObject2()
+		{
+		}
+		Gauge &gauge;
+};
+
+
+class data_usage_DynamicMetricObject3 : public DynamicMetricObject {
+	public:
+
+
+		data_usage_DynamicMetricObject3(Family<Gauge> &data_usage_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1, std::string dlabel_k2, std::string dlabel_v2):
+		 DynamicMetricObject(),
+		 gauge(data_usage_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}, {dlabel_k2, dlabel_v2}}))
+		{
+		}
+		~data_usage_DynamicMetricObject3()
+		{
+		}
+		Gauge &gauge;
+};
+class data_usage_gauges {
+	public:
+	data_usage_gauges();
+	~data_usage_gauges();
+	Family<Gauge> &data_usage_family;
+	Gauge &current__spgw_pdn;
+
+	data_usage_DynamicMetricObject1* add_dynamic1(std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0) {
+		return new data_usage_DynamicMetricObject1(data_usage_family,label_k0, label_v0,label_k1, label_v1,dlabel_k0, dlabel_v0);
+ 	}
+
+	data_usage_DynamicMetricObject2* add_dynamic2(std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1) {
+		return new data_usage_DynamicMetricObject2(data_usage_family,label_k0, label_v0,label_k1, label_v1,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1);
+ 	}
+
+	data_usage_DynamicMetricObject3* add_dynamic3(std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1, std::string dlabel_k2, std::string dlabel_v2) {
+		return new data_usage_DynamicMetricObject3(data_usage_family,label_k0, label_v0,label_k1, label_v1,dlabel_k0, dlabel_v0, dlabel_k1, dlabel_v1, dlabel_k2, dlabel_v2);
  	}
 };
 
@@ -724,8 +792,10 @@ class spgwStats {
 		void spgwStatspromThreadSetup(void);
 		void increment(spgwStatsCounter name, std::map<std::string, std::string> labels={}); 
 		void decrement(spgwStatsCounter name, std::map<std::string, std::string> labels={}); 
+		void set(spgwStatsCounter name, double val, std::map<std::string, std::string> labels={}); 
 	 public:
 		num_ue_gauges *num_ue_m;
+		data_usage_gauges *data_usage_m;
 		msg_rx_counters *msg_rx_m;
 		msg_tx_counters *msg_tx_m;
 		procedures_counters *procedures_m;

@@ -149,6 +149,15 @@ extern "C"
 	   spgwStats::Instance()->increment(id, {{"spgwu_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}});
     }
 
+    void set_data_stats(int stat_id, uint64_t imsi, uint32_t bytes)
+    {
+        spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+        std::stringstream imsi_s;
+        imsi_s << imsi; 
+        std::cout<<"setting data usage imsi ["<<imsi_s.str()<<"] = "<<bytes<<std::endl;
+        spgwStats::Instance()->set(id, bytes, {{"imsi",imsi_s.str()}});
+    }
+
     void increment_gx_peer_stats(int stat_id, uint32_t peer_addr)
     {
        spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
@@ -166,6 +175,12 @@ extern "C"
     {
        spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
 	   spgwStats::Instance()->increment(id);
+    }
+
+    void set_num_ue_stat(int stat_id, uint32_t val)
+    {
+        spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+        spgwStats::Instance()->set(id, val);
     }
 
     void increment_proc_mme_peer_stats_reason(int stat_id, uint32_t peer_addr, uint32_t reason)
