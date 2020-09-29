@@ -6,7 +6,6 @@
 
 #ifndef UE_H
 #define UE_H
-
 /**
  * @file
  *
@@ -363,6 +362,7 @@ typedef struct indication_flag_t {
 typedef struct ue_context {
 	uint8_t state;
 	uint64_t imsi;
+    uint64_t imsi64; // this is printable...logically we should get rid of above variable 
 	uint8_t imsi_len;
 	uint8_t unathenticated_imsi;
 	uint64_t mei;

@@ -63,6 +63,8 @@ int handle_pfcp_session_report_req_msg(msg_info_t *msg)
         // error indication
         // UE inactivity indication 
         msg->proc = USAGE_REPORT_PROC;
+        printf("setting data usage for subscriber %lu and data usage = %lu \n", context->imsi64,pfcp_sess_rep_req->usage_report[0].vol_meas.total_volume);
+        set_data_stats(DATA_USAGE_SPGW_PDN, context->imsi64, pfcp_sess_rep_req->usage_report[0].vol_meas.total_volume);
     }
 
     /* Create new transaction */

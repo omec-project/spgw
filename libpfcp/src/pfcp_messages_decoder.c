@@ -24,6 +24,7 @@ int decode_pfcp_sess_rpt_req_t(uint8_t *buf,
 
       count = decode_pfcp_header_t(buf + count, &value->header);
 
+
       if (value->header.s)
           buf_len = value->header.message_len - 12;
       else
@@ -1034,6 +1035,9 @@ int decode_pfcp_usage_rpt_sess_rpt_req_ie_t(uint8_t *buf,
       uint16_t buf_len = 0;
 
       count = decode_pfcp_ie_header_t(buf + count, &value->header);
+      count = count/CHAR_SIZE;
+
+      buf_len = value->header.len;
 
       value->evnt_time_stmp_count = 0;
 
@@ -1075,8 +1079,9 @@ int decode_pfcp_usage_rpt_sess_rpt_req_ie_t(uint8_t *buf,
             count += decode_pfcp_eth_traffic_info_ie_t(buf + count, &value->eth_traffic_info);
       }  else if (ie_type == PFCP_IE_EVNT_TIME_STMP) {
             count += decode_pfcp_evnt_time_stmp_ie_t(buf + count, &value->evnt_time_stmp[value->evnt_time_stmp_count++]);
-      }  else
+      }  else {
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
+      }
       }
       return count;
 }

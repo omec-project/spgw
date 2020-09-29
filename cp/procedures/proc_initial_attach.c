@@ -310,6 +310,7 @@ process_create_sess_req(create_sess_req_t *csr,
 		return ret;
     }
 
+    context->imsi64 = csr->imsi.imsi64;
     context->dns_enable = cp_config->dns_enable;
     context->sub_prof = sub_profile;
 	if (csr->mei.header.len)

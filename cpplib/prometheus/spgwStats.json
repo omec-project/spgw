@@ -1,6 +1,6 @@
 {
     "num_ue" : {
-        "name": "mme_number_of_ue_attached",
+        "name": "spgw_number_of_ue_attached",
         "help": "Number of UE attached",
         "type": "Gauge",
         "family_labels": [
@@ -986,6 +986,29 @@
             ],
             "dynamic_label_1": [
                 {"failure_reason" : "Put failure reason here"}
+            ]
+        }
+        ]
+    },
+    "data_usage" : {
+        "name": "data_usage_of_subscribers",
+        "help": "Number of Bytes transferred by UE",
+        "type": "Gauge",
+        "family_labels": [
+            { "usage": "data" }
+        ],
+        "gauges": [
+        {
+            "name": "data_usage_of_subscribers",
+            "help": "data usage of subscribers ",
+            "label_0": [
+                { "cp_mode": "spgw" }
+            ],
+            "label_1": [
+                {"level":"pdn"}
+            ],
+            "dynamic_label_0": [
+                { "imsi" :  "Subscriber IMSI " }
             ]
         }
         ]

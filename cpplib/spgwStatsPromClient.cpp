@@ -32,6 +32,7 @@ void spgwStatsSetupPrometheusThread(uint16_t port)
 spgwStats::spgwStats()
 {
 	 num_ue_m = new num_ue_gauges;
+	 data_usage_m = new data_usage_gauges;
 	 msg_rx_m = new msg_rx_counters;
 	 msg_tx_m = new msg_tx_counters;
 	 procedures_m = new procedures_counters;
@@ -44,7 +45,7 @@ spgwStats* spgwStats::Instance()
 
 
 num_ue_gauges::num_ue_gauges():
-num_ue_family(BuildGauge().Name("mme_number_of_ue_attached").Help("Number of UE attached").Labels({{"spgw_num_ue","subscribers"}}).Register(*registry)),
+num_ue_family(BuildGauge().Name("spgw_number_of_ue_attached").Help("Number of UE attached").Labels({{"spgw_num_ue","subscribers"}}).Register(*registry)),
 current__spgw_active_subscribers(num_ue_family.Add({{"cp_mode","spgw"},{"state","active"},{"level","subscribers"}})),
 current__spgw_idle_subscribers(num_ue_family.Add({{"cp_mode","spgw"},{"state","idle"},{"level","subscribers"}})),
 current__pgw_active_subscribers(num_ue_family.Add({{"cp_mode","pgw"},{"state","active"},{"level","subscribers"}})),
@@ -62,6 +63,20 @@ current__sgw_idle_pdns(num_ue_family.Add({{"cp_mode","sgw"},{"state","idle"},{"l
 
 
 num_ue_gauges::~num_ue_gauges()
+{
+}
+
+
+
+
+data_usage_gauges::data_usage_gauges():
+data_usage_family(BuildGauge().Name("data_usage_of_subscribers").Help("Number of Bytes transferred by UE").Labels({{"usage","data"}}).Register(*registry)),
+current__spgw_pdn(data_usage_family.Add({{"cp_mode","spgw"},{"level","pdn"}}))
+{
+}
+
+
+data_usage_gauges::~data_usage_gauges()
 {
 }
 
@@ -895,6 +910,57 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    obj->gauge.Increment();
 		} else {
 		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","sgw","state","idle","level","pdns",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::DATA_USAGE_SPGW_PDN:
+	{
+		data_usage_m->current__spgw_pdn.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    data_usage_DynamicMetricObject1 *obj = static_cast<data_usage_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Increment();
+		} else {
+		    data_usage_DynamicMetricObject1 *obj = data_usage_m->add_dynamic1("cp_mode","spgw","level","pdn",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    data_usage_DynamicMetricObject2 *obj = static_cast<data_usage_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Increment();
+		} else {
+		    data_usage_DynamicMetricObject2 *obj = data_usage_m->add_dynamic2("cp_mode","spgw","level","pdn",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    data_usage_DynamicMetricObject3 *obj = static_cast<data_usage_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Increment();
+		} else {
+		    data_usage_DynamicMetricObject3 *obj = data_usage_m->add_dynamic3("cp_mode","spgw","level","pdn",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->gauge.Increment();
@@ -10521,6 +10587,716 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::DATA_USAGE_SPGW_PDN:
+	{
+		data_usage_m->current__spgw_pdn.Decrement();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    data_usage_DynamicMetricObject1 *obj = static_cast<data_usage_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Decrement();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    data_usage_DynamicMetricObject2 *obj = static_cast<data_usage_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Decrement();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    data_usage_DynamicMetricObject3 *obj = static_cast<data_usage_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Decrement();
+		}
+		}
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+
+
+
+void spgwStats::set(spgwStatsCounter name, double val, std::map<std::string,std::string> labels)
+{
+	switch(name) {
+	case spgwStatsCounter::NUM_UE_SPGW_ACTIVE_SUBSCRIBERS:
+	{
+		num_ue_m->current__spgw_active_subscribers.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","spgw","state","active","level","subscribers",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","spgw","state","active","level","subscribers",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","spgw","state","active","level","subscribers",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::NUM_UE_SPGW_IDLE_SUBSCRIBERS:
+	{
+		num_ue_m->current__spgw_idle_subscribers.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","spgw","state","idle","level","subscribers",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","spgw","state","idle","level","subscribers",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","spgw","state","idle","level","subscribers",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::NUM_UE_PGW_ACTIVE_SUBSCRIBERS:
+	{
+		num_ue_m->current__pgw_active_subscribers.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","pgw","state","active","level","subscribers",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","pgw","state","active","level","subscribers",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","pgw","state","active","level","subscribers",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::NUM_UE_PGW_IDLE_SUBSCRIBERS:
+	{
+		num_ue_m->current__pgw_idle_subscribers.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","pgw","state","idle","level","subscribers",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","pgw","state","idle","level","subscribers",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","pgw","state","idle","level","subscribers",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::NUM_UE_SGW_ACTIVE_SUBSCRIBERS:
+	{
+		num_ue_m->current__sgw_active_subscribers.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","sgw","state","active","level","subscribers",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","sgw","state","active","level","subscribers",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","sgw","state","active","level","subscribers",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::NUM_UE_SGW_IDLE_SUBSCRIBERS:
+	{
+		num_ue_m->current__sgw_idle_subscribers.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","sgw","state","idle","level","subscribers",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","sgw","state","idle","level","subscribers",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","sgw","state","idle","level","subscribers",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::NUM_UE_SPGW_ACTIVE_PDNS:
+	{
+		num_ue_m->current__spgw_active_pdns.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","spgw","state","active","level","pdns",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","spgw","state","active","level","pdns",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","spgw","state","active","level","pdns",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::NUM_UE_SPGW_IDLE_PDNS:
+	{
+		num_ue_m->current__spgw_idle_pdns.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","spgw","state","idle","level","pdns",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","spgw","state","idle","level","pdns",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","spgw","state","idle","level","pdns",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::NUM_UE_PGW_ACTIVE_PDNS:
+	{
+		num_ue_m->current__pgw_active_pdns.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","pgw","state","active","level","pdns",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","pgw","state","active","level","pdns",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","pgw","state","active","level","pdns",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::NUM_UE_PGW_IDLE_PDNS:
+	{
+		num_ue_m->current__pgw_idle_pdns.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","pgw","state","idle","level","pdns",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","pgw","state","idle","level","pdns",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","pgw","state","idle","level","pdns",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::NUM_UE_SGW_ACTIVE_PDNS:
+	{
+		num_ue_m->current__sgw_active_pdns.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","sgw","state","active","level","pdns",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","sgw","state","active","level","pdns",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","sgw","state","active","level","pdns",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::NUM_UE_SGW_IDLE_PDNS:
+	{
+		num_ue_m->current__sgw_idle_pdns.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject1 *obj = num_ue_m->add_dynamic1("cp_mode","sgw","state","idle","level","pdns",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject2 *obj = num_ue_m->add_dynamic2("cp_mode","sgw","state","idle","level","pdns",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    num_ue_DynamicMetricObject3 *obj = num_ue_m->add_dynamic3("cp_mode","sgw","state","idle","level","pdns",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::DATA_USAGE_SPGW_PDN:
+	{
+		data_usage_m->current__spgw_pdn.Set(val);
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    data_usage_DynamicMetricObject1 *obj = static_cast<data_usage_DynamicMetricObject1 *>(it1->second);
+		    obj->gauge.Set(val);
+		} else {
+		    data_usage_DynamicMetricObject1 *obj = data_usage_m->add_dynamic1("cp_mode","spgw","level","pdn",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    data_usage_DynamicMetricObject2 *obj = static_cast<data_usage_DynamicMetricObject2 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    data_usage_DynamicMetricObject2 *obj = data_usage_m->add_dynamic2("cp_mode","spgw","level","pdn",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    data_usage_DynamicMetricObject3 *obj = static_cast<data_usage_DynamicMetricObject3 *>(itf->second);
+		    obj->gauge.Set(val);
+		} else {
+		    data_usage_DynamicMetricObject3 *obj = data_usage_m->add_dynamic3("cp_mode","spgw","level","pdn",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->gauge.Set(val);
 		}
 		}
 		break;

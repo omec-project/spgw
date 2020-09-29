@@ -38,6 +38,7 @@ void *get_t2tMsg(void);
 /* Prometheus APIs */
 void decrement_stat(int stat_id);
 void increment_stat(int stat_id);
+void set_num_ue_stat(int stat_id, uint32_t val);
 void setup_prometheus(uint16_t port);
 void setup_webserver(uint16_t port);
 void increment_userplane_stats(int stat_id, uint32_t peer_addr);
@@ -47,5 +48,6 @@ void increment_pgw_peer_stats(int stat_id, uint32_t peer_addr);
 void increment_gx_peer_stats(int stat_id, uint32_t peer_addr);
 void increment_proc_mme_peer_stats_reason(int stat_id, uint32_t peer_addr, uint32_t reason);
 void increment_proc_mme_peer_stats(int stat_id, uint32_t peer_addr);
+void set_data_stats(int stat_id, uint64_t imsi, uint32_t bytes);
 
 #endif
