@@ -254,7 +254,7 @@ int
 set_reporting_triggers(pfcp_rptng_triggers_ie_t *triggers)
 {
     int size = sizeof(pfcp_rptng_triggers_ie_t);
-	pfcp_set_ie_header(&(triggers->header), PFCP_IE_USAGE_RPT_TRIG, 2);
+	pfcp_set_ie_header(&(triggers->header), PFCP_IE_RPTNG_TRIGGERS, 2);
     triggers->droth = 0; /* report when drop exceede */
     triggers->perio = 0; /* report periodically */
     triggers->volth = 0; /* report when volume threshold reaches */
