@@ -1106,10 +1106,188 @@ def create_c_enum_file():
     h = "#endif /* _INCLUDE_"+module_name+"_ENUM_H__ */\n"
     header_file.write(h)
 
-
+def create_markdown_file():
+    fname = module_name + "KPI.md"
+    fh = open(fname, 'w')
+    fh.write("#License & Copyright\n\n")
+    fh.write("#SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>\n\n")
+    fh.write("#SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0\n\n")
+    print("sys.argv {}".format(sys.argv))
+    file = None
+    if(len(sys.argv) == 2):
+        file_name = sys.argv[1]
+    with open(file_name) as f:
+        data = json.load(f)
+    families = data.keys()
+    for key in families:
+        family = data[key]
+        family_name = key 
+        section = "\n\n# "+key+"\n\n"
+        fh.write(section)
+        table_header = "|Family type|" + "Family Name|" + "Counter Name| " + "Counter Help|" + "Static Labels|" + "Dynamic Labels|\n"
+        fh.write(table_header)
+        table_header = "|----------:|:--------------:|:------------:|:-----:|:-------:|-------:|\n"
+        fh.write(table_header)
+        print("*********family {} Type - {} *********".format(family_name, family['type']))
+        nameStr = family["name"] 
+        helpStr = family["help"] 
+        print("family_labels {}".format(family['family_labels']))
+        flabel_dict = family['family_labels']
+        if family['type'] == "Gauge":
+          family_row = "|Gauge|"+family["name"]+"|"
+          gaugeFamilyObj = GaugeFamily(family_name, nameStr, helpStr, flabel_dict) 
+          gauges_family_object_list.append(gaugeFamilyObj)
+          metrics = family['gauges']
+          for metric in metrics:
+            metric_row = family_row + metric["name"] +  "|" + metric["help"] + "|"
+            d_labels = []
+            d_label_0_dict = metric.get("dynamic_label_0")
+            print("d_label_0_dict {}".format(d_label_0_dict))
+            if d_label_0_dict != None:
+                for l0 in d_label_0_dict:
+                    d = []
+                    print("*********{}******** and keys {} ".format(l0, l0.keys()))
+                    for k in l0.keys():
+                       d.append(k)
+                    d_label_1_dict = metric.get("dynamic_label_1")
+                    if d_label_1_dict != None:
+                      for l1 in d_label_1_dict:
+                          print("\t*********{}********".format(l1))
+                          for k in l1.keys():
+                            d.append(k)
+                          d_label_2_dict = metric.get("dynamic_label_2")
+                          if d_label_2_dict != None:
+                            for l2 in d_label_2_dict.keys():
+                              print("\t\t*********{}********".format(l2))
+                              for k in l2.keys():
+                                d.append(k)
+                              d_labels.append(d)
+                          else:
+                              d_labels.append(d)
+                    else:
+                       d_labels.append(d)
+            print("dynamic labels = {} >>>>>> ".format(d_labels))
+            label_0_dict = metric["label_0"]
+            for zero_label in label_0_dict:
+               final_label_dict = []
+               zero_label_dict = []
+               for temp_zero in zero_label.keys():
+                  zero_label_dict = [{temp_zero: zero_label[temp_zero]}]
+                  final_label_dict = copy.deepcopy(zero_label_dict)
+                  if(metric.get("label_1")):
+                    label_1_dict = metric["label_1"]
+                    for one_label in label_1_dict:
+                       one_label_dict = copy.deepcopy(zero_label_dict)
+                       for temp_one in one_label.keys():
+                          one_label_dict.append({temp_one: one_label[temp_one]})
+                          final_label_dict = copy.deepcopy(one_label_dict)
+                          if(metric.get("label_2")):
+                            label_2_dict = metric["label_2"]
+                            for two_label in label_2_dict:
+                               two_label_dict = copy.deepcopy(one_label_dict)
+                               for temp_two in two_label.keys():
+                                  two_label_dict.append({temp_two: two_label[temp_two]})
+                                  final_label_dict = copy.deepcopy(two_label_dict)
+                                  print("labels = {}".format(final_label_dict))
+                                  label2_row = metric_row + str(final_label_dict) + "|"
+                                  for dy in d_labels:
+                                    final_row = label2_row + str(dy) + "|\n"
+                                    fh.write(final_row)
+                                  gaugeFamilyObj.add_gauge(family_name, final_label_dict)
+                          else:
+                            print("labels = {}".format(final_label_dict))
+                            label1_row = metric_row + str(final_label_dict) + "|"
+                            for dy in d_labels:
+                                final_row = label1_row + str(dy) + "|\n"
+                                fh.write(final_row)
+                            gaugeFamilyObj.add_gauge(family_name, final_label_dict)
+                  else:
+                    print("labels = {}".format(final_label_dict))
+                    label0_row = metric_row + str(final_label_dict) + "|"
+                    for dy in d_labels:
+                        final_row = label0_row + str(dy) + "|\n"
+                        fh.write(final_row)
+                    gaugeFamilyObj.add_gauge(family_name, final_label_dict)
+        else:
+          family_row = "|Counter|"+family["name"]+"|"
+          counterFamilyObj = CounterFamily(family_name, nameStr, helpStr, flabel_dict) 
+          counter_family_object_list.append(counterFamilyObj)
+          metrics = family['counters']
+          for metric in metrics:
+            metric_row = family_row + metric["name"] +  "|" + metric["help"] + "|"
+            d_labels = []
+            d_label_0_dict = metric.get("dynamic_label_0")
+            print("d_label_0_dict {}".format(d_label_0_dict))
+            if d_label_0_dict != None:
+                for l0 in d_label_0_dict:
+                    d = []
+                    print("*********{}******** and keys {} ".format(l0, l0.keys()))
+                    for k in l0.keys():
+                       d.append(k)
+                    d_label_1_dict = metric.get("dynamic_label_1")
+                    if d_label_1_dict != None:
+                      for l1 in d_label_1_dict:
+                          print("\t*********{}********".format(l1))
+                          for k in l1.keys():
+                            d.append(k)
+                          d_label_2_dict = metric.get("dynamic_label_2")
+                          if d_label_2_dict != None:
+                            for l2 in d_label_2_dict:
+                              print("\t\t*********{}********".format(l2))
+                              for k in l2.keys():
+                                d.append(k)
+                              d_labels.append(d)
+                          else:
+                              d_labels.append(d)
+                    else:
+                       d_labels.append(d)
+            print("dynamic labels = {} >>>>>> ".format(d_labels))
+            label_0_dict = metric["label_0"]
+            for zero_label in label_0_dict:
+               final_label_dict = []
+               zero_label_dict = []
+               for temp_zero in zero_label.keys():
+                  zero_label_dict = [{temp_zero: zero_label[temp_zero]}]
+                  final_label_dict = copy.deepcopy(zero_label_dict)
+                  if(metric.get("label_1")):
+                    label_1_dict = metric["label_1"]
+                    for one_label in label_1_dict:
+                       one_label_dict = copy.deepcopy(zero_label_dict)
+                       for temp_one in one_label.keys():
+                          one_label_dict.append({temp_one: one_label[temp_one]})
+                          final_label_dict = copy.deepcopy(one_label_dict)
+                          if(metric.get("label_2")):
+                            label_2_dict = metric["label_2"]
+                            for two_label in label_2_dict:
+                               two_label_dict = copy.deepcopy(one_label_dict)
+                               for temp_two in two_label.keys():
+                                  two_label_dict.append({temp_two: two_label[temp_two]})
+                                  final_label_dict = copy.deepcopy(two_label_dict)
+                                  print("labels = {}".format(final_label_dict))
+                                  label2_row = metric_row + str(final_label_dict) + "|"
+                                  for dy in d_labels:
+                                    final_row = label2_row + str(dy) + "|\n"
+                                    fh.write(final_row)
+                                  counterFamilyObj.add_counter(family_name, metric['name'], final_label_dict)
+                          else:
+                            print("labels = {}".format(final_label_dict))
+                            label1_row = metric_row + str(final_label_dict) + "|"
+                            for dy in d_labels:
+                                final_row = label1_row + str(dy) + "|\n"
+                                fh.write(final_row)
+                            counterFamilyObj.add_counter(family_name, metric['name'], final_label_dict)
+                  else:
+                    print("labels = {}".format(final_label_dict))
+                    label0_row = metric_row + str(final_label_dict) + "|"
+                    for dy in d_labels:
+                        final_row = label0_row + str(dy) + "|\n"
+                        fh.write(final_row)
+                    counterFamilyObj.add_counter(family_name, metric['name'], final_label_dict)
 
 parse_json_file()
 create_header_file()
 create_cpp_file()
 create_c_enum_file()
+print("********\n")
+create_markdown_file()
 
