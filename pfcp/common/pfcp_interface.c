@@ -8,6 +8,7 @@
 #include "pfcp_messages_decoder.h"
 #include "cp_config.h"
 #include "rte_common.h"
+#include "cp_events.h"
 
 
 pfcp_handler pfcp_msg_handler[256];
@@ -42,5 +43,19 @@ handle_unknown_pfcp_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
             "... Discarding\n", __func__, cp_config->cp_type, pfcp_rx->message_type);
 
     return -1;
+}
+
+void
+process_pfcp_msg(void *data, uint16_t event)
+{
+    assert(event == PFCP_MSG_RECEIVED );
+    msg_info_t *msg = (msg_info_t *)data;    
+    pfcp_header_t *pfcp_header = (pfcp_header_t *)msg->raw_buf;
+    pfcp_msg_handler[pfcp_header->message_type](&msg, pfcp_header);
+    free(msg->raw_buf);
+    if(msg->refCnt == 0)
+        free(msg);
+
+    return;
 }
 

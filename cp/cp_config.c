@@ -17,10 +17,10 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include "assert.h"
+#include "cp_config.h"
 #include "cp_config_apis.h"
 #include "clogger.h"
 #include "cp_init.h"
-#include "cp_config.h"
 #include "cp_config_defs.h"
 #include "monitor_config.h"
 #include "gw_adapter.h"

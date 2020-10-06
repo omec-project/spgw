@@ -24,27 +24,14 @@
 #include "gw_adapter.h"
 #include "crest.h"
 #include "clogger.h"
-#include "cstats.h"
 
 #include "pfcp_cp_set_ie.h"
-static int get_peer_index(uint32_t ip_addr);
-
-//////////////////////////////////////////////////////////////////////////////////
-
-
-/*CLI :new logic definations*/
-cli_node_t cli_node = {0};
-SPeer *peer[MAX_PEER] = {NULL};
-int cnt_peer = 0;
-int nbr_of_peer = 0;
-uint64_t oss_reset_time;
 
 int s11logger;
 int s5s8logger;
 int sxlogger;
 int gxlogger;
 int apilogger;
-int epclogger;
 
 
 MessageType ossS5s8MessageDefs[] = {
@@ -333,127 +320,19 @@ int gxMessageTypes [] = {
 };
 
 
-int get_peer_index(uint32_t ip_addr)
-{
-	int i;
-
-	for(i = 0; i < cnt_peer ; i++)
-	{
-		if(cli_node.peer[i]!=NULL)
-		{
-			if(cli_node.peer[i]->ipaddr.s_addr == ip_addr )
-				return i;
-		}
-	}
-
-	return -1;
-}
-
-int update_peer_timeouts(uint32_t ip_addr,uint8_t val)
-{
-
-	int ret = -1;
-	int index = -1;
-
-	index = get_peer_index(ip_addr);
-
-	if (index == -1)
-	{
-		clLog(clSystemLog, eCLSeverityTrace,
-				"peer :%s doesn't exist\n ",
-				inet_ntoa(*((struct in_addr *)&ip_addr)));
-		return ret;
-	}
-
-	cli_node.peer[index]->timeouts = val;
-
-	return 0;
-
-}
-
-int update_peer_status(uint32_t ip_addr,bool val)
-{
-
-	int ret = -1;
-	int index = -1;
-
-	index = get_peer_index(ip_addr);
-
-	if (index == -1)
-	{
-		clLog(clSystemLog, eCLSeverityTrace,
-				"peer :%s doesn't exist\n ",
-				inet_ntoa(*((struct in_addr *)&ip_addr)));
-		return ret;
-	}
-
-	cli_node.peer[index]->status = val;
-
-	return 0;
-
-}
-
-int delete_cli_peer(uint32_t ip_addr)
-{
-	int ret = -1;
-	int index = -1;
-
-	index = get_peer_index(ip_addr);
-
-	if (index == -1)
-	{
-		clLog(clSystemLog, eCLSeverityTrace,
-				"peer :%s doesn't exist\n ",
-				inet_ntoa(*((struct in_addr *)&ip_addr)));
-		return ret;
-	}
-
-	free(cli_node.peer[index]);
-	cli_node.peer[index] = NULL;
-
-	nbr_of_peer--; /*decrement peer count*/
-
-	return 0;
-
-}
-
 void init_cli_module(uint8_t gw_logger)
 {
-	clSetOption(eCLOptLogFileName, "logs/cp.log");
-	clSetOption(eCLOptStatFileName, "logs/cp_stat.log");
-	clSetOption(eCLOptAuditFileName, "logs/cp_sys.log");
+    clSetOption(eCLOptLogFileName, "logs/cp.log");
+    clSetOption(eCLOptStatFileName, "logs/cp_stat.log");
+    clSetOption(eCLOptAuditFileName, "logs/cp_sys.log");
 
-	    switch(cp_config->cp_type) {
-        case SGWC:
-            cli_node.gw_type = OSS_SGWC;
-			clInit("sgwc", gw_logger);
-            break;
-        case PGWC:
-            cli_node.gw_type = OSS_PGWC;
-			clInit("pgwc", gw_logger);
-            break;
-        case SAEGWC:
-            cli_node.gw_type = OSS_SAEGWC;
-			clInit("saegw", gw_logger);
-            break;
-    }
-
-	if (cp_config->cp_type == SGWC || cp_config->cp_type == SAEGWC) {
-		s11logger = clAddLogger("s11", gw_logger);
-	}
-	if (cp_config->cp_type == SGWC || cp_config->cp_type == PGWC)
-		s5s8logger = clAddLogger("s5s8", gw_logger);
-	if (cp_config->cp_type == SAEGWC || cp_config->cp_type == PGWC)
-		gxlogger = clAddLogger("Gx", gw_logger);
-
-	sxlogger = clAddLogger("sx", gw_logger);
-	apilogger = clAddLogger("api", gw_logger);
-	epclogger = clAddLogger("epc", gw_logger);
-	clAddRecentLogger("sgwc-001","cp",5);
-	clStart();
-	csInit(clGetStatsLogger(), 5000);
-	csStart();
-	cli_node.upsecs = &oss_reset_time;
-	cli_init(&cli_node,&cnt_peer);
+    clInit("saegw", gw_logger);
+    s11logger = clAddLogger("s11", gw_logger);
+    s5s8logger = clAddLogger("s5s8", gw_logger);
+    gxlogger = clAddLogger("Gx", gw_logger);
+    sxlogger = clAddLogger("sx", gw_logger);
+    apilogger = clAddLogger("api", gw_logger);
+    clAddRecentLogger("sgwc-001","cp",5);
+    clStart();
 }
 

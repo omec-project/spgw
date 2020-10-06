@@ -81,8 +81,8 @@ handle_gx_cca( unsigned char *recv_buf);
  * @param  : No param
  * @return : Returns 0 in case of success , -1 otherwise
  */
-int
-msg_handler_gx( void );
+void*
+msg_handler_gx( void *);
 
 /**
  * @brief  : Activate  interface for listening gx messages
@@ -179,4 +179,7 @@ int handle_cca_initial_msg(msg_info_t **msg);
 int handle_ccr_terminate_msg(msg_info_t **msg);
 int handle_rar_msg(msg_info_t **msg);
 void gx_msg_proc_failure(proc_context_t *proc_ctxt);
+
+void
+process_gx_msg(void *data, uint16_t event);
 #endif /* CP_APP_H_ */

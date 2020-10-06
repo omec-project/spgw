@@ -42,6 +42,7 @@ uint8_t pfcp_tx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 extern uint8_t rstCnt;
+udp_sock_t my_sock;
 
 static void 
 init_thread2ThreadSocket(void)
@@ -235,8 +236,6 @@ void init_cp(void)
 	}
 
     init_thread2ThreadSocket();
-
-    update_max_fd();
 
 	if (signal(SIGINT, sig_handler) == SIG_ERR)
 		rte_exit(EXIT_FAILURE, "Error:can't catch SIGINT\n");
