@@ -35,4 +35,5 @@ uint8_t
 add_node_conn_entry(uint32_t dstIp, uint8_t portId);
 
 
+void handle_timeout(void *data, uint16_t event);
 #endif

@@ -269,6 +269,7 @@ process_rab_proc_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg
 
     increment_mme_peer_stats(MSG_TX_GTPV2_S11_RABRSP,gtpc_trans->peer_sockaddr.sin_addr.s_addr);
 
+    increment_stat(PROCEDURES_SPGW_S1_RELEASE_SUCCESS);
     proc_rab_complete(proc_context);
 	return;
 }
@@ -343,6 +344,8 @@ proc_rab_failed(msg_info_t *msg, uint8_t cause )
                        cause,
                        cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 
+    
+    increment_stat(PROCEDURES_SPGW_S1_RELEASE_FAILURE);
     proc_rab_complete(proc_context);
 }
 

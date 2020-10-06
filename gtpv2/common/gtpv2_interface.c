@@ -12,6 +12,8 @@
 #include "gtp_ies.h"
 #include "rte_common.h"
 #include "util.h"
+#include "cp_events.h"
+#include "gtpv2_error_rsp.h"
 
 gtp_handler gtp_msg_handler[256];
 
@@ -53,6 +55,29 @@ handle_unknown_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_s11_rx)
     RTE_SET_USED(msg);
 	clLog(clSystemLog, eCLSeverityCritical, "Unhandled GTP message = %d\n", gtpv2c_s11_rx->gtpc.message_type);
     return -1;
+}
+
+void
+process_gtp_msg(void *data, uint16_t event)
+{
+    assert(event == GTP_MSG_RECEIVED );
+    msg_info_t *msg = (msg_info_t *)data;    
+    gtpv2c_header_t *gtpv2c_rx = (gtpv2c_header_t *)msg->raw_buf;
+    if (gtpv2c_rx->gtpc.version < GTP_VERSION_GTPV2C) {
+        fprintf(stderr, "Discarding packet due to gtp version is not supported..");
+        return;
+    }else if (gtpv2c_rx->gtpc.version > GTP_VERSION_GTPV2C) {
+        send_version_not_supported(&msg->peer_addr, 
+                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE,
+                gtpv2c_rx->teid.has_teid.seq);
+        fprintf(stderr, "Discarding packet due to gtp version is not supported..");
+        return;
+    }
+    gtp_msg_handler[gtpv2c_rx->gtpc.message_type](&msg, gtpv2c_rx);
+    free(msg->raw_buf);
+    if(msg->refCnt == 0)
+        free(msg);
+
 }
 
 /**

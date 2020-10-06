@@ -8,17 +8,6 @@
 #ifndef GW_ADAPTER_H
 #define GW_ADAPTER_H
 
-#define REST_SUCESSS  200
-#define REST_FAIL     400
-#define LAST_TIMER_SIZE 80
-
-
-/**
- * @brief initiates the rest service
- * @param port_no  - Rest service port number
- * @param thread_count - number of threads
- * @return void
- */
 typedef long long int _timer_t;
 
 #define TIMER_GET_CURRENT_TP(now)                                             \
@@ -149,28 +138,27 @@ typedef struct {
 #define TRUE 1
 
 typedef struct {
-	struct in_addr ipaddr;
-	EInterfaceType intfctype;
+       struct in_addr ipaddr;
+       EInterfaceType intfctype;
 
-	bool status;
-	int response_timeout;  //TRANSMIT TIMER
-	uint8_t maxtimeout;    //TRANSMIT COUNT in cp.cfg
-	uint8_t timeouts;
+       bool status;
+       int response_timeout;  //TRANSMIT TIMER
+       uint8_t maxtimeout;    //TRANSMIT COUNT in cp.cfg
+       uint8_t timeouts;
 
-	char lastactivity[80];
+       char lastactivity[80];
 
-	int hcrequest[2];
-	int hcresponse[2];
-	union {
-		Statistic s11[51];
-		Statistic s5s8[37];
-		Statistic sxa[21];
-		Statistic sxb[23];
-		Statistic sxasxb[23];
-		Statistic gx[23];
-	} stats;
+       int hcrequest[2];
+       int hcresponse[2];
+       union {
+               Statistic s11[51];
+               Statistic s5s8[37];
+               Statistic sxa[21];
+               Statistic sxb[23];
+               Statistic sxasxb[23];
+               Statistic gx[23];
+       } stats;
 } SPeer;
-
 /*
  * 0 --> active sessions
  * 1 --> Nbr-of-ues
@@ -178,19 +166,17 @@ typedef struct {
  * & so on.
  */
 
-
 typedef struct {
-	uint8_t gw_type;
-	uint64_t *upsecs;
-	uint64_t *resetsecs;
-	//uint64_t upsecs;
-	uint64_t stats[5];
-	SPeer *peer[MAX_PEER];
+       uint8_t gw_type;
+       uint64_t *upsecs;
+       uint64_t *resetsecs;
+       //uint64_t upsecs;
+       uint64_t stats[5];
+       SPeer *peer[MAX_PEER];
 }cli_node_t;
 
 extern cli_node_t cli_node;
 
-//extern SPeer *peer[MAX_PEER];
 extern int cnt_peer;  /*last index of array*/
 extern int nbr_of_peer; /*total nbr of peer count*/
 
@@ -199,10 +185,8 @@ extern int s11logger;
 extern int s5s8logger;
 extern int gxlogger;
 extern int apilogger;
-extern int epclogger;
 
 extern cli_node_t *cli_node_ptr; // OSS cli node ptr
-
 
 extern MessageType ossS5s8MessageDefs[];
 extern MessageType ossS11MessageDefs[];
@@ -217,8 +201,5 @@ extern char ossGatewayStr[][10];
 extern uint64_t oss_reset_time;
 
 void init_cli_module(uint8_t gw_logger);
-int update_peer_status(uint32_t ip_addr,bool val);
-int update_peer_timeouts(uint32_t ip_addr,uint8_t val);
-int delete_cli_peer(uint32_t ip_addr);
 
 #endif

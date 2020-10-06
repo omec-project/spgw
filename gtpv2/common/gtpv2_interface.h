@@ -353,8 +353,7 @@ int process_sgwc_delete_handover(uint64_t seid,
 int
 send_ddn_indication(proc_context_t *ctt, uint8_t ebi_index);
 
-int msg_handler_s11(void);
-int msg_handler_s5s8(void);
+void *msg_handler_gtp(void *);
 
 void 
 process_delete_bearer_resp_pfcp_timeout(void *data);
@@ -407,6 +406,8 @@ void process_pgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
 void process_sgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
 void process_sgwc_create_bearer_rsp_pfcp_timeout(void *data);
 void process_sgwc_s5s8_create_sess_rsp_pfcp_timeout(void *data);
+
+void process_gtp_msg(void *data, uint16_t event);
 
 
 /* Slowly delete following block under if 1*/

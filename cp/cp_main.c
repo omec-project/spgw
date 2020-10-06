@@ -5,11 +5,11 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <stdio.h>
+#include <pthread.h>
 #include <getopt.h>
 #include <rte_ip.h>
 #include <rte_udp.h>
 #include <rte_cfgfile.h>
-
 #include "gw_adapter.h"
 #include "clogger.h"
 #include "cp_init.h"
@@ -31,6 +31,9 @@
 #include "tables/tables.h"
 #include "cp_io_poll.h"
 #include "cdnshelper.h"
+#include "gtpv2_interface.h"
+#include "pfcp_cp_interface.h"
+#include "gx_interface.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -218,12 +221,51 @@ main(int argc, char **argv)
 #ifdef USE_CSID
     init_fqcsid_hash_tables();
 #endif /* USE_CSID */
-    while (1) {
-        iface_process_ipc_msgs();
+
+    // thread to read incoming socket messages from udp socket
+    pthread_t readerGtp_t;
+    pthread_attr_t gtpattr;
+    pthread_attr_init(&gtpattr);
+    pthread_attr_setdetachstate(&gtpattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&readerGtp_t, &gtpattr, &msg_handler_gtp, NULL);
+    pthread_attr_destroy(&gtpattr);
+
+    // thread to read incoming socket messages from udp socket
+    pthread_t readerPfcp_t;
+    pthread_attr_t pfcpattr;
+    pthread_attr_init(&pfcpattr);
+    pthread_attr_setdetachstate(&pfcpattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&readerPfcp_t, &pfcpattr, &msg_handler_pfcp, NULL);
+    pthread_attr_destroy(&pfcpattr);
+
+    // thread to read incoming socket messages from udp socket
+    pthread_t readerGx_t;
+    pthread_attr_t gxattr;
+    pthread_attr_init(&gxattr);
+    pthread_attr_setdetachstate(&gxattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&readerGx_t, &gxattr, &msg_handler_gx, NULL);
+    pthread_attr_destroy(&gxattr);
+
+
+    // thread to read incoming socker messages from local socket
+    pthread_t readerLocal_t;
+    pthread_attr_t localattr;
+    pthread_attr_init(&localattr);
+    pthread_attr_setdetachstate(&localattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&readerLocal_t, &localattr, &msg_handler_local, NULL);
+    pthread_attr_destroy(&localattr);
+
+    // thread to read incoming messages event queue 
+    pthread_t readerInevent_t;
+    pthread_attr_t inattr;
+    pthread_attr_init(&inattr);
+    pthread_attr_setdetachstate(&inattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&readerInevent_t, &inattr, &incoming_event_handler, NULL);
+    pthread_attr_destroy(&inattr);
+    while(1) {
+        sleep(10);
     }
 
-    /* TODO: Move this call in appropriate place */
-    /* clear_heartbeat_hash_table(); */
     return 0;
 }
 

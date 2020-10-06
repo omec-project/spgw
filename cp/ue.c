@@ -35,6 +35,7 @@ static uint32_t pgw_gtpu_base_teid = 0x00000001;
 
 uint32_t base_s1u_sgw_gtpu_teid = 0xf0000000;
 
+static void start_procedure_direct(proc_context_t *proc_ctxt);
 // Requirement: Understand how this teid range works
 void
 set_base_teid(uint8_t val)
@@ -391,6 +392,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 void
 start_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
 {
+    RTE_SET_USED(msg);
     ue_context_t *context = NULL;
     context = (ue_context_t *)proc_ctxt->ue_context;
 
@@ -400,11 +402,20 @@ start_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
         /* Decide if we wish to run procedure now... If yes move on ...*/
         proc_context_t *p_ctxt = TAILQ_FIRST(&context->pending_sub_procs);
         if(p_ctxt != proc_ctxt) {
-            printf("Some outstanding procedures in queue \n");
+            printf("Some outstanding procedures in queue. Proc Ctxt : %p \n",proc_ctxt);
             return;
         }
     }
+    start_procedure_direct(proc_ctxt);
+    return;
+}
+
+static void start_procedure_direct(proc_context_t *proc_ctxt)
+{
+    msg_info_t * msg = proc_ctxt->msg_info;
+    printf("Start direct procedure  %p \n",proc_ctxt);
     assert(proc_ctxt != NULL);
+
     printf("procedure number = %d \n",proc_ctxt->proc_type);
     switch(proc_ctxt->proc_type) {
         case INITIAL_PDN_ATTACH_PROC: {
@@ -452,6 +463,8 @@ start_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
             proc_ctxt->handler(proc_ctxt, msg);
             break;
         }
+        default:
+            rte_panic("unknown proc");
     }
     return;
 }
@@ -583,6 +596,7 @@ end_procedure(proc_context_t *proc_ctxt)
     ue_context_t *context = NULL;
     pdn_connection_t *pdn = NULL;
 
+    printf("end procedure  %p \n",proc_ctxt);
     assert(proc_ctxt != NULL);
 
     if(proc_ctxt->gtpc_trans != NULL) {
@@ -682,7 +696,7 @@ end_procedure(proc_context_t *proc_ctxt)
         printf("Continue with subscriber \n");
         proc_context_t *p_ctxt = TAILQ_FIRST(&context->pending_sub_procs);
         if(p_ctxt) {
-            start_procedure(p_ctxt, (msg_info_t *)p_ctxt->msg_info);
+            start_procedure_direct(p_ctxt);
         }
     } else {
         printf("Released subscriber \n");

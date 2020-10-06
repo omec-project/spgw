@@ -25,39 +25,37 @@
 #include "cp_transactions.h"
 #include <unistd.h>
 #include "cp_io_poll.h"
+#include "cp_events.h"
 
 uint8_t pfcp_rx[1024]; /* TODO: Decide size */
 
  
 /* TODO: Parse byte_rx to msg_handler_sx_n4 */
-int
-msg_handler_sx_n4(void)
+void*
+msg_handler_pfcp(void *data)
 {
-	socklen_t addr_len = sizeof(struct sockaddr_in);
-	int bytes_pfcp_rx = 0;
-	msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
-	struct sockaddr_in peer_addr = {0};
+    RTE_SET_USED(data);
+    while (1) {
+        socklen_t addr_len = sizeof(struct sockaddr_in);
+        int bytes_pfcp_rx = 0;
+        msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
+        struct sockaddr_in peer_addr = {0};
 
-	bytes_pfcp_rx = recvfrom(my_sock.sock_fd_pfcp, pfcp_rx, 512, MSG_DONTWAIT,
-			(struct sockaddr *)(&peer_addr), &addr_len);
+        bytes_pfcp_rx = recvfrom(my_sock.sock_fd_pfcp, pfcp_rx, 512, 0, (struct sockaddr *)(&peer_addr), &addr_len);
 
-    if ((bytes_pfcp_rx < 0) &&
-            (errno == EAGAIN  || errno == EWOULDBLOCK)) {
-        return -1; // Read complete data 
+        if ((bytes_pfcp_rx < 0) && (errno == EAGAIN  || errno == EWOULDBLOCK)) {
+            clLog(clSystemLog, eCLSeverityCritical, "SGWC|SAEGWC_s11 recvfrom error: %s",
+                    strerror(errno));
+            continue;
+        }
+
+        pfcp_header_t *pfcp_header = (pfcp_header_t *) pfcp_rx;
+        msg->msg_type = pfcp_header->message_type;
+        msg->peer_addr = peer_addr;
+        msg->source_interface = PFCP_IFACE; 
+        msg->raw_buf = calloc(1, bytes_pfcp_rx);
+        memcpy(msg->raw_buf, pfcp_header, bytes_pfcp_rx);
+        queue_stack_unwind_event(PFCP_MSG_RECEIVED, (void *)msg, process_pfcp_msg);
     }
-
-    if (bytes_pfcp_rx == 0) {
-        clLog(clSystemLog, eCLSeverityCritical, "SGWC|SAEGWC_s11 recvfrom error: %s",
-                strerror(errno));
-        return -1;
-    }
-
-	pfcp_header_t *pfcp_header = (pfcp_header_t *) pfcp_rx;
-	msg->msg_type = pfcp_header->message_type;
-    msg->peer_addr = peer_addr;
-    msg->source_interface = PFCP_IFACE; 
-    pfcp_msg_handler[pfcp_header->message_type](&msg, pfcp_header);
-    if(msg->refCnt == 0)
-        free(msg);
-	return 0;
+	return NULL;
 }

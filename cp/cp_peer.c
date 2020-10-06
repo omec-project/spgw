@@ -26,6 +26,7 @@
 #include "util.h"
 #include "cp_io_poll.h"
 #include "spgwStatsPromEnum.h"
+#include "cp_events.h"
 
 uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -43,22 +44,42 @@ static uint16_t gtpu_sx_seqnb	= 1;
  *
  * hash handles connection for S1U, SGI and PFCP
  */
+struct peer_data {
+    gstimerinfo_t *ti;
+    struct sockaddr_in dest_addr;
+};
 
 void timerCallback( gstimerinfo_t *ti, const void *data_t )
 {
-	uint16_t payload_length;
-	struct sockaddr_in dest_addr;
+    struct peer_data *temp = calloc(1, sizeof(struct peer_data));
 #pragma GCC diagnostic push  /* require GCC 4.6 */
 #pragma GCC diagnostic ignored "-Wcast-qual"
 	peerData_t *md = (peerData_t*)data_t;
 #pragma GCC diagnostic pop   /* require GCC 4.6 */
-
-
 	/* setting sendto destination addr */
-	dest_addr.sin_family = AF_INET;
-	dest_addr.sin_addr.s_addr = md->dstIP;
-	dest_addr.sin_port = htons(GTPC_UDP_PORT);
+	temp->dest_addr.sin_family = AF_INET;
+	temp->dest_addr.sin_addr.s_addr = md->dstIP;
+	temp->dest_addr.sin_port = htons(GTPC_UDP_PORT);
+    temp->ti = ti;
+    queue_stack_unwind_event(PEER_TIMEOUT, (void *)temp, handle_timeout); 
+    return;
+}
 
+void handle_timeout(void *data, uint16_t event)
+{
+    RTE_SET_USED(event);
+    peerData_t *md = NULL;
+	uint16_t payload_length;
+    struct peer_data *temp = (struct peer_data *)data;
+    struct sockaddr_in dest_addr = temp->dest_addr;
+    gstimerinfo_t *ti = temp->ti;
+    free(temp);
+    get_peer_entry(dest_addr.sin_addr.s_addr, &md);
+
+    if(md == NULL) {
+        printf("Peer (%s) not found \n", inet_ntoa(dest_addr.sin_addr));
+        return;
+    }
 	clLog(clSystemLog, eCLSeverityCritical, "%s - %s:%s:%u.%s (%dms) has expired", getPrintableTime(),
 		md->name, inet_ntoa(*(struct in_addr *)&md->dstIP), md->portId,
 		ti == &md->pt ? "Periodic_Timer" :
@@ -78,29 +99,9 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		clLog(clSystemLog, eCLSeverityDebug, "Stopped Periodic/transmit timer, peer node %s is not reachable\n",
 				inet_ntoa(*(struct in_addr *)&md->dstIP));
 
-		update_peer_status(md->dstIP,FALSE);
-		delete_cli_peer(md->dstIP);
-
-		if (md->portId == S11_SGW_PORT_ID)
-		{
-			clLog(s11logger, eCLSeverityDebug, "MME status : Inactive\n");
-		}
-
-		if (md->portId == SX_PORT_ID)
-		{
-			clLog(sxlogger, eCLSeverityDebug, " SGWU/SPGWU/PGWU status : Inactive\n");
-		}
-		if (md->portId == S5S8_SGWC_PORT_ID)
-		{
-			clLog(s5s8logger, eCLSeverityDebug, "PGWC status : Inactive\n");
-		}
-		if (md->portId == S5S8_PGWC_PORT_ID)
-		{
-			clLog(s5s8logger, eCLSeverityDebug, "SGWC status : Inactive\n");
-		}
-
 		/* TODO: Flush sessions */
         if (md->portId == SX_PORT_ID) {
+			clLog(sxlogger, eCLSeverityDebug, " SGWU/SPGWU/PGWU status : Inactive\n");
             upf_context_t *upf_context = NULL; 
             upf_context_entry_lookup(dest_addr.sin_addr.s_addr, &upf_context);
             if(upf_context != NULL)
@@ -119,6 +120,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 
 		/* Flush sessions */
 		if (md->portId == S11_SGW_PORT_ID) {
+			clLog(s11logger, eCLSeverityDebug, "MME status : Inactive\n");
 #ifdef USE_CSID
 			del_pfcp_peer_node_sess(md->dstIP, S11_SGW_PORT_ID);
 			del_peer_node_sess(ntohl(md->dstIP), S11_SGW_PORT_ID);
@@ -127,6 +129,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 
 		/* Flush sessions */
 		if (md->portId == S5S8_SGWC_PORT_ID) {
+			clLog(s5s8logger, eCLSeverityDebug, "PGWC status : Inactive\n");
 #ifdef USE_CSID
 			del_pfcp_peer_node_sess(ntohl(md->dstIP), S5S8_SGWC_PORT_ID);
 			del_peer_node_sess(md->dstIP, S5S8_SGWC_PORT_ID);
@@ -135,6 +138,7 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 
 		/* Flush sessions */
 		if (md->portId == S5S8_PGWC_PORT_ID) {
+			clLog(s5s8logger, eCLSeverityDebug, "SGWC status : Inactive\n");
 #ifdef USE_CSID
 			del_pfcp_peer_node_sess(ntohl(md->dstIP), S5S8_PGWC_PORT_ID);
 			del_peer_node_sess(md->dstIP, S5S8_PGWC_PORT_ID);
@@ -219,12 +223,6 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 		}
 	}
 
-	if(ti == &md->tt)
-	{
-		update_peer_timeouts(md->dstIP,md->itr_cnt);
-	}
-
-
 	if (ti == &md->pt) {
 		if ( startTimer( &md->tt ) < 0)
 		{
@@ -287,16 +285,13 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 		   return -1;
 		}
 
-		/*CLI: when add node conn entry called then always peer status will be true*/
-		update_peer_status(dstIp,TRUE);
-
 		/* clLog(clSystemLog, eCLSeverityDebug,"Timers PERIODIC:%d, TRANSMIT:%d, COUNT:%u\n",
 		 *cp_config->periodic_timer, cp_config->transmit_timer, cp_config->transmit_cnt);
 		 */
 
 		if ( startTimer( &conn_data->pt ) < 0) {
 			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to start...\n");
-			}
+		}
 		conn_cnt++;
 
 	} else {
@@ -327,12 +322,10 @@ uint8_t process_response(uint32_t dstIp)
 	ret = get_peer_entry(dstIp, &conn_data);
 
 	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityDebug, " Entry not found for NODE :%s\n",
+		clLog(clSystemLog, eCLSeverityCritical, " Entry not found for NODE :%s\n",
 				inet_ntoa(*(struct in_addr *)&dstIp));
 	} else {
 		conn_data->itr_cnt = 0;
-
-		update_peer_timeouts(conn_data->dstIP,0);
 
 		/* Stop transmit timer for specific peer node */
 		stopTimer( &conn_data->tt );
@@ -340,7 +333,9 @@ uint8_t process_response(uint32_t dstIp)
 		stopTimer( &conn_data->pt );
 		/* Reset Periodic Timer */
 		if ( startTimer( &conn_data->pt ) == false ) 
-			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to start...\n");
+			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to stop...\n");
+
+		clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer stopped \n");
 
 	}
 	return 0;

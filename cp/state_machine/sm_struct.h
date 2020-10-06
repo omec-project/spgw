@@ -75,6 +75,7 @@ typedef struct msg_info {
     void *bearer_context;
     void *proc_context;
     uint32_t refCnt;
+    void *raw_buf;
 }msg_info_t;
 
 #endif

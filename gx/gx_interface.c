@@ -19,6 +19,7 @@
 #include "cp_config.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
+#include "cp_events.h"
 
 static uint32_t cc_request_number = 0;
 int g_cp_sock ;
@@ -332,35 +333,57 @@ fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 	return 0;
 }
 
-int
-msg_handler_gx( void )
+void*
+msg_handler_gx(void *data)
 {
-	int bytes_rx = 0;
-	msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
-	gx_msg *gx_rx = NULL;
-	char recv_buf[BUFFSIZE] = {0};
+    RTE_SET_USED(data);
+    while(1) {
+        if(my_sock.gx_app_sock > 0) {
+            break;
+        }
+        sleep(1);
+    }
 
-	bytes_rx = recv_from_ipc_channel(my_sock.gx_app_sock, recv_buf);
-	if(bytes_rx <= 0 ){
-		close_ipc_channel(my_sock.gx_app_sock);
-		/* Greacefull Exit */
-		exit(0);
-        return -1;
-	}
+    while(1) {
+        int bytes_rx = 0;
+        msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
+        gx_msg *gx_rx = NULL;
+        char recv_buf[BUFFSIZE] = {0};
 
-	gx_rx = (gx_msg *)recv_buf;
-    struct sockaddr_in saddr_in;
-    saddr_in.sin_family = AF_INET;
-    inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-    msg->msg_type = gx_rx->msg_type;
-    msg->source_interface = GX_IFACE;
+        bytes_rx = recv_from_ipc_channel(my_sock.gx_app_sock, recv_buf);
+        if(bytes_rx <= 0 ){
+            close_ipc_channel(my_sock.gx_app_sock);
+            /* Greacefull Exit */
+            exit(0);
+            return NULL;
+        }
+
+        gx_rx = (gx_msg *)recv_buf;
+        struct sockaddr_in saddr_in;
+        saddr_in.sin_family = AF_INET;
+        inet_aton("127.0.0.1", &(saddr_in.sin_addr));
+        msg->msg_type = gx_rx->msg_type;
+        msg->source_interface = GX_IFACE;
+        msg->raw_buf = calloc(1, bytes_rx);
+        memcpy(msg->raw_buf, recv_buf, bytes_rx);
+        queue_stack_unwind_event(GX_MSG_RECEIVED, (void *)msg, process_gx_msg);
+    }
+    return NULL;
+}
+
+void
+process_gx_msg(void *data, uint16_t event)
+{
+    assert(event == GX_MSG_RECEIVED );
+    msg_info_t *msg = (msg_info_t *)data;    
+    gx_msg *gx_rx = (gx_msg *)msg->raw_buf;
     switch(msg->msg_type) {
         case GX_CCA_MSG: {
-            printf("\n Received CCA length %d \n", bytes_rx);
+            printf("\n Received CCA length \n");
             if (gx_cca_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type),
                         &msg->gx_msg.cca) <= 0) {
                 printf("\n unpack failed \n");
-                return -1;
+                return;
             }
             printf("\n Received CCA session id  %s \n", msg->gx_msg.cca.session_id.val);
             if(msg->gx_msg.cca.cc_request_type == INITIAL_REQUEST) {
@@ -368,7 +391,7 @@ msg_handler_gx( void )
                 handle_cca_initial_msg(&msg);
             } else if (msg->gx_msg.cca.cc_request_type == UPDATE_REQUEST) {
                 printf("\n Received CCA-update\n");
-               handle_cca_update_msg(&msg); 
+                handle_cca_update_msg(&msg); 
             } else if (msg->gx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
                 printf("\n Received CCA-terminate \n");
                 handle_ccr_terminate_msg(&msg);
@@ -376,13 +399,13 @@ msg_handler_gx( void )
                 printf("\n Received unknown CCA...treating initial..worst \n");
                 handle_cca_initial_msg(&msg);
             }
+            break;
         }
-        break;
         case GX_RAR_MSG: {
-            printf("\n Received RAR length %d \n", bytes_rx);
+            printf("\n Received RAR length \n");
             if (gx_rar_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type),
                         &msg->gx_msg.rar) <= 0) {
-                return -1;
+                return;
             }
             handle_rar_msg(&msg);
             break;
@@ -394,13 +417,15 @@ msg_handler_gx( void )
                     "%d not supported... Discarding\n", __func__,
                     cp_config->cp_type, gx_rx->msg_type);
             free(msg);
-            return -1;
+            return;
         }
     }
+    free(msg->raw_buf);
     // nobody took ownership...
     if(msg->refCnt == 0)
         free(msg);
-	return 0;
+    return;
+}
 
 #if 0
     // saegw - INITIAL_PDN_ATTACH_PROC, CCR_SNT_STATE, CCA_RCVD_EVNT - cca_msg_handler 
@@ -423,7 +448,6 @@ msg_handler_gx( void )
     // PGW - PDN_GW_INIT_BEARER_DEACTIVATION IDEL_STATE RE_AUTH_REQ_RCVD_EVNT ==> process_rar_request_handler
     process_gx_message(gxmsg, &msg);
 #endif
-}
 
 void
 start_cp_app(void )
@@ -442,7 +466,6 @@ start_cp_app(void )
 
 	/* Accept incomming connection request receive on socket */
 	my_sock.gx_app_sock  = accept_from_ipc_channel( g_cp_sock, gx_app_sockaddr);
-    update_max_fd();
 }
 
 const char *

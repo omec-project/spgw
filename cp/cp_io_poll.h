@@ -98,9 +98,10 @@ struct msgbuf {
  *
  * This function is not thread safe and should only be called once by DP.
  */
-void iface_process_ipc_msgs(void);
-
-void update_max_fd(void);
+void iface_process_events(void);
+void *msg_handler_local(void*);
+void process_local_msg(void *data, uint16_t event);
+void *incoming_event_handler(void*);
 
 #endif /* _CP_IO_POLL_H_ */
 

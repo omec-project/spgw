@@ -19,7 +19,7 @@
  *           received message buffer size
  * @return : Returns 0 in case of success , -1 otherwise
  */
-int msg_handler_sx_n4(void);
+void* msg_handler_pfcp(void*);
 
 void init_pfcp_interface(void);
 
@@ -62,4 +62,8 @@ handle_pfcp_set_deletion_response_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 
 int 
 handle_pfcp_session_delete_request_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
+
+void
+process_pfcp_msg(void *data, uint16_t event);
+
 #endif

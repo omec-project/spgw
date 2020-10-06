@@ -278,6 +278,7 @@ process_service_request_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info
 
     increment_mme_peer_stats(MSG_TX_GTPV2_S11_MBRSP, trans->peer_sockaddr.sin_addr.s_addr);
 
+    increment_stat(PROCEDURES_SPGW_SERVICE_REQUEST_PROC_SUCCESS);
     proc_service_request_complete(proc_context);
 
     return;
@@ -342,6 +343,7 @@ proc_service_request_failure(msg_info_t *msg, uint8_t cause)
     mbr_error_response(msg, cause,
             cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 
+    increment_stat(PROCEDURES_SPGW_SERVICE_REQUEST_PROC_FAILURE);
     proc_service_request_complete(proc_context);
     return;
 }

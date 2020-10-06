@@ -4,7 +4,10 @@
 
 #include <iostream>
 #include <map>
+#include <mutex>
 #include "spgw_tables.h"
+
+std::mutex event_queue_mtx; 
 
 bool 
 spgwTables::add_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans)
@@ -122,15 +125,21 @@ spgwTables::delete_gtp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_
 
 void spgwTables::queue_event(void *context)
 {
+    event_queue_mtx.lock();
     stack_events_queue.push(context);
+    event_queue_mtx.unlock();
     return;
 }
 
 void* spgwTables::pop_event(void)
 {
-    if(stack_events_queue.empty())
+    event_queue_mtx.lock();
+    if(stack_events_queue.empty()) {
+       event_queue_mtx.unlock();
        return NULL;
+    }
     void *context = stack_events_queue.front();
     stack_events_queue.pop();
+    event_queue_mtx.unlock();
     return context;
 }
