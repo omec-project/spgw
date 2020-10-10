@@ -622,7 +622,7 @@ end_procedure(proc_context_t *proc_ctxt)
         uint32_t sender_addr = pfcp_trans->peer_sockaddr.sin_addr.s_addr; 
         uint32_t seq_num = pfcp_trans->sequence; 
 
-        transData_t *temp = delete_gtp_transaction(sender_addr, port_num, seq_num);
+        transData_t *temp = delete_pfcp_transaction(sender_addr, port_num, seq_num);
         if(temp != NULL) {
             /* Let's cross check if transaction from the table is matchig with the one we have 
             * in subscriber 

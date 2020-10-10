@@ -31,6 +31,7 @@ struct transData
     timeout_handler_t timeout_function;
 
     /* This is important field, since sender FTEID and actual sender address can be different */
+    // Requirement - addr, port should be kept, this helps in cleaning both self initiated & peer initiated transactions
     struct sockaddr_in peer_sockaddr; 
 };
 typedef struct transData transData_t; 
