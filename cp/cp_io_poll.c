@@ -33,6 +33,7 @@ msg_handler_local(void *data)
 {
     int bytes_rx;
     uint8_t rx_buf[128];
+    printf("Starting local message handler thread \n");
     RTE_SET_USED(data);
     while(1) {
         bytes_rx = recv(my_sock.sock_fd_local, rx_buf, sizeof(rx_buf), 0);
@@ -41,6 +42,7 @@ msg_handler_local(void *data)
             queue_stack_unwind_event(LOCAL_MSG_RECEIVED, (void *)NULL, process_local_msg);
         }
     }
+    printf("exiting local message handler thread \n");
     return NULL;
 }
 
@@ -64,6 +66,7 @@ incoming_event_handler(void* data)
 {
     RTE_SET_USED(data);
     stack_event_t *event;
+    printf("Starting event handler thread \n");
     while(1) {
         event  = (stack_event_t *)get_stack_unwind_event();
         if(event != NULL)
@@ -75,5 +78,6 @@ incoming_event_handler(void* data)
         }
         usleep(10);
     }
+    printf("exiting event handler thread \n");
     return NULL;
 }

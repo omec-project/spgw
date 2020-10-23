@@ -83,6 +83,7 @@ accept_from_ipc_channel(int sock, struct sockaddr_un sock_addr)
 	socklen_t len ;
 	len = sizeof(sock_addr);
 
+    printf("accept_from_ipc_channel \n");
 	while (1) {
 		/* Accept incomming connection request receive on socket */
 		new_sock = accept( sock, (struct sockaddr *) &sock_addr, &len);
@@ -96,6 +97,7 @@ accept_from_ipc_channel(int sock, struct sockaddr_un sock_addr)
 				/* Greacefull Exit */
 				exit(0);
 		} else {
+            printf("accept_from_ipc_channel break \n");
 			break;
 		}
 	}

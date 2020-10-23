@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 		}
 	}
 	printf("complete\n");
-	printf("Opening unix socket...");
+	printf("Opening unix socket...\n");
 	if ( (rval = unixsock()) != FD_REASON_OK )
 	{
 		printf("Failure (%d) in unixsock()\n", rval);

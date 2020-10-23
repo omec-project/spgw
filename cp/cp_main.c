@@ -206,12 +206,6 @@ main(int argc, char **argv)
     create_associated_upf_hash();
 #endif
 
-    /* Make a connection between control-plane and gx_app */
-    if((cp_config->gx_enabled) && (cp_config->cp_type != SGWC)) {
-        printf("\n Opening up gx-app socket \n");
-        start_cp_app();
-    }
-
 	echo_table_init();
 
     rest_thread_init();

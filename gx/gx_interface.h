@@ -28,8 +28,7 @@
 #include "../libgtpv2c/include/gtp_messages.h"
 
 
-#define SERVER_PATH "/usr/sock_server"
-#define CLIENT_PATH "/usr/sock_client"
+#define SERVER_PATH "/tmp/sock_server"
 
 
 /* IMSI length on gx */

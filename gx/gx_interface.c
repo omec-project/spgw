@@ -336,14 +336,24 @@ fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 void*
 msg_handler_gx(void *data)
 {
+    printf("Starting gx message handler thread \n");
     RTE_SET_USED(data);
+
+    /* Make a connection between control-plane and gx_app */
+    if(cp_config->cp_type != SGWC) {
+        printf("\nOpening up gx-app socket \n");
+        start_cp_app();
+    }
+
     while(1) {
         if(my_sock.gx_app_sock > 0) {
             break;
         }
+        printf("\n error - why app started but gx_app_sock is < 0 ??\n");
         sleep(1);
     }
 
+    printf("Gx app connected \n");
     while(1) {
         int bytes_rx = 0;
         msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
@@ -368,6 +378,7 @@ msg_handler_gx(void *data)
         memcpy(msg->raw_buf, recv_buf, bytes_rx);
         queue_stack_unwind_event(GX_MSG_RECEIVED, (void *)msg, process_gx_msg);
     }
+    printf("exiting gx message handler thread \n");
     return NULL;
 }
 
@@ -379,7 +390,7 @@ process_gx_msg(void *data, uint16_t event)
     gx_msg *gx_rx = (gx_msg *)msg->raw_buf;
     switch(msg->msg_type) {
         case GX_CCA_MSG: {
-            printf("\n Received CCA length \n");
+            printf("\n Received CCA \n");
             if (gx_cca_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type),
                         &msg->gx_msg.cca) <= 0) {
                 printf("\n unpack failed \n");
@@ -402,7 +413,7 @@ process_gx_msg(void *data, uint16_t event)
             break;
         }
         case GX_RAR_MSG: {
-            printf("\n Received RAR length \n");
+            printf("\n Received RAR \n");
             if (gx_rar_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type),
                         &msg->gx_msg.rar) <= 0) {
                 return;
