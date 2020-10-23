@@ -40,6 +40,7 @@ uint32_t start_time;
 void*
 msg_handler_gtp(void *data)
 {
+    printf("Starting gtp message handler thread \n");
     RTE_SET_USED(data);
     while(1) {
         int ret = 0, bytes_rx = 0;
@@ -96,6 +97,7 @@ msg_handler_gtp(void *data)
         memcpy(msg->raw_buf, gtp_rx_buf, bytes_rx);
         queue_stack_unwind_event(GTP_MSG_RECEIVED, (void *)msg, process_gtp_msg);
     }
+    printf("exiting gtp message handler thread \n");
     return 0;
 }
 

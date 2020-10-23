@@ -59,10 +59,10 @@ clean:
 	@echo " $(RM) -r $(BUILDDIR) $(TARGET_DIR)/gx_app"; $(RM) -r $(BUILDDIR) $(TARGET_DIR)/gx_app
 
 install:
+	@echo " Installing gx-app ";
 	@mkdir -p $(TARGET_DIR)/bin
 	-@cp $(TARGET) $(TARGET_DIR)/bin
-	-@mkdir -p $(TARGET_DIR)/conf
-	-@cp conf/make_certs.sh $(TARGET_DIR)/conf/make_certs.sh
+	-@cp config/make_certs.sh $(TARGET_DIR)/bin
 
 
 .PHONY: clean

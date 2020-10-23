@@ -40,6 +40,7 @@ build_gxapp()
 	pushd $CUR_DIR/gx/gx_app
 	make clean
 	make || { echo -e "\nGxApp: Make GxApp failed\n"; }
+    make install
 	popd
 }
 

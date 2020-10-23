@@ -35,6 +35,7 @@ void*
 msg_handler_pfcp(void *data)
 {
     RTE_SET_USED(data);
+    printf("Starting pfcp message handler thread \n");
     while (1) {
         socklen_t addr_len = sizeof(struct sockaddr_in);
         int bytes_pfcp_rx = 0;
@@ -57,5 +58,6 @@ msg_handler_pfcp(void *data)
         memcpy(msg->raw_buf, pfcp_header, bytes_pfcp_rx);
         queue_stack_unwind_event(PFCP_MSG_RECEIVED, (void *)msg, process_pfcp_msg);
     }
+    printf("exiting pfcp message handler thread \n");
 	return NULL;
 }

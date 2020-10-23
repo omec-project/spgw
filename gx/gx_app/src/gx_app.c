@@ -102,9 +102,7 @@ int unixsock()
 
 	g_gx_client_sock = create_ipc_channel();
 
-	//bind_ipc_channel( g_gx_client_sock, gx_app_sockaddr, CLIENT_PATH );
-
-	connect_to_ipc_channel( g_gx_client_sock, cp_app_sockaddr, "/usr/sock_server");
+	connect_to_ipc_channel( g_gx_client_sock, cp_app_sockaddr, "/tmp/sock_server");
 
 	while(1){
 		/* add our descriptors to the set */

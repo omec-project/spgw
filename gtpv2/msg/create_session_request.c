@@ -663,6 +663,11 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
 
+    printf("decoded CSReq \n");
+    if(msg->gtpc_msg.csr.up_func_sel_indctn_flgs.dcnr) {
+        printf("Received CSReq for dcnr capable UE \n");
+    }
+
     ret = validate_csreq_msg(&msg->gtpc_msg.csr);
     if(ret != 0 ) {
         cs_error_response(msg, ret,

@@ -66,5 +66,6 @@ COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/cpp-driver/build/li
 COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/c-ares/.libs/lib*.so.* /usr/local/lib
 COPY --from=spgw /spgw/cpplib/target/lib/libspgwcpputil.a /usr/local/lib/
 COPY --from=spgw /tmp/prometheus/_build/deploy/usr/local/lib/ /usr/local/lib/
-COPY --from=spgw /spgw/gx/gx_app/gx_app  /bin/
+COPY --from=spgw /spgw/gx/gx_app/bin/gx_app  /bin/
+COPY --from=spgw /spgw/gx/gx_app/bin/make_certs.sh  /bin/
 COPY --from=spgw /tmp/pistache/installpath/lib/lib* /usr/local/lib/
