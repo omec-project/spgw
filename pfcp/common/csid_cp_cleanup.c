@@ -173,13 +173,13 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
 
 	if (gx_ccr_pack(&(ccr_request.data.ccr),
-				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msglen) == 0) {
+				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)+sizeof(ccr_request.seq_num)), msglen) == 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
 		return -1;
 	}
 
 	/* VS: Write or Send CCR -T msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type));
+	send_to_ipc_channel(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 	clLog(clSystemLog, eCLSeverityDebug, FORMAT"Send CCR-T to PCRF \n", ERR_MSG);
 
 	struct sockaddr_in saddr_in;

@@ -430,7 +430,6 @@ creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value)
 		}
 	}
 	/* TODO: Revisit this for change in yang*/
-	create_pdr->urr_id_count = 1;
 	for(int i=0; i < create_pdr->urr_id_count; i++ ) {
 		size += set_urr_id(&(create_pdr->urr_id[i]));
 	} 

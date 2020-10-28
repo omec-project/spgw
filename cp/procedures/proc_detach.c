@@ -167,12 +167,12 @@ process_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
         memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
 
         if (gx_ccr_pack(&(ccr_request.data.ccr),
-                    (unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msglen) == 0) {
+                    (unsigned char *)(buffer + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num)), msglen) == 0) {
             clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
             return -1;
         }
 		send_to_ipc_channel(my_sock.gx_app_sock, buffer,
-				msglen + sizeof(ccr_request.msg_type));
+				msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
         struct sockaddr_in saddr_in;
         saddr_in.sin_family = AF_INET;
         inet_aton("127.0.0.1", &(saddr_in.sin_addr));

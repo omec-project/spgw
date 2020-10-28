@@ -631,7 +631,7 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_raa_calc_length(&raa.data.cp_raa);
-	msg_body_ofs = sizeof(raa.msg_type);
+	msg_body_ofs = sizeof(raa.msg_type) + sizeof(raa.seq_num);
 	rqst_ptr_ofs = msg_len + msg_body_ofs;
 	msg_len_total = rqst_ptr_ofs + sizeof(pdn->rqst_ptr);
 
@@ -665,7 +665,7 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 			msg_len_total, msg_type_ofs, msg_body_ofs, rqst_ptr_ofs);
 #endif
 	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
+	send_to_ipc_channel(my_sock.gx_app_sock, buffer, // need change
 			msg_len_total);
 			//msg_len + sizeof(raa.msg_type) + sizeof(unsigned long));
 
