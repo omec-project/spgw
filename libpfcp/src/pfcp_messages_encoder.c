@@ -1683,6 +1683,7 @@ int encode_pfcp_pdi_ie_t(pfcp_pdi_ie_t *value,
 		enc_len += encode_pfcp_framed_routing_ie_t(&(value->framed_routing), buf + (enc_len/CHAR_SIZE));
 
 	/* TODO: Revisit this for change in yang */
+    printf("encode_pfcp_pdi_ie_t value->sdf_filter_count = %d \n", value->sdf_filter_count);
 	for (uint8_t i = 0; i < value->sdf_filter_count; i++) {
 		if (value->sdf_filter[i].header.len)
 			enc_len += encode_pfcp_sdf_filter_ie_t(&(value->sdf_filter[i]), buf + (enc_len/CHAR_SIZE));

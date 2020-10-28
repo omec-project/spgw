@@ -40,6 +40,7 @@ int gx_send_ccr(void *data)
 
 	GxCCR gx_ccr = {0};
 
+    
 	gx_ccr_unpack((unsigned char *)data, &gx_ccr );
 
 	/* construct the Diameter CCR  message */

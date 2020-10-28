@@ -20,6 +20,8 @@
 #include "cp_config.h"
 #include "trans_struct.h"
 #include "ue.h"
+#include "cp_proc.h"
+#include "spgw_cpp_wrapper.h"
 
 extern pcap_dumper_t *pcap_dumper;
 
@@ -95,6 +97,14 @@ void stop_transaction_timer(transData_t *data)
     return;
 }
 
+bool is_transaction_timer_started(transData_t *data)
+{
+    if(data->rt.ti_id == 0) {
+        return false;
+    }
+    return true;
+}
+
 void
 pfcp_node_transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
 {
@@ -132,6 +142,7 @@ transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
     if(data->rt.ti_id != 0) {
         stoptimer(&data->rt.ti_id);
         deinittimer(&data->rt.ti_id);
+        data->rt.ti_id = 0;
     }
     data->timeout_function(data->cb_data);
     return;
@@ -162,3 +173,56 @@ void pfcp_timer_retry_send(int fd, transData_t *t_tx, struct sockaddr_in *peer)
     }
 }
 
+/* Unlink transaction from procedure, remote transacton from table */
+void 
+cleanup_gtpc_trans(transData_t *gtpc_trans)
+{
+    proc_context_t *proc = (proc_context_t *)gtpc_trans->proc_context;
+    assert(gtpc_trans == proc->gtpc_trans);
+    bool self_initiated = is_transaction_timer_started(proc->gtpc_trans);
+    uint32_t seq_num = proc->gtpc_trans->sequence; 
+    uint32_t trans_addr;
+    uint16_t port_num;
+    if(self_initiated) {
+        port_num = my_sock.s11_sockaddr.sin_port;
+        trans_addr = my_sock.s11_sockaddr.sin_addr.s_addr;
+    } else {
+        /* Only MME initiated transactions as of now */
+        port_num = proc->gtpc_trans->peer_sockaddr.sin_port; 
+        trans_addr = proc->gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
+    }
+    transData_t *trans = delete_gtp_transaction(trans_addr, port_num, seq_num);
+    if(trans != NULL) {
+        assert(gtpc_trans == trans);
+    }
+    stop_transaction_timer(gtpc_trans);
+    free(gtpc_trans);
+    proc->gtpc_trans = NULL;
+}
+
+/* Unlink transaction from procedure, remote transacton from table */
+void 
+cleanup_pfcp_trans(transData_t *pfcp_trans)
+{
+    proc_context_t *proc = (proc_context_t *)pfcp_trans->proc_context;
+    assert(pfcp_trans == proc->pfcp_trans);
+    uint32_t trans_addr;
+    uint16_t port_num;
+    uint32_t seq_num = pfcp_trans->sequence; 
+    bool self_initiated = is_transaction_timer_started(pfcp_trans);
+    if(self_initiated) {
+        // only self initiated transactions as of now 
+        trans_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
+        port_num = my_sock.pfcp_sockaddr.sin_port;
+    } else {
+        trans_addr = pfcp_trans->peer_sockaddr.sin_addr.s_addr;
+        port_num = pfcp_trans->peer_sockaddr.sin_port;
+    }
+    transData_t *trans = delete_pfcp_transaction(trans_addr, port_num, seq_num);
+    if(trans != NULL) {
+        assert(pfcp_trans == trans);
+    }
+    stop_transaction_timer(pfcp_trans);
+    free(pfcp_trans);
+    proc->pfcp_trans = NULL;
+}

@@ -376,6 +376,13 @@ msg_handler_gx(void *data)
         msg->source_interface = GX_IFACE;
         msg->raw_buf = calloc(1, bytes_rx);
         memcpy(msg->raw_buf, recv_buf, bytes_rx);
+#if 1
+        if(GX_RAR_MSG == msg->msg_type) {
+            printf("Ignoring RAR coming from PCRF\n");
+            free(msg);
+            continue;
+        }
+#endif
         queue_stack_unwind_event(GX_MSG_RECEIVED, (void *)msg, process_gx_msg);
     }
     printf("exiting gx message handler thread \n");
@@ -386,12 +393,14 @@ void
 process_gx_msg(void *data, uint16_t event)
 {
     assert(event == GX_MSG_RECEIVED );
-    msg_info_t *msg = (msg_info_t *)data;    
+    msg_info_t *msg = (msg_info_t *)data;
     gx_msg *gx_rx = (gx_msg *)msg->raw_buf;
+    msg->rar_seq_num = gx_rx->seq_num;
+    printf("Sequence number = %d \n", gx_rx->seq_num);
     switch(msg->msg_type) {
         case GX_CCA_MSG: {
             printf("\n Received CCA \n");
-            if (gx_cca_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type),
+            if (gx_cca_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + sizeof(gx_rx->seq_num),
                         &msg->gx_msg.cca) <= 0) {
                 printf("\n unpack failed \n");
                 return;
@@ -413,8 +422,8 @@ process_gx_msg(void *data, uint16_t event)
             break;
         }
         case GX_RAR_MSG: {
-            printf("\n Received RAR \n");
-            if (gx_rar_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type),
+            printf("\n Received RAR with sequence number %d \n", gx_rx->seq_num);
+            if (gx_rar_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + sizeof(gx_rx->seq_num),
                         &msg->gx_msg.rar) <= 0) {
                 return;
             }
@@ -663,7 +672,7 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 	memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
 
 	if (gx_ccr_pack(&(ccr_request.data.ccr),
-				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msg_len) == 0) {
+				(unsigned char *)(buffer + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num)), msg_len) == 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
 		return -1;
 
@@ -671,6 +680,6 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 
 	/* VS: Write or Send CCR msg to Gx_App */
 	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
-			msg_len + sizeof(ccr_request.msg_type));
+			msg_len + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 	return 0;
 }

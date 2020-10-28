@@ -2327,7 +2327,7 @@ int decode_gtp_charging_id_ie(uint8_t *buf,
     uint16_t total_decoded = 0;
     total_decoded += decode_ie_header_t(buf, &(value->header), IE_HEADER_SIZE);
     uint16_t decoded = 0;
-    value->chrgng_id_val = decode_bits(buf, total_decoded, 8, &decoded);
+    value->chrgng_id_val = decode_bits(buf, total_decoded, 32, &decoded);
     total_decoded += decoded;
     return total_decoded/CHAR_SIZE;
 }
@@ -4537,6 +4537,7 @@ int decode_gtp_up_func_sel_indctn_flgs_ie(uint8_t *buf,
     value->spare2 = decode_bits(buf, total_decoded, 7, &decoded);
     total_decoded += decoded;
     value->dcnr = decode_bits(buf, total_decoded, 1, &decoded);
+    printf("value->dcnr = %d \n",value->dcnr);
     total_decoded += decoded;
     return total_decoded/CHAR_SIZE;
 }

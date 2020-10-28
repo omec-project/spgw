@@ -102,7 +102,27 @@ extern "C"
     {
         return table->pop_event();
     }
-    
+
+    void queue_test_stack_unwind_event_cpp(void *context)
+    {
+        return table->queue_test_event(context);
+    }
+
+    void *get_test_stack_unwind_event_cpp(void)
+    {
+        return table->pop_test_event();
+    }
+
+    void queue_gtp_out_event_cpp(void *context)
+    {
+        return table->queue_gtp_out_event(context);
+    }
+
+    void *get_gtp_out_event(void)
+    {
+        return table->pop_gtp_out_event();
+    }
+
     void *get_t2tMsg() 
     {
         return table->pop_t2t_msg_event();

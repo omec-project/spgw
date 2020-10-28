@@ -117,20 +117,10 @@ int
 delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *seid);
 
 /**
- * @brief  : Proccesses create bearer response on pgwc
- * @param  : cb_rsp, holds data from response
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-process_pgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp);
-
-/**
  * @brief  : Proccesses create bearer response on sgwc
  * @param  : cb_rsp, holds data from response
  * @return : Returns 0 in case of success , -1 otherwise
  */
-int
-process_sgwc_create_bearer_rsp(create_bearer_rsp_t *cb_rsp);
 
 int
 process_update_bearer_request(upd_bearer_req_t *ubr);

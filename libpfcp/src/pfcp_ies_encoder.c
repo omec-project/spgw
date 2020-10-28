@@ -10,6 +10,8 @@
 
 #include "../include/pfcp_cond_encoder.h"
 
+#include "stdio.h"
+
 /**
  * Encodes pfcp ie header to buffer.
  * @param value
@@ -2198,7 +2200,9 @@ int encode_pfcp_sdf_filter_ie_t(pfcp_sdf_filter_ie_t *value,
     encoded += encode_bits(value->fd, 1, buf + (encoded/8), encoded % CHAR_SIZE);
     encoded += encode_bits(value->sdf_fltr_spare2, 8, buf + (encoded/8), encoded % CHAR_SIZE);
     ENCODE_LEN_OF_FLOW_DESC_COND_1(value, 16, buf+(encoded)/8, encoded % CHAR_SIZE, encoded);
+    printf("\n encode_pfcp_sdf_filter_ie_t value->sd %d \n",value->fd);
 	if (value->fd){
+        printf("\n encode_pfcp_sdf_filter_ie_t %s \n",value->flow_desc);
 		memcpy(buf + (encoded/CHAR_SIZE), value->flow_desc, value->len_of_flow_desc);
 		encoded +=  (value->len_of_flow_desc * CHAR_SIZE);
 	}

@@ -15,6 +15,7 @@
 #include "gen_utils.h"
 #include "gtpv2_session.h"
 #include "spgw_cpp_wrapper.h"
+#include "cp_transactions.h"
 
 /* base value and offset for seid generation */
 const uint32_t s11_sgw_gtpc_base_teid = 0xC0FFEE;
@@ -463,6 +464,10 @@ static void start_procedure_direct(proc_context_t *proc_ctxt)
             proc_ctxt->handler(proc_ctxt, msg);
             break;
         }
+        case DED_BER_ACTIVATION_PROC: {
+            proc_ctxt->handler(proc_ctxt, msg);
+            break;
+        }
         default:
             rte_panic("unknown proc");
     }
@@ -596,44 +601,21 @@ end_procedure(proc_context_t *proc_ctxt)
     ue_context_t *context = NULL;
     pdn_connection_t *pdn = NULL;
 
+    /* TODO : add procedure name */
     printf("end procedure  %p \n",proc_ctxt);
     assert(proc_ctxt != NULL);
 
     if(proc_ctxt->gtpc_trans != NULL) {
-        transData_t *trans = proc_ctxt->gtpc_trans;
-
-        uint16_t port_num = trans->peer_sockaddr.sin_port; 
-        uint32_t sender_addr = trans->peer_sockaddr.sin_addr.s_addr; 
-        uint32_t seq_num = trans->sequence; 
-
-        transData_t *gtpc_trans = delete_gtp_transaction(sender_addr, port_num, seq_num);
-        assert(gtpc_trans != NULL);
-
-        /* Let's cross check if transaction from the table is matchig with the one we have 
-         * in subscriber 
-         */
-        assert(gtpc_trans == trans);
-        proc_ctxt->gtpc_trans =  NULL;
-        free(gtpc_trans);
+        cleanup_gtpc_trans(proc_ctxt->gtpc_trans);
     }
+
     if(proc_ctxt->pfcp_trans != NULL) {
-        transData_t *pfcp_trans = proc_ctxt->pfcp_trans;
-        uint16_t port_num = pfcp_trans->peer_sockaddr.sin_port; 
-        uint32_t sender_addr = pfcp_trans->peer_sockaddr.sin_addr.s_addr; 
-        uint32_t seq_num = pfcp_trans->sequence; 
-
-        transData_t *temp = delete_pfcp_transaction(sender_addr, port_num, seq_num);
-        if(temp != NULL) {
-            /* Let's cross check if transaction from the table is matchig with the one we have 
-            * in subscriber 
-            */
-            assert(pfcp_trans == temp);
-        }
-        free(pfcp_trans);
-        proc_ctxt->pfcp_trans = NULL;
+        cleanup_pfcp_trans(proc_ctxt->pfcp_trans);
     }
 
-    free(proc_ctxt->msg_info);
+    //proc_ctxt->msg_info->refCnt--;
+    //if(proc_ctxt->msg_info->refCnt == 0)
+    free(proc_ctxt->msg_info); // BUG - why we should not use refCnt ?
 
     context = proc_ctxt->ue_context;
     if(context != NULL) {

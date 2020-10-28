@@ -11,6 +11,7 @@
 
 #include "../include/sv_ies_encoder.h"
 #include "../include/enc_dec_bits.h"
+#include <stdio.h>
 
 
 /**
@@ -3845,16 +3846,28 @@ int encode_gtp_create_bearer_response_bearer_ctxt_ie(gtp_create_bearer_response_
     encoded /= CHAR_SIZE;
 
 if (value->eps_bearer_id.header.len)
+{
+        printf("\n value->eps_bearer_id.header.len %d \n",value->eps_bearer_id.header.len);
         encoded += encode_gtp_eps_bearer_id_ie(&(value->eps_bearer_id), buf + encoded);
+}
 
 if (value->cause.header.len)
+{
+        printf("\nvalue->cause.header.len %d \n",value->cause.header.len);
         encoded += encode_gtp_cause_ie(&(value->cause), buf + encoded);
+}
 
 if (value->s1u_enb_fteid.header.len)
+{
+        printf("\nvalue->s1u_enb_fteid.header.len %d \n",value->s1u_enb_fteid.header.len);
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s1u_enb_fteid), buf + encoded);
+}
 
 if (value->s1u_sgw_fteid.header.len)
+{
+        printf("\n value->s1u_sgw_fteid.header.len %d \n",value->s1u_sgw_fteid.header.len);
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s1u_sgw_fteid), buf + encoded);
+}
 
 if (value->s58_u_sgw_fteid.header.len)
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s58_u_sgw_fteid), buf + encoded);
@@ -3895,6 +3908,7 @@ if (value->ran_nas_cause.header.len)
 if (value->epco.header.len)
         encoded += encode_gtp_extnded_prot_cfg_opts_ie(&(value->epco), buf + encoded);
 
+    printf("\nnumber of bytes encoded %d \n",encoded);
     return encoded;
 }
 
@@ -5454,8 +5468,10 @@ int encode_create_bearer_rsp(create_bearer_rsp_t *value,
 if (value->cause.header.len)
         encoded += encode_gtp_cause_ie(&(value->cause), buf + encoded);
 
-if (value->bearer_contexts.header.len)
+if (value->bearer_contexts.header.len) {
+        printf("\n value->bearer_contexts.header.len %d \n",value->bearer_contexts.header.len);
         encoded += encode_gtp_create_bearer_response_bearer_ctxt_ie(&(value->bearer_contexts), buf + encoded);
+    }
 
 if (value->recovery.header.len)
         encoded += encode_gtp_recovery_ie(&(value->recovery), buf + encoded);

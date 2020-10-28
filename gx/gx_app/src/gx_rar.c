@@ -9,6 +9,8 @@
 #include "ipc_api.h"
 
 extern int g_gx_client_sock;
+uint16_t rar_seq_num = 10;
+struct msg *global_raa_ans;
 
 int unixsock();
 
@@ -216,6 +218,7 @@ enum disp_action * act
 {
 	int ret = FD_REASON_OK;
 	struct msg *rqst = *msg;
+    global_raa_ans = rqst;
 	//struct msg *ans = rqst;
 	char *send_buf = NULL;
 	gx_msg *gx_req = NULL;
@@ -261,9 +264,11 @@ enum disp_action * act
 	memset(send_buf, 0, (sizeof(gx_req->msg_type) + buflen + sizeof(rqst)));
 
 	/* encoding the rar header value to buffer */
-	memcpy( send_buf, &gx_req->msg_type, sizeof(gx_req->msg_type));
+    rar_seq_num++;
+	memcpy(send_buf, &gx_req->msg_type, sizeof(gx_req->msg_type));
+    memcpy(send_buf+sizeof(gx_req->msg_type), &rar_seq_num, sizeof(gx_req->seq_num)); 
 
-	if ( gx_rar_pack( &(gx_req->data.cp_rar), (unsigned char *)(send_buf + sizeof(gx_req->msg_type)), buflen ) == 0 )
+	if ( gx_rar_pack( &(gx_req->data.cp_rar), (unsigned char *)(send_buf + sizeof(gx_req->msg_type)) + sizeof(gx_req->seq_num), buflen ) == 0 )
 		printf("RAR Packing failure \n");
 
 
