@@ -148,7 +148,7 @@ fill_subscription_id( GxSubscriptionIdList *subs_id, uint64_t imsi, uint64_t msi
  * @return : Returns nothing
  */
 void
-process_create_bearer_resp_and_send_raa( int sock );
+process_create_bearer_resp_and_send_raa(proc_context_t *proc );
 
 /**
  * @brief  : Convert binary data to string value

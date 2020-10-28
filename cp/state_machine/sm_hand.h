@@ -31,30 +31,12 @@ int process_error_occured_handler(void *t1, void *t2);
 
 /* Function */
 /**
- * @brief  : Handles processing of pfcp session modification response in case create bearer request
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_pfcp_sess_mod_resp_cbr_handler(void *arg1, void *arg2);
-
-/* Function */
-/**
  * @brief  : Handles processing of create bearer response for pgwc
  * @param  : arg1, data contained in message
  * @param  : arg2, optional parameter
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int process_cbresp_handler(void *arg1, void *arg2);
-
-/* Function */
-/**
- * @brief  : Handles processing of create bearer response for sgwc
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_create_bearer_resp_handler(void *arg1, void *arg2);
 
 /* Function */
 /**
@@ -65,14 +47,6 @@ int process_create_bearer_resp_handler(void *arg1, void *arg2);
  */
 int process_create_bearer_request_handler(void *arg1, void *arg2);
 
-/* Function */
-/**
- * @brief  : Handles processing of rar request
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_rar_request_handler(void *arg1, void *arg2);
 
 /* Function */
 /**

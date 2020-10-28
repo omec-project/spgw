@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
+
 #include <stdio.h>
 #include <pthread.h>
 #include <getopt.h>
@@ -34,6 +35,7 @@
 #include "gtpv2_interface.h"
 #include "pfcp_cp_interface.h"
 #include "gx_interface.h"
+#include "cp_test.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -224,6 +226,13 @@ main(int argc, char **argv)
     pthread_create(&readerGtp_t, &gtpattr, &msg_handler_gtp, NULL);
     pthread_attr_destroy(&gtpattr);
 
+    pthread_t writerGtp_t;
+    pthread_attr_t gtpattr1;
+    pthread_attr_init(&gtpattr1);
+    pthread_attr_setdetachstate(&gtpattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&writerGtp_t, &gtpattr1, &out_handler_gtp, NULL);
+    pthread_attr_destroy(&gtpattr1);
+
     // thread to read incoming socket messages from udp socket
     pthread_t readerPfcp_t;
     pthread_attr_t pfcpattr;
@@ -256,6 +265,15 @@ main(int argc, char **argv)
     pthread_attr_setdetachstate(&inattr, PTHREAD_CREATE_DETACHED);
     pthread_create(&readerInevent_t, &inattr, &incoming_event_handler, NULL);
     pthread_attr_destroy(&inattr);
+
+    // thread to generate Test events for protocol stack
+    pthread_t readerTest_t;
+    pthread_attr_t testattr;
+    pthread_attr_init(&testattr);
+    pthread_attr_setdetachstate(&testattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&readerTest_t, &testattr, &test_event_thread, NULL);
+    pthread_attr_destroy(&testattr);
+
     while(1) {
         sleep(10);
     }

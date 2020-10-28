@@ -7,6 +7,10 @@
 #define __CP_EVENTS_H
 
 #include "spgw_cpp_wrapper.h"
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <string.h>
 
 #define UPF_CONNECTION_SETUP_SUCCESS 0x01 
 #define UPF_CONNECTION_SETUP_FAILED  0x02
@@ -16,6 +20,8 @@
 #define LOCAL_MSG_RECEIVED           0x06
 #define GX_MSG_RECEIVED              0x07
 #define PEER_TIMEOUT                 0x08
+#define TEST_EVENTS                  0x09
+#define GTP_OUT_PKTS                 0x0a
 
 static const char *event_names[] = { 
     "UNKNOWN",
@@ -27,6 +33,8 @@ static const char *event_names[] = {
     "LOCAL_MSG_RECEIVED",
     "GX_MSG_RECEIVED",
     "PEER_TIMEOUT",
+    "TEST_EVENTS",
+    "GTP_OUT_PKTS",
 };
 
 typedef void (*stack_event_handler) (void *, uint16_t);
@@ -44,6 +52,10 @@ queue_stack_unwind_event(uint16_t event, void *context, stack_event_handler cb)
     event_p->event = event;
     event_p->data = context;
     event_p->cb = cb;
+    if(event == TEST_EVENTS) {
+        queue_test_stack_unwind_event_cpp((void*)event_p);
+        return;
+    }
     queue_stack_unwind_event_cpp((void*)event_p);
     return;
 }
@@ -53,4 +65,37 @@ get_stack_unwind_event(void)
 {
     return get_stack_unwind_event_cpp();
 }
+
+static inline void*
+get_test_stack_unwind_event(void)
+{
+    return get_test_stack_unwind_event_cpp();
+}
+
+typedef struct outgoing_pkts_event {
+    int     fd;
+    uint8_t *payload;
+    uint16_t payload_len;
+    struct sockaddr dest_addr;
+}outgoing_pkts_event_t;
+
+typedef void (*test_out_gtp_handler) (void *);
+
+static inline void
+queue_gtp_out_event(int fd,
+                    uint8_t *payload,
+                    uint16_t payload_len,
+                    struct sockaddr *dest_addr)
+{
+    printf("Queue event GTP_OUT_PKTS \n");
+    outgoing_pkts_event_t *event_p = (outgoing_pkts_event_t*)calloc(1, sizeof(outgoing_pkts_event_t));
+    event_p->payload = calloc(1, payload_len + 10);
+    event_p->fd = fd;
+    event_p->payload_len = payload_len;
+    event_p->dest_addr = *dest_addr;
+    memcpy(event_p->payload, payload, payload_len);
+    queue_gtp_out_event_cpp((void*)event_p);
+    return;
+}
+
 #endif

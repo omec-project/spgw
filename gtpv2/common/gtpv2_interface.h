@@ -401,11 +401,10 @@ int
 handle_unknown_msg(msg_info_t **msg, gtpv2c_header_t *gtpv2c_s11_rx);
 
 void process_s5s8_upd_bearer_response_pfcp_timeout(void *data);
-void process_pgwc_create_bearer_rsp_pfcp_timeout(void *data);
 void process_pgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
 void process_sgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
-void process_sgwc_create_bearer_rsp_pfcp_timeout(void *data);
 void process_sgwc_s5s8_create_sess_rsp_pfcp_timeout(void *data);
+int handle_create_bearer_response_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx);
 
 void process_gtp_msg(void *data, uint16_t event);
 
@@ -414,6 +413,8 @@ void process_gtp_msg(void *data, uint16_t event);
 int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx);
 int validate_gtpv2_message_content(msg_info_t *msg);
 
+void* out_handler_gtp(void *data);
+uint32_t get_gtp_sequence(void);
 
 #ifdef FUTURE_NEEDS
 int handle_modify_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
@@ -422,7 +423,6 @@ int handle_ddn_ack_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_update_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_update_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_create_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_create_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_delete_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_delete_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_delete_bearer_cmd_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);

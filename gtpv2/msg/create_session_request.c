@@ -354,7 +354,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		 return ret;
     }
 
-	if (csr.indctn_flgs.header.len &&
+    if (csr.indctn_flgs.header.len &&
 			csr.indctn_flgs.indication_uimsi) {
 		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Unauthenticated IMSI Not Yet Implemented - "
 				"Dropping packet\n",
@@ -663,7 +663,6 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
 
-    printf("decoded CSReq \n");
     if(msg->gtpc_msg.csr.up_func_sel_indctn_flgs.dcnr) {
         printf("Received CSReq for dcnr capable UE \n");
     }

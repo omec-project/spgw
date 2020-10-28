@@ -1038,7 +1038,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 	memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
 
 	if (gx_ccr_pack(&(ccr_request.data.ccr),
-				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msg_len) == 0) {
+				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)) + sizeof(ccr_request.seq_num), msg_len) == 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
 		return -1;
 
@@ -1046,7 +1046,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 
 	/* VS: Write or Send CCR msg to Gx_App */
 	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
-			msg_len + sizeof(ccr_request.msg_type));
+			msg_len + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 	return 0;
 }
 
