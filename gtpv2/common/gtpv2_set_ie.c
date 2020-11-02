@@ -541,7 +541,7 @@ set_charging_id_ie(gtpv2c_header_t *header, enum ie_instance instance, uint32_t 
 void
 set_charging_id(gtp_charging_id_ie_t *charging_id, enum ie_instance instance, uint32_t chrgng_id_val)
 {
-	set_ie_header(&charging_id->header, GTP_IE_CHARGING_ID, instance, sizeof(uint8_t));
+	set_ie_header(&charging_id->header, GTP_IE_CHARGING_ID, instance, sizeof(uint32_t));
 
 	charging_id->chrgng_id_val = chrgng_id_val;
 }

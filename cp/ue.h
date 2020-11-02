@@ -511,7 +511,7 @@ typedef struct pdn_connection {
 	dynamic_rule_t *dynamic_rules[16];
 
 	/* need to maintain reqs ptr for RAA*/
-	unsigned long rqst_ptr;
+	unsigned long rqst_ptr; /* MUSTFIX */
 	policy_t policy;
 
 	/* timer entry data for stop timer session */

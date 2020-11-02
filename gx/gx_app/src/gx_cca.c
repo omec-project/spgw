@@ -164,13 +164,13 @@ int gx_cca_cb
 	memset(send_buf, 0, buflen);
 	/* encoding the cca header value to buffer */
 	memcpy( send_buf, &gx_resp.msg_type, sizeof(gx_resp.msg_type));
-	if ( gx_cca_pack( &(gx_resp.data.cp_cca), (unsigned char *)(send_buf + sizeof(gx_resp.msg_type)), buflen ) == 0 )
+	if ( gx_cca_pack( &(gx_resp.data.cp_cca), (unsigned char *)(send_buf + sizeof(gx_resp.msg_type) + sizeof(gx_resp.seq_num)), buflen ) == 0 )
 	{
 		printf("CCA Packing failure \n");
 		goto err;
 	}
 
-	send_to_ipc_channel(g_gx_client_sock, send_buf, buflen + sizeof(gx_resp.msg_type) );
+	send_to_ipc_channel(g_gx_client_sock, send_buf, buflen + sizeof(gx_resp.msg_type) + sizeof(gx_resp.seq_num) );
 	goto fini2;
 err:
 	goto fini2;

@@ -27,6 +27,7 @@ APP = ngic_controlplane
 # all source are stored in SRCS-y
 
 SRCS-y := cp_main.c
+SRCS-y += cp_test.c
 SRCS-y += ue.c
 SRCS-y += ip_pool.c
 SRCS-y += cp_init.c
@@ -66,6 +67,7 @@ SRCS-y += procedures/proc_bearer_delete.o
 SRCS-y += procedures/pfcp_set_update_proc.o
 SRCS-y += procedures/proc_pfd_mgmt.o
 SRCS-y += procedures/proc_sgw_relocation.o
+SRCS-y += procedures/proc_rar.o
 SRCS-y += $(SRCDIR)/../gtpv2/common/gtpv2_error_rsp.c
 SRCS-y += $(SRCDIR)/../gtpv2/common/gtpv2_interface.c
 SRCS-y += $(SRCDIR)/../gtpv2/common/gtpv2_set_ie.c

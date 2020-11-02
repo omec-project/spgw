@@ -257,13 +257,16 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
                                         msg->peer_addr.sin_port,
                                         rsp_info.seq);
 
-    assert(gtpc_trans != NULL);
-    gtpc_trans->cb_data = NULL;
-    proc_context_t *trans_proc = gtpc_trans->proc_context; 
-    proc_context_t *msg_proc = msg->proc_context; 
-    assert(trans_proc == msg_proc);
-    msg_proc->gtpc_trans = NULL;
-    free(gtpc_trans);
+    if(gtpc_trans != NULL) {
+        gtpc_trans->cb_data = NULL;
+        proc_context_t *trans_proc = gtpc_trans->proc_context; 
+        proc_context_t *msg_proc = msg->proc_context; 
+        if(msg_proc != NULL) {
+            assert(trans_proc == msg_proc);
+            msg_proc->gtpc_trans = NULL;
+        }
+        free(gtpc_trans);
+    }
     RTE_SET_USED(ret);
 }
 

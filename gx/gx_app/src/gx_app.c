@@ -65,18 +65,16 @@ recv_msg_handler( int sock )
 
 	bytes_recv = recv_from_ipc_channel(sock, buf);
 	hexDump(NULL, buf, bytes_recv);
+    printf("\nReceived bytes(%d) from spgwc app \n",bytes_recv);
 	if(bytes_recv > 0){
-		//REVIEW: Need to check this.
 		gx_msg *req = (gx_msg*)buf;
-		//switch (req->msg_type){
-		switch (*(uint8_t*)buf){
+		switch (req->msg_type){
 			case GX_CCR_MSG:
 				gx_send_ccr(&(req->data.ccr));
 				break;
 
 			case GX_RAA_MSG:
-				//gx_send_raa(&(req->data.cp_raa));
-				gx_send_raa(&buf[1]);
+				gx_send_raa(&buf[0]);
 				break;
 
 			default:

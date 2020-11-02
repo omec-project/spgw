@@ -22,6 +22,7 @@ typedef void (*event_handler_t) (void*,void*);
 /* GTP Req : Create transaction, create proc  and link proc to trans
  * respinse find transaction, linked proc pointer form trans
  */ 
+// MUSTDO ? : TODO : we need union in this procedure ???
 struct proc_context {
     uint32_t        proc_type;
     uint32_t        state;
@@ -35,6 +36,10 @@ struct proc_context {
     transData_t*    gtpc_trans;
     event_handler_t handler;
     void            *msg_info;
+    void            *gx_context;
+    uint32_t        call_id;
+    bool            cbrsp_received;
+    uint16_t        rar_seq_num;
 	TAILQ_ENTRY(proc_context) next_sub_proc;
 	TAILQ_ENTRY(proc_context) next_node_proc;
 };

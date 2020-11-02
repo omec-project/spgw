@@ -8,6 +8,8 @@
 #include "spgw_tables.h"
 
 std::mutex event_queue_mtx; 
+std::mutex test_queue_mtx;
+std::mutex gtp_queue_mtx;
 
 bool 
 spgwTables::add_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans)
@@ -141,5 +143,47 @@ void* spgwTables::pop_event(void)
     void *context = stack_events_queue.front();
     stack_events_queue.pop();
     event_queue_mtx.unlock();
+    return context;
+}
+
+void spgwTables::queue_test_event(void *context)
+{
+    test_queue_mtx.lock();
+    stack_test_events_queue.push(context);
+    test_queue_mtx.unlock();
+    return;
+}
+
+void* spgwTables::pop_test_event(void)
+{
+    test_queue_mtx.lock();
+    if(stack_test_events_queue.empty()) {
+       test_queue_mtx.unlock();
+       return NULL;
+    }
+    void *context = stack_test_events_queue.front();
+    stack_test_events_queue.pop();
+    test_queue_mtx.unlock();
+    return context;
+}
+
+void spgwTables::queue_gtp_out_event(void *context)
+{
+    gtp_queue_mtx.lock();
+    gtp_out_queue.push(context);
+    gtp_queue_mtx.unlock();
+    return;
+}
+
+void* spgwTables::pop_gtp_out_event(void)
+{
+    gtp_queue_mtx.lock();
+    if(gtp_out_queue.empty()) {
+       gtp_queue_mtx.unlock();
+       return NULL;
+    }
+    void *context = gtp_out_queue.front();
+    gtp_out_queue.pop();
+    gtp_queue_mtx.unlock();
     return context;
 }

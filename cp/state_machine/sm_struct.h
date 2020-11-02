@@ -76,6 +76,7 @@ typedef struct msg_info {
     void *proc_context;
     uint32_t refCnt;
     void *raw_buf;
+    uint16_t rar_seq_num;
 }msg_info_t;
 
 #endif

@@ -34,6 +34,7 @@ uint8_t pfcp_rx[1024]; /* TODO: Decide size */
 void*
 msg_handler_pfcp(void *data)
 {
+    printf("Starting pfcp message handler thread \n");
     RTE_SET_USED(data);
     printf("Starting pfcp message handler thread \n");
     while (1) {

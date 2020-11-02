@@ -1024,6 +1024,7 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 	dynamic_rule->num_flw_desc = GX_FLOW_COUNT;
 
 	for(uint8_t idx = 0; idx < GX_FLOW_COUNT; idx++) {
+        strcpy(dynamic_rule->flow_desc[idx].sdf_flow_description,"permit out ip from 0.0.0.0/0 to 0.0.0.0/0"); 
 		dynamic_rule->flow_desc[idx].flow_direction = BIDIRECTIONAL;
 		dynamic_rule->flow_desc[idx].sdf_flw_desc.proto_id = PROTO_ID;
 		dynamic_rule->flow_desc[idx].sdf_flw_desc.local_ip_mask = LOCAL_IP_MASK;
@@ -1986,7 +1987,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
-	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type),
+	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type)+sizeof(ccr_request.seq_num),
 	    RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (buffer == NULL) {
 		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
@@ -1999,9 +2000,10 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 
 	/* VS: Fill the CCR header values */
 	memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
+	memcpy(buffer+sizeof(ccr_request.msg_type), &ccr_request.seq_num, sizeof(ccr_request.seq_num));
 
 	if (gx_ccr_pack(&(ccr_request.data.ccr),
-				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msg_len) == 0) {
+				(unsigned char *)(buffer + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num)), msg_len) == 0) {
 		clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
 		return -1;
 
@@ -2009,7 +2011,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 
 	/* VS: Write or Send CCR msg to Gx_App */
 	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
-			msg_len + sizeof(ccr_request.msg_type));
+			msg_len + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 	return 0;
 }
 
@@ -2026,6 +2028,7 @@ cca_msg_handler(proc_context_t *proc_context, msg_info_t *msg)
 	if (msg->gx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
 		clLog(gxlogger, eCLSeverityDebug, FORMAT"Received GX CCR-T Response..!! \n",
 				ERR_MSG);
+        gx_msg_proc_failure(proc_context);
 		return 0;
 	}
 
@@ -2033,6 +2036,7 @@ cca_msg_handler(proc_context_t *proc_context, msg_info_t *msg)
 	ret = parse_gx_cca_msg(&msg->gx_msg.cca, &pdn);
 	if (ret) {
 		clLog(clSystemLog, eCLSeverityCritical, "Failed to establish IPCAN session, Send Failed CSResp back to SGWC\n");
+        gx_msg_proc_failure(proc_context);
 		return ret;
 	}
 
