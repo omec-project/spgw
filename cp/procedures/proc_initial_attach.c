@@ -1024,7 +1024,7 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 	dynamic_rule->num_flw_desc = GX_FLOW_COUNT;
 
 	for(uint8_t idx = 0; idx < GX_FLOW_COUNT; idx++) {
-        strcpy(dynamic_rule->flow_desc[idx].sdf_flow_description,"permit out ip from 0.0.0.0/0 to 0.0.0.0/0"); 
+        strcpy(dynamic_rule->flow_desc[idx].sdf_flow_description,"permit out ip from 0.0.0.0/0 to assigned"); 
 		dynamic_rule->flow_desc[idx].flow_direction = BIDIRECTIONAL;
 		dynamic_rule->flow_desc[idx].sdf_flw_desc.proto_id = PROTO_ID;
 		dynamic_rule->flow_desc[idx].sdf_flw_desc.local_ip_mask = LOCAL_IP_MASK;
