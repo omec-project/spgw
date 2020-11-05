@@ -93,7 +93,7 @@ upf_context_entry_lookup(uint32_t upf_ip, upf_context_t **entry)
 				__func__, __LINE__, upf_ip);
 		return -1;
 	}
-    printf("%s UPF context entry find UPF address %s \n", __FUNCTION__,inet_ntoa(*((struct in_addr *)&upf_ip)));
+    printf("%s UPF (%s) context entry found \n", __FUNCTION__,inet_ntoa(*((struct in_addr *)&upf_ip)));
 	return 0;
 }
 

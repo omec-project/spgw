@@ -8,6 +8,7 @@
 
 #include "gx.h"
 
+extern struct msg *global_raa_ans;
 extern void hexDump(char *desc, void *address, int len);
 /*
 *
@@ -22,8 +23,11 @@ extern void hexDump(char *desc, void *address, int len);
 *       File:   gx_raa.c
 *
 */
-int gx_send_raa(void *data)
+int gx_send_raa(void *buf)
 {
+    gx_msg *req = (gx_msg*)buf;
+    void *data = (void *)(&req->data.cp_raa);
+    printf("\nMessage type(%d). Received RAR with sequence number = %d \n", req->msg_type, req->seq_num);
 	int ret = FD_REASON_OK;
 	struct msg *ans = NULL;
 	//uint32_t buflen ;
@@ -34,12 +38,19 @@ int gx_send_raa(void *data)
 	GxRAA *gx_raa = (GxRAA*)malloc(sizeof(*gx_raa));    /* allocate the RAA structure */
 	memset((void*)gx_raa, 0, sizeof(*gx_raa));
 
+#if 0
+    uint16_t rar_seq_num = *(uint16_t *)(data);
+    data = (unsigned char *)data + sizeof(uint16_t);
+    printf("\n Received RAR sequence number = %d \n", rar_seq_num);
+#endif
+
 	gx_raa_unpack((unsigned char *)data, gx_raa);
 	//buflen = gx_raa_calc_length (&gx_raa);
 	//printf("Buflen %d\n", buflen);
 
 	//memcpy(&rqst_ptr, ((unsigned char *)data + buflen -1), sizeof(unsigned long));
-	memcpy(&ans, ((unsigned char *)data + *(uint32_t*)data), sizeof(ans));
+	//memcpy(&ans, ((unsigned char *)data + *(uint32_t*)data), sizeof(ans));
+    ans = global_raa_ans;
 	printf("Address in RAA %p\n", ans);
 
 	//	ans = (struct msg*)rqst_ptr;

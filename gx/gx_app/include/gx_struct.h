@@ -2027,6 +2027,7 @@ typedef struct gxRAR {
  */
 typedef struct Gx_msg {
 	uint8_t msg_type;
+    uint16_t seq_num; // maintain map of req ans 
 	union data_t {
 		GxRAR cp_rar;
 		GxRAA cp_raa;

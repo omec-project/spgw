@@ -109,7 +109,7 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
  * @param  : pdn , pdn information
  * @return : Returns nothing
  */
-void
+int
 fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		pdn_connection_t *pdn);
 
@@ -261,7 +261,7 @@ del_rule_entries(ue_context_t *context, uint8_t ebi_index);
  * @return : Returns nothing
  */
 void
-sdf_pkt_filter_to_string(sdf_pkt_fltr *sdf_flow, char *sdf_str,uint8_t direction);
+sdf_pkt_filter_to_string(flow_desc_t *sdf_flow, char *sdf_str,uint8_t direction);
 
 /**
  * @brief  : Fill sdf packet filters  in pfcp session establishment  request

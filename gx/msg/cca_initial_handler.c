@@ -22,6 +22,9 @@
 #include "gtpv2_error_rsp.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_proc.h"
+#include "cp_events.h"
+#include "cp_io_poll.h"
+#include "cp_test.h"
 
 void gx_msg_proc_failure(proc_context_t *proc_ctxt)
 {
@@ -91,10 +94,7 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
     SET_PROC_MSG(proc_context, msg);
     msg->proc_context = proc_context;
     proc_context->handler(proc_context, msg);
+    // if we wish to generate new test events based on CCA-I then enable following code. 
+    //queue_stack_unwind_event(TEST_EVENTS, (void *)pdn_cntxt, test_event_handler);
     return 0;
 }
-
-
-
-
-

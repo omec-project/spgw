@@ -43,6 +43,7 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 	// uint8_t delay = 0; /*TODO move this when more implemented?*/
 
     increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK, peer_addr->sin_addr.s_addr);
+
     /* Reset periodic timers */
     process_response(peer_addr->sin_addr.s_addr);
 

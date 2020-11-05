@@ -1880,7 +1880,7 @@ int encode_gtp_charging_id_ie(gtp_charging_id_ie_t *value,
 {
     uint16_t encoded = 0;
     encoded += encode_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
-    encoded += encode_bits(value->chrgng_id_val, 8, buf + (encoded/8), encoded % CHAR_SIZE);
+    encoded += encode_bits(value->chrgng_id_val, 32, buf + (encoded/8), encoded % CHAR_SIZE);
 
     return encoded/CHAR_SIZE;
 }

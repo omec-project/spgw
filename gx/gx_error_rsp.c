@@ -78,12 +78,12 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 				memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
 
 				if (gx_ccr_pack(&(ccr_request.data.ccr),
-					(unsigned char *)(buffer + sizeof(ccr_request.msg_type)), msglen) == 0) {
+					(unsigned char *)(buffer + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num)), msglen) == 0) {
 					clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
 					return;
 				}
 
-				send_to_ipc_channel(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type));
+				send_to_ipc_channel(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 
 				if(remove_gx_context((uint8_t*)pdn->gx_sess_id) < 0){
 					clLog(clSystemLog, eCLSeverityCritical, "%s %s - Error on gx_context_by_sess_id_hash deletion\n"
@@ -147,7 +147,7 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error)
 
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_raa_calc_length(&raa.data.cp_raa);
-	msg_body_ofs = sizeof(raa.msg_type);
+	msg_body_ofs = sizeof(raa.msg_type) + sizeof(raa.seq_num);
 	rqst_ptr_ofs = msg_len + msg_body_ofs;
 	msg_len_total = rqst_ptr_ofs + sizeof(pdn->rqst_ptr);
 

@@ -168,13 +168,6 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn);
 int16_t
 gx_update_bearer_req(pdn_connection_t *pdn);
 
-/**
- * @brief  : Parse GX RAR message.
- * @param  : rar holds data from gx rar message
- * @return : Returns 0 on success, -1 otherwise
- */
-int8_t
-parse_gx_rar_msg(GxRAR *rar);
 void pfcp_modify_rar_trigger_timeout(void *data);
 
 void

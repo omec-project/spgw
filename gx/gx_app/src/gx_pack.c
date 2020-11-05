@@ -991,6 +991,7 @@ int gx_rar_pack
     PACK_LIST_STRUCT( data, proxy_info, buf, buflen, offset, packGxProxyInfo );
     PACK_LIST_OCTETSTRING( data, route_record, buf, buflen, offset );
 
+    printf("sizeof message = %u \n",_offset);
     *((uint32_t*)buf) = _offset;
 
     return _offset == buflen;
@@ -1485,8 +1486,11 @@ int gx_rar_unpack
     uint32_t _offset = sizeof(uint32_t);
     uint32_t *offset = &_offset;
 
+    printf("length of rar message %u \n",length);
     UNPACK_PRESENCE( data, presence, buf, length, offset );
+    printf("data->session_id %u \n",data->presence.session_id);
     UNPACK_OCTETSTRING( data, session_id, buf, length, offset );
+    printf("data->session_id %u \n",data->presence.session_id);
     UNPACK_BASIC( data, drmp, buf, length, offset );
     UNPACK_BASIC( data, auth_application_id, buf, length, offset );
     UNPACK_OCTETSTRING( data, origin_host, buf, length, offset );
@@ -1575,11 +1579,15 @@ int gx_raa_unpack
     uint32_t *offset = &_offset;
 
     UNPACK_PRESENCE( data, presence, buf, length, offset );
+    printf("data->presence.session_id = %d ",data->presence.session_id);
     UNPACK_OCTETSTRING( data, session_id, buf, length, offset );
+    printf("data->presence.session_id = %d ",data->presence.session_id);
     UNPACK_BASIC( data, drmp, buf, length, offset );
     UNPACK_OCTETSTRING( data, origin_host, buf, length, offset );
     UNPACK_OCTETSTRING( data, origin_realm, buf, length, offset );
+    printf("data->presence.result_code = %d ",data->presence.result_code);
     UNPACK_BASIC( data, result_code, buf, length, offset );
+    printf("data->presence.result_code = %d ",data->presence.result_code);
     UNPACK_STRUCT( data, experimental_result, buf, length, offset, unpackGxExperimentalResult );
     UNPACK_BASIC( data, origin_state_id, buf, length, offset );
     UNPACK_STRUCT( data, oc_supported_features, buf, length, offset, unpackGxOcSupportedFeatures );
@@ -2216,6 +2224,7 @@ static uint32_t calcLengthGxFlowInformation
     uint32_t length = 0;
 
     CALCLEN_PRESENCE( length, data, presence );
+    printf("data->presence.flow_description = %d \n",data->presence.flow_description);
     CALCLEN_OCTETSTRING( length, data, flow_description );
     CALCLEN_OCTETSTRING( length, data, packet_filter_identifier );
     CALCLEN_BASIC( length, data, packet_filter_usage );
@@ -4099,7 +4108,9 @@ static int packGxQosInformation
     uint32_t *offset
 )
 {
+    printf("checking if qos should be packed in message \n");
     PACK_PRESENCE( data, presence, buf, buflen, offset );
+    printf("packing qos data in message \n");
     PACK_BASIC( data, qos_class_identifier, buf, buflen, offset );
     PACK_BASIC( data, max_requested_bandwidth_ul, buf, buflen, offset );
     PACK_BASIC( data, max_requested_bandwidth_dl, buf, buflen, offset );
@@ -4270,6 +4281,7 @@ static int packGxFlowInformation
 )
 {
     PACK_PRESENCE( data, presence, buf, buflen, offset );
+    printf("flow description = %s \n", data->flow_description.val);
     PACK_OCTETSTRING( data, flow_description, buf, buflen, offset );
     PACK_OCTETSTRING( data, packet_filter_identifier, buf, buflen, offset );
     PACK_BASIC( data, packet_filter_usage, buf, buflen, offset );
@@ -4279,6 +4291,7 @@ static int packGxFlowInformation
     PACK_BASIC( data, flow_direction, buf, buflen, offset );
     PACK_OCTETSTRING( data, routing_rule_identifier, buf, buflen, offset );
 
+    //printf("%s *offset <= buflen = %u \n",__FUNCTION__,*offset <= buflen);
     return *offset <= buflen;
 }
 
@@ -4627,6 +4640,7 @@ static int packGxChargingRuleInstall
     PACK_BASIC( data, charging_correlation_indicator, buf, buflen, offset );
     PACK_BASIC( data, ip_can_type, buf, buflen, offset );
 
+    //printf("%s *offset <= buflen = %u \n",__FUNCTION__,*offset <= buflen);
     return *offset <= buflen;
 }
 
@@ -4717,6 +4731,7 @@ static int packGxChargingRuleDefinition
     PACK_OCTETSTRING( data, traffic_steering_policy_identifier_ul, buf, buflen, offset );
     PACK_BASIC( data, content_version, buf, buflen, offset );
 
+    //printf("%s *offset <= buflen = %u \n",__FUNCTION__,*offset <= buflen);
     return *offset <= buflen;
 }
 
@@ -6370,6 +6385,11 @@ static int unpackGxFlowInformation
 {
     UNPACK_PRESENCE( data, presence, buf, length, offset );
     UNPACK_OCTETSTRING( data, flow_description, buf, length, offset );
+    if(data->presence.flow_description == PRESENT) {
+        printf("unpack flow description = %s \n", data->flow_description.val);
+    } else {
+        printf("Missing flow description\n");
+    }
     UNPACK_OCTETSTRING( data, packet_filter_identifier, buf, length, offset );
     UNPACK_BASIC( data, packet_filter_usage, buf, length, offset );
     UNPACK_OCTETSTRING( data, tos_traffic_class, buf, length, offset );
