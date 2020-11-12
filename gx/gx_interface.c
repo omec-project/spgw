@@ -341,7 +341,7 @@ msg_handler_gx(void *data)
 
     /* Make a connection between control-plane and gx_app */
     if(cp_config->cp_type != SGWC) {
-        printf("\nOpening up gx-app socket \n");
+        printf("Opening up gx-app socket \n");
         start_cp_app();
     }
 

@@ -75,6 +75,7 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
         gx_msg_proc_failure(proc_context); 
         return -1;
     }
+
     /* Retrieve PDN context based on call id */
     pdn_cntxt = get_pdn_conn_entry(call_id);
     if (pdn_cntxt == NULL)

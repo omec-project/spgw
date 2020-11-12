@@ -233,6 +233,7 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     ue_context_t *context = NULL;
     pdn_connection_t *pdn = NULL;
     uint8_t ebi_index;
+	eps_bearer_t *bearer  = NULL;
 
     peer_addr = &msg->peer_addr;
 
@@ -270,7 +271,25 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     }
     msg->ue_context = context;
     ebi_index = msg->gtpc_msg.dsr.lbi.ebi_ebi - 5;
+
+	if (!(context->bearer_bitmap & (1 << ebi_index))) {
+		clLog(clSystemLog, eCLSeverityCritical,
+				"Received delete session on non-existent EBI - "
+				"Dropping packet\n");
+		return -1;
+	}
+
+	bearer = context->eps_bearers[ebi_index];
+	if (!bearer) {
+		clLog(clSystemLog, eCLSeverityCritical,
+				"Received delete session on non-existent EBI - "
+				"Bitmap Inconsistency - Dropping packet\n");
+		return -1;
+	}
+
     pdn = GET_PDN(context, ebi_index);
+    assert(pdn == bearer->pdn);
+
     msg->pdn_context = pdn;
     msg->event = DS_REQ_RCVD_EVNT;
 

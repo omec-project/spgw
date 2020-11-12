@@ -13,7 +13,10 @@ GXFIX - This is bug in Gx code and should be fixed. This tag should have some co
 GXASSUMPTIONS : These are some assumptions in the Gx code.
 GXREQ : handle update bearer on both default and dedicated bearer 
 GXCOMPLIANCE - This tag indicates that we are doing something which is not as per standard
+GXFEATURE : Something which we should support
 
 BUG - Needs fix.  
 
 PERFORMANCE issue : performance improvement area
+
+PFCPCOMPLIANCE : code which is not compliant with spec 

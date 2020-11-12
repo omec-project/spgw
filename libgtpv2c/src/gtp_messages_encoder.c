@@ -3845,67 +3845,63 @@ int encode_gtp_create_bearer_response_bearer_ctxt_ie(gtp_create_bearer_response_
 
     encoded /= CHAR_SIZE;
 
-if (value->eps_bearer_id.header.len)
-{
-        printf("\n value->eps_bearer_id.header.len %d \n",value->eps_bearer_id.header.len);
+    if (value->eps_bearer_id.header.len)
+    {
         encoded += encode_gtp_eps_bearer_id_ie(&(value->eps_bearer_id), buf + encoded);
-}
+    }
 
-if (value->cause.header.len)
-{
-        printf("\nvalue->cause.header.len %d \n",value->cause.header.len);
+    if (value->cause.header.len)
+    {
         encoded += encode_gtp_cause_ie(&(value->cause), buf + encoded);
-}
+    }
 
-if (value->s1u_enb_fteid.header.len)
-{
-        printf("\nvalue->s1u_enb_fteid.header.len %d \n",value->s1u_enb_fteid.header.len);
+    if (value->s1u_enb_fteid.header.len)
+    {
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s1u_enb_fteid), buf + encoded);
-}
+    }
 
-if (value->s1u_sgw_fteid.header.len)
-{
-        printf("\n value->s1u_sgw_fteid.header.len %d \n",value->s1u_sgw_fteid.header.len);
+    if (value->s1u_sgw_fteid.header.len)
+    {
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s1u_sgw_fteid), buf + encoded);
-}
+    }
 
-if (value->s58_u_sgw_fteid.header.len)
+    if (value->s58_u_sgw_fteid.header.len)
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s58_u_sgw_fteid), buf + encoded);
 
-if (value->s58_u_pgw_fteid.header.len)
+    if (value->s58_u_pgw_fteid.header.len)
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s58_u_pgw_fteid), buf + encoded);
 
-if (value->s12_rnc_fteid.header.len)
+    if (value->s12_rnc_fteid.header.len)
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s12_rnc_fteid), buf + encoded);
 
-if (value->s12_sgw_fteid.header.len)
+    if (value->s12_sgw_fteid.header.len)
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s12_sgw_fteid), buf + encoded);
 
-if (value->s4_u_sgsn_fteid.header.len)
+    if (value->s4_u_sgsn_fteid.header.len)
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s4_u_sgsn_fteid), buf + encoded);
 
-if (value->s4_u_sgw_fteid.header.len)
+    if (value->s4_u_sgw_fteid.header.len)
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s4_u_sgw_fteid), buf + encoded);
 
-if (value->s2b_u_epdg_fteid.header.len)
+    if (value->s2b_u_epdg_fteid.header.len)
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s2b_u_epdg_fteid), buf + encoded);
 
-if (value->s2b_u_pgw_fteid.header.len)
+    if (value->s2b_u_pgw_fteid.header.len)
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s2b_u_pgw_fteid), buf + encoded);
 
-if (value->s2a_u_twan_fteid.header.len)
+    if (value->s2a_u_twan_fteid.header.len)
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s2a_u_twan_fteid), buf + encoded);
 
-if (value->s2a_u_pgw_fteid.header.len)
+    if (value->s2a_u_pgw_fteid.header.len)
         encoded += encode_gtp_fully_qual_tunn_endpt_idnt_ie(&(value->s2a_u_pgw_fteid), buf + encoded);
 
-if (value->pco.header.len)
+    if (value->pco.header.len)
         encoded += encode_gtp_prot_cfg_opts_ie(&(value->pco), buf + encoded);
 
-if (value->ran_nas_cause.header.len)
+    if (value->ran_nas_cause.header.len)
         encoded += encode_gtp_ran_nas_cause_ie(&(value->ran_nas_cause), buf + encoded);
 
-if (value->epco.header.len)
+    if (value->epco.header.len)
         encoded += encode_gtp_extnded_prot_cfg_opts_ie(&(value->epco), buf + encoded);
 
     printf("\nnumber of bytes encoded %d \n",encoded);
@@ -3930,10 +3926,10 @@ int encode_gtp_mod_acc_bearers_response__bearer_ctxt_marked_removal_ie(gtp_mod_a
 
     encoded /= CHAR_SIZE;
 
-if (value->eps_bearer_id.header.len)
+    if (value->eps_bearer_id.header.len)
         encoded += encode_gtp_eps_bearer_id_ie(&(value->eps_bearer_id), buf + encoded);
 
-if (value->cause.header.len)
+    if (value->cause.header.len)
         encoded += encode_gtp_cause_ie(&(value->cause), buf + encoded);
 
     return encoded;
@@ -3957,28 +3953,28 @@ int encode_gtp_upd_bearer_request__bearer_ctxt_ie(gtp_upd_bearer_request__bearer
 
     encoded /= CHAR_SIZE;
 
-if (value->eps_bearer_id.header.len)
+    if (value->eps_bearer_id.header.len)
         encoded += encode_gtp_eps_bearer_id_ie(&(value->eps_bearer_id), buf + encoded);
 
-if (value->tft.header.len)
+    if (value->tft.header.len)
         encoded += encode_gtp_eps_bearer_lvl_traffic_flow_tmpl_ie(&(value->tft), buf + encoded);
 
-if (value->bearer_lvl_qos.header.len)
+    if (value->bearer_lvl_qos.header.len)
         encoded += encode_gtp_bearer_qlty_of_svc_ie(&(value->bearer_lvl_qos), buf + encoded);
 
-if (value->bearer_flags.header.len)
+    if (value->bearer_flags.header.len)
         encoded += encode_gtp_bearer_flags_ie(&(value->bearer_flags), buf + encoded);
 
-if (value->pco.header.len)
+    if (value->pco.header.len)
         encoded += encode_gtp_prot_cfg_opts_ie(&(value->pco), buf + encoded);
 
-if (value->apco.header.len)
+    if (value->apco.header.len)
         encoded += encode_gtp_addtl_prot_cfg_opts_ie(&(value->apco), buf + encoded);
 
-if (value->epco.header.len)
+    if (value->epco.header.len)
         encoded += encode_gtp_extnded_prot_cfg_opts_ie(&(value->epco), buf + encoded);
 
-if (value->max_pckt_loss_rate.header.len)
+    if (value->max_pckt_loss_rate.header.len)
         encoded += encode_gtp_max_pckt_loss_rate_ie(&(value->max_pckt_loss_rate), buf + encoded);
 
     return encoded;
@@ -5469,9 +5465,8 @@ if (value->cause.header.len)
         encoded += encode_gtp_cause_ie(&(value->cause), buf + encoded);
 
 if (value->bearer_contexts.header.len) {
-        printf("\n value->bearer_contexts.header.len %d \n",value->bearer_contexts.header.len);
         encoded += encode_gtp_create_bearer_response_bearer_ctxt_ie(&(value->bearer_contexts), buf + encoded);
-    }
+}
 
 if (value->recovery.header.len)
         encoded += encode_gtp_recovery_ie(&(value->recovery), buf + encoded);
