@@ -566,7 +566,6 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 			}
 		}
 	}
-    printf("flow description after charging rule present %s \n",pdn->policy.pcc_rule[0].dyn_rule.flow_desc[0].sdf_flow_description);
 
 #if 0
 	for (idx = 0; idx < cca->charging_rule_install.count; idx++)
