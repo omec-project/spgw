@@ -95,7 +95,7 @@ test_event_handler(void *data, uint16_t evt_id)
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].flow_information.count =  1;
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].flow_information.list =  calloc(1,sizeof(GxFlowInformation));
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].flow_information.list[0].presence.flow_description =  PRESENT;
-        char rule[300]="permit out udp from 0.0.0.0/0 0-65535 to 0.0.0.0/0 0-65535";
+        char rule[300]="permit out udp from any to assigned";
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].flow_information.list[0].flow_description.len =strlen(rule);
         strcpy((char *)rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].flow_information.list[0].flow_description.val, rule);
 
@@ -120,7 +120,7 @@ init_gtp_mock_interface(void)
         gtp_mock_handler[i] = NULL;
 
     // enable this hook to feed outgoing messages to custom handler 
-    gtp_mock_handler[GTP_CREATE_BEARER_REQ] =  handle_mock_create_bearer_request_msg;
+    //gtp_mock_handler[GTP_CREATE_BEARER_REQ] =  handle_mock_create_bearer_request_msg;
 }
 
 void 
@@ -179,9 +179,7 @@ handle_mock_create_bearer_request_msg(void *evt)
 			           + cbrsp.bearer_contexts.s1u_sgw_fteid.header.len
 			           + sizeof(ie_header_t)));                      
         cbrsp_len = encode_create_bearer_rsp(&cbrsp, cbrsp_pkt);
-        printf("\n cbrsp len = %d \n", cbrsp_len);
         cbrsp.header.gtpc.message_len = htons(cbrsp_len);
-        printf("\n cbrsp len = %d \n", cbrsp.header.gtpc.message_len);
         gtpv2c_header_t *cbrsp_header = (gtpv2c_header_t *)cbrsp_pkt;
         cbrsp_header->gtpc.message_len = htons(cbrsp_len);
     }

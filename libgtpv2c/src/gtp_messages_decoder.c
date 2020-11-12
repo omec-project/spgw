@@ -3512,7 +3512,6 @@ int decode_create_sess_req(uint8_t *buf,
       }  else if (ie_header->type == GTP_IE_SECDRY_RAT_USAGE_DATA_RPT && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_secdry_rat_usage_data_rpt_ie(buf + count, &value->secdry_rat_usage_data_rpt);
       }  else if (ie_header->type == GTP_IE_UP_FUNC_SEL_INDCTN_FLGS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
-            printf("GTP_IE_UP_FUNC_SEL_INDCTN_FLGS \n");
             count += decode_gtp_up_func_sel_indctn_flgs_ie(buf + count, &value->up_func_sel_indctn_flgs);
       }  else if (ie_header->type == GTP_IE_PRIV_EXT) {
             count += decode_gtp_priv_ext_ie(buf + count, &value->priv_ext);
@@ -3950,65 +3949,46 @@ int decode_gtp_create_bearer_response_bearer_ctxt_ie(uint8_t *buf,
     count += decode_ie_header_t(buf, &(value->header), IE_HEADER_SIZE);
     buf = buf + count/CHAR_SIZE;
     buf_len = value->header.len;
-    printf("buffer length of bearer context = %d \n",buf_len);
     count = 0;
       while (count < buf_len) {
 
           ie_header_t *ie_header = (ie_header_t *) (buf + count);
 
           if (ie_header->type == GTP_IE_EPS_BEARER_ID && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
-            printf("cbrsp BC EBI IE present \n");
             count += decode_gtp_eps_bearer_id_ie(buf + count, &value->eps_bearer_id);
       }  else if (ie_header->type == GTP_IE_CAUSE && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
-            printf("cbrsp BC cause IE present \n");
             count += decode_gtp_cause_ie(buf + count, &value->cause);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
-            printf("cbrsp BC s1uenb IE present \n");
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s1u_enb_fteid);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_ONE) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s1u_sgw_fteid);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_TWO) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s58_u_sgw_fteid);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_THREE) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s58_u_pgw_fteid);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_FOUR) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s12_rnc_fteid);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_FIVE) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s12_sgw_fteid);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_SIX) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s4_u_sgsn_fteid);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_SEVEN) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s4_u_sgw_fteid);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_EIGHT) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s2b_u_epdg_fteid);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_NINE) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s2b_u_pgw_fteid);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_TEN) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s2a_u_twan_fteid);
       }  else if (ie_header->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT && ie_header->instance == GTP_IE_INSTANCE_ELEVEN) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_fully_qual_tunn_endpt_idnt_ie(buf + count, &value->s2a_u_pgw_fteid);
       }  else if (ie_header->type == GTP_IE_PROT_CFG_OPTS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_prot_cfg_opts_ie(buf + count, &value->pco);
       }  else if (ie_header->type == GTP_IE_RAN_NAS_CAUSE && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_ran_nas_cause_ie(buf + count, &value->ran_nas_cause);
       }  else if (ie_header->type == GTP_IE_EXTNDED_PROT_CFG_OPTS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_extnded_prot_cfg_opts_ie(buf + count, &value->epco);
       }  else {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += sizeof(ie_header_t) + ntohs(ie_header->len);
       }
       }
@@ -5666,10 +5646,8 @@ int decode_create_bearer_rsp(uint8_t *buf,
     count += decode_gtpv2c_header_t(buf + count, &value->header);
     if (value->header.gtpc.teid_flag) {
       buf_len = value->header.gtpc.message_len - 8;
-      printf("create bearer response teid present msg size = %d \n", buf_len);
     } else {
       buf_len = value->header.gtpc.message_len - 4;
-      printf("create bearer response teid absent %d \n",buf_len);
     }
       buf = buf + count;
       count = 0;
@@ -5678,10 +5656,8 @@ int decode_create_bearer_rsp(uint8_t *buf,
           ie_header_t *ie_header = (ie_header_t *) (buf + count);
 
           if (ie_header->type == GTP_IE_CAUSE && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
-            printf("cbrsp cause IE present \n");
             count += decode_gtp_cause_ie(buf + count, &value->cause);
       }  else if (ie_header->type == GTP_IE_BEARER_CONTEXT && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
-            printf("cbrsp BC IE present \n");
             count += decode_gtp_create_bearer_response_bearer_ctxt_ie(buf + count, &value->bearer_contexts);
       }  else if (ie_header->type == GTP_IE_RECOVERY && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_recovery_ie(buf + count, &value->recovery);

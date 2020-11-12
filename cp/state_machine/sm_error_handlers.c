@@ -136,6 +136,15 @@ process_error_occured_handler_new(void *data, void *unused_param)
         }
     }
 
+    pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
+    while (pcc_rule != NULL) {
+        TAILQ_REMOVE(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
+        free(pcc_rule->dyn_rule);
+        free(pcc_rule);
+        pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
+    }
+
+
     printf("Delete all bearers \n");
     // if all bearers released then release pdn context 
     if(pdn->num_bearer == 0) {

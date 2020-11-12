@@ -909,7 +909,7 @@ int
 fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 		ue_context_t *context, pdn_connection_t *pdn)
 {
-
+    printf("fill_bearer_info \n");
 	/* Need to re-vist this ARP[Allocation/Retention priority] handling portion */
 	bearer->qos.arp.priority_level =
 		csr->bearer_contexts_to_be_created.bearer_lvl_qos.pl;
@@ -942,22 +942,26 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 		bearer->s5s8_sgw_gtpu_teid = csr->bearer_contexts_to_be_created.s5s8_u_sgw_fteid.teid_gre_key;
 	}
 
+/*
     //Just set number of URRs in bearer and generate urr id for this bearer urr. 
     bearer->urr_count = NUMBER_OF_URR_PER_BEARER;
     for(uint8_t itr=0; itr < bearer->urr_count;itr++) {
         bearer->urr_id[itr].urr_id = generate_urr_id();
     }
-
+*/
 	/* TODO: Revisit this for change in yang*/
+/*
     if(cp_config->gx_enabled) {
         if (cp_config->cp_type != SGWC){
             bearer->qer_count = NUMBER_OF_QER_PER_BEARER;
             for(uint8_t itr=0; itr < bearer->qer_count; itr++){
                 bearer->qer_id[itr].qer_id = generate_qer_id();
+                printf("fill_bearer_info created qer_id = %d \n",bearer->qer_id[itr].qer_id);
                 fill_qer_entry(pdn, bearer,itr);
             }
         }
     }
+*/
 
 	/*SP: As per discussion Per bearer two pdrs and fars will be there*/
 	/************************************************
@@ -969,14 +973,15 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 	 ************************************************/
 
 	if (cp_config->cp_type == SGWC) {
-
 		bearer->pdr_count = NUMBER_OF_PDR_PER_BEARER;
 		for(uint8_t itr=0; itr < bearer->pdr_count; itr++){
 			switch(itr){
 				case SOURCE_INTERFACE_VALUE_ACCESS:
+                    printf("calling fill_pdr_entry - access interface \n");
 					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, itr);
 					break;
 				case SOURCE_INTERFACE_VALUE_CORE:
+                    printf("calling fill_pdr_entry - core interface \n");
 					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, itr);
 					break;
 				default:
@@ -987,14 +992,13 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 
 	bearer->pdn = pdn;
 
-	RTE_SET_USED(context);
 	return 0;
 }
 
 void
 fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 {
-	dynamic_rule_t *dynamic_rule = &pdn->policy.pcc_rule[0].dyn_rule;
+	dynamic_rule_t *dynamic_rule = calloc(1, sizeof(dynamic_rule_t)); 
 	uint8_t ebi_index = pdn->default_bearer_id - 5;
 	eps_bearer_t *bearer = pdn->eps_bearers[ebi_index];
 
@@ -1024,7 +1028,7 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 	dynamic_rule->num_flw_desc = GX_FLOW_COUNT;
 
 	for(uint8_t idx = 0; idx < GX_FLOW_COUNT; idx++) {
-        strcpy(dynamic_rule->flow_desc[idx].sdf_flow_description,"permit out ip from 0.0.0.0/0 to 0.0.0.0/0"); 
+        strcpy(dynamic_rule->flow_desc[idx].sdf_flow_description,"permit out ip from 0.0.0.0/0 to assigned");
 		dynamic_rule->flow_desc[idx].flow_direction = BIDIRECTIONAL;
 		dynamic_rule->flow_desc[idx].sdf_flw_desc.proto_id = PROTO_ID;
 		dynamic_rule->flow_desc[idx].sdf_flw_desc.local_ip_mask = LOCAL_IP_MASK;
@@ -1046,7 +1050,10 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 	dynamic_rule->qos.dl_mbr =  REQUESTED_BANDWIDTH_DL;
 	dynamic_rule->qos.ul_gbr =  GURATEED_BITRATE_UL;
 	dynamic_rule->qos.dl_gbr =  GURATEED_BITRATE_DL;
-
+    pcc_rule_t *pcc_rule = calloc(1, sizeof(pcc_rule_t)); 
+    pcc_rule->action = RULE_ACTION_ADD; 
+    pcc_rule->dyn_rule = dynamic_rule;
+    TAILQ_INSERT_TAIL(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
 }
 
 // TODO : need to define local cause above 255. That way we can increment stats 
