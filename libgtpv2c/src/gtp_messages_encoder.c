@@ -3904,6 +3904,7 @@ int encode_gtp_create_bearer_response_bearer_ctxt_ie(gtp_create_bearer_response_
     if (value->epco.header.len)
         encoded += encode_gtp_extnded_prot_cfg_opts_ie(&(value->epco), buf + encoded);
 
+    printf("\nnumber of bytes encoded %d \n",encoded);
     return encoded;
 }
 
@@ -5465,7 +5466,7 @@ if (value->cause.header.len)
 
 if (value->bearer_contexts.header.len) {
         encoded += encode_gtp_create_bearer_response_bearer_ctxt_ie(&(value->bearer_contexts), buf + encoded);
-    }
+}
 
 if (value->recovery.header.len)
         encoded += encode_gtp_recovery_ie(&(value->recovery), buf + encoded);

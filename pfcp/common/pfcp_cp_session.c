@@ -138,7 +138,8 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 
 	pfcp_sess_mod_req->header.seid_seqno.has_seid.seid = pdn->dp_seid;
 
-    /* PFCPCOMPLIANCE : no need to fill in the FSEID value in the modify */
+  /* PFCPCOMPLIANCE : no need to fill in the FSEID value in the modify */
+
 	char pAddr[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 	unsigned long node_value = inet_addr(pAddr);
@@ -186,7 +187,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 					pdn->context->eps_bearers[bearer_id] = bearer;
 					pdn->num_bearer++;
 					set_s5s8_pgw_gtpu_teid_using_pdn(bearer, pdn);
-                    // GXCONFUSION : find out if this is correct QoS  
+          // GXCONFUSION : find out if this is correct QoS  
 					memcpy(&(bearer->qos), &(pcc_rule->dyn_rule->qos), sizeof(bearer_qos_ie));
                     // create qer and add it into the table, and update PDR  
 					fill_dedicated_bearer_info(bearer, pdn->context, pdn);
@@ -217,7 +218,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 					return 0;
 				}
 			} else if(pcc_rule->action == RULE_ACTION_MODIFY) {
-                printf("policy rule action modify \n");
+        printf("policy rule action modify \n");
 				/*
 				 * Currently not handling dynamic rule qos modificaiton
 				 */
@@ -1467,6 +1468,7 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 	 * also store its reference in rule itself
 	 * May be pdr arrary in bearer not needed
 	 */
+    printf("dynamic rule pointer = %p \n", dyn_rule);
 	char mnc[4] = {0};
 	char mcc[4] = {0};
 	char nwinst[32] = {0};
@@ -2284,6 +2286,7 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
             for(uint8_t itr=0; itr < bearer->qer_count; itr++){
                 bearer->qer_id[itr].qer_id = generate_qer_id();
                 printf("\n fill_dedicated_bearer_info - qer_id = %d \n", bearer->qer_id[itr].qer_id);
+                /* GXCONFUSION - Where are we filling qos details in the bearer ?*/
                 fill_qer_entry(pdn, bearer, itr);
             }
 

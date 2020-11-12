@@ -181,7 +181,7 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
             printf("\n proto_id %d \n",pkt_filter->proto_id);
 		} else if (indx == 4) {
 			if(strncmp(str_fld[indx], "any", strlen("any")) != 0) {
-                printf("any not present in the filter \n");
+        printf("any not present in the filter \n");
 				if( strstr(str_fld[indx], "/") != NULL) {
                     printf("/ present in the filter \n");
 					int ip_token = 0;
@@ -214,7 +214,7 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
 		} else if(indx == 5) {
 			/*TODO VG : handling of multiple ports p1,p2,p3 etc*/
 			if(strncmp(str_fld[indx], "to", strlen("to")) != 0) {
-                printf("\n no TO found \n");
+        printf("\n no TO found \n");
 				if( strstr(str_fld[indx], "-") != NULL) {
                     printf("\n found - \n");
 					int port_token = 0;
@@ -488,8 +488,9 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 	int32_t idx = 0;
 	rule_name_key_t rule_name = {0};
 	GxChargingRuleDefinition *rule_definition = NULL;
-    printf("%s pdn->policy.count %d \n",__FUNCTION__,pdn->policy.count);
-    printf("%s charging_rule_install->count %d \n",__FUNCTION__,charging_rule_install->count);
+
+  printf("%s pdn->policy.count %d \n",__FUNCTION__,pdn->policy.count);
+  printf("%s charging_rule_install->count %d \n",__FUNCTION__,charging_rule_install->count);
 
 	if(install_present)
 	{
@@ -561,10 +562,11 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
                     TAILQ_INSERT_TAIL(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
 				} else {
                         printf("Rule %s - Received in RAR and not found \n", rule_name.rule_name);
-                }
+        }
 			}
 		}
 	}
+    printf("flow description after charging rule present %s \n",pdn->policy.pcc_rule[0].dyn_rule.flow_desc[0].sdf_flow_description);
 
 #if 0
 	for (idx = 0; idx < cca->charging_rule_install.count; idx++)
