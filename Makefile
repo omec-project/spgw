@@ -46,7 +46,7 @@ docker-build:
 		else PROGRESS_TAG="";\
 	fi
 
-	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build --pull --progress=plain $(PROGRESS_TAG) $(DOCKER_BUILD_ARGS) \
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build --pull $(PROGRESS_TAG) $(DOCKER_BUILD_ARGS) \
 		--tag ${DOCKER_REGISTRY}${DOCKER_REPOSITORY}spgw:${DOCKER_TAG} \
 		--label "org.label-schema.schema-version=1.0" \
 		--label "org.label-schema.name=spgw-$$target" \
