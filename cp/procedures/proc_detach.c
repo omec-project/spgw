@@ -64,6 +64,8 @@ detach_event_handler(void *proc, void *msg_info)
             process_ds_req_handler(proc_context, msg);
             break;
         } 
+        case CCA_RCVD_EVNT: {
+        }
         case PFCP_SESS_DEL_RESP_RCVD_EVNT: {
             process_sess_del_resp_handler(proc_context, msg);
             break;
@@ -246,7 +248,6 @@ process_pfcp_sess_del_request(proc_context_t *proc_context, msg_info_t *msg)
 
     pdn = proc_context->pdn_context;
 
-
 	/* Lookup and get context of delete request */
 	ret = delete_context(ds_req->lbi, ds_req->header.teid.has_teid.teid,
 		&context, &s5s8_pgw_gtpc_teid, &s5s8_pgw_gtpc_ipv4);
@@ -324,32 +325,10 @@ int
 process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *msg)
 {
     RTE_SET_USED(proc_context);
-	uint8_t ebi_index = 0;
 	ue_context_t *context = msg->ue_context;
-	eps_bearer_t *bearer  = NULL;
-	pdn_connection_t *pdn =  NULL;
+	pdn_connection_t *pdn =  msg->pdn_context;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
     del_sess_req_t *del_req = &msg->gtpc_msg.dsr;
-
-	ebi_index = del_req->lbi.ebi_ebi - 5;
-	if (!(context->bearer_bitmap & (1 << ebi_index))) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"Received delete session on non-existent EBI - "
-				"Dropping packet\n");
-		return -EPERM;
-	}
-
-	bearer = context->eps_bearers[ebi_index];
-	if (!bearer) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"Received delete session on non-existent EBI - "
-				"Bitmap Inconsistency - Dropping packet\n");
-		return -EPERM;
-	}
-
-	pdn = bearer->pdn;
-
-	bearer->eps_bearer_id = del_req->lbi.ebi_ebi;
 
 	fill_pfcp_sess_mod_req_delete(&pfcp_sess_mod_req, &del_req->header, context, pdn);
 
@@ -371,6 +350,7 @@ process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *ms
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
 #ifdef TRANS_SUPPORT
+	uint8_t ebi_index = 0;
 	/* Update the sequence number */
 	 context->sequence = del_req->header.teid.has_teid.seq;
 
@@ -445,7 +425,7 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 
 		/* VS: Set the Gx State for events */
 		gx_context->state = CCR_SNT_STATE;
-		//gx_context->proc = pdn->proc;
+		gx_context->proc = proc_context->proc_type;
 
 		/* VS: Calculate the max size of CCR msg to allocate the buffer */
 		*msglen = gx_ccr_calc_length(&ccr_request->data.ccr);
@@ -480,6 +460,7 @@ void
 fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		gtpv2c_header_t *header, ue_context_t *context, pdn_connection_t *pdn)
 {
+    RTE_SET_USED(header);
 	uint32_t seq = 0;
 	upf_context_t *upf_ctx = NULL;
 	pdr_t *pdr_ctxt = NULL;
@@ -493,9 +474,6 @@ fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
 		return;
 	}
-
-	if( header != NULL)
-		clLog(sxlogger, eCLSeverityDebug, "TEID[%d]\n", header->teid.has_teid.teid);
 
 	memset(pfcp_sess_mod_req, 0, sizeof(pfcp_sess_mod_req_t));
 

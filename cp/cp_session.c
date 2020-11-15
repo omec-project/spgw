@@ -249,6 +249,14 @@ delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *sei
 	--pdn_ctxt->context->num_pdns;
 	pdn_ctxt->context->teid_bitmap = 0;
 
+    pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn_ctxt->policy.pending_pcc_rules);
+    while (pcc_rule != NULL) {
+        TAILQ_REMOVE(&pdn_ctxt->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
+        free(pcc_rule->dyn_rule);
+        free(pcc_rule);
+        pcc_rule = TAILQ_FIRST(&pdn_ctxt->policy.pending_pcc_rules);
+    }
+
 	//*_context = pdn_ctxt->context;
 	rte_free(pdn_ctxt);
 	RTE_SET_USED(gtpv2c_teid);

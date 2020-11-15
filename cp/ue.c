@@ -352,6 +352,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		(*context)->bearer_bitmap |= (1 << ebi_index);
 		pdn->eps_bearers[ebi_index] = bearer;
 		pdn->default_bearer_id = ebi;
+        TAILQ_INIT(&(pdn->policy.pending_pcc_rules));
 	}
 
 	for (i = 0; i < MAX_FILTERS_PER_UE; ++i)

@@ -295,6 +295,7 @@ update_pdr_teid(eps_bearer_t *bearer, uint32_t teid, uint32_t ip, uint8_t iface)
 {
 	int ret = -1;
 
+    printf("update_pdr_teid bearer->pdr_count %d \n", bearer->pdr_count);
 	for(uint8_t itr = 0; itr < bearer->pdr_count ; itr++) {
 		if(bearer->pdrs[itr]->pdi.src_intfc.interface_value == iface){
 			bearer->pdrs[itr]->pdi.local_fteid.teid = teid;

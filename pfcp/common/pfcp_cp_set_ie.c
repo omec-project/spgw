@@ -422,18 +422,21 @@ creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value)
 	size += set_pdi(&(create_pdr->pdi));
 	if (cp_config->cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
 		size += set_outer_hdr_removal(&(create_pdr->outer_hdr_removal));
+
 	size += set_far_id(&(create_pdr->far_id));
+
 	/* TODO: Revisit this for change in yang*/
-	if (cp_config->cp_type != SGWC){
-		for(int i=0; i < create_pdr->qer_id_count; i++ ) {
-			size += set_qer_id(&(create_pdr->qer_id[i]));
-		}
-	}
-	/* TODO: Revisit this for change in yang*/
-	create_pdr->urr_id_count = 1;
-	for(int i=0; i < create_pdr->urr_id_count; i++ ) {
-		size += set_urr_id(&(create_pdr->urr_id[i]));
-	} 
+    if (cp_config->cp_type != SGWC){
+        //printf("create_pdr->qer_id_count %d \n", create_pdr->urr_id_count);
+        for(int i=0; i < create_pdr->qer_id_count; i++ ) {
+            size += set_qer_id(&(create_pdr->qer_id[i]));
+        }
+        //printf("create_pdr->urr_id_count %d \n", create_pdr->urr_id_count);
+        for(int i=0; i < create_pdr->urr_id_count; i++ ) {
+            size += set_urr_id(&(create_pdr->urr_id[i]));
+        }	
+    }
+ 
 
 	/* TODO: Revisit this for change in yang
 	create_pdr->actvt_predef_rules_count = 1;
@@ -1743,6 +1746,5 @@ creating_urr(pfcp_create_urr_ie_t *urr)
 	//size += set_far_id_quota_action(&(urr->far_id_for_quota_act));
 
 	pfcp_set_ie_header(&(urr->header), PFCP_IE_CREATE_URR , size);
-    printf("setting size of URR %d ", size);
 }
 

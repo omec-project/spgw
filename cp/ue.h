@@ -67,6 +67,9 @@
 #define QER_INDEX_FOR_ACCESS_INTERFACE 0
 #define QER_INDEX_FOR_CORE_INTERFACE 1
 
+#define URR_INDEX_FOR_ACCESS_INTERFACE 0
+#define URR_INDEX_FOR_CORE_INTERFACE 1
+
 
 #define CSR_SEQUENCE(x) (\
 	(x->header.gtpc.teid_flag == 1)? x->header.teid.has_teid.seq : x->header.teid.no_teid.seq \
@@ -321,7 +324,8 @@ enum rule_action_t {
 
 typedef struct pcc_rule{
 	enum rule_action_t action;
-	dynamic_rule_t dyn_rule;
+	dynamic_rule_t *dyn_rule;
+    TAILQ_ENTRY(pcc_rule) next_pcc_rule;
 }pcc_rule_t;
 /* Currently policy from PCRF can be two thing
  * 1. Default bearer QOS
@@ -332,13 +336,15 @@ typedef struct pcc_rule{
  * data strutures only after sucess from access side
  */
 typedef struct policy{
+    /*GXCLEAN : get rid of unwanted fields in this struct */
 	bool default_bearer_qos_valid;
 	uint8_t count;
 	uint8_t num_charg_rule_install;
 	uint8_t num_charg_rule_modify;
 	uint8_t num_charg_rule_delete;
 	bearer_qos_ie default_bearer_qos;
-	pcc_rule_t pcc_rule[32];
+    TAILQ_HEAD(pending_pcc_head, pcc_rule) pending_pcc_rules; /* list of uninstalled pcc rules */ 
+	pcc_rule_t pcc_rule[32]; /* GXCLEAN - remove this structure. For now its kept just to keep compilation happy  */
 }policy_t;
 
 /**

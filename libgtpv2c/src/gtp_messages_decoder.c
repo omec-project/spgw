@@ -4008,7 +4008,6 @@ int decode_gtp_create_bearer_response_bearer_ctxt_ie(uint8_t *buf,
             printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += decode_gtp_extnded_prot_cfg_opts_ie(buf + count, &value->epco);
       }  else {
-            printf("cbrsp BC %s %d IE present \n", __FUNCTION__, __LINE__);
             count += sizeof(ie_header_t) + ntohs(ie_header->len);
       }
       }
@@ -5666,10 +5665,8 @@ int decode_create_bearer_rsp(uint8_t *buf,
     count += decode_gtpv2c_header_t(buf + count, &value->header);
     if (value->header.gtpc.teid_flag) {
       buf_len = value->header.gtpc.message_len - 8;
-      printf("create bearer response teid present msg size = %d \n", buf_len);
     } else {
       buf_len = value->header.gtpc.message_len - 4;
-      printf("create bearer response teid absent %d \n",buf_len);
     }
       buf = buf + count;
       count = 0;

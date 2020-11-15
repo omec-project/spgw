@@ -44,6 +44,13 @@ typedef struct qer_info_t {
 	avgng_wnd_t avgng_wnd;						/* Averaging Window */
 }qer_t;
 
+/*
+ * @brief  : Maintains urr information
+ */
+typedef struct urr_info_t {
+	uint32_t urr_id;							/* URR ID */
+}urr_t;
+
 /**
  * @brief  : Maintains pdr information
  */
@@ -57,11 +64,11 @@ typedef struct pdr_info_t {
 	pdi_t pdi;									/* Packet Detection Information */
 	far_t far;									/* FAR structure info */
 	qer_t qer;
+    urr_t urr;  
 	outer_hdr_removal_t outer_hdr_removal;		/* Outer Header Removal */
 	urr urr_id[MAX_LIST_SIZE];					/* Collection of URR IDs */
 	qer qer_id[MAX_LIST_SIZE];					/* Collection of QER IDs */
 	actvt_predef_rules rules[MAX_LIST_SIZE];	/* Collection of active predefined rules */
-
 }pdr_t;
 
 /**
@@ -73,11 +80,4 @@ typedef struct bar_info_t {
 	suggstd_buf_pckts_cnt_t suggstd_buf_pckts_cnt;
 }bar_t;
 
-/*VS:TODO: Revisit this part and update it. */
-/**
- * @brief  : Maintains urr information
- */
-typedef struct urr_info_t {
-
-}urr_t;
 #endif /* PFCP_STRUCT_H */
