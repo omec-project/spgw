@@ -61,7 +61,6 @@ process_pfcp_msg(void *data, uint16_t event)
         if(msg->refCnt == 0) // no one claimed ownership of this msg 
             free(msg);
     }
-
     return;
 }
 
