@@ -44,6 +44,8 @@ fill_pfcp_association_setup_rsp(pfcp_assn_setup_rsp_t *pfcp_ass_setup_rsp, uint3
     return;
 }
 
+// Note - if this function decides to keep reference to *msg_p then set *msg_p = NULL,
+// else caller would free allocated message  
 int 
 handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {

@@ -122,14 +122,12 @@ handle_pfcp_association_setup_response(void *msg_t)
 {
     msg_info_t *msg = (msg_info_t*)msg_t;
 	upf_context_t *upf_context = NULL;
-    int ret=0;
     struct sockaddr_in *peer_addr = &msg->peer_addr;
     uint32_t seq_num = msg->pfcp_msg.pfcp_ass_resp.header.seid_seqno.no_seid.seq_no; 
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
 
     assert(msg->msg_type == PFCP_ASSOCIATION_SETUP_RESPONSE);
-    RTE_SET_USED(ret);
     // Requirement : 
     // 0. Validate presence of IE
     // 1. node_id should come as name or ip address
@@ -167,7 +165,7 @@ handle_pfcp_association_setup_response(void *msg_t)
          */
         upf_context->state = UPF_SETUP_FAILED; 
         queue_stack_unwind_event(UPF_CONNECTION_SETUP_FAILED, (void *)upf_context, upf_pfcp_setup_failure);
-		return -1;
+		return 0;
 	}
 
 	msg->state = upf_context->state;

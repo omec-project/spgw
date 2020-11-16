@@ -107,8 +107,7 @@ int handle_cca_update_msg(msg_info_t **msg_p)
     }
     /* Retrieve PDN context based on call id */
     pdn_cntxt = get_pdn_conn_entry(call_id);
-    if (pdn_cntxt == NULL)
-    {
+    if (pdn_cntxt == NULL) {
         clLog(clSystemLog, eCLSeverityCritical, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
                 __func__, call_id);
         return -1;
@@ -126,8 +125,9 @@ int handle_cca_update_msg(msg_info_t **msg_p)
     SET_PROC_MSG(proc_context,msg);
     msg->proc_context = proc_context;
     proc_context->handler(proc_context, msg);
+    // NOTE : this is important so that caller does not free msg pointer 
+    *msg_p = NULL;
     return 0;
-
 }
 
 /*

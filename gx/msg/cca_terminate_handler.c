@@ -106,8 +106,7 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
     printf("retrieve pdn_cntxt \n");
     /* Retrieve PDN context based on call id */
     pdn_cntxt = get_pdn_conn_entry(call_id);
-    if (pdn_cntxt == NULL)
-    {
+    if (pdn_cntxt == NULL) {
         printf("retrieve pdn_cntxt failed \n");
         clLog(clSystemLog, eCLSeverityCritical, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
                 __func__, call_id);
@@ -125,6 +124,8 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
             get_state_string(msg->state), get_event_string(msg->event));
 
     dispatch_cca(msg); 
+    // NOTE : this is important so that caller does not free msg pointer 
+    *msg_p = NULL;
 
     return 0;
 }

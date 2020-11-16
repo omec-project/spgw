@@ -43,7 +43,7 @@ msg_handler_pfcp(void *data)
         msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
         struct sockaddr_in peer_addr = {0};
 
-        bytes_pfcp_rx = recvfrom(my_sock.sock_fd_pfcp, pfcp_rx, 512, 0, (struct sockaddr *)(&peer_addr), &addr_len);
+        bytes_pfcp_rx = recvfrom(my_sock.sock_fd_pfcp, pfcp_rx, sizeof(pfcp_rx), 0, (struct sockaddr *)(&peer_addr), &addr_len);
 
         if ((bytes_pfcp_rx < 0) && (errno == EAGAIN  || errno == EWOULDBLOCK)) {
             clLog(clSystemLog, eCLSeverityCritical, "SGWC|SAEGWC_s11 recvfrom error: %s",
@@ -52,6 +52,8 @@ msg_handler_pfcp(void *data)
         }
 
         pfcp_header_t *pfcp_header = (pfcp_header_t *) pfcp_rx;
+        msg->magic_head = MSG_MAGIC;
+        msg->magic_tail = MSG_MAGIC;
         msg->msg_type = pfcp_header->message_type;
         msg->peer_addr = peer_addr;
         msg->source_interface = PFCP_IFACE; 

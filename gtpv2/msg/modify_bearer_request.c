@@ -674,6 +674,8 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         mbreq_proc->gtpc_trans = trans;
         
         start_procedure(mbreq_proc, msg);
+        // Note : important to note that we are holding on this msg now 
+        *msg_p = NULL;
 	}
     return 0;
 }

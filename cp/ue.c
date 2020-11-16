@@ -614,14 +614,20 @@ end_procedure(proc_context_t *proc_ctxt)
         cleanup_pfcp_trans(proc_ctxt->pfcp_trans);
     }
 
-    //proc_ctxt->msg_info->refCnt--;
-    //if(proc_ctxt->msg_info->refCnt == 0)
-    free(proc_ctxt->msg_info); // BUG - why we should not use refCnt ?
+    msg_info_t *msg = (msg_info_t *)proc_ctxt->msg_info;
+    if(msg != NULL) {
+        msg->refCnt--;
+        if(msg->refCnt == 1) { // i m the only one using this 
+            free(msg->raw_buf);
+            free(msg); 
+        }
+    }
 
     context = proc_ctxt->ue_context;
     if(context != NULL) {
         TAILQ_REMOVE(&context->pending_sub_procs, proc_ctxt, next_sub_proc);
     }
+
     switch(proc_ctxt->proc_type) {
         case INITIAL_PDN_ATTACH_PROC: {
             context = proc_ctxt->ue_context;

@@ -356,7 +356,6 @@ msg_handler_gx(void *data)
     printf("Gx app connected \n");
     while(1) {
         int bytes_rx = 0;
-        msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
         gx_msg *gx_rx = NULL;
         char recv_buf[BUFFSIZE] = {0};
 
@@ -372,6 +371,9 @@ msg_handler_gx(void *data)
         struct sockaddr_in saddr_in;
         saddr_in.sin_family = AF_INET;
         inet_aton("127.0.0.1", &(saddr_in.sin_addr));
+        msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
+        msg->magic_head = MSG_MAGIC;
+        msg->magic_tail = MSG_MAGIC;
         msg->msg_type = gx_rx->msg_type;
         msg->source_interface = GX_IFACE;
         msg->raw_buf = calloc(1, bytes_rx);
@@ -402,6 +404,8 @@ process_gx_msg(void *data, uint16_t event)
             printf("\n Received CCA \n");
             if (gx_cca_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + sizeof(gx_rx->seq_num),
                         &msg->gx_msg.cca) <= 0) {
+                free(msg->raw_buf);
+                free(msg);
                 printf("\n unpack failed \n");
                 return;
             }
@@ -425,6 +429,8 @@ process_gx_msg(void *data, uint16_t event)
             printf("\n Received RAR with sequence number %d \n", gx_rx->seq_num);
             if (gx_rar_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + sizeof(gx_rx->seq_num),
                         &msg->gx_msg.rar) <= 0) {
+                free(msg->raw_buf);
+                free(msg);
                 return;
             }
             handle_rar_msg(&msg);
@@ -436,14 +442,20 @@ process_gx_msg(void *data, uint16_t event)
                     "\n\tReceived Gx Message : "
                     "%d not supported... Discarding\n", __func__,
                     cp_config->cp_type, gx_rx->msg_type);
+            free(msg->raw_buf);
             free(msg);
             return;
         }
     }
-    free(msg->raw_buf);
-    // nobody took ownership...
-    if(msg->refCnt == 0)
-        free(msg);
+
+    if(msg != NULL) {
+        assert(msg->magic_head == MSG_MAGIC);
+        assert(msg->magic_tail == MSG_MAGIC);
+        if(msg->refCnt == 0) { // no one claimed ownership of this msg 
+            free(msg->raw_buf);
+            free(msg);
+        }
+    }
     return;
 }
 

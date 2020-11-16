@@ -257,8 +257,7 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     uint32_t seq_num = msg->gtpc_msg.dsr.header.teid.has_teid.seq;  
     transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
 
-    if(old_trans != NULL)
-    {
+    if(old_trans != NULL) {
         printf("Retransmitted DSReq received. Old DSReq is in progress\n");
         return -1;
     }
@@ -310,6 +309,8 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     gtpc_trans->sequence = seq_num;
     gtpc_trans->peer_sockaddr = msg->peer_addr;
     start_procedure(detach_proc, msg);
+    // Note : important to note that we are holding on this msg now 
+    *msg_p = NULL;
     return 0;
 }
 

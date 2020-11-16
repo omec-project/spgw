@@ -72,6 +72,8 @@ process_gtp_msg(void *data, uint16_t event)
     gtpv2c_header_t *gtpv2c_rx = (gtpv2c_header_t *)msg->raw_buf;
     if (gtpv2c_rx->gtpc.version < GTP_VERSION_GTPV2C) {
         fprintf(stderr, "Discarding packet due to gtp version is not supported..");
+        free(msg->raw_buf);
+        free(msg);
         return;
     }else if (gtpv2c_rx->gtpc.version > GTP_VERSION_GTPV2C) {
         send_version_not_supported(&msg->peer_addr, 
@@ -81,9 +83,14 @@ process_gtp_msg(void *data, uint16_t event)
         return;
     }
     gtp_msg_handler[gtpv2c_rx->gtpc.message_type](&msg, gtpv2c_rx);
-    free(msg->raw_buf);
-    if(msg->refCnt == 0)
-        free(msg);
+    if(msg != NULL) {
+        assert(msg->magic_head == MSG_MAGIC);
+        assert(msg->magic_tail == MSG_MAGIC);
+        if(msg->refCnt == 0) { // no one claimed ownership of this msg 
+            free(msg->raw_buf);
+            free(msg);
+        }
+    }
 
 }
 
