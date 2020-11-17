@@ -19,7 +19,10 @@
 /**
  * @brief  : Maintains decoded message from different messages
  */
+#define MSG_MAGIC ('M' << 24 | 'S' << 16 | 'G' << 8 | 'M')
+
 typedef struct msg_info {
+    uint32_t magic_head;
 	uint8_t msg_type;
 	uint8_t state;
 	uint8_t event;
@@ -77,6 +80,7 @@ typedef struct msg_info {
     uint32_t refCnt;
     void *raw_buf;
     uint16_t rar_seq_num;
+    uint32_t magic_tail;
 }msg_info_t;
 
 #endif

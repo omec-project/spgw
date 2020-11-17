@@ -129,6 +129,12 @@ handle_session_report_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 
     msg->ue_context = context;
 
-    handle_pfcp_session_report_req_msg(msg);
+    int err = handle_pfcp_session_report_req_msg(msg);
+
+    if(!err) {
+      // we would free the mesage as a part of proc cleanup 
+      *msg_p = NULL;
+    }
+
     return 0;
 }

@@ -45,8 +45,13 @@ struct proc_context {
 };
 typedef struct proc_context proc_context_t;
 
+// BUG : Should i check refCnt ?
 #define SET_PROC_MSG(proc, msg) { \
-    free(proc->msg_info); \
+    if(proc->msg_info != NULL) { \
+       msg_info_t *_tmp = (msg_info_t *)proc->msg_info;\
+       free(_tmp->raw_buf); \
+       free(_tmp); \
+    } \
     proc->msg_info = (void *)msg;\
     msg->refCnt++; \
 }

@@ -49,6 +49,12 @@ handle_pfcp_session_delete_request_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_r
         return -1;
     }
 
-    handle_pfcp_session_set_delete_request(msg);
+    int err = handle_pfcp_session_set_delete_request(msg);
+
+    if(!err) {
+      // we would free the mesage as a part of proc cleanup 
+      *msg_p = NULL;
+    }
+
     return 0;
 }

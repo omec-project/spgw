@@ -45,7 +45,6 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
     saddr_in.sin_family = AF_INET;
     inet_aton("127.0.0.1", &(saddr_in.sin_addr));
 
-
     increment_gx_peer_stats(MSG_RX_DIAMETER_GX_CCA_I, saddr_in.sin_addr.s_addr);
 
     pdn_connection_t *pdn_cntxt = NULL;
@@ -78,13 +77,13 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
 
     /* Retrieve PDN context based on call id */
     pdn_cntxt = get_pdn_conn_entry(call_id);
-    if (pdn_cntxt == NULL)
-    {
+    if (pdn_cntxt == NULL) {
         clLog(clSystemLog, eCLSeverityCritical, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
                 __func__, call_id);
         gx_msg_proc_failure(proc_context); 
         return -1;
     }
+
     msg->event = CCA_RCVD_EVNT;
     clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
             "Msg_Type:%s[%u], Session Id:%s, "
@@ -95,6 +94,8 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
     SET_PROC_MSG(proc_context, msg);
     msg->proc_context = proc_context;
     proc_context->handler(proc_context, msg);
+    // NOTE : this is important so that caller does not free msg pointer 
+    *msg_p = NULL;
     // if we wish to generate new test events based on CCA-I then enable following code. 
     //queue_stack_unwind_event(TEST_EVENTS, (void *)pdn_cntxt, test_event_handler);
     return 0;

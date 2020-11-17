@@ -94,6 +94,8 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     msg->event = DDN_ACK_RESP_RCVD_EVNT;
     msg->proc  = proc_context->state;
     SET_PROC_MSG(proc_context, msg);
+    // Note : important to note that we are holding on this msg now 
+    *msg_p = NULL;
 
     clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
             "Msg_Type:%s[%u], Teid:%u, "

@@ -75,6 +75,12 @@ handle_pfcp_session_delete_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_
         return -1;
     }
     increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP, peer_addr->sin_addr.s_addr);
-    handle_pfcp_session_delete_response(msg);
+    int err = handle_pfcp_session_delete_response(msg);
+
+    if(!err) {
+      // we would free the mesage as a part of proc cleanup 
+      *msg_p = NULL;
+    }
+
     return 0;
 }

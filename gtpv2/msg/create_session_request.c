@@ -683,8 +683,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     uint32_t seq_num = msg->gtpc_msg.csr.header.teid.has_teid.seq;  
     transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
 
-    if(old_trans != NULL)
-    {
+    if(old_trans != NULL) {
         printf("Retransmitted CSReq received. Old CSReq is in progress\n");
         return -1;
     }
@@ -744,6 +743,8 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     trans->sequence = seq_num;
     trans->peer_sockaddr = msg->peer_addr;
     start_procedure(csreq_proc, msg);
+    // NOTE : this is important so that caller does not free msg pointer 
+    *msg_p = NULL;
     return 0;
 }
 

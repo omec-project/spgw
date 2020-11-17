@@ -80,8 +80,7 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     uint32_t seq_num = msg->gtpc_msg.rab.header.teid.has_teid.seq;  
     transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
 
-    if(old_trans != NULL)
-    {
+    if(old_trans != NULL) {
         printf("Retransmitted RAB received. Old RAB is in progress\n");
         increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ_DROP, s11_peer_sockaddr->sin_addr.s_addr);
         return -1;
@@ -119,5 +118,8 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     trans->peer_sockaddr = msg->peer_addr;
 
     start_procedure(rab_proc, msg);
+    // Note : important to note that we are holding on this msg now 
+    *msg_p = NULL;
+
     return 0;
 }

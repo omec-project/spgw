@@ -44,7 +44,6 @@ msg_handler_gtp(void *data)
     RTE_SET_USED(data);
     while(1) {
         int ret = 0, bytes_rx = 0;
-        msg_info_t *msg = calloc(1, sizeof(msg_info_t));
         struct sockaddr_in peer_sockaddr = {0};
         socklen_t peer_sockaddr_len = sizeof(peer_sockaddr);
 
@@ -72,10 +71,6 @@ msg_handler_gtp(void *data)
             continue; 
         }
 
-        msg->peer_addr = peer_sockaddr;
-        msg->source_interface = S11_IFACE;
-        msg->msg_type = gtpv2c_rx->gtpc.message_type;
-
         if ((unsigned)bytes_rx != (ntohs(gtpv2c_rx->gtpc.message_len) + sizeof(gtpv2c_rx->gtpc))) {
             ret = GTPV2C_CAUSE_INVALID_LENGTH;
             /* According to 29.274 7.7.7, if message is request,
@@ -92,7 +87,12 @@ msg_handler_gtp(void *data)
             RTE_SET_USED(ret);
             continue; 
         }
-
+        msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+        msg->magic_head = MSG_MAGIC;
+        msg->magic_tail = MSG_MAGIC;
+        msg->peer_addr = peer_sockaddr;
+        msg->source_interface = S11_IFACE;
+        msg->msg_type = gtpv2c_rx->gtpc.message_type;
         msg->raw_buf = calloc(1, bytes_rx);
         memcpy(msg->raw_buf, gtp_rx_buf, bytes_rx);
         queue_stack_unwind_event(GTP_MSG_RECEIVED, (void *)msg, process_gtp_msg);

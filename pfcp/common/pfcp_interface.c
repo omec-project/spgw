@@ -50,12 +50,17 @@ process_pfcp_msg(void *data, uint16_t event)
 {
     assert(event == PFCP_MSG_RECEIVED );
     msg_info_t *msg = (msg_info_t *)data;    
+    assert(msg->magic_head == MSG_MAGIC);
+    assert(msg->magic_tail == MSG_MAGIC);
     pfcp_header_t *pfcp_header = (pfcp_header_t *)msg->raw_buf;
     pfcp_msg_handler[pfcp_header->message_type](&msg, pfcp_header);
-    free(msg->raw_buf);
-    if(msg->refCnt == 0)
-        free(msg);
-
+    if(msg != NULL) {
+        assert(msg->magic_head == MSG_MAGIC);
+        assert(msg->magic_tail == MSG_MAGIC);
+        free(msg->raw_buf);
+        if(msg->refCnt == 0) // no one claimed ownership of this msg 
+            free(msg);
+    }
     return;
 }
 

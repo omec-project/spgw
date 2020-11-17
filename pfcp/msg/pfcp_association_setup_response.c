@@ -25,14 +25,14 @@ handle_pfcp_association_setup_response_msg(msg_info_t **msg_p, pfcp_header_t *pf
     if(decoded <= 0) 
     {
         clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp precondition check\n", __func__);
-
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPRSP, peer_addr.sin_addr.s_addr);
-
         return -1;
     }
     increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPRSP, peer_addr.sin_addr.s_addr);
 
+    //Dont hold on to any message reference inside this function call...
     handle_pfcp_association_setup_response(msg);
+    // caller would free allocated message  
     return 0;
 }
 
