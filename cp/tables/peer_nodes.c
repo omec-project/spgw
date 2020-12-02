@@ -11,6 +11,7 @@
 #include "rte_lcore.h"
 #include "rte_debug.h"
 #include "rte_errno.h"
+#include "cp_log.h"
 
 struct rte_hash *conn_hash_handle;
 
@@ -72,7 +73,7 @@ get_peer_entry(uint32_t ipaddr, peerData_t **entry)
 			(const void*) &(ipaddr), (void **) entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN PEER HASH HASH [%s]",
+		LOG_MSG(LOG_DEBUG, "%s:%d NO ENTRY FOUND IN PEER HASH HASH [%s]",
 				__func__, __LINE__, inet_ntoa(*((struct in_addr *)&ipaddr)));
 		return -1;
 	}

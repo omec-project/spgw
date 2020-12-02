@@ -69,6 +69,7 @@ int handle_pfcp_session_report_req_msg(msg_info_t *msg)
 
     /* Create new transaction */
     transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
+    trans->self_initiated = 0;
     trans->sequence = seq_num;
     trans->peer_sockaddr = msg->peer_addr;
     add_pfcp_transaction(source_addr, source_port, seq_num, trans);

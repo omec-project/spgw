@@ -21,6 +21,7 @@
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
 #include "proc_session_report.h"
+#include "pfcp_cp_interface.h"
 
 proc_context_t*
 alloc_session_report_proc(msg_info_t *msg)
@@ -156,10 +157,7 @@ send_session_report_response(proc_context_t *proc_ctxt, msg_info_t *msg)
 	pfcp_header_t *pfcp_hdr = (pfcp_header_t *) pfcp_msg;
 	pfcp_hdr->message_len = htons(encoded - 4);
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0 ) {
-		clLog(sxlogger, eCLSeverityCritical, "Error REPORT REPONSE message: %i\n", errno);
-		return;
-	}
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSREPORTRSP, GET_UPF_ADDR(context->upf_context));
     proc_session_report_success(msg);
     return;

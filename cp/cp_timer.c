@@ -22,6 +22,7 @@
 #include "cp_timer.h"
 #include "clogger.h"
 #include "errno.h"
+#include "cp_log.h"
 
 
 static pthread_t _gstimer_thread;
@@ -68,7 +69,7 @@ static void *_gstimer_thread_func(void *arg)
 	sigemptyset( &set );
 	sigaddset( &set, SIGRTMIN );
 	sigaddset( &set, SIGUSR1 );
-
+	LOG_MSG(LOG_INIT, "Started timer thread ");
 	while (keepgoing)
 	{
 		int sig = sigwaitinfo( &set, &si );
@@ -86,6 +87,7 @@ static void *_gstimer_thread_func(void *arg)
 		}
 	}
 
+	LOG_MSG(LOG_ERROR, "Exiting timer thread ");
 	return NULL;
 }
 

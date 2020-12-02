@@ -386,16 +386,12 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0) {
-		clLog(sxlogger, eCLSeverityCritical,
-			"%s : Error in sending MBR to SGW-U. err_no: %i\n",
-			__func__, errno);
-	} else {
-        increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
-        transData_t *trans_entry;
-		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_delete_bearer_request_pfcp_timeout);
-        pdn->trans_entry = trans_entry;
-	}
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
+
+    increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
+    transData_t *trans_entry;
+	trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_delete_bearer_request_pfcp_timeout);
+    pdn->trans_entry = trans_entry;
 
 	context->sequence = db_req->header.teid.has_teid.seq;
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;

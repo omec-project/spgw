@@ -111,6 +111,7 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     /* Create new transaction */
     transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
+    trans->self_initiated = 0;
     add_gtp_transaction(source_addr, source_port, seq_num, trans);
     trans->proc_context = (void *)rab_proc;
     rab_proc->gtpc_trans = trans;

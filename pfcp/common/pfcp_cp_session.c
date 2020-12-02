@@ -3,7 +3,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
-
 #include "rte_errno.h"
 #include "rte_common.h"
 #include "pfcp_cp_util.h"
@@ -39,6 +38,7 @@
 #include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
+#include "pfcp_cp_interface.h"
 
 
 #define size sizeof(pfcp_sess_mod_req_t) /* ajay - clean this */
@@ -432,6 +432,7 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 		qer->gate_status.ul_gate  = dyn_rule->pdr[i]->qer.gate_status.ul_gate;
 		qer->gate_status.dl_gate  = dyn_rule->pdr[i]->qer.gate_status.dl_gate;
         //printf("pfcp_sess_mod_req->create_urr_count %d \n", pfcp_sess_mod_req->create_urr_count);
+		// URR support
         for(uint8_t idx = 0; idx < 1; idx++)
         {
             creating_urr(&pfcp_sess_mod_req->create_urr[urr_idx]);
@@ -1015,7 +1016,6 @@ sdf_pkt_filter_to_string(flow_desc_t *flow,
 				sdf_flow->proto_id, sdf_flow->proto_mask);
 	}
 #endif
-    printf("\n sdf_pkt_filter_to_string : - sdf_str = %s \n",sdf_str);
 }
 
 void
@@ -1617,6 +1617,7 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 				/*TODO*/
 				break;
 		}
+		// URR support 
 		pdr_ctxt->urr.urr_id = bearer->urr_id[i].urr_id;
 		pdr_ctxt->urr_id[0].urr_id = pdr_ctxt->urr.urr_id;
 	}
@@ -2468,16 +2469,13 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0 ){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error sending: %i\n",
-				__func__, __LINE__, errno);
-		return NULL;
-	} 
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
 
     /*pfcp-session-estab-req-sent*/
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSESTREQ,GET_UPF_ADDR(context->upf_context)); 
 
     trans_entry = start_response_wait_timer(proc_context, pfcp_msg, encoded, process_pfcp_sess_est_request_timeout);
+    trans_entry->self_initiated = 1;
     trans_entry->sequence = sequence;
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
 

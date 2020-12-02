@@ -26,6 +26,8 @@
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_util.h"
 #include "cp_transactions.h"
+#include "pfcp_cp_interface.h"
+#include "gx_interface.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -1045,7 +1047,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 	}
 
 	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
+	gx_send(my_sock.gx_app_sock, buffer,
 			msg_len + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 	return 0;
 }
@@ -1102,9 +1104,7 @@ send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &pdn->context->upf_context->upf_sockaddr) < 0 ){
-		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
-	}
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &pdn->context->upf_context->upf_sockaddr);
 
 	/* Update UE State */
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;

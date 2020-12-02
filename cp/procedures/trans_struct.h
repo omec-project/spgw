@@ -13,7 +13,7 @@
 #include <netinet/ip.h>
 
 /**
- * @brief  : Maintains context of upf
+ * @brief  : Maintains transaction information 
  */
 typedef void (*timeout_handler_t)(void *);
 
@@ -21,6 +21,7 @@ struct transData
 {
     uint8_t     iface;
     uint8_t     msg_type;
+    uint8_t     self_initiated;
     uint32_t    sequence;
 	uint16_t    buf_len;
 	uint8_t     buf[1024];

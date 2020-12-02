@@ -31,6 +31,7 @@
 #include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
+#include "pfcp_cp_interface.h"
 
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
@@ -196,14 +197,13 @@ process_mb_req_handler(proc_context_t *proc_context, msg_info_t *msg)
     pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
     header->message_len = htons(encoded - 4);
 
-    if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0 ){
-        clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
-        // Assume that its success and let retry take care of error handling  
-    } 
+    pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
+
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
 
     transData_t *trans_entry;
     trans_entry = start_response_wait_timer(proc_context, pfcp_msg, encoded, process_pfcp_sess_mod_request_timeout);
+    trans_entry->self_initiated = 1;
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
     trans_entry->sequence = sequence;
 

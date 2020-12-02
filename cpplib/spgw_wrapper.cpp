@@ -19,6 +19,7 @@ extern "C"
     #include <stdio.h>
     #include "spgw_cpp_wrapper.h"
     #include "spgwStatsPromEnum.h"
+	#include "cp_log.h"
 
     spgw_config_profile_t *parse_subscriber_profiles_c(const char *file)
     {
@@ -121,6 +122,26 @@ extern "C"
     void *get_gtp_out_event(void)
     {
         return table->pop_gtp_out_event();
+    }
+
+    void queue_pfcp_out_event_cpp(void *context)
+    {
+        return table->queue_pfcp_out_event(context);
+    }
+
+    void *get_pfcp_out_event(void)
+    {
+        return table->pop_pfcp_out_event();
+    }
+
+    void queue_gx_out_event_cpp(void *context)
+    {
+        return table->queue_gx_out_event(context);
+    }
+
+    void *get_gx_out_event(void)
+    {
+        return table->pop_gx_out_event();
     }
 
     void *get_t2tMsg() 

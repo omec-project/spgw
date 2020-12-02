@@ -40,7 +40,7 @@
 #include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
-
+#include "pfcp_cp_interface.h"
 
 static int
 assoication_setup_request(upf_context_t *upf_context);
@@ -297,23 +297,20 @@ assoication_setup_request(upf_context_t *upf_context)
     pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
     header->message_len = htons(encoded - 4);
 
-    if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &upf_context->upf_sockaddr) < 0 ) {
-        clLog(clSystemLog, eCLSeverityDebug,"Error sending\n\n");
-        // this cause will be put in csrsp 
-        return GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER;
-    } else {
+    pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &upf_context->upf_sockaddr);
 
-        increment_userplane_stats(MSG_TX_PFCP_SXASXB_ASSOCSETUPREQ, GET_UPF_ADDR(upf_context));
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_ASSOCSETUPREQ, GET_UPF_ADDR(upf_context));
 
-        trans_entry = start_pfcp_node_timer((void *)upf_context, pfcp_msg, encoded,  
-                                            process_assoc_resp_timeout_handler);
-        
-        trans_entry->sequence = seq_num;
-        // for now...upf is responding with 0 seq 
-        add_pfcp_transaction(local_addr, port_num, seq_num, (void*)trans_entry);  
-        upf_context->trans_entry = trans_entry;
-        upf_context->state = PFCP_ASSOC_REQ_SNT_STATE;
-    }
+    trans_entry = start_pfcp_node_timer((void *)upf_context, pfcp_msg, encoded,  
+                                        process_assoc_resp_timeout_handler);
+    
+    trans_entry->self_initiated = 1;
+    trans_entry->sequence = seq_num;
+    // for now...upf is responding with 0 seq 
+    add_pfcp_transaction(local_addr, port_num, seq_num, (void*)trans_entry);  
+    upf_context->trans_entry = trans_entry;
+    upf_context->state = PFCP_ASSOC_REQ_SNT_STATE;
+
     return 0;
 }
 

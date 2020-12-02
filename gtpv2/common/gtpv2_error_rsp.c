@@ -374,13 +374,7 @@ void mbr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 	set_ebi(&mb_resp.bearer_contexts_modified.eps_bearer_id, IE_INSTANCE_ZERO,
 			rsp_info.ebi_index);
 
-	 mb_resp.bearer_contexts_modified.header.len += sizeof(uint8_t)+ IE_HEADER_SIZE;
-
-	ue_context_t *context = NULL;
-
-	if (get_ue_context(rsp_info.teid, &context) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
-	}
+	mb_resp.bearer_contexts_modified.header.len += sizeof(uint8_t)+ IE_HEADER_SIZE;
 
 	uint16_t msg_len = 0;
 	msg_len = encode_mod_bearer_rsp(&mb_resp, (uint8_t *)gtpv2c_tx);

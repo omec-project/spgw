@@ -363,19 +363,6 @@ dns_query_lookup(pdn_connection_t *pdn, uint32_t *upf_ip)
 	return 0;
 }
 
-int
-pfcp_send(int fd, void *msg_payload, uint32_t size,
-		struct sockaddr_in *peer_addr)
-{
-	socklen_t addr_len = sizeof(*peer_addr);
-	uint32_t bytes = sendto(fd,
-			(uint8_t *) msg_payload,
-			size,
-			MSG_DONTWAIT,
-			(struct sockaddr *)peer_addr,
-			addr_len);
-	return bytes;
-}
 
 long
 uptime(void)

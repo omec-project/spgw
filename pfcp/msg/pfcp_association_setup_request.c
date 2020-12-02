@@ -139,13 +139,9 @@ handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfc
     pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
     header->message_len = htons(encoded - 4);
 
-    if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &upf_context->upf_sockaddr) < 0 ) {
-        clLog(clSystemLog, eCLSeverityDebug,"Error sending\n\n");
-        return -1;
-    } else {
-        increment_userplane_stats(MSG_TX_PFCP_SXASXB_ASSOCSETUPRSP, GET_UPF_ADDR(upf_context));
-        upf_context->state = PFCP_ASSOC_RESP_RCVD_STATE;
-    }
+    pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &upf_context->upf_sockaddr);
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_ASSOCSETUPRSP, GET_UPF_ADDR(upf_context));
+    upf_context->state = PFCP_ASSOC_RESP_RCVD_STATE;
     return 0;
 }
 

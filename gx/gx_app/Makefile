@@ -29,12 +29,12 @@ DEBUG = 1
 ifeq ($(DEBUG),1)
 	CFLAGS += -g3
 #un-comment below line to remove all Debug logs for testing.
-	CFLAGS += -DGX_DEBUG
+	CFLAGS += -DGX_DEBUG $(INCS)
 else
 	CFLAGS += -O3
 endif
 
-INCS := -I$(ROOT)/include -I$(ROOT)/../ -I$(ROOT)/../../pfcp_messages/ -I$(ROOT)/../../cp
+INCS := -I$(ROOT)/include -I$(ROOT)/../ -I$(ROOT)/../../pfcp_messages/ -I$(ROOT)/../../cp -I$(ROOT)/../../cpplib
 LIB_PATH :=/usr/local/lib
 LIBS := -lfdproto -lfdcore
 

@@ -21,11 +21,9 @@
  */
 void* msg_handler_pfcp(void*);
 
-void init_pfcp_interface(void);
+void init_pfcp_msg_handlers(void);
 
 typedef int (*pfcp_handler)(msg_info_t **msg, pfcp_header_t *); 
-
-extern pfcp_handler pfcp_msg_handler[256];
 
 int 
 handle_unknown_pfcp_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
@@ -66,4 +64,24 @@ handle_pfcp_session_delete_request_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx)
 void
 process_pfcp_msg(void *data, uint16_t event);
 
+/**
+ * @brief  : Send data to peer node
+ * @param  : fd, socket or file descriptor to use to send data
+ * @param  : msg_payload, buffer to store data to be send
+ * @param  : size, max size to send data
+ * @param  : peer_addr, peer node address
+ * @return : Returns sent number of bytes
+ */
+int
+pfcp_send(int fd,void *msg_payload, uint32_t size,
+		struct sockaddr_in *peer_addr);
+
+
+void* out_handler_pfcp(void *data);
+
+void init_pfcp(void);
+
+void init_pfcp_msg_handlers(void);
+
+void init_pfcp_msg_threads(void);
 #endif

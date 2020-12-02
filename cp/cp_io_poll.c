@@ -27,29 +27,13 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_events.h"
 #include "rte_common.h"
+#include "cp_log.h"
 
-void* 
-msg_handler_local(void *data)
-{
-    int bytes_rx;
-    uint8_t rx_buf[128];
-    printf("Starting local message handler thread \n");
-    RTE_SET_USED(data);
-    while(1) {
-        bytes_rx = recv(my_sock.sock_fd_local, rx_buf, sizeof(rx_buf), 0);
-        if(bytes_rx != 0) {
-            printf("Read the config read event \n");
-            queue_stack_unwind_event(LOCAL_MSG_RECEIVED, (void *)NULL, process_local_msg);
-        }
-    }
-    printf("exiting local message handler thread \n");
-    return NULL;
-}
 
 void 
 process_local_msg(void *data, uint16_t event)
 {
-    printf("Process local message event \n");
+    LOG_MSG(LOG_INFO,"Process local message event ");
     RTE_SET_USED(data);
     RTE_SET_USED(event);
     struct t2tMsg *evt  = (struct t2tMsg *)get_t2tMsg();
@@ -66,18 +50,18 @@ incoming_event_handler(void* data)
 {
     RTE_SET_USED(data);
     stack_event_t *event;
-    printf("Starting event handler thread \n");
+    LOG_MSG(LOG_INIT, "Starting main-event handler thread ");
     while(1) {
         event  = (stack_event_t *)get_stack_unwind_event();
         if(event != NULL)
         {
-            clLog(clSystemLog, eCLSeverityCritical,"handle stack unwind event %s ",event_names[event->event]);
+            LOG_MSG(LOG_DEBUG,"handle stack unwind event %s ",event_names[event->event]);
             event->cb(event->data, event->event);
             free(event);
             continue;
         }
         usleep(10);
     }
-    printf("exiting event handler thread \n");
+    LOG_MSG(LOG_ERROR,"exiting event handler thread ");
     return NULL;
 }

@@ -27,9 +27,10 @@
 #define SIZE_IF_TEIDRI_PRESENT 7
 #define SIZE_IF_TEIDRI_NOT_PRESENT 6
 
+extern uint32_t start_time;
+
 pfcp_context_t pfcp_ctxt;
 /* extern */
-uint32_t start_time;
 const uint32_t pfcp_base_seq_no = 0x00000000;
 static uint32_t pfcp_seq_no_offset;
 

@@ -36,6 +36,7 @@
 #include "pfcp_cp_interface.h"
 #include "gx_interface.h"
 #include "cp_test.h"
+#include "cp_log.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -46,16 +47,11 @@
 #define IP_POOL_MASK_SET   (0x0100)
 #define APN_NAME_SET	   (0x0200)
 
-pcap_t *pcap_reader;
+uint8_t logging_level;
+pcap_t *pcap_reader = NULL;
 pcap_dumper_t *pcap_dumper;
-uint32_t start_time;
 char *config_update_base_folder = NULL;
 bool native_config_folder = false;
-
-/* We should move all the config inside this structure eventually
- * config is scattered all across the place as of now
- */
-uint8_t rstCnt = 0;
 
 #ifdef USE_CSID
 uint16_t local_csid = 0;
@@ -137,24 +133,6 @@ parse_arg(int argc, char **argv)
     }
 }
 
-/**
- * @brief  : initializes the core assignments for various control plane threads
- * @param  : No param
- * @return : Returns nothing
- */
-static void
-init_cp_params(void) 
-{
-    unsigned last_lcore = rte_get_master_lcore();
-
-    cp_params.stats_core_id = rte_get_next_lcore(last_lcore, 1, 0);
-    if (cp_params.stats_core_id == RTE_MAX_LCORE)
-        clLog(clSystemLog, eCLSeverityCritical, "Insufficient cores in coremask to "
-                "spawn stats thread\n");
-    last_lcore = cp_params.stats_core_id;
-
-}
-
 
 /**
  * @brief  : Main function - initializes dpdk environment, parses command line arguments,
@@ -168,17 +146,14 @@ main(int argc, char **argv)
 {
     int ret;
 
-    start_time = current_ntp_timestamp();
-
-    /* VS: Increment the restart counter value after starting control plane */
-    rstCnt = update_rstCnt();
-
-    TIMER_GET_CURRENT_TP(st_time);
-    recovery_time_into_file(start_time);
+	set_logging_level("LOG_ERROR");
+    LOG_MSG(LOG_INIT, "Starting main thread ");
 
     ret = rte_eal_init(argc, argv);
     if (ret < 0)
         rte_panic("Cannot init EAL\n");
+
+    parse_arg(argc - ret, argv + ret);
 
     int state = mkdir(DEFAULT_STATS_PATH, S_IRWXU);
     if (state && errno != EEXIST) {
@@ -186,96 +161,25 @@ main(int argc, char **argv)
                 DEFAULT_STATS_PATH, strerror(errno));
     }
 
-    parse_arg(argc - ret, argv + ret);
-
-
-    // this parses file and allocates cp_config  
-    init_config();
-
-    setup_prometheus(cp_config->prom_port);
-
-    setup_webserver(cp_config->webserver_port);
 
     init_cp();
-
-    init_cp_params();
-
-    init_cpp_tables(); 
-
-    create_heartbeat_hash_table();
 
 #ifdef DELETE
     create_associated_upf_hash();
 #endif
 
-	echo_table_init();
-
-    rest_thread_init();
-
-    init_pfcp_tables();
-
 #ifdef USE_CSID
     init_fqcsid_hash_tables();
 #endif /* USE_CSID */
 
-    // thread to read incoming socket messages from udp socket
-    pthread_t readerGtp_t;
-    pthread_attr_t gtpattr;
-    pthread_attr_init(&gtpattr);
-    pthread_attr_setdetachstate(&gtpattr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&readerGtp_t, &gtpattr, &msg_handler_gtp, NULL);
-    pthread_attr_destroy(&gtpattr);
+	if (signal(SIGINT, sig_handler) == SIG_ERR)
+		rte_exit(EXIT_FAILURE, "Error:can't catch SIGINT\n");
 
-    pthread_t writerGtp_t;
-    pthread_attr_t gtpattr1;
-    pthread_attr_init(&gtpattr1);
-    pthread_attr_setdetachstate(&gtpattr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&writerGtp_t, &gtpattr1, &out_handler_gtp, NULL);
-    pthread_attr_destroy(&gtpattr1);
-
-    // thread to read incoming socket messages from udp socket
-    pthread_t readerPfcp_t;
-    pthread_attr_t pfcpattr;
-    pthread_attr_init(&pfcpattr);
-    pthread_attr_setdetachstate(&pfcpattr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&readerPfcp_t, &pfcpattr, &msg_handler_pfcp, NULL);
-    pthread_attr_destroy(&pfcpattr);
-
-    // thread to read incoming socket messages from udp socket
-    pthread_t readerGx_t;
-    pthread_attr_t gxattr;
-    pthread_attr_init(&gxattr);
-    pthread_attr_setdetachstate(&gxattr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&readerGx_t, &gxattr, &msg_handler_gx, NULL);
-    pthread_attr_destroy(&gxattr);
-
-
-    // thread to read incoming socker messages from local socket
-    pthread_t readerLocal_t;
-    pthread_attr_t localattr;
-    pthread_attr_init(&localattr);
-    pthread_attr_setdetachstate(&localattr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&readerLocal_t, &localattr, &msg_handler_local, NULL);
-    pthread_attr_destroy(&localattr);
-
-    // thread to read incoming messages event queue 
-    pthread_t readerInevent_t;
-    pthread_attr_t inattr;
-    pthread_attr_init(&inattr);
-    pthread_attr_setdetachstate(&inattr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&readerInevent_t, &inattr, &incoming_event_handler, NULL);
-    pthread_attr_destroy(&inattr);
-
-    // thread to generate Test events for protocol stack
-    pthread_t readerTest_t;
-    pthread_attr_t testattr;
-    pthread_attr_init(&testattr);
-    pthread_attr_setdetachstate(&testattr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&readerTest_t, &testattr, &test_event_thread, NULL);
-    pthread_attr_destroy(&testattr);
+	if (signal(SIGSEGV, sig_handler) == SIG_ERR)
+		rte_exit(EXIT_FAILURE, "Error:can't catch SIGSEGV\n");
 
     while(1) {
-        sleep(10);
+		incoming_event_handler(NULL);
     }
 
     return 0;

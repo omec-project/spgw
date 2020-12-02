@@ -9,8 +9,10 @@
 
 #include "ipc_api.h"
 #include "gx.h"
+#include "cp_log.h"
 
 extern int g_gx_client_sock;
+uint8_t logging_level=LOG_ERROR;
 
 int done = 0;
 

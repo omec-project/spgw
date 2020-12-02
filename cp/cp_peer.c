@@ -27,6 +27,7 @@
 #include "cp_io_poll.h"
 #include "spgwStatsPromEnum.h"
 #include "cp_events.h"
+#include "cp_log.h"
 
 uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -80,7 +81,7 @@ void handle_timeout(void *data, uint16_t event)
         printf("Peer (%s) not found \n", inet_ntoa(dest_addr.sin_addr));
         return;
     }
-	clLog(clSystemLog, eCLSeverityCritical, "%s - %s:%s:%u.%s (%dms) has expired", getPrintableTime(),
+	LOG_MSG(LOG_DEBUG, "%s - %s:%s:%u.%s (%dms) has expired", getPrintableTime(),
 		md->name, inet_ntoa(*(struct in_addr *)&md->dstIP), md->portId,
 		ti == &md->pt ? "Periodic_Timer" :
 		ti == &md->tt ? "Transmit_Timer" : "unknown",
@@ -96,12 +97,11 @@ void handle_timeout(void *data, uint16_t event)
 		/* Deinit transmit timer for specific Peer Node */
 		deinitTimer( &md->pt );
 
-		clLog(clSystemLog, eCLSeverityDebug, "Stopped Periodic/transmit timer, peer node %s is not reachable\n",
-				inet_ntoa(*(struct in_addr *)&md->dstIP));
 
 		/* TODO: Flush sessions */
         if (md->portId == SX_PORT_ID) {
-			clLog(sxlogger, eCLSeverityDebug, " SGWU/SPGWU/PGWU status : Inactive\n");
+			LOG_MSG(LOG_ERROR, "Stopped Periodic/transmit timer, User Plane node %s is not reachable",
+				inet_ntoa(*(struct in_addr *)&md->dstIP));
             upf_context_t *upf_context = NULL; 
             upf_context_entry_lookup(dest_addr.sin_addr.s_addr, &upf_context);
             if(upf_context != NULL)
@@ -120,7 +120,8 @@ void handle_timeout(void *data, uint16_t event)
 
 		/* Flush sessions */
 		if (md->portId == S11_SGW_PORT_ID) {
-			clLog(s11logger, eCLSeverityDebug, "MME status : Inactive\n");
+			LOG_MSG(LOG_ERROR, "Stopped Periodic/transmit timer, MME node %s is not reachable",
+				inet_ntoa(*(struct in_addr *)&md->dstIP));
 #ifdef USE_CSID
 			del_pfcp_peer_node_sess(md->dstIP, S11_SGW_PORT_ID);
 			del_peer_node_sess(ntohl(md->dstIP), S11_SGW_PORT_ID);
@@ -129,7 +130,8 @@ void handle_timeout(void *data, uint16_t event)
 
 		/* Flush sessions */
 		if (md->portId == S5S8_SGWC_PORT_ID) {
-			clLog(s5s8logger, eCLSeverityDebug, "PGWC status : Inactive\n");
+			LOG_MSG(LOG_ERROR, "Stopped Periodic/transmit timer, PGWC node %s is not reachable",
+				inet_ntoa(*(struct in_addr *)&md->dstIP));
 #ifdef USE_CSID
 			del_pfcp_peer_node_sess(ntohl(md->dstIP), S5S8_SGWC_PORT_ID);
 			del_peer_node_sess(md->dstIP, S5S8_SGWC_PORT_ID);
@@ -138,7 +140,8 @@ void handle_timeout(void *data, uint16_t event)
 
 		/* Flush sessions */
 		if (md->portId == S5S8_PGWC_PORT_ID) {
-			clLog(s5s8logger, eCLSeverityDebug, "SGWC status : Inactive\n");
+			LOG_MSG(LOG_ERROR, "Stopped Periodic/transmit timer, SGWC node %s is not reachable",
+				inet_ntoa(*(struct in_addr *)&md->dstIP));
 #ifdef USE_CSID
 			del_pfcp_peer_node_sess(ntohl(md->dstIP), S5S8_PGWC_PORT_ID);
 			del_peer_node_sess(md->dstIP, S5S8_PGWC_PORT_ID);
@@ -226,7 +229,7 @@ void handle_timeout(void *data, uint16_t event)
 	if (ti == &md->pt) {
 		if ( startTimer( &md->tt ) < 0)
 		{
-			clLog(clSystemLog, eCLSeverityCritical, "Transmit Timer failed to start..\n");
+			LOG_MSG(LOG_ERROR, "Transmit Timer failed to start..");
 		}
 
 		/* Stop periodic timer for specific Peer Node */
@@ -322,7 +325,7 @@ uint8_t process_response(uint32_t dstIp)
 	ret = get_peer_entry(dstIp, &conn_data);
 
 	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, " Entry not found for NODE :%s\n",
+		LOG_MSG(LOG_ERROR, " Entry not found for NODE :%s",
 				inet_ntoa(*(struct in_addr *)&dstIp));
 	} else {
 		conn_data->itr_cnt = 0;
@@ -333,10 +336,9 @@ uint8_t process_response(uint32_t dstIp)
 		stopTimer( &conn_data->pt );
 		/* Reset Periodic Timer */
 		if ( startTimer( &conn_data->pt ) == false ) 
-			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to stop...\n");
+			LOG_MSG(LOG_ERROR, "Periodic Timer failed to stop...\n");
 
-		clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer stopped \n");
-
+		LOG_MSG(LOG_DEBUG, "Periodic Timer stopped - since activity seen with peer node ");
 	}
 	return 0;
 }

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifdef FUTURE_NEED
+#include "gx_interface.h"
 int
 process_mod_resp_delete_handler(void *data, void *unused_param)
 {
@@ -409,18 +410,13 @@ process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0 ){
-		clLog(sxlogger, eCLSeverityCritical,
-			"%s:%d Error sending: %i\n", __func__, __LINE__, errno);
-		return -1;
-	} else  {
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
 
-        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSDELREQ, GET_UPF_ADDR(context->upf_context));
-        transData_t *trans_entry;
-		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pfcp_sess_del_request_delete_bearer_rsp_timeout);
-        RTE_SET_USED(trans_entry);
-        pdn->trans_entry = trans_entry;
-	}
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSDELREQ, GET_UPF_ADDR(context->upf_context));
+    transData_t *trans_entry;
+	trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pfcp_sess_del_request_delete_bearer_rsp_timeout);
+    RTE_SET_USED(trans_entry);
+    pdn->trans_entry = trans_entry;
 
 	/* Update UE State */
 	context->pdns[ebi_index]->state = PFCP_SESS_DEL_REQ_SNT_STATE;
@@ -544,16 +540,12 @@ process_sess_mod_req_del_cmd(pdn_connection_t *pdn)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0 ){
-		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
-	} else {
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
 
-        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
-        transData_t *trans_entry;
-        trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pfcp_sess_mod_del_cmd_timeout);
-        pdn->trans_entry = trans_entry;
-
-	}
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
+    transData_t *trans_entry;
+    trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pfcp_sess_mod_del_cmd_timeout);
+    pdn->trans_entry = trans_entry;
 
 	/* Update UE State */
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
@@ -665,7 +657,7 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 			msg_len_total, msg_type_ofs, msg_body_ofs, rqst_ptr_ofs);
 #endif
 	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer, // need change
+	gx_send(my_sock.gx_app_sock, buffer, // need change
 			msg_len_total);
 			//msg_len + sizeof(raa.msg_type) + sizeof(unsigned long));
 

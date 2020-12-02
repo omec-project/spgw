@@ -102,7 +102,7 @@ int unixsock()
 
 	connect_to_ipc_channel( g_gx_client_sock, cp_app_sockaddr, "/tmp/sock_server");
 
-	while(1){
+	while(1) {
 		/* add our descriptors to the set */
 		FD_SET(g_gx_client_sock, &readfds);
 

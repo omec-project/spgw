@@ -30,17 +30,17 @@
 #include "cp_io_poll.h"
 #include "cdnshelper.h"
 #include "cp_events.h"
+#include "cp_test.h"
+#include "cp_log.h"
 
 uint8_t gtp_rx_buf[MAX_GTPV2C_UDP_LEN];
-
-uint32_t start_time;
 
 /* Requirement1 - multiple read to read all the messages from the sockets 
  */
 void*
 msg_handler_gtp(void *data)
 {
-    printf("Starting gtp message handler thread \n");
+    LOG_MSG(LOG_INIT,"Starting gtp message handler thread ");
     RTE_SET_USED(data);
     while(1) {
         int ret = 0, bytes_rx = 0;
@@ -95,9 +95,13 @@ msg_handler_gtp(void *data)
         msg->msg_type = gtpv2c_rx->gtpc.message_type;
         msg->raw_buf = calloc(1, bytes_rx);
         memcpy(msg->raw_buf, gtp_rx_buf, bytes_rx);
-        queue_stack_unwind_event(GTP_MSG_RECEIVED, (void *)msg, process_gtp_msg);
+		if(gtp_in_mock_handler[msg->msg_type] != NULL) { 
+			gtp_in_mock_handler[msg->msg_type](msg, GTP_MSG_RECEIVED);
+		} else {
+			queue_stack_unwind_event(GTP_MSG_RECEIVED, (void *)msg, process_gtp_msg);
+		}
     }
-    printf("exiting gtp message handler thread \n");
+    LOG_MSG(LOG_INIT,"exiting gtp message handler thread ");
     return 0;
 }
 

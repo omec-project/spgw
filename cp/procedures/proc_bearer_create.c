@@ -22,9 +22,10 @@
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_util.h"
 #include "ipc_api.h"
+#include "pfcp_cp_interface.h"
+#include "gx_interface.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
-extern udp_sock_t my_sock;
 
 void
 process_pfcp_sess_mod_resp_cbr_timeout(void *data)
@@ -112,6 +113,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *p)
                                             payload_length, 
                                             process_pfcp_sess_mod_resp_cbr_timeout);
 
+    gtpc_trans->self_initiated = 1;
     gtpc_trans->proc_context = (void *)proc_ctxt;
     proc_ctxt->gtpc_trans = gtpc_trans;
     gtpc_trans->sequence = sequence;
@@ -239,7 +241,7 @@ process_create_bearer_resp_and_send_raa( proc_context_t *proc)
 		clLog(gxlogger, eCLSeverityDebug,"RAA Packing failure \n");
     }
 
-    send_to_ipc_channel(my_sock.gx_app_sock, send_buf, buflen + sizeof(resp->msg_type) + sizeof(resp->seq_num));
+    gx_send(my_sock.gx_app_sock, send_buf, buflen + sizeof(resp->msg_type) + sizeof(resp->seq_num));
 }
 
 void process_sgwc_create_bearer_rsp_pfcp_timeout(void *data)
@@ -315,12 +317,12 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 	header->message_len = htons(encoded - 4);
 
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0)
-		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
 
     increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
     transData_t *trans_entry;
     trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_sgwc_create_bearer_rsp_pfcp_timeout);
+    trans_entry->self_initiated = 1;
     bearer->pdn->trans_entry = trans_entry; 
     proc->pfcp_trans = trans_entry;
     trans_entry->proc_context = proc;
@@ -413,12 +415,12 @@ process_pgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0)
-		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
 
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
     transData_t *trans_entry;
     trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pgwc_create_bearer_rsp_pfcp_timeout);
+    trans_entry->self_initiated = 1;
     bearer->pdn->trans_entry = trans_entry; 
     proc->pfcp_trans = trans_entry;
     trans_entry->proc_context = proc;
@@ -559,16 +561,12 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0)
-		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
-	else
-	{
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
 
-        increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
-        transData_t *trans_entry;
-		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_create_bearer_request_pfcp_timeout);
-        pdn->trans_entry = trans_entry;
-	}
+    increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
+    transData_t *trans_entry;
+	trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_create_bearer_request_pfcp_timeout);
+    pdn->trans_entry = trans_entry;
 
 	context->sequence = seq_no;
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;

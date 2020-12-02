@@ -30,6 +30,7 @@
 #include "tables/tables.h"
 #include "cp_io_poll.h"
 #include "cdnsutil.h"
+#include "pfcp_cp_interface.h"
 
 void
 fill_pfcp_association_release_req(pfcp_assn_rel_req_t *pfcp_ass_rel_req)
@@ -359,10 +360,7 @@ int process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, peer_addr) < 0 ) {
-				clLog(sxlogger, eCLSeverityDebug, "Error sending: %i\n", errno);
-	}
-
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, peer_addr);
      
 	return 0;
 

@@ -26,6 +26,8 @@
 #include <unistd.h>
 #include "cp_io_poll.h"
 #include "cp_events.h"
+#include "cp_test.h"
+#include "cp_log.h"
 
 uint8_t pfcp_rx[1024]; /* TODO: Decide size */
 
@@ -34,9 +36,8 @@ uint8_t pfcp_rx[1024]; /* TODO: Decide size */
 void*
 msg_handler_pfcp(void *data)
 {
-    printf("Starting pfcp message handler thread \n");
     RTE_SET_USED(data);
-    printf("Starting pfcp message handler thread \n");
+    LOG_MSG(LOG_INIT,"Starting pfcp message handler thread ");
     while (1) {
         socklen_t addr_len = sizeof(struct sockaddr_in);
         int bytes_pfcp_rx = 0;
@@ -46,8 +47,7 @@ msg_handler_pfcp(void *data)
         bytes_pfcp_rx = recvfrom(my_sock.sock_fd_pfcp, pfcp_rx, sizeof(pfcp_rx), 0, (struct sockaddr *)(&peer_addr), &addr_len);
 
         if ((bytes_pfcp_rx < 0) && (errno == EAGAIN  || errno == EWOULDBLOCK)) {
-            clLog(clSystemLog, eCLSeverityCritical, "SGWC|SAEGWC_s11 recvfrom error: %s",
-                    strerror(errno));
+            LOG_MSG(LOG_ERROR, "SAEGWC pfcp recvfrom error: %s", strerror(errno));
             continue;
         }
 
@@ -59,8 +59,12 @@ msg_handler_pfcp(void *data)
         msg->source_interface = PFCP_IFACE; 
         msg->raw_buf = calloc(1, bytes_pfcp_rx);
         memcpy(msg->raw_buf, pfcp_header, bytes_pfcp_rx);
-        queue_stack_unwind_event(PFCP_MSG_RECEIVED, (void *)msg, process_pfcp_msg);
+		if(pfcp_in_mock_handler[msg->msg_type] != NULL) {
+			queue_stack_unwind_event(PFCP_MSG_RECEIVED, (void *)msg, pfcp_in_mock_handler[msg->msg_type]);
+		} else {
+			queue_stack_unwind_event(PFCP_MSG_RECEIVED, (void *)msg, process_pfcp_msg);
+		}
     }
-    printf("exiting pfcp message handler thread \n");
+    LOG_MSG(LOG_ERROR,"exiting pfcp message handler thread ");
 	return NULL;
 }
