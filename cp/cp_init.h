@@ -62,6 +62,6 @@ void recovery_time_into_file(uint32_t recov_time);
  */
 
 
-void rest_thread_init(void);
+void init_timer_thread(void);
 
 #endif

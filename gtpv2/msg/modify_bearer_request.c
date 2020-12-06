@@ -665,6 +665,7 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
         /* allocate transaction */
         transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
+        trans->self_initiated = 0;
         add_gtp_transaction(source_addr, source_port, seq_num, trans);
         trans->sequence = seq_num;
         trans->peer_sockaddr = msg->peer_addr;

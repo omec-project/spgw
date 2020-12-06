@@ -43,7 +43,7 @@ docker-build:
 	# Enable compatibility with Docker versions without the --progress flag.
 	if [ $(echo "$DOCKER_VERSION >= 18.09" | bc -l) ];\
 		then PROGRESS_TAG="--progress=plain";\
-		else PROGRESS_TAG="";\
+		else PROGRESS_TAG="--progress=plain";\
 	fi
 
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build --pull $(PROGRESS_TAG) $(DOCKER_BUILD_ARGS) \

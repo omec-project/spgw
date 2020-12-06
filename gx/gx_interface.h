@@ -181,4 +181,13 @@ void gx_msg_proc_failure(proc_context_t *proc_ctxt);
 
 void
 process_gx_msg(void *data, uint16_t event);
+
+void*
+out_handler_gx(void *data);
+
+void 
+gx_send(int fd, char *buf, uint16_t len);
+
+void init_gx(void);
+
 #endif /* CP_APP_H_ */

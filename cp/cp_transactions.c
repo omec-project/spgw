@@ -179,11 +179,10 @@ cleanup_gtpc_trans(transData_t *gtpc_trans)
 {
     proc_context_t *proc = (proc_context_t *)gtpc_trans->proc_context;
     assert(gtpc_trans == proc->gtpc_trans);
-    bool self_initiated = is_transaction_timer_started(proc->gtpc_trans);
     uint32_t seq_num = proc->gtpc_trans->sequence; 
     uint32_t trans_addr;
     uint16_t port_num;
-    if(self_initiated) {
+    if(gtpc_trans->self_initiated == 1) {
         port_num = my_sock.s11_sockaddr.sin_port;
         trans_addr = my_sock.s11_sockaddr.sin_addr.s_addr;
     } else {
@@ -209,9 +208,7 @@ cleanup_pfcp_trans(transData_t *pfcp_trans)
     uint32_t trans_addr;
     uint16_t port_num;
     uint32_t seq_num = pfcp_trans->sequence; 
-    bool self_initiated = is_transaction_timer_started(pfcp_trans);
-    if(self_initiated) {
-        // only self initiated transactions as of now 
+    if(pfcp_trans->self_initiated == 1) {
         trans_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
         port_num = my_sock.pfcp_sockaddr.sin_port;
     } else {

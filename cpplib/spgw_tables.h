@@ -80,6 +80,8 @@ class spgwTables
      std::queue<void *> stack_test_events_queue;
      std::queue<void *> gtp_out_queue;
      std::queue<void *> t2tmsg_queue;
+     std::queue<void *> pfcp_out_queue;
+     std::queue<void *> gx_out_queue;
 
      bool add_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans); 
      void *find_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq); 
@@ -89,10 +91,25 @@ class spgwTables
      void *delete_gtp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq); 
      void  queue_event(void *context); 
      void  *pop_event(void); 
+
+	 /* Test events */
      void  queue_test_event(void *context);
      void* pop_test_event(void);
+
+	 /* GTP events */
      void  queue_gtp_out_event(void *context);
      void* pop_gtp_out_event(void);
+
+	 /* PFCP events */
+     void  queue_pfcp_out_event(void *context);
+     void* pop_pfcp_out_event(void);
+
+	 /* GX events */
+     void  queue_gx_out_event(void *context);
+     void* pop_gx_out_event(void);
+
+
+
      void  queue_t2t_msg_event(void *context) { t2tmsg_queue.push(context);}
      void  *pop_t2t_msg_event(void)
      {

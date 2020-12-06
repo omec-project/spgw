@@ -180,7 +180,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
           }
           if(proc->pfcp_trans != NULL) {
               printf("Delete pfcp procs \n");
-              cleanup_gtpc_trans(proc->pfcp_trans);
+              cleanup_pfcp_trans(proc->pfcp_trans);
           }
           free(proc);
       }
@@ -299,14 +299,10 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 							pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 							header->message_len = htons(encoded - 4);
 
-							if(pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded, &context->upf_context->upf_sockaddr) < 0) {
-								fprintf(stderr , " %s:%s:%u Error sending: %i\n",
-										__FILE__, __func__, __LINE__, errno);
-							}else {
+							pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded, &context->upf_context->upf_sockaddr);
                             transData_t *trans_entry;
 							trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, clean_up_while_error_pfcp_timeout);
                             pdn->trans_entry = trans_entry;
-							}
 						} else {
 							if(resp->state == PFCP_SESS_DEL_REQ_SNT_STATE) {
 								goto del_ue_cntx_imsi;

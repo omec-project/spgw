@@ -20,6 +20,8 @@
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_events.h"
+#include "cp_test.h"
+#include "cp_log.h"
 
 static uint32_t cc_request_number = 0;
 int g_cp_sock ;
@@ -336,12 +338,12 @@ fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 void*
 msg_handler_gx(void *data)
 {
-    printf("Starting gx message handler thread \n");
+    LOG_MSG(LOG_INIT,"Starting gx message handler thread ");
     RTE_SET_USED(data);
 
     /* Make a connection between control-plane and gx_app */
     if(cp_config->cp_type != SGWC) {
-        printf("Opening up gx-app socket \n");
+        LOG_MSG(LOG_INIT, "Opening up gx-app socket ");
         start_cp_app();
     }
 
@@ -349,11 +351,11 @@ msg_handler_gx(void *data)
         if(my_sock.gx_app_sock > 0) {
             break;
         }
-        printf("\n error - why app started but gx_app_sock is < 0 ??\n");
+        LOG_MSG(LOG_ERROR,"App started but gx_app_sock is < 0 ? Retry ");
         sleep(1);
     }
 
-    printf("Gx app connected \n");
+    LOG_MSG(LOG_INIT, "Gx app connected ");
     while(1) {
         int bytes_rx = 0;
         gx_msg *gx_rx = NULL;
@@ -378,16 +380,13 @@ msg_handler_gx(void *data)
         msg->source_interface = GX_IFACE;
         msg->raw_buf = calloc(1, bytes_rx);
         memcpy(msg->raw_buf, recv_buf, bytes_rx);
-#if 1
-        if(GX_RAR_MSG == msg->msg_type) {
-            printf("Ignoring RAR coming from PCRF\n");
-            free(msg);
-            continue;
-        }
-#endif
-        queue_stack_unwind_event(GX_MSG_RECEIVED, (void *)msg, process_gx_msg);
+		if(gx_in_mock_handler[msg->msg_type] != NULL) {
+			gx_in_mock_handler[msg->msg_type](msg, GX_MSG_RECEIVED);
+		} else {
+        	queue_stack_unwind_event(GX_MSG_RECEIVED, (void *)msg, process_gx_msg);
+		}
     }
-    printf("exiting gx message handler thread \n");
+    LOG_MSG(LOG_ERROR,"exiting gx message handler thread ");
     return NULL;
 }
 
@@ -398,35 +397,34 @@ process_gx_msg(void *data, uint16_t event)
     msg_info_t *msg = (msg_info_t *)data;
     gx_msg *gx_rx = (gx_msg *)msg->raw_buf;
     msg->rar_seq_num = gx_rx->seq_num;
-    printf("Sequence number = %d \n", gx_rx->seq_num);
     switch(msg->msg_type) {
         case GX_CCA_MSG: {
-            printf("\n Received CCA \n");
+    		LOG_MSG(LOG_DEBUG,"Received CCA. Sequence number = %d ", gx_rx->seq_num);
             if (gx_cca_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + sizeof(gx_rx->seq_num),
                         &msg->gx_msg.cca) <= 0) {
                 free(msg->raw_buf);
                 free(msg);
-                printf("\n unpack failed \n");
+                LOG_MSG(LOG_ERROR, "Received CCA. Sequence number = %d. Unpacked failed ", gx_rx->seq_num);
                 return;
             }
-            printf("\n Received CCA session id  %s \n", msg->gx_msg.cca.session_id.val);
+            LOG_MSG(LOG_DEBUG,"Received CCA session id  %s ", msg->gx_msg.cca.session_id.val);
             if(msg->gx_msg.cca.cc_request_type == INITIAL_REQUEST) {
-                printf("\n Received CCA-initial \n");
+                LOG_MSG(LOG_DEBUG,"Received CCA-initial ");
                 handle_cca_initial_msg(&msg);
             } else if (msg->gx_msg.cca.cc_request_type == UPDATE_REQUEST) {
-                printf("\n Received CCA-update\n");
+                LOG_MSG(LOG_DEBUG,"Received CCA-update");
                 handle_cca_update_msg(&msg); 
             } else if (msg->gx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
-                printf("\n Received CCA-terminate \n");
+                LOG_MSG(LOG_DEBUG,"Received CCA-terminate ");
                 handle_ccr_terminate_msg(&msg);
             } else {
-                printf("\n Received unknown CCA...treating initial..worst \n");
+                LOG_MSG(LOG_ERROR,"Received unknown CCA...treating initial..worst ");
                 handle_cca_initial_msg(&msg);
             }
             break;
         }
         case GX_RAR_MSG: {
-            printf("\n Received RAR with sequence number %d \n", gx_rx->seq_num);
+            LOG_MSG(LOG_DEBUG,"Received RAR with sequence number %d ", gx_rx->seq_num);
             if (gx_rar_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + sizeof(gx_rx->seq_num),
                         &msg->gx_msg.rar) <= 0) {
                 free(msg->raw_buf);
@@ -437,9 +435,8 @@ process_gx_msg(void *data, uint16_t event)
             break;
         }
         default: {
-            clLog(clSystemLog, eCLSeverityCritical, "%s::process_msgs-"
-                    "\n\tcase: SAEGWC::spgw_cfg= %d;"
-                    "\n\tReceived Gx Message : "
+            clLog(clSystemLog, eCLSeverityCritical, "%s::process_msgs-case: SAEGWC::spgw_cfg= %d;"
+                    " Received Gx Message : "
                     "%d not supported... Discarding\n", __func__,
                     cp_config->cp_type, gx_rx->msg_type);
             free(msg->raw_buf);
@@ -691,7 +688,60 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 	}
 
 	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
+	gx_send(my_sock.gx_app_sock, buffer,
 			msg_len + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 	return 0;
+}
+
+void 
+gx_send(int fd, char *buf, uint16_t len)
+{
+    LOG_MSG(LOG_DEBUG,"queuing message in gx out channel ");
+    queue_gx_out_event(fd, (uint8_t *)buf, len);
+	return;
+}
+
+/* PERFORAMANCE : Should use conditional variable ?*/
+void*
+out_handler_gx(void *data)
+{
+	LOG_MSG(LOG_INIT,"Starting gx out message handler thread");
+    RTE_SET_USED(data);
+    while(1) {
+        outgoing_pkts_event_t *event = get_gx_out_event();
+        if(event != NULL) {
+            //Push packet to test chain 
+            gx_msg *temp = (gx_msg*)event->payload;
+            if(gx_out_mock_handler[temp->msg_type] != NULL) {
+                gx_out_mock_handler[temp->msg_type](event);
+                continue;
+            }
+
+            send_to_ipc_channel(event->fd, (char *)event->payload, event->payload_len);
+            continue;
+        }
+        //PERFORAMANCE ISSUE - use conditional variable 
+        usleep(10);
+    }
+	LOG_MSG(LOG_ERROR,"gx out message handler thread exited");
+    return NULL;
+}
+
+void init_gx(void)
+{
+    // thread to read incoming socket messages from udp socket
+    pthread_t readerGx_t;
+    pthread_attr_t gxattr;
+    pthread_attr_init(&gxattr);
+    pthread_attr_setdetachstate(&gxattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&readerGx_t, &gxattr, &msg_handler_gx, NULL);
+    pthread_attr_destroy(&gxattr);
+
+    // thread to write outgoing gx messages
+    pthread_t writerGx_t;
+    pthread_attr_t gxattr1;
+    pthread_attr_init(&gxattr1);
+    pthread_attr_setdetachstate(&gxattr1, PTHREAD_CREATE_DETACHED);
+    pthread_create(&writerGx_t, &gxattr1, &out_handler_gx, NULL);
+    pthread_attr_destroy(&gxattr1);
 }

@@ -179,7 +179,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	}
 
 	/* VS: Write or Send CCR -T msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
+	gx_send(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 	clLog(clSystemLog, eCLSeverityDebug, FORMAT"Send CCR-T to PCRF \n", ERR_MSG);
 
 	struct sockaddr_in saddr_in;
@@ -620,12 +620,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 
     struct sockaddr_in upf_pfcp_sockaddr;
     assert(0); // Need handling 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &upf_pfcp_sockaddr) < 0 ) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error sending: %i\n",
-				ERR_MSG, errno);
-		return -1;
-	}
-
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &upf_pfcp_sockaddr);
 
 	/* Cleanup Internal data structures */
 	ret = del_csid_entry_hash(&peer_csids, &csids, iface);

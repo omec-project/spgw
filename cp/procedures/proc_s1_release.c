@@ -27,6 +27,7 @@
 #include "util.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
+#include "pfcp_cp_interface.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -183,17 +184,14 @@ process_release_access_bearer_request(proc_context_t *rab_proc, msg_info_t *msg)
 		pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 		header->message_len = htons(encoded - 4);
 
-		if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &ue_context->upf_context->upf_sockaddr) < 0 )
-        {
-			clLog(sxlogger, eCLSeverityCritical,"Error sending: %i\n",errno);
-            return -1;
-        }
+		pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &ue_context->upf_context->upf_sockaddr);
 
         increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(ue_context->upf_context));
 
         transData_t *trans_entry;
         trans_entry = start_response_wait_timer(rab_proc, pfcp_msg, encoded, process_release_access_bearer_request_pfcp_timeout);
 
+        trans_entry->self_initiated = 1;
         /* add transaction into transaction table */
         add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
         trans_entry->sequence = sequence;

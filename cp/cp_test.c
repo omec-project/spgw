@@ -15,16 +15,23 @@
 #include "gtpv2_interface.h"
 #include "pfcp_cp_session.h"
 #include "gtp_ies.h"
+#include "cp_log.h"
 
-test_out_gtp_handler gtp_mock_handler[256];
+test_out_pkt_handler gtp_out_mock_handler[256];
+test_out_pkt_handler pfcp_out_mock_handler[256];
+test_out_pkt_handler gx_out_mock_handler[256];
+
+test_in_pkt_handler gtp_in_mock_handler[256];
+test_in_pkt_handler pfcp_in_mock_handler[256];
+test_in_pkt_handler gx_in_mock_handler[256];
+
 
 void* 
 test_event_thread(void* data)
 {
     RTE_SET_USED(data);
-    printf("Starting test event handler thread \n");
-    init_gtp_mock_interface();
-    stack_event_t *event;
+    LOG_MSG(LOG_INIT, "Starting test event handler thread ");
+	stack_event_t *event;
     while(1) {
         event  = (stack_event_t *)get_test_stack_unwind_event();
         if(event != NULL)
@@ -36,7 +43,7 @@ test_event_thread(void* data)
         }
         usleep(10);
     }
-    printf("exiting event handler thread \n");
+    LOG_MSG(LOG_ERROR, "exiting event handler thread ");
     return NULL;
 }
 
@@ -116,11 +123,36 @@ test_event_handler(void *data, uint16_t evt_id)
 void 
 init_gtp_mock_interface(void)
 {
-    for(int i=0;i<256;i++)
-        gtp_mock_handler[i] = NULL;
+    for(int i=0;i<256;i++) {
+        gtp_out_mock_handler[i] = NULL;
+        gtp_in_mock_handler[i] = NULL;
+	}
 
     // enable this hook to feed outgoing messages to custom handler 
-    //gtp_mock_handler[GTP_CREATE_BEARER_REQ] =  handle_mock_create_bearer_request_msg;
+    //gtp_out_mock_handler[GTP_CREATE_BEARER_REQ] =  handle_mock_create_bearer_request_msg;
+}
+
+void 
+init_pfcp_mock_interface(void)
+{
+    for(int i=0;i<256;i++) {
+        pfcp_out_mock_handler[i] = NULL;
+        pfcp_in_mock_handler[i] = NULL;
+	}
+
+    // enable this hook to feed outgoing messages to custom handler 
+}
+
+void 
+init_gx_mock_interface(void)
+{
+    for(int i=0;i<256;i++) {
+        gx_out_mock_handler[i] = NULL;
+        gx_in_mock_handler[i] = NULL;
+	}
+
+    // enable this hook to feed outgoing messages to custom handler 
+    gx_in_mock_handler[GX_RAR_MSG] =  handle_mock_rar_request_msg;
 }
 
 void 
@@ -196,4 +228,29 @@ handle_mock_create_bearer_request_msg(void *evt)
         queue_stack_unwind_event(GTP_MSG_RECEIVED, (void *)cbrsp_event, process_gtp_msg);
     }
     return ;
+}
+
+void 
+handle_mock_rar_request_msg(void *msg, uint16_t event)
+{
+	RTE_SET_USED(msg);
+	RTE_SET_USED(event);
+	printf("mock handler called - %s ", __FUNCTION__);
+	return;
+}
+
+void init_mock_test(void)
+{
+    init_gtp_mock_interface();
+    init_pfcp_mock_interface();
+    init_gx_mock_interface();
+
+    // thread to generate Test events for protocol stack
+    pthread_t readerTest_t;
+    pthread_attr_t testattr;
+    pthread_attr_init(&testattr);
+    pthread_attr_setdetachstate(&testattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&readerTest_t, &testattr, &test_event_thread, NULL);
+    pthread_attr_destroy(&testattr);
+	return;
 }

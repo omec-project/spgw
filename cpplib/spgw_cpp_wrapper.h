@@ -25,20 +25,31 @@ apn_profile_t * match_apn_profile(char *, uint16_t len);
 
 void invalidate_upf_dns_results(uint32_t ip);
 void init_cpp_tables(void);
+
 bool add_pfcp_transaction(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans);
 void* find_pfcp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq);
 void* delete_pfcp_transaction(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq);
+
 bool add_gtp_transaction(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans);
 void* find_gtp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq);
 void* delete_gtp_transaction(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq);
+
 void queue_stack_unwind_event_cpp(void *context); 
 void *get_stack_unwind_event_cpp(void);
+
 void *get_t2tMsg(void);
+
 void queue_test_stack_unwind_event_cpp(void *context);
 void *get_test_stack_unwind_event_cpp(void);
 
 void queue_gtp_out_event_cpp(void *context);
 void *get_gtp_out_event(void);
+
+void queue_pfcp_out_event_cpp(void *context);
+void *get_pfcp_out_event(void);
+
+void queue_gx_out_event_cpp(void *context);
+void *get_gx_out_event(void);
 
 /* Prometheus APIs */
 void decrement_stat(int stat_id);

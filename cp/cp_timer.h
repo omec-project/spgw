@@ -52,11 +52,6 @@ struct _gstimerinfo_t {
 	const void       *ti_data;
 };
 
-/* Configured start/up time of component */
-/*	extern uint32_t up_time;
-	uint32_t current_ntp_timestamp(void);
-*/
-
 /**
  * @brief  : start the timer thread and wait for _timer_tid to be populated
  * @param  : No param

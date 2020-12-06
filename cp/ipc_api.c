@@ -5,6 +5,7 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "ipc_api.h"
+#include "cp_log.h"
 
 int
 create_ipc_channel( void )
@@ -83,7 +84,7 @@ accept_from_ipc_channel(int sock, struct sockaddr_un sock_addr)
 	socklen_t len ;
 	len = sizeof(sock_addr);
 
-    printf("accept_from_ipc_channel \n");
+    LOG_MSG(LOG_INIT, "accept_from_ipc_channel ");
 	while (1) {
 		/* Accept incomming connection request receive on socket */
 		new_sock = accept( sock, (struct sockaddr *) &sock_addr, &len);
@@ -97,12 +98,12 @@ accept_from_ipc_channel(int sock, struct sockaddr_un sock_addr)
 				/* Greacefull Exit */
 				exit(0);
 		} else {
-            printf("accept_from_ipc_channel break \n");
+            LOG_MSG(LOG_INIT, "accept_from_ipc_channel break ");
 			break;
 		}
 	}
 
-	fprintf(stderr, "CP: Gx_app client connection succesfully accepted...!!!\n");
+	LOG_MSG(LOG_INIT, "CP: Gx_app client connection succesfully accepted...!!!");
 
 	return new_sock;
 }
@@ -118,7 +119,7 @@ listen_ipc_channel( int sock )
 		/* Greacefull Exit */
 		exit(0);
 	}
-	fprintf(stderr, "CP: Unix Server waiting for Gx_app client connection...\n");
+	LOG_MSG(LOG_INIT,"CP: Unix Server waiting for Gx_app client connection...");
 }
 
 void

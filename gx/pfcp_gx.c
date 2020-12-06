@@ -31,6 +31,7 @@
 #include "util.h"
 #include "cp_io_poll.h"
 #include "proc_rar.h"
+#include "pfcp_cp_interface.h"
 
 #define PRESENT 1
 #define NUM_VALS 9
@@ -1027,23 +1028,22 @@ parse_gx_rar_msg(msg_info_t *msg)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &ue_context->upf_context->upf_sockaddr) < 0 ){
-		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
-	} else {
-        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(ue_context->upf_context));
-    }
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &ue_context->upf_context->upf_sockaddr);
+
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(ue_context->upf_context));
+
     transData_t *trans_entry = NULL;
     if(cp_config->cp_type == PGWC){
         trans_entry = start_response_wait_timer(ue_context,
                 pfcp_msg, encoded,
                 pfcp_modify_rar_trigger_timeout);
-        RTE_SET_USED(trans_entry);
     }
-    if(cp_config->cp_type == SAEGWC)
+    else if(cp_config->cp_type == SAEGWC)
     {
         trans_entry = start_response_wait_timer(ue_context,
                 pfcp_msg, encoded, pfcp_modify_rar_trigger_timeout);
     }
+    trans_entry->self_initiated = 1;
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
     add_pfcp_transaction(local_addr, port_num, seq_no, (void*)trans_entry);

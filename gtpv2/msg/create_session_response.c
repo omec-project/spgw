@@ -29,6 +29,7 @@
 #include "sm_structs_api.h"
 #include "pfcp_cp_session.h"
 #include "cp_peer.h"
+#include "pfcp_cp_interface.h"
 
 int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
@@ -284,15 +285,12 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 	header->message_len = htons(encoded - 4);
 
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0)
-		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
-	else
-	{
-        increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
-        transData_t *trans_entry;
-		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_create_sess_rsp_pfcp_timeout);
-        pdn->trans_entry = trans_entry; 
-	}
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
+
+    increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
+    transData_t *trans_entry;
+	trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_create_sess_rsp_pfcp_timeout);
+    pdn->trans_entry = trans_entry; 
 
 	/* Update UE State */
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;

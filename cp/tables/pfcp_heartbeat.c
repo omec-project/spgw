@@ -12,6 +12,7 @@
 #include "rte_debug.h"
 #include "rte_errno.h"
 #include <rte_hash_crc.h>
+#include "cp_log.h"
 
 
 struct rte_hash *heartbeat_recovery_hash;
@@ -41,12 +42,12 @@ create_heartbeat_hash_table(void)
 int
 peer_heartbeat_entry_lookup(uint32_t peer_ip, uint32_t *recov_time)
 {
-    printf("%s peer entry find heartbeat_recovery_hash address %s \n", __FUNCTION__,inet_ntoa(*((struct in_addr *)&peer_ip)));
+    LOG_MSG(LOG_DEBUG,"%s peer entry find heartbeat_recovery_hash address %s ", __FUNCTION__,inet_ntoa(*((struct in_addr *)&peer_ip)));
 	int ret = rte_hash_lookup_data(heartbeat_recovery_hash,
 			(const void*) &(peer_ip), (void **)recov_time);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN PEER heartbeat HASH [%u]",
+		LOG_MSG(LOG_ERROR, "%s:%d NO ENTRY FOUND IN PEER heartbeat HASH [%u]",
 				__func__, __LINE__, peer_ip);
 		return -1;
 	}

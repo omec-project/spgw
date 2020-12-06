@@ -18,6 +18,7 @@
 #include <monitor_config.h>
 #include "clogger.h"
 #include "rte_common.h"
+#include "cp_log.h"
 
 #define MAX_FILE_PATH 128
 struct entry
@@ -39,7 +40,7 @@ handle_events(int fd, int *wd, struct entry *config)
 	char *ptr;
 
 	/* Loop while events can be read from inotify file descriptor. */
-	clLog(clSystemLog, eCLSeverityCritical, "Received file event for %s \n", config->config_file);
+	LOG_MSG(LOG_INFO, "Received file event for %s ", config->config_file);
 	/* Read some events. */
 	len = read(fd, buf, sizeof buf);
 	/* If the nonblocking read() found no events to read, then
@@ -125,7 +126,7 @@ config_thread_handler(void *config)
 	struct entry *cfg = (struct entry *)config;
 	int fd = 0;
 
-	clLog(clSystemLog, eCLSeverityCritical, "Thread started for monitoring config file %s\n",
+	LOG_MSG(LOG_INIT, "Thread started for monitoring config file %s",
 		   cfg->config_file);
 
 	fd = inotify_init1(IN_NONBLOCK);
@@ -136,11 +137,10 @@ config_thread_handler(void *config)
 
 	wd = inotify_add_watch(fd, cfg->config_file, IN_ALL_EVENTS); //OPEN | IN_CLOSE);
 	if (wd == -1) {
-		clLog(clSystemLog, eCLSeverityCritical, "Can not watch file. File does not exist - %s \n",
+		LOG_MSG(LOG_ERROR, "Can not watch file. File does not exist - %s ",
 			cfg->config_file);
 		return NULL;
 	}
-	clLog(clSystemLog, eCLSeverityCritical, "add_watch return %d \n", wd);
 
 	/* Prepare for polling */
 	nfds = 1;
@@ -181,7 +181,7 @@ watch_config_change(const char *config_file, configCbk cbk)
 {
 	pthread_attr_t attr;
 
-	clLog(clSystemLog, eCLSeverityCritical, "Register config change notification %s\n", config_file);
+	LOG_MSG(LOG_INFO, "Register config change notification %s", config_file);
 
 	struct entry *config_entry = (struct entry *) calloc(1, sizeof(struct entry));
 	if (config_entry == NULL) {

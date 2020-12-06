@@ -36,6 +36,8 @@
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_set_ie.h"
 #include "pfcp_messages_encoder.h"
+#include "pfcp_cp_interface.h"
+#include "gx_interface.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 static uint32_t s5s8_sgw_gtpc_teid_offset;
@@ -1595,15 +1597,12 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	header->message_len = htons(encoded - 4);
 
 	/*Send the packet to PGWU*/
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Error in sending CSR to PGW-U. err_no: %i\n", errno);
-	} else {
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
 
-        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSESTREQ, GET_UPF_ADDR(context->upf_context));
-        transData_t *trans_entry;
-		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pgwc_s5s8_create_session_request_pfcp_timeout);
-        pdn->trans_entry = trans_entry;
-	}
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSESTREQ, GET_UPF_ADDR(context->upf_context));
+    transData_t *trans_entry;
+	trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pgwc_s5s8_create_session_request_pfcp_timeout);
+    pdn->trans_entry = trans_entry;
 
 #ifdef TEMP
 	if (add_sess_entry_seid(context->pdns[ebi_index]->seid, resp) != 0) {
@@ -2017,7 +2016,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 	}
 
 	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
+	gx_send(my_sock.gx_app_sock, buffer,
 			msg_len + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 	return 0;
 }

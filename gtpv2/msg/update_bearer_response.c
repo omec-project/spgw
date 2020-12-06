@@ -187,15 +187,13 @@ process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	pfcp_header_t *header = (pfcp_header_t *)pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0)
-		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
-	else
-	{
-        increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
-        transData_t *trans_entry;
-		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded,  process_s5s8_upd_bearer_response_pfcp_timeout);
-        pdn_cntxt->trans_entry = trans_entry;
-	}
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
+
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
+    transData_t *trans_entry;
+	trans_entry = start_response_wait_timer(context, pfcp_msg, encoded,  process_s5s8_upd_bearer_response_pfcp_timeout);
+    pdn_cntxt->trans_entry = trans_entry;
+
 	/* Update UE State */
 	pdn_cntxt->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 

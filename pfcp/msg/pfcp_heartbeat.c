@@ -58,11 +58,8 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	/* Reset the periodic timers */
 	process_response((uint32_t)peer_addr->sin_addr.s_addr);
 
-	if ( pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, peer_addr) < 0 ) {
-		clLog(clSystemLog, eCLSeverityDebug, "Error sending in heartbeat request: %i\n",errno);
-	} else {
-        increment_userplane_stats(MSG_TX_PFCP_SXASXB_ECHORSP, peer_addr->sin_addr.s_addr);
-	}
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, peer_addr);
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_ECHORSP, peer_addr->sin_addr.s_addr);
 	free(pfcp_heartbeat_req);
 	return 0;
 }

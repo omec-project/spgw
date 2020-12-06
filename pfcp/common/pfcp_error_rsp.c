@@ -17,9 +17,9 @@
 #include "spgw_cpp_wrapper.h"
 #include "gw_adapter.h"
 #include "pfcp_cp_util.h"
+#include "pfcp_cp_interface.h"
 
 extern uint8_t pfcp_tx_buf[MAX_GTPV2C_UDP_LEN];
-extern udp_sock_t my_sock;
 
 void 
 get_error_session_report_info(msg_info_t *msg, pfcp_err_rsp_info_t *rsp_info) 
@@ -82,10 +82,7 @@ session_report_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 	encoded = encode_pfcp_sess_rpt_rsp_t(&pfcp_sess_rep_resp,(uint8_t *)pfcp_tx_buf);
 	pfcp_header_t *pfcp_hdr = (pfcp_header_t *) pfcp_tx_buf;
 	pfcp_hdr->message_len = htons(encoded - 4);
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_tx_buf, encoded, &rsp_info.peer_addr) < 0 ) {
-		clLog(sxlogger, eCLSeverityCritical, "Error REPORT REPONSE message: %i\n", errno);
-		return;
-	}
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_tx_buf, encoded, &rsp_info.peer_addr);
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSREPORTRSP_REJ, rsp_info.peer_addr.sin_addr.s_addr);
     return;
 }

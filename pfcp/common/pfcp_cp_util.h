@@ -14,8 +14,6 @@
 #include "ue.h"
 #include "gtp_messages.h"
 
-extern uint32_t start_time;
-
 /**
  * @brief  : Get upf list
  * @param  : pdn, pdn connection information
@@ -33,18 +31,6 @@ get_upf_list(pdn_connection_t *pdn);
  */
 int
 dns_query_lookup(pdn_connection_t *pdn, uint32_t *upf_ip);
-
-/**
- * @brief  : Send data to peer node
- * @param  : fd, socket or file descriptor to use to send data
- * @param  : msg_payload, buffer to store data to be send
- * @param  : size, max size to send data
- * @param  : peer_addr, peer node address
- * @return : Returns sent number of bytes
- */
-int
-pfcp_send(int fd,void *msg_payload, uint32_t size,
-		struct sockaddr_in *peer_addr);
 
 /**
  * @brief  : Returns system seconds since boot

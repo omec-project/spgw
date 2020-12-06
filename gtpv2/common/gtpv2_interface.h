@@ -14,6 +14,12 @@
 #include "sm_struct.h"
 #include "cp_proc.h"
 
+void init_gtp(void);
+
+void init_gtp_msg_handlers(void);
+
+void init_gtp_msg_threads(void);
+
 /**
  * @brief  : Function to build GTP-U echo request
  * @param  : echo_pkt rte_mbuf pointer
@@ -370,7 +376,6 @@ process_delete_bearer_resp_pfcp_timeout(void *data);
 void
 process_delete_bearer_request_pfcp_timeout(void *data);
 
-void init_gtp_interface(void);
 
 typedef int (*gtp_handler)(msg_info_t **msg, gtpv2c_header_t *); 
 

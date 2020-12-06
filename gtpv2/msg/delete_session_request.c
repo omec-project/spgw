@@ -303,6 +303,7 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     /* Create new transaction */
     transData_t *gtpc_trans = (transData_t *) calloc(1, sizeof(transData_t));  
+    gtpc_trans->self_initiated = 0;
     add_gtp_transaction(source_addr, source_port, seq_num, gtpc_trans);
     gtpc_trans->proc_context = (void *)detach_proc;
     detach_proc->gtpc_trans = gtpc_trans;
@@ -348,14 +349,11 @@ process_pgwc_s5s8_delete_session_request(del_sess_req_t *ds_req)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded,
-				&context->upf_context->upf_sockaddr) < 0 ) {
-		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
-	}else {
-        transData_t *trans_entry;
-		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pgwc_s5s8_delete_session_request_pfcp_timeout);
-        pdn->trans_entry = trans_entry;
-	}
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded, &context->upf_context->upf_sockaddr);
+
+    transData_t *trans_entry;
+	trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pgwc_s5s8_delete_session_request_pfcp_timeout);
+    pdn->trans_entry = trans_entry;
 
 	/* Update UE State */
 	pdn->state = PFCP_SESS_DEL_REQ_SNT_STATE;

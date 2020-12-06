@@ -80,6 +80,7 @@ int handle_rar_msg(msg_info_t **msg_p)
             msg->gx_msg.cca.session_id.val,
             get_state_string(msg->state), get_event_string(msg->event));
 
+    /* BUG ? Dont we need transaction ? */
     proc_context_t *rar_proc = alloc_rar_proc(msg);
     rar_proc->call_id = call_id;
     rar_proc->gx_context = gx_context;

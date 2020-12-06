@@ -35,7 +35,9 @@
 #include "tables/tables.h"
 #include "dns_config.h"
 #include "cdnshelper.h"
-
+#include "cp_log.h"
+#include "cp_events.h"
+#include "cp_io_poll.h"
 
 #define GLOBAL_ENTRIES			"GLOBAL"
 #define APN_ENTRIES				"APN_CONFIG"
@@ -48,6 +50,7 @@
 
 #define CP_TYPE					"CP_TYPE"
 #define GX_CONFIG               "GX_CONFIG"
+#define LOGGING_LEVEL			"LOGGING_LEVEL"
 #define CP_LOGGER				"CP_LOGGER"
 #define DNS_ENABLE				"DNS_ENABLE"
 #define S11_IPS					"S11_IP"
@@ -90,6 +93,8 @@ void set_dns_config(void);
 
 void init_config(void) 
 {
+	LOG_MSG(LOG_INIT, "initializing configuration");
+
     /*Global config holder for cp */
     cp_config = (cp_config_t *) calloc(1, sizeof(cp_config_t));
 
@@ -125,7 +130,34 @@ void init_config(void)
     strcat(file, "subscriber_mapping.json");
     clLog(clSystemLog, eCLSeverityDebug, "Config file to monitor %s \n", file);
     register_config_updates(file);
+
+    // thread to read incoming socker messages from local socket - config change listen 
+    pthread_t readerLocal_t;
+    pthread_attr_t localattr;
+    pthread_attr_init(&localattr);
+    pthread_attr_setdetachstate(&localattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&readerLocal_t, &localattr, &msg_handler_local, NULL);
+    pthread_attr_destroy(&localattr);
+
     return;
+}
+
+void* 
+msg_handler_local(void *data)
+{
+    int bytes_rx;
+    uint8_t rx_buf[128];
+    LOG_MSG(LOG_INIT, "Starting local message handler thread ");
+    RTE_SET_USED(data);
+    while(1) {
+        bytes_rx = recv(my_sock.sock_fd_local, rx_buf, sizeof(rx_buf), 0);
+        if(bytes_rx != 0) {
+            LOG_MSG(LOG_INFO, "config read event received");
+            queue_stack_unwind_event(LOCAL_MSG_RECEIVED, (void *)NULL, process_local_msg);
+        }
+    }
+    LOG_MSG(LOG_ERROR,"Exiting local message handler thread ");
+    return NULL;
 }
 
 void
@@ -144,7 +176,6 @@ config_cp_ip_port(cp_config_t *cp_config)
     struct rte_cfgfile_entry *cache_entries = NULL;
     struct rte_cfgfile_entry *app_entries = NULL;
     struct rte_cfgfile_entry *ops_entries = NULL;
-
 
     fprintf(stderr, "CP: S11_IP      : %s\n",
             inet_ntoa(cp_config->s11_ip));
@@ -294,6 +325,10 @@ config_cp_ip_port(cp_config_t *cp_config)
             cp_config->dns_enable = (uint8_t)atoi(global_entries[i].value);
             fprintf(stderr, "CP: DNS_ENABLE : %d\n",
                     cp_config->dns_enable);
+        }
+
+        if(strncmp(LOGGING_LEVEL, global_entries[i].name, strlen(LOGGING_LEVEL)) == 0) {
+			set_logging_level(global_entries[i].name);
         }
 
         /* Parse timer and counter values from cp.cfg */

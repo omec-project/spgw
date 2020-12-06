@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "gtpv2_interface.h"
-#include "clogger.h"
 #include "gtp_messages_decoder.h"
 #include "cp_interface.h"
 #include "cp_config.h"
@@ -15,8 +14,12 @@
 #include "cp_events.h"
 #include "gtpv2_error_rsp.h"
 #include "cp_test.h"
+#include "cp_log.h"
+#include "cp_io_poll.h"
 
 gtp_handler gtp_msg_handler[256];
+extern pcap_t *pcap_reader;
+struct sockaddr_in s5s8_sockaddr;
 
 uint32_t get_gtp_sequence(void)
 {
@@ -24,8 +27,10 @@ uint32_t get_gtp_sequence(void)
     return sequence_num++;
 }
 
-void init_gtp_interface(void)
+
+void init_gtp_msg_handlers(void)
 {
+	LOG_MSG(LOG_INIT,"Init gtp interface");
     for(int i=0;i<256;i++)
         gtp_msg_handler[i] = handle_unknown_msg;
 
@@ -56,12 +61,120 @@ void init_gtp_interface(void)
 }
 
 int 
-handle_unknown_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_s11_rx)
+handle_unknown_msg(msg_info_t **msg_p, gtpv2c_header_t *rx_msg)
 {
     msg_info_t *msg = *msg_p;
     RTE_SET_USED(msg);
-	clLog(clSystemLog, eCLSeverityCritical, "Unhandled GTP message = %d\n", gtpv2c_s11_rx->gtpc.message_type);
+	LOG_MSG(LOG_ERROR, "Unhandled GTP message = %d", rx_msg->gtpc.message_type);
     return -1;
+}
+
+/**
+ * @brief  : Initalizes S11 interface if in use
+ * @param  : void
+ * @return : void
+ */
+static void init_s11(void)
+{
+    int s11_fd = -1;
+	int ret;
+    struct sockaddr_in s11_sockaddr;
+
+	if (pcap_reader != NULL && pcap_dumper != NULL)
+		return;
+
+	s11_fd = socket(AF_INET, SOCK_DGRAM, 0);
+	my_sock.sock_fd_s11 = s11_fd;
+
+	if (s11_fd < 0)
+		rte_panic("Socket call error : %s", strerror(errno));
+
+	bzero(s11_sockaddr.sin_zero,
+			sizeof(s11_sockaddr.sin_zero));
+	s11_sockaddr.sin_family = AF_INET;
+	s11_sockaddr.sin_port = htons(cp_config->s11_port);
+	s11_sockaddr.sin_addr = cp_config->s11_ip;
+
+	ret = bind(s11_fd, (struct sockaddr *) &s11_sockaddr,
+			    sizeof(struct sockaddr_in));
+
+	if (ret < 0) {
+		rte_panic("Bind error for %s:%u - %s\n",
+			inet_ntoa(s11_sockaddr.sin_addr),
+			ntohs(s11_sockaddr.sin_port),
+			strerror(errno));
+	}
+    my_sock.s11_sockaddr = s11_sockaddr;
+	LOG_MSG(LOG_INIT, "init_s11() s11_fd= %d :: s11_ip= %s : s11_port= %d",
+			s11_fd, inet_ntoa(cp_config->s11_ip), cp_config->s11_port);
+}
+
+/**
+ * @brief  : Initalizes s5s8_sgwc interface if in use
+ * @param  : void
+ * @return : void
+ */
+static void init_s5s8(void)
+{
+    int s5s8_fd = -1;
+	int ret;
+    struct sockaddr_in s5s8_recv_sockaddr;
+
+	/* TODO: Need to think*/
+	s5s8_recv_sockaddr.sin_port = htons(cp_config->s5s8_port);
+
+	if (pcap_reader != NULL && pcap_dumper != NULL)
+		return;
+
+	s5s8_fd = socket(AF_INET, SOCK_DGRAM, 0);
+	my_sock.sock_fd_s5s8 = s5s8_fd;
+
+	if (s5s8_fd < 0)
+		rte_panic("Socket call error : %s", strerror(errno));
+
+	bzero(s5s8_sockaddr.sin_zero,
+			sizeof(s5s8_sockaddr.sin_zero));
+	s5s8_sockaddr.sin_family = AF_INET;
+	s5s8_sockaddr.sin_port = htons(cp_config->s5s8_port);
+	s5s8_sockaddr.sin_addr = cp_config->s5s8_ip;
+
+	ret = bind(s5s8_fd, (struct sockaddr *) &s5s8_sockaddr,
+			    sizeof(struct sockaddr_in));
+
+	if (ret < 0) {
+		rte_panic("Bind error for %s:%u - %s\n",
+			inet_ntoa(s5s8_sockaddr.sin_addr),
+			ntohs(s5s8_sockaddr.sin_port),
+			strerror(errno));
+	}
+
+    my_sock.s5s8_recv_sockaddr = s5s8_recv_sockaddr;
+
+	LOG_MSG(LOG_INIT, "init_s5s8_sgwc() s5s8_fd= %d :: s5s8_ip= %s : s5s8_port= %d",
+			s5s8_fd, inet_ntoa(cp_config->s5s8_ip),
+			htons(cp_config->s5s8_port));
+
+}
+
+void 
+init_gtp_msg_threads(void)
+{
+    // thread to read incoming socket messages from udp socket
+    pthread_t readerGtp_t;
+    pthread_attr_t gtpattr;
+    pthread_attr_init(&gtpattr);
+    pthread_attr_setdetachstate(&gtpattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&readerGtp_t, &gtpattr, &msg_handler_gtp, NULL);
+    pthread_attr_destroy(&gtpattr);
+
+    // thread to write outgoing gtp messages
+    pthread_t writerGtp_t;
+    pthread_attr_t gtpattr1;
+    pthread_attr_init(&gtpattr1);
+    pthread_attr_setdetachstate(&gtpattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&writerGtp_t, &gtpattr1, &out_handler_gtp, NULL);
+    pthread_attr_destroy(&gtpattr1);
+	return;
 }
 
 void
@@ -71,7 +184,7 @@ process_gtp_msg(void *data, uint16_t event)
     msg_info_t *msg = (msg_info_t *)data;    
     gtpv2c_header_t *gtpv2c_rx = (gtpv2c_header_t *)msg->raw_buf;
     if (gtpv2c_rx->gtpc.version < GTP_VERSION_GTPV2C) {
-        fprintf(stderr, "Discarding packet due to gtp version is not supported..");
+        LOG_MSG(LOG_ERROR, "Discarding packet due to gtp version is not supported..\n");
         free(msg->raw_buf);
         free(msg);
         return;
@@ -79,7 +192,7 @@ process_gtp_msg(void *data, uint16_t event)
         send_version_not_supported(&msg->peer_addr, 
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE,
                 gtpv2c_rx->teid.has_teid.seq);
-        fprintf(stderr, "Discarding packet due to gtp version is not supported..");
+        LOG_MSG(LOG_ERROR, "Discarding packet due to gtp version is not supported..\n");
         return;
     }
     gtp_msg_handler[gtpv2c_rx->gtpc.message_type](&msg, gtpv2c_rx);
@@ -108,54 +221,66 @@ gtpv2c_send(int gtpv2c_if_fd, uint8_t *gtpv2c_tx_buf,
 		uint16_t gtpv2c_pyld_len, struct sockaddr *dest_addr,
 		socklen_t dest_addr_len)
 {
-#define TEST_IMAGE
-#ifndef TEST_IMAGE
+#ifdef PCAP_DUMP
 	int bytes_tx;
 	if (pcap_dumper) {
 		dump_pcap(gtpv2c_pyld_len, gtpv2c_tx_buf);
-	} else {
-		bytes_tx = sendto(gtpv2c_if_fd, gtpv2c_tx_buf, gtpv2c_pyld_len, 0,
-			(struct sockaddr *) dest_addr, dest_addr_len);
-
-		clLog(clSystemLog, eCLSeverityDebug, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d\n", gtpv2c_if_fd);
-
-	if (bytes_tx != (int) gtpv2c_pyld_len) {
-			clLog(clSystemLog, eCLSeverityCritical, "Transmitted Incomplete GTPv2c Message:"
-					"%u of %d tx bytes\n",
-					gtpv2c_pyld_len, bytes_tx);
-		}
-	}
-#else
-    RTE_SET_USED(dest_addr_len);
-    printf("queuing message in gtp out channel \n");
-    queue_gtp_out_event(gtpv2c_if_fd, gtpv2c_tx_buf, gtpv2c_pyld_len, dest_addr);
+	} 
 #endif
-#undef TEST_IMAGE
+    RTE_SET_USED(dest_addr_len);
+    LOG_MSG(LOG_DEBUG, "queuing message in gtp out channel \n");
+    queue_gtp_out_event(gtpv2c_if_fd, gtpv2c_tx_buf, gtpv2c_pyld_len, dest_addr);
 }
 
 /* Should use conditional variable ?*/
 void*
 out_handler_gtp(void *data)
 {
-    RTE_SET_USED(data);
+	LOG_MSG(LOG_INIT,"Starting gtp out message handler thread");
     while(1) {
         outgoing_pkts_event_t *event = get_gtp_out_event();
         if(event != NULL) {
             //Push packet to test chain 
             gtpv2c_header_t *temp = (gtpv2c_header_t *)event->payload;
-            if(gtp_mock_handler[temp->gtpc.message_type] != NULL) {
-                gtp_mock_handler[temp->gtpc.message_type](event);
+            if(gtp_out_mock_handler[temp->gtpc.message_type] != NULL) {
+                gtp_out_mock_handler[temp->gtpc.message_type](event);
                 continue;
             }
 
             int bytes_tx = sendto(event->fd, event->payload, event->payload_len, 0,
                     (struct sockaddr *) &event->dest_addr, sizeof(struct sockaddr_in));
-            clLog(clSystemLog, eCLSeverityDebug, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d\n", event->fd);
-            RTE_SET_USED(bytes_tx);
+			if(bytes_tx < 0) {
+            	LOG_MSG(LOG_ERROR, "gtpv2c_send() failed on fd= %d\n", event->fd);
+			}
             continue;
         }
         //PERFORAMANCE ISSUE - use conditional variable 
         usleep(10);
     }
+	LOG_MSG(LOG_ERROR,"Exiting gtp out message handler thread");
+    RTE_SET_USED(data);
     return NULL;
 }
+
+void init_gtp(void)
+{
+    init_gtp_msg_handlers();
+
+	switch (cp_config->cp_type) {
+	case SGWC:
+		init_s11();
+        break;
+	case PGWC:
+		init_s5s8();
+		break;
+	case SAEGWC:
+		init_s11();
+		break;
+	default:
+		rte_panic("main.c::init_cp()-"
+				"Unknown spgw_cfg= %u\n", cp_config->cp_type);
+		break;
+	}
+	init_gtp_msg_threads();
+}
+

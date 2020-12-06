@@ -27,7 +27,16 @@
 #include "pfcp_cp_interface.h"
 #include "tables/tables.h"
 #include "cdnshelper.h"
+#include "cp_log.h"
+#include "cp_test.h"
+#include "cp_timer.h"
+#include "pfcp_cp_util.h"
 
+/* We should move all the config inside this structure eventually
+ * config is scattered all across the place as of now
+ */
+uint8_t rstCnt = 0;
+uint32_t start_time;
 int s11_pcap_fd = -1;
 extern pcap_t *pcap_reader;
 extern pcap_dumper_t *pcap_dumper;
@@ -37,15 +46,13 @@ cp_config_t *cp_config;
 uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t s5s8_rx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t s5s8_tx_buf[MAX_GTPV2C_UDP_LEN];
-struct sockaddr_in s5s8_sockaddr;
 uint8_t pfcp_tx_buf[MAX_GTPV2C_UDP_LEN];
 uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
-extern uint8_t rstCnt;
 udp_sock_t my_sock;
 
 static void 
-init_thread2ThreadSocket(void)
+init_thread_to_thread_socket(void)
 {
 	int ret;
     struct sockaddr_in local_sockaddr;
@@ -66,9 +73,8 @@ init_thread2ThreadSocket(void)
 
 	ret = bind(local_fd, (struct sockaddr *) &local_sockaddr, sizeof(struct sockaddr_in));
 
-	clLog(clSystemLog, eCLSeverityCritical,  "init_local()" "\n\tlocal_fd = %d :: "
-			"\n\tlocal_ip = %s : local_port = %d\n",
-			local_fd, inet_ntoa(local_ip), local_sockaddr.sin_addr);
+	LOG_MSG(LOG_INIT,"init local local thread to thread socket opened ");
+
 	if (ret < 0) {
 		rte_panic("Bind error for %s:%u - %s\n",
 				inet_ntoa(local_sockaddr.sin_addr),
@@ -78,134 +84,6 @@ init_thread2ThreadSocket(void)
     my_sock.loopback_sockaddr = local_sockaddr; 
 }
 
-static void 
-init_pfcp(void)
-{
-	int ret;
-    int pfcp_fd = -1;
-    struct sockaddr_in pfcp_sockaddr;
-
-	pfcp_fd = socket(AF_INET, SOCK_DGRAM, 0);
-	my_sock.sock_fd_pfcp = pfcp_fd;
-
-	if (pfcp_fd < 0)
-		rte_panic("Socket call error : %s", strerror(errno));
-
-	bzero(pfcp_sockaddr.sin_zero,
-			sizeof(pfcp_sockaddr.sin_zero));
-	pfcp_sockaddr.sin_family = AF_INET;
-	pfcp_sockaddr.sin_port = htons(cp_config->pfcp_port);
-	pfcp_sockaddr.sin_addr = cp_config->pfcp_ip;
-
-	ret = bind(pfcp_fd, (struct sockaddr *) &pfcp_sockaddr,
-			sizeof(struct sockaddr_in));
-
-	clLog(sxlogger, eCLSeverityInfo,  "NGIC- main.c::init_pfcp()" "\n\tpfcp_fd = %d :: "
-			"\n\tpfcp_ip = %s : pfcp_port = %d\n",
-			pfcp_fd, inet_ntoa(cp_config->pfcp_ip),
-			cp_config->pfcp_port);
-	if (ret < 0) {
-		rte_panic("Bind error for %s:%u - %s\n",
-				inet_ntoa(pfcp_sockaddr.sin_addr),
-				ntohs(pfcp_sockaddr.sin_port),
-				strerror(errno));
-	}
-    my_sock.pfcp_sockaddr = pfcp_sockaddr; 
-}
-
-
-/**
- * @brief  : Initalizes S11 interface if in use
- * @param  : void
- * @return : void
- */
-static void init_s11(void)
-{
-    int s11_fd = -1;
-	int ret;
-    struct sockaddr_in s11_sockaddr;
-
-	if (pcap_reader != NULL && pcap_dumper != NULL)
-		return;
-
-	s11_fd = socket(AF_INET, SOCK_DGRAM, 0);
-	my_sock.sock_fd_s11 = s11_fd;
-
-	if (s11_fd < 0)
-		rte_panic("Socket call error : %s", strerror(errno));
-
-	bzero(s11_sockaddr.sin_zero,
-			sizeof(s11_sockaddr.sin_zero));
-	s11_sockaddr.sin_family = AF_INET;
-	s11_sockaddr.sin_port = htons(cp_config->s11_port);
-	s11_sockaddr.sin_addr = cp_config->s11_ip;
-
-	ret = bind(s11_fd, (struct sockaddr *) &s11_sockaddr,
-			    sizeof(struct sockaddr_in));
-
-	clLog(s11logger, eCLSeverityInfo, "NGIC- main.c::init_s11()"
-			"\n\ts11_fd= %d :: "
-			"\n\ts11_ip= %s : s11_port= %d\n",
-			s11_fd, inet_ntoa(cp_config->s11_ip), cp_config->s11_port);
-
-	if (ret < 0) {
-		rte_panic("Bind error for %s:%u - %s\n",
-			inet_ntoa(s11_sockaddr.sin_addr),
-			ntohs(s11_sockaddr.sin_port),
-			strerror(errno));
-	}
-    my_sock.s11_sockaddr = s11_sockaddr;
-
-}
-
-/**
- * @brief  : Initalizes s5s8_sgwc interface if in use
- * @param  : void
- * @return : void
- */
-static void init_s5s8(void)
-{
-    int s5s8_fd = -1;
-	int ret;
-    struct sockaddr_in s5s8_recv_sockaddr;
-
-	/* TODO: Need to think*/
-	s5s8_recv_sockaddr.sin_port = htons(cp_config->s5s8_port);
-
-	if (pcap_reader != NULL && pcap_dumper != NULL)
-		return;
-
-	s5s8_fd = socket(AF_INET, SOCK_DGRAM, 0);
-	my_sock.sock_fd_s5s8 = s5s8_fd;
-
-	if (s5s8_fd < 0)
-		rte_panic("Socket call error : %s", strerror(errno));
-
-	bzero(s5s8_sockaddr.sin_zero,
-			sizeof(s5s8_sockaddr.sin_zero));
-	s5s8_sockaddr.sin_family = AF_INET;
-	s5s8_sockaddr.sin_port = htons(cp_config->s5s8_port);
-	s5s8_sockaddr.sin_addr = cp_config->s5s8_ip;
-
-	ret = bind(s5s8_fd, (struct sockaddr *) &s5s8_sockaddr,
-			    sizeof(struct sockaddr_in));
-
-	clLog(s5s8logger, eCLSeverityInfo, "NGIC- main.c::init_s5s8_sgwc()"
-			"\n\ts5s8_fd= %d :: "
-			"\n\ts5s8_ip= %s : s5s8_port= %d\n",
-			s5s8_fd, inet_ntoa(cp_config->s5s8_ip),
-			htons(cp_config->s5s8_port));
-
-	if (ret < 0) {
-		rte_panic("Bind error for %s:%u - %s\n",
-			inet_ntoa(s5s8_sockaddr.sin_addr),
-			ntohs(s5s8_sockaddr.sin_port),
-			strerror(errno));
-	}
-
-    my_sock.s5s8_recv_sockaddr = s5s8_recv_sockaddr;
-}
-
 /**
  * @brief  : Initializes Control Plane data structures, packet filters, and calls for the
  *           Data Plane to create required tables
@@ -213,37 +91,37 @@ static void init_s5s8(void)
 void init_cp(void)
 {
 
-    init_pfcp_interface();
+    init_cpp_tables(); 
+
+    // this parses file and allocates cp_config  
+    init_config();
+
+    TIMER_GET_CURRENT_TP(st_time);
+
+    start_time = current_ntp_timestamp();
+
+    recovery_time_into_file(start_time);
+
+    /* VS: Increment the restart counter value after starting control plane */
+    rstCnt = update_rstCnt();
+
+    setup_prometheus(cp_config->prom_port);
+
+    setup_webserver(cp_config->webserver_port);
 
 	init_pfcp();
+	
+	init_gtp();
 
-    init_gtp_interface();
+	init_gx();
 
-	switch (cp_config->cp_type) {
-	case SGWC:
-		init_s11();
-        break;
-	case PGWC:
-		init_s5s8();
-		break;
-	case SAEGWC:
-		init_s11();
-		break;
-	default:
-		rte_panic("main.c::init_cp()-"
-				"Unknown spgw_cfg= %u\n", cp_config->cp_type);
-		break;
-	}
+	init_mock_test();
 
-    init_thread2ThreadSocket();
+    init_thread_to_thread_socket();
 
-	if (signal(SIGINT, sig_handler) == SIG_ERR)
-		rte_exit(EXIT_FAILURE, "Error:can't catch SIGINT\n");
+    init_timer_thread();
 
-	if (signal(SIGSEGV, sig_handler) == SIG_ERR)
-		rte_exit(EXIT_FAILURE, "Error:can't catch SIGSEGV\n");
-
-    
+	echo_table_init();
 	create_ue_hash();
 	create_pdn_hash();
 	create_bearer_hash();
@@ -252,6 +130,7 @@ void init_cp(void)
 	create_upf_by_ue_hash();
     create_pdn_callid_hash(); 
 
+	return;
 }
 
 uint8_t update_rstCnt(void)
@@ -269,6 +148,7 @@ uint8_t update_rstCnt(void)
 		fseek(fp, 0, SEEK_SET);
 		fprintf(fp, "%u\n", ++rstCnt);
 		fclose(fp);
+		LOG_MSG(LOG_INIT, "Setting restart counter Value of rstcnt=%u", rstCnt);
 		return rstCnt;
 
 	}
@@ -278,7 +158,7 @@ uint8_t update_rstCnt(void)
 	rstCnt = tmp;
 	fprintf(fp, "%d\n", ++rstCnt);
 
-	clLog(clSystemLog, eCLSeverityDebug, "Updated restart counter Value of rstcnt=%u\n", rstCnt);
+	LOG_MSG(LOG_INIT, "Updated restart counter Value of rstcnt=%u", rstCnt);
 	fclose(fp);
 
 	return rstCnt;
@@ -290,7 +170,6 @@ void recovery_time_into_file(uint32_t recov_time)
 
     if ((fp = fopen(HEARTBEAT_TIMESTAMP, "w+")) == NULL) {
         clLog(clSystemLog, eCLSeverityCritical, "Unable to open heartbeat recovery file..\n");
-
     } else {
         fseek(fp, 0, SEEK_SET);
         fprintf(fp, "%u\n", recov_time);
@@ -298,7 +177,7 @@ void recovery_time_into_file(uint32_t recov_time)
     }
 }
 
-void rest_thread_init(void)
+void init_timer_thread(void)
 {
 	sigset_t sigset;
 
@@ -310,7 +189,7 @@ void rest_thread_init(void)
 
 	if (!gst_init())
 	{
-		clLog(clSystemLog, eCLSeverityDebug, "%s - gstimer_init() failed!!\n", getPrintableTime() );
+		LOG_MSG(LOG_ERROR, "%s - gstimer_init() failed!!", getPrintableTime() );
 	}
 	return;
 }

@@ -157,14 +157,13 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
 
-	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded, &context->upf_context->upf_sockaddr) < 0 )
-		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
-	else {
-        increment_userplane_stats(MSG_TX_PFCP_SXA_SESSDELREQ, GET_UPF_ADDR(context->upf_context));
-        transData_t *trans_entry;
-		trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_delete_session_request_pfcp_timeout);
-        bearer->pdn->trans_entry = trans_entry; 
-	}
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded, &context->upf_context->upf_sockaddr);
+
+    increment_userplane_stats(MSG_TX_PFCP_SXA_SESSDELREQ, GET_UPF_ADDR(context->upf_context));
+    transData_t *trans_entry;
+	trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_sgwc_s5s8_delete_session_request_pfcp_timeout);
+    bearer->pdn->trans_entry = trans_entry; 
+
 	/* Update UE State */
 	bearer->pdn->state = PFCP_SESS_DEL_REQ_SNT_STATE;
 

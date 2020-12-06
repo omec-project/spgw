@@ -20,6 +20,7 @@
 #include "pfcp.h"
 #include "tables/tables.h"
 #include "cp_io_poll.h"
+#include "gx_interface.h"
 
 void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid) 
 {
@@ -83,7 +84,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 					return;
 				}
 
-				send_to_ipc_channel(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
+				gx_send(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 
 				if(remove_gx_context((uint8_t*)pdn->gx_sess_id) < 0){
 					clLog(clSystemLog, eCLSeverityCritical, "%s %s - Error on gx_context_by_sess_id_hash deletion\n"
@@ -171,8 +172,7 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error)
 			sizeof(pdn->rqst_ptr));
 
 	/* VS: Write or Send CCR msg to Gx_App */
-	send_to_ipc_channel(my_sock.gx_app_sock, buffer,
-			msg_len_total);
+	gx_send(my_sock.gx_app_sock, buffer, msg_len_total);
 
 	return;
 }

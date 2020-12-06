@@ -209,6 +209,7 @@ send_ddn_indication(proc_context_t *proc_ctxt, uint8_t ebi_index)
                                             payload_length, 
                                             ddn_indication_timeout);
 
+    gtpc_trans->self_initiated = 1;
     gtpc_trans->proc_context = (void *)proc_ctxt;
     proc_ctxt->gtpc_trans = gtpc_trans;
     gtpc_trans->sequence = ddn_sequence;

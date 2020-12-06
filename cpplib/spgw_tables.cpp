@@ -9,7 +9,9 @@
 
 std::mutex event_queue_mtx; 
 std::mutex test_queue_mtx;
-std::mutex gtp_queue_mtx;
+std::mutex out_gtp_queue_mtx;
+std::mutex out_pfcp_queue_mtx;
+std::mutex out_gx_queue_mtx;
 
 bool 
 spgwTables::add_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans)
@@ -169,21 +171,67 @@ void* spgwTables::pop_test_event(void)
 
 void spgwTables::queue_gtp_out_event(void *context)
 {
-    gtp_queue_mtx.lock();
+    out_gtp_queue_mtx.lock();
     gtp_out_queue.push(context);
-    gtp_queue_mtx.unlock();
+    out_gtp_queue_mtx.unlock();
     return;
 }
 
 void* spgwTables::pop_gtp_out_event(void)
 {
-    gtp_queue_mtx.lock();
+    out_gtp_queue_mtx.lock();
     if(gtp_out_queue.empty()) {
-       gtp_queue_mtx.unlock();
+       out_gtp_queue_mtx.unlock();
        return NULL;
     }
     void *context = gtp_out_queue.front();
     gtp_out_queue.pop();
-    gtp_queue_mtx.unlock();
+    out_gtp_queue_mtx.unlock();
+    return context;
+}
+
+void 
+spgwTables::queue_pfcp_out_event(void *context)
+{
+    out_pfcp_queue_mtx.lock();
+    pfcp_out_queue.push(context);
+    out_pfcp_queue_mtx.unlock();
+    return;
+}
+
+void* 
+spgwTables::pop_pfcp_out_event(void)
+{
+    out_pfcp_queue_mtx.lock();
+    if(pfcp_out_queue.empty()) {
+       out_pfcp_queue_mtx.unlock();
+       return NULL;
+    }
+    void *context = pfcp_out_queue.front();
+    pfcp_out_queue.pop();
+    out_pfcp_queue_mtx.unlock();
+    return context;
+}
+
+void 
+spgwTables::queue_gx_out_event(void *context)
+{
+    out_gx_queue_mtx.lock();
+    gx_out_queue.push(context);
+    out_gx_queue_mtx.unlock();
+    return;
+}
+
+void* 
+spgwTables::pop_gx_out_event(void)
+{
+    out_gx_queue_mtx.lock();
+    if(gx_out_queue.empty()) {
+       out_gx_queue_mtx.unlock();
+       return NULL;
+    }
+    void *context = gx_out_queue.front();
+    gx_out_queue.pop();
+    out_gx_queue_mtx.unlock();
     return context;
 }
