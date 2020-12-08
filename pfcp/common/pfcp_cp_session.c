@@ -39,6 +39,7 @@
 #include "util.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_interface.h"
+#include "cp_log.h"
 
 
 #define size sizeof(pfcp_sess_mod_req_t) /* ajay - clean this */
@@ -319,7 +320,12 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 		qer = &(pfcp_sess_mod_req->create_qer[i]);
 
 		pdr->qer_id_count = 1;
-		pdr->urr_id_count = 1;
+
+        /* URR_SUPPORT : Each PDR can have only 1 URR as of now */
+        pdr->urr_id_count = 0;
+        if(cp_config->urr_enable == 1) {
+            pdr->urr_id_count = 1;
+        }
 
 		creating_pdr(pdr, i);
 
@@ -1683,7 +1689,9 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 		 * Revist again in case of multiple rule support
 		 */
 		pdr_ctxt->qer_id_count = 1;
-		pdr_ctxt->urr_id_count = 1;
+		if(cp_config->urr_enable == 1) {
+			pdr_ctxt->urr_id_count = 1;
+		}
 
 		if(iface == SOURCE_INTERFACE_VALUE_ACCESS) {
             pdr_ctxt->qer_id[0].qer_id = bearer->qer_id[QER_INDEX_FOR_ACCESS_INTERFACE].qer_id;
@@ -1889,6 +1897,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 					fill_dedicated_bearer_info(bearer, pdn->context, pdn);
 				}
 			}
+
 			if (cp_config->cp_type == SGWC) {
 				set_s1u_sgw_gtpu_teid(bearer, bearer->pdn->context);
 				update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, bearer->s1u_sgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
@@ -1902,6 +1911,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 				update_pdr_teid(bearer, bearer->s5s8_pgw_gtpu_teid, bearer->s5s8_pgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
 			}
 
+            /* URR_SUPPORT : generate URR ids and keep it in the default bearer */
 			bearer->urr_id[bearer->urr_count].urr_id = generate_urr_id();
             bearer->urr_count++;
 			bearer->urr_id[bearer->urr_count].urr_id = generate_urr_id();
@@ -1966,7 +1976,11 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
                 printf("bearer->pdr_count %d \n", bearer->pdr_count);
 				for(uint8_t idx = 0; idx < bearer->pdr_count; idx++)
 				{
-					pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = 1;
+                    // URR_SUPPORT : Fix number of URRs per PDR 
+                    pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = 0;
+                    if(cp_config->urr_enable == 1) {
+                        pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = 1;
+                    }
 					pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count = 1;
 					creating_pdr(&(pfcp_sess_est_req->create_pdr[pdr_idx]), bearer->pdrs[idx]->pdi.src_intfc.interface_value);
 					pfcp_sess_est_req->create_far_count++;
@@ -2069,7 +2083,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 								bearer->s1u_enb_gtpu_teid;
 							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc.interface_value =
 								DESTINATION_INTERFACE_VALUE_ACCESS;
-
 						}
 						//else if(itr == 0)
 					    else
@@ -2098,48 +2111,49 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 						}
 					}
 
-                    // filling urr id in PDR in the pdrpfcp_sess_est_req
-					if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC){
-                        printf("number of URRs on bearer = %d \n", bearer->pdrs[idx]->urr_id_count);
-						pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = bearer->pdrs[idx]->urr_id_count;
-						for(int itr1 = 0; itr1 < bearer->pdrs[idx]->urr_id_count; itr1++) {
-							pfcp_sess_est_req->create_pdr[pdr_idx].urr_id[itr1].urr_id_value = bearer->urr_id[idx].urr_id;
-						}
-					}
+                    // URR_SUPPORT : filling urr id in PDR in the pdrpfcp_sess_est_req
+                    if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC) {
+                        if(cp_config->urr_enable == 1) {
+                            LOG_MSG(LOG_DEBUG,"Number of URRs on bearer (%d)  = %d \n", bearer->eps_bearer_id, bearer->pdrs[idx]->urr_id_count);
+                            pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = bearer->pdrs[idx]->urr_id_count;
+                            for(int itr1 = 0; itr1 < bearer->pdrs[idx]->urr_id_count; itr1++) {
+                                pfcp_sess_est_req->create_pdr[pdr_idx].urr_id[itr1].urr_id_value = bearer->urr_id[idx].urr_id;
+                            }
+                        }
+                    }
 
                     // Creating FAR @msg level which is referenced in PDR 
 					if ((cp_config->cp_type == PGWC) || (SAEGWC == cp_config->cp_type)) {
-						pfcp_sess_est_req->create_far[pdr_idx].apply_action.forw = PRESENT;
-						if (pfcp_sess_est_req->create_far[pdr_idx].apply_action.forw == PRESENT) {
-							uint16_t len = 0;
+						uint16_t len = 0;
 
-							if ((SAEGWC == cp_config->cp_type) ||
-									(SOURCE_INTERFACE_VALUE_ACCESS == bearer->pdrs[idx]->pdi.src_intfc.interface_value)) {
-								set_destination_interface(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc));
-								pfcp_set_ie_header(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.header),
-										PFCP_IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
+						if (SOURCE_INTERFACE_VALUE_ACCESS == bearer->pdrs[idx]->pdi.src_intfc.interface_value) {
+						    pfcp_sess_est_req->create_far[pdr_idx].apply_action.forw = PRESENT;
+							set_destination_interface(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc));
+							pfcp_set_ie_header(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.header),
+									PFCP_IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
 
-								pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.header.len = sizeof(pfcp_dst_intfc_ie_t);
+							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.header.len = sizeof(pfcp_dst_intfc_ie_t);
 
-								len += sizeof(pfcp_dst_intfc_ie_t);
-								len += UPD_PARAM_HEADER_SIZE;
+							len += sizeof(pfcp_dst_intfc_ie_t);
+							len += UPD_PARAM_HEADER_SIZE;
 
-								pfcp_sess_est_req->create_far[pdr_idx].header.len += len;
-								pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc.interface_value =
-									bearer->pdrs[pdr_idx]->far.dst_intfc.interface_value;
-							} else {
-								len += set_forwarding_param(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms));
-								/* Currently take as hardcoded value */
-								len += UPD_PARAM_HEADER_SIZE;
-								pfcp_sess_est_req->create_far[pdr_idx].header.len += len;
+							pfcp_sess_est_req->create_far[pdr_idx].header.len += len;
+							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc.interface_value =
+								bearer->pdrs[pdr_idx]->far.dst_intfc.interface_value;
+						} else {
+                            // destination access - need to drop initial packets. Forward when eNB teids available
+						    pfcp_sess_est_req->create_far[pdr_idx].apply_action.drop = PRESENT;
+							len += set_forwarding_param(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms));
+							/* Currently take as hardcoded value */
+							len += UPD_PARAM_HEADER_SIZE;
+							pfcp_sess_est_req->create_far[pdr_idx].header.len += len;
 
-								pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.ipv4_address =
-									bearer->pdrs[pdr_idx]->far.outer_hdr_creation.ipv4_address;
-								pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.teid =
-									bearer->pdrs[pdr_idx]->far.outer_hdr_creation.teid;
-								pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc.interface_value =
-									bearer->pdrs[pdr_idx]->far.dst_intfc.interface_value;
-							}
+							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.ipv4_address =
+								bearer->pdrs[pdr_idx]->far.outer_hdr_creation.ipv4_address;
+							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.teid =
+								bearer->pdrs[pdr_idx]->far.outer_hdr_creation.teid;
+							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc.interface_value =
+								bearer->pdrs[pdr_idx]->far.dst_intfc.interface_value;
 						}
 					}
 
@@ -2183,21 +2197,24 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
                         }
                         qer_idx++;
                     }
-                    pfcp_sess_est_req->create_urr_count += bearer->urr_count;
-                    printf("pfcp_sess_est_req->create_urr_count %d \n", pfcp_sess_est_req->create_urr_count);
-                    for(uint8_t idx = 0; idx < bearer->urr_count; idx++)
-                    {
-                        creating_urr(&pfcp_sess_est_req->create_urr[urr_idx]);
-                        pfcp_sess_est_req->create_urr[urr_idx].urr_id.urr_id_value  = bearer->urr_id[urr_idx].urr_id;
-                        pfcp_sess_est_req->create_urr[urr_idx].meas_mthd.volum = 1;
-                        pfcp_sess_est_req->create_urr[urr_idx].rptng_triggers.volth = 1;
-                        pfcp_sess_est_req->create_urr[urr_idx].rptng_triggers.volqu = 1;
-                        pfcp_sess_est_req->create_urr[urr_idx].vol_thresh.tovol = 1;
-                        pfcp_sess_est_req->create_urr[urr_idx].vol_thresh.total_volume = 1000000;
-                        pfcp_sess_est_req->create_urr[urr_idx].volume_quota.tovol = 1;
-                        pfcp_sess_est_req->create_urr[urr_idx].volume_quota.total_volume = 1000000000; // 1GB 
-                        urr_idx++;
-                    }
+					if(cp_config->urr_enable == 1) {
+						/* URR_SUPPORT : now fill the URRs in the PFCP Session EST Message. */
+						pfcp_sess_est_req->create_urr_count += bearer->urr_count;
+						printf("pfcp_sess_est_req->create_urr_count %d \n", pfcp_sess_est_req->create_urr_count);
+						for(uint8_t idx = 0; idx < bearer->urr_count; idx++)
+						{
+								creating_urr(&pfcp_sess_est_req->create_urr[urr_idx]);
+								pfcp_sess_est_req->create_urr[urr_idx].urr_id.urr_id_value  = bearer->urr_id[urr_idx].urr_id;
+								pfcp_sess_est_req->create_urr[urr_idx].meas_mthd.volum = 1;
+								pfcp_sess_est_req->create_urr[urr_idx].rptng_triggers.volth = 1;
+								pfcp_sess_est_req->create_urr[urr_idx].rptng_triggers.volqu = 1;
+								pfcp_sess_est_req->create_urr[urr_idx].vol_thresh.tovol = 1;
+								pfcp_sess_est_req->create_urr[urr_idx].vol_thresh.total_volume = 1000000;
+								pfcp_sess_est_req->create_urr[urr_idx].volume_quota.tovol = 1;
+								pfcp_sess_est_req->create_urr[urr_idx].volume_quota.total_volume = 1000000000; // 1GB 
+								urr_idx++;
+						}
+					}
 
                 }
 			}
@@ -2291,6 +2308,7 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
                 fill_qer_entry(pdn, bearer, itr);
             }
 
+			/* URR_SUPPORT : generate urr ids for dedicated bearer */
             bearer->urr_count = NUMBER_OF_URR_PER_BEARER;
             for(uint8_t itr=0; itr < bearer->urr_count; itr++) {
 			    bearer->urr_id[itr].urr_id = generate_urr_id();

@@ -108,6 +108,7 @@ typedef struct cp_config
 	dns_config_t app_dns;
 
     uint32_t  gx_enabled;
+    uint32_t  urr_enable;
 }cp_config_t;
 
 extern cp_config_t *cp_config;

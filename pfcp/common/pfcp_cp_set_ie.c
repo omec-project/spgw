@@ -428,11 +428,10 @@ creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value)
 
 	/* TODO: Revisit this for change in yang*/
     if (cp_config->cp_type != SGWC){
-        //printf("create_pdr->qer_id_count %d \n", create_pdr->urr_id_count);
         for(int i=0; i < create_pdr->qer_id_count; i++ ) {
             size += set_qer_id(&(create_pdr->qer_id[i]));
         }
-        //printf("create_pdr->urr_id_count %d \n", create_pdr->urr_id_count);
+        /* URR_SUPPORT : count space used by urr_ids in the PDR */
         for(int i=0; i < create_pdr->urr_id_count; i++ ) {
             size += set_urr_id(&(create_pdr->urr_id[i]));
         }	
