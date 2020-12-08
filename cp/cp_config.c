@@ -48,10 +48,11 @@
 #define APP_ENTRIES				"APP"
 #define OPS_ENTRIES				"OPS"
 
-#define CP_TYPE					"CP_TYPE"
+#define CP_TYPE	                "CP_TYPE"
 #define GX_CONFIG               "GX_CONFIG"
-#define LOGGING_LEVEL			"LOGGING_LEVEL"
-#define CP_LOGGER				"CP_LOGGER"
+#define URR_CONFIG              "URR_CONFIG"
+#define LOGGING_LEVEL	        "LOGGING_LEVEL"
+#define CP_LOGGER               "CP_LOGGER"
 #define DNS_ENABLE				"DNS_ENABLE"
 #define S11_IPS					"S11_IP"
 #define S11_PORTS				"S11_PORT"
@@ -186,8 +187,9 @@ config_cp_ip_port(cp_config_t *cp_config)
 
 
     /* default valueas */
-    cp_config->dns_enable = 0;
-    cp_config->gx_enabled = 0;
+    cp_config->dns_enable = 0;  // disabled by default
+    cp_config->gx_enabled = 0;  // disabled by default
+    cp_config->urr_enable = 0;  // disabled by default
     cp_config->prom_port = 3082;
     cp_config->webserver_port = 9090; //default webserver_port
 
@@ -327,9 +329,15 @@ config_cp_ip_port(cp_config_t *cp_config)
                     cp_config->dns_enable);
         }
 
-        if(strncmp(LOGGING_LEVEL, global_entries[i].name, strlen(LOGGING_LEVEL)) == 0) {
-			set_logging_level(global_entries[i].name);
+        if(strncmp(URR_CONFIG, global_entries[i].name, strlen(URR_CONFIG)) == 0) {
+            cp_config->urr_enable = (uint8_t)atoi(global_entries[i].value);
+            fprintf(stderr, "CP: URR_ENABLE : %d\n", cp_config->urr_enable);
         }
+
+        if(strncmp(LOGGING_LEVEL, global_entries[i].name, strlen(LOGGING_LEVEL)) == 0) {
+            set_logging_level(global_entries[i].name);
+        }
+
 
         /* Parse timer and counter values from cp.cfg */
         if(strncmp(TRANSMIT_TIMER, global_entries[i].name, strlen(TRANSMIT_TIMER)) == 0) {
