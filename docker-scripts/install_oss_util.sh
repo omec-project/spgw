@@ -116,7 +116,6 @@ install_oss_util()
    git clone $OSS_UTIL_GIT_LINK
    pushd oss-util
    init_oss_util_submodules
-   #build_c3po_util
    popd
    popd
 }

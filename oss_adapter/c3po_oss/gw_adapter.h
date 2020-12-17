@@ -200,6 +200,4 @@ extern char ossInterfaceProtocolStr[][10];
 extern char ossGatewayStr[][10];
 extern uint64_t oss_reset_time;
 
-void init_cli_module(uint8_t gw_logger);
-
 #endif

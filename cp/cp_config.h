@@ -79,9 +79,6 @@ typedef struct cp_config
 
     uint16_t webserver_port;
 
-	/* logger parameter */
-	uint8_t cp_logger;
-
 	/* RESTORATION PARAMETERS */
 	uint8_t transmit_cnt;
 	int transmit_timer;

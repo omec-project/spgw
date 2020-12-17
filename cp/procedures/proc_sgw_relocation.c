@@ -10,9 +10,8 @@
 #include "sm_enum.h"
 #include "gtpv2_interface.h"
 #include "ipc_api.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "pfcp_cp_session.h"
-#include "gw_adapter.h"
 #include "cp_io_poll.h"
 #include "spgwStatsPromEnum.h"
 #include "cp_config.h"
@@ -89,7 +88,7 @@ sgw_relocation_event_handler(void *proc, void *msg_info)
     uint8_t event = msg->event;
     RTE_SET_USED(proc_context);
 
-    printf("Received event %d in %s \n",event, __FUNCTION__);
+    LOG_MSG(LOG_DEBUG4, "Received event %d in %s \n",event, __FUNCTION__);
     switch(event) {
         case PFCP_SESS_EST_RESP_RCVD_EVNT: {
             process_sess_est_resp_sgw_reloc_handler(msg, NULL);
@@ -140,7 +139,7 @@ process_sess_est_resp_sgw_reloc_handler(void *data, void *unused_param)
 	//		msg->pfcp_msg.pfcp_sess_est_resp.up_fseid.seid);
 
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 		return -1;
 	}
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
@@ -180,7 +179,7 @@ process_mb_req_sgw_reloc_handler(void *data, void *unused_param)
     int ret = 0;
 	ret = process_pfcp_sess_mod_req_handover(&msg->gtpc_msg.mbr);
 	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 		return ret;
 	}
 
@@ -206,7 +205,7 @@ int process_pfcp_sess_mod_req_handover(mod_bearer_req_t *mb_req)
 
 	ebi_index = mb_req->bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
 	if (!(context->bearer_bitmap & (1 << ebi_index))) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"Received modify bearer on non-existent EBI - "
 				"Dropping packet\n");
 		return -EPERM;
@@ -214,7 +213,7 @@ int process_pfcp_sess_mod_req_handover(mod_bearer_req_t *mb_req)
 
 	bearer = context->eps_bearers[ebi_index];
 	if (!bearer) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"Received modify bearer on non-existent EBI - "
 				"Bitmap Inconsistency - Dropping packet\n");
 		return -EPERM;
@@ -309,7 +308,7 @@ int process_pfcp_sess_mod_req_handover(mod_bearer_req_t *mb_req)
 #if 0
 		/*Retrive the session information based on session id. */
 		if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0){
-			clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for sess ID:%lu\n", context->pdns[ebi_index]->seid);
+			LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu\n", context->pdns[ebi_index]->seid);
 			return -1;
 		}
 	    resp->gtpc_msg.mbr = *mb_req;
@@ -344,7 +343,7 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 	if (ret) {
 		if(ret != -1)
 			mbr_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 		return ret;
 	}
 
@@ -384,7 +383,7 @@ process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx
 #ifdef TEMP
 	/* Retrive the session information based on session id. */
 	if (get_sess_entry_seid(sess_id, &resp) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for sess ID:%lu\n", sess_id);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu\n", sess_id);
 		return -1;
 	}
 
@@ -397,7 +396,7 @@ process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx
 	/* Retrieve the UE context */
 	ret = get_ue_context(teid, &context);
 	if (ret < 0) {
-	         clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
+	         LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
 	                 __func__, __LINE__,
 	                 teid);
 	}
@@ -407,14 +406,14 @@ process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx
 	ret = update_ue_state(context->pdns[ebi_index]->s5s8_pgw_gtpc_teid,
 			PFCP_SESS_MOD_RESP_RCVD_STATE ,ebi_index);
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:Failed to update UE State for teid: %u\n", __func__,
+		LOG_MSG(LOG_ERROR, "%s:Failed to update UE State for teid: %u\n", __func__,
 				context->pdns[ebi_index]->s5s8_pgw_gtpc_teid);
 	}
 #endif
 
 	bearer = context->eps_bearers[ebi_index];
 	if (!bearer) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"Retrive modify bearer context but EBI is non-existent- "
 				"Bitmap Inconsistency - Dropping packet\n");
 		return -EPERM;
@@ -433,7 +432,7 @@ process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx
 	ret = update_ue_state(context->s11_sgw_gtpc_teid,
 			CONNECTED_STATE,ebi_index);
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:Failed to update UE State.\n", __func__);
+		LOG_MSG(LOG_ERROR, "%s:Failed to update UE State.\n", __func__);
 	}
 #endif
 
@@ -441,7 +440,7 @@ process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx
 		htonl(bearer->pdn->s5s8_sgw_gtpc_ipv4.s_addr);
 
 #if 0
-	clLog(sxlogger, eCLSeverityDebug, "%s: s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__,
+	LOG_MSG(LOG_DEBUG, "%s: s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__,
 			inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
 #endif
 	return 0;
@@ -490,7 +489,7 @@ int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 
 	if (ret) {
 		mbr_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 		return ret;
 	}
 
@@ -526,14 +525,14 @@ process_sgwc_delete_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 
 #ifdef TEMP
 	if (get_sess_entry_seid(sess_id, &resp) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for sess ID:%lu\n", sess_id);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu\n", sess_id);
 		return -1;
 	}
 #endif
 
 	ret = get_ue_context(teid, &context);
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
+		LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
 				__func__, __LINE__,
 				teid);
 	}
@@ -555,14 +554,14 @@ process_sgwc_delete_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 	s11_mme_sockaddr.sin_addr.s_addr =
 		htonl(context->s11_mme_gtpc_ipv4.s_addr);
 
-	clLog(s11logger, eCLSeverityDebug, "SAEGWC:%s:"
+	LOG_MSG(LOG_DEBUG, "SAEGWC:%s:"
 			"s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__,
 			inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
 #endif
 
 	/* Delete entry from session entry */
 	if (del_sess_entry_seid(sess_id) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for Key sess ID:%lu\n", sess_id);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for Key sess ID:%lu\n", sess_id);
 		return -1;
 	}
 	return 0;
@@ -859,7 +858,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 
 	int ret = get_gx_context((uint8_t*)pdn->gx_sess_id,&gx_context);
 	  if (ret < 0) {
-		       clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
+		       LOG_MSG(LOG_ERROR, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
 					                pdn->gx_sess_id);
 			    return -1;
 	}
@@ -1006,7 +1005,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 
 	/* VS: Fill the Credit Crontrol Request to send PCRF */
 	if(fill_ccr_request(&ccr_request.data.ccr, pdn->context, (bearer->eps_bearer_id - 5), pdn->gx_sess_id) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
 		return -1;
 	}
 
@@ -1028,7 +1027,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type),
 	    RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (buffer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -1041,7 +1040,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 
 	if (gx_ccr_pack(&(ccr_request.data.ccr),
 				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)) + sizeof(ccr_request.seq_num), msg_len) == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
 		return -1;
 
 	}
@@ -1068,7 +1067,7 @@ send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
 
 	int ebi_index = mb_req->bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5 ;
 	if (!(pdn->context->bearer_bitmap & (1 << ebi_index))) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"Received modify bearer on non-existent EBI - "
 				"Dropping packet\n");
 		return -EPERM;
@@ -1121,7 +1120,7 @@ send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
 #ifdef TEMP
 	pdn->proc= SGW_RELOCATION_PROC;//GTP_MODIFY_BEARER_REQ;
 	if (get_sess_entry_seid(pdn->seid, &context) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for sess ID:%lu\n", pdn->seid);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu\n", pdn->seid);
 		return -1;
 	}
 

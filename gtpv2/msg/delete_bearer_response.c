@@ -57,7 +57,7 @@ int handle_delete_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_r
 		context->eps_bearers[ebi_index]->pdn->proc = msg->proc;
 	}
 	msg->event = DELETE_BER_RESP_RCVD_EVNT;
-	clLog(s5s8logger, eCLSeverityDebug, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
 			"Msg_Type:%s[%u], Teid:%u, "
 			"State:%s, Event:%s\n",
 			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
@@ -110,7 +110,7 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 
 	ret = get_ue_context(db_rsp->header.teid.has_teid.teid, &context);
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__,
 				__LINE__, ret);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -154,7 +154,7 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 
 #if 0
 	if (get_sess_entry_seid(pdn->seid, &resp) != 0) {
-		clLog(sxlogger, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 			"%s : Failed to add response in entry in SM_HASH\n",
 			__func__);
 		return -1;

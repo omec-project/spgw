@@ -10,8 +10,6 @@
 #include <rte_hash_crc.h>
 #include <errno.h>
 #include "cp_init.h"
-#include "clogger.h"
-#include "gw_adapter.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_cp_association.h"
@@ -96,7 +94,7 @@ void init_cp(void)
     // this parses file and allocates cp_config  
     init_config();
 
-    TIMER_GET_CURRENT_TP(st_time);
+    // TIMER_GET_CURRENT_TP(st_time); DELETE_CODE
 
     start_time = current_ntp_timestamp();
 
@@ -140,7 +138,7 @@ uint8_t update_rstCnt(void)
 
 	if ((fp = fopen(RESTART_CNT_FILE,"rw+")) == NULL){
 		if ((fp = fopen(RESTART_CNT_FILE,"w")) == NULL)
-			clLog(clSystemLog, eCLSeverityCritical,"Error! creating cp_rstCnt.txt file");
+			LOG_MSG(LOG_ERROR,"Error! creating cp_rstCnt.txt file");
 	}
 
 	if (fscanf(fp,"%u", &tmp) < 0) {
@@ -169,7 +167,7 @@ void recovery_time_into_file(uint32_t recov_time)
     FILE *fp = NULL;
 
     if ((fp = fopen(HEARTBEAT_TIMESTAMP, "w+")) == NULL) {
-        clLog(clSystemLog, eCLSeverityCritical, "Unable to open heartbeat recovery file..\n");
+        LOG_MSG(LOG_ERROR, "Unable to open heartbeat recovery file..\n");
     } else {
         fseek(fp, 0, SEEK_SET);
         fprintf(fp, "%u\n", recov_time);

@@ -6,7 +6,6 @@
 #include "rte_lcore.h" 
 #include "trans_struct.h"
 #include "cp_transactions.h"
-#include "clogger.h"
 #include "rte_per_lcore.h"
 #include "rte_errno.h"
 #include <string.h>
@@ -22,6 +21,7 @@
 #include "ue.h"
 #include "cp_proc.h"
 #include "spgw_cpp_wrapper.h"
+#include "cp_log.h"
 
 extern pcap_dumper_t *pcap_dumper;
 
@@ -62,7 +62,7 @@ start_transaction_timer(void *cb_data,
 	trans_entry = (transData_t *)calloc(1, sizeof(transData_t));
 	if(trans_entry == NULL )
 	{
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate transaction entry entry :"
+		LOG_MSG(LOG_ERROR, "Failure to allocate transaction entry entry :"
 				"%s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__, __LINE__);
@@ -75,13 +75,13 @@ start_transaction_timer(void *cb_data,
 
 	if (!init_timer(&trans_entry->rt, cp_config->request_timeout, cb_retry, (void *)trans_entry))
 	{
-		clLog(clSystemLog, eCLSeverityCritical,"%s:%s:%u =>%s - initialization of trans timer failed erro no %d\n",
+		LOG_MSG(LOG_ERROR,"%s:%s:%u =>%s - initialization of trans timer failed erro no %d\n",
 				__FILE__, __func__, __LINE__, getPrintableTime(), errno);
 		return NULL;
 	}
 
     if (starttimer(&trans_entry->rt) < 0) {
-        clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%u Periodic Timer failed to start...\n",
+        LOG_MSG(LOG_ERROR, "%s:%s:%u Periodic Timer failed to start...\n",
                 __FILE__, __func__, __LINE__);
     }
 	return(trans_entry);
@@ -163,10 +163,10 @@ void pfcp_timer_retry_send(int fd, transData_t *t_tx, struct sockaddr_in *peer)
         bytes_tx = sendto(fd, t_tx->buf, t_tx->buf_len, 0,
                 (struct sockaddr *)peer, sizeof(struct sockaddr_in));
 
-        clLog(clSystemLog, eCLSeverityDebug, "SPGWC - retransmitted PFCP message \n");
+        LOG_MSG(LOG_INFO,"SPGWC - retransmitted PFCP message \n");
 
         if (bytes_tx != (int) t_tx->buf_len) {
-            clLog(clSystemLog, eCLSeverityCritical, "Transmitted Incomplete Timer Retry Message:"
+            LOG_MSG(LOG_ERROR, "Transmitted Incomplete Timer Retry Message:"
                     "%u of %d tx bytes : %s\n",
                     t_tx->buf_len, bytes_tx, strerror(errno));
         }

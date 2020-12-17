@@ -7,7 +7,7 @@
 #include "tables/tables.h"
 #include <rte_hash.h>
 #include <rte_jhash.h>
-#include "clogger.h"
+#include "cp_log.h"
 #include "rte_lcore.h"
 #include "rte_debug.h"
 #include "rte_errno.h"
@@ -68,17 +68,17 @@ create_associated_upf_hash(void)
 uint8_t
 upf_context_entry_add(uint32_t *upf_ip, upf_context_t *entry)
 {
-    printf("%s UPF context entry add UPF address %s \n", __FUNCTION__,inet_ntoa(*((struct in_addr *)upf_ip)));
 	int ret = 0;
 	ret = rte_hash_add_key_data(upf_context_by_ip_hash,
 			(const void *)upf_ip , (void *)entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"%s - Error on rte_hash_add_key_data add\n",
 				strerror(ret));
 		return 1;
 	}
+    LOG_MSG(LOG_DEBUG2, "UPF context entry add UPF address %s ", inet_ntoa(*((struct in_addr *)upf_ip)));
 	return 0;
 }
 
@@ -89,11 +89,10 @@ upf_context_entry_lookup(uint32_t upf_ip, upf_context_t **entry)
 			(const void*) &(upf_ip), (void **) entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN UPF HASH [%u]",
-				__func__, __LINE__, upf_ip);
+		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN UPF HASH [%u]", upf_ip);
 		return -1;
 	}
-    printf("%s UPF (%s) context entry found \n", __FUNCTION__,inet_ntoa(*((struct in_addr *)&upf_ip)));
+    LOG_MSG(LOG_DEBUG2, "UPF (%s) context entry found ",inet_ntoa(*((struct in_addr *)&upf_ip)));
 	return 0;
 }
 

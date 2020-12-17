@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "pfcp_cp_interface.h"
-#include "gw_adapter.h"
 #include "cp_peer.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "pfcp_messages_decoder.h"
 #include "spgw_cpp_wrapper.h"
 
@@ -25,7 +24,7 @@ int handle_pfcp_pfd_management_response(msg_info_t *msg)
      */
 	/* check cause ie */
 	if(msg->pfcp_msg.pfcp_pfd_resp.cause.cause_value !=  REQUESTACCEPTED){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:  Msg_Type:%u, Cause value:%d, offending ie:%u\n",
+		LOG_MSG(LOG_ERROR, "%s:  Msg_Type:%u, Cause value:%d, offending ie:%u\n",
 					__func__, msg->msg_type, msg->pfcp_msg.pfcp_pfd_resp.cause.cause_value,
 			    msg->pfcp_msg.pfcp_pfd_resp.offending_ie.type_of_the_offending_ie);
 		return -1;
@@ -52,7 +51,7 @@ handle_pfcp_pfd_management_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_
     int decoded = decode_pfcp_pfd_mgmt_rsp_t((uint8_t *)pfcp_rx, &msg->pfcp_msg.pfcp_pfd_resp);
     if(decoded <= 0) 
     {
-        clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Pfd Mgmt Resp is %d\n",
+        LOG_MSG(LOG_DEBUG, "DEOCED bytes in Pfd Mgmt Resp is %d\n",
                 decoded);
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_PFDMGMTRSP_DROP, peer_addr.sin_addr.s_addr); 
         return -1;

@@ -11,8 +11,7 @@
  */
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_interface.h"
-#include "gw_adapter.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "cp_io_poll.h"
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
@@ -73,7 +72,7 @@ int handle_pfcp_heartbit_req_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 
     ret = process_heartbeat_request((uint8_t*)pfcp_rx, peer_addr);
     if(ret != 0){
-        clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat request\n", __func__);
+        LOG_MSG(LOG_ERROR, "%s: Failed to process pfcp heartbeat request\n", __func__);
     }
     return 0;
 }
@@ -95,7 +94,7 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	int ret = peer_heartbeat_entry_lookup(peer_addr->sin_addr.s_addr, &recov_time);
 
 	if (ret == -ENOENT) {
-		clLog(clSystemLog, eCLSeverityDebug, "No entry found for the heartbeat!!\n");
+		LOG_MSG(LOG_DEBUG, "No entry found for the heartbeat!!\n");
 
 	} else {
 		/*TODO: Restoration part to be added if recovery time is found greater*/
@@ -119,7 +118,7 @@ int handle_pfcp_heartbit_rsp_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
     int ret;
     ret = process_heartbeat_response((uint8_t *)pfcp_rx, peer_addr);
     if(ret != 0){
-        clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp heartbeat response\n", __func__);
+        LOG_MSG(LOG_ERROR, "%s: Failed to process pfcp heartbeat response\n", __func__);
     } else {
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_ECHORSP, peer_addr->sin_addr.s_addr);
     }

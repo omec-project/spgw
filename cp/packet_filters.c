@@ -11,9 +11,9 @@
 #include "util.h"
 #include "packet_filters.h"
 #include "vepc_cp_dp_api.h"
-#include "clogger.h"
 #include "gen_utils.h"
 #include "cp_config_defs.h"
+#include "cp_log.h"
 
 const char *direction_str[] = {
 		[TFT_DIRECTION_DOWNLINK_ONLY] = "DOWNLINK_ONLY ",
@@ -150,7 +150,7 @@ push_sdf_rules(uint16_t index)
 			sdf_filters[index]->proto, sdf_filters[index]->proto_mask);
 		if (sdf_filters[index]->direction ==
 				TFT_DIRECTION_BIDIRECTIONAL)
-			clLog(clSystemLog, eCLSeverityCritical, "Ignoring uplink portion of packet "
+			LOG_MSG(LOG_ERROR, "Ignoring uplink portion of packet "
 					"filter for now\n");
 	} else if (sdf_filters[index]->direction & TFT_DIRECTION_UPLINK_ONLY) {
 		snprintf(pktf.u.rule_str, MAX_LEN, "%s/%"PRIu8" %s/%"PRIu8" %"
@@ -165,13 +165,13 @@ push_sdf_rules(uint16_t index)
 			sdf_filters[index]->proto, sdf_filters[index]->proto_mask);
 	}
 
-	clLog(clSystemLog, eCLSeverityDebug,"Installing %s pkt_filter #%"PRIu16" : %s",
+	LOG_MSG(LOG_DEBUG,"Installing %s pkt_filter #%"PRIu16" : %s",
 	    direction_str[sdf_filters[index]->direction], index,
 		pktf.u.rule_str);
 
 #ifdef OBSOLETE_APIS
 	if (sdf_filter_entry_add(dp_id, pktf) < 0)
-		rte_exit(EXIT_FAILURE,"SDF filter entry add fail !!!");
+        assert(0);
 #endif
 }
 
@@ -191,7 +191,7 @@ install_sdf_rules(const pkt_fltr *new_packet_filter)
 	pkt_fltr *filter = rte_zmalloc_socket(NULL, sizeof(pkt_fltr),
 	    RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (filter == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate dedicated packet filter "
+		LOG_MSG(LOG_ERROR, "Failure to allocate dedicated packet filter "
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -229,7 +229,7 @@ install_pcc_rules(struct pcc_rules new_pcc_entry)
 			sizeof(new_pcc_entry),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (NULL == pcc_filter) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate memeory for pcc filter "
+		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for pcc filter "
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -245,7 +245,7 @@ install_pcc_rules(struct pcc_rules new_pcc_entry)
 
 #ifdef OBSOLETE_APIS
 	if (pcc_entry_add(dp_id, new_pcc_entry) < 0 )
-		rte_exit(EXIT_FAILURE,"PCC entry add fail !!!");
+        assert(0);
 #endif
 	return num_pcc_filter;
 }
@@ -268,7 +268,7 @@ install_meter_profiles(struct dp_id dp_id, struct mtr_entry new_mtr_entry)
 			sizeof(new_mtr_entry),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (mtr_profile == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate memeory for meter profile "
+		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for meter profile "
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -415,7 +415,7 @@ init_sdf_rules(void)
 				/*rte_panic("Invalid address %s in section %s "
 						"sdf config file %s\n",
 						entry, sectionname, SDF_RULE_FILE);*/
-				clLog(clSystemLog, eCLSeverityCritical, "Invalid address %s in section %s "
+				LOG_MSG(LOG_ERROR, "Invalid address %s in section %s "
 						"sdf config file %s. Setting to default 32.\n",
 						entry, sectionname, SDF_RULE_FILE);
 				 pf.remote_ip_mask = 32;
@@ -458,7 +458,7 @@ init_sdf_rules(void)
 				/*rte_panic("Invalid address %s in section %s "
 						"sdf config file %s\n",
 						entry, sectionname, SDF_RULE_FILE);*/
-				clLog(clSystemLog, eCLSeverityCritical, "Invalid address %s in section %s "
+				LOG_MSG(LOG_ERROR, "Invalid address %s in section %s "
 						"sdf config file %s. Setting to default 32.\n",
 						entry, sectionname, SDF_RULE_FILE);
 				pf.remote_ip_mask = 32;
@@ -681,22 +681,22 @@ init_packet_filters(void)
  */
 static void print_adc_rule(struct adc_rules adc_rule)
 {
-	clLog(clSystemLog, eCLSeverityDebug,"%-8u ", adc_rule.rule_id);
+	LOG_MSG(LOG_DEBUG,"%-8u ", adc_rule.rule_id);
 	switch (adc_rule.sel_type) {
 	case DOMAIN_IP_ADDR:
-		clLog(clSystemLog, eCLSeverityDebug,"%-10s " IPV4_ADDR, "IP",
+		LOG_MSG(LOG_DEBUG,"%-10s " IPV4_ADDR, "IP",
 			IPV4_ADDR_HOST_FORMAT(adc_rule.u.domain_ip.u.ipv4_addr));
 		break;
 	case DOMAIN_IP_ADDR_PREFIX:
-		clLog(clSystemLog, eCLSeverityDebug,"%-10s " IPV4_ADDR"/%d ", "IP_PREFIX",
+		LOG_MSG(LOG_DEBUG,"%-10s " IPV4_ADDR"/%d ", "IP_PREFIX",
 			IPV4_ADDR_HOST_FORMAT(adc_rule.u.domain_prefix.ip_addr.u.ipv4_addr),
 			adc_rule.u.domain_prefix.prefix);
 		break;
 	case DOMAIN_NAME:
-		clLog(clSystemLog, eCLSeverityDebug,"%-10s %-35s ", "DOMAIN", adc_rule.u.domain_name);
+		LOG_MSG(LOG_DEBUG,"%-10s %-35s ", "DOMAIN", adc_rule.u.domain_name);
 		break;
 	default:
-		clLog(clSystemLog, eCLSeverityCritical,"ERROR IN ADC RULE");
+		LOG_MSG(LOG_ERROR,"ERROR IN ADC RULE");
 	}
 }
 
@@ -777,8 +777,7 @@ parse_adc_rules(void)
 				break;
 
 			default:
-				rte_exit(EXIT_FAILURE, "Unexpected ADC TYPE : %d\n",
-						tmp_adc.sel_type);
+                assert(0);
 		}
 
 
@@ -787,7 +786,7 @@ parse_adc_rules(void)
 		tmp_adc.rule_id = rule_id++;
 #ifdef OBSOLETE_APIS
 		if (adc_entry_add(dp_id, tmp_adc) < 0)
-			rte_exit(EXIT_FAILURE, "ADC entry add fail !!!");
+                assert(0);
 #endif
 		print_adc_rule(tmp_adc);
 

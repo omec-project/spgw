@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifdef FUTURE_NEED
+#include "cp_log.h"
+
 /* Function */
 int
 process_pfcp_sess_set_del_req_t(pfcp_sess_set_del_req_t *del_set_req,
@@ -30,8 +32,7 @@ int process_pfcp_sess_set_del_req(void *data, void *unused_param)
 	ret = process_pfcp_sess_set_del_req_t(&msg->pfcp_msg.pfcp_sess_set_del_req,
 			gtpv2c_tx);
 	if (ret) {
-			clLog(sxlogger, eCLSeverityCritical, FORMAT"Error: %d \n",
-					ERR_MSG, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
 	}
 #else
@@ -53,8 +54,7 @@ int process_pfcp_sess_set_del_rsp(void *data, void *unused_param)
 
 	ret = process_pfcp_sess_set_del_rsp_t(&msg->pfcp_msg.pfcp_sess_set_del_rsp);
 	if (ret) {
-			clLog(sxlogger, eCLSeverityCritical, FORMAT"Error: %d \n",
-					ERR_MSG, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
 	}
 #else
@@ -69,8 +69,8 @@ int
 process_pfcp_sess_set_del_rsp_t(pfcp_sess_set_del_rsp_t *del_set_rsp)
 {
 	if(del_set_rsp->cause.cause_value != REQUESTACCEPTED){
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"ERROR:Cause received Session Set deletion response is %d\n",
-				ERR_MSG, del_set_rsp->cause.cause_value);
+		LOG_MSG(LOG_ERROR, "ERROR:Cause received Session Set deletion response is %d",
+				del_set_rsp->cause.cause_value);
 
 		/* TODO: Add handling to send association to next upf
 		 * for each buffered CSR */
@@ -94,8 +94,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 	ret = process_del_pdn_conn_set_req_t(&msg->gtpc_msg.del_pdn_req,
 			gtpv2c_tx);
 	if (ret) {
-			clLog(s11logger, eCLSeverityCritical, FORMAT"Error: %d \n",
-					ERR_MSG, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
 	}
 
@@ -126,8 +125,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 			msg->gtpc_msg.del_pdn_req.header.teid.has_teid.seq,
 			GTPV2C_CAUSE_REQUEST_ACCEPTED);
 	if (ret) {
-			clLog(s11logger, eCLSeverityCritical, FORMAT"Error: %d \n",
-					ERR_MSG, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
 	}
 
@@ -169,7 +167,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 //	ret = process_del_pdn_conn_set_req_t(&msg->gtpc_msg.del_pdn_req,
 //			gtpv2c_tx);
 //	if (ret) {
-//			clLog(s11logger, eCLSeverityCritical, FORMAT"Error: %d \n",
+//			LOG_MSG(LOG_ERROR, FORMAT"Error: %d \n",
 //					ERR_MSG, ret);
 //			return -1;
 //	}
@@ -189,7 +187,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 //			msg->gtpc_msg.del_pdn_req.header.teid.has_teid.seq,
 //			GTPV2C_CAUSE_REQUEST_ACCEPTED);
 //	if (ret) {
-//			clLog(s11logger, eCLSeverityCritical, FORMAT"Error: %d \n",
+//			LOG_MSG(LOG_ERROR, FORMAT"Error: %d \n",
 //					ERR_MSG, ret);
 //			return -1;
 //	}
@@ -219,8 +217,7 @@ process_del_pdn_conn_set_rsp(void *data, void *unused_param)
 
 	ret = process_del_pdn_conn_set_rsp_t(&msg->gtpc_msg.del_pdn_rsp);
 	if (ret) {
-			clLog(s11logger, eCLSeverityCritical, FORMAT"Error: %d \n",
-					ERR_MSG, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
 	}
 #else

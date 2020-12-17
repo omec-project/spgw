@@ -9,8 +9,7 @@
 #include "gtpv2_set_ie.h"
 #include "gtpv2_interface.h"
 #include "cp_peer.h"
-#include "clogger.h"
-#include "gw_adapter.h"
+#include "cp_log.h"
 #include "cp_io_poll.h"
 #include "gtpv2_internal.h"
 #include "cp_config.h"
@@ -90,13 +89,13 @@ handle_echo_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         increment_sgw_peer_stats(MSG_RX_GTPV2_S5S8_ECHOREQ, peer_addr->sin_addr.s_addr);
     } else {
         // TODOSTATS
-		clLog(clSystemLog, eCLSeverityCritical, "%s: Invalid interface %d \n", __func__, iface);
+		LOG_MSG(LOG_ERROR, "%s: Invalid interface %d \n", __func__, iface);
 		return -1;
 	}
 
 	ret = process_echo_request(gtpv2c_rx, gtpv2c_tx);
 	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, "main.c::control_plane()::Error"
+		LOG_MSG(LOG_ERROR, "main.c::control_plane()::Error"
 				"\n\tprocess_echo_req "
 				"%s: (%d) %s\n",
 				gtp_type_str(gtpv2c_rx->gtpc.message_type), ret,
@@ -146,13 +145,13 @@ handle_echo_response(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     } else if (iface == S5S8_IFACE && cp_config->cp_type == SGWC) {
         increment_pgw_peer_stats(MSG_RX_GTPV2_S5S8_ECHORSP, peer_addr->sin_addr.s_addr);
     } else { 
-		clLog(clSystemLog, eCLSeverityCritical, "%s: Invalid interface %d \n", __func__, iface);
+		LOG_MSG(LOG_ERROR, "%s: Invalid interface %d \n", __func__, iface);
 		return -1;
 	}
 
     ret = process_response(peer_addr->sin_addr.s_addr);
     if (ret) {
-        clLog(clSystemLog, eCLSeverityCritical, "main.c::control_plane()::Error"
+        LOG_MSG(LOG_ERROR, "main.c::control_plane()::Error"
                 "\n\tprocess_echo_resp "
                 "%s: (%d) %s\n",
                 gtp_type_str(gtpv2c_rx->gtpc.message_type), ret,

@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "gx.h"
 #include "ipc_api.h"
+#include "cp_log.h"
 
 extern int g_gx_client_sock;
 uint16_t rar_seq_num = 10;
@@ -101,8 +102,6 @@ prep_rar_for_cp(gx_msg *req, struct session *sess, struct msg *rqst)
 			}
 		}
 	}
-	/*printf("ULBW [%u] DLBW[%u] \n", req->data.cp_rar.default_qos_information.max_requested_bandwidth_ul,
-			req->data.cp_rar.default_qos_information.max_requested_bandwidth_dl);*/
 }
 
 /*
@@ -227,7 +226,7 @@ enum disp_action * act
 	/* stored the rqst pointer, required in RAA*/
 	//uint64_t *rqst_ptr = malloc(sizeof(uint64_t));
 	//memcpy(rqst_ptr, (uint64_t *)(*msg), sizeof(uint64_t));
-	printf("address msg %p \n", *msg);
+	LOG_MSG(LOG_DEBUG, "address msg %p ", *msg);
 
 	*msg = NULL;
 #if 1
@@ -235,15 +234,13 @@ enum disp_action * act
 #endif
 
 	//prep_rar_for_cp(&gx_req, sess, rqst);
-	 //printf("ULBW [%u] DLBW[%u] \n", gx_req.data.cp_rar.default_qos_information.max_requested_bandwidth_ul,
-	//	gx_req.data.cp_rar.default_qos_information.max_requested_bandwidth_dl); */
 
 	//send_to_ipc_channel(g_gx_client_sock, (char *)&gx_req);
 
 	/* allocate the rar message */
 	gx_req = malloc( sizeof(gx_msg) );
 	if(gx_req == NULL)
-		printf("Memory Allocation fails for gx_req\n");
+		LOG_MSG(LOG_ERROR, "Memory Allocation fails for gx_req");
 
 	memset( gx_req, 0, sizeof(gx_req) );
 
@@ -259,7 +256,7 @@ enum disp_action * act
 
 	send_buf = malloc(sizeof(gx_req->msg_type) + buflen + sizeof(rqst));
 	if(send_buf == NULL)
-		printf("Memory Allocation fails for send_buf\n");
+		LOG_MSG(LOG_ERROR,"Memory Allocation fails for send_buf");
 
 	memset(send_buf, 0, (sizeof(gx_req->msg_type) + buflen + sizeof(rqst)));
 
@@ -269,7 +266,7 @@ enum disp_action * act
     memcpy(send_buf+sizeof(gx_req->msg_type), &rar_seq_num, sizeof(gx_req->seq_num)); 
 
 	if ( gx_rar_pack( &(gx_req->data.cp_rar), (unsigned char *)(send_buf + sizeof(gx_req->msg_type)) + sizeof(gx_req->seq_num), buflen ) == 0 )
-		printf("RAR Packing failure \n");
+		LOG_MSG(LOG_ERROR, "RAR Packing failure ");
 
 
 	memcpy((unsigned char *)(send_buf + sizeof(gx_req->msg_type) + buflen), &rqst, sizeof(rqst));
@@ -278,7 +275,7 @@ enum disp_action * act
 	/* Free the memory sender buffer */
 	free(send_buf);
 
-    printf("===== SENT RAR FROM GXAPP TO PCEF and address===  \n");
+    LOG_MSG(LOG_DEBUG2, "===== SENT RAR FROM GXAPP TO PCEF and address=== ");
 #if GX_DEBUG
 	FD_DUMP_MESSAGE(rqst);
 #endif
@@ -291,7 +288,7 @@ enum disp_action * act
 	bytes_recv = recv_from_ipc_channel(g_gx_client_sock, buf);
 	if(bytes_recv > 0){
 		resp = (gx_msg *)buf;
-		printf("session id [%s] ulBw [%d] dlBW[%d]\n",resp->data.cp_raa.session_id.val,
+		LOG_MSG(LOG_DEBUG, "session id [%s] ulBw [%d] dlBW[%d]\n",resp->data.cp_raa.session_id.val,
 				resp->data.cp_raa.default_qos_information.max_requested_bandwidth_ul,
 				resp->data.cp_raa.default_qos_information.max_requested_bandwidth_dl);
 
@@ -328,7 +325,7 @@ enum disp_action * act
 	goto fini1;
 
 err:
-	printf("Error (%d) while processing RAR\n", ret);
+	LOG_MSG(LOG_ERROR, "Error (%d) while processing RAR\n", ret);
 	free(gx_req);
 	goto fini2;
 

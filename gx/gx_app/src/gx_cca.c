@@ -8,6 +8,7 @@
 
 #include "gx.h"
 #include "ipc_api.h"
+#include "cp_log.h"
 
 extern int g_gx_client_sock;
 
@@ -145,20 +146,20 @@ int gx_cca_cb
 	/* retrieve the original query associated with the answer */
     struct msg_hdr *hdr=NULL;
     CHECK_FCT( fd_msg_hdr(ans, &hdr) );
-    printf("\n end to end id = %d \n", hdr->msg_eteid);
+    LOG_MSG(LOG_DEBUG, "end to end id = %d n CCA message", hdr->msg_eteid);
 	CHECK_FCT(fd_msg_answ_getq (ans, &qry));
 	ret = gx_cca_parse(*msg, &(gx_resp.data.cp_cca));
 
 	if (ret != FD_REASON_OK)
 	{
-        printf("parsing failed gx_cca_parse\n");
+        LOG_MSG(LOG_ERROR,"parsing failed gx_cca_parse\n");
 		goto err;
 	}
 	/* Cal the length of buffer needed */
 	buflen = gx_cca_calc_length (&gx_resp.data.cp_cca);
 	send_buf = malloc(buflen + sizeof(gx_resp.msg_type));
 	if( send_buf == NULL){
- 			printf("SendBuff memory fails\n");
+ 			LOG_MSG(LOG_ERROR,"SendBuff memory fails\n");
 			return 1;
 	}
 	memset(send_buf, 0, buflen);
@@ -166,7 +167,7 @@ int gx_cca_cb
 	memcpy( send_buf, &gx_resp.msg_type, sizeof(gx_resp.msg_type));
 	if ( gx_cca_pack( &(gx_resp.data.cp_cca), (unsigned char *)(send_buf + sizeof(gx_resp.msg_type) + sizeof(gx_resp.seq_num)), buflen ) == 0 )
 	{
-		printf("CCA Packing failure \n");
+		LOG_MSG(LOG_ERROR, "CCA Packing failure \n");
 		goto err;
 	}
 

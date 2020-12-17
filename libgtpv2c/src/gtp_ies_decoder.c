@@ -4537,7 +4537,6 @@ int decode_gtp_up_func_sel_indctn_flgs_ie(uint8_t *buf,
     value->spare2 = decode_bits(buf, total_decoded, 7, &decoded);
     total_decoded += decoded;
     value->dcnr = decode_bits(buf, total_decoded, 1, &decoded);
-    printf("value->dcnr = %d \n",value->dcnr);
     total_decoded += decoded;
     return total_decoded/CHAR_SIZE;
 }

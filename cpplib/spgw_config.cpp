@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "cp_log.h"
 
 
 spgwConfigStore *config;
@@ -26,10 +27,10 @@ compare_sub_rules(const sub_selection_rule_t *rule1, const sub_selection_rule_t 
 
 spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jsonFile)
 {
-    std::cout<<"parsing config in class function "<<std::endl;
+    LOG_MSG(LOG_INIT,"parsing config in class function");
     FILE* fp = fopen(jsonFile , "r");
     if(fp == NULL){
-        std::cout << "The json config file specified does not exists" << std::endl;
+        LOG_MSG(LOG_ERROR, "The json config file specified does not exists");
         return nullptr;
     }
     char readBuffer[65536];
@@ -38,7 +39,7 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
     rapidjson::Document doc;
     doc.ParseStream(is);
     if(!doc.IsObject()) {
-        std::cout << "Error parsing the json config file" << std::endl;
+        LOG_MSG(LOG_ERROR,"Error parsing the json config file"); 
         return nullptr;
     }
     spgw_config_profile_t *config = spgwConfig::parse_json_doc(doc);
@@ -57,7 +58,7 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
         for(uint32_t i=0; i< doc["subscriber-selection-rules"].Size();i++) 
         {
             sub_selection_rule_t *sub_rule = new (sub_selection_rule_t);
-            std::cout<<"\tSubscriber selection rule "<<i<<std::endl;
+            LOG_MSG(LOG_INIT,"\tSubscriber selection rule %d ",i); 
             sub_rule->keys = nullptr;
             sub_rule->selected_apn_profile = nullptr;
             sub_rule->selected_user_plane_profile = nullptr;
@@ -70,7 +71,7 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
             if(subRuleSection.HasMember("priority"))
             {
                 sub_rule->rule_priority = subRuleSection["priority"].GetInt();
-                std::cout<<"\t\tkeys has priority "<<sub_rule->rule_priority<<std::endl;
+                LOG_MSG(LOG_INIT,"\t\tkeys has priority %d ",sub_rule->rule_priority);
             }
             if(subRuleSection.HasMember("keys"))
             {
@@ -82,15 +83,15 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
                 const rapidjson::Value& ruleKeys = subRuleSection["keys"];
                 if(ruleKeys.HasMember("imsi-range") && ruleKeys["imsi-range"].IsObject())
                 {
-                    std::cout<<"\t\t\tkeys has imsi-range Object "<<std::endl;
+                    LOG_MSG(LOG_INIT, "\t\t\tkeys has imsi-range Object ");
                     const rapidjson::Value& imsiKeys = ruleKeys["imsi-range"];
                     if(imsiKeys.HasMember("from"))
                     {
-                        std::cout<<"\t\t\t\tIMSI range from present "<<imsiKeys["from"].GetInt64()<<std::endl;
+                        LOG_MSG(LOG_INIT, "\t\t\t\tIMSI range from present %lu ",imsiKeys["from"].GetInt64());
                     }
                     if(imsiKeys.HasMember("to"))
                     {
-                        std::cout<<"\t\t\t\tIMSI range to present "<<imsiKeys["to"].GetInt64()<<std::endl;
+                        LOG_MSG(LOG_INIT,"\t\t\t\tIMSI range to present %lu ",imsiKeys["to"].GetInt64());
                     }
                     key->imsi.is_valid = true;
                     key->imsi.from_imsi= imsiKeys["from"].GetInt64(); 
@@ -98,22 +99,22 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
                 }
                 if(ruleKeys.HasMember("serving-plmn") && ruleKeys["serving-plmn"].IsObject())
                 {
-                    std::cout<<"\t\t\tkeys has serving-plmn Object "<<std::endl;
+                    LOG_MSG(LOG_INIT, "\t\t\tkeys has serving-plmn Object ");
                     const rapidjson::Value& plmnKeys = ruleKeys["serving-plmn"];
                     uint16_t mcc, mnc;
                     if(plmnKeys.HasMember("mcc"))
                     {
                         mcc = plmnKeys["mcc"].GetInt();
-                        std::cout<<"\t\t\t\tmcc "<<mcc<<std::endl;
+                        LOG_MSG(LOG_INIT,"\t\t\t\tmcc %u",mcc);
                     }
                     if(plmnKeys.HasMember("mnc"))
                     {
                         mnc = plmnKeys["mnc"].GetInt();
-                        std::cout<<"\t\t\t\tmnc "<<mnc<<std::endl;
+                        LOG_MSG(LOG_INIT,"\t\t\t\tmnc %d",mnc);
                     }
                     if(plmnKeys.HasMember("tac"))
                     {
-                        std::cout<<"\t\t\t\ttac "<<plmnKeys["tac"].GetInt()<<std::endl;
+                        LOG_MSG(LOG_INIT,"\t\t\t\ttac %d",plmnKeys["tac"].GetInt());
                     }
                     key->plmn.is_valid = true;
                     uint16_t mcc_dig_1, mcc_dig_2, mcc_dig_3;
@@ -142,32 +143,32 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
                 if(ruleKeys.HasMember("requested-apn"))
                 {
                     const char *temp = ruleKeys["requested-apn"].GetString();
-                    std::cout<<"\t\t\tkeys has requested-apn "<<temp<<std::endl;
+                    LOG_MSG(LOG_INIT,"\t\t\tkeys has requested-apn %s",temp);
                     key->apn.is_valid = true;
                     strcpy(key->apn.requested_apn,temp);
                     
                 }
             }
-            std::cout<<"\t\tSelected Profiles"<<std::endl;
+            LOG_MSG(LOG_INIT,"\t\tSelected Profiles ");
             if(subRuleSection.HasMember("selected-apn-profile"))
             {
                 const char *temp = subRuleSection["selected-apn-profile"].GetString();
                 sub_rule->selected_apn_profile = (char *)malloc (strlen(temp)+1);
-                std::cout<<"\t\t\tselected-apn-profile found - "<<temp<<std::endl;
+                LOG_MSG(LOG_INIT,"\t\t\tselected-apn-profile found - %s",temp);
                 strcpy(sub_rule->selected_apn_profile, temp);
             }
             if(subRuleSection.HasMember("selected-user-plane-profile"))
             {
                 const char *temp = subRuleSection["selected-user-plane-profile"].GetString();
                 sub_rule->selected_user_plane_profile = (char *)malloc(strlen(temp)+1);
-                std::cout<<"\t\t\tselected-user-plane-profile found "<<temp<<std::endl;
+                LOG_MSG(LOG_INIT,"\t\t\tselected-user-plane-profile found %s",temp);
                 strcpy(sub_rule->selected_user_plane_profile, temp);
             }
             if(subRuleSection.HasMember("selected-qos-profile"))
             {
                 const char *temp = subRuleSection["selected-qos-profile"].GetString();
                 sub_rule->selected_qos_profile = (char *)malloc(strlen(temp)+1);
-                std::cout<<"\t\t\tselected-qos-profile found - "<<temp<<std::endl;
+                LOG_MSG(LOG_INIT,"\t\t\tselected-qos-profile found - %s",temp);
                 strcpy(sub_rule->selected_qos_profile, temp);
             }
             if(subRuleSection.HasMember("selected-access-profile"))
@@ -177,7 +178,7 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
                     const rapidjson::Value& accessProfile= subRuleSection["selected-access-profile"][acc];
                     const char *temp = accessProfile.GetString(); 
                     sub_rule->selected_access_profile[acc] = (char *)malloc(strlen(temp)+1);
-                    std::cout<<"\t\t\tselected-access-profile - "<<temp<<std::endl;
+                    LOG_MSG(LOG_INIT,"\t\t\tselected-access-profile - %s",temp);
                     strcpy(sub_rule->selected_access_profile[acc], temp);
                 }
             }            
@@ -193,14 +194,14 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
             std::string key = itr->name.GetString();
             if(itr->value.IsObject())
             {
-                std::cout<<"\tAPN profile "<< key.c_str()<<" is Object"<<std::endl; 
+                LOG_MSG(LOG_INIT,"\tAPN profile %s is Object", key.c_str());
                 apn_profile_t *apn_profile = new (apn_profile_t);
                 memset(apn_profile, 0, sizeof(apn_profile_t));
                 strcpy(apn_profile->apn_profile_name, key.c_str());
                 const rapidjson::Value& apnSection = itr->value; 
                 if(apnSection.HasMember("apn-name")) {
                     const char *temp = apnSection["apn-name"].GetString();
-                    std::cout<<"\t\tAPN name["<<temp<<"]"<<std::endl;
+                    LOG_MSG(LOG_INIT,"\t\tAPN name[%s]",temp);
                     /* Don't copy NULL termination */
                     strncpy(&apn_profile->apn_name[1], temp, strlen(temp));
                     char *ptr, *size;
@@ -219,44 +220,43 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
                         --ptr;
                     } while (ptr != apn_profile->apn_name);
                     apn_profile->apn_name_length = strlen(apn_profile->apn_name);
-                    std::cout<<"\t\tAPN name after encode ["<<apn_profile->apn_name<<"]"<<std::endl;
+                    LOG_MSG(LOG_INIT,"\t\tAPN name after encode [%s]",apn_profile->apn_name);
                 }
                 if(apnSection.HasMember("usage")) {
                     int usage = apnSection["usage"].GetInt();
-                    std::cout<<"\t\tUsage type  "<<usage<<std::endl;
+                    LOG_MSG(LOG_INIT,"\t\tUsage type  %d ",usage);
                     apn_profile->apn_usage_type = usage;
                 }
                 if(apnSection.HasMember("network")) {
                     const char *temp = apnSection["network"].GetString();
-                    std::cout<<"\t\tNetwork type "<<temp<<std::endl;
+                    LOG_MSG(LOG_INIT,"\t\tNetwork type %s",temp);;
                     strcpy(apn_profile->apn_net_cap, temp);
                 }
                 if(apnSection.HasMember("gx_enabled")) {
                     bool gx_enabled = apnSection["gx_enabled"].GetBool();
-                    std::cout<<"\t\tGx enabled "<<gx_enabled<<std::endl;
+                    LOG_MSG(LOG_INIT,"\t\tGx enabled %s",gx_enabled == true ? "True":"False");
                     apn_profile->gx_enabled = gx_enabled;
                 }
                 if(apnSection.HasMember("mtu")) {
                     uint16_t mtu = apnSection["mtu"].GetInt();
-                    std::cout<<"\t\tAPN has mtu "<<mtu<<std::endl;
+                    LOG_MSG(LOG_INIT,"\t\tAPN has mtu %u",mtu);
                     apn_profile->mtu = mtu;
                 }
                 if(apnSection.HasMember("dns_primary")) {
                     const char *temp = apnSection["dns_primary"].GetString();
-                    std::cout<<"\t\tAPN has dns_primary "<<temp<<std::endl;
+                    LOG_MSG(LOG_INIT,"\t\tAPN has dns_primary %s ",temp);
                     struct in_addr temp_i;
                     inet_aton(temp, &temp_i);
                     apn_profile->dns_primary = temp_i.s_addr;
                 }
                 if(apnSection.HasMember("dns_secondary")) {
                     const char *temp = apnSection["dns_secondary"].GetString();
-                    std::cout<<"\t\tAPN has dns_secondary "<<temp<<std::endl;
+                    LOG_MSG(LOG_INIT,"\t\tAPN has dns_secondary %s",temp);
                     struct in_addr temp_i;
                     inet_aton(temp, &temp_i);
                     apn_profile->dns_secondary = temp_i.s_addr;
                 }
                 config_store->apn_profile_list.push_back(apn_profile);
-                std::cout<<std::endl;
             }
         }
     }
@@ -274,16 +274,16 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
             if(userPlaneSection.HasMember("user-plane"))
             {
                 const char *temp = userPlaneSection["user-plane"].GetString();
-                std::cout<<"\tUser Plane - "<<temp<<std::endl;
+                LOG_MSG(LOG_INIT,"\tUser Plane - %s ",temp);
                 strcpy(user_plane->user_plane_service, temp);
             }
             if(userPlaneSection.HasMember("qos-tags"))
             {
-                std::cout<<"\t\tQoS Tags specified "<<std::endl;
+                LOG_MSG(LOG_INIT,"\t\tQoS Tags specified "); 
             }
             if(userPlaneSection.HasMember("access-tags"))
             {
-                std::cout<<"\t\tAccess Tags specified "<<std::endl;
+                LOG_MSG(LOG_INIT,"\t\tAccess Tags specified ");
             }
             config_store->user_plane_list.push_back(user_plane);
         }
@@ -296,11 +296,11 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
             qos_profile_t *qos_profile = new (qos_profile_t);
             std::string key = itr->name.GetString();
             strcpy(qos_profile->qos_profile_name, key.c_str());
-            std::cout<<"\tQoS profile - "<<key<<std::endl;
+            LOG_MSG(LOG_INIT,"\tQoS profile - %s",key.c_str());
             const rapidjson::Value& qosPlaneSection = itr->value; 
             qos_profile->apn_ambr_ul = qosPlaneSection["apn-ambr"][0].GetInt64();
             qos_profile->apn_ambr_dl = qosPlaneSection["apn-ambr"][1].GetInt64();
-            std::cout<<"\t\tQoS apn ambr uplink - "<<qos_profile->apn_ambr_ul <<" downlink - "<<qos_profile->apn_ambr_dl<<std::endl;
+            LOG_MSG(LOG_INIT,"\t\tQoS apn ambr uplink - %u, downlink %u ",qos_profile->apn_ambr_ul, qos_profile->apn_ambr_dl);
             config_store->qos_profile_list.push_back(qos_profile);
         }
     }
@@ -310,7 +310,7 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
         for (rapidjson::Value::ConstMemberIterator itr = accessProfileSection.MemberBegin(); itr != accessProfileSection.MemberEnd(); ++itr)
         {
             std::string key = itr->name.GetString();
-            std::cout<<"\tAccess profile - "<<key<<std::endl;
+            LOG_MSG(LOG_INIT,"\tAccess profile - %s",key.c_str());
             access_profile_t *access_profile = new (access_profile_t);
             strcpy(access_profile->access_profile_name, key.c_str());
             config_store->access_profile_list.push_back(access_profile);
@@ -325,13 +325,13 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
     sub_selection_rule_t *rule = nullptr;
     std::list<sub_selection_rule_t *>::iterator it;
     if(config == NULL) {
-        std::cout<<"Configuration not available..."<<std::endl;
+        LOG_MSG(LOG_ERROR,"Subscriber mapping configuration not available...");
         return NULL;
     }
     for (it=config->sub_sel_rules.begin(); it!=config->sub_sel_rules.end(); ++it)
     {
         rule = *it;
-        printf("Searching rule %d \n", rule->rule_priority);
+        LOG_MSG(LOG_DEBUG,"Searching rule %d ", rule->rule_priority);
         sub_selection_keys_t *key_l = rule->keys;
         if((key_l != nullptr) && (key_l->imsi.is_valid))
         {
@@ -340,9 +340,12 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
                 continue; // no match continue for next rule 
             }
             if(!((key->imsi.from_imsi >= key_l->imsi.from_imsi) && (key->imsi.from_imsi <= key_l->imsi.to_imsi)))
+            {
+               LOG_MSG(LOG_DEBUG, "IMSI range not matched");
                continue; // no match continue for next rule  
+            }
         }
-        printf("IMSI matched \n");
+        LOG_MSG(LOG_DEBUG, "IMSI range matched for %lu", key->imsi.from_imsi);
         if((key_l != nullptr) && (key_l->plmn.is_valid))
         {
             if(key->plmn.is_valid == false)
@@ -350,17 +353,23 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
             if(memcmp(&key_l->plmn.plmn[0], &key_l->plmn.plmn[0],3))
                 continue; // no match 
             if(key_l->plmn.tac != key->plmn.tac)
+            {
+                LOG_MSG(LOG_DEBUG, "Subscriber not matched with PLMN ");
                 continue; // no match 
+            }
         } 
-        printf("PLMN matched \n");
+        LOG_MSG(LOG_DEBUG, "Subscriber matched with PLMN ");
         if((key_l != nullptr) && (key_l->apn.is_valid))
         {
             if(key->apn.is_valid == false)
                 continue;
             if(strcmp(key->apn.requested_apn, key_l->apn.requested_apn))
+            {
+                LOG_MSG(LOG_DEBUG, "Subscriber not matched with APN");
                 continue;
+            }
         }
-        printf("APN matched \n");
+        LOG_MSG(LOG_DEBUG, "Subscriber matched with APN");
         break;
     }
 
@@ -372,10 +381,10 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
         temp->qos_profile = config->get_qos_profile(rule->selected_qos_profile);
         temp->up_profile = config->get_user_plane_profile(rule->selected_user_plane_profile);
         temp->access_profile = config->get_access_profile(rule->selected_access_profile[0]);
-        std::cout<<"matching subscriber rule found "<<std::endl;
+        LOG_MSG(LOG_DEBUG,"matching subscriber rule found ");
         return temp;
     }
-    std::cout<<"No matching rule found "<<std::endl;
+    LOG_MSG(LOG_INIT,"No matching rule found ");
     return nullptr;
 }
 
@@ -404,18 +413,19 @@ void spgwConfig::switch_config_cpp(spgw_config_profile_t *new_config)
 apn_profile_t* spgwConfig::match_apn_profile_cpp(char *name, uint16_t len)
 {
     std::list<apn_profile_t*>::iterator it;
+    LOG_MSG(LOG_DEBUG,"Search APN [%s] in APN profile list", name);
     for (it=config->apn_profile_list.begin(); it!=config->apn_profile_list.end(); ++it)
     {
         apn_profile_t* apn = *it;
-        printf("Compare APN profile [%s] with [%s] \n", apn->apn_name, name);
+        LOG_MSG(LOG_DEBUG, "Compare APN profile [%s] with [%s] ", apn->apn_name, name);
         if(strlen(apn->apn_name) != len)
             continue;
         if(memcmp(apn->apn_name,name,len) != 0)
             continue;
-        printf("Found APN profile   %s \n", apn->apn_name);
+        LOG_MSG(LOG_DEBUG,"Found APN profile   %s ", apn->apn_name);
         return apn;
     }
-    printf("APN [%s] not found \n", name);
+    LOG_MSG(LOG_DEBUG,"APN [%s] not found ", name);
     return nullptr;
 }
 
@@ -427,7 +437,7 @@ spgwConfig::invalidate_user_plane_address(uint32_t addr)
         user_plane_profile_t *up=*it;
         if(up->upf_addr == addr)
         {
-            std::cout<<"invalidating upf address. \n";
+            LOG_MSG(LOG_INIT, "invalidating upf address");
             up->upf_addr = 0;
         }
     }

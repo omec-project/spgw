@@ -7,7 +7,6 @@
 #include "tables/tables.h"
 #include <rte_hash.h>
 #include <rte_jhash.h>
-#include "clogger.h"
 #include "rte_lcore.h"
 #include "rte_debug.h"
 #include "rte_errno.h"
@@ -49,14 +48,14 @@ add_peer_entry(uint32_t ipaddr, peerData_t *peer)
 {
 	int ret;
 
-	clLog(clSystemLog, eCLSeverityDebug, "Add entry to connection table  ip:%s",
+	LOG_MSG(LOG_DEBUG, "Add entry to connection table  ip:%s",
 			inet_ntoa(*(struct in_addr *)&ipaddr));
 
 	ret = rte_hash_add_key_data(conn_hash_handle,
 			(const void *)&ipaddr, (void *)peer);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"%s - Error on rte_hash_add_key_data add\n",
 				strerror(ret));
 		return -1;
@@ -85,7 +84,7 @@ void del_entry_from_hash(uint32_t ipAddr)
 
 	int ret = 0;
 
-	clLog(clSystemLog, eCLSeverityDebug, " Delete entry from connection table of ip:%s",
+	LOG_MSG(LOG_DEBUG, " Delete entry from connection table of ip:%s",
 			inet_ntoa(*(struct in_addr *)&ipAddr));
 
 	/* Delete entry from connection hash table */
@@ -93,11 +92,11 @@ void del_entry_from_hash(uint32_t ipAddr)
 			&ipAddr);
 
 	if (ret == -ENOENT)
-		clLog(clSystemLog, eCLSeverityDebug, "key is not found\n");
+		LOG_MSG(LOG_DEBUG, "key is not found\n");
 	if (ret == -EINVAL)
-		clLog(clSystemLog, eCLSeverityDebug, "Invalid Params: Failed to del from hash table\n");
+		LOG_MSG(LOG_DEBUG, "Invalid Params: Failed to del from hash table\n");
 	if (ret < 0)
-		clLog(clSystemLog, eCLSeverityDebug, "VS: Failed to del entry from hash table\n");
+		LOG_MSG(LOG_DEBUG, "VS: Failed to del entry from hash table\n");
 
 	//conn_cnt--; ajay
 

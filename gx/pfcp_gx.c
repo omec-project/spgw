@@ -11,8 +11,7 @@
 #include <rte_cfgfile.h>
 #include <rte_string_fns.h>
 
-#include "gw_adapter.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "sm_structs_api.h"
 #include "spgw_cpp_wrapper.h"
 //REVIEW: Need to check this: No need to add this header files
@@ -147,7 +146,6 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
 	int nb_token = 0;
 	char *str_fld[NUM_VALS];
 	int offset = 0;
-    printf("string to parse = %s \n", temp_str);
     char str[512];
     strcpy(str, temp_str);
 
@@ -158,74 +156,61 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
     //   permit out udp from any to assigned
     //    0      1   2   3    4   5  6
 	nb_token = rte_strsplit(str, strlen(str), str_fld, NUM_VALS, ' ');
-    printf("nb_token = %d \n", nb_token);
 	if (nb_token > NUM_VALS) {
-		clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:Reach Max limit for sdf string \n",
-				__file__, __func__, __LINE__);
-        printf("%s %d \n",__FUNCTION__, __LINE__);
+		LOG_MSG(LOG_ERROR, "AVP:Reach Max limit for sdf string ");
 		return -1;
 	}
 
 	for(int indx=0; indx < nb_token; indx++) {
-        printf("\n Index %d string %s \n", indx, str_fld[indx]);
+        LOG_MSG(LOG_DEBUG,"Index %d string %s ", indx, str_fld[indx]);
         if( indx == 0 ) {
             if(strncmp(str_fld[indx], "permit", strlen("permit")) != 0 ) {
-                clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:Skip sdf filling for IP filter rule action : %s \n",
-                        __file__, __func__, __LINE__,str_fld[indx]);
-                printf("%s %d \n",__FUNCTION__, __LINE__);
+                LOG_MSG(LOG_ERROR, "AVP:Skip sdf filling for IP filter rule action : %s ",str_fld[indx]);
                 return -1;
             } else {
-                printf("permit \n");
+                LOG_MSG(LOG_DEBUG, "permit ");
             }
 		} else if(indx == 2) {
 			pkt_filter->proto_id = atoi(str_fld[indx]);
-            printf("\n proto_id %d \n",pkt_filter->proto_id);
+            LOG_MSG(LOG_DEBUG, "proto_id %d ",pkt_filter->proto_id);
 		} else if (indx == 4) {
 			if(strncmp(str_fld[indx], "any", strlen("any")) != 0) {
-        printf("any not present in the filter \n");
+                LOG_MSG(LOG_DEBUG, "any not present in the filter ");
 				if( strstr(str_fld[indx], "/") != NULL) {
-                    printf("/ present in the filter \n");
+                    LOG_MSG(LOG_DEBUG, "/ present in the filter \n");
 					int ip_token = 0;
 					char *ip_fld[2];
 					ip_token = rte_strsplit(str_fld[indx], strlen(str_fld[indx]), ip_fld, 2, '/');
 					if (ip_token > 2) {
-						clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:Reach Max limit for sdf src ip \n",
-							__file__, __func__, __LINE__);
-                        printf("%s %d \n",__FUNCTION__, __LINE__);
+						LOG_MSG(LOG_ERROR, "AVP:Reach Max limit for sdf src ip");
 						return -1;
 					}
 					if(inet_pton(AF_INET, (const char *) ip_fld[0], (void *)(&pkt_filter->local_ip_addr)) < 0){
-						clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:conv of src ip fails \n",
-							__file__, __func__, __LINE__);
-                        printf("%s %d \n",__FUNCTION__, __LINE__);
+						LOG_MSG(LOG_ERROR, "AVP:conv of src ip fails ");
 						return -1;
 					}
 
 					pkt_filter->local_ip_mask = atoi(ip_fld[1]);
 				} else {
 					if(inet_pton(AF_INET, (const char *) str_fld[indx], (void *)(&pkt_filter->local_ip_addr)) < 0){
-						clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:conv of src ip fails \n",
-								__file__, __func__, __LINE__);
-                        printf("%s %d \n",__FUNCTION__, __LINE__);
+						LOG_MSG(LOG_ERROR, "AVP:conv of src ip fails ");
 						return -1;
 					}
-                    printf("/ is not present in the filter %s \n",inet_ntoa(pkt_filter->local_ip_addr));
+                    LOG_MSG(LOG_DEBUG, "/ is not present in the filter %s ",inet_ntoa(pkt_filter->local_ip_addr));
 				}
 			}
 		} else if(indx == 5) {
 			/*TODO VG : handling of multiple ports p1,p2,p3 etc*/
 			if(strncmp(str_fld[indx], "to", strlen("to")) != 0) {
-        printf("\n no TO found \n");
+                LOG_MSG(LOG_DEBUG,"no TO found ");
 				if( strstr(str_fld[indx], "-") != NULL) {
-                    printf("\n found - \n");
+                    LOG_MSG(LOG_DEBUG, "found - ");
 					int port_token = 0;
 					char *port_fld[2];
 					port_token = rte_strsplit(str_fld[indx], strlen(str_fld[indx]), port_fld, 2, '-');
 
 					if (port_token > 2) {
-						clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:Reach Max limit for sdf src port \n",
-							__file__, __func__, __LINE__);
-                        printf("%s %d \n",__FUNCTION__, __LINE__);
+						LOG_MSG(LOG_ERROR, "AVP:Reach Max limit for sdf src port ");
 						return -1;
 					}
 
@@ -235,19 +220,19 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
 				} else {
 					pkt_filter->local_port_low = atoi(str_fld[indx]);
 					pkt_filter->local_port_high = atoi(str_fld[indx]);
-                    printf("\n pkt_filter->local_port_low %d pkt_filter->local_port_high %d \n", pkt_filter->local_port_low, pkt_filter->local_port_high);
+                    LOG_MSG(LOG_DEBUG,"pkt_filter->local_port_low %d pkt_filter->local_port_high %d ", pkt_filter->local_port_low, pkt_filter->local_port_high);
 				}
 			}else {
-                printf("\n TO found...");
+                LOG_MSG(LOG_DEBUG,"TO found...");
 				offset++;
 			}
 		} else if (indx + offset == 7) {
 
 			if(strncmp(str_fld[indx], "any", strlen("any")) == 0 ) {
-                printf("keyword any used in the ip filter\n");
+                LOG_MSG(LOG_DEBUG,"keyword any used in the ip filter");
             }
 			else if(strncmp(str_fld[indx], "assigned", strlen("assigned")) == 0 ) {
-                printf("keyword assigned used in the ip filter\n");
+                LOG_MSG(LOG_DEBUG,"keyword assigned used in the ip filter");
                 pkt_filter->remote_ip_mask = 32;
                 pkt_filter->remote_ip_addr = pdn->ipv4;
             }
@@ -257,24 +242,18 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
                     char *ip_fld[2];
                     ip_token = rte_strsplit(str_fld[indx], strlen(str_fld[indx]), ip_fld, 2, '/');
                     if (ip_token > 2) {
-                        clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:Reach Max limit for sdf dst ip \n",
-                                __file__, __func__, __LINE__);
-                        printf("%s %d \n",__FUNCTION__, __LINE__);
+                        LOG_MSG(LOG_ERROR, "AVP:Reach Max limit for sdf dst ip ");
                         return -1;
                     }
                     if(inet_pton(AF_INET, (const char *) ip_fld[0], (void *)(&pkt_filter->remote_ip_addr)) < 0){
-                        clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:conv of dst ip fails \n",
-                                __file__, __func__, __LINE__);
-                        printf("%s %d \n",__FUNCTION__, __LINE__);
+                        LOG_MSG(LOG_ERROR, "AVP:conv of dst ip fails");
                         return -1;
                     }
 
                     pkt_filter->remote_ip_mask = atoi(ip_fld[1]);
                 } else{
                     if(inet_pton(AF_INET, (const char *) str_fld[indx], (void *)(&pkt_filter->remote_ip_addr)) < 0){
-                        clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:conv of dst ip \n",
-                                __file__, __func__, __LINE__);
-                        printf("%s %d \n",__FUNCTION__, __LINE__);
+                        LOG_MSG(LOG_ERROR, "AVP:conv of dst ip");
                         return -1;
                     }
                 }
@@ -288,9 +267,7 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
 				port_token = rte_strsplit(str_fld[indx], strlen(str_fld[indx]), port_fld, 2, '-');
 
 				if (port_token > 2) {
-					clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:Reach Max limit for sdf dst port\n",
-							__file__, __func__, __LINE__);
-                        printf("%s %d \n",__FUNCTION__, __LINE__);
+					LOG_MSG(LOG_ERROR, "AVP:Reach Max limit for sdf dst port");
 					return -1;
 				}
 
@@ -298,14 +275,13 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
 				pkt_filter->remote_port_high = atoi(port_fld[1]);
 
 			} else {
-                printf("pkt_filter->remote_port_low %d pkt_filter->remote_port_high %d \n",pkt_filter->remote_port_low, pkt_filter->remote_port_high);
+                LOG_MSG(LOG_DEBUG, "pkt_filter->remote_port_low %d pkt_filter->remote_port_high %d ",pkt_filter->remote_port_low, pkt_filter->remote_port_high);
 				pkt_filter->remote_port_low = atoi(str_fld[indx]);
 				pkt_filter->remote_port_high = atoi(str_fld[indx]);
 			}
 		}
 	}
 
-    printf("success %s %d \n",__FUNCTION__, __LINE__);
     return 0;
 }
 
@@ -323,19 +299,6 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
 					          GxChargingRuleDefinition *rule_definition)
 {
     int32_t idx = 0;
-    printf("%s %d  - dynamic rule %p \n", __FUNCTION__, __LINE__, dynamic_rule);
-
-    /* VS: Allocate memory for dynamic rule */
-    //	dynamic_rule = rte_zmalloc_socket(NULL, sizeof(dynamic_rule_t),
-    //	    RTE_CACHE_LINE_SIZE, rte_socket_id());
-    //	if (dynamic_rule == NULL) {
-    //		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate bearer id memory "
-    //				"structure: %s (%s:%d)\n",
-    //				rte_strerror(rte_errno),
-    //				__file__,
-    //				__LINE__);
-    //		return -1;
-    //	}
 
     if (rule_definition->presence.online == PRESENT)
         dynamic_rule->online =  rule_definition->online;
@@ -372,13 +335,11 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
                 rule_definition->af_charging_identifier.len);
     }
 
-    printf("rule_definition->presence.flow_information = %d \n", rule_definition->presence.flow_information);
     if (rule_definition->presence.flow_information == PRESENT) {
         dynamic_rule->num_flw_desc = rule_definition->flow_information.count;
 
         for(idx = 0; idx < rule_definition->flow_information.count; idx++)
         {
-            printf("\n index %d \n", idx);
             if ((rule_definition->flow_information).list[idx].presence.flow_direction
                     == PRESENT) {
                 dynamic_rule->flow_desc[idx].flow_direction =
@@ -394,12 +355,10 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
                 dynamic_rule->flow_desc[idx].flow_desc_len =
                     (rule_definition->flow_information).list[idx].flow_description.len;
 
-                printf("calling fill_sdf_strctr - flow description is present %s %d \n",dynamic_rule->flow_desc[idx].sdf_flow_description, dynamic_rule->flow_desc[idx].flow_desc_len);
                 fill_sdf_strctr(dynamic_rule->flow_desc[idx].sdf_flow_description,
                                 &(dynamic_rule->flow_desc[idx].sdf_flw_desc),
                                 pdn);
 
-                printf("after fill_sdf_strctr - flow description is present %s %d \n",dynamic_rule->flow_desc[idx].sdf_flow_description, dynamic_rule->flow_desc[idx].flow_desc_len);
                 /*VG assign direction in flow desc */
                 dynamic_rule->flow_desc[idx].sdf_flw_desc.direction =(uint8_t)
                     (rule_definition->flow_information).list[idx].flow_direction;
@@ -409,12 +368,9 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
     }
 
 
-    printf("rule_definition->presence.qos_information %d \n", rule_definition->presence.qos_information);
     if(rule_definition->presence.qos_information == PRESENT) {
-        printf("Found qos informaation in the rule \n");
         GxQosInformation *qos = &(rule_definition->qos_information);
         dynamic_rule->qos.qci = qos->qos_class_identifier;
-        printf("dynamic_rule->qos.qci %d \n", dynamic_rule->qos.qci);
         dynamic_rule->qos.arp.priority_level = qos->allocation_retention_priority.priority_level;
         dynamic_rule->qos.arp.preemption_capability = qos->allocation_retention_priority.pre_emption_capability;
         dynamic_rule->qos.arp.preemption_vulnerability = qos->allocation_retention_priority.pre_emption_vulnerability;
@@ -436,11 +392,10 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
         strncpy(dynamic_rule->rule_name,
                 (char *)rule_definition->charging_rule_name.val,
                 rule_definition->charging_rule_name.len);
-        printf("dynamic rule found = %s \n",dynamic_rule->rule_name);
 #if 0
         /* VS: Maintain the Rule Name and Bearer ID  mapping with call id */
         if (add_rule_name_entry(key, &id) != 0) {
-            clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to add_rule_name_entry with rule_name\n",
+            LOG_MSG(LOG_ERROR, "%s:%d Failed to add_rule_name_entry with rule_name\n",
                     __func__, __LINE__);
             return -1;
         }
@@ -490,8 +445,8 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 	rule_name_key_t rule_name = {0};
 	GxChargingRuleDefinition *rule_definition = NULL;
 
-  printf("%s pdn->policy.count %d \n",__FUNCTION__,pdn->policy.count);
-  printf("%s charging_rule_install->count %d \n",__FUNCTION__,charging_rule_install->count);
+  LOG_MSG(LOG_DEBUG, "pdn->policy.count %d, charging_rule_install->count %d \n", pdn->policy.count,
+                      charging_rule_install->count);
 
 	if(install_present)
 	{
@@ -526,7 +481,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 						fill_charging_rule_definition(pdn, pcc_rule->dyn_rule, rule_definition);
 					} else {
 						//TODO: Rule without name not possible; Log IT ?
-                        printf("Rule without name not allowed\n");
+                        LOG_MSG(LOG_ERROR, "Rule without name not allowed");
 						return -1;
 					}
 				}
@@ -562,7 +517,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
                     // GXBUG : idx_offset is not incremented..it will keep overriding rules 
                     TAILQ_INSERT_TAIL(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
 				} else {
-                        printf("Rule %s - Received in RAR and not found \n", rule_name.rule_name);
+                        LOG_MSG(LOG_ERROR, "Rule %s - Received in RAR and not found ", rule_name.rule_name);
         }
 			}
 		}
@@ -584,7 +539,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 							context->dynamic_rules[cnt] = rte_zmalloc_socket(NULL, sizeof(dynamic_rule_t),
 							    RTE_CACHE_LINE_SIZE, rte_socket_id());
 							if (context->dynamic_rules[cnt] == NULL) {
-								clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate dynamic rule memory "
+								LOG_MSG(LOG_ERROR, "Failure to allocate dynamic rule memory "
 										"structure: %s (%s:%d)\n",
 										rte_strerror(rte_errno),
 										__file__,
@@ -614,7 +569,7 @@ check_for_rules_on_default_bearer(pdn_connection_t *pdn)
 			(compare_default_bearer_qos(&pdn->policy.default_bearer_qos,
 					&pcc_rule->dyn_rule->qos) == 0))
         {
-            printf("\n check_for_rules_on_default_bearer - installing rules on default bearer \n");
+            LOG_MSG(LOG_DEBUG,"check_for_rules_on_default_bearer - installing rules on default bearer ");
             /* Adding rule and bearer id to a hash */
             bearer_id_t *id;
             id = malloc(sizeof(bearer_id_t));
@@ -626,9 +581,7 @@ check_for_rules_on_default_bearer(pdn_connection_t *pdn)
             sprintf(key.rule_name, "%s%d", key.rule_name,
                     pdn->call_id);
             if (add_rule_name_entry(key, id) != 0) {
-                clLog(sxlogger, eCLSeverityCritical,
-                        FORMAT"Failed to add_rule_name_entry with rule_name\n",
-                        ERR_MSG);
+                LOG_MSG(LOG_ERROR, "Failed to add_rule_name_entry with rule_name");
                 return -1;
             }
             //GXFEATURE : we can have multiple rules on default bearer...
@@ -636,7 +589,6 @@ check_for_rules_on_default_bearer(pdn_connection_t *pdn)
         }
         pcc_rule = next_pcc_rule;
 	}
-    printf("%s %d \n", __FUNCTION__, __LINE__);
 	return 0;
 }
 
@@ -675,7 +627,7 @@ retrieve_bearer_id(pdn_connection_t *pdn, GxCCA *cca)
 						if (ret == 0)
 							return id;
 					} else {
-						clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:charging_rule_definition missing:"
+						LOG_MSG(LOG_ERROR, "%s:%s:%d AVP:charging_rule_definition missing:"
 								"AVP:Qos Information \n",
 								__file__, __func__, __LINE__);
 						return -1;
@@ -700,7 +652,7 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 	/* Extract the call id from session id */
 	ret = retrieve_call_id((char *)&cca->session_id.val, &call_id);
 	if (ret < 0) {
-	        clLog(clSystemLog, eCLSeverityCritical, "%s:No Call Id found from session id:%s\n", __func__,
+	        LOG_MSG(LOG_ERROR, "%s:No Call Id found from session id:%s\n", __func__,
 	                        cca->session_id.val);
 	        return -1;
 	}
@@ -709,7 +661,7 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 	pdn_cntxt = get_pdn_conn_entry(call_id);
 	if (pdn_cntxt == NULL)
 	{
-	      clLog(clSystemLog, eCLSeverityCritical, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
+	      LOG_MSG(LOG_ERROR, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
 	                          __func__, call_id);
 	      return -1;
 	}
@@ -721,14 +673,12 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 
 	/* VS: Overwirte the CSR qos values with CCA default eps bearer qos values */
 	if (cca->presence.default_eps_bearer_qos != PRESENT) {
-		clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:default_eps_bearer_qos is missing \n",
-				__file__, __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "AVP:default_eps_bearer_qos is missing ");
 		return -1;
 	}
 	ret = store_default_bearer_qos_in_policy(pdn_cntxt, cca->default_eps_bearer_qos);
 	if (ret) {
-        clLog(gxlogger, eCLSeverityCritical, "%s:%s:%d AVP:default_eps_bearer_qos failed to store \n",
-                __file__, __func__, __LINE__);
+        LOG_MSG(LOG_ERROR, "AVP:default_eps_bearer_qos failed to store ");
         return ret;
     }
 
@@ -744,21 +694,20 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
     bool remove_rule_present = (cca->presence.charging_rule_remove == PRESENT);
 	ret = store_dynamic_rules_in_policy(pdn_cntxt, &(cca->charging_rule_install), &(cca->charging_rule_remove), install_rule_present, remove_rule_present);
     if (ret) {
-        printf("Failed at %s %d \n",__FUNCTION__, __LINE__);
+        LOG_MSG(LOG_ERROR, "store dynamic rules failed ");
         return ret;
     }
 
 	ret = check_for_rules_on_default_bearer(pdn_cntxt);
     if (ret) {
-        printf("Failed at %s %d \n",__FUNCTION__, __LINE__);
+        LOG_MSG(LOG_ERROR, "check rules on default bearer failed ");
         return ret;
     }
 
 	if (cca->presence.event_trigger == PRESENT) {
-        printf("Trigger present in the message \n");
         ret = store_event_trigger(pdn_cntxt, &(cca->event_trigger));
         if (ret) {
-            printf("Failed at %s %d \n",__FUNCTION__, __LINE__);
+            LOG_MSG(LOG_ERROR, "store event trigger failed ");
             return ret;
         }
     }
@@ -785,7 +734,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	upd_bearer_req_t ubr_req = {0};
 
 	if (get_sess_entry_seid(pdn->seid, &context) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
+		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, pdn->seid);
 		return DIAMETER_ERROR_USER_UNKNOWN;
 	}
@@ -814,8 +763,8 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 
 			bearer = get_bearer(pdn, &pdn->policy.pcc_rule[idx].dyn_rule->qos);
 			if(bearer == NULL){
-				clLog(sxlogger, eCLSeverityCritical,
-						"%s:%d Bearer return is Null for that Qos recived in RAR: %d \n",
+				LOG_MSG(LOG_ERROR,
+						"%s:%d Bearer return is Null for that Qos recived in RAR\n",
 				 		__func__, __LINE__);
 				return DIAMETER_ERROR_USER_UNKNOWN;
 
@@ -858,7 +807,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	/* Retrive Gx_context based on Sess ID. */
 	ret = get_gx_context((uint8_t*)pdn->gx_sess_id, &gx_context);
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
+		LOG_MSG(LOG_ERROR, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
 				pdn->gx_sess_id);
 		return DIAMETER_UNKNOWN_SESSION_ID;
 	}
@@ -1008,12 +957,12 @@ parse_gx_rar_msg(msg_info_t *msg)
     bool remove_rule_present = (rar->presence.charging_rule_remove == PRESENT);
 	ret = store_dynamic_rules_in_policy(pdn_cntxt, &(rar->charging_rule_install), &(rar->charging_rule_remove), install_rule_present, remove_rule_present);
 	if (ret) {
-        printf("store_dynamic_rules_in_policy failed with return %d \n",ret);
+        LOG_MSG(LOG_ERROR, "store dynamic rules in policy failed with return %d ",ret);
 	    return ret;
     }
 
     /* Requirement - updating policy only on either default bearer to dedicated bearer */
-    printf("Modify pcc rules %d \n", pdn_cntxt->policy.num_charg_rule_modify);
+    LOG_MSG(LOG_DEBUG, "Modify pcc rules %d ", pdn_cntxt->policy.num_charg_rule_modify);
 	if(pdn_cntxt->policy.num_charg_rule_modify) {
         /*GXFIX : we are not updating pfcp session ? when should we do it ? */
         /* What if RAR is received which involves modify as well as addition of new rules, we can not 

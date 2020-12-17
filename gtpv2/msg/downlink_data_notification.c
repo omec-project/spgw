@@ -5,10 +5,9 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "gtp_messages_decoder.h"
-#include "gw_adapter.h"
 #include "ue.h"
 #include "sm_struct.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "cp_io_poll.h"
 #include "vepc_cp_dp_api.h"
 #include"cp_config.h"
@@ -49,13 +48,14 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     ret = decode_dnlnk_data_notif_ack((uint8_t*)gtpv2c_rx, ddn_ack); 
     if (!ret) {
-        printf("\n DDN decode failure ");
+        LOG_MSG(LOG_DEBUG0, "DDN decode failure ");
         increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
         return ret;
     }
 
     if (gtpv2c_rx->teid.has_teid.teid && get_ue_context(ddn_ack->header.teid.has_teid.teid, &context) != 0) {
         increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
+        LOG_MSG(LOG_DEBUG0, "Rcvd DDN, Context not found for TEID %u ", gtpv2c_rx->teid.has_teid.teid);
         return -1;
     }
  
@@ -69,7 +69,7 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     /* Retrive the session information based on session id. */
     if(gtpc_trans == NULL) {
-        printf("Unsolicitated DDN Ack response \n");
+        LOG_MSG(LOG_DEBUG3, "Unsolicitated DDN Ack response ");
         increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
         return -1;
     }
@@ -97,7 +97,7 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     // Note : important to note that we are holding on this msg now 
     *msg_p = NULL;
 
-    clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
+    LOG_MSG(LOG_DEBUG, "%s: Callback called for"
             "Msg_Type:%s[%u], Teid:%u, "
             "Procedure:%s, State:%s, Event:%s\n",
             __func__, gtp_type_str(msg->msg_type), msg->msg_type,

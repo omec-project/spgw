@@ -12,10 +12,8 @@
 #include "rte_common.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_set_ie.h"
-#include "clogger.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
-#include "gw_adapter.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_interface.h"
 

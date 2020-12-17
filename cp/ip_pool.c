@@ -11,8 +11,8 @@
 #include "gtpv2_ie.h"
 #include "ue.h"
 #include "cp_config.h"
-#include "clogger.h"
 #include "util.h"
+#include "cp_log.h"
 
 struct ip_table *static_addr_pool = NULL;
 
@@ -30,7 +30,7 @@ acquire_ip(struct in_addr *ipv4)
 {
 	static uint32_t next_ip_index;
 	if (unlikely(next_ip_index == LDB_ENTRIES_DEFAULT)) {
-		clLog(clSystemLog, eCLSeverityCritical, "IP Pool depleted\n");
+		LOG_MSG(LOG_ERROR, "IP Pool depleted\n");
 		return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
 	}
 	ipv4->s_addr = GET_UE_IP(next_ip_index++);
@@ -49,10 +49,10 @@ create_ue_pool(struct in_addr network, struct in_addr mask)
 		total_address = total_address << 1;
 		n =  n >> 1;
 	}
-	printf("\n Number of possible addresses = %d \n", total_address);
+	LOG_MSG(LOG_INIT,"Number of possible addresses = %d ", total_address);
 	struct ip_table *addr_pool = calloc(1, sizeof(struct ip_table));
 	if (addr_pool == NULL) {
-		printf("\n Address pool allocation failed. \n");
+		LOG_MSG(LOG_ERROR, "Address pool allocation failed. ");
 		return NULL;
 	}
 	for (uint32_t i = 1; i < (total_address - 1); i++) {
@@ -60,7 +60,7 @@ create_ue_pool(struct in_addr network, struct in_addr mask)
 		ue_ip.s_addr = network.s_addr + i; 
 		add_ipaddr_in_pool(addr_pool, ue_ip);
 		ue_ip.s_addr = htonl(ue_ip.s_addr); // just for print purpose
-		printf("Add UE IP address = %s  in pool \n", inet_ntoa(ue_ip)); 
+		LOG_MSG(LOG_DEBUG, "Add UE IP address = %s  in pool ", inet_ntoa(ue_ip)); 
 	}
 	return addr_pool;
 }
@@ -100,7 +100,7 @@ reserve_ip_node(struct ip_table *search_tree , struct in_addr host)
 	uint32_t shift[]  = {24, 16, 8, 0};
 	if (search_tree == NULL) {
 		host.s_addr = htonl(host.s_addr);
-		printf("Failed to reserve IP address %s. Static Pool not configured \n", inet_ntoa(host));
+		LOG_MSG(LOG_ERROR,"Failed to reserve IP address %s. Static Pool not configured ", inet_ntoa(host));
 		return false;
 	}
 
@@ -113,10 +113,10 @@ reserve_ip_node(struct ip_table *search_tree , struct in_addr host)
 	}
 
 	if (search_tree->used == true) {
-		printf("Found address %s in static IP Pool. But this is already used. Rejecy call setup  \n", search_tree->ue_address);
+		LOG_MSG(LOG_ERROR, "Found address %s in static IP Pool. But this is already used. Rejecy call setup ", search_tree->ue_address);
 		return false;
 	}
-	printf("Found address %s in static IP Pool \n", search_tree->ue_address);
+	LOG_MSG(LOG_DEBUG,"Found address %s in static IP Pool ", search_tree->ue_address);
 	/* Delete should free the flag.. Currently we are not taking care of hanging sessions. 
 	 * hangign sessions at PDN GW + Static Address is already trouble. This also means that
 	 * if new session comes to PDN GW and if old session found present then PDN GW should 
@@ -137,7 +137,7 @@ release_ip_node(struct ip_table *search_tree , struct in_addr host)
 	if (search_tree == NULL) {
         struct in_addr printHost = {0};
 		printHost.s_addr = htonl(host.s_addr); // Changing just for print purpoise 
-		printf("Failed to release IP address %s. Static Pool not configured \n", inet_ntoa(printHost));
+		LOG_MSG(LOG_ERROR,"Failed to release IP address %s. Static Pool not configured ", inet_ntoa(printHost));
 		return false;
 	}
 
@@ -150,11 +150,11 @@ release_ip_node(struct ip_table *search_tree , struct in_addr host)
 	}
 
 	if (search_tree->used == true) {
-		printf("Found address %s in static IP Pool. Freeing the addres \n", search_tree->ue_address);
+		LOG_MSG(LOG_DEBUG, "Found address %s in static IP Pool. Freeing the addres ", search_tree->ue_address);
 		search_tree->used = false; 
 		return true;
 	}
 
-	printf("address %s was not part of static pool \n", search_tree->ue_address);
+	LOG_MSG(LOG_ERROR, "Address %s was not part of static pool ", search_tree->ue_address);
 	return false;
 }

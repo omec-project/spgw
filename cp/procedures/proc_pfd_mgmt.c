@@ -5,16 +5,15 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <stdint.h>
-#include "clogger.h"
 #include "sm_hand.h"
 #include "rte_common.h"
 #include "cp_config.h"
-#include "gw_adapter.h"
+#include "cp_log.h"
 
 int
 pfd_management_handler(void *data, void *unused_param)
 {
-	clLog(sxlogger, eCLSeverityDebug,
+	LOG_MSG(LOG_DEBUG,
 		"Pfcp Pfd Management Response Recived Successfully \n");
 
 	RTE_SET_USED(data);

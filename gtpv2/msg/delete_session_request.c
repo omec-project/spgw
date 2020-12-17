@@ -12,9 +12,8 @@
 #include "gtpv2_interface.h"
 #include "sm_struct.h"
 #include "cp_config.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "ip_pool.h"
-#include "gw_adapter.h"
 #include "cp_peer.h"
 #include "spgw_cpp_wrapper.h"
 #include "sm_structs_api.h"
@@ -57,32 +56,32 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 	if (!lbi.header.len) {
 		/* TODO: should be responding with response indicating error
 		 * in request */
-		clLog(sxlogger, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 			"%s : Received delete session without ebi! - dropping\n", __func__);
 		return GTPV2C_CAUSE_INVALID_MESSAGE_FORMAT;
 	}
 
 	uint8_t ebi_index = lbi.ebi_ebi - 5;
 	if (!(context->bearer_bitmap & (1 << ebi_index))) {
-		clLog(sxlogger, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 		    "Received delete session on non-existent EBI - "
 		    "Dropping packet\n");
-		clLog(sxlogger, eCLSeverityCritical, "ebi %u\n", lbi.ebi_ebi);
-		clLog(sxlogger, eCLSeverityCritical, "ebi_index %u\n", ebi_index);
-		clLog(sxlogger, eCLSeverityCritical, "bearer_bitmap %04x\n", context->bearer_bitmap);
-		clLog(sxlogger, eCLSeverityCritical, "mask %04x\n", (1 << ebi_index));
+		LOG_MSG(LOG_ERROR, "ebi %u\n", lbi.ebi_ebi);
+		LOG_MSG(LOG_ERROR, "ebi_index %u\n", ebi_index);
+		LOG_MSG(LOG_ERROR, "bearer_bitmap %04x\n", context->bearer_bitmap);
+		LOG_MSG(LOG_ERROR, "mask %04x\n", (1 << ebi_index));
 		return GTPV2C_CAUSE_INVALID_MESSAGE_FORMAT;
 	}
 
 	pdn_connection_t *pdn = context->eps_bearers[ebi_index]->pdn;
 	if (!pdn) {
-		clLog(sxlogger, eCLSeverityCritical, "Received delete session on "
+		LOG_MSG(LOG_ERROR, "Received delete session on "
 				"non-existent EBI\n");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
 
 	if (pdn->default_bearer_id != lbi.ebi_ebi) {
-		clLog(sxlogger, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 		    "Received delete session referencing incorrect "
 		    "default bearer ebi");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
@@ -90,7 +89,7 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 
 	eps_bearer_t *bearer = context->eps_bearers[ebi_index];
 	if (!bearer) {
-		clLog(sxlogger, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 			"Received delete session on non-existent default EBI\n");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
@@ -119,7 +118,7 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 		*s5s8_pgw_gtpc_teid = htonl(pdn->s5s8_pgw_gtpc_teid);
 		*s5s8_pgw_gtpc_ipv4 = htonl(pdn->s5s8_pgw_gtpc_ipv4.s_addr);
 
-		clLog(s5s8logger, eCLSeverityDebug, "s5s8_pgw_gtpc_teid:%u, s5s8_pgw_gtpc_ipv4:%u\n",
+		LOG_MSG(LOG_DEBUG, "s5s8_pgw_gtpc_teid:%u, s5s8_pgw_gtpc_ipv4:%u\n",
 				*s5s8_pgw_gtpc_teid, *s5s8_pgw_gtpc_ipv4);
 	}
 
@@ -189,7 +188,7 @@ process_delete_session_request(gtpv2c_header_t *gtpv2c_rx,
 			gen_sgwc_s5s8_delete_session_request(gtpv2c_rx,
 				gtpv2c_s5s8_tx, s5s8_pgw_gtpc_del_teid,
 				gtpv2c_rx->teid.has_teid.seq, ds_req.lbi.ebi_ebi);
-		clLog(s11logger, eCLSeverityDebug,
+		LOG_MSG(LOG_DEBUG,
 				"\n\tprocess_delete_session_request::case= %d;"
 				"\n\tprocess_sgwc_s5s8_ds_req_cnt= %u;"
 				"\n\tue_ip= pdn->ipv4= %s;"
@@ -258,7 +257,7 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
-        printf("Retransmitted DSReq received. Old DSReq is in progress\n");
+        LOG_MSG(LOG_ERROR, "Retransmitted DSReq received. Old DSReq is in progress\n");
         return -1;
     }
 
@@ -272,17 +271,16 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     ebi_index = msg->gtpc_msg.dsr.lbi.ebi_ebi - 5;
 
 	if (!(context->bearer_bitmap & (1 << ebi_index))) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"Received delete session on non-existent EBI - "
-				"Dropping packet\n");
+		LOG_MSG(LOG_ERROR, "Received delete session on non-existent EBI - "
+				"Dropping packet");
 		return -1;
 	}
 
 	bearer = context->eps_bearers[ebi_index];
 	if (!bearer) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"Received delete session on non-existent EBI - "
-				"Bitmap Inconsistency - Dropping packet\n");
+				"Bitmap Inconsistency - Dropping packet");
 		return -1;
 	}
 
@@ -360,7 +358,7 @@ process_pgwc_s5s8_delete_session_request(del_sess_req_t *ds_req)
 
 	/* VS: Stored/Update the session information. */
 	if (get_sess_entry(_resp.seid, &resp) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Failed to add response in entry in SM_HASH\n", __file__
+		LOG_MSG(LOG_ERROR, "%s %s %d Failed to add response in entry in SM_HASH\n", __file__
 				,__func__, __LINE__);
 		return -1;
 	}
@@ -590,7 +588,7 @@ struct gw_info {
 //	    (void **) &context);
 //	if (ret < 0 || !context) {
 //
-//		clLog(s5s8logger, eCLSeverityDebug, "NGIC- delete_s5s8_session.c::"
+//		LOG_MSG(LOG_DEBUG, "NGIC- delete_s5s8_session.c::"
 //				"\n\tprocess_pgwc_s5s8_delete_session_request:"
 //				"\n\tdelete_pgwc_context-ERROR!!!"
 //				"\n\tprocess_pgwc_s5s8_ds_req_cnt= %u;"
@@ -617,7 +615,7 @@ struct gw_info {
 //	if (!ebi_ei_to_be_removed) {
 //		/* TODO: should be responding with response indicating error
 //		 * in request */
-//		clLog(clSystemLog, eCLSeverityCritical, "Received delete session without ebi! - "
+//		LOG_MSG(LOG_ERROR, "Received delete session without ebi! - "
 //				"dropping\n");
 //		return -EPERM;
 //	}
@@ -630,27 +628,27 @@ struct gw_info {
 //
 //	uint8_t ebi_index = ebi - 5;
 //	if (!(context->bearer_bitmap & (1 << ebi_index))) {
-//		clLog(clSystemLog, eCLSeverityCritical,
+//		LOG_MSG(LOG_ERROR,
 //		    "Received delete session on non-existent EBI - "
 //		    "Dropping packet\n");
-//		clLog(clSystemLog, eCLSeverityCritical, "ebi %u\n",
+//		LOG_MSG(LOG_ERROR, "ebi %u\n",
 //		    *IE_TYPE_PTR_FROM_GTPV2C_IE(uint8_t, ebi_ei_to_be_removed));
-//		clLog(clSystemLog, eCLSeverityCritical, "ebi_index %u\n", ebi_index);
-//		clLog(clSystemLog, eCLSeverityCritical, "bearer_bitmap %04x\n", context->bearer_bitmap);
-//		clLog(clSystemLog, eCLSeverityCritical, "mask %04x\n", (1 << ebi_index));
+//		LOG_MSG(LOG_ERROR, "ebi_index %u\n", ebi_index);
+//		LOG_MSG(LOG_ERROR, "bearer_bitmap %04x\n", context->bearer_bitmap);
+//		LOG_MSG(LOG_ERROR, "mask %04x\n", (1 << ebi_index));
 //		return -EPERM;
 //	}
 //
 //	pdn_connection_t *pdn = context->pdns[ebi_index];
 //	resp->seid = context->pdns[ebi_index]->seid;  //NK:change for seid
 //	if (!pdn) {
-//		clLog(clSystemLog, eCLSeverityCritical, "Received delete session on "
+//		LOG_MSG(LOG_ERROR, "Received delete session on "
 //				"non-existent EBI\n");
 //		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 //	}
 //
 //	if (pdn->default_bearer_id != ebi) {
-//		clLog(clSystemLog, eCLSeverityCritical,
+//		LOG_MSG(LOG_ERROR,
 //		    "Received delete session referencing incorrect "
 //		    "default bearer ebi");
 //		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
@@ -660,7 +658,7 @@ struct gw_info {
 //	resp->s5s8_sgw_gtpc_teid = pdn->s5s8_sgw_gtpc_teid;
 //	resp->s5s8_pgw_gtpc_ipv4 = pdn->s5s8_sgw_gtpc_ipv4.s_addr;
 //
-//	clLog(s5s8logger, eCLSeverityDebug, "NGIC- delete_s5s8_session.c::"
+//	LOG_MSG(LOG_DEBUG, "NGIC- delete_s5s8_session.c::"
 //			"\n\tdelete_pgwc_context(...);"
 //			"\n\tprocess_pgwc_s5s8_ds_req_cnt= %u;"
 //			"\n\tue_ip= pdn->ipv4= %s;"
@@ -680,7 +678,7 @@ struct gw_info {
 //
 //	eps_bearer_t *bearer = context->eps_bearers[ebi_index];
 //	if (!bearer) {
-//		clLog(clSystemLog, eCLSeverityCritical, "Received delete session on non-existent "
+//		LOG_MSG(LOG_ERROR, "Received delete session on non-existent "
 //				"default EBI\n");
 //		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 //	}
@@ -753,7 +751,7 @@ struct gw_info {
 //
 //	if (pfcp_send(pfcp_fd, pfcp_msg,encoded,
 //				&context->upf_context.upf_sockaddr) < 0 )
-//		clLog(clSystemLog, eCLSeverityDebug,"Error sending: %i\n",errno);
+//		LOG_MSG(LOG_DEBUG,"Error sending: %i\n",errno);
 //	else {
 //	}
 //
@@ -766,7 +764,7 @@ struct gw_info {
 //
 //	/* VS: Stored/Update the session information. */
 //	if (get_sess_entry_seid(_resp.seid, &resp) != 0) {
-//		clLog(clSystemLog, eCLSeverityCritical, "Failed to add response in entry in SM_HASH\n");
+//		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH\n");
 //		return -1;
 //	}
 //
@@ -817,7 +815,7 @@ struct gw_info {
 //	    (void **) &context);
 //	if (ret < 0 || !context) {
 //
-//		clLog(s5s8logger, eCLSeverityDebug, "NGIC- delete_s5s8_session.c::"
+//		LOG_MSG(LOG_DEBUG, "NGIC- delete_s5s8_session.c::"
 //				"\n\tprocess_sgwc_s5s8_delete_session_request:"
 //				"\n\tdelete_sgwc_context-ERROR!!!"
 //				"\n\tprocess_sgwc_s5s8_ds_rep_cnt= %u;"
@@ -827,11 +825,11 @@ struct gw_info {
 //				process_sgwc_s5s8_ds_rsp_cnt++,
 //				gtpv2c_rx->teid_u.has_teid.teid,
 //				ret);
-//		clLog(clSystemLog, eCLSeverityDebug,"Conext not found\n\n");
+//		LOG_MSG(LOG_DEBUG,"Conext not found\n\n");
 //		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 //	}
 //
-//	clLog(s5s8logger, eCLSeverityDebug, "NGIC- delete_s5s8_session.c::"
+//	LOG_MSG(LOG_DEBUG, "NGIC- delete_s5s8_session.c::"
 //			"\n\tdelete_sgwc_context(...);"
 //			"\n\tprocess_sgwc_s5s8_ds_rsp_cnt= %u;"
 //			"\n\tgtpv2c_rx->teid_u.has_teid.teid= %X"

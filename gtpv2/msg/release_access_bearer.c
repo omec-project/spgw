@@ -6,8 +6,7 @@
 
 #include "ue.h"
 #include "pfcp.h"
-#include "clogger.h"
-#include "gw_adapter.h"
+#include "cp_log.h"
 #include "sm_structs_api.h"
 #include "cp_config.h"
 #include "sm_struct.h"
@@ -81,7 +80,7 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
-        printf("Retransmitted RAB received. Old RAB is in progress\n");
+        LOG_MSG(LOG_WARN, "Retransmitted RAB received. Old RAB is in progress\n");
         increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ_DROP, s11_peer_sockaddr->sin_addr.s_addr);
         return -1;
     }

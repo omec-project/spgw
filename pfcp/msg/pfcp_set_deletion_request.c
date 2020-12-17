@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "pfcp_cp_interface.h"
-#include "gw_adapter.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
 #include "sm_structs_api.h"
@@ -21,7 +20,7 @@ int handle_pfcp_session_set_delete_request(msg_info_t *msg)
 	/*Set the appropriate event type.*/
 	msg->event = PFCP_SESS_SET_DEL_REQ_RCVD_EVNT;
 
-	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
 			" Msg_Type: PFCP_SESSION_SET_DELETION_RESPONSE[%u], "
 			"Procedure:%s, State:%s, Event:%s\n",
 			__func__, msg->msg_type,
@@ -44,7 +43,7 @@ handle_pfcp_session_delete_request_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_r
 
     if(decoded <=0 ) 
     {
-        clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Sess Set Deletion Request is %d\n",
+        LOG_MSG(LOG_DEBUG, "DEOCED bytes in Sess Set Deletion Request is %d\n",
                 decoded);
         return -1;
     }

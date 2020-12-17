@@ -9,7 +9,7 @@
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_enum.h"
-#include "clogger.h"
+#include "cp_log.h"
 
 #include "cp_main.h"
 #include "pfcp.h"
@@ -17,7 +17,6 @@
 #include "gen_utils.h"
 #include "cp_config.h"
 #include "spgw_cpp_wrapper.h"
-#include "gw_adapter.h"
 #include "cp_config_apis.h"
 #include "pfcp_cp_association.h"
 
@@ -84,7 +83,7 @@ get_pfcp_sequence_number(uint8_t type, uint32_t seq){
 		case PFCP_SESSION_REPORT_RESPONSE:
 			return seq;
 		default:
-			clLog(clSystemLog, eCLSeverityDebug, "Unknown pfcp msg type. \n");
+			LOG_MSG(LOG_DEBUG, "Unknown pfcp msg type. \n");
 			return 0;
 			break;
 	}

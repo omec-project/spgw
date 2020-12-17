@@ -8,10 +8,9 @@
 #include "rte_common.h"
 #include "ue.h"
 #include "gx_error_rsp.h"
-#include "clogger.h"
-#include "gw_adapter.h"
 #include "proc_bearer_create.h"
 #include "gx_interface.h"
+#include "cp_log.h"
 
 proc_context_t*
 alloc_rar_proc(msg_info_t *msg)
@@ -44,7 +43,7 @@ rar_req_event_handler(void *proc, void *msg_info)
             process_rar_request_handler(msg, NULL);
 #define TEST_RAR
 #ifdef TEST_RAR
-            printf("Send RAA now ?? \n"); 
+            LOG_MSG(LOG_DEBUG2,"Send RAA now ?? "); 
             process_create_bearer_resp_and_send_raa(proc_context);
 #endif
             break;
@@ -53,7 +52,7 @@ rar_req_event_handler(void *proc, void *msg_info)
             if(proc_context->cbrsp_received == false) {
                 process_pfcp_sess_mod_resp_cbr_handler(msg, proc_context);
             } else {
-               printf("Send RAA now ?? \n"); 
+               LOG_MSG(LOG_DEBUG2, "Send RAA now ?? "); 
                process_create_bearer_resp_and_send_raa(proc_context);
             }
             break;
@@ -82,7 +81,7 @@ process_rar_request_handler(void *data, void *unused_param)
 			pdn_connection_t *pdn_cntxt = proc_ctxt->pdn_context;
 			gen_reauth_error_response(pdn_cntxt, ret);
 		}
-		clLog(sxlogger, eCLSeverityCritical, "%s:%s:%d Error: %d \n",
+		LOG_MSG(LOG_ERROR, "%s:%s:%d Error: %d \n",
 				__FILE__, __func__, __LINE__, ret);
 		return -1;
 	}

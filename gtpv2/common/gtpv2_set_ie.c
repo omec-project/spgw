@@ -7,7 +7,7 @@
 #include "gtp_ies.h"
 #include "gtpv2_set_ie.h"
 #include "packet_filters.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "cp_config.h"
 #include <assert.h>
 #include "ue.h"
@@ -521,7 +521,7 @@ uint16_t
 set_ebi_ie(gtpv2c_header_t *header, enum ie_instance instance, uint8_t ebi)
 {
 	if (ebi & 0xF0)
-		clLog(clSystemLog, eCLSeverityCritical, "Invalid EBI used %"PRIu8"\n", ebi);
+		LOG_MSG(LOG_ERROR, "Invalid EBI used %"PRIu8"\n", ebi);
 	return set_uint8_ie(header, GTP_IE_EPS_BEARER_ID, instance, ebi);
 }
 

@@ -15,14 +15,13 @@
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_messages.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "cp_config.h"
 #include "cp_config_defs.h"
 #include "cp_io_poll.h"
 #include "tables/tables.h"
 #include "util.h"
 #include "pfcp_cp_association.h"
-#include "gw_adapter.h"
 #include "cdnshelper.h"
 
 #define FAILED_ENB_FILE "logs/failed_enb_queries.log"
@@ -46,7 +45,7 @@ add_canonical_result_upflist_entry(canonical_result_t *res,
 				sizeof(upfs_dnsres_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (NULL == upf_list) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate memory for upf list "
+		LOG_MSG(LOG_ERROR, "Failure to allocate memory for upf list "
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -67,7 +66,7 @@ add_canonical_result_upflist_entry(canonical_result_t *res,
 	}
 
 	if (upf_count == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Could not get collocated candidate list. \n");
+		LOG_MSG(LOG_ERROR, "Could not get collocated candidate list. \n");
 		return 0;
 	}
 
@@ -94,7 +93,7 @@ add_dns_result_upflist_entry(dns_query_result_t *res,
 				sizeof(upfs_dnsres_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (NULL == upf_list) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate memeory for upf list "
+		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for upf list "
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -115,7 +114,7 @@ add_dns_result_upflist_entry(dns_query_result_t *res,
 	}
 
 	if (upf_count == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Could not get SGW-U list using DNS query \n");
+		LOG_MSG(LOG_ERROR, "Could not get SGW-U list using DNS query \n");
 		return 0;
 	}
 
@@ -137,7 +136,7 @@ record_failed_enbid(char *enbid)
 	FILE *fp = fopen(FAILED_ENB_FILE, "a");
 
 	if (fp == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Could not open %s for writing failed "
+		LOG_MSG(LOG_ERROR, "Could not open %s for writing failed "
 				"eNodeB query entry.\n", FAILED_ENB_FILE);
 		return 1;
 	}
@@ -219,7 +218,7 @@ get_upf_list(pdn_connection_t *pdn)
 			char hb[8] = {0};
 
 			if (ctxt->uli.tai != 1) {
-				clLog(clSystemLog, eCLSeverityCritical, "Could not get SGW-U list using DNS"
+				LOG_MSG(LOG_ERROR, "Could not get SGW-U list using DNS"
 								"query. TAC missing in CSR.\n");
 				return 0;
 			}
@@ -243,7 +242,7 @@ get_upf_list(pdn_connection_t *pdn)
 			process_dnsreq(sgwupf_node_sel, sgwu_list, &sgwu_count);
 
 			if (!sgwu_count) {
-				clLog(clSystemLog, eCLSeverityCritical, "Could not get SGW-U list using DNS"
+				LOG_MSG(LOG_ERROR, "Could not get SGW-U list using DNS"
 					"query \n");
 				return 0;
 			}
@@ -317,7 +316,7 @@ get_upf_list(pdn_connection_t *pdn)
 		/* VS: Need to check this */
 		/* Get collocated candidate list */
 		if (!strlen((char *)pdn->fqdn)) {
-			clLog(clSystemLog, eCLSeverityCritical, "SGW-U node name missing in CSR. \n");
+			LOG_MSG(LOG_ERROR, "SGW-U node name missing in CSR. \n");
 			deinit_node_selector(pwupf_node_sel);
 			return 0;
 		}
@@ -327,7 +326,7 @@ get_upf_list(pdn_connection_t *pdn)
 				(char *)pdn->fqdn, pwupf_node_sel, result);
 
 		if (!res_count) {
-			clLog(clSystemLog, eCLSeverityCritical, "Could not get collocated candidate list. \n");
+			LOG_MSG(LOG_ERROR, "Could not get collocated candidate list. \n");
 			deinit_node_selector(pwupf_node_sel);
 			return 0;
 		}
@@ -348,14 +347,14 @@ dns_query_lookup(pdn_connection_t *pdn, uint32_t *upf_ip)
 	upfs_dnsres_t *entry = NULL;
 
 	if (get_upf_list(pdn) == 0){
-		 clLog(sxlogger, eCLSeverityCritical, "%s:%d Error:\n",
+		 LOG_MSG(LOG_ERROR, "%s:%d Error:\n",
 			    __func__, __LINE__);
 		return GTPV2C_CAUSE_REQUEST_REJECTED;
 	}
 
 	/* Fill msg->upf_ipv4 address */
 	if ((get_upf_ip(pdn->context, &entry, &upf_ip)) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failed to get upf ip address\n");
+		LOG_MSG(LOG_ERROR, "Failed to get upf ip address\n");
 		return GTPV2C_CAUSE_REQUEST_REJECTED;
 	}
 	memcpy(pdn->fqdn, entry->upf_fqdn[entry->current_upf],
@@ -370,7 +369,7 @@ uptime(void)
 	struct sysinfo s_info;
 	int error = sysinfo(&s_info);
 	if(error != 0) {
-		clLog(clSystemLog, eCLSeverityDebug, "Error in uptime\n");
+		LOG_MSG(LOG_DEBUG, "Error in uptime\n");
 	}
 	return s_info.uptime;
 }

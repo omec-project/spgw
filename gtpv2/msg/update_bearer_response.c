@@ -56,19 +56,19 @@ process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	ret = get_pdn_context(ub_rsp->header.teid.has_teid.teid, &pdn_cntxt);
 
 	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,"%s:Entry not found for teid:%x...\n", __func__, ub_rsp->header.teid.has_teid.teid);
+		LOG_MSG(LOG_ERROR,"%s:Entry not found for teid:%x...\n", __func__, ub_rsp->header.teid.has_teid.teid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
 	if (get_sess_entry_seid(pdn_cntxt->seid, &resp) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
+		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, pdn_cntxt->seid);
 		return -1;
 	}
 
 	ret = get_ue_context(ub_rsp->header.teid.has_teid.teid, &context);
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__,
 				__LINE__, ret);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -140,20 +140,20 @@ process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	ret = get_pdn_context(ub_rsp->header.teid.has_teid.teid, &pdn_cntxt);
 
 	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,"%s:Entry not found for teid:%x...\n", __func__,
+		LOG_MSG(LOG_ERROR,"%s:Entry not found for teid:%x...\n", __func__,
 										ub_rsp->header.teid.has_teid.teid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
 	if (get_sess_entry_seid(pdn_cntxt->seid, &resp) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
+		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 										__func__, __LINE__, pdn_cntxt->seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
 	ret = get_ue_context(ub_rsp->header.teid.has_teid.teid, &context);
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__,
 				__LINE__, ret);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -226,7 +226,7 @@ int process_update_bearer_response_handler(void *data, void *unused_param)
 				ubr_error_response(msg, ret, GX_IFACE);
 	}
 	if (ret) {
-			clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
+			LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
 					__func__, __LINE__, ret);
 			return -1;
 	}

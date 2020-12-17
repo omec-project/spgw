@@ -15,7 +15,7 @@ int handle_update_pdn_conn_set_rsp(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 	//msg->proc = get_procedure(msg);
 	//msg->event = UPD_PDN_CONN_SET_RESP_RCVD_EVNT;
 
-	//clLog(s5s8logger, eCLSeverityDebug, "%s: Callback called for"
+	//LOG_MSG(LOG_DEBUG, "%s: Callback called for"
 	//		" Msg_Type:%s[%u],"
 	//		"State:%s, Event:%s\n",
 	//		__func__, gtp_type_str(msg->msg_type), msg->msg_type,

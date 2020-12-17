@@ -21,18 +21,9 @@
 #include "cp_interface.h"
 #include "../../cp/ue.h"
 #include "util.h"
-#include "gw_adapter.h"
 #include "crest.h"
-#include "clogger.h"
 
 #include "pfcp_cp_set_ie.h"
-
-int s11logger;
-int s5s8logger;
-int sxlogger;
-int gxlogger;
-int apilogger;
-
 
 MessageType ossS5s8MessageDefs[] = {
         {       3       , "Version Not Supported Indication",dNone      },
@@ -318,21 +309,4 @@ int gxMessageTypes [] = {
   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,
   1,2,3,4,5,6,7
 };
-
-
-void init_cli_module(uint8_t gw_logger)
-{
-    clSetOption(eCLOptLogFileName, "logs/cp.log");
-    clSetOption(eCLOptStatFileName, "logs/cp_stat.log");
-    clSetOption(eCLOptAuditFileName, "logs/cp_sys.log");
-
-    clInit("saegw", gw_logger);
-    s11logger = clAddLogger("s11", gw_logger);
-    s5s8logger = clAddLogger("s5s8", gw_logger);
-    gxlogger = clAddLogger("Gx", gw_logger);
-    sxlogger = clAddLogger("sx", gw_logger);
-    apilogger = clAddLogger("api", gw_logger);
-    clAddRecentLogger("sgwc-001","cp",5);
-    clStart();
-}
 

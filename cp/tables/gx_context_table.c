@@ -7,7 +7,7 @@
 #include "tables/tables.h"
 #include <rte_hash.h>
 #include <rte_jhash.h>
-#include "clogger.h"
+#include "cp_log.h"
 #include "rte_lcore.h"
 #include "rte_debug.h"
 #include "rte_errno.h"
@@ -42,16 +42,15 @@ int
 gx_context_entry_add(uint8_t *sess_id, gx_context_t *context)
 {
 	int ret;
-    printf("%s GX context entry add %s \n", __FUNCTION__, sess_id);
 	ret = rte_hash_add_key_data(gx_context_by_sess_id_hash,
 			(const void *)sess_id, (void *)context);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s - Error on rte_hash_add_key_data add\n",
+		LOG_MSG(LOG_ERROR, "%s - Error on rte_hash_add_key_data add",
 				strerror(ret));
 		return -1;
 	}
+    LOG_MSG(LOG_DEBUG5,"Add GX context entry %s ",sess_id);
 	return 0;
 
 }
@@ -63,10 +62,10 @@ get_gx_context(uint8_t *sessid, gx_context_t **entry)
 			(const void*) (sessid), (void **) entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN GX HASH [%lu]\n",
-				__func__, __LINE__, sessid);
+		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN GX HASH [%s]", sessid);
 		return -1;
 	}
+    LOG_MSG(LOG_DEBUG5,"Get GX context entry %s ",sessid);
 	return 0;
 }
 
@@ -74,6 +73,7 @@ get_gx_context(uint8_t *sessid, gx_context_t **entry)
 int remove_gx_context(uint8_t *sessid)
 {
     rte_hash_del_key(gx_context_by_sess_id_hash, (const void *) sessid);
+    LOG_MSG(LOG_DEBUG5,"Delete GX context entry %s ",sessid);
     return 0;
 }
 

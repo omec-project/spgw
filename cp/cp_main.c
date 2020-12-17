@@ -11,8 +11,6 @@
 #include <rte_ip.h>
 #include <rte_udp.h>
 #include <rte_cfgfile.h>
-#include "gw_adapter.h"
-#include "clogger.h"
 #include "cp_init.h"
 #include "cp_main.h"
 #include "sm_struct.h"
@@ -58,7 +56,7 @@ uint16_t local_csid = 0;
 #endif /* USE_CSID */
 
 struct cp_params cp_params;
-_timer_t st_time;
+// _timer_t st_time; DELETE_CODE
 
 /**
  *
@@ -118,7 +116,7 @@ parse_arg(int argc, char **argv)
 
             default:
                 // No crash for unknown args 
-                printf("\nUnknown argument %c - %s.", c, argv[optind]);
+                LOG_MSG(LOG_ERROR,"Unknown argument %c - %s.", c, argv[optind]);
                 break;
         }
     } while (c != -1);
@@ -157,8 +155,7 @@ main(int argc, char **argv)
 
     int state = mkdir(DEFAULT_STATS_PATH, S_IRWXU);
     if (state && errno != EEXIST) {
-        rte_exit(EXIT_FAILURE, "Failed to create directory %s: %s\n",
-                DEFAULT_STATS_PATH, strerror(errno));
+        assert(0);
     }
 
 
@@ -173,10 +170,10 @@ main(int argc, char **argv)
 #endif /* USE_CSID */
 
 	if (signal(SIGINT, sig_handler) == SIG_ERR)
-		rte_exit(EXIT_FAILURE, "Error:can't catch SIGINT\n");
+        assert(0);
 
 	if (signal(SIGSEGV, sig_handler) == SIG_ERR)
-		rte_exit(EXIT_FAILURE, "Error:can't catch SIGSEGV\n");
+        assert(0);
 
     while(1) {
 		incoming_event_handler(NULL);
@@ -193,7 +190,7 @@ void sig_handler(int signo)
 
         gst_deinit();
 
-        rte_exit(EXIT_SUCCESS, "received SIGINT\n");
+        assert(0);
     }
     else if (signo == SIGSEGV)
         rte_panic("received SIGSEGV\n");

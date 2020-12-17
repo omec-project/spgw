@@ -9,9 +9,7 @@
 #include "sm_enum.h"
 #include "gtpv2_error_rsp.h"
 #include "assert.h"
-#include "clogger.h"
 #include "cp_peer.h"
-#include "gw_adapter.h"
 #include "gtpv2_interface.h"
 #include "sm_structs_api.h"
 #include "spgw_cpp_wrapper.h"
@@ -38,6 +36,7 @@
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_interface.h"
 #include "gx_interface.h"
+#include "cp_log.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 static uint32_t s5s8_sgw_gtpc_teid_offset;
@@ -83,7 +82,7 @@ initial_attach_event_handler(void *proc, void *msg_info)
     msg_info_t *msg = (msg_info_t *) msg_info;
     uint8_t event = msg->event;
 
-    printf("Received event %d in %s \n",event, __FUNCTION__);
+    LOG_MSG(LOG_DEBUG4,"Received event %d ",event);
     switch(event) {
         case CS_REQ_RCVD_EVNT: {
             handle_csreq_msg(proc_context, msg);
@@ -130,8 +129,7 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
 	if (ret) {
         // > 0 cause - Send reject message out 
         // -1 : just cleanup call locally 
-		clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Error: %d \n",
-				__file__, __func__, __LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
         proc_initial_attach_failure(csreq_proc, ret);
 		return -1;
 	}
@@ -142,8 +140,7 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
     if ((cp_config->cp_type == PGWC) || (cp_config->cp_type == SAEGWC)) {
         if(cp_config->gx_enabled) {
             if (gen_ccr_request(csreq_proc, pdn->default_bearer_id-5, &msg->gtpc_msg.csr)) {
-                clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
-                        strerror(errno));
+                LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
                 return -1;
             }
             // Wait for CCA-I from Gx before initiating any further messages 
@@ -165,18 +162,17 @@ initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg)
 	upf_context_t *upf_context = context->upf_context;
 
     if (upf_context->state == PFCP_ASSOC_REQ_SNT_STATE) {
-        printf("UPF association formation in progress. Buffer new CSReq  \n");
+        LOG_MSG(LOG_DEBUG,"UPF association formation in progress. Buffer new CSReq  ");
         // After every setup timeout we would flush the buffered entries..
         // dont worry about #of packets in buffer for now 
         buffer_csr_request(csreq_proc);
         csreq_proc->flags |= UPF_ASSOCIATION_PENDING;
         return;
     } else if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
-        printf("UPF association already formed \n");
+        LOG_MSG(LOG_DEBUG, "UPF association already formed ");
         transData_t *pfcp_trans = process_pfcp_sess_est_request(csreq_proc, upf_context);
         if (pfcp_trans == NULL) {
-            clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: pfcp send error \n",
-                    __func__, __LINE__);
+            LOG_MSG(LOG_ERROR, "Error: pfcp send error ");
             proc_initial_attach_failure(csreq_proc, GTPV2C_CAUSE_INVALID_PEER);
             return;
         }
@@ -232,7 +228,7 @@ process_create_sess_req(create_sess_req_t *csr,
     dpkey.plmn.tac = csr->uli.tai2.tai_tac;
     memcpy((void *)(&dpkey.plmn.plmn[0]), (void *)(&csr->uli.tai2), 3);
 
-    clLog(s11logger, eCLSeverityTrace, "Create Session Request ULI mcc %d %d %d " 
+    LOG_MSG(LOG_DEBUG, "Create Session Request ULI mcc %d %d %d " 
                 " mnc %d %d %d \n", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, 
                 csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, 
                 csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
@@ -248,8 +244,7 @@ process_create_sess_req(create_sess_req_t *csr,
 		/* VS: Select the UPF based on DNS */
 		ret = dns_query_lookup(pdn, &upf_ipv4.s_addr);
 		if (ret) {
-			clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Error: %d \n",
-					__file__, __func__, __LINE__, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return ret;
 		}
     } else {
@@ -260,7 +255,7 @@ process_create_sess_req(create_sess_req_t *csr,
         upf_ipv4 = upf_context->upf_sockaddr.sin_addr;
     }
 
-    printf("Selected UPF address  %s \n", inet_ntoa(upf_ipv4));
+    LOG_MSG(LOG_DEBUG, "Selected UPF address  %s ", inet_ntoa(upf_ipv4));
 	if(csr->mapped_ue_usage_type.header.len > 0) {
 		apn_requested->apn_usage_type = csr->mapped_ue_usage_type.mapped_ue_usage_type;
 	}
@@ -282,7 +277,7 @@ process_create_sess_req(create_sess_req_t *csr,
 #endif
 #endif
             if (found == false) {
-                clLog(sxlogger, eCLSeverityCritical,"Received CSReq with static address %s"
+                LOG_MSG(LOG_ERROR,"Received CSReq with static address %s"
                         " . Invalid address received \n",
                         inet_ntoa(*paa_ipv4));
                 // caller sends out csrsp 
@@ -303,7 +298,7 @@ process_create_sess_req(create_sess_req_t *csr,
 		return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
     }
 
-	printf("[%s] : %d -  Acquire ip = %s \n", __FUNCTION__, __LINE__, inet_ntoa(ue_ip));
+	LOG_MSG(LOG_INFO, "IMSI - %lu, Acquire ip = %s ",csr->imsi.imsi64, inet_ntoa(ue_ip));
 	/* set s11_sgw_gtpc_teid= key->ue_context_by_fteid_hash */
 	ret = create_ue_context(&csr->imsi.imsi_number_digits, csr->imsi.header.len,
 			csr->bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi, &context, apn_requested,
@@ -427,16 +422,14 @@ process_create_sess_req(create_sess_req_t *csr,
 		context->pgw_fqcsid = rte_zmalloc_socket(NULL, sizeof(fqcsid_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (context->pgw_fqcsid == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to allocate the memory for fqcsids entry\n",
-					ERR_MSG);
+			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for fqcsids entry");
 			return -1;
 		}
 	}
 
 	if ((context->mme_fqcsid == NULL) ||
 			(context->sgw_fqcsid == NULL)) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to allocate the memory for fqcsids entry\n",
-				ERR_MSG);
+		LOG_MSG(LOG_ERROR, "Failed to allocate the memory for fqcsids entry");
 		return -1;
 	}
 
@@ -446,8 +439,7 @@ process_create_sess_req(create_sess_req_t *csr,
 		tmp = get_peer_addr_csids_entry(csr->mme_fqcsid.node_address,
 				ADD);
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ",strerror(errno));
 			return -1;
 		}
 		/* check ntohl */
@@ -471,8 +463,7 @@ process_create_sess_req(create_sess_req_t *csr,
 		tmp = get_peer_addr_csids_entry(context->s11_mme_gtpc_ipv4.s_addr,
 				ADD);
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			return -1;
 		}
 		tmp->node_addr = context->s11_mme_gtpc_ipv4.s_addr;
@@ -491,8 +482,7 @@ process_create_sess_req(create_sess_req_t *csr,
 					ADD);
 		}
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			return -1;
 		}
 		tmp->node_addr = csr->sgw_fqcsid.node_address;
@@ -514,8 +504,7 @@ process_create_sess_req(create_sess_req_t *csr,
 			tmp = get_peer_addr_csids_entry(context->s11_sgw_gtpc_ipv4.s_addr,
 					ADD);
 			if (tmp == NULL) {
-				clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 				return -1;
 			}
 			tmp->node_addr = ntohl(context->s11_sgw_gtpc_ipv4.s_addr);
@@ -540,8 +529,7 @@ process_create_sess_req(create_sess_req_t *csr,
 		tmp = get_peer_addr_csids_entry(pdn->s5s8_pgw_gtpc_ipv4.s_addr,
 				ADD);
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			return -1;
 		}
 		tmp->node_addr = pdn->s5s8_pgw_gtpc_ipv4.s_addr;
@@ -569,7 +557,7 @@ int
 process_sess_est_resp_timeout_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     RTE_SET_USED(msg);
-	clLog(sxlogger, eCLSeverityDebug, "PFCP sess establishment request timeout \n");
+	LOG_MSG(LOG_DEBUG, "PFCP sess establishment request timeout \n");
     proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
     return 0;
 }
@@ -580,9 +568,9 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
     int ret = 0;
 	uint16_t payload_length = 0;
 
-	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
 			"Msg_Type:PFCP_SESSION_ESTABLISHMENT_RESPONSE[%u], Seid:%lu, "
-			"Procedure:%s, State:%s, Event:%s\n",
+			"Procedure:%s, State:%s, Event:%s",
 			__func__, msg->msg_type,
 			msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid,
 			get_proc_string(msg->proc),
@@ -590,7 +578,7 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 
 
 	if(msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value != REQUESTACCEPTED) {
-		clLog(sxlogger, eCLSeverityDebug, "Cause received Est response is %d\n",
+		LOG_MSG(LOG_DEBUG, "Cause received Est response is %d",
 				msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value);
         proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REQUEST_REJECTED);
 		return -1;
@@ -604,7 +592,7 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 			&msg->pfcp_msg.pfcp_sess_est_resp, gtpv2c_tx);
 
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d ",
 				__func__, __LINE__, ret);
         proc_initial_attach_failure(proc_context, ret);
 		return -1;
@@ -911,7 +899,6 @@ int
 fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 		ue_context_t *context, pdn_connection_t *pdn)
 {
-    printf("fill_bearer_info \n");
 	/* Need to re-vist this ARP[Allocation/Retention priority] handling portion */
 	bearer->qos.arp.priority_level =
 		csr->bearer_contexts_to_be_created.bearer_lvl_qos.pl;
@@ -958,7 +945,6 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
             bearer->qer_count = NUMBER_OF_QER_PER_BEARER;
             for(uint8_t itr=0; itr < bearer->qer_count; itr++){
                 bearer->qer_id[itr].qer_id = generate_qer_id();
-                printf("fill_bearer_info created qer_id = %d \n",bearer->qer_id[itr].qer_id);
                 fill_qer_entry(pdn, bearer,itr);
             }
         }
@@ -979,11 +965,9 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 		for(uint8_t itr=0; itr < bearer->pdr_count; itr++){
 			switch(itr){
 				case SOURCE_INTERFACE_VALUE_ACCESS:
-                    printf("calling fill_pdr_entry - access interface \n");
 					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, itr);
 					break;
 				case SOURCE_INTERFACE_VALUE_CORE:
-                    printf("calling fill_pdr_entry - core interface \n");
 					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, itr);
 					break;
 				default:
@@ -1153,7 +1137,7 @@ parse_sgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_rx,
 	if (!csr->apn_restriction_ie
 		|| !csr->bearer_context_to_be_created_ebi
 		|| !csr->pgw_s5s8_gtpc_fteid) {
-		clLog(clSystemLog, eCLSeverityCritical, "Dropping packet\n");
+		LOG_MSG(LOG_ERROR, "Dropping packet");
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 	return 0;
@@ -1370,11 +1354,11 @@ parse_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		|| !csr->msisdn_ie
 		|| !IE_TYPE_PTR_FROM_GTPV2C_IE(pdn_type_ie,
 				csr->pdn_type_ie)->ipv4) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:Dropping packet\n", __func__);
+		LOG_MSG(LOG_ERROR, "Dropping packet");
 		return GTPV2C_CAUSE_MANDATORY_IE_MISSING;
 	}
 	if (IE_TYPE_PTR_FROM_GTPV2C_IE(pdn_type_ie, csr->pdn_type_ie)->ipv6) {
-		clLog(clSystemLog, eCLSeverityCritical, "IPv6 Not Yet Implemented - Dropping packet\n");
+		LOG_MSG(LOG_ERROR, "IPv6 Not Yet Implemented - Dropping packet");
 		return GTPV2C_CAUSE_PREFERRED_PDN_TYPE_UNSUPPORTED;
 	}
 	return 0;
@@ -1406,7 +1390,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	ret = upf_context_entry_lookup((upf_ipv4->s_addr), &(upf_context));
 
 	if (ret < 0) {
-		clLog(s5s8logger, eCLSeverityDebug, "NO ENTRY FOUND IN UPF HASH [%u]\n", upf_ipv4->s_addr);
+		LOG_MSG(LOG_DEBUG, "NO ENTRY FOUND IN UPF HASH [%u]", upf_ipv4->s_addr);
 		return 0;
 	}
 
@@ -1606,7 +1590,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 #ifdef TEMP
 	if (add_sess_entry_seid(context->pdns[ebi_index]->seid, resp) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, " %s %s %d Failed to add response in entry in SM_HASH\n",__file__,
+		LOG_MSG(LOG_ERROR, " %s %s %d Failed to add response in entry in SM_HASH\n",__file__,
 				__func__, __LINE__);
 		return -1;
 	}
@@ -1700,7 +1684,7 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //	    (const void *) &gtpv2c_rx->teid.has_teid.teid,
 //	    (void **) &context);
 //
-//	clLog(s5s8logger, eCLSeverityDebug, "NGIC- create_s5s8_session.c::"
+//	LOG_MSG(LOG_DEBUG, "NGIC- create_s5s8_session.c::"
 //			"\n\tprocess_sgwc_s5s8_create_session_response"
 //			"\n\tprocess_sgwc_s5s8_cs_rsp_cnt= %u;"
 //			"\n\tgtpv2c_rx->teid.has_teid.teid= %X\n",
@@ -1777,7 +1761,7 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //	s11_mme_sockaddr.sin_addr.s_addr =
 //					htonl(context->s11_mme_gtpc_ipv4.s_addr);
 //
-//	clLog(s5s8logger, eCLSeverityDebug, "NGIC- create_s5s8_session.c::"
+//	LOG_MSG(LOG_DEBUG, "NGIC- create_s5s8_session.c::"
 //			"\n\tprocess_sgwc_s5s8_cs_rsp_cnt= %u;"
 //			"\n\tprocess_spgwc_s11_cs_res_cnt= %u;"
 //			"\n\tue_ip= pdn->ipv4= %s;"
@@ -1825,7 +1809,7 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //
 //
 //	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0)
-//		clLog(clSystemLog, eCLSeverityCritical, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
+//		LOG_MSG(LOG_ERROR, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
 //	else
 //	{
 //	}
@@ -1834,7 +1818,7 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //
 //	/* Lookup Stored the session information. */
 //	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0) {
-//		clLog(clSystemLog, eCLSeverityCritical, "Failed to add response in entry in SM_HASH\n");
+//		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH\n");
 //		return -1;
 //	}
 //
@@ -1875,8 +1859,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 	/* VS: Generate unique session id for communicate over the Gx interface */
 	if (gen_sess_id_for_ccr(gx_context->gx_sess_id,
 				context->pdns[ebi_index]->call_id)) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
-				strerror(errno));
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
 
@@ -1887,7 +1870,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 	/* VS: Maintain the PDN mapping with call id */
 	if (add_pdn_conn_entry(context->pdns[ebi_index]->call_id,
 				context->pdns[ebi_index]) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to add pdn entry with call id\n", __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Failed to add pdn entry with call id");
 		return -1;
 	}
 
@@ -1966,7 +1949,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 
 	/* VS: Fill the Credit Crontrol Request to send PCRF */
 	if(fill_ccr_request(&ccr_request.data.ccr, context, ebi_index, gx_context->gx_sess_id) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Failed CCR request filling process");
 		return -1;
 	}
 
@@ -1986,8 +1969,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 
 	/* VS: Maintain the Gx context mapping with Gx Session id */
 	if (gx_context_entry_add((uint8_t*)gx_context->gx_sess_id, gx_context) < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Error: %s \n", __func__, __LINE__,
-				strerror(errno));
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
 
@@ -1996,11 +1978,8 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type)+sizeof(ccr_request.seq_num),
 	    RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (buffer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
+				"structure: %s ", rte_strerror(rte_errno));
 		return -1;
 	}
 
@@ -2010,7 +1989,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 
 	if (gx_ccr_pack(&(ccr_request.data.ccr),
 				(unsigned char *)(buffer + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num)), msg_len) == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "ERROR: Packing CCR Buffer... ");
 		return -1;
 
 	}
@@ -2032,8 +2011,7 @@ cca_msg_handler(proc_context_t *proc_context, msg_info_t *msg)
 
 	/* Handle the CCR-T Message */
 	if (msg->gx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
-		clLog(gxlogger, eCLSeverityDebug, FORMAT"Received GX CCR-T Response..!! \n",
-				ERR_MSG);
+		LOG_MSG(LOG_DEBUG, "Received GX CCR-T Response..!! ");
         gx_msg_proc_failure(proc_context);
 		return 0;
 	}
@@ -2041,7 +2019,7 @@ cca_msg_handler(proc_context_t *proc_context, msg_info_t *msg)
 	/* VS: Retrive the ebi index */
 	ret = parse_gx_cca_msg(&msg->gx_msg.cca, &pdn);
 	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failed to establish IPCAN session, Send Failed CSResp back to SGWC\n");
+		LOG_MSG(LOG_ERROR, "Failed to establish IPCAN session, Send Failed CSResp back to SGWC");
         gx_msg_proc_failure(proc_context);
 		return ret;
 	}
@@ -2055,7 +2033,7 @@ int
 process_gx_ccai_reject_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     RTE_SET_USED(msg);
-	clLog(sxlogger, eCLSeverityCritical, "Gx IP Can session setup failed \n");
+	LOG_MSG(LOG_ERROR, "Gx IP Can session setup failed ");
     proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
     return 0;
 }

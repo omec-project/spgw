@@ -12,7 +12,7 @@
 #include "sm_struct.h"
 #include "cp_config.h"
 #include "gen_utils.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "sm_structs_api.h"
 #include "tables/tables.h"
 
@@ -33,14 +33,14 @@ update_ue_state(uint32_t teid_key, uint8_t state,  uint8_t ebi_index)
 	ret = get_ue_context(teid_key, &context);
 
 	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:Failed to update UE State for Teid:%x...\n", __func__,
+		LOG_MSG(LOG_ERROR, "%s:Failed to update UE State for Teid:%x...\n", __func__,
 				teid_key);
 		return -1;
 	}
 	pdn = GET_PDN(context , ebi_index);
 	pdn->state = state;
 
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Change UE State for Teid:%u, State:%s\n",
+	LOG_MSG(LOG_DEBUG, "%s: Change UE State for Teid:%u, State:%s\n",
 			__func__, teid_key, get_state_string(pdn->state));
 	return 0;
 
@@ -55,11 +55,11 @@ get_ue_state(uint32_t teid_key, uint8_t ebi_index)
 	ret = get_ue_context(teid_key, &context);
 
 	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:Entry not found for teid:%x...\n", __func__, teid_key);
+		LOG_MSG(LOG_ERROR, "%s:Entry not found for teid:%x...\n", __func__, teid_key);
 		return -1;
 	}
 	pdn = GET_PDN(context , ebi_index);
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Teid:%u, State:%s\n",
+	LOG_MSG(LOG_DEBUG, "%s: Teid:%u, State:%s\n",
 			__func__, teid_key, get_state_string(pdn->state));
 	return pdn->state;
 }
@@ -72,7 +72,7 @@ get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context_t **context)
 
 	ret = get_bearer_by_teid(teid_key, &bearer);
 	if(ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Entry not found for teid:%x...\n", __func__, __LINE__, teid_key);
+		LOG_MSG(LOG_ERROR, "%s:%d Entry not found for teid:%x...\n", __func__, __LINE__, teid_key);
                 return -1;
 	}
 	if(bearer != NULL && bearer->pdn != NULL && bearer->pdn->context != NULL ) {
@@ -93,7 +93,7 @@ get_ue_context_while_error(uint32_t teid_key, ue_context_t **context)
 		/* If teid key is sgwc s5s8 */
 		ret = get_bearer_by_teid(teid_key, &bearer);
 		if(ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Entry not found for teid:%x...\n", __func__, __LINE__, teid_key);
+			LOG_MSG(LOG_ERROR, "%s:%d Entry not found for teid:%x...\n", __func__, __LINE__, teid_key);
 			return -1;
 		}
 

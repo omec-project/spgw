@@ -8,6 +8,7 @@
 
 #include "gx.h"
 #include "ipc_api.h"
+#include "cp_log.h"
 
 extern int g_gx_client_sock;
 
@@ -2000,7 +2001,7 @@ FD_DUMP_MESSAGE(rqst);
    goto fini1;
 
 err:
-   printf("Error (%d) while processing CCR\n", ret);
+   LOG_MSG(LOG_ERROR, "Error (%d) while processing CCR", ret);
    free(ccr);
    goto fini2;
 

@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "pfcp_cp_interface.h"
-#include "gw_adapter.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
 
@@ -23,7 +22,7 @@ handle_pfcp_set_deletion_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx
 
     if(decoded <= 0)
     {
-        clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Sess Set Deletion Resp is %d\n",
+        LOG_MSG(LOG_DEBUG, "DEOCED bytes in Sess Set Deletion Resp is %d\n",
                 decoded);
 //        increment_userplane_stats(MSG_RX_PFCP_SXASXB_SET_DELETE_RSP_DECODE_ERR, peer_addr.sin_addr.s_addr);
         return -1;

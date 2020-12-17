@@ -6,6 +6,7 @@
 
 #include "ipc_api.h"
 #include "gx.h"
+#include "cp_log.h"
 
 extern int done ;
 int g_gx_client_sock = 0;
@@ -65,8 +66,8 @@ recv_msg_handler( int sock )
 
 	bytes_recv = recv_from_ipc_channel(sock, buf);
 	hexDump(NULL, buf, bytes_recv);
-    printf("\nReceived bytes(%d) from spgwc app \n",bytes_recv);
-	if(bytes_recv > 0){
+    LOG_MSG(LOG_DEBUG, "Received bytes(%d) from spgwc app ",bytes_recv);
+	if(bytes_recv > 0) {
 		gx_msg *req = (gx_msg*)buf;
 		switch (req->msg_type){
 			case GX_CCR_MSG:
@@ -78,7 +79,7 @@ recv_msg_handler( int sock )
 				break;
 
 			default:
-				printf( "Unknown message received from CP app - %d\n",
+				LOG_MSG(LOG_ERROR,"Unknown message received from CP app - %d",
 						req->msg_type);
 		}
 	}

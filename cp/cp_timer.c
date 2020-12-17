@@ -20,7 +20,6 @@
 #include "rte_hash.h"
 #include "rte_errno.h"
 #include "cp_timer.h"
-#include "clogger.h"
 #include "errno.h"
 #include "cp_log.h"
 

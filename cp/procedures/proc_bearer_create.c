@@ -5,13 +5,10 @@
 #include "sm_struct.h"
 #include "gtp_ies.h"
 #include "pfcp_cp_session.h"
-#include "clogger.h"
 #include "tables/tables.h"
 #include "util.h"
 #include "cp_config.h"
 #include "gx_interface.h"
-#include "clogger.h"
-#include "gw_adapter.h"
 #include "gtpv2_interface.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_io_poll.h"
@@ -24,6 +21,7 @@
 #include "ipc_api.h"
 #include "pfcp_cp_interface.h"
 #include "gx_interface.h"
+#include "cp_log.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -54,7 +52,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *p)
 			/* TODO for cbr
 			 * mbr_error_response(&msg->gtpc_msg.mbr, ret,
 								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE); */
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
 		return ret;
 	}
@@ -65,7 +63,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *p)
 #if 0
 	if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 																			&resp) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
+		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -152,7 +150,7 @@ process_pfcp_sess_mod_resp_cbr(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 
 	/* Retrive the session information based on session id. */
 	if (get_sess_entry_seid(sess_id, &context) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
+		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, sess_id);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -160,7 +158,7 @@ process_pfcp_sess_mod_resp_cbr(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 	/* Retrieve the UE context */
 	ret = get_ue_context(teid, &context);
 	if (ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
+			LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
 					__func__, __LINE__,
 					teid);
 	}
@@ -172,7 +170,7 @@ process_pfcp_sess_mod_resp_cbr(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 	pdn->state = PFCP_SESS_MOD_RESP_RCVD_STATE;
 
 	if (!bearer) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"%s:%d Retrive modify bearer context but EBI is non-existent- "
 				"Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -182,7 +180,7 @@ process_pfcp_sess_mod_resp_cbr(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
     get_bearer_info_install_rules(pdn, &ebi);
     bearer = context->eps_bearers[ebi];
     if (!bearer) {
-        clLog(clSystemLog, eCLSeverityCritical,
+        LOG_MSG(LOG_ERROR,
                 "%s:%d Retrive modify bearer context but EBI is non-existent- "
                 "Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
         return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -229,17 +227,14 @@ process_create_bearer_resp_and_send_raa( proc_context_t *proc)
 	memset(send_buf, 0, buflen + sizeof(resp->msg_type)+sizeof(resp->seq_num));
 
 	/* encoding the raa header value to buffer */
-    printf("\nWriting RAA at send_buff %p and buflen = %d final buflen = %ld \n",send_buf, buflen, buflen + sizeof(resp->msg_type) + sizeof(resp->seq_num));
 	memcpy(send_buf, &resp->msg_type, sizeof(resp->msg_type));
-    printf("\nWriting RAA (seq) at send_buff %p \n",send_buf+sizeof(resp->msg_type));
     memcpy(send_buf+sizeof(resp->msg_type), &proc->rar_seq_num, sizeof(resp->seq_num));
     
-    printf("\nWriting RAA (message content) at send_buff %p \n",send_buf+sizeof(resp->msg_type)+sizeof(resp->seq_num));
 	if ( gx_raa_pack(&(resp->data.cp_raa), (unsigned char *)(send_buf + sizeof(resp->msg_type) + sizeof(resp->seq_num)), buflen ) == 0 )
     {
-        printf("failed to pack RAA \n");
-		clLog(gxlogger, eCLSeverityDebug,"RAA Packing failure \n");
+		LOG_MSG(LOG_DEBUG,"RAA Packing failure \n");
     }
+    LOG_MSG(LOG_DEBUG, "RAA successfully sent ");
 
     gx_send(my_sock.gx_app_sock, send_buf, buflen + sizeof(resp->msg_type) + sizeof(resp->seq_num));
 }
@@ -264,7 +259,7 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 #if 0
 	ret = get_ue_context(cb_rsp->header.teid.has_teid.teid, &context);
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__,
 				__LINE__, ret);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -276,7 +271,7 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 	bearer->eps_bearer_id = cb_rsp->bearer_contexts.eps_bearer_id.ebi_ebi;
 	if(bearer == NULL)
 	{
-         printf("\n bearer not found \n");
+         LOG_MSG(LOG_ERROR, "Received CBRsp and  bearer not found. Ignore CBRsp");
 		/* TODO:
 		 * This mean ebi we allocated and received doesnt match
 		 * In correct design match the bearer in transtient struct from sgw-u teid
@@ -337,7 +332,7 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 
 #if 0
 	if (get_sess_entry_seid(bearer->pdn->seid, &resp) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failed to add response in entry in SM_HASH\n");
+		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH\n");
 		return -1;
 	}
 
@@ -375,7 +370,7 @@ process_pgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 	bearer->eps_bearer_id = cb_rsp->bearer_contexts.eps_bearer_id.ebi_ebi;
 	if (NULL == bearer)
 	{
-        printf("bearer not found \n");
+        LOG_MSG(LOG_ERROR, "CBRsp received at PGW but bearer not found");
 		/* TODO: Invalid ebi index handling */
 		return -1;
 	}
@@ -444,7 +439,7 @@ process_cbresp_handler(void *data, void *unused_param)
 
 	ret = process_pgwc_create_bearer_rsp(&msg->gtpc_msg.cb_rsp);
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 		return ret;
 	}
 
@@ -460,7 +455,7 @@ process_create_bearer_request_handler(void *data, void *unused_param)
 
 	ret = process_create_bearer_request(&msg->gtpc_msg.cb_req);
 	if (ret) {
-			clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
+			LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
 					__func__, __LINE__, ret);
 			return -1;
 	}
@@ -477,7 +472,7 @@ process_create_bearer_resp_handler(void *data, void *unused_param)
 
 	ret = process_sgwc_create_bearer_rsp(&msg->gtpc_msg.cb_rsp);
 	if (ret) {
-			clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
+			LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
 					__func__, __LINE__, ret);
 			return -1;
 	}
@@ -506,7 +501,7 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 
 	ret = get_ue_context_by_sgw_s5s8_teid(cbr->header.teid.has_teid.teid, &context);
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__,
 				__LINE__, ret);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -514,7 +509,7 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 	bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (bearer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate bearer "
+		LOG_MSG(LOG_ERROR, "Failure to allocate bearer "
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -572,7 +567,7 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
 	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failed to add response in entry in SM_HASH\n");
+		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH\n");
 		return -1;
 	}
 
