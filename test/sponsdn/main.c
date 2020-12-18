@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 
 	ret = rte_eal_init(argc, argv);
 	if (ret < 0)
-		rte_exit(EXIT_FAILURE, "Error with EAL initialization\n");
+        assert(0);
 
 	ret++;
 

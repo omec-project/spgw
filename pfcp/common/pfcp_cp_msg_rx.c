@@ -11,8 +11,6 @@
 #include "pfcp_cp_association.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_messages_decoder.h"
-#include "gw_adapter.h"
-#include "clogger.h"
 #include "pfcp_cp_interface.h"
 #include "cp_peer.h"
 #include "sm_structs_api.h"

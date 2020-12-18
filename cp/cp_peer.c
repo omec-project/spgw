@@ -8,12 +8,10 @@
 #include "stdint.h"
 #include "rte_errno.h"
 #include "rte_debug.h"
-#include "clogger.h"
 #include "cp_interface.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_association.h"
 #include "cp_config.h"
-#include "gw_adapter.h"
 #include "sm_struct.h"
 #include "csid_cp_cleanup.h"
 #include "csid_api.h"
@@ -78,7 +76,7 @@ void handle_timeout(void *data, uint16_t event)
     get_peer_entry(dest_addr.sin_addr.s_addr, &md);
 
     if(md == NULL) {
-        printf("Peer (%s) not found \n", inet_ntoa(dest_addr.sin_addr));
+        LOG_MSG(LOG_ERROR,"Peer (%s) not found \n", inet_ntoa(dest_addr.sin_addr));
         return;
     }
 	LOG_MSG(LOG_DEBUG, "%s - %s:%s:%u.%s (%dms) has expired", getPrintableTime(),
@@ -257,7 +255,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 
 	if ( ret < 0) {
 
-		clLog(clSystemLog, eCLSeverityDebug, " Add entry in conn table :%s\n",
+		LOG_MSG(LOG_INFO, " Add entry in conn table :%s\n",
 					inet_ntoa(*((struct in_addr *)&dstIp)));
 
 		/* No conn entry for dstIp
@@ -278,38 +276,34 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 
 		/* Add peer node entry in connection hash table */
 		if ((add_peer_entry(dstIp, conn_data)) < 0 ) {
-			clLog(clSystemLog, eCLSeverityCritical, "Failed to add entry in hash table");
+			LOG_MSG(LOG_ERROR, "Failed to add entry in hash table");
 		}
 
 		if ( !initpeerData( conn_data, "PEER_NODE", (cp_config->periodic_timer * 1000),
 						(cp_config->transmit_timer * 1000)) )
 		{
-		   clLog(clSystemLog, eCLSeverityCritical, "%s - initialization of %s failed\n", getPrintableTime(), conn_data->name );
+		   LOG_MSG(LOG_ERROR, "%s - initialization of %s failed\n", getPrintableTime(), conn_data->name );
 		   return -1;
 		}
 
-		/* clLog(clSystemLog, eCLSeverityDebug,"Timers PERIODIC:%d, TRANSMIT:%d, COUNT:%u\n",
-		 *cp_config->periodic_timer, cp_config->transmit_timer, cp_config->transmit_cnt);
-		 */
-
 		if ( startTimer( &conn_data->pt ) < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to start...\n");
+			LOG_MSG(LOG_ERROR, "Periodic Timer failed to start...\n");
 		}
 		conn_cnt++;
 
 	} else {
 		/* TODO: peer node entry already exit in conn table */
 
-		clLog(clSystemLog, eCLSeverityDebug, "Conn entry already exit in conn table :%s\n",
+		LOG_MSG(LOG_INFO, "Conn entry already exit in conn table :%s\n",
 					inet_ntoa(*((struct in_addr *)&dstIp)));
 		if ( startTimer( &conn_data->pt ) < 0)
 		{
-			clLog(clSystemLog, eCLSeverityCritical, "Periodic Timer failed to start...\n");
+			LOG_MSG(LOG_ERROR, "Periodic Timer failed to start...\n");
 		}
 		//conn_cnt++;
 	}
 
-	clLog(clSystemLog, eCLSeverityDebug, "Current Active Conn Cnt:%u\n", conn_cnt);
+	LOG_MSG(LOG_INFO, "Current Active Peer Conn Cnt:%u\n", conn_cnt);
 	return 0;
 }
 

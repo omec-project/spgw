@@ -6,7 +6,7 @@
 
 #include <rte_errno.h>
 #include <rte_hash.h>
-#include "clogger.h"
+#include "cp_log.h"
 #include "cp_config.h"
 #include "gtp_messages_decoder.h"
 #include "gtpv2_set_ie.h"
@@ -75,7 +75,7 @@ parse_bearer_resource_cmd(gtpv2c_header_t *gtpv2c_rx,
 	if (!brc->linked_eps_bearer_id
 	    || !brc->procedure_transaction_id
 	    || !brc->tad) {
-		clLog(clSystemLog, eCLSeverityCritical, "Improper Bearer Resource Command - "
+		LOG_MSG(LOG_ERROR, "Improper Bearer Resource Command - "
 				"Dropping packet\n");
 		return -EPERM;
 	}
@@ -84,7 +84,7 @@ parse_bearer_resource_cmd(gtpv2c_header_t *gtpv2c_rx,
 	    brc->linked_eps_bearer_id) - 5;
 	if (!(brc->context->bearer_bitmap &
 			(1 << ebi_index))) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 		    "Received Bearer Resource Command on non-existent LBI - "
 		    "Dropping packet\n");
 		return -EPERM;
@@ -92,7 +92,7 @@ parse_bearer_resource_cmd(gtpv2c_header_t *gtpv2c_rx,
 
 	brc->bearer = brc->context->eps_bearers[ebi_index];
 	if (!brc->bearer) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 		    "Received Bearer Resource Command on non-existent LBI - "
 		    "Bitmap Inconsistency - Dropping packet\n");
 		return -EPERM;
@@ -130,7 +130,7 @@ parse_packet_filter(create_pkt_filter *cpf, pkt_fltr *pf)
 	while (length) {
 		if (length <
 			PACKET_FILTER_COMPONENT_SIZE[filter_component->type]) {
-			clLog(clSystemLog, eCLSeverityCritical,
+			LOG_MSG(LOG_ERROR,
 			    "Insufficient space in packet filter for"
 			    " component type %u\n",
 			    filter_component->type);
@@ -149,10 +149,10 @@ parse_packet_filter(create_pkt_filter *cpf, pkt_fltr *pf)
 				+ __builtin_ctzl(
 					filter_component->type_union.ipv4.mask.
 					s_addr) != 32) {
-				clLog(clSystemLog, eCLSeverityCritical, "Error in ipmask:");
-				clLog(clSystemLog, eCLSeverityCritical, "IPV4_REMOTE_ADDRESS: %s/",
+				LOG_MSG(LOG_ERROR, "Error in ipmask:");
+				LOG_MSG(LOG_ERROR, "IPV4_REMOTE_ADDRESS: %s/",
 				    inet_ntoa(pf->remote_ip_addr));
-				clLog(clSystemLog, eCLSeverityCritical, "%s\n",
+				LOG_MSG(LOG_ERROR, "%s\n",
 				    inet_ntoa(filter_component->type_union.
 						    ipv4.mask));
 			}
@@ -174,10 +174,10 @@ parse_packet_filter(create_pkt_filter *cpf, pkt_fltr *pf)
 				+ __builtin_ctzl(
 					filter_component->type_union.ipv4.mask.
 					s_addr) != 32) {
-				clLog(clSystemLog, eCLSeverityCritical, "Error in ipmask:");
-				clLog(clSystemLog, eCLSeverityCritical, "IPV4_REMOTE_ADDRESS: %s/",
+				LOG_MSG(LOG_ERROR, "Error in ipmask:");
+				LOG_MSG(LOG_ERROR, "IPV4_REMOTE_ADDRESS: %s/",
 					inet_ntoa(pf->local_ip_addr));
-				clLog(clSystemLog, eCLSeverityCritical, "%s\n",
+				LOG_MSG(LOG_ERROR, "%s\n",
 					inet_ntoa(
 					filter_component->type_union.ipv4.
 					mask));
@@ -239,7 +239,7 @@ parse_packet_filter(create_pkt_filter *cpf, pkt_fltr *pf)
 			    next_component;
 			break;
 		default:
-			clLog(clSystemLog, eCLSeverityCritical, "Invalid/Unsupported TFT Filter"
+			LOG_MSG(LOG_ERROR, "Invalid/Unsupported TFT Filter"
 					" Component\n");
 			return GTPV2C_CAUSE_SERVICE_NOT_SUPPORTED;
 		}
@@ -305,7 +305,7 @@ install_packet_filters(eps_bearer_t *ded_bearer,
 		}
 
 		if (bearer_filter_id == MAX_FILTERS_PER_UE) {
-			clLog(clSystemLog, eCLSeverityCritical, "Not enough packet filter "
+			LOG_MSG(LOG_ERROR, "Not enough packet filter "
 					"identifiers available");
 			return -EPERM;
 		}
@@ -322,7 +322,7 @@ install_packet_filters(eps_bearer_t *ded_bearer,
 		/*pf.pkt_fltr.rating_group = ded_bearer->qos.qos.qci;*/
 
 		if (dp_packet_filter_id == -ENOENT) {
-			clLog(clSystemLog, eCLSeverityCritical,
+			LOG_MSG(LOG_ERROR,
 			    "Packet filters must be pre-defined by static "
 			    "file prior to reference by s11 Message\n");
 			/* TODO: Implement dynamic installation of packet
@@ -525,7 +525,7 @@ create_dedicated_bearer(gtpv2c_header_t *gtpv2c_rx,
 
 
 	if (brc->flow_quality_of_service == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Received Bearer Resource Command without Flow "
+		LOG_MSG(LOG_ERROR, "Received Bearer Resource Command without Flow "
 				"QoS IE\n");
 		return -EPERM;
 	}
@@ -536,7 +536,7 @@ create_dedicated_bearer(gtpv2c_header_t *gtpv2c_rx,
 			rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
 					RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (ded_bearer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate dedicated bearer "
+		LOG_MSG(LOG_ERROR, "Failure to allocate dedicated bearer "
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -612,9 +612,9 @@ delete_packet_filter(gtpv2c_header_t *gtpv2c_rx,
 	eps_bearer_t *b = brc->pdn->packet_filter_map[dpf->pkt_filter_id];
 
 	if (b == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Requesting the deletion of non-existent "
+		LOG_MSG(LOG_ERROR, "Requesting the deletion of non-existent "
 				"packet filter\n");
-		clLog(clSystemLog, eCLSeverityCritical, "\t"
+		LOG_MSG(LOG_ERROR, "\t"
 				"%"PRIx32"\t"
 		"%"PRIx32"\n", brc->context->s11_mme_gtpc_teid,
 		    brc->context->s11_sgw_gtpc_teid);

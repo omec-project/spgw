@@ -6,14 +6,12 @@
 
 #include "cp_init.h"
 #include "pfcp.h"
-#include "clogger.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_enum.h"
-#include "gw_adapter.h"
 #include "csid_struct.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_messages_encoder.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "csid_api.h"
 #include "csid_cp_cleanup.h"
 #include "gtpv2_set_ie.h"
@@ -102,7 +100,7 @@ fill_gtpc_del_set_pdn_conn_req(gtpv2c_header_t *gtpv2c_tx, fqcsid_t *local_csids
 					local_csids);
 		}
 	} else {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Select Invalid iface type..\n", ERR_MSG);
+		LOG_MSG(LOG_ERROR, "Select Invalid iface type..");
 		return -1;
 	}
 
@@ -128,7 +126,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	/* Retrive Gx_context based on Sess ID. */
 	ret = get_gx_context((uint8_t *)pdn->gx_sess_id, &gx_context);
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
+		LOG_MSG(LOG_ERROR, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
 				pdn->gx_sess_id);
 		return -1;
 	}
@@ -146,7 +144,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 
 	/* VS: Fill the Credit Crontrol Request to send PCRF */
 	if(fill_ccr_request(&ccr_request.data.ccr, pdn->context, ebi_index, pdn->gx_sess_id) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
 		return -1;
 	}
 	/* Update UE State */
@@ -162,7 +160,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	buffer = rte_zmalloc_socket(NULL, msglen + sizeof(ccr_request.msg_type),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (buffer == NULL) {
-		clLog(sxlogger, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -174,13 +172,13 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 
 	if (gx_ccr_pack(&(ccr_request.data.ccr),
 				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)+sizeof(ccr_request.seq_num)), msglen) == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
 		return -1;
 	}
 
 	/* VS: Write or Send CCR -T msg to Gx_App */
 	gx_send(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
-	clLog(clSystemLog, eCLSeverityDebug, FORMAT"Send CCR-T to PCRF \n", ERR_MSG);
+	LOG_MSG(LOG_DEBUG, "Send CCR-T to PCRF ");
 
 	struct sockaddr_in saddr_in;
 	saddr_in.sin_family = AF_INET;
@@ -259,7 +257,7 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 
 	/* Delete UE context entry from IMSI Hash */
 	if (ue_context_delete_entry_imsiKey(context->imsi) < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"%s %s - Error on ue_context_by_imsi_hash del\n",__file__,
 				strerror(ret));
 	}
@@ -280,8 +278,7 @@ cleanup_sess_by_csid_entry(fqcsid_t *csids, uint8_t iface)
 		sess_csid *tmp = NULL;
 		tmp = get_sess_csid_entry(csids->local_csid[itr1]);
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			return -1;
 		}
 
@@ -293,7 +290,7 @@ cleanup_sess_by_csid_entry(fqcsid_t *csids, uint8_t iface)
 
 			/* Delete UE context entry from UE Hash */
 			if (ue_context_delete_entry_teidKey(teid_key) < 0) {
-				clLog(clSystemLog, eCLSeverityCritical,
+				LOG_MSG(LOG_ERROR,
 						"%s - Error on ue_context_by_fteid_hash del\n", __file__);
 			}
 		}
@@ -305,7 +302,7 @@ cleanup_sess_by_csid_entry(fqcsid_t *csids, uint8_t iface)
 int8_t
 del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 {
-	clLog(apilogger, eCLSeverityDebug, "%s:START\n", __func__);
+	LOG_MSG(LOG_DEBUG, "%s:START\n", __func__);
 	int ret = 0;
 	uint16_t payload_length = 0;
 	fqcsid_t csids = {0};
@@ -322,11 +319,10 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 		/* Delete UPF hash entry */
 		if (iface == SX_PORT_ID) {
 			if (upf_context_delete_entry(&node_addr) < 0) {
-				clLog(clSystemLog, eCLSeverityCritical,
-						FORMAT" Error on deleting upf context del\n", ERR_MSG);
+				LOG_MSG(LOG_ERROR, " Error on deleting upf context del");
 			}
 		}
-		clLog(clSystemLog, eCLSeverityDebug, FORMAT" Entry not found \n", ERR_MSG);
+		LOG_MSG(LOG_DEBUG, " Entry not found ");
 		return -1;
 	}
 
@@ -337,7 +333,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 		tmp = get_peer_csid_entry(&peer_csids->local_csid[itr],
 				iface);
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityDebug, FORMAT" Entry not found \n", ERR_MSG);
+			LOG_MSG(LOG_DEBUG, " Entry not found ");
 			return -1;
 		}
 		csids.local_csid[itr] = tmp->local_csid;
@@ -345,15 +341,14 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 	}
 
 	if (!csids.num_csid) {
-		clLog(clSystemLog, eCLSeverityDebug, FORMAT"Csids are empty \n", ERR_MSG);
+		LOG_MSG(LOG_DEBUG, "Csids are empty ");
 		return 0;
 	}
 
 	/* Cleanup Internal data structures */
 	ret = cleanup_sess_by_csid_entry(&csids, iface);
 	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-				strerror(errno));
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		//return -1;
 	}
 
@@ -373,8 +368,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 							(struct sockaddr *) &s11_mme_sockaddr,
 							sizeof(struct sockaddr_in));
 
-					clLog(clSystemLog, eCLSeverityDebug, FORMAT"Send PGW Restart notification to MME \n",
-							ERR_MSG);
+					LOG_MSG(LOG_DEBUG, "Send PGW Restart notification to MME ");
 
 				}
 
@@ -383,8 +377,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 							(struct sockaddr *) &s11_mme_sockaddr,
 							sizeof(struct sockaddr_in));
 
-					clLog(clSystemLog, eCLSeverityDebug, FORMAT"Send PGW Restart notification to MME \n",
-							ERR_MSG);
+					LOG_MSG(LOG_DEBUG, "Send PGW Restart notification to MME ");
 				}
 
 				memset(gtpv2c_tx, 0, sizeof(gtpv2c_header_t));
@@ -439,19 +432,18 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 	/* Cleanup Internal data structures */
 	ret = del_csid_entry_hash(peer_csids, &csids, iface);
 	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
 
 	/* Delete UPF hash entry */
 	if (iface == SX_PORT_ID) {
 		if (upf_context_delete_entry(&node_addr) < 0) {
-			clLog(clSystemLog, eCLSeverityCritical,
-					FORMAT" Error on delete upf context \n", ERR_MSG);
+			LOG_MSG(LOG_ERROR,
+					" Error on delete upf context ");
 		}
 	}
-	clLog(apilogger, eCLSeverityDebug, "%s:END\n", __func__);
+	LOG_MSG(LOG_DEBUG, "%s:END\n", __func__);
 	return 0;
 }
 
@@ -474,8 +466,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 			tmp = get_peer_csid_entry(&del_pdn_req->mme_fqcsid.pdn_csid[itr],
 					S11_SGW_PORT_ID);
 			if (tmp == NULL) {
-				clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 				return -1;
 			}
 			/* TODO: Hanlde Multiple CSID with single MME CSID */
@@ -507,8 +498,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 			tmp = get_peer_csid_entry(&del_pdn_req->sgw_fqcsid.pdn_csid[itr],
 					S5S8_PGWC_PORT_ID);
 			if (tmp == NULL) {
-				clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 				return -1;
 			}
 			/* TODO: Hanlde Multiple CSID with single MME CSID */
@@ -531,8 +521,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 			tmp = get_peer_csid_entry(&del_pdn_req->pgw_fqcsid.pdn_csid[itr],
 					S5S8_SGWC_PORT_ID);
 			if (tmp == NULL) {
-				clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 				return -1;
 			}
 			/* TODO: Hanlde Multiple CSID with single MME CSID */
@@ -547,7 +536,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 	}
 
 	if (csids.num_csid == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Not received any CSID from peer node \n", ERR_MSG);
+		LOG_MSG(LOG_ERROR, "Not received any CSID from peer node ");
 		return -1;
 	}
 
@@ -581,8 +570,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 						(struct sockaddr *) &s11_mme_sockaddr,
 						sizeof(struct sockaddr_in));
 
-				clLog(clSystemLog, eCLSeverityDebug, FORMAT"Send PGW Restart notification to MME \n",
-						ERR_MSG);
+				LOG_MSG(LOG_DEBUG, "Send PGW Restart notification to MME ");
 			//}
 			}
 	}
@@ -625,8 +613,7 @@ process_del_pdn_conn_set_req_t(del_pdn_conn_set_req_t *del_pdn_req,
 	/* Cleanup Internal data structures */
 	ret = del_csid_entry_hash(&peer_csids, &csids, iface);
 	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
 	return 0;
@@ -656,8 +643,7 @@ int8_t
 process_del_pdn_conn_set_rsp_t(del_pdn_conn_set_rsp_t *del_pdn_rsp)
 {
 	if (del_pdn_rsp->cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-				strerror(errno));
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
 	return 0;

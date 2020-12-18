@@ -228,7 +228,7 @@ gtpv2c_send(int gtpv2c_if_fd, uint8_t *gtpv2c_tx_buf,
 	} 
 #endif
     RTE_SET_USED(dest_addr_len);
-    LOG_MSG(LOG_DEBUG, "queuing message in gtp out channel \n");
+    LOG_MSG(LOG_DEBUG, "queuing message in gtp out channel");
     queue_gtp_out_event(gtpv2c_if_fd, gtpv2c_tx_buf, gtpv2c_pyld_len, dest_addr);
 }
 

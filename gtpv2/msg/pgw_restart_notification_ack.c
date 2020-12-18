@@ -14,7 +14,7 @@ int handle_pgw_restart_notf_ack(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 	msg->proc = RESTORATION_RECOVERY_PROC;
 	msg->event = PGW_RSTRT_NOTIF_ACK_RCVD_EVNT;
 
-	clLog(s5s8logger, eCLSeverityDebug, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
 			" Msg_Type:%s[%u],"
 			"State:%s, Event:%s\n",
 			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
@@ -32,8 +32,7 @@ process_pgw_rstrt_notif_ack(void *data, void *unused_param)
 
 	if (msg->gtpc_msg.pgw_rstrt_notif_ack.cause.cause_value ==
 			GTPV2C_CAUSE_REQUEST_ACCEPTED) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-				strerror(errno));
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
 #else

@@ -8,7 +8,6 @@
 #include "sm_struct.h"
 #include "gtp_messages.h"
 #include "cp_config.h"
-#include "clogger.h"
 #include "stdio.h"
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_interface.h"
@@ -84,7 +83,6 @@ int validate_ubrsp_msg(upd_bearer_rsp_t *ubrsp)
 int validate_gtpv2_message_content(msg_info_t *msg)
 {
     int ret=0;
-    printf("Validate gtpv2 message\n");
     switch(msg->msg_type)
     {
     	case GTP_CREATE_SESSION_RSP:

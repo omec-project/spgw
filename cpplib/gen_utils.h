@@ -30,4 +30,7 @@
 #define FORMAT "%s:%s:%d:"
 #define ERR_MSG __file__, __func__, __LINE__
 
+#define FALSE 0
+#define TRUE 1
+
 #endif

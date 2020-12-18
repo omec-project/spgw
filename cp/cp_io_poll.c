@@ -21,8 +21,6 @@
 #include "cp_io_poll.h"
 #include "cp_config.h"
 #include "sm_struct.h"
-#include "gw_adapter.h"
-#include "clogger.h"
 #include "cp_config_apis.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_events.h"

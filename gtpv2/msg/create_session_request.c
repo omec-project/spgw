@@ -8,8 +8,7 @@
 #include <errno.h>
 #include <rte_debug.h>
 #include "gtp_messages_decoder.h"
-#include "clogger.h"
-#include "gw_adapter.h"
+#include "cp_log.h"
 #include "ue.h"
 #include "packet_filters.h"
 #include "gtp_messages.h"
@@ -144,7 +143,7 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
             }
 			break;
 			default:
-			    clLog(s11logger, eCLSeverityDebug,"Unknown PCO ID:(0x%x) received ", 
+			    LOG_MSG(LOG_DEBUG,"Unknown PCO ID:(0x%x) received ", 
                                                 req_pco->ids[i].type);
 		}
 	}
@@ -199,7 +198,7 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 	}
 
 	pdn->ipv4.s_addr = htonl(pdn->ipv4.s_addr);
-	printf("%s %d - UE address %s, pdn = %p\n",__FUNCTION__,__LINE__,inet_ntoa(pdn->ipv4), pdn);
+	LOG_MSG(LOG_DEBUG, "UE address %s, pdn = %p",inet_ntoa(pdn->ipv4), pdn);
 	set_ipv4_paa(&cs_resp.paa, IE_INSTANCE_ZERO, pdn->ipv4);
 
 	set_apn_restriction(&cs_resp.apn_restriction, IE_INSTANCE_ZERO,
@@ -220,7 +219,7 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 		cs_resp.bearer_contexts_created.header.len += sizeof(struct cause_ie_hdr_t) + IE_HEADER_SIZE;
 
 		if (bearer->s11u_mme_gtpu_teid) {
-			clLog(s11logger, eCLSeverityDebug,"S11U Detect- set_create_session_response-"
+			LOG_MSG(LOG_DEBUG,"S11U Detect- set_create_session_response-"
 					"\n\tbearer->s11u_mme_gtpu_teid= %X;"
 					"\n\tGTPV2C_IFTYPE_S11U_MME_GTPU= %X\n",
 					htonl(bearer->s11u_mme_gtpu_teid),
@@ -228,7 +227,7 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 
 			/* TODO: set fteid values to create session response member */
 			/*
-			clLog(s11logger, eCLSeverityDebug,"S11U Detect- set_create_session_response-"
+			LOG_MSG(LOG_DEBUG,"S11U Detect- set_create_session_response-"
 					"\n\tbearer->s11u_mme_gtpu_teid= %X;"
 					"\n\tGTPV2C_IFTYPE_S11U_MME_GTPU= %X\n",
 					bearer->s11u_mme_gtpu_teid,
@@ -356,7 +355,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
     if (csr.indctn_flgs.header.len &&
 			csr.indctn_flgs.indication_uimsi) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Unauthenticated IMSI Not Yet Implemented - "
+		LOG_MSG(LOG_ERROR, "%s:%s:%d Unauthenticated IMSI Not Yet Implemented - "
 				"Dropping packet\n",
 			   __FILE__, __func__, __LINE__);
 		return -EPERM;
@@ -373,14 +372,14 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 			|| !csr.bearer_contexts_to_be_created.bearer_lvl_qos.header.len
 			|| !csr.msisdn.header.len
 			|| !(csr.pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4) ) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Mandatory IE missing. Dropping packet\n",
+		LOG_MSG(LOG_ERROR, "%s:%s:%d Mandatory IE missing. Dropping packet\n",
 			   __FILE__, __func__, __LINE__);
 		return -EPERM;
 	}
 
 	if (csr.pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV6 ||
 			csr.pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4V6) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d IPv6 Not Yet Implemented - Dropping packet\n",
+			LOG_MSG(LOG_ERROR, "%s:%s:%d IPv6 Not Yet Implemented - Dropping packet\n",
 			   __FILE__, __func__, __LINE__);
 			return GTPV2C_CAUSE_PREFERRED_PDN_TYPE_UNSUPPORTED;
 	}
@@ -392,10 +391,11 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 	uint8_t ebi_index = csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
 
-	printf("\n acquire ip %d %s",__LINE__,__FUNCTION__);
 	ret = acquire_ip(&ue_ip);
-	if (ret)
+	if (ret) {
+        LOG_MSG(LOG_DEBUG, "Acquire IP failed ");
 		return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
+    }
 
 	/* set s11_sgw_gtpc_teid= key->ue_context_by_fteid_hash */
 	ret = create_ue_context(&csr.imsi.imsi_number_digits, csr.imsi.header.len,
@@ -481,7 +481,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 				gtpv2c_s5s8_tx, csr.header.teid.has_teid.seq,
 				pdn, bearer, sgwu_fqdn);
 
-		 clLog(s5s8logger, eCLSeverityDebug, "NGIC- create_session.c::"
+		 LOG_MSG(LOG_DEBUG, "NGIC- create_session.c::"
 				"\n\tprocess_create_session_request::case= %d;"
 				"\n\tprocess_sgwc_s5s8_cs_req_cnt= %u;"
 				"\n\tgen_create_s5s8_session_request= %d\n",
@@ -490,12 +490,11 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		return ret;
 	}
 
-	printf("\n ******* call set_create_session_response from %d %s \n",__LINE__,__FUNCTION__);
 	set_create_session_response(
 			gtpv2c_s11_tx, csr.header.teid.has_teid.seq,
 			context, pdn, bearer);
 
-	clLog(s11logger, eCLSeverityDebug, "NGIC- create_session.c::"
+	LOG_MSG(LOG_DEBUG, "NGIC- create_session.c::"
 			"\n\tprocess_create_session_request::case= %d;"
 			"\n\tprocess_spgwc_s11_cs_res_cnt= %u;"
 			"\n\tset_create_session_response::done...\n",
@@ -558,7 +557,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 #ifdef OBSOLETE_APIS
 	if (session_create(dp_id, session) < 0)
-		rte_exit(EXIT_FAILURE,"Bearer Session create fail !!!");
+        assert(0);
 #endif
 
 	if (bearer->s11u_mme_gtpu_teid) {
@@ -572,7 +571,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 #ifdef OBSOLETE_APIS
 		if (session_modify(dp_id, session) < 0)
-			rte_exit(EXIT_FAILURE, "Bearer Session create CIOT implicit modify fail !!!");
+            assert(0);
 #endif
 	}
 
@@ -584,7 +583,7 @@ int validate_csreq_msg(create_sess_req_t *csr)
 {
 	if (csr->indctn_flgs.header.len &&
 			csr->indctn_flgs.indication_uimsi) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Unauthenticated IMSI Not Yet Implemented - "
+		LOG_MSG(LOG_ERROR, "%s:%s:%d Unauthenticated IMSI Not Yet Implemented - "
 				"Dropping packet\n", __FILE__, __func__, __LINE__);
 	
 		return GTPV2C_CAUSE_IMSI_NOT_KNOWN;
@@ -592,7 +591,7 @@ int validate_csreq_msg(create_sess_req_t *csr)
 
 	if ((cp_config->cp_type == SGWC) &&
 			(!csr->pgw_s5s8_addr_ctl_plane_or_pmip.header.len)) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Mandatory IE missing. Dropping packet len:%u\n",
+		LOG_MSG(LOG_ERROR, "%s:%s:%d Mandatory IE missing. Dropping packet len:%u\n",
 				__FILE__, __func__, __LINE__,
 				csr->pgw_s5s8_addr_ctl_plane_or_pmip.header.len);
 		return GTPV2C_CAUSE_MANDATORY_IE_MISSING;
@@ -607,14 +606,14 @@ int validate_csreq_msg(create_sess_req_t *csr)
 			|| !csr->bearer_contexts_to_be_created.bearer_lvl_qos.header.len
 			|| !csr->rat_type.header.len
 			|| !(csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4) ) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d Mandatory IE missing. Dropping packet\n",
+		LOG_MSG(LOG_ERROR, "%s:%s:%d Mandatory IE missing. Dropping packet\n",
 				__FILE__, __func__, __LINE__);
 		return GTPV2C_CAUSE_MANDATORY_IE_MISSING;
 	}
 
 	if (csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV6 ||
 			csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4V6) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%s:%d IPv6 Not Yet Implemented - Dropping packet\n",
+		LOG_MSG(LOG_ERROR, "%s:%s:%d IPv6 Not Yet Implemented - Dropping packet\n",
 				__FILE__, __func__, __LINE__);
 		return GTPV2C_CAUSE_PREFERRED_PDN_TYPE_UNSUPPORTED;
 	}    
@@ -630,7 +629,7 @@ decode_check_csr(gtpv2c_header_t *gtpv2c_rx,
 			csr);
 
 	if (!ret){
-		clLog(clSystemLog, eCLSeverityCritical, "Decoding for csr req failed");
+		LOG_MSG(LOG_ERROR, "Decoding for csr req failed");
 		return -1;
 	}
 
@@ -664,7 +663,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     }
 
     if(msg->gtpc_msg.csr.up_func_sel_indctn_flgs.dcnr) {
-        printf("Received CSReq for dcnr capable UE \n");
+        LOG_MSG(LOG_DEBUG, "Received CSReq for dcnr capable UE ");
     }
 
     ret = validate_csreq_msg(&msg->gtpc_msg.csr);
@@ -684,7 +683,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
-        printf("Retransmitted CSReq received. Old CSReq is in progress\n");
+        LOG_MSG(LOG_DEBUG0, "Retransmitted CSReq received. Old CSReq is in progress");
         return -1;
     }
 
@@ -700,11 +699,11 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
     ret = ue_context_entry_lookup_imsiKey(imsi, &(context));
     if(context != NULL) {
-        printf("Detected context replacement of the call \n");
+        LOG_MSG(LOG_DEBUG0, "[IMSI - %lu] Detected context replacement ", context->imsi64);
         msg->msg_type = GTP_RESERVED; 
         msg->ue_context = context;
         process_error_occured_handler_new((void *)msg, NULL);
-        printf("Deleted old call due to context replacement \n");
+        LOG_MSG(LOG_DEBUG0, "[IMSI - %lu] Deleted old call due to context replacement ", context->imsi64);
         msg->msg_type = GTP_CREATE_SESSION_REQ; 
         msg->ue_context = NULL;
     }

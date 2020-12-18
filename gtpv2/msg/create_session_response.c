@@ -14,12 +14,11 @@
 #include "tables/tables.h"
 #include "gtpv2_set_ie.h"
 #include "gtpv2_interface.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "ue.h"
 #include "pfcp_enum.h"
 #include "spgw_cpp_wrapper.h"
 #include "util.h"
-#include "gw_adapter.h"
 #include "gtpv2_error_rsp.h"
 #include "cp_transactions.h"
 #include "cp_io_poll.h"
@@ -66,7 +65,7 @@ int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 
     increment_stat(NUM_UE_SGW_ACTIVE_SUBSCRIBERS);
 
-	clLog(s11logger, eCLSeverityDebug, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
 					"Msg_Type:%s[%u], Teid:%u, "
 					"Procedure:%s, State:%s, Event:%s\n",
 					__func__, gtp_type_str(msg->msg_type), msg->msg_type,
@@ -89,7 +88,7 @@ int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 			/*Set the appropriate event type.*/
 			msg->event = CS_RESP_RCVD_EVNT;
 
-			clLog(s5s8logger, eCLSeverityDebug, "%s: Callback called for"
+			LOG_MSG(LOG_DEBUG, "%s: Callback called for"
 					"Msg_Type:%s[%u], Teid:%u, "
 					"Procedure:%s, State:%s, Event:%s\n",
 					__func__, gtp_type_str(msg->msg_type), msg->msg_type,
@@ -121,7 +120,7 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 	/*CLI logic : add PGWC entry when CSResponse received*/
 	if ((add_node_conn_entry(ntohl(cs_rsp->pgw_s5s8_s2as2b_fteid_pmip_based_intfc_or_gtp_based_ctl_plane_intfc.ipv4_address),
 			S5S8_SGWC_PORT_ID)) != 0) {
-		clLog(clSystemLog, eCLSeverityDebug, "Fail to add connection entry for PGWC");
+		LOG_MSG(LOG_DEBUG, "Fail to add connection entry for PGWC");
 	}
 
 	uint8_t ebi_index = cs_rsp->bearer_contexts_created.eps_bearer_id.ebi_ebi - 5;
@@ -209,8 +208,7 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 				ADD);
 
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			return -1;
 		}
 		tmp->node_addr = ntohl(cs_rsp->pgw_fqcsid.node_address);
@@ -232,8 +230,7 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 		tmp = get_peer_addr_csids_entry(pdn->s5s8_pgw_gtpc_ipv4.s_addr,
 				ADD);
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			return -1;
 		}
 		tmp->node_addr = pdn->s5s8_pgw_gtpc_ipv4.s_addr;
@@ -247,8 +244,7 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 				&(context->pgw_fqcsid)->local_csid[(context->pgw_fqcsid)->num_csid - 1],
 				S5S8_SGWC_PORT_ID);
 		if (tmp1 == NULL) {
-			clLog(apilogger, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			return -1;
 		}
 
@@ -298,7 +294,7 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 #ifdef OBSOLTE
 	/* Lookup Stored the session information. */
 	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Failed to add response in entry in SM_HASH\n", __file__
+		LOG_MSG(LOG_ERROR, "%s %s %d Failed to add response in entry in SM_HASH\n", __file__
 				,__func__, __LINE__);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -399,7 +395,7 @@ process_cs_resp_handler(void *data, void *unused_param)
 				cs_error_response(msg, ret, S11_IFACE);
 				process_error_occured_handler_new(data, unused_param);
 			}
-			clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
+			LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
 					__func__, __LINE__, ret);
 			return -1;
 	}

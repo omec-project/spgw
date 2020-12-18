@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "pfcp_cp_interface.h"
-#include "gw_adapter.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
 #include "sm_structs_api.h"
@@ -40,7 +39,7 @@ int handle_pfcp_session_report_req_msg(msg_info_t *msg)
 
     if(old_trans != NULL) {
         // drop packet 
-        printf("retransmitted session report received\n");
+        LOG_MSG(LOG_ERROR,"Retransmitted session report received");
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSREPORTREQ_DROP, peer_addr->sin_addr.s_addr);
         return -1;
     }
@@ -63,7 +62,8 @@ int handle_pfcp_session_report_req_msg(msg_info_t *msg)
         // error indication
         // UE inactivity indication 
         msg->proc = USAGE_REPORT_PROC;
-        printf("setting data usage for subscriber %lu and data usage = %lu \n", context->imsi64,pfcp_sess_rep_req->usage_report[0].vol_meas.total_volume);
+        LOG_MSG(LOG_DEBUG2, "Setting data usage for subscriber %lu and data usage = %lu ", 
+                context->imsi64,pfcp_sess_rep_req->usage_report[0].vol_meas.total_volume);
         set_data_stats(DATA_USAGE_SPGW_PDN, context->imsi64, pfcp_sess_rep_req->usage_report[0].vol_meas.total_volume);
     }
 
@@ -78,10 +78,10 @@ int handle_pfcp_session_report_req_msg(msg_info_t *msg)
     sess_report_proc->pfcp_trans = trans;
     trans->proc_context = (void *)sess_report_proc;
 
-	clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for"
 			"Msg_Type:PFCP_SESSION_REPORT_REQUEST[%u], Seid:%lu, "
-			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, msg->msg_type,
+			"Procedure:%s, State:%s, Event:%s",
+			msg->msg_type,
 			msg->pfcp_msg.pfcp_sess_rep_req.header.seid_seqno.has_seid.seid,
 			get_proc_string(msg->proc),
 			get_state_string(msg->state), get_event_string(msg->event));
@@ -98,7 +98,7 @@ handle_session_report_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
     msg_info_t *msg = *msg_p;
     struct sockaddr_in *peer_addr = &msg->peer_addr;
  
-    printf("Received Session Report Msg from %s \n", inet_ntoa(peer_addr->sin_addr));
+    LOG_MSG(LOG_DEBUG2, "Received Session Report Msg from %s ", inet_ntoa(peer_addr->sin_addr));
     process_response(peer_addr->sin_addr.s_addr);
 
     increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSREPORTREQ, peer_addr->sin_addr.s_addr);
@@ -109,7 +109,7 @@ handle_session_report_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 
     if(decoded <= 0)
     {
-        clLog(sxlogger, eCLSeverityCritical, "DECODED bytes in Sess Report Request is %d\n",
+        LOG_MSG(LOG_ERROR, "DECODED bytes in Sess Report Request is %d",
                 decoded);
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSREPORTREQ_DROP, peer_addr->sin_addr.s_addr);
         return -1;
@@ -120,8 +120,8 @@ handle_session_report_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
     pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->pfcp_msg.pfcp_sess_rep_req;
 	if (get_sess_entry_seid(pfcp_sess_rep_req->header.seid_seqno.has_seid.seid,
 				&context) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s: Session entry not found Msg_Type:%u, Sess ID:%lu\n",
-				__func__, msg->msg_type,
+		LOG_MSG(LOG_ERROR, "Session entry not found Msg_Type:%u, Sess ID:%lu",
+				msg->msg_type,
 				pfcp_sess_rep_req->header.seid_seqno.has_seid.seid);
         // TODO: robustness. Generate report response with context not found 
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSREPORTREQ_REJ, peer_addr->sin_addr.s_addr);

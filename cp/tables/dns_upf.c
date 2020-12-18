@@ -6,13 +6,13 @@
 #include "tables/tables.h"
 #include <rte_hash.h>
 #include <rte_jhash.h>
-#include "clogger.h"
 #include "rte_lcore.h"
 #include "rte_debug.h"
 #include "rte_errno.h"
 #include <rte_hash_crc.h>
 #include "gen_utils.h"
 #include "ue.h"
+#include "cp_log.h"
 
 
 /* upflist returned via DNS query */
@@ -50,11 +50,10 @@ upflist_by_ue_hash_entry_add(uint64_t *imsi_val, uint16_t imsi_len,
 			entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failed to add entry in upflist_by_ue_hash"
+		LOG_MSG(LOG_ERROR, "Failed to add entry in upflist_by_ue_hash"
 				"hash table");
 		return -1;
 	}
-
 	return 0;
 }
 
@@ -70,7 +69,7 @@ upflist_by_ue_hash_entry_lookup(uint64_t *imsi_val, uint16_t imsi_len,
 			(void **)entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failed to search entry in upflist_by_ue_hash"
+		LOG_MSG(LOG_ERROR, "Failed to search entry in upflist_by_ue_hash"
 				"hash table");
 		return ret;
 	}
@@ -92,8 +91,7 @@ upflist_by_ue_hash_entry_delete(uint64_t *imsi_val, uint16_t imsi_len)
 		ret = rte_hash_del_key(upflist_by_ue_hash, &imsi);
 
 		if ( ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"IMSI entry is not found:%lu...\n",
-						ERR_MSG, imsi);
+			LOG_MSG(LOG_ERROR, "IMSI entry is not found:%lu...", imsi);
 			return -1;
 		}
 	}

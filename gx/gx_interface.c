@@ -12,8 +12,6 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_association.h"
 #include "ue.h"
-#include "clogger.h"
-#include "gw_adapter.h"
 #include "gen_utils.h"
 #include "tables/tables.h"
 #include "cp_config.h"
@@ -158,7 +156,7 @@ fill_subscription_id( GxSubscriptionIdList *subs_id, uint64_t imsi, uint64_t msi
 	if( imsi != 0 ) {
 		subs_id->list = malloc(sizeof( GxSubscriptionId));
 		if(subs_id->list == NULL){
-			clLog(clSystemLog, eCLSeverityCritical,"[%s]:[%s]:[%d] Memory allocation fails\n",
+			LOG_MSG(LOG_ERROR,"[%s]:[%s]:[%d] Memory allocation fails\n",
 					__file__, __func__, __LINE__);
 		}
 
@@ -175,7 +173,7 @@ fill_subscription_id( GxSubscriptionIdList *subs_id, uint64_t imsi, uint64_t msi
 
 		subs_id->list = malloc(sizeof( GxSubscriptionId));
 		if(subs_id->list == NULL){
-			clLog(clSystemLog, eCLSeverityCritical,"[%s]:[%s]:[%d] Memory allocation fails\n",
+			LOG_MSG(LOG_ERROR,"[%s]:[%s]:[%d] Memory allocation fails\n",
 					__file__, __func__, __LINE__);
 		}
 
@@ -270,7 +268,7 @@ fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 				break;
 
 			default:
-				clLog(clSystemLog, eCLSeverityCritical, "%s : Error: %s \n", __func__,
+				LOG_MSG(LOG_ERROR, "%s : Error: %s \n", __func__,
 						strerror(errno));
 				return -1;
 		}
@@ -435,7 +433,7 @@ process_gx_msg(void *data, uint16_t event)
             break;
         }
         default: {
-            clLog(clSystemLog, eCLSeverityCritical, "%s::process_msgs-case: SAEGWC::spgw_cfg= %d;"
+            LOG_MSG(LOG_ERROR, "%s::process_msgs-case: SAEGWC::spgw_cfg= %d;"
                     " Received Gx Message : "
                     "%d not supported... Discarding\n", __func__,
                     cp_config->cp_type, gx_rx->msg_type);
@@ -542,7 +540,7 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 
 	ret = get_gx_context((uint8_t *)pdn->gx_sess_id, &gx_context);
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
+		LOG_MSG(LOG_ERROR, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
 				pdn->gx_sess_id);
 	return -1;
 	}
@@ -648,7 +646,7 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 
 	/* VS: Fill the Credit Crontrol Request to send PCRF */
 	if(fill_ccr_request(&ccr_request.data.ccr, pdn->context, bearer->eps_bearer_id - 5, pdn->gx_sess_id) != 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
 		return -1;
 	}
 
@@ -669,7 +667,7 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type),
 	    RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (buffer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -682,7 +680,7 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 
 	if (gx_ccr_pack(&(ccr_request.data.ccr),
 				(unsigned char *)(buffer + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num)), msg_len) == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
 		return -1;
 
 	}

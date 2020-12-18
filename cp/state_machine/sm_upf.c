@@ -21,12 +21,10 @@
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_session.h"
 #include "cp_config.h"
-#include "clogger.h"
 #include "csid_cp_cleanup.h"
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
 #include "gen_utils.h"
-#include "gw_adapter.h"
 #include "gx_error_rsp.h"
 #include "cp_main.h"
 #include "upf_struct.h"
@@ -37,6 +35,7 @@
 #include "cp_transactions.h"
 #include "cp_peer.h"
 #include "tables/tables.h"
+#include "cp/cp_log.h"
 
 
 int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt) 
@@ -47,7 +46,7 @@ int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt)
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 
 	if (upf_context == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate upf context: "
+		LOG_MSG(LOG_ERROR, "Failure to allocate upf context: "
 				"%s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -64,7 +63,7 @@ int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt)
 
 	ret = upf_context_entry_add(&upf_ip, upf_context);
 	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 		return -1;
 	}
 
@@ -83,7 +82,7 @@ start_upf_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
     /* Logic here to decide if we want to run the procedure right away or delay
      * the execution */
     proc_ctxt = TAILQ_FIRST(&upf_context->pending_node_procs);
-    printf("procedure number = %d \n",proc_ctxt->proc_type);
+    LOG_MSG(LOG_DEBUG, "Start procedure number (%d) \n",proc_ctxt->proc_type);
     switch(proc_ctxt->proc_type) {
         case PFCP_ASSOC_SETUP_PROC: {
             proc_ctxt->handler(proc_ctxt, msg);

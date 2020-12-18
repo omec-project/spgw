@@ -46,6 +46,7 @@ get_upf_context(user_plane_profile_t *upf_profile);
  * may be through helm Charts or any other means. 
  */
 void config_change_cbk(char *config_file, uint32_t flags);
+void cpconfig_change_cbk(char *config_file, uint32_t flags);
 
 /**
  * Register for the watcher for the config update
@@ -56,6 +57,7 @@ void config_change_cbk(char *config_file, uint32_t flags);
  * Void
  */
 void register_config_updates(char *file);
+void register_cpconfig_updates(char *file);
 
 
 struct in_addr native_linux_name_resolve(const char *name);

@@ -3,10 +3,9 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "pfcp_cp_interface.h"
-#include "gw_adapter.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
 #include "cp_io_poll.h"
@@ -31,7 +30,7 @@ int handle_pfcp_session_est_response(msg_info_t *msg)
 
 	/* Retrive the session information based on session id. */
     if(pfcp_trans == NULL) {
-        clLog(sxlogger, eCLSeverityCritical, "Received PFCP response and transaction not found \n");
+        LOG_MSG(LOG_ERROR, "Received PFCP response and transaction not found \n");
         // TODOSTATS
 		return -1;
     }
@@ -65,12 +64,12 @@ handle_pfcp_session_est_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
     /*Decode the received msg and stored into the struct. */
     int decoded = decode_pfcp_sess_estab_rsp_t((uint8_t*)pfcp_rx,
             &msg->pfcp_msg.pfcp_sess_est_resp);
-    clLog(sxlogger, eCLSeverityDebug, "DEOCED bytes in Sess Estab Resp is %d\n",
+    LOG_MSG(LOG_DEBUG, "DEOCED bytes in Sess Estab Resp is %d",
             decoded);
 
     if(decoded <= 0) 
     {
-        clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp precondition check\n", __func__);
+        LOG_MSG(LOG_ERROR, "Failed to process pfcp precondition check");
         // TODOSTASTICS 
         // increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSESTRSP_DECODE_ERR, peer_addr.sin_addr.s_addr);
         return -1;

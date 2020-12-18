@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifdef FUTURE_NEED
+#include "cp_log.h"
 /* Function */
 // ajay - unhandled fsm - RESTORATION_RECOVERY_PROC CONNECTED_STATE UPD_PDN_CONN_SET_REQ_RCVD_EVNT => process_upd_pdn_conn_set_req
 // ajay unhandled fsm - RESTORATION_RECOVERY_PROC CONNECTED_STATE UPD_PDN_CONN_SET_REQ_RCVD_EVNT ==> process_upd_pdn_conn_set_req
@@ -17,8 +18,7 @@ process_upd_pdn_conn_set_req(void *data, void *unused_param)
 
 	ret = process_upd_pdn_conn_set_req_t(&msg->gtpc_msg.upd_pdn_req);
 	if (ret) {
-			clLog(s11logger, eCLSeverityCritical, FORMAT"Error: %d \n",
-					ERR_MSG, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
 	}
 #else
@@ -43,8 +43,7 @@ process_upd_pdn_conn_set_rsp(void *data, void *unused_param)
 
 	ret = process_upd_pdn_conn_set_rsp_t(&msg->gtpc_msg.upd_pdn_rsp);
 	if (ret) {
-			clLog(s11logger, eCLSeverityCritical, FORMAT"Error: %d \n",
-					ERR_MSG, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
 	}
 #else

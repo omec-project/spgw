@@ -9,8 +9,7 @@
 #include "pfcp_enum.h"
 #include "csid_struct.h"
 #include "pfcp_messages_encoder.h"
-#include "clogger.h"
-#include "gw_adapter.h"
+#include "cp_log.h"
 #include "csid_api.h"
 #include "cp_init.h"
 #include "cp_io_poll.h"
@@ -104,7 +103,7 @@ fill_peer_node_info(pdn_connection_t *pdn,
 	/* Get local csid for set of peer node */
 	local_csid = get_csid_entry(&peer_info);
 	if (local_csid < 0) {
-		clLog(apilogger, eCLSeverityCritical, FORMAT"Failed to assinged CSID..\n", ERR_MSG);
+		LOG_MSG(LOG_ERROR, "Failed to assinged CSID..");
 		return -1;
 	}
 
@@ -142,8 +141,7 @@ fill_peer_node_info(pdn_connection_t *pdn,
 				&((pdn->context)->mme_fqcsid)->local_csid[((pdn->context)->mme_fqcsid)->num_csid - 1],
 				S11_SGW_PORT_ID);
 		if (tmp == NULL) {
-			clLog(apilogger, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			return -1;
 		}
 
@@ -176,7 +174,7 @@ fill_peer_node_info(pdn_connection_t *pdn,
 	//				S5S8_PGWC_PORT_ID);
 	//	}
 	//	if (tmp1 == NULL) {
-	//		clLog(apilogger, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
+	//		LOG_MSG(LOG_ERROR, "Error: %s \n", 
 	//				strerror(errno));
 	//		return -1;
 	//	}
@@ -199,8 +197,7 @@ fill_peer_node_info(pdn_connection_t *pdn,
 					S5S8_PGWC_PORT_ID);
 
 			if (tmp1 == NULL) {
-				clLog(apilogger, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 				return -1;
 			}
 
@@ -282,8 +279,7 @@ update_peer_csid_link(fqcsid_t *fqcsid, fqcsid_t *fqcsid_t)
 					&(fqcsid->local_csid[itr]),
 					SX_PORT_ID);
 			if (tmp == NULL) {
-				clLog(apilogger, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+				LOG_MSG(LOG_ERROR, "Error: %s \n", strerror(errno));
 				return -1;
 			}
 
@@ -394,8 +390,7 @@ del_pfcp_peer_node_sess(uint32_t node_addr, uint8_t iface)
 			MOD);
 
 	if (local_csids == NULL) {
-		clLog(apilogger, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-				strerror(errno));
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
 
@@ -406,8 +401,7 @@ del_pfcp_peer_node_sess(uint32_t node_addr, uint8_t iface)
 		tmp = get_peer_csid_entry(&local_csids->local_csid[itr],
 				iface);
 		if (tmp == NULL) {
-			clLog(apilogger, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			return -1;
 		}
 		csids.local_csid[itr] = tmp->local_csid;
@@ -415,7 +409,7 @@ del_pfcp_peer_node_sess(uint32_t node_addr, uint8_t iface)
 	}
 
 	if (!csids.num_csid) {
-		clLog(apilogger, eCLSeverityDebug, FORMAT"Csids are empty \n", ERR_MSG);
+		LOG_MSG(LOG_DEBUG, "Csids are empty ");
 		return 0;
 	}
 
@@ -461,16 +455,14 @@ del_csid_entry_hash(fqcsid_t *peer_csids,
 {
 	if (peer_csids != NULL) {
 		if (del_peer_addr_csids_entry(peer_csids->node_addr)) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			/* TODO ERROR HANDLING */
 			return -1;
 		}
 
 		for (int itr = 0; itr < peer_csids->num_csid; itr++) {
 			if (del_peer_csid_entry(&peer_csids->local_csid[itr], iface)) {
-				clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 				/* TODO ERROR HANDLING */
 				return -1;
 			}
@@ -484,15 +476,14 @@ del_csid_entry_hash(fqcsid_t *peer_csids,
 	if (local_csids != NULL) {
 		for (int itr1 = 0; itr1 < local_csids->num_csid; itr1++) {
 			if (del_sess_csid_entry(local_csids->local_csid[itr1])) {
-				clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 				/* TODO ERROR HANDLING */
 				//return -1;
 			}
 		}
 
 		//if (del_peer_addr_csids_entry(local_csids->node_addr)) {
-		//	clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
+		//	LOG_MSG(LOG_ERROR, "Error: %s \n", 
 		//			strerror(errno));
 		//	/* TODO ERROR HANDLING */
 		//	//return -1;

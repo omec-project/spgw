@@ -20,7 +20,7 @@ process_mod_resp_delete_handler(void *data, void *unused_param)
 			gtpv2c_tx);
 	if (ret) {
 		mbr_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 		return ret;
 	}
 
@@ -59,7 +59,7 @@ process_delete_bearer_pfcp_sess_response(uint64_t sess_id, gtpv2c_header_t *gtpv
 	uint8_t bearer_id = UE_BEAR_ID(sess_id) - 5;
 
 	if (get_sess_entry_seid(sess_id, &context) != 0){
-		clLog(sxlogger, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 			"%s:%d NO Session Entry Found for sess ID:%lu\n",
 			__func__, __LINE__, sess_id);
 
@@ -68,7 +68,7 @@ process_delete_bearer_pfcp_sess_response(uint64_t sess_id, gtpv2c_header_t *gtpv
 
 	ret = get_ue_context(teid, &context);
 	if (ret < 0) {
-		clLog(sxlogger, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 			"%s:%d Failed to update UE State for teid: %u\n",
 			__func__, __LINE__, teid);
 
@@ -166,7 +166,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 		msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 		gtpv2c_tx);
 	if (ret != 0) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
 		return ret;
 	}
@@ -229,7 +229,7 @@ process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
 		msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
 		gtpv2c_tx);
 	if (ret != 0) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n",
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
 		return ret;
 	}
@@ -240,7 +240,7 @@ process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
 	if (get_sess_entry_seid(
 		msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
 		&resp) != 0) {
-		clLog(sxlogger, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 			"%s:%d NO Session Entry Found for sess ID:%lu\n",
 			__func__, __LINE__,
 			msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
@@ -283,7 +283,7 @@ int del_bearer_cmd_ccau_handler(void *data, void *unused_param)
 	/* Extract the call id from session id */
 	ret = retrieve_call_id((char *)&msg->gx_msg.cca.session_id.val, &call_id);
 	if (ret < 0) {
-	        clLog(clSystemLog, eCLSeverityCritical, "%s:No Call Id found from session id:%s\n", __func__,
+	        LOG_MSG(LOG_ERROR, "%s:No Call Id found from session id:%s\n", __func__,
 	                       (char*) &msg->gx_msg.cca.session_id.val);
 	        return -1;
 	}
@@ -292,7 +292,7 @@ int del_bearer_cmd_ccau_handler(void *data, void *unused_param)
 	pdn = get_pdn_conn_entry(call_id);
 	if (pdn == NULL)
 	{
-	      clLog(clSystemLog, eCLSeverityCritical, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
+	      LOG_MSG(LOG_ERROR, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
 	                          __func__, call_id);
 	      return -1;
 	}
@@ -300,7 +300,7 @@ int del_bearer_cmd_ccau_handler(void *data, void *unused_param)
 
 	ret = process_sess_mod_req_del_cmd(pdn);
 	if (ret != 0) {
-		clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
 		return ret;
 	}
@@ -320,7 +320,7 @@ process_delete_bearer_response_handler(void *data, void *unused_param)
 	int ret = 0;
 	ret = process_delete_bearer_resp(&msg->gtpc_msg.db_rsp, 1);
 	if (ret != 0) {
-		clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
 				__func__, __LINE__, ret);
 		return ret;
 	}
@@ -349,7 +349,7 @@ del_bearer_cmd_mbr_resp_handler(void *data, void *unused_param)
 			 gtpv2c_tx ,&flag);
 
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 		return ret;
 	}
 	if(flag == 0){
@@ -423,7 +423,7 @@ process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
 
 	/* Lookup entry in hash table on the basis of session id*/
 	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &context) != 0){
-		clLog(sxlogger, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 			"%s:%d NO Session Entry Found for sess ID:%lu\n",
 			__func__, __LINE__, context->pdns[ebi_index]->seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -447,14 +447,14 @@ process_pfcp_sess_mod_resp_del_cmd(uint64_t sess_id, gtpv2c_header_t *gtpv2c_rx 
 
 	/* Retrive the session information based on session id. */
 	if (get_sess_entry_seid(sess_id, &resp) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for sess ID:%lu\n", sess_id);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu\n", sess_id);
 		return -1;
 	}
 
 	if(resp->msg_type == GTP_DELETE_BEARER_CMD){
 		ret = get_ue_context(teid, &context);
 		if (ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
+			LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
 					__func__, __LINE__,
 					teid);
 		}
@@ -479,7 +479,7 @@ process_pfcp_sess_mod_resp_del_cmd(uint64_t sess_id, gtpv2c_header_t *gtpv2c_rx 
 		/* Get ue context and update state to connected state */
 		ret = get_ue_context(teid, &context);
 		if (ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
+			LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
 					__func__, __LINE__,
 					teid);
 		}
@@ -514,13 +514,13 @@ process_sess_mod_req_del_cmd(pdn_connection_t *pdn)
 	ret = get_ue_context(teid, &context);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
+		LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
 	                     __func__, __LINE__,
 			   teid);
 	}
 
 	if (get_sess_entry_seid(pdn->seid, &resp) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "NO Session Entry Found for sess ID:%lu\n", pdn->seid);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu\n", pdn->seid);
 		return -1;
 	}
 	ebi_index = resp->eps_bearer_id;
@@ -632,7 +632,7 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 	buffer = rte_zmalloc_socket(NULL, msg_len_total,
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (buffer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -644,16 +644,16 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 
 	//if (gx_raa_pack(&(raa.data.cp_raa), (unsigned char *)(buffer + sizeof(raa.msg_type)), msg_len) == 0 )
 	if (gx_raa_pack(&(raa.data.cp_raa), (unsigned char *)(buffer + msg_body_ofs), msg_len) == 0 )
-		clLog(clSystemLog, eCLSeverityDebug,"RAA Packing failure\n");
+		LOG_MSG(LOG_DEBUG,"RAA Packing failure\n");
 
 	//memcpy((unsigned char *)(buffer + sizeof(raa.msg_type) + msg_len), &(context->eps_bearers[1]->rqst_ptr),
 	memcpy((unsigned char *)(buffer + rqst_ptr_ofs), &(pdn->rqst_ptr),
 			sizeof(pdn->rqst_ptr));
 #if 0
-	clLog(clSystemLog, eCLSeverityDebug,"While packing RAA %p %p\n", (void*)(context->eps_bearers[1]->rqst_ptr),
+	LOG_MSG(LOG_DEBUG,"While packing RAA %p %p\n", (void*)(context->eps_bearers[1]->rqst_ptr),
 			*(void**)(buffer+rqst_ptr_ofs));
 
-	clLog(clSystemLog, eCLSeverityDebug,"msg_len_total [%d] msg_type_ofs[%d] msg_body_ofs[%d] rqst_ptr_ofs[%d]\n",
+	LOG_MSG(LOG_DEBUG,"msg_len_total [%d] msg_type_ofs[%d] msg_body_ofs[%d] rqst_ptr_ofs[%d]\n",
 			msg_len_total, msg_type_ofs, msg_body_ofs, rqst_ptr_ofs);
 #endif
 	/* VS: Write or Send CCR msg to Gx_App */

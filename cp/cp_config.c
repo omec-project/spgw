@@ -19,12 +19,9 @@
 #include "assert.h"
 #include "cp_config.h"
 #include "cp_config_apis.h"
-#include "clogger.h"
 #include "cp_init.h"
 #include "cp_config_defs.h"
 #include "monitor_config.h"
-#include "gw_adapter.h"
-#include "cp_config.h"
 #include "cp_config_apis.h"
 #include "upf_struct.h"
 #include "ue.h"
@@ -52,7 +49,6 @@
 #define GX_CONFIG               "GX_CONFIG"
 #define URR_CONFIG              "URR_CONFIG"
 #define LOGGING_LEVEL	        "LOGGING_LEVEL"
-#define CP_LOGGER               "CP_LOGGER"
 #define DNS_ENABLE				"DNS_ENABLE"
 #define S11_IPS					"S11_IP"
 #define S11_PORTS				"S11_PORT"
@@ -100,7 +96,7 @@ void init_config(void)
     cp_config = (cp_config_t *) calloc(1, sizeof(cp_config_t));
 
     if (cp_config == NULL) {
-        rte_exit(EXIT_FAILURE, "Can't allocate memory for cp_config!\n");
+        assert(0);
     }
     
     char *pod_ip = getenv("POD_IP");
@@ -116,8 +112,6 @@ void init_config(void)
         set_dns_config();
     }
 
-    init_cli_module(cp_config->cp_logger);
-
     /* Parse initial configuration file */
     cp_config->subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
     if(cp_config->subscriber_rulebase != NULL) {
@@ -129,8 +123,14 @@ void init_config(void)
     char file[128] = {'\0'};
     strcat(file, config_update_base_folder);
     strcat(file, "subscriber_mapping.json");
-    clLog(clSystemLog, eCLSeverityDebug, "Config file to monitor %s \n", file);
+    LOG_MSG(LOG_INIT,"Config file to monitor %s ", file);
     register_config_updates(file);
+
+    char cfgfile[128] = {'\0'};
+    strcat(cfgfile, config_update_base_folder);
+    strcat(cfgfile, "cp.cfg");
+    LOG_MSG(LOG_INIT,"Config file to monitor %s ", cfgfile);
+    register_cpconfig_updates(cfgfile);
 
     // thread to read incoming socker messages from local socket - config change listen 
     pthread_t readerLocal_t;
@@ -178,12 +178,9 @@ config_cp_ip_port(cp_config_t *cp_config)
     struct rte_cfgfile_entry *app_entries = NULL;
     struct rte_cfgfile_entry *ops_entries = NULL;
 
-    fprintf(stderr, "CP: S11_IP      : %s\n",
-            inet_ntoa(cp_config->s11_ip));
-    fprintf(stderr, "CP: S5S8_IP     : %s\n",
-            inet_ntoa(cp_config->s5s8_ip));
-    fprintf(stderr, "CP: PFCP_IP     : %s\n",
-            inet_ntoa(cp_config->pfcp_ip));
+    LOG_MSG(LOG_INIT, "CP: S11_IP      : %s", inet_ntoa(cp_config->s11_ip));
+    LOG_MSG(LOG_INIT, "CP: S5S8_IP     : %s", inet_ntoa(cp_config->s5s8_ip));
+    LOG_MSG(LOG_INIT, "CP: PFCP_IP     : %s", inet_ntoa(cp_config->pfcp_ip));
 
 
     /* default valueas */
@@ -195,11 +192,10 @@ config_cp_ip_port(cp_config_t *cp_config)
 
     struct rte_cfgfile *file = rte_cfgfile_load(STATIC_CP_FILE, 0);
     if (file == NULL) {
-        rte_exit(EXIT_FAILURE, "Cannot load configuration file %s\n",
-                STATIC_CP_FILE);
+        assert(0);
     }
 
-    fprintf(stderr, "CP: PFCP Config Parsing %s\n", STATIC_CP_FILE);
+    LOG_MSG(LOG_INIT, "CP: PFCP Config Parsing %s", STATIC_CP_FILE);
 
     /* Read GLOBAL seaction values and configure respective params. */
     num_global_entries = rte_cfgfile_section_num_entries(file, GLOBAL_ENTRIES);
@@ -212,8 +208,7 @@ config_cp_ip_port(cp_config_t *cp_config)
     }
 
     if (global_entries == NULL) {
-        rte_panic("Error configuring global entry of %s\n",
-                STATIC_CP_FILE);
+        rte_panic("Error configuring global entry of %s", STATIC_CP_FILE);
     }
 
     rte_cfgfile_section_entries(file, GLOBAL_ENTRIES, global_entries,
@@ -225,7 +220,7 @@ config_cp_ip_port(cp_config_t *cp_config)
         if(strncmp(CP_TYPE, global_entries[i].name, strlen(CP_TYPE)) == 0) {
             cp_config->cp_type = (uint8_t)atoi(global_entries[i].value);
 
-            fprintf(stderr, "CP: CP_TYPE     : %s\n",
+            LOG_MSG(LOG_INIT, "CP: CP_TYPE     : %s",
                     cp_config->cp_type == SGWC ? "SGW-C" :
                     cp_config->cp_type == PGWC ? "PGW-C" :
                     cp_config->cp_type == SAEGWC ? "SAEGW-C" : "UNKNOWN");
@@ -235,7 +230,7 @@ config_cp_ip_port(cp_config_t *cp_config)
         else if(strncmp(GX_CONFIG, global_entries[i].name, strlen(GX_CONFIG)) == 0) {
             cp_config->gx_enabled = (uint8_t)atoi(global_entries[i].value);
 
-            fprintf(stderr, "CP: GX_CONFIG     : %s\n", cp_config->gx_enabled == 1 ? "enabled" : "disabled");
+            LOG_MSG(LOG_INIT, "CP: GX_CONFIG     : %s", cp_config->gx_enabled == 1 ? "enabled" : "disabled");
 
         }else if (strncmp(S11_IPS, global_entries[i].name,
                     strlen(S11_IPS)) == 0) {
@@ -244,8 +239,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             inet_aton(global_entries[i].value,
                     &(cp_config->s11_ip));
 
-            fprintf(stderr, "CP: S11_IP      : %s\n",
-                    inet_ntoa(cp_config->s11_ip));
+            LOG_MSG(LOG_INIT, "CP: S11_IP      : %s", inet_ntoa(cp_config->s11_ip));
 
         }else if (strncmp(S11_PORTS, global_entries[i].name,
                     strlen(S11_PORTS)) == 0) {
@@ -253,8 +247,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             cp_config->s11_port =
                 (uint16_t)atoi(global_entries[i].value);
 
-            fprintf(stderr, "CP: S11_PORT    : %d\n",
-                    cp_config->s11_port);
+            LOG_MSG(LOG_INIT, "CP: S11_PORT    : %d", cp_config->s11_port);
 
         } else if (strncmp(S5S8_IPS, global_entries[i].name,
                     strlen(S5S8_IPS)) == 0) {
@@ -262,8 +255,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             inet_aton(global_entries[i].value,
                     &(cp_config->s5s8_ip));
 
-            fprintf(stderr, "CP: S5S8_IP     : %s\n",
-                    inet_ntoa(cp_config->s5s8_ip));
+            LOG_MSG(LOG_INIT, "CP: S5S8_IP     : %s", inet_ntoa(cp_config->s5s8_ip));
 
         } else if (strncmp(S5S8_PORTS, global_entries[i].name,
                     strlen(S5S8_PORTS)) == 0) {
@@ -271,8 +263,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             cp_config->s5s8_port =
                 (uint16_t)atoi(global_entries[i].value);
 
-            fprintf(stderr, "CP: S5S8_PORT   : %d\n",
-                    cp_config->s5s8_port);
+            LOG_MSG(LOG_INIT, "CP: S5S8_PORT   : %d", cp_config->s5s8_port);
 
         } else if (strncmp(PFCP_IPS , global_entries[i].name,
                     strlen(PFCP_IPS)) == 0) {
@@ -280,8 +271,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             inet_aton(global_entries[i].value,
                     &(cp_config->pfcp_ip));
 
-            fprintf(stderr, "CP: PFCP_IP     : %s\n",
-                    inet_ntoa(cp_config->pfcp_ip));
+            LOG_MSG(LOG_INIT, "CP: PFCP_IP     : %s", inet_ntoa(cp_config->pfcp_ip));
 
         } else if (strncmp(PFCP_PORTS, global_entries[i].name,
                     strlen(PFCP_PORTS)) == 0) {
@@ -289,8 +279,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             cp_config->pfcp_port =
                 (uint16_t)atoi(global_entries[i].value);
 
-            fprintf(stderr, "CP: PFCP_PORT   : %d\n",
-                    cp_config->pfcp_port);
+            LOG_MSG(LOG_INIT, "CP: PFCP_PORT   : %d", cp_config->pfcp_port);
 
         } else if (strncmp(PROMETHEUS_PORT, global_entries[i].name,
                     strlen(PROMETHEUS_PORT)) == 0) {
@@ -298,8 +287,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             cp_config->prom_port =
                 (uint16_t)atoi(global_entries[i].value);
 
-            fprintf(stderr, "CP: PROMETHEUS_PORT   : %d\n",
-                    cp_config->prom_port);
+            LOG_MSG(LOG_INIT, "CP: PROMETHEUS_PORT   : %d", cp_config->prom_port);
 
         } else if (strncmp(HTTP_PORT, global_entries[i].name,
                     strlen(HTTP_PORT)) == 0) {
@@ -307,7 +295,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             cp_config->webserver_port =
                 (uint16_t)atoi(global_entries[i].value);
 
-            fprintf(stderr, "CP: HTTP_PORT : %d\n",
+            LOG_MSG(LOG_INIT, "CP: HTTP_PORT : %d",
                     cp_config->webserver_port);
 
         } else if (strncmp(UPF_PFCP_PORTS, global_entries[i].name,
@@ -316,45 +304,42 @@ config_cp_ip_port(cp_config_t *cp_config)
             cp_config->upf_pfcp_port =
                 (uint16_t)atoi(global_entries[i].value);
 
-            fprintf(stderr, "CP: UPF_PFCP_PORT: %d\n",
+            LOG_MSG(LOG_INIT, "CP: UPF_PFCP_PORT: %d",
                     cp_config->upf_pfcp_port);
 
-        } else if (strncmp(CP_LOGGER, global_entries[i].name, strlen(CP_LOGGER)) == 0) {
-            cp_config->cp_logger = (uint8_t)atoi(global_entries[i].value);
-            fprintf(stderr, "CP: CP_LOGGER: %d\n",
-                    cp_config->cp_logger);
         } else if (strncmp(DNS_ENABLE, global_entries[i].name, strlen(DNS_ENABLE)) == 0) {
             cp_config->dns_enable = (uint8_t)atoi(global_entries[i].value);
-            fprintf(stderr, "CP: DNS_ENABLE : %d\n",
+            LOG_MSG(LOG_INIT, "CP: DNS_ENABLE : %d",
                     cp_config->dns_enable);
         }
 
         if(strncmp(URR_CONFIG, global_entries[i].name, strlen(URR_CONFIG)) == 0) {
             cp_config->urr_enable = (uint8_t)atoi(global_entries[i].value);
-            fprintf(stderr, "CP: URR_ENABLE : %d\n", cp_config->urr_enable);
+            LOG_MSG(LOG_INIT, "CP: URR_ENABLE : %d", cp_config->urr_enable);
         }
 
         if(strncmp(LOGGING_LEVEL, global_entries[i].name, strlen(LOGGING_LEVEL)) == 0) {
-            set_logging_level(global_entries[i].name);
+            LOG_MSG(LOG_INIT, "CP: LOGGING_LEVEL : %s", global_entries[i].value);
+            set_logging_level(global_entries[i].value);
         }
 
 
         /* Parse timer and counter values from cp.cfg */
         if(strncmp(TRANSMIT_TIMER, global_entries[i].name, strlen(TRANSMIT_TIMER)) == 0) {
             cp_config->transmit_timer = (int)atoi(global_entries[i].value);
-            fprintf(stderr, "CP: TRANSMIT_TIMER: %d\n",
+            LOG_MSG(LOG_INIT, "CP: TRANSMIT_TIMER: %d",
                     cp_config->transmit_timer);
         }
 
         if(strncmp(PERIODIC_TIMER, global_entries[i].name, strlen(PERIODIC_TIMER)) == 0) {
             cp_config->periodic_timer = (int)atoi(global_entries[i].value);
-            fprintf(stderr, "CP: PERIODIC_TIMER: %d\n",
+            LOG_MSG(LOG_INIT, "CP: PERIODIC_TIMER: %d",
                     cp_config->periodic_timer);
         }
 
         if(strncmp(TRANSMIT_COUNT, global_entries[i].name, strlen(TRANSMIT_COUNT)) == 0) {
             cp_config->transmit_cnt = (uint8_t)atoi(global_entries[i].value);
-            fprintf(stderr, "CP: TRANSMIT_COUNT: %u\n",
+            LOG_MSG(LOG_INIT, "CP: TRANSMIT_COUNT: %u",
                     cp_config->transmit_cnt);
         }
 
@@ -362,11 +347,11 @@ config_cp_ip_port(cp_config_t *cp_config)
         if(strncmp(REQUEST_TIMEOUT, global_entries[i].name, strlen(REQUEST_TIMEOUT)) == 0){
             if(check_cp_req_timeout_config(global_entries[i].value) == 0) {
                 cp_config->request_timeout = (int)atoi(global_entries[i].value);
-                fprintf(stderr, "CP: REQUEST_TIMEOUT: %d\n",
+                LOG_MSG(LOG_INIT, "CP: REQUEST_TIMEOUT: %d",
                         cp_config->request_timeout);
             } else {
                 rte_panic("Error configuring "
-                        "CP TIMER "REQUEST_TIMEOUT" invalid entry of %s\n", STATIC_CP_FILE);
+                        "CP TIMER "REQUEST_TIMEOUT" invalid entry of %s", STATIC_CP_FILE);
             }
         }else {
             /* if CP Request Timer Parameter is not present is cp.cfg */
@@ -374,7 +359,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             /* 5 minute = 300000 milisecond  */
             if(cp_config->request_timeout == 0) {
                 cp_config->request_timeout = 300000;
-                fprintf(stderr, "CP: DEFAULT REQUEST_TIMEOUT: %d\n",
+                LOG_MSG(LOG_INIT, "CP: DEFAULT REQUEST_TIMEOUT: %d",
                         cp_config->request_timeout);
             }
         }
@@ -382,11 +367,10 @@ config_cp_ip_port(cp_config_t *cp_config)
         if(strncmp(REQUEST_TRIES, global_entries[i].name, strlen(REQUEST_TRIES)) == 0) {
             if(check_cp_req_tries_config(global_entries[i].value) == 0) {
                 cp_config->request_tries = (uint8_t)atoi(global_entries[i].value);
-                fprintf(stderr, "CP: REQUEST_TRIES: %d\n",
-                        cp_config->request_tries);
+                LOG_MSG(LOG_INIT, "CP: REQUEST_TRIES: %d", cp_config->request_tries);
             } else {
                 rte_panic("Error configuring "
-                        "CP TIMER "REQUEST_TRIES" invalid entry of %s\n", STATIC_CP_FILE);
+                        "CP TIMER "REQUEST_TRIES" invalid entry of %s", STATIC_CP_FILE);
             }
 
         } else {
@@ -394,8 +378,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             /* Defualt Request Retries value */
             if(cp_config->request_tries == 0) {
                 cp_config->request_tries = 3;
-                fprintf(stderr, "CP: DEFAULT REQUEST_TRIES: %d\n",
-                        cp_config->request_tries);
+                LOG_MSG(LOG_INIT, "CP: DEFAULT REQUEST_TRIES: %d", cp_config->request_tries);
             }
         }
     }
@@ -417,15 +400,14 @@ config_cp_ip_port(cp_config_t *cp_config)
     }
 
     if (cache_entries == NULL)
-        rte_panic("Error configuring"
-                "CACHE entry of %s\n", STATIC_CP_FILE);
+        rte_panic("Error configuring CACHE entry of %s", STATIC_CP_FILE);
 
     rte_cfgfile_section_entries(file, CACHE_ENTRIES,
             cache_entries,
             num_cache_entries);
 
     for (i = 0; i < num_cache_entries; ++i) {
-        fprintf(stderr, "CP: [%s] = %s\n",
+        LOG_MSG(LOG_INIT, "CP: [%s] = %s",
                 cache_entries[i].name,
                 cache_entries[i].value);
         if (strncmp(CONCURRENT, cache_entries[i].name,
@@ -465,15 +447,14 @@ config_cp_ip_port(cp_config_t *cp_config)
     }
 
     if (app_entries == NULL)
-        rte_panic("Error configuring"
-                "APP entry of %s\n", STATIC_CP_FILE);
+        rte_panic("Error configuring APP entry of %s", STATIC_CP_FILE);
 
     rte_cfgfile_section_entries(file, APP_ENTRIES,
             app_entries,
             num_app_entries);
 
     for (i = 0; i < num_app_entries; ++i) {
-        fprintf(stderr, "CP: [%s] = %s\n",
+        LOG_MSG(LOG_INIT, "CP: [%s] = %s",
                 app_entries[i].name,
                 app_entries[i].value);
 
@@ -514,17 +495,15 @@ config_cp_ip_port(cp_config_t *cp_config)
     }
 
     if (ops_entries == NULL)
-        rte_panic("Error configuring"
-                "OPS entry of %s\n", STATIC_CP_FILE);
+        rte_panic("Error configuring OPS entry of %s", STATIC_CP_FILE);
 
     rte_cfgfile_section_entries(file, OPS_ENTRIES,
             ops_entries,
             num_ops_entries);
 
     for (i = 0; i < num_ops_entries; ++i) {
-        fprintf(stderr, "CP: [%s] = %s\n",
-                ops_entries[i].name,
-                ops_entries[i].value);
+        LOG_MSG(LOG_INIT, "CP: [%s] = %s",
+                ops_entries[i].name, ops_entries[i].value);
 
         if (strncmp(FREQ_SEC, ops_entries[i].name,
                     strlen(FREQ_SEC)) == 0)
@@ -562,8 +541,7 @@ config_cp_ip_port(cp_config_t *cp_config)
                 RTE_CACHE_LINE_SIZE,
                 rte_socket_id());
         if (ip_pool_entries == NULL)
-            rte_panic("Error configuring ip"
-                    "pool entry of %s\n", STATIC_CP_FILE);
+            rte_panic("Error configuring ip pool entry of %s", STATIC_CP_FILE);
     }
 
     rte_cfgfile_section_entries(file, IP_POOL_ENTRIES,
@@ -571,7 +549,7 @@ config_cp_ip_port(cp_config_t *cp_config)
             num_ip_pool_entries);
 
     for (i = 0; i < num_ip_pool_entries; ++i) {
-        fprintf(stderr, "CP: [%s] = %s\n",
+        LOG_MSG(LOG_INIT, "CP: [%s] = %s",
                 ip_pool_entries[i].name,
                 ip_pool_entries[i].value);
         if (strncmp(IP_POOL_IP,
@@ -612,7 +590,7 @@ config_cp_ip_port(cp_config_t *cp_config)
     bool addr_configured=false;
     bool mask_configured=false;
     for (i = 0; i < num_ip_pool_entries; ++i) {
-        fprintf(stderr, "CP: [%s] = %s\n",
+        LOG_MSG(LOG_INIT, "CP: [%s] = %s",
                 static_ip_pool_entries[i].name,
                 ip_pool_entries[i].value);
         if (strncmp(IP_POOL_IP,
@@ -775,14 +753,14 @@ parse_apn_args(char *temp, char *ptr[3])
 void
 config_change_cbk(char *config_file, uint32_t flags)
 {
-    clLog(clSystemLog, eCLSeverityCritical, "Config change trigger function - %s" 
-                " - file %s and flags = %x \n", __FUNCTION__, config_file, flags);
+    LOG_MSG(LOG_INIT, "Config change trigger function - %s" 
+                " - file %s and flags = %x ", __FUNCTION__, config_file, flags);
 	if (native_config_folder == false) {
 		/* Move the updated config to standard path */
 		char cmd[256];
 		sprintf(cmd, "cp %s %s", config_file, CP_CONFIG_SUB_RULES);
 		int ret = system(cmd);
-        clLog(clSystemLog, eCLSeverityDebug, "System call return value %d", ret);
+        LOG_MSG(LOG_INIT, "System call return value %d", ret);
     }
  
 	/* We dont expect quick updates from configmap..One update per interval. Typically 
@@ -793,6 +771,10 @@ config_change_cbk(char *config_file, uint32_t flags)
 
     spgw_config_profile_t *subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
 
+    if(subscriber_rulebase == NULL) {
+        LOG_MSG(LOG_INIT, "subscriber_rulebase null ");
+        return;
+    }
     update_subscriber_analyzer_config((void *)subscriber_rulebase, 0);
      
 }
@@ -812,6 +794,69 @@ register_config_updates(char *file)
 	watch_config_change(file, config_change_cbk);
 }
 
+void
+cpconfig_change_cbk(char *config_file, uint32_t flags)
+{
+    LOG_MSG(LOG_INIT, "Config change trigger function - %s" 
+                " - file %s and flags = %x ", __FUNCTION__, config_file, flags);
+	if (native_config_folder == false) {
+		/* Move the updated config to standard path */
+		char cmd[256];
+		sprintf(cmd, "cp %s %s", config_file, STATIC_CP_FILE);
+		int ret = system(cmd);
+        LOG_MSG(LOG_INIT, "System call return value %d", ret);
+    }
+ 
+	/* We dont expect quick updates from configmap..One update per interval. Typically 
+	 * worst case 60 seconds for 1 config update. Updates are clubbed and dont come frequent 
+	 * We re-register to avoid recursive callbacks 
+	 */
+	watch_config_change(config_file, cpconfig_change_cbk);
+
+    struct rte_cfgfile_entry *global_entries = NULL;
+    int32_t num_global_entries = 0;
+    struct rte_cfgfile *file = rte_cfgfile_load(STATIC_CP_FILE, 0);
+    if (file == NULL) {
+        assert(0);
+    }
+
+   /* Read GLOBAL seaction values and configure respective params. */
+    num_global_entries = rte_cfgfile_section_num_entries(file, GLOBAL_ENTRIES);
+
+    if (num_global_entries > 0) {
+        global_entries = rte_malloc_socket(NULL,
+                sizeof(struct rte_cfgfile_entry) *
+                num_global_entries,
+                RTE_CACHE_LINE_SIZE, rte_socket_id());
+    }
+
+    if (global_entries == NULL) {
+        rte_panic("Error configuring global entry of %s", STATIC_CP_FILE);
+    }
+
+    rte_cfgfile_section_entries(file, GLOBAL_ENTRIES, global_entries,
+            num_global_entries);
+
+
+    for (int i = 0; i < num_global_entries; ++i) {
+        if(strncmp(LOGGING_LEVEL, global_entries[i].name, strlen(LOGGING_LEVEL)) == 0) {
+            LOG_MSG(LOG_INIT, "CP: LOGGING_LEVEL : %s", global_entries[i].value);
+            set_logging_level(global_entries[i].value);
+            break;
+        }
+    }
+    rte_free(global_entries);
+    return;
+}
+
+void 
+register_cpconfig_updates(char *file)
+{
+	/* I would prefer a complete path than this relative path.
+	 * Looks like it may break */
+	watch_config_change(file, cpconfig_change_cbk);
+}
+
 /* Requirement: 
  * For now I am using linux system call to do the service name dns resolution...
  * 3gpp based DNS lookup of NRF support would be required to locate UPF. 
@@ -819,7 +864,7 @@ register_config_updates(char *file)
 struct in_addr native_linux_name_resolve(const char *name)
 {
     struct in_addr ip = {0};
-    printf("Function [%s] - Line - %d - %s - \n",__FUNCTION__,__LINE__,name);
+    LOG_MSG(LOG_INFO, "DNS Query - %s ",name);
     struct addrinfo hints;
     struct addrinfo *result=NULL, *rp=NULL;
     int err;
@@ -833,25 +878,19 @@ struct in_addr native_linux_name_resolve(const char *name)
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
     err = getaddrinfo(name, NULL, &hints, &result);
-    if (err != 0)
-    {
-        // Keep trying ...May be SGW is not yet deployed
-        // We shall be doing this once timer library is integrated
-        printf("getaddrinfo: %s\n", gai_strerror(err));
-    }
-    else
+    if (err == 0)
     {
         for (rp = result; rp != NULL; rp = rp->ai_next)
         {
             if(rp->ai_family == AF_INET)
             {
                 struct sockaddr_in *addrV4 = (struct sockaddr_in *)rp->ai_addr;
-                printf("gw address received from DNS response %s\n", inet_ntoa(addrV4->sin_addr));
+                LOG_MSG(LOG_DEBUG, "Received DNS response. name %s mapped to  %s\n", name, inet_ntoa(addrV4->sin_addr));
                 return addrV4->sin_addr;
             }
         }
     }
-    printf("Function [%s] - Line - %d - %s - name resolution failed \n",__FUNCTION__,__LINE__,name);
+    LOG_MSG(LOG_ERROR, "DNS Query for %s failed with error %s\n", name, gai_strerror(err));
     return ip;
 }
 
@@ -876,6 +915,5 @@ get_upf_context(user_plane_profile_t *upf_profile)
         }
         return upf_context;
     }
-    printf("DNS Resolution failed Profile - %s and Service name  %s \n",upf_profile->user_plane_profile_name, upf_profile->user_plane_service);
 	return NULL; 
 }

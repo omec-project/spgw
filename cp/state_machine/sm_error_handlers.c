@@ -19,12 +19,10 @@
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_session.h"
 #include "cp_config.h"
-#include "clogger.h"
 #include "csid_cp_cleanup.h"
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
 #include "gen_utils.h"
-#include "gw_adapter.h"
 #include "gx_error_rsp.h"
 #include "cp_main.h"
 #include "upf_struct.h"
@@ -33,6 +31,7 @@
 #include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
+#include "cp_log.h"
 
 void
 get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
@@ -110,7 +109,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
 
     if (get_ue_context_while_error(teid, &context) < 0) 
     {
-        clLog(clSystemLog, eCLSeverityCritical, "%s:%d:SM_ERROR: Error handler UE_Proc: %u UE_State: %u "
+        LOG_MSG(LOG_ERROR, "%s:%d:SM_ERROR: Error handler UE_Proc: %u UE_State: %u "
                 "%u and Message_Type:%s\n", __func__, __LINE__,
                 msg->proc, msg->state,msg->event,
                 gtp_type_str(msg->msg_type));
@@ -145,7 +144,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
     }
 
 
-    printf("Delete all bearers \n");
+    LOG_MSG(LOG_DEBUG3, "Delete all bearers of %lu ", context->imsi64);
     // if all bearers released then release pdn context 
     if(pdn->num_bearer == 0) {
         pdn_context_delete_entry_teidKey(teid);
@@ -156,7 +155,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
         context->num_pdns --;
     }
 
-    printf("Delete all PDNs \n");
+    LOG_MSG(LOG_DEBUG3, "Delete all PDNs of %lu ", context->imsi64);
     upf_context_t *upf_context = context->upf_context;
 
     proc_context_t *proc = TAILQ_FIRST(&context->pending_sub_procs);
@@ -175,11 +174,11 @@ process_error_occured_handler_new(void *data, void *unused_param)
 
       if(proc != NULL) {
           if(proc->gtpc_trans != NULL) {
-              printf("Delete gtpc procs \n");
+              LOG_MSG(LOG_DEBUG, "Delete gtpc procs ");
               cleanup_gtpc_trans(proc->gtpc_trans);
           }
           if(proc->pfcp_trans != NULL) {
-              printf("Delete pfcp procs \n");
+              LOG_MSG(LOG_DEBUG, "Delete pfcp procs ");
               cleanup_pfcp_trans(proc->pfcp_trans);
           }
           free(proc);
@@ -256,7 +255,7 @@ process_error_occured_handler(void *data, void *unused_param)
             context = NULL;
         }
     }
-    clLog(clSystemLog, eCLSeverityCritical, "%s:%d:SM_ERROR: Error handler UE_Proc: %u UE_State: %u "
+    LOG_MSG(LOG_ERROR, "%s:%d:SM_ERROR: Error handler UE_Proc: %u UE_State: %u "
             "%u and Message_Type:%s\n", __func__, __LINE__,
             msg->proc, msg->state,msg->event,
             gtp_type_str(msg->msg_type));

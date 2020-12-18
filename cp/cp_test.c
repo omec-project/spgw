@@ -6,7 +6,6 @@
 #include <rte_common.h>
 #include "cp_test.h"
 #include "cp_events.h"
-#include "clogger.h"
 #include "cp_io_poll.h" 
 #include "gx_interface.h"
 #include "util.h"
@@ -36,7 +35,7 @@ test_event_thread(void* data)
         event  = (stack_event_t *)get_test_stack_unwind_event();
         if(event != NULL)
         {
-            clLog(clSystemLog, eCLSeverityCritical,"handle stack unwind event %s ",event_names[event->event]);
+            LOG_MSG(LOG_INFO,"handle stack unwind event %s ",event_names[event->event]);
             event->cb(event->data, event->event);
             free(event);
             continue;
@@ -61,7 +60,7 @@ test_event_handler(void *data, uint16_t evt_id)
 	    gx_msg rar_request = {0};
 		uint16_t msglen = 0;
 		char *rar_buffer = NULL;
-        printf("Received Test events for session Id = %s\n",gx_ctxt->gx_sess_id);
+        LOG_MSG(LOG_INFO, "Received Test events for session Id = %s\n",gx_ctxt->gx_sess_id);
         rar_request.data.cp_rar.presence.session_id = PRESENT;
         rar_request.data.cp_rar.session_id.len = strlen(gx_ctxt->gx_sess_id);
         memcpy(rar_request.data.cp_rar.session_id.val, gx_ctxt->gx_sess_id, strlen(gx_ctxt->gx_sess_id));
@@ -158,7 +157,7 @@ init_gx_mock_interface(void)
 void 
 handle_unknown_mock_msg(void *event)
 {
-    printf("Received unknown mock msg event %p\n",event);
+    LOG_MSG(LOG_ERROR, "Received unknown mock msg event %p\n",event);
     return;
 }
 
@@ -170,7 +169,7 @@ handle_mock_create_bearer_request_msg(void *evt)
     msg_info_t *msg = calloc(1, sizeof(msg_info_t));
     outgoing_pkts_event_t *event = (outgoing_pkts_event_t *)evt;
 
-    printf("%s Received mock event %p\n",__FUNCTION__,event);
+    LOG_MSG(LOG_DEBUG, "Received mock event %p\n",event);
 
     if((ret = decode_create_bearer_req((uint8_t *) event->payload,
                     &msg->gtpc_msg.cb_req) == 0))
@@ -235,7 +234,7 @@ handle_mock_rar_request_msg(void *msg, uint16_t event)
 {
 	RTE_SET_USED(msg);
 	RTE_SET_USED(event);
-	printf("mock handler called - %s ", __FUNCTION__);
+	LOG_MSG(LOG_DEBUG, "RAR mock handler called");
 	return;
 }
 

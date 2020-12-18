@@ -23,7 +23,7 @@ int handle_update_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
 
 	//Vikrant Which ebi to be selected as multiple bearer in request
 	if(get_ue_context_by_sgw_s5s8_teid(gtpv2c_rx->teid.has_teid.teid, &context) != 0) {
-			fprintf(stderr , "%s:%d UE Context not found... 0x%x\n",__func__,
+			LOG_MSG(LOG_ERROR, "%s:%d UE Context not found... 0x%x\n",__func__,
 						__LINE__, gtpv2c_rx->teid.has_teid.teid);
 			ubr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
 															S5S8_IFACE);
@@ -57,7 +57,7 @@ process_update_bearer_request(upd_bearer_req_t *ubr)
 
 	ret = get_ue_context_by_sgw_s5s8_teid(ubr->header.teid.has_teid.teid, &context);
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__,
 				__LINE__, ret);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -65,7 +65,7 @@ process_update_bearer_request(upd_bearer_req_t *ubr)
 	pdn_cntxt = context->eps_bearers[ebi_index]->pdn;
 
 	if (get_sess_entry_seid(pdn_cntxt->seid, &resp) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
+		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, pdn_cntxt->seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -153,7 +153,7 @@ int process_update_bearer_request_handler(void *data, void *unused_param)
 	if (ret) {
 		if(ret != -1)
 			ubr_error_response(msg, ret, S5S8_IFACE);
-		clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
 					__func__, __LINE__, ret);
 		return -1;
 	}

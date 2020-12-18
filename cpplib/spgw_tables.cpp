@@ -31,16 +31,10 @@ spgwTables::find_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_s
     it = spgw_pfcp_transaction_map.find(key);
     if(it == spgw_pfcp_transaction_map.end())
     {
-#ifdef DEBUG_LOG_CPP
-        std::cout<<"Key not Found"<<std::endl;
-#endif
         return NULL;
     }
     else
     {
-#if DEBUG_LOG_CPP
-        std::cout<<"Key Found - it->second "<<it->second<<std::endl;
-#endif
         void *temp = it->second;
         return temp;
     }
@@ -54,16 +48,10 @@ spgwTables::delete_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg
     it = spgw_pfcp_transaction_map.find(key);
     if(it == spgw_pfcp_transaction_map.end())
     {
-#ifdef DEBUG_LOG_CPP
-        std::cout<<"Key not Found"<<std::endl;
-#endif
         return NULL;
     }
     else
     {
-#ifdef DEBUG_LOG_CPP
-        std::cout<<"Key Found - it->second "<<it->second<<std::endl;
-#endif
         void *temp = it->second;
         spgw_pfcp_transaction_map.erase(it);
         return temp;
@@ -88,16 +76,10 @@ spgwTables::find_gtp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_se
     it = spgw_gtp_transaction_map.find(key);
     if(it == spgw_gtp_transaction_map.end())
     {
-#if DEBUG_LOG_CPP
-        std::cout<<"Key not Found"<<std::endl;
-#endif
         return NULL;
     }
     else
     {
-#if DEBUG_LOG_CPP
-        std::cout<<"Key Found second "<<it->second<<std::endl;
-#endif
         void *temp = it->second;
         return temp;
     }
@@ -111,16 +93,10 @@ spgwTables::delete_gtp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_
     it = spgw_gtp_transaction_map.find(key);
     if(it == spgw_gtp_transaction_map.end())
     {
-#if DEBUG_LOG_CPP
-        std::cout<<"Key not Found"<<std::endl;
-#endif
         return NULL;
     }
     else
     {
-#if DEBUG_LOG_CPP
-        std::cout<<"Key Found - it->second "<<it->second<<std::endl;
-#endif
         void *temp = it->second;
         spgw_gtp_transaction_map.erase(it);
         return temp;

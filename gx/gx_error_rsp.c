@@ -13,7 +13,7 @@
 #include "sm_structs_api.h"
 #include "sm_struct.h"
 #include "gx_error_rsp.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "rte_errno.h"
 #include "ipc_api.h"
 #include "pfcp_cp_set_ie.h"
@@ -32,7 +32,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 	/* Retrieve the UE context */
 	ret = get_ue_context(teid, &context);
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to get UE State for teid: %u\n",
+		LOG_MSG(LOG_ERROR, "%s:%d Failed to get UE State for teid: %u\n",
 			__func__, __LINE__, teid);
 	}else{
 		int ebi_index = ebi - 5;
@@ -48,7 +48,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 			/* Retrive Gx_context based on Sess ID. */
 			ret = get_gx_context((uint8_t *)pdn->gx_sess_id,&gx_context);
 			if (ret < 0) {
-				clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
+				LOG_MSG(LOG_ERROR, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
 					pdn->gx_sess_id);
 			}else{
 				gx_msg ccr_request = {0};
@@ -61,14 +61,14 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 				ccr_request.data.ccr.presence.bearer_operation = PRESENT;
 				ccr_request.data.ccr.bearer_operation = TERMINATION ;
 				if(fill_ccr_request(&ccr_request.data.ccr, context, ebi_index, pdn->gx_sess_id) != 0) {
-					clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
+					LOG_MSG(LOG_ERROR, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
 					return;
 				}
 				msglen = gx_ccr_calc_length(&ccr_request.data.ccr);
 				buffer = rte_zmalloc_socket(NULL, msglen + sizeof(ccr_request.msg_type),
 											RTE_CACHE_LINE_SIZE, rte_socket_id());
 				if (buffer == NULL) {
-				clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
+				LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 								"structure: %s (%s:%d)\n",
 								 rte_strerror(rte_errno),
 								 __FILE__,
@@ -80,21 +80,21 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 
 				if (gx_ccr_pack(&(ccr_request.data.ccr),
 					(unsigned char *)(buffer + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num)), msglen) == 0) {
-					clLog(clSystemLog, eCLSeverityCritical, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
+					LOG_MSG(LOG_ERROR, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
 					return;
 				}
 
 				gx_send(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 
 				if(remove_gx_context((uint8_t*)pdn->gx_sess_id) < 0){
-					clLog(clSystemLog, eCLSeverityCritical, "%s %s - Error on gx_context_by_sess_id_hash deletion\n"
+					LOG_MSG(LOG_ERROR, "%s %s - Error on gx_context_by_sess_id_hash deletion\n"
 									,__file__, strerror(ret));
 				}
 				RTE_SET_USED(msg);
 				rte_free(gx_context);
 			}
 		}else {
-			clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND FOR EBI VALUE [%d]\n", __func__,
+			LOG_MSG(LOG_ERROR, "%s: NO ENTRY FOUND FOR EBI VALUE [%d]\n", __func__,
 					ebi);
 			return;
 		}
@@ -155,7 +155,7 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error)
 	buffer = rte_zmalloc_socket(NULL, msg_len_total,
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (buffer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -166,7 +166,7 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error)
 	memcpy(buffer + msg_type_ofs, &raa.msg_type, sizeof(raa.msg_type));
 
 	if (gx_raa_pack(&(raa.data.cp_raa), (unsigned char *)(buffer + msg_body_ofs), msg_len) == 0 )
-		clLog(clSystemLog, eCLSeverityDebug,"RAA Packing failure\n");
+		LOG_MSG(LOG_DEBUG,"RAA Packing failure\n");
 
 	memcpy((unsigned char *)(buffer + rqst_ptr_ofs), &(pdn->rqst_ptr),
 			sizeof(pdn->rqst_ptr));

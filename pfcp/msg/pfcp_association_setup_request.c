@@ -4,13 +4,11 @@
 
 #include "pfcp_ies.h"
 #include "pfcp_cp_interface.h"
-#include "gw_adapter.h"
 #include "pfcp_messages_decoder.h"
 #include "pfcp_messages_encoder.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "proc_pfcp_assoc_setup.h"
 #include "sm_struct.h"
-#include "gw_adapter.h"
 #include "upf_struct.h"
 #include "netinet/in.h"
 #include "pfcp_cp_set_ie.h"
@@ -56,10 +54,10 @@ handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfc
     int decoded = decode_pfcp_assn_setup_req_t((uint8_t *)pfcp_rx,
             &msg->pfcp_msg.pfcp_ass_req);
 
-    clLog(sxlogger, eCLSeverityDebug, "Decoded bytes [%d]\n", decoded);
+    LOG_MSG(LOG_DEBUG, "Decoded bytes [%d]\n", decoded);
     if(decoded <= 0) 
     {
-        clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to process pfcp precondition check\n", __func__);
+        LOG_MSG(LOG_ERROR, "%s: Failed to process pfcp precondition check\n", __func__);
 
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPREQ_DROP, peer_addr->sin_addr.s_addr);
         return -1;
@@ -71,7 +69,7 @@ handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfc
     upf_context_t *upf_context = NULL; 
     upf_context_entry_lookup(peer_addr->sin_addr.s_addr, &upf_context);
     if(upf_context == NULL) {
-        clLog(clSystemLog, eCLSeverityCritical, "Received PFCP association setup request from UPF %s ",inet_ntoa(peer_addr->sin_addr));
+        LOG_MSG(LOG_ERROR, "Received PFCP association setup request from UPF %s ",inet_ntoa(peer_addr->sin_addr));
         create_upf_context(peer_addr->sin_addr.s_addr, &upf_context);
     }
 
@@ -128,7 +126,7 @@ handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfc
     if ((add_node_conn_entry((uint32_t)peer_addr->sin_addr.s_addr,
                     SX_PORT_ID)) != 0) {
 
-        clLog(clSystemLog, eCLSeverityCritical, "Failed to add connection entry for SGWU/SAEGWU");
+        LOG_MSG(LOG_ERROR, "Failed to add connection entry for SGWU/SAEGWU");
     }
     pfcp_assn_setup_rsp_t pfcp_ass_setup_rsp = {0};
     fill_pfcp_association_setup_rsp(&pfcp_ass_setup_rsp, seq_num);

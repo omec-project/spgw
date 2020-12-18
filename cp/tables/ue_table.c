@@ -7,7 +7,7 @@
 #include "tables/tables.h"
 #include <rte_hash.h>
 #include <rte_jhash.h>
-#include "clogger.h"
+#include "cp_log.h"
 #include "rte_lcore.h"
 #include "rte_debug.h"
 #include "rte_errno.h"
@@ -76,16 +76,16 @@ int
 ue_context_entry_add_imsiKey(ue_context_t *context)
 {
 	int ret;
-    printf("%s UE context entry add \n", __FUNCTION__);
 	ret = rte_hash_add_key_data(ue_context_by_imsi_hash,
 			(const void *)&context->imsi, (void *)context);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s - Error on rte_hash_add_key_data add\n",
-				strerror(ret));
+		LOG_MSG(LOG_ERROR,
+				"%s - Error on rte_hash_add_key_data add - IMSI %lu",
+				strerror(ret), context->imsi64);
 		return -1;
 	}
+    LOG_MSG(LOG_DEBUG2,"UE context entry add - IMSI %lu", context->imsi64);
 	return 0;
 
 }
@@ -97,8 +97,7 @@ ue_context_entry_lookup_imsiKey(uint64_t imsi, ue_context_t **entry)
 			(const void*) &(imsi), (void **) entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN UE HASH [%u]",
-				__func__, __LINE__, imsi);
+		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN UE HASH [%lu]", imsi);
 		return -1;
 	}
 	return 0;
@@ -115,16 +114,16 @@ int
 ue_context_entry_add_teidKey(uint32_t teid, ue_context_t *context)
 {
 	int ret;
-    printf("%s UE context entry add teid %u \n", __FUNCTION__, teid);
 	ret = rte_hash_add_key_data(ue_context_by_fteid_hash,
 			(const void *)&teid, (void *)context);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s - Error on rte_hash_add_key_data add\n",
-				strerror(ret));
+		LOG_MSG(LOG_ERROR,
+				"%s - Error on rte_hash_add_key_data add %lu",
+				strerror(ret), context->imsi64);
 		return -1;
 	}
+    LOG_MSG(LOG_DEBUG2, "UE (IMSI-%lu) context entry add teid %u ", context->imsi64, teid);
 	return 0;
 
 }
@@ -137,8 +136,7 @@ get_ue_context(uint32_t teid, ue_context_t **entry)
 			(const void*) &(teid), (void **) entry);
 
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO ENTRY FOUND IN UE HASH [%u]",
-				__func__, __LINE__, teid);
+		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN UE HASH [%u]", teid);
 		return -1;
 	}
 	return 0;
@@ -173,16 +171,13 @@ add_sess_entry_seid(uint64_t sess_id, ue_context_t *context)
 		ret = rte_hash_add_key_data(seid_session_hash,
 						&sess_id, context);
 		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s: Failed to add entry = %lu"
-					"\n\tError= %s\n",
-					__func__, sess_id,
+			LOG_MSG(LOG_ERROR, "Failed to add entry = %lu Error= %s", sess_id,
 					rte_strerror(abs(ret)));
 			return -1;
 		}
 	} 
 
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Sess Entry add for Sess ID:%lu\n",
-			__func__, sess_id);
+	LOG_MSG(LOG_DEBUG, "Sess Entry add for Sess ID:%lu",sess_id);
 	return 0;
 }
 
@@ -194,13 +189,11 @@ get_sess_entry_seid(uint64_t sess_id, ue_context_t **context)
 				&sess_id, (void **)context);
 
 	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s %s %d Entry not found for sess_id:%lu...\n",__func__,
-				__file__, __LINE__,sess_id);
+		LOG_MSG(LOG_ERROR, "Entry not found for sess_id:%lu",sess_id);
 		return -1;
 	}
 
-	clLog(clSystemLog, eCLSeverityDebug, "%s %s %d Entry found for sess_id:%lu...\n",__func__,
-				__file__, __LINE__,sess_id);
+	LOG_MSG(LOG_DEBUG2, "Entry found for sess_id:%lu",sess_id);
 	return 0;
 
 }
@@ -220,8 +213,7 @@ del_sess_entry_seid(uint64_t sess_id)
 		ret = rte_hash_del_key(seid_session_hash, &sess_id);
 
 		if ( ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s %s %d:Entry not found for sess_id:%lu...\n",
-						__func__, __file__, __LINE__, sess_id);
+			LOG_MSG(LOG_ERROR, "Entry not found for sess_id:%lu...", sess_id);
 			return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 		}
 	}
@@ -229,8 +221,7 @@ del_sess_entry_seid(uint64_t sess_id)
 	/* Free data from hash */
 	rte_free(resp);
 
-	clLog(clSystemLog, eCLSeverityDebug, "%s: Sess ID:%lu\n",
-			__func__, sess_id);
+	LOG_MSG(LOG_DEBUG2, "Sess ID:%lu", sess_id);
 
 	return 0;
 }

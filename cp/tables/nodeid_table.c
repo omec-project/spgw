@@ -6,7 +6,7 @@
 #include "tables/tables.h"
 #include <rte_hash.h>
 #include <rte_jhash.h>
-#include "clogger.h"
+#include "cp_log.h"
 #include "rte_lcore.h"
 #include "rte_debug.h"
 #include "rte_errno.h"
@@ -47,7 +47,7 @@ add_node_id_hash(uint32_t *nodeid, uint64_t *data )
 	temp =(uint64_t *) rte_zmalloc_socket(NULL, sizeof(uint64_t),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (temp == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate ue context "
+		LOG_MSG(LOG_ERROR, "Failure to allocate ue context "
 				"structure: %s (%s:%d)\n",
 				rte_strerror(rte_errno),
 				__FILE__,
@@ -58,7 +58,7 @@ add_node_id_hash(uint32_t *nodeid, uint64_t *data )
 	ret = rte_hash_add_key_data(node_id_hash,
 			(const void *)&key , (void *)temp);
 	if (ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"%s - Error on rte_hash_add_key_data add\n",
 				strerror(ret));
 		rte_free((temp));

@@ -53,7 +53,7 @@ parse_fd_config(const char *filename, char *peer_name)
 	size_t str_len = 0;
 
 	if((gx_fd = fopen(filename, "r")) <= 0) {
-		fprintf(stderr, "ERROR :[ %s ] unable to read [ %s ] file\n" ,__func__ ,filename);
+		LOG_MSG(LOG_ERROR, "ERROR :[ %s ] unable to read [ %s ] file\n" ,__func__ ,filename);
 		return -1;
 	}
 	fseek(gx_fd, 0L, SEEK_SET);
@@ -84,51 +84,47 @@ int main(int argc, char **argv)
 	const char *fdcfg = "config/gx.conf";
 	char peer_name[256] = {0};
 
-	printf("Registering signal handler...");
+	LOG_MSG(LOG_INIT, "Registering signal handler...");
 	if ( signal(SIGINT, signal_handler) == SIG_ERR )
 	{
-		printf("Cannot catch SIGINT\n");
+		LOG_MSG(LOG_ERROR,"Cannot catch SIGINT\n");
 		return 1;
 	}
-	printf("complete\n");
 
-	printf("Initializing freeDiameter...");
+	LOG_MSG(LOG_INIT, "Initializing freeDiameter...");
 	if ( (rval = fdinit(fdcfg)) != FD_REASON_OK )
 	{
-		printf("Failure (%d) in fdinit()\n", rval);
+		LOG_MSG(LOG_ERROR,"Failure (%d) in fdinit()\n", rval);
 		return 1;
 	}
-	printf("complete\n");
 
-	printf("Calling gxInit()...");
+	LOG_MSG(LOG_INIT, "Calling gxInit()...");
 	if ( (rval = gxInit()) != FD_REASON_OK )
 	{
-		printf("Failure (%d) in gxInit()\n", rval);
+		LOG_MSG(LOG_ERROR, "Failure (%d) in gxInit()\n", rval);
 		return 1;
 	}
-	printf("complete\n");
 
-	printf("Calling gxRegistger()...");
+	LOG_MSG(LOG_INIT,"Calling gxRegistger()...");
 	if ( (rval = gxRegister()) != FD_REASON_OK )
 	{
-		printf("Failure (%d) in gxRegister()\n", rval);
+		LOG_MSG(LOG_ERROR,"Failure (%d) in gxRegister()\n", rval);
 		return 1;
 	}
-	printf("complete\n");
 
-	printf("Starting freeDiameter...");
+	LOG_MSG(LOG_INIT, "Starting freeDiameter...");
 	if ( (rval = fdstart()) != FD_REASON_OK )
 	{
-		printf("Failure (%d) in fdstart()\n", rval);
+		LOG_MSG(LOG_ERROR,"Failure (%d) in fdstart()\n", rval);
 		return 1;
 	}
-	printf("complete\n");
+
 	if(parse_fd_config(fdcfg, peer_name) < 0 ) {
-		fprintf(stderr, "unable to read [ %s ] file \n",fdcfg);
+		LOG_MSG(LOG_ERROR, "unable to read [ %s ] file \n",fdcfg);
 		return -1;
 	}
 
-	printf("Waiting to connect to [%s] \n", peer_name);
+	LOG_MSG(LOG_INIT, "Waiting to connect to [%s] \n", peer_name);
 	while(1){
 		struct peer_hdr *peer;
 		sleep(1);
@@ -145,14 +141,13 @@ int main(int argc, char **argv)
 			return -1;
 		}
 	}
-	printf("complete\n");
-	printf("Opening unix socket...\n");
+
+	LOG_MSG(LOG_INIT, "Opening unix socket...\n");
 	if ( (rval = unixsock()) != FD_REASON_OK )
 	{
-		printf("Failure (%d) in unixsock()\n", rval);
+		LOG_MSG(LOG_ERROR,"Failure (%d) in unixsock()\n", rval);
 		return 1;
 	}
-	printf("complete\n");
 
 	while (!done)
 		sleep(1);

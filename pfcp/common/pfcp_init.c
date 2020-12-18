@@ -9,7 +9,7 @@
 #include <rte_hash_crc.h>
 #include <rte_errno.h>
 #include "pfcp.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "gen_utils.h"
 #include "tables/tables.h"
 
@@ -180,7 +180,7 @@ gen_sess_id_string(char *str_buf, char *timestamp , uint32_t value)
 
 	if (timestamp == NULL)
 	{
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Time stamp is NULL \n",
+		LOG_MSG(LOG_ERROR, "%s:%d Time stamp is NULL \n",
 				__func__, __LINE__);
 		return -1;
 	}
@@ -190,7 +190,7 @@ gen_sess_id_string(char *str_buf, char *timestamp , uint32_t value)
 
 	if(buf[0] == 0)
 	{
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed coversion of integer to string, len:%d \n",
+		LOG_MSG(LOG_ERROR, "%s:%d Failed coversion of integer to string, len:%d \n",
 			__func__, __LINE__, len);
 		return -1;
 	}
@@ -222,7 +222,7 @@ retrieve_call_id(char *str, uint32_t *call_id)
 
 	if(str == NULL)
 	{
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d String is NULL\n",
+		LOG_MSG(LOG_ERROR, "%s:%d String is NULL\n",
 				__func__, __LINE__);
 		return -1;
 	}
@@ -236,7 +236,7 @@ retrieve_call_id(char *str, uint32_t *call_id)
 
 	*call_id = atoi(buf);
 	if (*call_id == 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Call ID not found\n",
+		LOG_MSG(LOG_ERROR, "%s:%d Call ID not found\n",
 				__func__, __LINE__);
 		return -1;
 	}
@@ -255,7 +255,7 @@ gen_sess_id_for_ccr(char *sess_id, uint32_t call_id)
 
 	if((gen_sess_id_string(sess_id, timestamp, call_id)) < 0)
 	{
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to generate session id for CCR\n",
+		LOG_MSG(LOG_ERROR, "%s:%d Failed to generate session id for CCR\n",
 				__func__, __LINE__);
 		return -1;
 	}

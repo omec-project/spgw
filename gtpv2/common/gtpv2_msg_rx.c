@@ -19,8 +19,6 @@
 #include "pfcp_messages_decoder.h"
 #include "pfcp_messages_encoder.h"
 #include "cp_peer.h"
-#include "gw_adapter.h"
-#include "clogger.h"
 #include "sm_struct.h"
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_internal.h"
@@ -55,7 +53,7 @@ msg_handler_gtp(void *data)
                 &peer_sockaddr_len);
 
         if (bytes_rx == 0) {
-            clLog(clSystemLog, eCLSeverityCritical, "SGWC|SAEGWC_s11 recvfrom error:"
+            LOG_MSG(LOG_ERROR, "SGWC|SAEGWC_s11 recvfrom error:"
                     "\n\ton %s:%u - %s\n",
                     inet_ntoa(peer_sockaddr.sin_addr),
                     peer_sockaddr.sin_port,
@@ -77,7 +75,7 @@ msg_handler_gtp(void *data)
              * reply with cause = GTPV2C_CAUSE_INVALID_LENGTH
              *  should be sent - ignoring packet for now
              */
-            clLog(clSystemLog, eCLSeverityCritical, "GTPv2C Received UDP Payload:"
+            LOG_MSG(LOG_ERROR, "GTPv2C Received UDP Payload:"
                     "\n\t(%d bytes) with gtpv2c + "
                     "header (%u + %lu) = %lu bytes\n",
                     bytes_rx, ntohs(gtpv2c_rx->gtpc.message_len),

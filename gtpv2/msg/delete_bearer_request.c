@@ -10,7 +10,7 @@
 #include "gtpv2_set_ie.h"
 #include "ue.h"
 #include "vepc_cp_dp_api.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_interface.h"
 #include "cp_config_defs.h"
@@ -87,7 +87,7 @@ parse_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx,
 
 	if (!dbr->cause_ie || !dbr->bearer_context_ebi_ie
 	    || !dbr->bearer_context_cause_ie) {
-		clLog(clSystemLog, eCLSeverityCritical, "Received Delete Bearer Response without "
+		LOG_MSG(LOG_ERROR, "Received Delete Bearer Response without "
 				"mandatory IEs\n");
 		return -EPERM;
 	}
@@ -121,7 +121,7 @@ process_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx)
 	    delete_bearer_rsp.context->eps_bearers[ebi_index];
 
 	if (delete_bearer_rsp.ded_bearer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 		    "Received Delete Bearer Response for"
 		    " non-existant EBI: %"PRIu8"\n",
 		    ebi);
@@ -264,7 +264,7 @@ int handle_delete_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
 	}
 
 	if(get_ue_context_by_sgw_s5s8_teid(gtpv2c_rx->teid.has_teid.teid, &context) != 0) {
-		clLog(sxlogger, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 			"%s:%d UE Context not found... 0x%x\n",__func__,
 			__LINE__, gtpv2c_rx->teid.has_teid.teid);
 		return -1;
@@ -281,7 +281,7 @@ int handle_delete_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
 
 	context->eps_bearers[ebi_index]->pdn->proc = msg->proc;
 
-	clLog(s5s8logger, eCLSeverityDebug, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
 			"Msg_Type:%s[%u], Teid:%u, "
 			"State:%s, Event:%s\n",
 			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
@@ -300,7 +300,7 @@ process_delete_bearer_request_handler(void *data, void *unused_param)
 
 	ret = process_delete_bearer_request(&msg->gtpc_msg.db_req ,0);
 	if (ret) {
-		clLog(s11logger, eCLSeverityCritical, "%s:%d Error: %d \n",
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
 			__func__, __LINE__, ret);
 		return -1;
 	}
@@ -318,7 +318,7 @@ int process_delete_bearer_req_handler(void *data, void *unused_param)
 	int ret = process_delete_bearer_request(&msg->gtpc_msg.db_req, 1);
 	if(ret !=0 ) {
 		/*TODO: set error response*/
-		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 	}
 
 	RTE_SET_USED(unused_param);
@@ -346,7 +346,7 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 
 	ret = get_ue_context_by_sgw_s5s8_teid(db_req->header.teid.has_teid.teid, &context);
 	if (ret) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
+		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__,
 				__LINE__, ret);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -397,7 +397,7 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
 	if (get_sess_entry_seid(pdn->seid, &resp) != 0) {
-		clLog(sxlogger, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 			"%s : Failed to add response in entry in SM_HASH\n", __func__);
 		return -1;
 	}

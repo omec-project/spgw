@@ -6,7 +6,7 @@
 
 
 #include "gx_interface.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "cp_config.h"
 #include "sm_enum.h"
 #include "sm_struct.h"
@@ -16,7 +16,6 @@
 #include "pfcp.h"
 #include "sm_structs_api.h"
 #include "tables/tables.h"
-#include "gw_adapter.h"
 #include "gen_utils.h"
 #include "spgw_cpp_wrapper.h"
 
@@ -28,7 +27,7 @@ void dispatch_cca(msg_info_t *msg)
         switch(msg->proc) {
             case DETACH_PROC:
             {
-                printf("message state %d \n", msg->state);
+                LOG_MSG(LOG_DEBUG,"message state %d \n", msg->state);
                 if(msg->state == CCR_SNT_STATE)
                 {
                     cca_t_msg_handler(msg, NULL);
@@ -74,49 +73,41 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
     increment_gx_peer_stats(MSG_RX_DIAMETER_GX_CCA_T, saddr_in.sin_addr.s_addr);
 
     pdn_connection_t *pdn_cntxt = NULL;
-    printf("find gx context \n");
+    LOG_MSG(LOG_DEBUG, "find gx context ");
     /* Retrive Gx_context based on Sess ID. */
     ret = get_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val,&gx_context);
     if (ret < 0) {
-        printf("failed to find gx context \n");
-        clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
-                msg->gx_msg.cca.session_id.val);
+        LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]\n", msg->gx_msg.cca.session_id.val);
         return -1;
     }
 
     if(msg->gx_msg.cca.presence.result_code &&
             msg->gx_msg.cca.result_code != 2001){
-        printf("CCA-T failed \n");
-        clLog(clSystemLog, eCLSeverityCritical, "%s:Received CCA with DIAMETER Failure [%d]\n", __func__,
+        LOG_MSG(LOG_ERROR, "Received CCA-T with DIAMETER Failure [%d]\n",
                 msg->gx_msg.cca.result_code);
         return -1;
     }
 
     /* Extract the call id from session id */
-    printf("retrieve call_id \n");
     uint32_t call_id;
     ret = retrieve_call_id((char *)msg->gx_msg.cca.session_id.val, &call_id);
     if (ret < 0) {
-        printf("retrieve call_id failed \n");
-        clLog(clSystemLog, eCLSeverityCritical, "%s:No Call Id found from session id:%s\n", __func__,
+        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s\n", 
                 msg->gx_msg.cca.session_id.val);
         return -1;
     }
 
-    printf("retrieve pdn_cntxt \n");
     /* Retrieve PDN context based on call id */
     pdn_cntxt = get_pdn_conn_entry(call_id);
     if (pdn_cntxt == NULL) {
-        printf("retrieve pdn_cntxt failed \n");
-        clLog(clSystemLog, eCLSeverityCritical, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
-                __func__, call_id);
+        LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);
         return -1;
     }
     /* Retrive the Session state and set the event */
     msg->state = gx_context->state;
     msg->event = CCA_RCVD_EVNT;
     msg->proc = gx_context->proc;
-    clLog(sxlogger, eCLSeverityDebug, "%s: Callback called for"
+    LOG_MSG(LOG_DEBUG, "%s: Callback called for"
             "Msg_Type:%s[%u], Session Id:%s, "
             "State:%s, Event:%s\n",
             __func__, gx_type_str(msg->msg_type), msg->msg_type,
@@ -142,22 +133,18 @@ cca_t_msg_handler(void *data, void *unused_param)
 
 	RTE_SET_USED(unused_param);
 
-    printf("find - gx session \n");
 	/* Retrive Gx_context based on Sess ID. */
 	ret = get_gx_context(msg->gx_msg.cca.session_id.val, &gx_context);
 	if (ret < 0) {
-        printf("\n no gx session found \n");
-		clLog(clSystemLog, eCLSeverityCritical, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
+		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]\n",
 				msg->gx_msg.cca.session_id.val);
 		return -1;
 	}
 
-	if(remove_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val) < 0){
-		clLog(clSystemLog, eCLSeverityCritical,
-				"%s %s - Error on gx_context_by_sess_id_hash deletion\n",__file__,
-				strerror(ret));
+	if(remove_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val) < 0) {
+		LOG_MSG(LOG_ERROR, "%s - Error on gx_context_by_sess_id_hash deletion\n", strerror(ret));
 	}
-    printf("Cleanup - gx session \n");
+    LOG_MSG(LOG_DEBUG, "Cleanup - gx session ");
 	rte_free(gx_context);
 	return 0;
 }

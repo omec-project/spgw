@@ -16,8 +16,7 @@
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
 #include "gen_utils.h"
-#include "clogger.h"
-#include "gw_adapter.h"
+#include "cp_log.h"
 #include "sm_structs_api.h"
 #include "gx_error_rsp.h"
 #include "pfcp.h"
@@ -103,7 +102,7 @@ void get_error_csrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 		case GTP_CREATE_SESSION_RSP:{
 #ifdef FUTURE_NEED
 			if (get_ue_context_while_error(msg->gtpc_msg.cs_rsp.header.teid.has_teid.teid, &context) != 0){
-				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 				return;
 			}
 
@@ -122,7 +121,7 @@ void get_error_csrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 			rsp_info->ebi_index = msg->gtpc_msg.mb_rsp.bearer_contexts_modified.eps_bearer_id.ebi_ebi;
 
 			if (get_ue_context_while_error(msg->gtpc_msg.mb_rsp.header.teid.has_teid.teid, &context) != 0){
-							clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
+							LOG_MSG(LOG_ERROR, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 
 			}
 
@@ -298,7 +297,7 @@ void get_error_mbrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 			rsp_info->ebi_index = msg->gtpc_msg.mb_rsp.bearer_contexts_modified.eps_bearer_id.ebi_ebi;
 
 			if (get_ue_context_while_error(msg->gtpc_msg.mb_rsp.header.teid.has_teid.teid, &context) != 0){
-							clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
+							LOG_MSG(LOG_ERROR, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 
 			}
 
@@ -408,7 +407,7 @@ void get_error_dsrsp_info(proc_context_t *detach_proc, msg_info_t *msg, err_rsp_
 
 			if(get_ue_context(msg->gtpc_msg.dsr.header.teid.has_teid.teid,
 							&context) != 0) {
-				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 				return;
 			}
 			rsp_info->sender_teid = context->s11_mme_gtpc_teid;
@@ -429,7 +428,7 @@ void get_error_dsrsp_info(proc_context_t *detach_proc, msg_info_t *msg, err_rsp_
 		case GTP_DELETE_SESSION_RSP: {
             // in case of SGW mode -- DSRsp from pgw  
 			if(get_ue_context_while_error(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid, &context) != 0) {
-				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 				return;
 
 			}
@@ -510,7 +509,7 @@ void get_error_rabrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 			if(get_ue_context(msg->gtpc_msg.rab.header.teid.has_teid.teid,
 							&context) != 0) {
-				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 				return;
 			}
 			rsp_info->sender_teid = context->s11_mme_gtpc_teid;
@@ -584,7 +583,7 @@ void get_error_ubrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 		case PFCP_SESSION_MODIFICATION_RESPONSE: {
 
 			if (get_ue_context(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid), &context) != 0){
-				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 				return;
 			}
 			rsp_info->sender_teid = context->s11_mme_gtpc_teid;
@@ -599,7 +598,7 @@ void get_error_ubrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 #ifdef FUTURE_NEED
 			if(get_ue_context_by_sgw_s5s8_teid(msg->gtpc_msg.ub_req.header.teid.has_teid.teid,
 																				&context) != 0) {
-				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 				return;
 
 			}
@@ -621,7 +620,7 @@ void get_error_ubrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 #ifdef FUTURE_NEED
 			if(get_ue_context(msg->gtpc_msg.ub_rsp.header.teid.has_teid.teid, &context)){
 
-				clLog(clSystemLog, eCLSeverityCritical, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "[%s]:[%s]:[%d]UE context not found \n", __file__, __func__, __LINE__);
 				return;
 			}
 			pdn_connection_t *pdn_cntxt = NULL;
@@ -699,7 +698,7 @@ void ubr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 		}
 
 		if (ret) {
-			clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
+			LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__,
 				__LINE__, ret);
 			return;
 		}

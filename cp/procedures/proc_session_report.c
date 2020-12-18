@@ -5,8 +5,6 @@
 #include "sm_hand.h"
 #include "sm_struct.h"
 #include "ue.h"
-#include "clogger.h"
-#include "gw_adapter.h"
 #include "rte_common.h"
 #include "stdint.h"
 #include "pfcp_cp_set_ie.h"
@@ -22,6 +20,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "proc_session_report.h"
 #include "pfcp_cp_interface.h"
+#include "cp_log.h"
 
 proc_context_t*
 alloc_session_report_proc(msg_info_t *msg)
@@ -104,7 +103,7 @@ process_rpt_req_handler(proc_context_t *proc_ctxt, msg_info_t *msg)
 	if (proc_ctxt->proc_type == PAGING_PROC) {
         ret = send_ddn_indication(proc_ctxt, ebi);
 		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, "DDN %s: (%d) \n", __func__, ret);
+			LOG_MSG(LOG_ERROR, "DDN %s: (%d) \n", __func__, ret);
             increment_mme_peer_stats(MSG_RX_PFCP_SXASXB_SESSREPORTREQ_DROP, context->s11_mme_gtpc_ipv4.s_addr);
 			return -1;
 		}

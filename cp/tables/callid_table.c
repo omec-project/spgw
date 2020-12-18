@@ -7,7 +7,7 @@
 #include "tables/tables.h"
 #include <rte_hash.h>
 #include <rte_jhash.h>
-#include "clogger.h"
+#include "cp_log.h"
 #include "rte_lcore.h"
 #include "rte_debug.h"
 #include "rte_errno.h"
@@ -63,7 +63,7 @@ add_pdn_conn_entry(uint32_t call_id, pdn_connection_t *pdn)
 		ret = rte_hash_add_key_data(pdn_conn_hash,
 						&call_id, pdn);
 		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to add pdn connection for CALL_ID = %u"
+			LOG_MSG(LOG_ERROR, "%s:%d Failed to add pdn connection for CALL_ID = %u"
 					"\n\tError= %s\n",
 					__func__, __LINE__, call_id,
 					rte_strerror(abs(ret)));
@@ -73,7 +73,7 @@ add_pdn_conn_entry(uint32_t call_id, pdn_connection_t *pdn)
 		memcpy(tmp, pdn, sizeof(pdn_connection_t));
 	}
 
-	clLog(clSystemLog, eCLSeverityDebug, "%s:%d PDN Connection entry add for CALL_ID:%u",
+	LOG_MSG(LOG_DEBUG, "%s:%d PDN Connection entry add for CALL_ID:%u",
 			__func__, __LINE__, call_id);
 	return 0;
 }
@@ -96,12 +96,12 @@ pdn_connection_t *get_pdn_conn_entry(uint32_t call_id)
 				&call_id, (void **)&pdn);
 
 	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Entry not found for CALL_ID:%u...\n",
+		LOG_MSG(LOG_ERROR, "%s:%d Entry not found for CALL_ID:%u...\n",
 				__func__, __LINE__, call_id);
 		return NULL;
 	}
 
-	clLog(clSystemLog, eCLSeverityDebug, "%s:%d CALL_ID:%u",
+	LOG_MSG(LOG_DEBUG, "%s:%d CALL_ID:%u",
 			__func__, __LINE__, call_id);
 	return pdn;
 
@@ -129,7 +129,7 @@ del_pdn_conn_entry(uint32_t call_id)
 		ret = rte_hash_del_key(pdn_conn_hash, &call_id);
 
 		if ( ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Entry not found for CALL_ID:%u...\n",
+			LOG_MSG(LOG_ERROR, "%s:%d Entry not found for CALL_ID:%u...\n",
 						__func__, __LINE__, call_id);
 			return -1;
 		}
@@ -138,7 +138,7 @@ del_pdn_conn_entry(uint32_t call_id)
 	/* Free data from hash */
 	rte_free(pdn);
 
-	clLog(clSystemLog, eCLSeverityDebug, "%s: CALL_ID:%u",
+	LOG_MSG(LOG_DEBUG, "%s: CALL_ID:%u",
 			__func__, call_id);
 
 	return 0;

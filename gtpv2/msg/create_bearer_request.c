@@ -44,7 +44,7 @@ parse_cb_rsp(gtpv2c_header_t *gtpv2c_rx,
 
 	cbr->ded_bearer = cbr->context->ded_bearer;
 	if (cbr->ded_bearer == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Received unexpected Create "
+		LOG_MSG(LOG_ERROR, "Received unexpected Create "
 				"Bearer Response!\n");
 		return -EPERM;
 	}
@@ -85,7 +85,7 @@ parse_cb_rsp(gtpv2c_header_t *gtpv2c_rx,
 
 	if (cbr->ebi_ie == NULL || cbr->s1u_enb_gtpu_fteid_ie == NULL
 	    || cbr->s1u_sgw_gtpu_fteid_ie == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Received Create Bearer "
+		LOG_MSG(LOG_ERROR, "Received Create Bearer "
 				"response without expected IEs");
 		return -EPERM;
 	}
@@ -183,10 +183,10 @@ process_create_bearer_response(gtpv2c_header_t *gtpv2c_rx)
 				cb_rsp.ded_bearer->eps_bearer_id);
 
 	if (session_create(dp_id, session) < 0)
-		rte_exit(EXIT_FAILURE,"Bearer Session create fail !!!");
+        assert(0);
 
 	if (session_modify(dp_id, session) < 0)
-		rte_exit(EXIT_FAILURE,"Bearer Session modify fail !!!");
+        assert(0);
 	return 0;
 }
 #endif
@@ -209,7 +209,7 @@ int handle_create_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
 	uint8_t ebi_index = msg->gtpc_msg.cb_req.lbi.ebi_ebi - 5;
 
 	if(get_ue_context_by_sgw_s5s8_teid(gtpv2c_rx->teid.has_teid.teid, &context) != 0) {
-		fprintf(stderr , "%s:%d UE Context not found... 0x%x\n",__func__,
+		LOG_MSG(LOG_ERROR, "%s:%d UE Context not found... 0x%x\n",__func__,
 					__LINE__, gtpv2c_rx->teid.has_teid.teid);
 		return -1;
 	}
@@ -217,7 +217,7 @@ int handle_create_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
 	msg->proc =  DED_BER_ACTIVATION_PROC;
 	msg->event = CREATE_BER_REQ_RCVD_EVNT;
 
-	clLog(s5s8logger, eCLSeverityDebug, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
 			"Msg_Type:%s[%u], Teid:%u, "
 			"State:%s, Event:%s\n",
 			__func__, gtp_type_str(msg->msg_type), msg->msg_type,

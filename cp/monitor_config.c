@@ -16,9 +16,9 @@
 #include <pthread.h>
 #include <string.h>
 #include <monitor_config.h>
-#include "clogger.h"
 #include "rte_common.h"
 #include "cp_log.h"
+#include <assert.h>
 
 #define MAX_FILE_PATH 128
 struct entry
@@ -47,11 +47,11 @@ handle_events(int fd, int *wd, struct entry *config)
 	   it returns -1 with errno set to EAGAIN. In that case,
 	   we exit the loop. */
 	if (len == -1 && errno != EAGAIN) {
-		rte_exit(EXIT_FAILURE, "Failed to read!\n");
+		assert(0);
 	}
 
 	if (len <= 0) {
-		clLog(clSystemLog, eCLSeverityDebug, "inotify read config change len <= 0 \n ");
+		LOG_MSG(LOG_DEBUG, "inotify read config change len <= 0 ");
 		return handled; 
 	}
 
@@ -60,54 +60,54 @@ handle_events(int fd, int *wd, struct entry *config)
 	     ptr += sizeof(struct inotify_event) + event->len) {
 
 		event = (const struct inotify_event *) ptr;
-		clLog(clSystemLog, eCLSeverityDebug, "event mask %x: \n", event->mask);
+		LOG_MSG(LOG_DEBUG, "event mask %x: ", event->mask);
 
 		/* Print event type */
 		if (event->mask & IN_ACCESS) {
-			clLog(clSystemLog, eCLSeverityDebug, "IN_ACCESS: \n");
+			LOG_MSG(LOG_DEBUG, "IN_ACCESS: ");
 			continue;
 		}
 		if (event->mask & IN_CLOSE_NOWRITE) {
-			clLog(clSystemLog, eCLSeverityDebug, "IN_CLOSE_NOWRITE: \n");
+			LOG_MSG(LOG_DEBUG, "IN_CLOSE_NOWRITE: ");
 			continue;
 		}
 		if (event->mask & IN_OPEN) {
-			clLog(clSystemLog, eCLSeverityDebug, "IN_OPEN: skip \n");
+			LOG_MSG(LOG_DEBUG, "IN_OPEN: skip ");
 			continue;
 		}
 		if (event->mask & IN_ATTRIB) {
-			clLog(clSystemLog, eCLSeverityDebug, "IN_ATTRIB: \n");
+			LOG_MSG(LOG_DEBUG, "IN_ATTRIB: ");
 		}
 		if (event->mask & IN_CLOSE_WRITE) {
-			clLog(clSystemLog, eCLSeverityDebug, "IN_CLOSE_WRITE: \n");
+			LOG_MSG(LOG_DEBUG, "IN_CLOSE_WRITE: ");
 		}
 		if (event->mask & IN_CREATE) {
-			clLog(clSystemLog, eCLSeverityDebug, "IN_CREATE: \n");
+			LOG_MSG(LOG_DEBUG, "IN_CREATE: ");
 		}
 		if (event->mask & IN_DELETE) {
-			clLog(clSystemLog, eCLSeverityDebug, "IN_DELETE: \n");
+			LOG_MSG(LOG_DEBUG, "IN_DELETE: ");
 		}
 		if (event->mask & IN_DELETE_SELF) {
-			clLog(clSystemLog, eCLSeverityDebug, "IN_DELETE_SELF: \n");
+			LOG_MSG(LOG_DEBUG, "IN_DELETE_SELF: ");
 		}
 		if (event->mask & IN_MODIFY) {
-			clLog(clSystemLog, eCLSeverityDebug, "IN_MODIFY: \n");
+			LOG_MSG(LOG_DEBUG, "IN_MODIFY: ");
 		}
 		if (event->mask & IN_MOVE_SELF) {
-			clLog(clSystemLog, eCLSeverityDebug, "IN_MOVE_SELF: \n");
+			LOG_MSG(LOG_DEBUG, "IN_MOVE_SELF: ");
 		}
 		if (event->mask & IN_MOVED_FROM)
-			clLog(clSystemLog, eCLSeverityDebug, "IN_MOVED_FROM: \n");
+			LOG_MSG(LOG_DEBUG, "IN_MOVED_FROM: ");
 
 		if (event->mask & IN_MOVED_TO) {
-				clLog(clSystemLog, eCLSeverityDebug, "IN_MOVED_TO: \n");
+				LOG_MSG(LOG_DEBUG, "IN_MOVED_TO: ");
 		}
 		if (event->mask & IN_IGNORED) {
-			clLog(clSystemLog, eCLSeverityDebug, "IN_IGNORE: file deleted \n");
+			LOG_MSG(LOG_DEBUG, "IN_IGNORE: file deleted ");
 		}
 
 		if (wd[0] == event->wd) {
-			clLog(clSystemLog, eCLSeverityDebug, "calling config change callback \n");
+			LOG_MSG(LOG_DEBUG, "calling config change callback ");
 			handled = true;
 			config->callback(config->config_file, 0);
 			break;
@@ -165,7 +165,7 @@ config_thread_handler(void *config)
 				/* Inotify events are available */
 				bool handled = handle_events(fd, &wd, cfg);
 				if (handled == true) {
-					clLog(clSystemLog, eCLSeverityCritical, "FILE change handled \n");
+					LOG_MSG(LOG_ERROR, "FILE change handled ");
 					/* One time event. Exit from the thread  */
 					return NULL;
 				}
@@ -185,7 +185,7 @@ watch_config_change(const char *config_file, configCbk cbk)
 
 	struct entry *config_entry = (struct entry *) calloc(1, sizeof(struct entry));
 	if (config_entry == NULL) {
-		rte_exit(EXIT_FAILURE, "Could not allocate memory for config entry!\n");
+		assert(0);
 	}
 	strncpy(config_entry->config_file, config_file, strlen(config_file));
 	config_entry->callback = cbk;
@@ -193,7 +193,7 @@ watch_config_change(const char *config_file, configCbk cbk)
 	pthread_attr_init(&attr);
 	/* Create a thread which will monitor changes in the config file */
 	if (pthread_create(&config_monitor_tid, &attr, &config_thread_handler, config_entry) != 0) {
-		rte_exit(EXIT_FAILURE, "Failed to spawn app config thread!\n");
+		assert(0);
 	}
 	pthread_attr_destroy(&attr);
 	return;

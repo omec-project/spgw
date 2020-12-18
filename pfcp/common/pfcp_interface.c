@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "pfcp_cp_interface.h"
-#include "gw_adapter.h"
-#include "clogger.h"
 #include "pfcp_messages_decoder.h"
 #include "cp_config.h"
 #include "rte_common.h"
@@ -42,7 +40,7 @@ handle_unknown_pfcp_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {
     msg_info_t *msg = *msg_p;
     RTE_SET_USED(msg);
-    clLog(clSystemLog, eCLSeverityCritical, "%s::process_msgs-"
+    LOG_MSG(LOG_ERROR, "%s::process_msgs-"
             "\n\tcase: spgw_cfg= %d;"
             "\n\tReceived unprocessed PFCP Message_Type:%u"
             "... Discarding\n", __func__, cp_config->cp_type, pfcp_rx->message_type);
@@ -105,7 +103,7 @@ out_handler_pfcp(void *data)
 
             int bytes_tx = sendto(event->fd, event->payload, event->payload_len, 0,
                     (struct sockaddr *) &event->dest_addr, sizeof(struct sockaddr_in));
-            clLog(clSystemLog, eCLSeverityDebug, "pfcp_send() on fd= %d\n", event->fd);
+            LOG_MSG(LOG_DEBUG, "pfcp_send() on fd= %d", event->fd);
             RTE_SET_USED(bytes_tx);
             continue;
         }

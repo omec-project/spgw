@@ -24,6 +24,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
+#include "cp_log.h"
 
 using namespace Pistache;
 extern spgwTables *table; 
@@ -33,14 +34,14 @@ static int mainthread_port;
 
 static void send_msg(void* config)
 {
-    printf("sending thread to thread message over UDP \n");
+    LOG_MSG(LOG_INIT,"Sending thread to thread message over UDP ");
     struct t2tMsg *msg = (struct t2tMsg *)calloc(1, sizeof(t2tMsg));
     msg->data = config;
     msg->event = CONFIG_CHANGE_NOTIFICATION;
     table->queue_t2t_msg_event(msg);
     uint8_t buf[16];
     int ret = sendto(local_fd, buf, 16, 0, (struct sockaddr*)&mainthread_sockaddr, sizeof(struct sockaddr_in));
-    printf("thread to thread message sent %d \n", ret);
+    LOG_MSG(LOG_INIT,"thread to thread message sent %d ", ret);
     
 }
 
@@ -84,18 +85,17 @@ public:
         } else if (request.resource() == "/v1/config") {
             switch(request.method()) {
                 case Http::Method::Post: {
-                    std::cout<<"Post method callback on resource "<<request.resource()<<std::endl;
+                    LOG_MSG(LOG_DEBUG3,"Post method callback on resource %s",request.resource().c_str());
                     auto content_type = request.headers().tryGet<Http::Header::ContentType>();
                     if (content_type != nullptr) {
                         if (content_type->mime() == MIME(Application, Json))
                         {
                             rapidjson::Document doc;
                             std::string body = request.body();
-                            std::cout<<"Request body - "<<body<<std::endl;
+                            LOG_MSG(LOG_DEBUG,"Request body - %s", body.c_str());
                             doc.Parse(body.c_str());
-                            std::cout << " content_type is application/json" << '\n';
                             if(!doc.IsObject()) {
-                                std::cout << "Error parsing the json config file" << std::endl;
+                                LOG_MSG(LOG_ERROR, "Error parsing the json config file %s", body.c_str());
                                 response.send(Pistache::Http::Code::Bad_Request);
                                 return;
                             }
@@ -114,12 +114,12 @@ public:
                 }
                 default: {
                     response.send(Pistache::Http::Code::Bad_Request);
-                    std::cout<<"Unhandled method "<<request.method()<<std::endl;
+                    LOG_MSG(LOG_ERROR,"Unhandled method %d ",int(request.method()));
                     break;
                 }
             }
         } else {
-            std::cout<<"Unhandled Request resource "<<request.resource()<<std::endl;
+            LOG_MSG(LOG_ERROR, "Unhandled Request resource %s ",request.resource().c_str());
             response.send(Pistache::Http::Code::Not_Found);
         }
     }

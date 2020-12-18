@@ -10,7 +10,7 @@
 #include "gtpv2_set_ie.h"
 #include "vepc_cp_dp_api.h"
 #include "pfcp_cp_set_ie.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "gtpv2_internal.h"
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
@@ -170,13 +170,13 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 
 	if (!mb_req.bearer_contexts_to_be_modified.eps_bearer_id.header.len
 			|| !mb_req.bearer_contexts_to_be_modified.s1_enodeb_fteid.header.len) {
-			clLog(clSystemLog, eCLSeverityCritical, "Dropping packet\n");
+			LOG_MSG(LOG_ERROR, "Dropping packet\n");
 			return -EPERM;
 	}
 
 	uint8_t ebi_index = mb_req.bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
 	if (!(context->bearer_bitmap & (1 << ebi_index))) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 			"Received modify bearer on non-existent EBI - "
 			"Dropping packet\n");
 		return -EPERM;
@@ -184,7 +184,7 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 
 	bearer = context->eps_bearers[ebi_index];
 	if (!bearer) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 			"Received modify bearer on non-existent EBI - "
 			"Bitmap Inconsistency - Dropping packet\n");
 		return -EPERM;
@@ -248,7 +248,7 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 
 #ifdef OBSELETE_APIS
 	if (session_modify(dp_id, session) < 0)
-		rte_exit(EXIT_FAILURE, "Bearer Session modify fail !!!");
+        assert(0);
 #endif
 	return 0;
 }
@@ -271,7 +271,7 @@ void set_modify_bearer_request(gtpv2c_header_t *gtpv2c_tx, /*create_sess_req_t *
 			IE_INSTANCE_ZERO,
 			pdn->s5s8_sgw_gtpc_ipv4, pdn->s5s8_sgw_gtpc_teid);
 	if(pdn == NULL &&  pdn->context == NULL ) {
-		clLog(clSystemLog, eCLSeverityCritical, " %s : %s : %d UE contex not found : Warnning \n",
+		LOG_MSG(LOG_ERROR, " %s : %s : %d UE contex not found : Warnning \n",
 							__file__, __func__, __LINE__);
 
 		return;
@@ -503,7 +503,7 @@ void set_modify_bearer_request(gtpv2c_header *gtpv2c_tx, create_sess_req_t *csr,
 	uint16_t msg_len = 0;
 	encode_mod_bearer_req(&mbr, (uint8_t *)gtpv2c_tx);
 	gtpv2c_tx->gtpc.length = htons(msg_len - 4);
-	clLog(clSystemLog, eCLSeverityDebug,"The length of mbr is %d and gtpv2c is %d\n\n", mbr.bearer_contexts_to_be_modified.header.len,
+	LOG_MSG(LOG_DEBUG,"The length of mbr is %d and gtpv2c is %d\n\n", mbr.bearer_contexts_to_be_modified.header.len,
 			gtpv2c_tx->gtpc.length);
 }
 
@@ -525,14 +525,14 @@ int validate_mbreq_msg(msg_info_t *msg, mod_bearer_req_t *mb_req)
 
 	if (!mb_req->bearer_contexts_to_be_modified.eps_bearer_id.header.len
 			|| !mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.header.len) {
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d Mandatory IE lbi/fteid missing in MBReq Dropping packet\n",
+		LOG_MSG(LOG_ERROR, "%s:%d Mandatory IE lbi/fteid missing in MBReq Dropping packet\n",
 				__func__, __LINE__);
 		return GTPV2C_CAUSE_INVALID_LENGTH;
 	}
 
 	uint8_t ebi_index = mb_req->bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
 	if (!(context->bearer_bitmap & (1 << ebi_index))) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"%s:%d Received modify bearer on non-existent EBI - "
 				"Dropping packet\n", __func__, __LINE__);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -540,7 +540,7 @@ int validate_mbreq_msg(msg_info_t *msg, mod_bearer_req_t *mb_req)
 
 	eps_bearer_t *bearer = context->eps_bearers[ebi_index];
 	if (!bearer) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"%s:%d Received modify bearer on non-existent EBI - "
 				"Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -629,7 +629,7 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         } else {
             increment_sgw_peer_stats(MSG_RX_GTPV2_S5S8_MBREQ_DROP, peer_addr->sin_addr.s_addr);
         }
-        printf("Retransmitted MBReq received. Old MBReq is in progress\n");
+        LOG_MSG(LOG_DEBUG3, "Retransmitted MBReq received. Old MBReq is in progress");
         return -1;
     }
 

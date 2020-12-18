@@ -114,7 +114,6 @@ SRCS-y += $(SRCDIR)/../pfcp/msg/pfcp_session_report.o
 SRCS-y += $(SRCDIR)/../pfcp/msg/pfcp_set_deletion_response.o
 SRCS-y += $(SRCDIR)/../pfcp/msg/pfcp_set_deletion_request.o
 SRCS-y += $(SRCDIR)/../pfcp/msg/pfd_management_response.o
-SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/gw_adapter.o
 SRCS-y += $(SRCDIR)/../gx/gx_error_rsp.c
 SRCS-y += $(SRCDIR)/../gx/gx_interface.c
 SRCS-y += $(SRCDIR)/../gx/pfcp_gx.o
@@ -218,7 +217,8 @@ CFLAGS += -DUSE_DNS_QUERY
 #ifneq (,$(findstring USE_DNS_QUERY, $(CFLAGS)))
 	LIBDNSCLIENT_ROOT = $(SRCDIR)/../oss_adapter/c3po_oss/oss-util
 	CFLAGS += -I$(LIBDNSCLIENT_ROOT)/include
-	LDLIBS += $(LIBDNSCLIENT_ROOT)/lib/liboss-util.a -lstdc++
+	LDLIBS += $(LIBDNSCLIENT_ROOT)/lib/liboss-util.a
+	LDLIBS +=  -lstdc++
 	LDLIBS += -L$(LIBDNSCLIENT_ROOT)/modules/c-ares -lcares
 #endif
 

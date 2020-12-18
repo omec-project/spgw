@@ -28,11 +28,11 @@
 #include "util.h"
 #include "cp_interface.h"
 #include "cp_io_poll.h"
-#include "clogger.h"
 #include "cp_config_defs.h"
 #include "ipc_api.h"
 #include "gtpv2_internal.h"
 #include "cp_config.h"
+#include "cp_log.h"
 #include "upf_struct.h"
 
 #define PCAP_TTL           (64)
@@ -68,10 +68,10 @@ void gtpc_timer_retry_send(int fd, peerData_t *t_tx)
 		bytes_tx = sendto(fd, t_tx->buf, t_tx->buf_len, 0,
 			(struct sockaddr *)&tx_sockaddr, sizeof(struct sockaddr_in));
 
-		clLog(clSystemLog, eCLSeverityDebug, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d\n",fd);
+		LOG_MSG(LOG_DEBUG, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d\n",fd);
 
 	if (bytes_tx != (int) t_tx->buf_len) {
-			clLog(clSystemLog, eCLSeverityCritical, "Transmitted Incomplete Timer Retry Message:"
+			LOG_MSG( LOG_ERROR, "Transmitted Incomplete Timer Retry Message:"
 					"%u of %d tx bytes : %s\n",
 					t_tx->buf_len, bytes_tx, strerror(errno));
 		}

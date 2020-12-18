@@ -7,7 +7,6 @@
 #include "gtp_messages_encoder.h"
 #include "gtpv2_session.h"
 #include "gtpv2_error_rsp.h"
-#include "clogger.h"
 #include "gtpv2_internal.h"
 #include "gtpv2_interface.h"
 #include "pfcp_cp_session.h" // ajay - check_interface_type - this should be part of pfcp interface 
@@ -18,12 +17,12 @@
 #include "gtpv2_set_ie.h"
 #include "cp_peer.h"
 #include "gen_utils.h"
-#include "gw_adapter.h"
 #include "sm_structs_api.h"
 #include "pfcp.h"
 #include "cp_transactions.h"
 #include "tables/tables.h"
 #include "cp_io_poll.h"
+#include "cp_log.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -47,7 +46,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 	ret = get_ue_context(ds_req->header.teid.has_teid.teid, &context);
 	if (ret < 0 || !context) {
 
-		clLog(s5s8logger, eCLSeverityDebug, "NGIC- delete_s5s8_session.c::"
+		LOG_MSG(LOG_DEBUG, "NGIC- delete_s5s8_session.c::"
 				"\n\tprocess_pgwc_s5s8_delete_session_request:"
 				"\n\tdelete_pgwc_context-ERROR!!!"
 				"\n\tprocess_pgwc_s5s8_ds_req_cnt= %u;"
@@ -76,7 +75,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 	if(!ebi) {
 		/* TODO: should be responding with response indicating error
 		 * 		 * in request */
-		clLog(clSystemLog, eCLSeverityCritical, "Received delete session without ebi! - "
+		LOG_MSG(LOG_ERROR, "Received delete session without ebi! - "
 				"dropping\n");
 		return -EPERM;
 	}
@@ -86,28 +85,28 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 
 	uint8_t ebi_index = ebi - 5;
 	if (!(context->bearer_bitmap & (1 << ebi_index))) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"Received delete session on non-existent EBI - "
 				"Dropping packet\n");
-		/*clLog(clSystemLog, eCLSeverityCritical, "ebi %u\n",
+		/*LOG_MSG(LOG_ERROR, "ebi %u\n",
 		 * 		    *IE_TYPE_PTR_FROM_GTPV2C_IE(uint8_t, ebi_ei_to_be_removed));*/
-		clLog(clSystemLog, eCLSeverityCritical, "ebi %u\n", ebi);
-		clLog(clSystemLog, eCLSeverityCritical, "ebi_index %u\n", ebi_index);
-		clLog(clSystemLog, eCLSeverityCritical, "bearer_bitmap %04x\n", context->bearer_bitmap);
-		clLog(clSystemLog, eCLSeverityCritical, "mask %04x\n", (1 << ebi_index));
+		LOG_MSG(LOG_ERROR, "ebi %u\n", ebi);
+		LOG_MSG(LOG_ERROR, "ebi_index %u\n", ebi_index);
+		LOG_MSG(LOG_ERROR, "bearer_bitmap %04x\n", context->bearer_bitmap);
+		LOG_MSG(LOG_ERROR, "mask %04x\n", (1 << ebi_index));
 		return -EPERM;
 	}
 
 	pdn_connection_t *pdn = context->eps_bearers[ebi_index]->pdn;
 	resp->seid = context->pdns[ebi_index]->seid;  //NK:change for seid
 	if (!pdn) {
-		clLog(clSystemLog, eCLSeverityCritical, "Received delete session on "
+		LOG_MSG(LOG_ERROR, "Received delete session on "
 				"non-existent EBI\n");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
 
 	if (pdn->default_bearer_id != ebi) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"Received delete session referencing incorrect "
 				"default bearer ebi");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
@@ -117,7 +116,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 	resp->s5s8_sgw_gtpc_teid = pdn->s5s8_sgw_gtpc_teid;
 	resp->s5s8_pgw_gtpc_ipv4 = pdn->s5s8_sgw_gtpc_ipv4.s_addr;
 
-	clLog(s5s8logger, eCLSeverityDebug, "NGIC- delete_s5s8_session.c::"
+	LOG_MSG(LOG_DEBUG, "NGIC- delete_s5s8_session.c::"
 			"\n\tdelete_pgwc_context(...);"
 			"\n\tprocess_pgwc_s5s8_ds_req_cnt= %u;"
 			"\n\tue_ip= pdn->ipv4= %s;"
@@ -137,7 +136,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 
 	eps_bearer_t *bearer = context->eps_bearers[ebi_index];
 	if (!bearer) {
-		clLog(clSystemLog, eCLSeverityCritical, "Received delete session on non-existent "
+		LOG_MSG(LOG_ERROR, "Received delete session on non-existent "
 				"default EBI\n");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
@@ -171,9 +170,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 						255);
 					sprintf(key.rule_name, "%s%d", key.rule_name, (bearer->pdn)->call_id);
 					if (del_rule_name_entry(key) != 0) {
-						clLog(clSystemLog, eCLSeverityCritical,
-							FORMAT" Error on delete rule name entries\n",
-							ERR_MSG);
+						LOG_MSG(LOG_ERROR,"Error on delete rule name entries", ERR_MSG);
 					}
 				}
 			}
@@ -231,9 +228,7 @@ delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *sei
 						255);
 					sprintf(key.rule_name, "%s%d", key.rule_name, (bearer->pdn)->call_id);
 					if (del_rule_name_entry(key) != 0) {
-						clLog(clSystemLog, eCLSeverityCritical,
-							FORMAT" Error on delete rule name entries\n",
-							ERR_MSG);
+						LOG_MSG(LOG_ERROR," Error on delete rule name entries");
 					}
 				}
 			}

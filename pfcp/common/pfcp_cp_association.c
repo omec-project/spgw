@@ -12,7 +12,7 @@
 #include "pfcp_messages_encoder.h"
 #include "pfcp_messages_decoder.h"
 #include "vepc_cp_dp_api.h"
-#include "clogger.h"
+#include "cp_log.h"
 #include "cp_main.h"
 #include "pfcp.h"
 #include "cp_config.h"
@@ -24,7 +24,6 @@
 #include "cp_peer.h"
 #include "gen_utils.h"
 #include "sm_structs_api.h"
-#include "gw_adapter.h"
 #include "spgw_cpp_wrapper.h"
 #include "assert.h"
 #include "tables/tables.h"
@@ -206,7 +205,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf)
 #endif
 				break;
 			default:
-				clLog(apilogger, eCLSeverityCritical, "build_dp_msg: Invalid msg type\n");
+				LOG_MSG(LOG_ERROR, "build_dp_msg: Invalid msg type\n");
 				break;
 		}
 	}

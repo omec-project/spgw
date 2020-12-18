@@ -9,8 +9,7 @@
 #include <rte_hash_crc.h>
 
 #include "csid_struct.h"
-#include "clogger.h"
-#include "gw_adapter.h"
+#include "cp_log.h"
 #include "cp_init.h"
 #include "cp_main.h"
 
@@ -40,7 +39,7 @@ add_peer_csid_entry(uint16_t *key, csid_t *csid, uint8_t iface)
 	} else if (iface == S5S8_PGWC_PORT_ID) {
 		hash = local_csids_by_pgwcsid_hash;
 	} else {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Select Invalid iface type..\n", ERR_MSG);
+		LOG_MSG(LOG_ERROR, "Select Invalid iface type..");
 		return -1;
 	}
 
@@ -52,8 +51,7 @@ add_peer_csid_entry(uint16_t *key, csid_t *csid, uint8_t iface)
 		tmp = rte_zmalloc_socket(NULL, sizeof(csid_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to allocate the memory for csid\n",
-					ERR_MSG);
+			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid");
 			return -1;
 		}
 		tmp = csid;
@@ -62,9 +60,7 @@ add_peer_csid_entry(uint16_t *key, csid_t *csid, uint8_t iface)
 		ret = rte_hash_add_key_data(hash,
 						key, tmp);
 		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to add entry for csid : %u"
-					"\n\tError= %s\n",
-					ERR_MSG, tmp->local_csid,
+			LOG_MSG(LOG_ERROR, "Failed to add entry for csid : %u Error= %s", tmp->local_csid,
 					rte_strerror(abs(ret)));
 			return -1;
 		}
@@ -72,8 +68,8 @@ add_peer_csid_entry(uint16_t *key, csid_t *csid, uint8_t iface)
 		tmp = csid;
 	}
 
-	clLog(apilogger, eCLSeverityDebug, FORMAT"CSID entry added for csid:%u\n",
-			ERR_MSG, tmp->local_csid);
+	LOG_MSG(LOG_DEBUG, "CSID entry added for csid:%u\n",
+			tmp->local_csid);
 	return 0;
 }
 
@@ -102,7 +98,7 @@ get_peer_csid_entry(uint16_t *key, uint8_t iface)
 	} else if (iface == S5S8_PGWC_PORT_ID) {
 		hash = local_csids_by_pgwcsid_hash;
 	} else {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Select Invalid iface type..\n", ERR_MSG);
+		LOG_MSG(LOG_ERROR, "Select Invalid iface type..");
 		return NULL;
 	}
 
@@ -111,14 +107,13 @@ get_peer_csid_entry(uint16_t *key, uint8_t iface)
 				key, (void **)&csid);
 
 	if ( ret < 0) {
-		clLog(apilogger, eCLSeverityDebug, FORMAT"Entry not found in peer node hash table..\n",
-				ERR_MSG);
+		LOG_MSG(LOG_DEBUG, "Entry not found in peer node hash table..");
 
 		/* Allocate the memory for local CSID */
 		csid = rte_zmalloc_socket(NULL, sizeof(csid_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (csid == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, "Failed to allocate the memory for csid\n");
+			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid\n");
 			return NULL;
 		}
 
@@ -126,16 +121,13 @@ get_peer_csid_entry(uint16_t *key, uint8_t iface)
 		ret = rte_hash_add_key_data(hash,
 						key, csid);
 		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to add entry for csid : %u"
-					"\n\tError= %s\n",
-					ERR_MSG, csid->local_csid,
-					rte_strerror(abs(ret)));
+			LOG_MSG(LOG_ERROR, "Failed to add entry for csid : %u Error= %s",
+					csid->local_csid, rte_strerror(abs(ret)));
 			return NULL;
 		}
 	}
 
-	clLog(apilogger, eCLSeverityDebug, FORMAT"CSID : %u\n",
-			ERR_MSG, csid->local_csid);
+	LOG_MSG(LOG_DEBUG, "CSID : %u", csid->local_csid);
 	return csid;
 
 }
@@ -165,7 +157,7 @@ del_peer_csid_entry(uint16_t *key, uint8_t iface)
 	} else if (iface == S5S8_PGWC_PORT_ID) {
 		hash = local_csids_by_pgwcsid_hash;
 	} else {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Select Invalid iface type..\n", ERR_MSG);
+		LOG_MSG(LOG_ERROR, "Select Invalid iface type..");
 		return -1;
 	}
 
@@ -173,8 +165,7 @@ del_peer_csid_entry(uint16_t *key, uint8_t iface)
 	ret = rte_hash_lookup_data(hash,
 					key, (void **)&csid);
 	if ( ret < 0) {
-		clLog(apilogger, eCLSeverityDebug, FORMAT"CSID entry not found..!!\n",
-					ERR_MSG);
+		LOG_MSG(LOG_DEBUG, "CSID entry not found..!!");
 		return 0;
 	}
 	/* Peer node CSID Entry is present. Delete the CSID Entry */
@@ -183,7 +174,7 @@ del_peer_csid_entry(uint16_t *key, uint8_t iface)
 	/* Free data from hash */
 	rte_free(csid);
 
-	clLog(apilogger, eCLSeverityDebug, FORMAT"Peer node CSID entry deleted\n", ERR_MSG);
+	LOG_MSG(LOG_DEBUG, "Peer node CSID entry deleted");
 
 	return 0;
 }
@@ -213,8 +204,8 @@ add_peer_addr_csids_entry(uint32_t node_addr, fqcsid_t *csids)
 		tmp = rte_zmalloc_socket(NULL, sizeof(csid_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to allocate the memory for node addr:"IPV4_ADDR"\n",
-					ERR_MSG, IPV4_ADDR_HOST_FORMAT(node_addr));
+			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for node addr:"IPV4_ADDR"\n",
+					IPV4_ADDR_HOST_FORMAT(node_addr));
 			return -1;
 		}
 		memcpy(tmp, csids, sizeof(fqcsid_t));
@@ -223,9 +214,9 @@ add_peer_addr_csids_entry(uint32_t node_addr, fqcsid_t *csids)
 		ret = rte_hash_add_key_data(hash,
 						&node_addr, csids);
 		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to add entry for CSIDs for Node address:"IPV4_ADDR
+			LOG_MSG(LOG_ERROR, "Failed to add entry for CSIDs for Node address:"IPV4_ADDR
 					"\n\tError= %s\n",
-					ERR_MSG, IPV4_ADDR_HOST_FORMAT(node_addr),
+					IPV4_ADDR_HOST_FORMAT(node_addr),
 					rte_strerror(abs(ret)));
 			return -1;
 		}
@@ -233,8 +224,8 @@ add_peer_addr_csids_entry(uint32_t node_addr, fqcsid_t *csids)
 		memcpy(tmp, csids, sizeof(fqcsid_t));
 	}
 
-	clLog(apilogger, eCLSeverityDebug, FORMAT"CSID entry added for node address:"IPV4_ADDR"\n",
-			ERR_MSG, IPV4_ADDR_HOST_FORMAT(node_addr));
+	LOG_MSG(LOG_DEBUG, "CSID entry added for node address:"IPV4_ADDR"\n",
+			IPV4_ADDR_HOST_FORMAT(node_addr));
 	return 0;
 }
 
@@ -260,8 +251,8 @@ get_peer_addr_csids_entry(uint32_t node_addr, uint8_t is_mod)
 
 	if ( ret < 0) {
 		if (is_mod != ADD) {
-			clLog(apilogger, eCLSeverityDebug, FORMAT"Entry not found for Node addrees :"IPV4_ADDR"\n",
-					ERR_MSG, IPV4_ADDR_HOST_FORMAT(node_addr));
+			LOG_MSG(LOG_DEBUG, "Entry not found for Node addrees :"IPV4_ADDR"\n",
+					IPV4_ADDR_HOST_FORMAT(node_addr));
 			return NULL;
 		}
 
@@ -269,8 +260,8 @@ get_peer_addr_csids_entry(uint32_t node_addr, uint8_t is_mod)
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to allocate the memory for node addr:"IPV4_ADDR"\n",
-					ERR_MSG, IPV4_ADDR_HOST_FORMAT(node_addr));
+			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for node addr:"IPV4_ADDR"\n",
+					IPV4_ADDR_HOST_FORMAT(node_addr));
 			return NULL;
 		}
 
@@ -278,20 +269,20 @@ get_peer_addr_csids_entry(uint32_t node_addr, uint8_t is_mod)
 		ret = rte_hash_add_key_data(hash,
 						&node_addr, tmp);
 		if (ret) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to add entry for CSIDs for Node address:"IPV4_ADDR
+			LOG_MSG(LOG_ERROR, "Failed to add entry for CSIDs for Node address:"IPV4_ADDR
 					"\n\tError= %s\n",
-					ERR_MSG, IPV4_ADDR_HOST_FORMAT(node_addr),
+					IPV4_ADDR_HOST_FORMAT(node_addr),
 					rte_strerror(abs(ret)));
 			return NULL;
 		}
 
-		clLog(apilogger, eCLSeverityDebug, FORMAT"Entry added for Node address: "IPV4_ADDR"\n",
-				ERR_MSG, IPV4_ADDR_HOST_FORMAT(node_addr));
+		LOG_MSG(LOG_DEBUG, "Entry added for Node address: "IPV4_ADDR"\n",
+				IPV4_ADDR_HOST_FORMAT(node_addr));
 		return tmp;
 	}
 
-	clLog(apilogger, eCLSeverityDebug, FORMAT"Entry found for Node address: "IPV4_ADDR"\n",
-			ERR_MSG, IPV4_ADDR_HOST_FORMAT(node_addr));
+	LOG_MSG(LOG_DEBUG, "Entry found for Node address: "IPV4_ADDR"\n",
+			IPV4_ADDR_HOST_FORMAT(node_addr));
 	return tmp;
 
 }
@@ -316,8 +307,8 @@ del_peer_addr_csids_entry(uint32_t node_addr)
 	ret = rte_hash_lookup_data(hash,
 					&node_addr, (void **)&tmp);
 	if ( ret < 0) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Entry not found for Node Addr:"IPV4_ADDR"\n",
-					ERR_MSG, IPV4_ADDR_HOST_FORMAT(node_addr));
+		LOG_MSG(LOG_ERROR, "Entry not found for Node Addr:"IPV4_ADDR"\n",
+					IPV4_ADDR_HOST_FORMAT(node_addr));
 		return -1;
 	}
 	/* Local CSID Entry is present. Delete local csid Entry */
@@ -327,8 +318,8 @@ del_peer_addr_csids_entry(uint32_t node_addr)
 	rte_free(tmp);
 	tmp = NULL;
 
-	clLog(apilogger, eCLSeverityDebug, FORMAT"Entry deleted for node addr:"IPV4_ADDR"\n",
-			ERR_MSG, IPV4_ADDR_HOST_FORMAT(node_addr));
+	LOG_MSG(LOG_DEBUG, "Entry deleted for node addr:"IPV4_ADDR"\n",
+			IPV4_ADDR_HOST_FORMAT(node_addr));
 
 	return 0;
 }

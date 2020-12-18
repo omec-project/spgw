@@ -14,8 +14,6 @@
 #include "pfcp_messages_encoder.h"
 #include "pfcp_messages_decoder.h"
 #include "sm_structs_api.h"
-#include "clogger.h"
-#include "gw_adapter.h"
 #include "ue.h"
 #include "cp_main.h"
 #include "pfcp.h"
@@ -150,7 +148,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 	if ((cp_config->cp_type == PGWC) ||
 		(cp_config->cp_type == SAEGWC))
 	{
-        printf("Total pending rules - %d, install rules - %d, modify rules - %d , delete rules - %d  \n",
+        LOG_MSG(LOG_DEBUG, "Total pending rules - %d, install rules - %d, modify rules - %d , delete rules - %d ",
                 pdn->policy.count, pdn->policy.num_charg_rule_install, pdn->policy.num_charg_rule_delete, 
                 pdn->policy.num_charg_rule_delete);
         pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
@@ -163,18 +161,14 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 				 */
 				 bearer = get_bearer(pdn, &pcc_rule->dyn_rule->qos);
 				 if(bearer == NULL) {
-                    printf("New dedicated Bearer should be created to accomodate-new rule with QCI/ARP \n");
+                    LOG_MSG(LOG_DEBUG, "New dedicated Bearer should be created to accomodate-new rule with QCI/ARP ");
 					/*
 					 * create dedicated bearer
 					 */
 					bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
 							RTE_CACHE_LINE_SIZE, rte_socket_id());
 					if(bearer == NULL) {
-						clLog(sxlogger, eCLSeverityCritical,
-							"Failure to allocate bearer "
-							"structure: %s (%s:%d)\n",
-							rte_strerror(rte_errno),
-							 __FILE__,  __LINE__);
+						LOG_MSG(LOG_ERROR, "Failure to allocate bearer %s ", rte_strerror(rte_errno));
 						return 0;
 						/* return GTPV2C_CAUSE_SYSTEM_FAILURE; */
 					}
@@ -193,7 +187,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
                     // create qer and add it into the table, and update PDR  
 					fill_dedicated_bearer_info(bearer, pdn->context, pdn);
 				 } else {
-                    printf("Bearer found %d \n", bearer->eps_bearer_id);
+                    LOG_MSG(LOG_DEBUG, "Existing Bearer found %d ", bearer->eps_bearer_id);
                  }
 
 				 bearer->dynamic_rules[bearer->num_dynamic_filters] = pcc_rule->dyn_rule; 
@@ -213,24 +207,18 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 						strlen(pcc_rule->dyn_rule->rule_name));
 				sprintf(key.rule_name, "%s%d", key.rule_name, pdn->call_id);
 				if (add_rule_name_entry(key, id) != 0) {
-					clLog(sxlogger, eCLSeverityCritical,
-						"%s:%d Failed to add_rule_name_entry with rule_name\n",
-						__func__, __LINE__);
+					LOG_MSG(LOG_ERROR,"Failed to add_rule_name_entry with rule_name\n");
 					return 0;
 				}
 			} else if(pcc_rule->action == RULE_ACTION_MODIFY) {
-        printf("policy rule action modify \n");
+                LOG_MSG(LOG_DEBUG, "policy rule action modify ");
 				/*
 				 * Currently not handling dynamic rule qos modificaiton
 				 */
 				bearer = get_bearer(pdn, &pcc_rule->dyn_rule->qos);
 				if(bearer == NULL)
 				{
-					 clLog(sxlogger, eCLSeverityCritical, "Failure to find bearer "
-							 "structure: %s (%s:%d)\n",
-							 rte_strerror(rte_errno),
-							 __FILE__,
-							 __LINE__);
+					 LOG_MSG(LOG_ERROR, "Failure to find bearer %s ", rte_strerror(rte_errno));
 					 return 0;
 					 /* return GTPV2C_CAUSE_SYSTEM_FAILURE; */
 				}
@@ -238,7 +226,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 				fill_update_pfcp_info(pfcp_sess_mod_req, pcc_rule->dyn_rule);
 
 			} else {
-                printf("What action it is ? %d \n",pcc_rule->action);
+                LOG_MSG(LOG_ERROR,"unknown action What action it is ? %d ",pcc_rule->action);
             }
             pcc_rule = next_pcc_rule;
 		}
@@ -268,7 +256,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
                 /* bearer = get_bearer(pdn, &pdn->policy.pcc_rule[idx + idx_offset].dyn_rule.qos);
                    if(NULL == bearer)
                    {
-                   clLog(clSystemLog, eCLSeverityCritical, "Failure to find bearer "
+                   LOG_MSG(LOG_ERROR, "Failure to find bearer "
                    "structure: %s (%s:%d)\n",
                    rte_strerror(rte_errno),
                    __FILE__,
@@ -336,7 +324,6 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 
 		pdr->qer_id[0].qer_id_value = dyn_rule->pdr[i]->qer.qer_id;
 
-        //printf("Dynamic rule pdr urr id %d \n",dyn_rule->pdr[i]->urr.urr_id);
 		pdr->urr_id[0].urr_id_value = dyn_rule->pdr[i]->urr.urr_id;
 
 		pdr->pdi.ue_ip_address.ipv4_address =
@@ -371,7 +358,6 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 			pdr->pdi.ntwk_inst.header.len = 0;
 		}
 #if 0
-        printf("adding flow description in the pdr.pdi %s \n",dyn_rule->pdr[i]->pdi.sdf_filter[pdr->pdi.sdf_filter_count].flow_desc);
         pdr->pdi.sdf_filter[pdr->pdi.sdf_filter_count].fd = 1;
 		memcpy(&(pdr->pdi.sdf_filter[pdr->pdi.sdf_filter_count].flow_desc),
 			&(dyn_rule->pdr[i]->pdi.sdf_filter[pdr->pdi.sdf_filter_count].flow_desc),
@@ -382,17 +368,14 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 
 		pdr->pdi.sdf_filter_count++;
 #endif
-        printf("dyn_rule %p dyn_rule->num_flw_desc %d \n",dyn_rule, dyn_rule->num_flw_desc);
 		for(int itr = 0; itr < dyn_rule->num_flw_desc; itr++) {
 			if(dyn_rule->flow_desc[itr].sdf_flow_description == NULL) {
                 continue;
             }
-            printf(" dyn_rule->flow_desc[itr].sdf_flow_description %s \n",dyn_rule->flow_desc[itr].sdf_flow_description);
             if((pdr->pdi.src_intfc.interface_value == SOURCE_INTERFACE_VALUE_ACCESS) &&
                     ((dyn_rule->flow_desc[itr].sdf_flw_desc.direction == TFT_DIRECTION_UPLINK_ONLY) ||
                      (dyn_rule->flow_desc[itr].sdf_flw_desc.direction == TFT_DIRECTION_BIDIRECTIONAL))) {
 
-                //printf("adding sdf pkt filter  - access interface \n");
                 sdf_pkt_filter_gx_mod(
                         pdr, dyn_rule, sdf_filter_count, itr, TFT_DIRECTION_UPLINK_ONLY);
                 sdf_filter_count++;
@@ -404,12 +387,10 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
                 sdf_pkt_filter_gx_mod(
                         pdr, dyn_rule, sdf_filter_count, itr, TFT_DIRECTION_DOWNLINK_ONLY);
                 sdf_filter_count++;
-                //printf("adding sdf pkt filter  - core interface \n");
             }
         }
 
 		pdr->pdi.sdf_filter_count = sdf_filter_count;
-        printf("number of pdr->pdi.sdf_filter_count = %d \n", pdr->pdi.sdf_filter_count);
 
 		creating_far(far);
 		far->far_id.far_id_value = dyn_rule->pdr[i]->far.far_id_value;
@@ -437,7 +418,6 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 		qer->guaranteed_bitrate.dl_gbr  = dyn_rule->pdr[i]->qer.guaranteed_bitrate.dl_gbr;
 		qer->gate_status.ul_gate  = dyn_rule->pdr[i]->qer.gate_status.ul_gate;
 		qer->gate_status.dl_gate  = dyn_rule->pdr[i]->qer.gate_status.dl_gate;
-        //printf("pfcp_sess_mod_req->create_urr_count %d \n", pfcp_sess_mod_req->create_urr_count);
 		// URR support
         for(uint8_t idx = 0; idx < 1; idx++)
         {
@@ -540,7 +520,7 @@ fill_update_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 				}
 
 			} else {
-				clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Empty SDF rules\n", __file__, __func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "Empty SDF rules");
 			}
 
 			if(dyn_rule->flow_desc[itr].sdf_flow_description != NULL) {
@@ -553,7 +533,7 @@ fill_update_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 					sdf_filter_count++;
 				}
 			} else {
-				clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Empty SDF rules\n", __file__, __func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "Empty SDF rules");
 			}
 		}
 		pdr->pdi.sdf_filter_count = sdf_filter_count;
@@ -662,7 +642,7 @@ int fill_upd_bearer_sdf_rule(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
                 }
 
             } else {
-                clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Empty SDF rules\n", __file__, __func__, __LINE__);
+                LOG_MSG(LOG_ERROR, "Empty SDF rules\n");
             }
 
             if(bearer->dynamic_rules[index]->flow_desc[itr].sdf_flow_description != NULL) {
@@ -674,7 +654,7 @@ int fill_upd_bearer_sdf_rule(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
                     sdf_filter_count++;
                 }
             } else {
-                clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Empty SDF rules\n", __file__, __func__, __LINE__);
+                LOG_MSG(LOG_ERROR, "Empty SDF rules\n");
             }
         }
 
@@ -773,13 +753,12 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 			&upf_ctx)) < 0) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
-				__LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ",ret);
 		return 0;
 	}
 
 	if( header != NULL)
-		clLog(sxlogger, eCLSeverityDebug, "TEID[%d]\n", header->teid.has_teid.teid);
+		LOG_MSG(LOG_DEBUG, "TEID[%d]", header->teid.has_teid.teid);
 
 	seq = get_pfcp_sequence_number(PFCP_SESSION_MODIFICATION_REQUEST, seq);
 
@@ -905,7 +884,7 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 			break;
 
 		default :
-			clLog(clSystemLog, eCLSeverityDebug,"%s:%d default pfcp sess mod req\n", __func__, __LINE__);
+			LOG_MSG(LOG_DEBUG,"%s:%d default pfcp sess mod req\n", __func__, __LINE__);
 			break;
 	}
 
@@ -1227,6 +1206,8 @@ void sdf_pkt_filter_add(pfcp_sess_estab_req_t* pfcp_sess_est_req,
 		int flow_cnt,
 		uint8_t direction)
 {
+    if(1)
+        return; // hack to avoid sending sdf filter 
 	int len = 0;
 	pfcp_sess_est_req->create_pdr[pdr_counter].pdi.sdf_filter[sdf_filter_count].fd = 1;
 	sdf_pkt_filter_to_string(&(dynamic_rules->flow_desc[flow_cnt]),
@@ -1278,7 +1259,7 @@ void sdf_pkt_filter_gx_mod(pfcp_create_pdr_ie_t *pdr, dynamic_rule_t *dyn_rule, 
 {
 	int len = 0;
 	pdr->pdi.sdf_filter[sdf_filter_count].fd = 1;
-    printf("\n dyn_rule->flow_desc[flow_cnt].sdf_flow_description = %s \n", dyn_rule->flow_desc[flow_cnt].sdf_flow_description);
+    LOG_MSG(LOG_DEBUG,"dyn_rule->flow_desc[flow_cnt].sdf_flow_description = %s ", dyn_rule->flow_desc[flow_cnt].sdf_flow_description);
 	sdf_pkt_filter_to_string(&(dyn_rule->flow_desc[flow_cnt]),
 			(char*)(pdr->pdi.sdf_filter[sdf_filter_count].flow_desc), direction);
 
@@ -1322,7 +1303,7 @@ int fill_sdf_rules_modification(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
 				}
 
 			} else {
-				clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Empty SDF rules\n", __file__, __func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "Empty SDF rules");
 			}
 
 			if(bearer->dynamic_rules[index]->flow_desc[itr].sdf_flow_description != NULL) {
@@ -1334,7 +1315,7 @@ int fill_sdf_rules_modification(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
 					sdf_filter_count++;
 				}
 			} else {
-				clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Empty SDF rules\n", __file__, __func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "Empty SDF rules");
 			}
 		}
 
@@ -1355,38 +1336,30 @@ int fill_sdf_rules(pfcp_sess_estab_req_t* pfcp_sess_est_req,
     pfcp_sess_est_req->create_pdr[pdr_counter].precedence.prcdnc_val = dynamic_rules->precedence;
     // itr is for flow information counter
     // sdf_filter_count is for SDF information counter
-    //printf("fill_sdf_rules - dynamic_rules->num_flw_desc %d \n", dynamic_rules->num_flw_desc);
     for(int itr = 0; itr < dynamic_rules->num_flw_desc; itr++) {
         if(dynamic_rules->flow_desc[itr].sdf_flow_description != NULL) {
             if((pfcp_sess_est_req->create_pdr[pdr_counter].pdi.src_intfc.interface_value == SOURCE_INTERFACE_VALUE_ACCESS) &&
                     ((dynamic_rules->flow_desc[itr].sdf_flw_desc.direction == TFT_DIRECTION_UPLINK_ONLY) ||
                      (dynamic_rules->flow_desc[itr].sdf_flw_desc.direction == TFT_DIRECTION_BIDIRECTIONAL))) {
 
-                //printf("fill_sdf_rules pdr %d \n",pdr_counter);
                 sdf_pkt_filter_add(
                         pfcp_sess_est_req, dynamic_rules, pdr_counter, sdf_filter_count, itr, TFT_DIRECTION_UPLINK_ONLY);
                 sdf_filter_count++;
-            } else {
-                //printf("fill_sdf_rules pdr %d failed \n",pdr_counter);
             }
-
         } else {
-            clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Empty SDF rules\n", __file__, __func__, __LINE__);
+            LOG_MSG(LOG_ERROR, "Empty SDF rules");
         }
 
         if(dynamic_rules->flow_desc[itr].sdf_flow_description != NULL) {
             if((pfcp_sess_est_req->create_pdr[pdr_counter].pdi.src_intfc.interface_value == SOURCE_INTERFACE_VALUE_CORE) &&
                     ((dynamic_rules->flow_desc[itr].sdf_flw_desc.direction == TFT_DIRECTION_DOWNLINK_ONLY) ||
                      (dynamic_rules->flow_desc[itr].sdf_flw_desc.direction == TFT_DIRECTION_BIDIRECTIONAL))) {
-                //printf("fill_sdf_rules pdr %d \n",pdr_counter);
                 sdf_pkt_filter_add(
                         pfcp_sess_est_req, dynamic_rules, pdr_counter, sdf_filter_count, itr, TFT_DIRECTION_DOWNLINK_ONLY);
                 sdf_filter_count++;
-            } else {
-                //printf("fill_sdf_rules pdr %d failed \n",pdr_counter);
-            }
+            } 
         } else {
-            clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Empty SDF rules\n", __file__, __func__, __LINE__);
+            LOG_MSG(LOG_ERROR, "Empty SDF rules\n");
         }
     }
 
@@ -1403,13 +1376,8 @@ fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr)
 	qer_t *qer_ctxt = NULL;
 	qer_ctxt = rte_zmalloc_socket(NULL, sizeof(qer_t),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
-    printf("fill_qer_entry id = %d \n",itr);
 	if (qer_ctxt == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer %s ", rte_strerror(rte_errno));
 		return ret;
 	}
 	qer_ctxt->qer_id = bearer->qer_id[itr].qer_id;;
@@ -1421,8 +1389,7 @@ fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr)
 
 	ret = add_qer_entry(qer_ctxt->qer_id,qer_ctxt);
 	if(ret != 0) {
-		clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Adding qer entry Error: %d \n", __file__,
-				__func__, __LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Adding qer entry Error: %d ", ret);
 		return ret;
 	}
 
@@ -1437,11 +1404,7 @@ add_qer_into_hash(qer_t *qer)
 	qer_ctxt = rte_zmalloc_socket(NULL, sizeof(qer_t),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (qer_ctxt == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory %s ", rte_strerror(rte_errno));
 		return ret;
 	}
 
@@ -1455,8 +1418,7 @@ add_qer_into_hash(qer_t *qer)
 	ret = add_qer_entry(qer_ctxt->qer_id, qer_ctxt);
 
 	if(ret != 0) {
-		clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Adding qer entry Error: %d \n", __file__,
-				__func__, __LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Adding qer entry Error: %d ", ret);
 		return ret;
 	}
 
@@ -1474,7 +1436,6 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 	 * also store its reference in rule itself
 	 * May be pdr arrary in bearer not needed
 	 */
-    printf("dynamic rule pointer = %p \n", dyn_rule);
 	char mnc[4] = {0};
 	char mcc[4] = {0};
 	char nwinst[32] = {0};
@@ -1505,27 +1466,20 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 		pdr_ctxt = rte_zmalloc_socket(NULL, sizeof(pdr_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (pdr_ctxt == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
-					"structure: %s (%s:%d)\n",
-					rte_strerror(rte_errno),
-					__FILE__,
-					__LINE__);
+			LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory : %s", rte_strerror(rte_errno));
 			return -1;
 		}
 		memset(pdr_ctxt,0,sizeof(pdr_t));
 
 		pdr_ctxt->rule_id =  generate_pdr_id();
-        printf("\n fill_pfcp_entry - pdr_id = %d \n", pdr_ctxt->rule_id);
 		pdr_ctxt->prcdnc_val =  dyn_rule->precedence;
 		pdr_ctxt->far.far_id_value = generate_far_id();
 		pdr_ctxt->session_id = pdn->seid;
 		/*to be filled in fill_sdf_rule*/
 		pdr_ctxt->pdi.sdf_filter_cnt = 0;
 		dyn_rule->pdr[i] = pdr_ctxt;
-        printf("number of flow descr on dynamic rule %d \n",dyn_rule->num_flw_desc);
 		for(int itr = 0; itr < dyn_rule->num_flw_desc; itr++)
 		{
-            printf("flow description %s \n",dyn_rule->flow_desc[itr].sdf_flow_description);
 			if(dyn_rule->flow_desc[itr].sdf_flow_description != NULL)
 			{
 				flow_len = dyn_rule->flow_desc[itr].flow_desc_len;
@@ -1538,7 +1492,6 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 		}
 
 		if (i == SOURCE_INTERFACE_VALUE_ACCESS) {
-            printf("\n access interface \n");
 			if (cp_config->cp_type == PGWC) {
 				pdr_ctxt->pdi.local_fteid.teid = bearer->s5s8_pgw_gtpu_teid;
 				pdr_ctxt->pdi.local_fteid.ipv4_address =
@@ -1574,8 +1527,7 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 
 		ret = add_pdr_entry(pdr_ctxt->rule_id, pdr_ctxt);
 		if ( ret != 0) {
-			clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Adding pdr entry Error: %d \n", __file__,
-					__func__, __LINE__, ret);
+			LOG_MSG(LOG_ERROR, "Adding pdr entry Error: %d ", ret);
 			return -1;
 		}
 
@@ -1592,9 +1544,7 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 		ret = add_qer_into_hash(&pdr_ctxt->qer);
 
 		if(ret != 0) {
-            printf("Failed to add QER..Are we adding duplicate entries ?\n");
-			clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Adding qer entry Error: %d \n", __file__,
-					__func__, __LINE__, ret);
+			LOG_MSG(LOG_ERROR, "Adding qer entry Error: %d ", ret);
 			return ret;
 		}
 		enum flow_status f_status = dyn_rule->flow_status;
@@ -1640,7 +1590,6 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 	pdr_t *pdr_ctxt = NULL;
 	int ret;
 
-    printf("fill_pdr_entry itr %d \n", itr);
 	if (context->serving_nw.mnc_digit_3 == 15) {
 		sprintf(mnc, "0%u%u", context->serving_nw.mnc_digit_1,
 				context->serving_nw.mnc_digit_2);
@@ -1659,17 +1608,12 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 	pdr_ctxt = rte_zmalloc_socket(NULL, sizeof(pdr_t),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (pdr_ctxt == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate CCR Buffer memory"
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory : %s", rte_strerror(rte_errno));
 		return NULL;
 	}
 	memset(pdr_ctxt,0,sizeof(pdr_t));
 
 	pdr_ctxt->rule_id =  generate_pdr_id();
-    printf("\n fill_pdr_entry 1 - pdr_id = %d \n", pdr_ctxt->rule_id);
 	pdr_ctxt->prcdnc_val =  1;
 	pdr_ctxt->far.far_id_value = generate_far_id();
 	pdr_ctxt->session_id = pdn->seid;
@@ -1750,8 +1694,7 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 	bearer->pdrs[itr] = pdr_ctxt;
 	ret = add_pdr_entry(bearer->pdrs[itr]->rule_id, bearer->pdrs[itr]);
 	if ( ret != 0) {
-		clLog(sxlogger, eCLSeverityCritical, "[%s]:[%s]:[%d] Adding pdr entry Error: %d \n", __file__,
-				__func__, __LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Adding pdr entry Error: %d ", ret);
 		return NULL;
 	}
 	return pdr_ctxt;
@@ -1766,27 +1709,29 @@ eps_bearer_t* get_default_bearer(pdn_connection_t *pdn)
 eps_bearer_t* get_bearer(pdn_connection_t *pdn, bearer_qos_ie *qos)
 {
 	eps_bearer_t *bearer = NULL;
-    printf("New rule - Qoc qci %d , arp-vulner %d , arp-level %d , arp-capability %d \n",qos->qci, qos->arp.preemption_vulnerability, qos->arp.priority_level, qos->arp.preemption_capability);
+    LOG_MSG(LOG_DEBUG, "New rule - Qoc qci %d , arp-vulner %d , arp-level %d , arp-capability %d ",qos->qci, qos->arp.preemption_vulnerability, qos->arp.priority_level, qos->arp.preemption_capability);
 	for(uint8_t idx = 0; idx < MAX_BEARERS; idx++)
 	{
 		bearer = pdn->eps_bearers[idx];
 		if(bearer != NULL)
 		{
-            printf("Bearer checking with bearer id %d \n", bearer->eps_bearer_id);
-            printf("Existing bearer qci - %d , arp-vulner %d , arp-level %d , arp-capability %d \n", bearer->qos.qci, bearer->qos.arp.preemption_vulnerability, bearer->qos.arp.priority_level, bearer->qos.arp.preemption_capability);
+            LOG_MSG(LOG_DEBUG,"Bearer checking with bearer id %d \n", bearer->eps_bearer_id);
+            LOG_MSG(LOG_DEBUG,"Existing bearer qci - %d , arp-vulner %d , arp-level %d , arp-capability %d ", 
+                               bearer->qos.qci, bearer->qos.arp.preemption_vulnerability, 
+                               bearer->qos.arp.priority_level, bearer->qos.arp.preemption_capability);
 			/* Comparing each member in arp */
 			if((bearer->qos.qci == qos->qci) &&
 				(bearer->qos.arp.preemption_vulnerability == qos->arp.preemption_vulnerability) &&
 				(bearer->qos.arp.priority_level == qos->arp.priority_level) &&
 				(bearer->qos.arp.preemption_capability == qos->arp.preemption_capability))
 			{
-                printf("Matching bearer found %d \n",bearer->eps_bearer_id); 
+                LOG_MSG(LOG_DEBUG,"Matching bearer found %d ",bearer->eps_bearer_id); 
 				return bearer;
 			}
 		}
 
 	}
-    printf("No Matcing bearer for qci/arp combination \n");
+    LOG_MSG(LOG_DEBUG, "No Matcing bearer for qci/arp combination ");
 	return NULL;
 }
 
@@ -1825,8 +1770,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
     // PERFORMANCE : why we are doing lookup ? Just use it from pdn  
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 			&upf_ctx)) < 0) {
-		clLog(sxlogger, eCLSeverityCritical, "%s:%d Error: %d \n", __func__,
-				__LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return;
 	}
 	assert(upf_ctx != NULL);
@@ -1852,25 +1796,25 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		/*
 		 * For pgw create pdr, far and qer while handling pfcp messages
 		 */
-        printf("pdn->policy.num_charg_rule_install %d \n",pdn->policy.num_charg_rule_install);
-        printf("number of pdrs in pfcp_sess_est_req = %d \n", pfcp_sess_est_req->create_pdr_count);
+        LOG_MSG(LOG_DEBUG,"Num charg ruleinstall %d and PDRs in est request = %d ",
+                           pdn->policy.num_charg_rule_install,
+                           pfcp_sess_est_req->create_pdr_count);
         pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
         while (pcc_rule != NULL) {
             pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
-            printf("found pcc rule to process \n");
-            printf("dynamic_rules->num_flw_desc 1 -  %d \n", pcc_rule->dyn_rule->num_flw_desc);
+            LOG_MSG(LOG_DEBUG, "dynamic_rules->num_flw_desc -  %d ", pcc_rule->dyn_rule->num_flw_desc);
 
 			bearer = NULL;
 			if(compare_default_bearer_qos(&pdn->policy.default_bearer_qos, &pcc_rule->dyn_rule->qos) == 0)
 			{
-				printf("[%s]-%d. default bearer \n",__FUNCTION__,__LINE__);
+				LOG_MSG(LOG_DEBUG, "Found matching default bearer ");
 				 // This means this Dynamic rule going to install in default bearer
 				bearer = get_default_bearer(pdn);
 			}
 			else
 			{
 				// dedicated bearer creation rules received in CCA-I
-				printf("[%s]-%d. dedicated bearer \n",__FUNCTION__,__LINE__);
+				LOG_MSG(LOG_DEBUG, "Need to create dedicated bearer ");
 				uint8_t bearer_id = 0;
 				bearer = get_bearer(pdn, &pcc_rule->dyn_rule->qos);
 				if(bearer == NULL) {
@@ -1878,11 +1822,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 					bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
 							RTE_CACHE_LINE_SIZE, rte_socket_id());
 					if(bearer == NULL) {
-						clLog(clSystemLog, eCLSeverityCritical, "Failure to allocate bearer "
-								"structure: %s (%s:%d)\n",
-								rte_strerror(rte_errno),
-								 __FILE__,
-								  __LINE__);
+						LOG_MSG(LOG_ERROR, "Failure to allocate bearer %s ", rte_strerror(rte_errno));
 						return;
 						/* return GTPV2C_CAUSE_SYSTEM_FAILURE; */
 					}
@@ -1916,15 +1856,12 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
             bearer->urr_count++;
 			bearer->urr_id[bearer->urr_count].urr_id = generate_urr_id();
             bearer->urr_count++;
-            //printf("Bearer has %d URRs \n", bearer->urr_count);
 
 			bearer->dynamic_rules[bearer->num_dynamic_filters] = pcc_rule->dyn_rule;
 			// Create 2 PDRs and 2 QERsfor every rule
-            //printf("call fill_pdr_entry for ACCESS interface \n");
 			bearer->dynamic_rules[bearer->num_dynamic_filters]->pdr[0] = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, bearer->pdr_count++);
 
 			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id();
-            //printf("bearer->qer_id = %d \n",bearer->qer_id[bearer->qer_count].qer_id);
 			fill_qer_entry(pdn, bearer, bearer->qer_count++);
 
 			enum flow_status f_status = bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
@@ -1932,10 +1869,8 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
 		    //fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, 0);
 
-            //printf("call fill_pdr_entry for CORE interface \n");
 			bearer->dynamic_rules[bearer->num_dynamic_filters]->pdr[1] = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, bearer->pdr_count++);
 			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id(); // ajay - URR..
-            //printf("bearer->qer_id %d \n", bearer->qer_id[bearer->qer_count].qer_id);
 			fill_qer_entry(pdn, bearer, bearer->qer_count++);
 
 			f_status = bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
@@ -1946,7 +1881,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			bearer->num_dynamic_filters++;
 
             pcc_rule = next_pcc_rule;
-            printf(" PCC RULE PROCESSING \n");
 		}
 
 		if (cp_config->cp_type == SAEGWC) {
@@ -1959,8 +1893,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	} else {
 		bearer = get_default_bearer(pdn);
 		pfcp_sess_est_req->create_pdr_count = bearer->pdr_count;
-        printf("\n function - %s bearer pdr count = %d \n", __FUNCTION__, bearer->pdr_count);
-
 		update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, upf_ctx->s1u_ip, SOURCE_INTERFACE_VALUE_ACCESS);
 		update_pdr_teid(bearer, bearer->s5s8_sgw_gtpu_teid, upf_ctx->s5s8_sgwu_ip, SOURCE_INTERFACE_VALUE_CORE);
 	}
@@ -1973,7 +1905,6 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			if(bearer != NULL)
 			{
 				assert(bearer->pdr_count != 0);
-                printf("bearer->pdr_count %d \n", bearer->pdr_count);
 				for(uint8_t idx = 0; idx < bearer->pdr_count; idx++)
 				{
                     // URR_SUPPORT : Fix number of URRs per PDR 
@@ -2103,7 +2034,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 
                     // filling qer id in PDR in the pdrpfcp_sess_est_req
 					if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC){
-                        printf("number of QERs on bearer = %d \n", bearer->pdrs[idx]->qer_id_count);
+                        LOG_MSG(LOG_DEBUG, "number of QERs on bearer = %d ", bearer->pdrs[idx]->qer_id_count);
 						pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count =
 							bearer->pdrs[idx]->qer_id_count;
 						for(int itr1 = 0; itr1 < bearer->pdrs[idx]->qer_id_count; itr1++) {
@@ -2114,7 +2045,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
                     // URR_SUPPORT : filling urr id in PDR in the pdrpfcp_sess_est_req
                     if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC) {
                         if(cp_config->urr_enable == 1) {
-                            LOG_MSG(LOG_DEBUG,"Number of URRs on bearer (%d)  = %d \n", bearer->eps_bearer_id, bearer->pdrs[idx]->urr_id_count);
+                            LOG_MSG(LOG_DEBUG,"Number of URRs on bearer (%d)  = %d ", bearer->eps_bearer_id, bearer->pdrs[idx]->urr_id_count);
                             pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = bearer->pdrs[idx]->urr_id_count;
                             for(int itr1 = 0; itr1 < bearer->pdrs[idx]->urr_id_count; itr1++) {
                                 pfcp_sess_est_req->create_pdr[pdr_idx].urr_id[itr1].urr_id_value = bearer->urr_id[idx].urr_id;
@@ -2200,7 +2131,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 					if(cp_config->urr_enable == 1) {
 						/* URR_SUPPORT : now fill the URRs in the PFCP Session EST Message. */
 						pfcp_sess_est_req->create_urr_count += bearer->urr_count;
-						printf("pfcp_sess_est_req->create_urr_count %d \n", pfcp_sess_est_req->create_urr_count);
+						LOG_MSG(LOG_DEBUG, "pfcp_sess_est_req->create_urr_count %d ", pfcp_sess_est_req->create_urr_count);
 						for(uint8_t idx = 0; idx < bearer->urr_count; idx++)
 						{
 								creating_urr(&pfcp_sess_est_req->create_urr[urr_idx]);
@@ -2222,11 +2153,8 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	}
 
 	uint8_t pdr_idx = 0;
-    printf(" Lets add sdf rules - PCC RULE PROCESSING \n");
     pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
     while (pcc_rule != NULL) {
-        printf(" Rule present add sdf rules - PCC RULE PROCESSING \n");
-        printf("dynamic_rules->num_flw_desc 1 -  %d \n", pcc_rule->dyn_rule->num_flw_desc);
         TAILQ_REMOVE(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
 		/*
 		 * call fill_sdf_rules twice because one rule create 2 PDRs
@@ -2303,7 +2231,7 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
             bearer->qer_count = NUMBER_OF_QER_PER_BEARER;
             for(uint8_t itr=0; itr < bearer->qer_count; itr++){
                 bearer->qer_id[itr].qer_id = generate_qer_id();
-                printf("\n fill_dedicated_bearer_info - qer_id = %d \n", bearer->qer_id[itr].qer_id);
+                LOG_MSG(LOG_DEBUG, "fill_dedicated_bearer_info - qer_id = %d ", bearer->qer_id[itr].qer_id);
                 /* GXCONFUSION - Where are we filling qos details in the bearer ?*/
                 fill_qer_entry(pdn, bearer, itr);
             }
@@ -2313,7 +2241,7 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
             for(uint8_t itr=0; itr < bearer->urr_count; itr++) {
 			    bearer->urr_id[itr].urr_id = generate_urr_id();
             }
-            printf("Bearer has %d URRs \n", bearer->urr_count);
+            LOG_MSG(LOG_DEBUG, "Bearer has %d URRs ", bearer->urr_count);
         }
     }
 
@@ -2369,7 +2297,7 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
 void
 process_pfcp_sess_est_request_timeout(void *data)
 {
-    printf("%s %d ",__FUNCTION__, __LINE__);
+    LOG_MSG(LOG_ERROR, "PFCP Session Establishment Request timeout");
     proc_context_t *proc_context = (proc_context_t *)data;
     msg_info_t *msg = calloc(1, sizeof(msg_info_t));
     SET_PROC_MSG(proc_context,msg);
@@ -2428,8 +2356,7 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
 #ifdef USE_CSID
 	/* Add the entry for peer nodes */
 	if (fill_peer_node_info(pdn, bearer)) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to fill peer node info and assignment of the CSID Error: %s\n",
-				ERR_MSG,
+		LOG_MSG(LOG_ERROR, "Failed to fill peer node info and assignment of the CSID Error: %s",
 				strerror(errno));
 		return NULL;
 	}
@@ -2446,8 +2373,7 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
 	}
 
 	if (tmp == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-				strerror(errno));
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return NULL;
 	}
 
@@ -2456,8 +2382,7 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
 
 	/* Fill the fqcsid into the session est request */
 	if (fill_fqcsid_sess_est_req(&pfcp_sess_est_req, context)) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to fill FQ-CSID in Sess EST Req ERROR: %s\n",
-				ERR_MSG,
+		LOG_MSG(LOG_ERROR, "Failed to fill FQ-CSID in Sess EST Req ERROR: %s",
 				strerror(errno));
 		return NULL;
 	}
@@ -2498,7 +2423,7 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
 
     if (add_sess_entry_seid(pdn->seid, context) != 0) {
-        clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to add response in entry in SM_HASH\n",
+        LOG_MSG(LOG_ERROR, "%s:%d Failed to add response in entry in SM_HASH\n",
                 __func__, __LINE__);
         assert(0);
     }
@@ -2523,15 +2448,13 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 	uint64_t dp_sess_id = pfcp_sess_est_rsp->up_fseid.seid;
 	uint32_t teid = UE_SESS_ID(sess_id);
 
-	printf("%s %d - sess_id %lu teid = %u \n", __FUNCTION__, __LINE__, sess_id, teid);
+	LOG_MSG(LOG_DEBUG, "sess_id %lu teid = %u ", sess_id, teid);
     proc_context_t *proc_context;
 
 	/* Retrieve the UE context */
 	ret = get_ue_context(teid, &context);
 	if (ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
-					__func__, __LINE__,
-					teid);
+		LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
     assert(context != NULL);
@@ -2551,8 +2474,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 	fqcsid = rte_zmalloc_socket(NULL, sizeof(fqcsid_t),
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (fqcsid == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Failed to allocate the memory for fqcsids entry\n",
-				ERR_MSG);
+		LOG_MSG(LOG_ERROR, "Failed to allocate the memory for fqcsids entry");
 		return -1;
 	}
 	/* SGW FQ-CSID */
@@ -2562,8 +2484,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 				ADD);
 
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			return -1;
 		}
 		tmp->node_addr = pfcp_sess_est_rsp->sgw_u_fqcsid.node_address;
@@ -2586,8 +2507,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 			tmp = get_peer_addr_csids_entry(pfcp_sess_est_rsp->up_fseid.ipv4_address,
 					ADD);
 			if (tmp == NULL) {
-				clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 				return -1;
 			}
 			tmp->node_addr = pfcp_sess_est_rsp->sgw_u_fqcsid.node_address;
@@ -2602,8 +2522,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 				ADD);
 
 		if (tmp == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-					strerror(errno));
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 			return -1;
 		}
 		tmp->node_addr = pfcp_sess_est_rsp->pgw_u_fqcsid.node_address;
@@ -2626,8 +2545,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 			tmp = get_peer_addr_csids_entry(pfcp_sess_est_rsp->up_fseid.ipv4_address,
 					ADD);
 			if (tmp == NULL) {
-				clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-						strerror(errno));
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 				return -1;
 			}
 			tmp->node_addr = pfcp_sess_est_rsp->pgw_u_fqcsid.node_address;
@@ -2644,8 +2562,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 	}
 
 	if (ret) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-				strerror(errno));
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
 
@@ -2665,8 +2582,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 	}
 
 	if (sess_t == NULL) {
-		clLog(clSystemLog, eCLSeverityCritical, FORMAT"Error: %s \n", ERR_MSG,
-				strerror(errno));
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
 
@@ -2690,7 +2606,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 	pdn->dp_seid = dp_sess_id;
     struct in_addr temp_addr = pdn->ipv4; 
     temp_addr.s_addr = htonl(temp_addr.s_addr);
-	printf("%s %d DP session id %lu. UE address = %s  \n", __FUNCTION__, __LINE__, dp_sess_id, inet_ntoa(temp_addr));
+	LOG_MSG(LOG_DEBUG, "DP session id %lu. UE address = %s  ", dp_sess_id, inet_ntoa(temp_addr));
 
 	/* Update the UE state */
 	pdn->state = PFCP_SESS_EST_RESP_RCVD_STATE;
@@ -2737,7 +2653,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 				&(upf_context));
 
 		if (ret < 0) {
-			clLog(clSystemLog, eCLSeverityDebug, "%s:%d NO ENTRY FOUND IN UPF HASH [%u]\n", __func__,
+			LOG_MSG(LOG_DEBUG, "%s:%d NO ENTRY FOUND IN UPF HASH [%u]\n", __func__,
 					__LINE__, (context->pdns[ebi_index])->upf_ipv4.s_addr);
 			return GTPV2C_CAUSE_INVALID_PEER;
 		}
@@ -2785,7 +2701,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		}
 #endif /* USE_CSID */
 		if (ret < 0) {
-			clLog(clSystemLog, eCLSeverityDebug, "%s:Failed to create the CSR request \n", __func__);
+			LOG_MSG(LOG_DEBUG, "%s:Failed to create the CSR request \n", __func__);
 			return 0;
 		}
 
@@ -2799,7 +2715,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		header->gtpc.message_len = htons(msg_len);
 
 		if (ret < 0)
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to generate S5S8 SGWC CSR.\n",
+			LOG_MSG(LOG_ERROR, "%s:%d Failed to generate S5S8 SGWC CSR.\n",
 					__func__, __LINE__);
 
 		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
@@ -2841,7 +2757,7 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 
 	/* Retrive the session information based on session id. */
 	if (get_sess_entry_seid(sess_id, &context) != 0){
-		clLog(clSystemLog, eCLSeverityCritical, "%s:%d NO Session Entry Found for sess ID:%lu\n",
+		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
 				__func__, __LINE__, sess_id);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -2849,7 +2765,7 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 	/* Retrieve the UE context */
 	ret = get_ue_context(teid, &context);
 	if (ret < 0) {
-			clLog(clSystemLog, eCLSeverityCritical, "%s:%d Failed to update UE State for teid: %u\n",
+			LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
 					__func__, __LINE__,
 					teid);
 	}
@@ -2861,7 +2777,7 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 	pdn->state = PFCP_SESS_MOD_RESP_RCVD_STATE;
 
 	if (!bearer) {
-		clLog(clSystemLog, eCLSeverityCritical,
+		LOG_MSG(LOG_ERROR,
 				"%s:%d Retrive modify bearer context but EBI is non-existent- "
 				"Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -2893,7 +2809,7 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 		get_bearer_info_install_rules(pdn, &ebi);
 		bearer = context->eps_bearers[ebi];
 		if (!bearer) {
-			clLog(clSystemLog, eCLSeverityCritical,
+			LOG_MSG(LOG_ERROR,
 				"%s:%d Retrive modify bearer context but EBI is non-existent- "
 				"Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
 			return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -2984,10 +2900,10 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 			ret = update_ue_state(context->s11_sgw_gtpc_teid,
 					DS_REQ_SNT_STATE, resp->eps_bearer_id - 5);
 			if (ret < 0) {
-				clLog(clSystemLog, eCLSeverityCritical, "%s:Failed to update UE State.\n", __func__);
+				LOG_MSG(LOG_ERROR, "%s:Failed to update UE State.\n", __func__);
 			}
 
-			clLog(sxlogger, eCLSeverityDebug, "SGWC:%s: "
+			LOG_MSG(LOG_DEBUG, "SGWC:%s: "
 					"s5s8_recv_sockaddr.sin_addr.s_addr :%s\n", __func__,
 					inet_ntoa(*((struct in_addr *)&my_sock.s5s8_recv_sockaddr.sin_addr.s_addr)));
 
@@ -3007,7 +2923,7 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 		s11_mme_sockaddr.sin_addr.s_addr =
 						htonl(context->s11_mme_gtpc_ipv4.s_addr);
 
-		clLog(sxlogger, eCLSeverityDebug, "%s:%d s11_mme_sockaddr.sin_addr.s_addr :%s\n",
+		LOG_MSG(LOG_DEBUG, "%s:%d s11_mme_sockaddr.sin_addr.s_addr :%s\n",
 				__func__, __LINE__,
 				inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
 
@@ -3023,7 +2939,7 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 	s11_mme_sockaddr.sin_addr.s_addr =
 					htonl(context->s11_mme_gtpc_ipv4.s_addr);
 
-	clLog(sxlogger, eCLSeverityDebug, "%s:%d s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__,
+	LOG_MSG(LOG_DEBUG, "%s:%d s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__,
 				__LINE__, inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
 
 	return 0;
@@ -3040,23 +2956,18 @@ del_rule_entries(ue_context_t *context, uint8_t ebi_index)
     if(cp_config->gx_enabled) {
         for(uint8_t itr = 0; itr < context->eps_bearers[ebi_index]->qer_count ; itr++) {
             if( del_qer_entry(context->eps_bearers[ebi_index]->qer_id[itr].qer_id) != 0 ){
-                clLog(clSystemLog, eCLSeverityCritical,
-                        "%s %s %d %s - Error del_pdr_entry deletion\n",__file__,
-                        __func__, __LINE__, strerror(ret));
+                LOG_MSG(LOG_ERROR, "Error %s -  del_pdr_entry deletion\n",strerror(ret));
             }
         }
     }
 	for(uint8_t itr = 0; itr < context->eps_bearers[ebi_index]->pdr_count ; itr++) {
 		pdr_ctx = context->eps_bearers[ebi_index]->pdrs[itr];
 		if(pdr_ctx == NULL) {
-			clLog(clSystemLog, eCLSeverityCritical,
-					"%s %s %d %s - Error no pdr entry \n",__file__,
-					__func__, __LINE__, strerror(ret));
+			LOG_MSG(LOG_ERROR, "Error %s - no pdr entry \n", strerror(ret));
 		}
 		if( del_pdr_entry(context->eps_bearers[ebi_index]->pdrs[itr]->rule_id) != 0 ){
-			clLog(clSystemLog, eCLSeverityCritical,
-					"%s %s %d %s - Error del_pdr_entry deletion\n",__file__,
-					__func__, __LINE__, strerror(ret));
+			LOG_MSG(LOG_ERROR,
+					"Error %s - del_pdr_entry deletion\n",strerror(ret));
 		}
 	}
 	return 0;
@@ -3077,7 +2988,7 @@ fill_pfcp_sess_mod_req_pgw_init_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 					&upf_ctx)) < 0) {
-		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 		return;
 	}
 
@@ -3126,7 +3037,7 @@ fill_pfcp_sess_mod_req_pgw_init_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 			break;
 
 		default :
-			clLog(clSystemLog, eCLSeverityDebug,"default pfcp sess mod req\n");
+			LOG_MSG(LOG_DEBUG,"default pfcp sess mod req\n");
 			break;
 	}
 
@@ -3156,7 +3067,7 @@ fill_pfcp_sess_mod_req_pgw_init_remove_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 					&upf_ctx)) < 0) {
-		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 		return;
 	}
 
@@ -3206,7 +3117,7 @@ fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod
 
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 					&upf_ctx)) < 0) {
-		clLog(sxlogger, eCLSeverityCritical, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
 		return;
 	}
 
@@ -3255,7 +3166,7 @@ fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod
 			break;
 
 		default :
-			clLog(clSystemLog, eCLSeverityDebug,"default pfcp sess mod req\n");
+			LOG_MSG(LOG_DEBUG,"default pfcp sess mod req\n");
 			break;
 	}
 
