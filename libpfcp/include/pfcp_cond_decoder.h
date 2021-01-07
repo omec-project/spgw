@@ -429,7 +429,11 @@ if (1) \
 #define DECODE_NTWK_INST_COND_1(buf, total_decoded, bit_count, decoded, value) \
     if (value->assoni) \
     { \
-        value->ntwk_inst += decode_bits(buf, total_decoded, bit_count, &decoded); \
+        value->ntwk_inst += decode_bits(buf, total_decoded, 8, &decoded); \
+		total_decoded += decoded; \
+        if(value->ntwk_inst >=48 && value->ntwk_inst <= 57) { \
+            decoded = 8*(value->ntwk_inst-48); \
+        } \
 		total_decoded += decoded; \
     }
 
