@@ -224,7 +224,7 @@ process_service_request_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info
 
     /*Validate the modification is accepted or not. */
     if(msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value != REQUESTACCEPTED){
-        LOG_MSG(LOG_DEBUG, "Cause received Modify response is %d\n",
+        LOG_MSG(LOG_DEBUG, "Cause received Modify response is %d",
                 msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value);
         // TODO : mapping the pfcp cause on GTP
         proc_service_request_failure(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
@@ -233,19 +233,19 @@ process_service_request_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info
     /* Retrive the session information based on session id. */
     if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
                 &context) != 0) {
-        LOG_MSG(LOG_ERROR, "%s: Session entry not found Msg_Type:%u,"
-                "Sess ID:%lu, n",
-                __func__, msg->msg_type,
+        LOG_MSG(LOG_ERROR, "Session entry not found Msg_Type:%u,"
+                "Sess ID:%lu ",
+                msg->msg_type,
                 msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
         proc_service_request_failure(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
         return;
     }
     assert(context == ((proc_context_t *)msg->proc_context)->ue_context);
 
-    LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+    LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:PFCP_SESSION_MODIFICATION_RESPONSE[%u], Seid:%lu, "
             "Procedure:%s, State:%s, Event:%s",
-            __func__, msg->msg_type,
+            msg->msg_type,
             msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
             get_proc_string(msg->proc),
             get_state_string(msg->state), get_event_string(msg->event));
@@ -258,8 +258,7 @@ process_service_request_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info
             msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
             gtpv2c_tx);
     if (ret != 0) {
-        LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
-                __func__, __LINE__, ret);
+        LOG_MSG(LOG_ERROR, "Error: %d ", ret);
         if(ret != -1) {
             proc_service_request_failure(msg, ret);
         }
@@ -299,9 +298,7 @@ process_srreq_pfcp_sess_mod_resp(proc_context_t *proc_context,
     /* Retrieve the UE context */
     ret = get_ue_context(teid, &context);
     if (ret < 0) {
-        LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
-                __func__, __LINE__,
-                teid);
+        LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
     }
 
     assert(proc_context->ue_context == context);
@@ -313,8 +310,8 @@ process_srreq_pfcp_sess_mod_resp(proc_context_t *proc_context,
 
     if (!bearer) {
         LOG_MSG(LOG_ERROR,
-                "%s:%d Retrive modify bearer context but EBI is non-existent- "
-                "Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
+                "Retrive modify bearer context but EBI is non-existent- "
+                "Bitmap Inconsistency - Dropping packet");
         return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
     }
 

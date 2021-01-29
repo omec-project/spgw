@@ -268,6 +268,7 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
         {
             std::string key = itr->name.GetString();
             user_plane_profile_t *user_plane = new (user_plane_profile_t);
+            user_plane->global_address = true; // default global addressing mode
             user_plane->upf_addr = 0;
             const rapidjson::Value& userPlaneSection = itr->value; 
             strcpy(user_plane->user_plane_profile_name, key.c_str());
@@ -276,6 +277,10 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
                 const char *temp = userPlaneSection["user-plane"].GetString();
                 LOG_MSG(LOG_INIT,"\tUser Plane - %s ",temp);
                 strcpy(user_plane->user_plane_service, temp);
+            }
+            if(userPlaneSection.HasMember("global-address"))
+            {
+                user_plane->global_address = userPlaneSection["global-address"].GetBool();
             }
             if(userPlaneSection.HasMember("qos-tags"))
             {

@@ -32,7 +32,7 @@ int handle_rar_msg(msg_info_t **msg_p)
     increment_gx_peer_stats(MSG_RX_DIAMETER_GX_RAR,saddr_in.sin_addr.s_addr);
     ret = retrieve_call_id((char *)&msg->gx_msg.rar.session_id.val, &call_id);
     if (ret < 0) {
-        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s\n", 
+        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s", 
                 msg->gx_msg.rar.session_id.val);
         return -1;
     }
@@ -68,7 +68,7 @@ int handle_rar_msg(msg_info_t **msg_p)
     /* RAR may trigger update bearer, delete bearer or create bearer... */
     msg->proc = DED_BER_ACTIVATION_PROC; 
 
-    LOG_MSG(LOG_DEBUG, "Callback called for"
+    LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:%s[%u], Session Id:%s, "
             "State:%s, Event:%s",
             gx_type_str(msg->msg_type), msg->msg_type,

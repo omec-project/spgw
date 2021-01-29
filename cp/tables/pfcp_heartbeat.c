@@ -47,8 +47,7 @@ peer_heartbeat_entry_lookup(uint32_t peer_ip, uint32_t *recov_time)
 			(const void*) &(peer_ip), (void **)recov_time);
 
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR, "%s:%d NO ENTRY FOUND IN PEER heartbeat HASH [%u]",
-				__func__, __LINE__, peer_ip);
+		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN PEER heartbeat HASH [%u]", peer_ip);
 		return -1;
 	}
 
@@ -67,17 +66,14 @@ add_data_to_heartbeat_hash_table(uint32_t *ip, uint32_t *recov_time)
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (temp == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate fseid context "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+				"structure: %s ", rte_strerror(rte_errno));
 		return 1;
 	}
 	*temp = *recov_time;
 	ret = rte_hash_add_key_data(heartbeat_recovery_hash,
 			(const void *)&key, temp);
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR,"%s - Error on rte_hash_add_key_data add in heartbeat\n",
+		LOG_MSG(LOG_ERROR,"%s - Error on rte_hash_add_key_data add in heartbeat",
 				strerror(ret));
 		free(temp);
 		return 1;
@@ -93,11 +89,7 @@ void add_ip_to_heartbeat_hash(struct sockaddr_in *peer_addr, uint32_t recovery_t
 
 	if(default_recov_time == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate memory in adding ip to heartbeat"
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
-
+				"structure: %s ", rte_strerror(rte_errno));
 	} else {
 
 		*default_recov_time = recovery_time;
@@ -105,7 +97,7 @@ void add_ip_to_heartbeat_hash(struct sockaddr_in *peer_addr, uint32_t recovery_t
 				default_recov_time);
 
 		if(ret !=0) {
-			LOG_MSG(LOG_ERROR,"%s - Error on rte_hash_add_key_data add in heartbeat\n",
+			LOG_MSG(LOG_ERROR,"%s - Error on rte_hash_add_key_data add in heartbeat",
 					strerror(ret));
 		}
 	}
@@ -117,7 +109,7 @@ void delete_entry_heartbeat_hash(struct sockaddr_in *peer_addr)
 	int ret = rte_hash_del_key(heartbeat_recovery_hash,
 			(const void *)&(peer_addr->sin_addr.s_addr));
 	if (ret == -EINVAL || ret == -ENOENT) {
-		LOG_MSG(LOG_ERROR,"%s - Error on rte_delete_enrty_key_data add in heartbeat\n",
+		LOG_MSG(LOG_ERROR,"%s - Error on rte_delete_enrty_key_data add in heartbeat",
 				strerror(ret));
 	}
     

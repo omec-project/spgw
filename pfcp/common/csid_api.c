@@ -174,7 +174,7 @@ fill_peer_node_info(pdn_connection_t *pdn,
 	//				S5S8_PGWC_PORT_ID);
 	//	}
 	//	if (tmp1 == NULL) {
-	//		LOG_MSG(LOG_ERROR, "Error: %s \n", 
+	//		LOG_MSG(LOG_ERROR, "Error: %s ", 
 	//				strerror(errno));
 	//		return -1;
 	//	}
@@ -279,7 +279,7 @@ update_peer_csid_link(fqcsid_t *fqcsid, fqcsid_t *fqcsid_t)
 					&(fqcsid->local_csid[itr]),
 					SX_PORT_ID);
 			if (tmp == NULL) {
-				LOG_MSG(LOG_ERROR, "Error: %s \n", strerror(errno));
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 				return -1;
 			}
 
@@ -483,7 +483,7 @@ del_csid_entry_hash(fqcsid_t *peer_csids,
 		}
 
 		//if (del_peer_addr_csids_entry(local_csids->node_addr)) {
-		//	LOG_MSG(LOG_ERROR, "Error: %s \n", 
+		//	LOG_MSG(LOG_ERROR, "Error: %s ", 
 		//			strerror(errno));
 		//	/* TODO ERROR HANDLING */
 		//	//return -1;

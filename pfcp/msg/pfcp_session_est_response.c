@@ -30,7 +30,7 @@ int handle_pfcp_session_est_response(msg_info_t *msg)
 
 	/* Retrive the session information based on session id. */
     if(pfcp_trans == NULL) {
-        LOG_MSG(LOG_ERROR, "Received PFCP response and transaction not found \n");
+        LOG_MSG(LOG_ERROR, "Received PFCP response and transaction not found ");
         // TODOSTATS
 		return -1;
     }

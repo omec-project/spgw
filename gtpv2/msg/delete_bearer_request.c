@@ -87,8 +87,7 @@ parse_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx,
 
 	if (!dbr->cause_ie || !dbr->bearer_context_ebi_ie
 	    || !dbr->bearer_context_cause_ie) {
-		LOG_MSG(LOG_ERROR, "Received Delete Bearer Response without "
-				"mandatory IEs\n");
+		LOG_MSG(LOG_ERROR, "Received Delete Bearer Response without mandatory IEs");
 		return -EPERM;
 	}
 
@@ -264,9 +263,7 @@ int handle_delete_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
 	}
 
 	if(get_ue_context_by_sgw_s5s8_teid(gtpv2c_rx->teid.has_teid.teid, &context) != 0) {
-		LOG_MSG(LOG_ERROR,
-			"%s:%d UE Context not found... 0x%x\n",__func__,
-			__LINE__, gtpv2c_rx->teid.has_teid.teid);
+		LOG_MSG(LOG_ERROR, "UE Context not found... 0x%x", gtpv2c_rx->teid.has_teid.teid);
 		return -1;
 	}
 
@@ -281,10 +278,9 @@ int handle_delete_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
 
 	context->eps_bearers[ebi_index]->pdn->proc = msg->proc;
 
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "%s: Callback called for "
 			"Msg_Type:%s[%u], Teid:%u, "
-			"State:%s, Event:%s\n",
-			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+			"State:%s, Event:%s\n", gtp_type_str(msg->msg_type), msg->msg_type,
 			gtpv2c_rx->teid.has_teid.teid,
 			get_state_string(msg->state), get_event_string(msg->event));
 
@@ -300,8 +296,7 @@ process_delete_bearer_request_handler(void *data, void *unused_param)
 
 	ret = process_delete_bearer_request(&msg->gtpc_msg.db_req ,0);
 	if (ret) {
-		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
-			__func__, __LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return -1;
 	}
 
@@ -318,7 +313,7 @@ int process_delete_bearer_req_handler(void *data, void *unused_param)
 	int ret = process_delete_bearer_request(&msg->gtpc_msg.db_req, 1);
 	if(ret !=0 ) {
 		/*TODO: set error response*/
-		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 	}
 
 	RTE_SET_USED(unused_param);
@@ -346,8 +341,7 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 
 	ret = get_ue_context_by_sgw_s5s8_teid(db_req->header.teid.has_teid.teid, &context);
 	if (ret) {
-		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__,
-				__LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
@@ -397,8 +391,7 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
 	if (get_sess_entry_seid(pdn->seid, &resp) != 0) {
-		LOG_MSG(LOG_ERROR,
-			"%s : Failed to add response in entry in SM_HASH\n", __func__);
+		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 		return -1;
 	}
 		if (db_req->lbi.header.len != 0) {

@@ -31,7 +31,7 @@ int handle_delete_bearer_cmd_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 #if 0
 	if (update_ue_proc(context->s11_sgw_gtpc_teid,
 					msg->proc ,ebi_index) != 0) {
-			LOG_MSG(LOG_ERROR, "%s failed\n", __func__);
+			LOG_MSG(LOG_ERROR, "failed");
 			return -1;
 	}
 #endif
@@ -152,7 +152,7 @@ process_delete_bearer_command_handler(void *data, void *unused_param)
 
 	if(ret != 0) {
 	/* TODO:set error response*/
-	LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
+	LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 	}
 
 	if (SGWC == cp_config->cp_type ) {
@@ -182,8 +182,7 @@ process_delete_bearer_cmd_request(del_bearer_cmd_t *del_bearer_cmd, gtpv2c_heade
 	ret = get_ue_context(del_bearer_cmd->header.teid.has_teid.teid, &context);
 
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
-	                     __func__, __LINE__,
+		LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u",
 	                  del_bearer_cmd->header.teid.has_teid.teid);
 	}
 	ebi_index = del_bearer_cmd->bearer_contexts[ebi_index].eps_bearer_id.ebi_ebi -5;
@@ -195,8 +194,7 @@ process_delete_bearer_cmd_request(del_bearer_cmd_t *del_bearer_cmd, gtpv2c_heade
     if (SAEGWC == cp_config->cp_type || PGWC == cp_config->cp_type) {
         if(cp_config->gx_enabled) {
             if (ccru_req_for_bear_termination(pdn , bearer)) {
-                LOG_MSG(LOG_ERROR, "%s:%d Error: %s \n", __func__, __LINE__,
-                        strerror(errno));
+                LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
                 return -1;
             }
         }
@@ -209,8 +207,7 @@ process_delete_bearer_cmd_request(del_bearer_cmd_t *del_bearer_cmd, gtpv2c_heade
 	}
     pdn->state = CONNECTED_STATE;
     if (get_sess_entry_seid(pdn->seid, &resp) != 0){
-        LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-                __func__, __LINE__, pdn->seid);
+        LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", pdn->seid);
         return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
     }
 

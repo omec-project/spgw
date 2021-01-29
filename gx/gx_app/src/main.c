@@ -53,7 +53,7 @@ parse_fd_config(const char *filename, char *peer_name)
 	size_t str_len = 0;
 
 	if((gx_fd = fopen(filename, "r")) <= 0) {
-		LOG_MSG(LOG_ERROR, "ERROR :[ %s ] unable to read [ %s ] file\n" ,__func__ ,filename);
+		LOG_MSG(LOG_ERROR, "ERROR :unable to read [ %s ] file",filename);
 		return -1;
 	}
 	fseek(gx_fd, 0L, SEEK_SET);
@@ -87,44 +87,44 @@ int main(int argc, char **argv)
 	LOG_MSG(LOG_INIT, "Registering signal handler...");
 	if ( signal(SIGINT, signal_handler) == SIG_ERR )
 	{
-		LOG_MSG(LOG_ERROR,"Cannot catch SIGINT\n");
+		LOG_MSG(LOG_ERROR,"Cannot catch SIGINT");
 		return 1;
 	}
 
 	LOG_MSG(LOG_INIT, "Initializing freeDiameter...");
 	if ( (rval = fdinit(fdcfg)) != FD_REASON_OK )
 	{
-		LOG_MSG(LOG_ERROR,"Failure (%d) in fdinit()\n", rval);
+		LOG_MSG(LOG_ERROR,"Failure (%d) in fdinit()", rval);
 		return 1;
 	}
 
 	LOG_MSG(LOG_INIT, "Calling gxInit()...");
 	if ( (rval = gxInit()) != FD_REASON_OK )
 	{
-		LOG_MSG(LOG_ERROR, "Failure (%d) in gxInit()\n", rval);
+		LOG_MSG(LOG_ERROR, "Failure (%d) in gxInit()", rval);
 		return 1;
 	}
 
 	LOG_MSG(LOG_INIT,"Calling gxRegistger()...");
 	if ( (rval = gxRegister()) != FD_REASON_OK )
 	{
-		LOG_MSG(LOG_ERROR,"Failure (%d) in gxRegister()\n", rval);
+		LOG_MSG(LOG_ERROR,"Failure (%d) in gxRegister()", rval);
 		return 1;
 	}
 
 	LOG_MSG(LOG_INIT, "Starting freeDiameter...");
 	if ( (rval = fdstart()) != FD_REASON_OK )
 	{
-		LOG_MSG(LOG_ERROR,"Failure (%d) in fdstart()\n", rval);
+		LOG_MSG(LOG_ERROR,"Failure (%d) in fdstart()", rval);
 		return 1;
 	}
 
 	if(parse_fd_config(fdcfg, peer_name) < 0 ) {
-		LOG_MSG(LOG_ERROR, "unable to read [ %s ] file \n",fdcfg);
+		LOG_MSG(LOG_ERROR, "unable to read [ %s ] file ",fdcfg);
 		return -1;
 	}
 
-	LOG_MSG(LOG_INIT, "Waiting to connect to [%s] \n", peer_name);
+	LOG_MSG(LOG_INIT, "Waiting to connect to [%s] ", peer_name);
 	while(1){
 		struct peer_hdr *peer;
 		sleep(1);
@@ -142,10 +142,10 @@ int main(int argc, char **argv)
 		}
 	}
 
-	LOG_MSG(LOG_INIT, "Opening unix socket...\n");
+	LOG_MSG(LOG_INIT, "Opening unix socket...");
 	if ( (rval = unixsock()) != FD_REASON_OK )
 	{
-		LOG_MSG(LOG_ERROR,"Failure (%d) in unixsock()\n", rval);
+		LOG_MSG(LOG_ERROR,"Failure (%d) in unixsock()", rval);
 		return 1;
 	}
 

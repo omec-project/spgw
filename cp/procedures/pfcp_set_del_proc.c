@@ -167,7 +167,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 //	ret = process_del_pdn_conn_set_req_t(&msg->gtpc_msg.del_pdn_req,
 //			gtpv2c_tx);
 //	if (ret) {
-//			LOG_MSG(LOG_ERROR, FORMAT"Error: %d \n",
+//			LOG_MSG(LOG_ERROR, FORMAT"Error: %d ",
 //					ERR_MSG, ret);
 //			return -1;
 //	}
@@ -187,7 +187,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 //			msg->gtpc_msg.del_pdn_req.header.teid.has_teid.seq,
 //			GTPV2C_CAUSE_REQUEST_ACCEPTED);
 //	if (ret) {
-//			LOG_MSG(LOG_ERROR, FORMAT"Error: %d \n",
+//			LOG_MSG(LOG_ERROR, FORMAT"Error: %d ",
 //					ERR_MSG, ret);
 //			return -1;
 //	}

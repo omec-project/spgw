@@ -68,7 +68,7 @@ add_peer_csid_entry(uint16_t *key, csid_t *csid, uint8_t iface)
 		tmp = csid;
 	}
 
-	LOG_MSG(LOG_DEBUG, "CSID entry added for csid:%u\n",
+	LOG_MSG(LOG_DEBUG, "CSID entry added for csid:%u",
 			tmp->local_csid);
 	return 0;
 }
@@ -113,7 +113,7 @@ get_peer_csid_entry(uint16_t *key, uint8_t iface)
 		csid = rte_zmalloc_socket(NULL, sizeof(csid_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (csid == NULL) {
-			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid\n");
+			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid");
 			return NULL;
 		}
 
@@ -215,7 +215,7 @@ add_peer_addr_csids_entry(uint32_t node_addr, fqcsid_t *csids)
 						&node_addr, csids);
 		if (ret) {
 			LOG_MSG(LOG_ERROR, "Failed to add entry for CSIDs for Node address:"IPV4_ADDR
-					"\n\tError= %s\n",
+					"\n\tError= %s",
 					IPV4_ADDR_HOST_FORMAT(node_addr),
 					rte_strerror(abs(ret)));
 			return -1;
@@ -270,7 +270,7 @@ get_peer_addr_csids_entry(uint32_t node_addr, uint8_t is_mod)
 						&node_addr, tmp);
 		if (ret) {
 			LOG_MSG(LOG_ERROR, "Failed to add entry for CSIDs for Node address:"IPV4_ADDR
-					"\n\tError= %s\n",
+					"\n\tError= %s",
 					IPV4_ADDR_HOST_FORMAT(node_addr),
 					rte_strerror(abs(ret)));
 			return NULL;

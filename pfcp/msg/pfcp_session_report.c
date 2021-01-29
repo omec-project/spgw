@@ -78,7 +78,7 @@ int handle_pfcp_session_report_req_msg(msg_info_t *msg)
     sess_report_proc->pfcp_trans = trans;
     trans->proc_context = (void *)sess_report_proc;
 
-	LOG_MSG(LOG_DEBUG, "Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:PFCP_SESSION_REPORT_REQUEST[%u], Seid:%lu, "
 			"Procedure:%s, State:%s, Event:%s",
 			msg->msg_type,

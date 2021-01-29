@@ -73,8 +73,7 @@ upf_context_entry_add(uint32_t *upf_ip, upf_context_t *entry)
 			(const void *)upf_ip , (void *)entry);
 
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR,
-				"%s - Error on rte_hash_add_key_data add\n",
+		LOG_MSG(LOG_ERROR, "%s - Error on rte_hash_add_key_data add",
 				strerror(ret));
 		return 1;
 	}

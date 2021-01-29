@@ -207,7 +207,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 						strlen(pcc_rule->dyn_rule->rule_name));
 				sprintf(key.rule_name, "%s%d", key.rule_name, pdn->call_id);
 				if (add_rule_name_entry(key, id) != 0) {
-					LOG_MSG(LOG_ERROR,"Failed to add_rule_name_entry with rule_name\n");
+					LOG_MSG(LOG_ERROR,"Failed to add_rule_name_entry with rule_name");
 					return 0;
 				}
 			} else if(pcc_rule->action == RULE_ACTION_MODIFY) {
@@ -257,10 +257,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
                    if(NULL == bearer)
                    {
                    LOG_MSG(LOG_ERROR, "Failure to find bearer "
-                   "structure: %s (%s:%d)\n",
-                   rte_strerror(rte_errno),
-                   __FILE__,
-                   __LINE__);
+                   "structure: %s ", rte_strerror(rte_errno));
                    return;
                    } */
 
@@ -300,6 +297,7 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 	pfcp_create_far_ie_t *far = NULL;
 	pfcp_create_qer_ie_t *qer = NULL;
     uint8_t urr_idx = 0;
+    uint32_t ue_ip_flags = 0; // TODO : analyze why we need to send ue_ip_address in pdi in pfcp modify session
 
 	for(int i=0; i<MAX_PDR_PER_RULE; i++)
 	{
@@ -315,7 +313,7 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
             pdr->urr_id_count = 1;
         }
 
-		creating_pdr(pdr, i);
+		creating_pdr(pdr, i, ue_ip_flags);
 
 		pdr->pdr_id.rule_id = dyn_rule->pdr[i]->rule_id;
 		pdr->precedence.prcdnc_val = dyn_rule->pdr[i]->prcdnc_val;
@@ -642,7 +640,7 @@ int fill_upd_bearer_sdf_rule(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
                 }
 
             } else {
-                LOG_MSG(LOG_ERROR, "Empty SDF rules\n");
+                LOG_MSG(LOG_ERROR, "Empty SDF rules");
             }
 
             if(bearer->dynamic_rules[index]->flow_desc[itr].sdf_flow_description != NULL) {
@@ -654,7 +652,7 @@ int fill_upd_bearer_sdf_rule(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
                     sdf_filter_count++;
                 }
             } else {
-                LOG_MSG(LOG_ERROR, "Empty SDF rules\n");
+                LOG_MSG(LOG_ERROR, "Empty SDF rules");
             }
         }
 
@@ -668,6 +666,7 @@ void
 fill_update_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer_t *bearer){
 
 	int size1 = 0;
+    uint32_t ue_ip_flags = 0; // TODO : take these flags from config/pdn and also analyze the impact on update pdr
 
 	for(int i = pfcp_sess_mod_req->update_pdr_count;
 			i < pfcp_sess_mod_req->update_pdr_count + NUMBER_OF_PDR_PER_BEARER;
@@ -676,7 +675,7 @@ fill_update_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer_t *bearer){
 		size1 = 0;
 		size1 += set_pdr_id(&(pfcp_sess_mod_req->update_pdr[i].pdr_id));
 		size1 += set_precedence(&(pfcp_sess_mod_req->update_pdr[i].precedence));
-		size1 += set_pdi(&(pfcp_sess_mod_req->update_pdr[i].pdi));
+		size1 += set_pdi(&(pfcp_sess_mod_req->update_pdr[i].pdi), ue_ip_flags);
 
 		int itr = i - pfcp_sess_mod_req->update_pdr_count;
 
@@ -884,7 +883,7 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 			break;
 
 		default :
-			LOG_MSG(LOG_DEBUG,"%s:%d default pfcp sess mod req\n", __func__, __LINE__);
+			LOG_MSG(LOG_DEBUG,"default pfcp sess mod req");
 			break;
 	}
 
@@ -1008,11 +1007,12 @@ fill_pdr_far_qer_using_bearer(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		eps_bearer_t *bearer)
 {
 	pfcp_sess_mod_req->create_pdr_count = bearer->pdr_count;
+	uint32_t ue_ip_flags = 0; // TODO : analyze why we need to send ue ip address in pdi for pfcp session modify
 
 	for(int i = 0; i < pfcp_sess_mod_req->create_pdr_count; i++) {
 		pfcp_sess_mod_req->create_pdr[i].qer_id_count = 1;
 		//pfcp_sess_mod_req->create_pdr[i].qer_id_count = bearer->qer_count;
-		creating_pdr(&(pfcp_sess_mod_req->create_pdr[i]), bearer->pdrs[i]->pdi.src_intfc.interface_value);
+		creating_pdr(&(pfcp_sess_mod_req->create_pdr[i]), bearer->pdrs[i]->pdi.src_intfc.interface_value, ue_ip_flags);
 		pfcp_sess_mod_req->create_far_count++;
 		creating_far(&(pfcp_sess_mod_req->create_far[i]));
 	}
@@ -1359,7 +1359,7 @@ int fill_sdf_rules(pfcp_sess_estab_req_t* pfcp_sess_est_req,
                 sdf_filter_count++;
             } 
         } else {
-            LOG_MSG(LOG_ERROR, "Empty SDF rules\n");
+            LOG_MSG(LOG_ERROR, "Empty SDF rules");
         }
     }
 
@@ -1715,7 +1715,7 @@ eps_bearer_t* get_bearer(pdn_connection_t *pdn, bearer_qos_ie *qos)
 		bearer = pdn->eps_bearers[idx];
 		if(bearer != NULL)
 		{
-            LOG_MSG(LOG_DEBUG,"Bearer checking with bearer id %d \n", bearer->eps_bearer_id);
+            LOG_MSG(LOG_DEBUG,"Bearer checking with bearer id %d ", bearer->eps_bearer_id);
             LOG_MSG(LOG_DEBUG,"Existing bearer qci - %d , arp-vulner %d , arp-level %d , arp-capability %d ", 
                                bearer->qos.qci, bearer->qos.arp.preemption_vulnerability, 
                                bearer->qos.arp.priority_level, bearer->qos.arp.preemption_capability);
@@ -1897,26 +1897,32 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		update_pdr_teid(bearer, bearer->s5s8_sgw_gtpu_teid, upf_ctx->s5s8_sgwu_ip, SOURCE_INTERFACE_VALUE_CORE);
 	}
 
-	{
-		uint8_t pdr_idx =0;
-		for(uint8_t i = 0; i < MAX_BEARERS; i++)
-		{
-			bearer = pdn->eps_bearers[i];
-			if(bearer != NULL)
-			{
-				assert(bearer->pdr_count != 0);
-				for(uint8_t idx = 0; idx < bearer->pdr_count; idx++)
-				{
+    {
+        uint8_t pdr_idx =0;
+        for(uint8_t i = 0; i < MAX_BEARERS; i++)
+        {
+            bearer = pdn->eps_bearers[i];
+            if(bearer != NULL)
+            {
+                assert(bearer->pdr_count != 0);
+                for(uint8_t idx = 0; idx < bearer->pdr_count; idx++)
+                {
+                    uint32_t ue_ip_flags = 0;
                     // URR_SUPPORT : Fix number of URRs per PDR 
                     pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = 0;
                     if(cp_config->urr_enable == 1) {
                         pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = 1;
                     }
-					pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count = 1;
-					creating_pdr(&(pfcp_sess_est_req->create_pdr[pdr_idx]), bearer->pdrs[idx]->pdi.src_intfc.interface_value);
-					pfcp_sess_est_req->create_far_count++;
-					creating_far(&(pfcp_sess_est_req->create_far[pdr_idx]));
-					pdr_idx++;
+                    pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count = 1;
+                    if(IF_PDN_ADDR_ALLOC_CONTROL(pdn)) {
+                      ue_ip_flags = PDN_ADDR_ALLOC_CONTROL;
+                    } else {
+                      ue_ip_flags = PDN_ADDR_ALLOC_UPF;
+                    }
+                    creating_pdr(&(pfcp_sess_est_req->create_pdr[pdr_idx]), bearer->pdrs[idx]->pdi.src_intfc.interface_value, ue_ip_flags);
+                    pfcp_sess_est_req->create_far_count++;
+                    creating_far(&(pfcp_sess_est_req->create_far[pdr_idx]));
+                    pdr_idx++;
 				}
 			}
 		}
@@ -2423,8 +2429,7 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
 
     if (add_sess_entry_seid(pdn->seid, context) != 0) {
-        LOG_MSG(LOG_ERROR, "%s:%d Failed to add response in entry in SM_HASH\n",
-                __func__, __LINE__);
+        LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
         assert(0);
     }
 
@@ -2604,8 +2609,10 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 	bearer = context->eps_bearers[ebi_index];
     assert(bearer != NULL);
 	pdn->dp_seid = dp_sess_id;
+    if(pfcp_sess_est_rsp->created_pdr.ue_ip_address.v4 != 0)
+        pdn->ipv4.s_addr = ntohl(pfcp_sess_est_rsp->created_pdr.ue_ip_address.ipv4_address);
     struct in_addr temp_addr = pdn->ipv4; 
-    temp_addr.s_addr = htonl(temp_addr.s_addr);
+    temp_addr.s_addr = temp_addr.s_addr;
 	LOG_MSG(LOG_DEBUG, "DP session id %lu. UE address = %s  ", dp_sess_id, inet_ntoa(temp_addr));
 
 	/* Update the UE state */
@@ -2653,8 +2660,8 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 				&(upf_context));
 
 		if (ret < 0) {
-			LOG_MSG(LOG_DEBUG, "%s:%d NO ENTRY FOUND IN UPF HASH [%u]\n", __func__,
-					__LINE__, (context->pdns[ebi_index])->upf_ipv4.s_addr);
+			LOG_MSG(LOG_DEBUG, "NO ENTRY FOUND IN UPF HASH [%u]", 
+					(context->pdns[ebi_index])->upf_ipv4.s_addr);
 			return GTPV2C_CAUSE_INVALID_PEER;
 		}
 
@@ -2701,7 +2708,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		}
 #endif /* USE_CSID */
 		if (ret < 0) {
-			LOG_MSG(LOG_DEBUG, "%s:Failed to create the CSR request \n", __func__);
+			LOG_MSG(LOG_DEBUG, "Failed to create the CSR request ");
 			return 0;
 		}
 
@@ -2715,8 +2722,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		header->gtpc.message_len = htons(msg_len);
 
 		if (ret < 0)
-			LOG_MSG(LOG_ERROR, "%s:%d Failed to generate S5S8 SGWC CSR.\n",
-					__func__, __LINE__);
+			LOG_MSG(LOG_ERROR, "Failed to generate S5S8 SGWC CSR.");
 
 		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
 				htonl(context->pdns[ebi_index]->s5s8_pgw_gtpc_ipv4.s_addr);
@@ -2757,17 +2763,14 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 
 	/* Retrive the session information based on session id. */
 	if (get_sess_entry_seid(sess_id, &context) != 0){
-		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-				__func__, __LINE__, sess_id);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
 	/* Retrieve the UE context */
 	ret = get_ue_context(teid, &context);
 	if (ret < 0) {
-			LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
-					__func__, __LINE__,
-					teid);
+			LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
 	}
 
 	ebi_index = UE_BEAR_ID(sess_id) - 5;
@@ -2778,8 +2781,8 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 
 	if (!bearer) {
 		LOG_MSG(LOG_ERROR,
-				"%s:%d Retrive modify bearer context but EBI is non-existent- "
-				"Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
+				"Retrive modify bearer context but EBI is non-existent- "
+				"Bitmap Inconsistency - Dropping packet");
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
@@ -2810,8 +2813,8 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 		bearer = context->eps_bearers[ebi];
 		if (!bearer) {
 			LOG_MSG(LOG_ERROR,
-				"%s:%d Retrive modify bearer context but EBI is non-existent- "
-				"Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
+				"Retrive modify bearer context but EBI is non-existent- "
+				"Bitmap Inconsistency - Dropping packet");
 			return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 		}
 
@@ -2900,11 +2903,10 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 			ret = update_ue_state(context->s11_sgw_gtpc_teid,
 					DS_REQ_SNT_STATE, resp->eps_bearer_id - 5);
 			if (ret < 0) {
-				LOG_MSG(LOG_ERROR, "%s:Failed to update UE State.\n", __func__);
+				LOG_MSG(LOG_ERROR, "Failed to update UE State.");
 			}
 
-			LOG_MSG(LOG_DEBUG, "SGWC:%s: "
-					"s5s8_recv_sockaddr.sin_addr.s_addr :%s\n", __func__,
+			LOG_MSG(LOG_DEBUG, "SGWC:s5s8_recv_sockaddr.sin_addr.s_addr :%s",
 					inet_ntoa(*((struct in_addr *)&my_sock.s5s8_recv_sockaddr.sin_addr.s_addr)));
 
 			return ret;
@@ -2923,8 +2925,7 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 		s11_mme_sockaddr.sin_addr.s_addr =
 						htonl(context->s11_mme_gtpc_ipv4.s_addr);
 
-		LOG_MSG(LOG_DEBUG, "%s:%d s11_mme_sockaddr.sin_addr.s_addr :%s\n",
-				__func__, __LINE__,
+		LOG_MSG(LOG_DEBUG, "s11_mme_sockaddr.sin_addr.s_addr :%s",
 				inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
 
 		return 0;
@@ -2939,8 +2940,8 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 	s11_mme_sockaddr.sin_addr.s_addr =
 					htonl(context->s11_mme_gtpc_ipv4.s_addr);
 
-	LOG_MSG(LOG_DEBUG, "%s:%d s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__,
-				__LINE__, inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
+	LOG_MSG(LOG_DEBUG, "s11_mme_sockaddr.sin_addr.s_addr :%s",
+				inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
 
 	return 0;
 }
@@ -2956,18 +2957,18 @@ del_rule_entries(ue_context_t *context, uint8_t ebi_index)
     if(cp_config->gx_enabled) {
         for(uint8_t itr = 0; itr < context->eps_bearers[ebi_index]->qer_count ; itr++) {
             if( del_qer_entry(context->eps_bearers[ebi_index]->qer_id[itr].qer_id) != 0 ){
-                LOG_MSG(LOG_ERROR, "Error %s -  del_pdr_entry deletion\n",strerror(ret));
+                LOG_MSG(LOG_ERROR, "Error %s -  del_pdr_entry deletion",strerror(ret));
             }
         }
     }
 	for(uint8_t itr = 0; itr < context->eps_bearers[ebi_index]->pdr_count ; itr++) {
 		pdr_ctx = context->eps_bearers[ebi_index]->pdrs[itr];
 		if(pdr_ctx == NULL) {
-			LOG_MSG(LOG_ERROR, "Error %s - no pdr entry \n", strerror(ret));
+			LOG_MSG(LOG_ERROR, "Error %s - no pdr entry ", strerror(ret));
 		}
 		if( del_pdr_entry(context->eps_bearers[ebi_index]->pdrs[itr]->rule_id) != 0 ){
 			LOG_MSG(LOG_ERROR,
-					"Error %s - del_pdr_entry deletion\n",strerror(ret));
+					"Error %s - del_pdr_entry deletion",strerror(ret));
 		}
 	}
 	return 0;
@@ -2988,7 +2989,7 @@ fill_pfcp_sess_mod_req_pgw_init_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 					&upf_ctx)) < 0) {
-		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return;
 	}
 
@@ -3037,7 +3038,7 @@ fill_pfcp_sess_mod_req_pgw_init_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 			break;
 
 		default :
-			LOG_MSG(LOG_DEBUG,"default pfcp sess mod req\n");
+			LOG_MSG(LOG_DEBUG,"default pfcp sess mod req");
 			break;
 	}
 
@@ -3067,7 +3068,7 @@ fill_pfcp_sess_mod_req_pgw_init_remove_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 					&upf_ctx)) < 0) {
-		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return;
 	}
 
@@ -3117,7 +3118,7 @@ fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod
 
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 					&upf_ctx)) < 0) {
-		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return;
 	}
 
@@ -3166,7 +3167,7 @@ fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod
 			break;
 
 		default :
-			LOG_MSG(LOG_DEBUG,"default pfcp sess mod req\n");
+			LOG_MSG(LOG_DEBUG,"default pfcp sess mod req");
 			break;
 	}
 

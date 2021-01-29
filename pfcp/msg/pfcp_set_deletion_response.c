@@ -22,8 +22,7 @@ handle_pfcp_set_deletion_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx
 
     if(decoded <= 0)
     {
-        LOG_MSG(LOG_DEBUG, "DEOCED bytes in Sess Set Deletion Resp is %d\n",
-                decoded);
+        LOG_MSG(LOG_DEBUG, "DEOCED bytes in Sess Set Deletion Resp is %d", decoded);
 //        increment_userplane_stats(MSG_RX_PFCP_SXASXB_SET_DELETE_RSP_DECODE_ERR, peer_addr.sin_addr.s_addr);
         return -1;
     }

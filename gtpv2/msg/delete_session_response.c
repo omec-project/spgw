@@ -37,7 +37,7 @@ int handle_delete_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 	}
 
 	if(msg->gtpc_msg.ds_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
-		LOG_MSG(LOG_ERROR, "Cause Req Error : (%s:%d)msg type :%u, cause ie : %u \n", __func__, __LINE__,
+		LOG_MSG(LOG_ERROR, "Cause Req Error : msg type :%u, cause ie : %u ",
 				msg->msg_type, msg->gtpc_msg.ds_rsp.cause.cause_value);
 
 		 ds_error_response(proc_context, msg, msg->gtpc_msg.ds_rsp.cause.cause_value,
@@ -57,10 +57,10 @@ int handle_delete_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 	msg->event = DS_RESP_RCVD_EVNT;
 #endif
 
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 		"Msg_Type:%s[%u], Teid:%u, "
-		"Procedure:%s, State:%s, Event:%s\n",
-		__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+		"Procedure:%s, State:%s, Event:%s",
+		gtp_type_str(msg->msg_type), msg->msg_type,
 		msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid,
 		get_proc_string(msg->proc),
 		get_state_string(msg->state), get_event_string(msg->event));
@@ -98,19 +98,19 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *dsr, uint8_t *gtpv2c_t
 	gtpv2c_header_t *header = (gtpv2c_header_t *) gtpv2c_tx;
 	header->gtpc.message_len = htons(msg_len - 4);
 
-	LOG_MSG(LOG_DEBUG, "%s: s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__,
+	LOG_MSG(LOG_DEBUG, "s11_mme_sockaddr.sin_addr.s_addr :%s", 
 			inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
 
 	/* Delete entry from session entry */
 	if (del_sess_entry_seid(seid) != 0){
-		LOG_MSG(LOG_ERROR, "NO Session Entry Found for Key sess ID:%lu\n", seid);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for Key sess ID:%lu", seid);
 		return -1;
 	}
 
 	/* Delete UE context entry from UE Hash */
 	if (ue_context_delete_entry_imsiKey(context->imsi) < 0){
 	LOG_MSG(LOG_ERROR,
-			"%s %s - Error on ue_context_by_fteid_hash deletion\n",__file__,
+			"%s - Error on ue_context_by_fteid_hash deletion",
 			strerror(ret));
 	}
 
@@ -137,13 +137,12 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
 	/* Retrieve the UE context */
 	ret = get_ue_context_by_sgw_s5s8_teid(ds_resp->header.teid.has_teid.teid, &context);
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR, "%s:%d Failed to get UE State for teid: %u\n",
-				__func__, __LINE__,
+		LOG_MSG(LOG_ERROR, "Failed to get UE State for teid: %u",
 				ds_resp->header.teid.has_teid.teid);
 	}
 	ret = get_bearer_by_teid(ds_resp->header.teid.has_teid.teid, &bearer);
 	     if(ret < 0) {
-	               LOG_MSG(LOG_ERROR, "%s:%d Entry not found for teid:%x...\n", __func__, __LINE__, ds_resp->header.teid.has_teid.teid);
+	               LOG_MSG(LOG_ERROR, "Entry not found for teid:%x", ds_resp->header.teid.has_teid.teid);
 	               return -1;
 	       }
 	// ebi_index = UE_BEAR_ID(bearer->pdn->seid) -5;
@@ -169,8 +168,7 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
 
 	/* VS: Stored/Update the session information. */
 	if (get_sess_entry_seid(bearer->pdn->seid, &resp) != 0) {
-		LOG_MSG(LOG_ERROR, "%s %s %d Failed to get response entry in SM_HASH\n", __file__
-				,__func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Failed to get response entry in SM_HASH");
 		return -1;
 	}
 
@@ -193,7 +191,7 @@ process_ds_resp_handler(void *data, void *unused_param)
 				ds_error_response(proc_context, msg, ret,
 						           cp_config->cp_type != PGWC ? S11_IFACE :S5S8_IFACE);
 			/* Error handling not implemented */
-			LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
 		}
 	} else {
@@ -233,12 +231,12 @@ process_ds_resp_handler(void *data, void *unused_param)
 //	s11_mme_sockaddr.sin_addr.s_addr =
 //					htonl(context->s11_mme_gtpc_ipv4.s_addr);
 //
-//	LOG_MSG(LOG_DEBUG, "%s: s11_mme_sockaddr.sin_addr.s_addr :%s\n", __func__,
+//	LOG_MSG(LOG_DEBUG, "s11_mme_sockaddr.sin_addr.s_addr :%s", 
 //				inet_ntoa(*((struct in_addr *)&s11_mme_sockaddr.sin_addr.s_addr)));
 //
 //	/* Delete entry from session entry */
 //	if (del_sess_entry_seid(seid) != 0){
-//		LOG_MSG(LOG_ERROR, "NO Session Entry Found for Key sess ID:%lu\n", seid);
+//		LOG_MSG(LOG_ERROR, "NO Session Entry Found for Key sess ID:%lu", seid);
 //		return -1;
 //	}
 //

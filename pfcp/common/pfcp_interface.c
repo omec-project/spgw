@@ -40,10 +40,10 @@ handle_unknown_pfcp_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {
     msg_info_t *msg = *msg_p;
     RTE_SET_USED(msg);
-    LOG_MSG(LOG_ERROR, "%s::process_msgs-"
-            "\n\tcase: spgw_cfg= %d;"
-            "\n\tReceived unprocessed PFCP Message_Type:%u"
-            "... Discarding\n", __func__, cp_config->cp_type, pfcp_rx->message_type);
+    LOG_MSG(LOG_ERROR, "process_msgs-"
+            "\tcase: spgw_cfg= %d;"
+            "\tReceived unprocessed PFCP Message_Type:%u"
+            "... Discarding\n", cp_config->cp_type, pfcp_rx->message_type);
 
     return -1;
 }

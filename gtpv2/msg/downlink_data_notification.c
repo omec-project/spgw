@@ -97,10 +97,10 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     // Note : important to note that we are holding on this msg now 
     *msg_p = NULL;
 
-    LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+    LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:%s[%u], Teid:%u, "
             "Procedure:%s, State:%s, Event:%s\n",
-            __func__, gtp_type_str(msg->msg_type), msg->msg_type,
+            gtp_type_str(msg->msg_type), msg->msg_type,
             gtpv2c_rx->teid.has_teid.teid,
             get_proc_string(msg->proc),
             get_state_string(msg->state), get_event_string(msg->event));

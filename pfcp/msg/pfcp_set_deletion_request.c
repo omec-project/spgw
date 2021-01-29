@@ -20,10 +20,10 @@ int handle_pfcp_session_set_delete_request(msg_info_t *msg)
 	/*Set the appropriate event type.*/
 	msg->event = PFCP_SESS_SET_DEL_REQ_RCVD_EVNT;
 
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 			" Msg_Type: PFCP_SESSION_SET_DELETION_RESPONSE[%u], "
 			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, msg->msg_type,
+			msg->msg_type,
 			get_proc_string(msg->proc),
 			get_state_string(msg->state), get_event_string(msg->event));
     return 0;
@@ -43,8 +43,7 @@ handle_pfcp_session_delete_request_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_r
 
     if(decoded <=0 ) 
     {
-        LOG_MSG(LOG_DEBUG, "DEOCED bytes in Sess Set Deletion Request is %d\n",
-                decoded);
+        LOG_MSG(LOG_DEBUG, "DEOCED bytes in Sess Set Deletion Request is %d", decoded);
         return -1;
     }
 

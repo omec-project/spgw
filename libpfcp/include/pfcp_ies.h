@@ -473,6 +473,8 @@ Description -UP Function Features
 typedef struct pfcp_up_func_feat_ie_t {
   pfcp_ie_header_t header;
   uint16_t sup_feat;
+  uint16_t add_sup_feat1;
+  uint16_t add_sup_feat2;
 } pfcp_up_func_feat_ie_t;
 
 /**
@@ -880,7 +882,8 @@ Description -UE IP Address
 */
 typedef struct pfcp_ue_ip_address_ie_t {
   pfcp_ie_header_t header;
-  uint8_t ue_ip_addr_spare :4;
+  uint8_t ue_ip_addr_spare :3;
+  uint8_t chv4:1;
   uint8_t ipv6d :1;
   uint8_t sd :1;
   uint8_t v4 :1;

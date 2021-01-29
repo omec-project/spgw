@@ -47,10 +47,7 @@ int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt)
 
 	if (upf_context == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate upf context: "
-				"%s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+				"%s ", rte_strerror(rte_errno));
 
 		return -1;
 	}
@@ -63,7 +60,7 @@ int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt)
 
 	ret = upf_context_entry_add(&upf_ip, upf_context);
 	if (ret) {
-		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return -1;
 	}
 
@@ -82,7 +79,7 @@ start_upf_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
     /* Logic here to decide if we want to run the procedure right away or delay
      * the execution */
     proc_ctxt = TAILQ_FIRST(&upf_context->pending_node_procs);
-    LOG_MSG(LOG_DEBUG, "Start procedure number (%d) \n",proc_ctxt->proc_type);
+    LOG_MSG(LOG_DEBUG, "Start procedure number (%d) ",proc_ctxt->proc_type);
     switch(proc_ctxt->proc_type) {
         case PFCP_ASSOC_SETUP_PROC: {
             proc_ctxt->handler(proc_ctxt, msg);

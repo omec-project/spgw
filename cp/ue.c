@@ -122,7 +122,7 @@ print_ue_context_by(struct rte_hash *h, ue_context_t *context)
 	int32_t ret;
 	uint32_t next = 0;
 	int i;
-	LOG_MSG(LOG_DEBUG," %16s %1s %16s %16s %8s %8s %11s\n", "imsi", "u", "mei",
+	LOG_MSG(LOG_DEBUG," %16s %1s %16s %16s %8s %8s %11s", "imsi", "u", "mei",
 			"msisdn", "s11-teid", "s11-ipv4", "56789012345");
 	if (context) {
 		LOG_MSG(LOG_DEBUG,"*%16lx %1lx %16lx %16lx %8x %15s ", context->imsi,
@@ -133,7 +133,7 @@ print_ue_context_by(struct rte_hash *h, ue_context_t *context)
 			LOG_MSG(LOG_DEBUG,"%c", (context->bearer_bitmap & (1 << i))
 					? '1' : '0');
 		}
-		LOG_MSG(LOG_DEBUG,"\t0x%04x\n", context->bearer_bitmap);
+		LOG_MSG(LOG_DEBUG,"\t0x%04x", context->bearer_bitmap);
 	}
 	if (h == NULL)
 		return;
@@ -165,7 +165,7 @@ add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, eps_bearer_t **bearer)
 	
 	if (ret < 0) {
 		LOG_MSG(LOG_ERROR,
-			"%s - Error on rte_hash_add_key_data add\n",
+			"%s - Error on rte_hash_add_key_data add",
 			strerror(ret));
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
 	}
@@ -189,17 +189,14 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 
 	memcpy(&imsi, imsi_val, imsi_len);
 
-	ret = ue_context_entry_lookup_imsiKey(imsi, &(*context));
+	ret = ue_context_entry_lookup_imsiKey(imsi, &(*context), false);
 
 	if (ret == -1) {
 		(*context) = rte_zmalloc_socket(NULL, sizeof(ue_context_t),
 		    RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (*context == NULL) {
 			LOG_MSG(LOG_ERROR, "Failure to allocate ue context "
-					"structure: %s (%s:%d)\n",
-					rte_strerror(rte_errno),
-					__FILE__,
-					__LINE__);
+					"structure: %s ", rte_strerror(rte_errno));
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
 		}
 		(*context)->imsi = imsi;
@@ -207,7 +204,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		ret = ue_context_entry_add_imsiKey(*context); 
 		if (ret < 0) {
 			LOG_MSG(LOG_ERROR,
-				"%s - Error on rte_hash_add_key_data add\n",
+				"%s - Error on rte_hash_add_key_data add",
 				strerror(ret));
 			rte_free((*context));
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
@@ -232,14 +229,13 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 					(((*context)->pdns[ebi - 5])->apn_in_use)->apn_name,
 					sizeof(apn_requested->apn_name_length))) == 0) {
 			LOG_MSG(LOG_ERROR,
-				"%s- Discarding re-transmitted csr received for IMSI:%lu \n",
-				__func__, imsi);
+				"Discarding re-transmitted csr received for IMSI:%lu ", imsi);
 			return -1;
 		}*/
 #endif
         LOG_MSG(LOG_ERROR,
-                "%s- Context Replacement CSReq Received for IMSI:%lu \n",
-                __func__, imsi);
+                "Context Replacement CSReq Received for IMSI:%lu ",
+                imsi);
         return GTPV2C_CAUSE_REQUEST_REJECTED ; 
 	}
 	if (if_ue_present == 0){
@@ -262,7 +258,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 
 	if (ret < 0) {
 		LOG_MSG(LOG_ERROR,
-			"%s - Error on ue_context_by_fteid_hash add\n",
+			"%s - Error on ue_context_by_fteid_hash add",
 			strerror(ret));
 		ue_context_delete_entry_imsiKey((*context)->imsi);
 		if (ret < 0) {
@@ -272,7 +268,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			 * to be removed.
 			 */
 			rte_panic("%s - Error on "
-				"ue_context_by_imsi_hash del\n",
+				"ue_context_by_imsi_hash del",
 				strerror(ret));
 		}
 		rte_free((*context));
@@ -308,10 +304,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 			if (pdn == NULL) {
 				LOG_MSG(LOG_ERROR, "Failure to allocate PDN "
-						"structure: %s (%s:%d)\n",
-						rte_strerror(rte_errno),
-						__FILE__,
-						__LINE__);
+						"structure: %s ", rte_strerror(rte_errno));
 				return GTPV2C_CAUSE_SYSTEM_FAILURE;
 			}
 			pdn->num_bearer++;
@@ -328,10 +321,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (bearer == NULL) {
 			LOG_MSG(LOG_ERROR, "Failure to allocate bearer "
-					"structure: %s (%s:%d)\n",
-					rte_strerror(rte_errno),
-					__FILE__,
-					__LINE__);
+					"structure: %s ", rte_strerror(rte_errno));
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
 		}
 		bearer->eps_bearer_id = ebi;
@@ -339,10 +329,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		    RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (pdn == NULL) {
 			LOG_MSG(LOG_ERROR, "Failure to allocate PDN "
-					"structure: %s (%s:%d)\n",
-					rte_strerror(rte_errno),
-					__FILE__,
-					__LINE__);
+					"structure: %s ", rte_strerror(rte_errno));
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
 		}
 		pdn->num_bearer++;
@@ -369,7 +356,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 
 	if (ret < 0) {
 		LOG_MSG(LOG_ERROR,
-			"%s - Error on pdn by fteid hash add\n",
+			"%s - Error on pdn by fteid hash add",
 			strerror(ret));
 		pdn_context_delete_entry_teidKey((*context)->s11_sgw_gtpc_teid);
 		if (ret < 0) {
@@ -379,7 +366,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			 * to be removed.
 			 */
 			rte_panic("%s - Error on "
-				"pdn by fteid hash del\n",
+				"pdn by fteid hash del",
 				strerror(ret));
 		}
 		rte_free((*context));
@@ -484,16 +471,14 @@ cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
     int ret;
 
 	/* Delete entry from session entry */
-    LOG_MSG(LOG_DEBUG4, "Delete session from the pfcp seid table \n");
+    LOG_MSG(LOG_DEBUG4, "Delete session from the pfcp seid table ");
 	if (del_sess_entry_seid(sess_id) != 0) {
-		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for Key sess ID:%lu\n",
-				__func__, __LINE__, sess_id);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for Key sess ID:%lu", sess_id);
 		return -1;
 	}
 
 	if (del_rule_entries(context, ebi_index) != 0) {
-		LOG_MSG(LOG_ERROR,
-				"%s - Error on delete rule entries\n",__file__);
+		LOG_MSG(LOG_ERROR, "Error on delete rule entries");
 	}
 	uint32_t teid = UE_SESS_ID(sess_id);
 	ret = delete_sgwc_context(teid, &context, &sess_id);
@@ -503,9 +488,7 @@ cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
     if(context->num_pdns == 0) {
         /* Delete UE context entry from UE Hash */
         if (ue_context_delete_entry_imsiKey(context->imsi) < 0){
-            LOG_MSG(LOG_ERROR,
-                    "%s %s - Error on ue_context_by_fteid_hash del\n",__file__,
-                    strerror(ret));
+            LOG_MSG(LOG_ERROR, "%s - Error on ue_context_by_fteid_hash del", strerror(ret));
         }
 
         /* delete context from user context */
@@ -515,9 +498,7 @@ cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
 
         /* Delete UPFList entry from UPF Hash */
         if ((context->dns_enable && upflist_by_ue_hash_entry_delete(&context->imsi, sizeof(context->imsi))) < 0){
-            LOG_MSG(LOG_ERROR,
-                    "%s %s - Error on upflist_by_ue_hash deletion of IMSI \n",__file__,
-                    strerror(ret));
+            LOG_MSG(LOG_ERROR, "%s - Error on upflist_by_ue_hash deletion of IMSI ", strerror(ret));
         }
 
 #ifdef USE_CSID
@@ -545,7 +526,7 @@ cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
                         tmp->cp_seid[pos] = tmp->cp_seid[pos + 1];
 
                     tmp->seid_cnt--;
-                    LOG_MSG(LOG_DEBUG, "Session Deleted from csid table sid:%lu\n",
+                    LOG_MSG(LOG_DEBUG, "Session Deleted from csid table sid:%lu",
                             sess_id);
                 }
             }

@@ -17,8 +17,7 @@ create_ipc_channel( void )
 	/* Unix Socket Creation and Verification */
 	sock = socket( AF_UNIX, SOCK_STREAM, 0);
 	if ( sock == -1 ){
-		LOG_MSG(LOG_ERROR,"%s: Gx Interface Unix socket creation failed error:%s\n",
-				__func__, strerror(errno));
+		LOG_MSG(LOG_ERROR,"Gx Interface Unix socket creation failed error:%s", strerror(errno));
 		/* Greacefull Exit */
 		exit(0);
 	}
@@ -40,15 +39,14 @@ connect_to_ipc_channel(int sock, struct sockaddr_un sock_addr, const char *path)
     do {
         rc = connect( sock, (struct sockaddr *) &sock_addr, len);
         if ( rc == -1){
-            LOG_MSG(LOG_ERROR, "%s: Socket connect failed error: %s\n",
-                    __func__, strerror(errno));
+            LOG_MSG(LOG_ERROR, "Socket connect failed error: %s", strerror(errno));
             //close_ipc_channel( sock );
             /* Greacefull Exit */
             //exit(0);
             sleep(2);
             continue;
         }
-        LOG_MSG(LOG_ERROR, "GxApp: Gx_app client connection succesfully connected...!!!\n");
+        LOG_MSG(LOG_ERROR, "GxApp: Gx_app client connection succesfully connected...!!!");
         return;
     } while(1);
 }
@@ -70,8 +68,7 @@ bind_ipc_channel(int sock, struct sockaddr_un sock_addr,const char *path)
 	rc =  bind( sock, (struct sockaddr *) &sock_addr, sizeof(struct sockaddr_un));
 	if( rc != 0 ){
 		close_ipc_channel(sock);
-		LOG_MSG(LOG_ERROR,"%s: Gx Socket Bind failed error: %s\n",
-				__func__, strerror(errno));
+		LOG_MSG(LOG_ERROR,"Gx Socket Bind failed error: %s", strerror(errno));
 		/* Greacefull Exit */
 		exit(0);
 	}
@@ -93,8 +90,7 @@ accept_from_ipc_channel(int sock, struct sockaddr_un sock_addr)
 					continue;
 
 				close_ipc_channel(sock);
-				LOG_MSG(LOG_ERROR,"%s: Socket connection accept failed error: %s\n", __func__,
-						strerror(errno));
+				LOG_MSG(LOG_ERROR,"Socket connection accept failed error: %s", strerror(errno));
 				/* Greacefull Exit */
 				exit(0);
 		} else {
@@ -114,8 +110,7 @@ listen_ipc_channel( int sock )
 	/* Mark the socket as a passive socket to accept incomming connections */
 	if( listen(sock, 100) == -1){
 		close_ipc_channel(sock);
-		LOG_MSG(LOG_ERROR, "%s: Socket Listen failed error: %s\n",
-				__func__, strerror(errno));
+		LOG_MSG(LOG_ERROR, "Socket Listen failed error: %s", strerror(errno));
 		/* Greacefull Exit */
 		exit(0);
 	}
@@ -129,14 +124,13 @@ get_peer_name(int sock, struct sockaddr_un sock_addr)
 	if( getpeername( sock, (struct sockaddr *) &sock_addr, &len) == -1) {
 		if(errno != EINTR)
 		{
-			LOG_MSG(LOG_ERROR, "%s: Socket getpeername failed error: %s\n",
-					__func__, strerror(errno));
+			LOG_MSG(LOG_ERROR, "Socket getpeername failed error: %s",strerror(errno));
 			close_ipc_channel(sock);
 			/* Greacefull Exit */
 			exit(0);
 		}
 	} else {
-		LOG_MSG(LOG_ERROR, "CP: Gx_app client socket path %s...!!!\n",sock_addr.sun_path);
+		LOG_MSG(LOG_ERROR, "CP: Gx_app client socket path %s...!!!",sock_addr.sun_path);
 	}
 
 }
@@ -148,8 +142,7 @@ recv_from_ipc_channel(int sock, char *buf)
 	bytes_recv = recv(sock, buf, BUFFSIZE, 0 ) ;
 	if ( bytes_recv <= 0 ){
 		if(errno != EINTR){
-			LOG_MSG(LOG_ERROR, "%s: Socket recv failed error: %s\n",
-					__func__, strerror(errno));
+			LOG_MSG(LOG_ERROR, "Socket recv failed error: %s",strerror(errno));
            close_ipc_channel(sock);
            /* Greacefull Exit */
            exit(0);
@@ -163,8 +156,7 @@ send_to_ipc_channel(int sock, char *buf, int len)
 {
 	if( send(sock, buf, len, 0) <= 0){
 		if(errno != EINTR){
-			LOG_MSG(LOG_ERROR, "%s: Socket send failed error: %s\n",
-					__func__, strerror(errno));
+			LOG_MSG(LOG_ERROR, "Socket send failed error: %s", strerror(errno));
 			close_ipc_channel(sock);
 			/* Greacefull Exit */
 			exit(0);

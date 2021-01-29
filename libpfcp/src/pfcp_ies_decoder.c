@@ -942,6 +942,14 @@ int decode_pfcp_up_func_feat_ie_t(uint8_t *buf,
     uint16_t decoded = 0;
     value->sup_feat = decode_bits(buf, total_decoded, 16, &decoded);
     total_decoded += decoded;
+    if(total_decoded/CHAR_SIZE < (value->header.len + 4)) {
+        value->add_sup_feat1 = decode_bits(buf, total_decoded, 16, &decoded);
+        total_decoded += decoded;
+    }
+    if(total_decoded/CHAR_SIZE < (value->header.len + 4)) {
+        value->add_sup_feat2 = decode_bits(buf, total_decoded, 16, &decoded);
+        total_decoded += decoded;
+    }
     return total_decoded/CHAR_SIZE;
 }
 

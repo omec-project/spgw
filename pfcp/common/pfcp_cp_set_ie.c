@@ -19,6 +19,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_config_apis.h"
 #include "pfcp_cp_association.h"
+#include "ue.h"
 
 #define RI_MAX 8
 
@@ -83,7 +84,7 @@ get_pfcp_sequence_number(uint8_t type, uint32_t seq){
 		case PFCP_SESSION_REPORT_RESPONSE:
 			return seq;
 		default:
-			LOG_MSG(LOG_DEBUG, "Unknown pfcp msg type. \n");
+			LOG_MSG(LOG_DEBUG, "Unknown pfcp msg type. ");
 			return 0;
 			break;
 	}
@@ -384,14 +385,14 @@ set_source_intf(pfcp_src_intfc_ie_t *src_intf)
 }
 
 int
-set_pdi(pfcp_pdi_ie_t *pdi)
+set_pdi(pfcp_pdi_ie_t *pdi, uint32_t ue_ip_flags)
 {
 	int size = 0;
 
 	size += set_source_intf(&(pdi->src_intfc));
 	size += set_fteid(&(pdi->local_fteid));
 	size += set_network_instance(&(pdi->ntwk_inst));
-	size += set_ue_ip(&(pdi->ue_ip_address));
+	size += set_ue_ip(&(pdi->ue_ip_address), ue_ip_flags); /* flag : chv4 or v4 */
 	/*size += set_traffic_endpoint(&(pdi->traffic_endpt_id));
 	size += set_application_id(&(pdi->application_id));
 	size += set_ethernet_pdu_sess_info(&(pdi->eth_pdu_sess_info));
@@ -413,13 +414,13 @@ set_activate_predefined_rules(pfcp_actvt_predef_rules_ie_t *act_predef_rule)
 }
 
 int
-creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value)
+creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value, uint32_t ue_ip_flags)
 {
 	int size = 0;
 
 	size += set_pdr_id(&(create_pdr->pdr_id));
 	size += set_precedence(&(create_pdr->precedence));
-	size += set_pdi(&(create_pdr->pdi));
+	size += set_pdi(&(create_pdr->pdi), ue_ip_flags);
 	if (cp_config->cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
 		size += set_outer_hdr_removal(&(create_pdr->outer_hdr_removal));
 
@@ -465,10 +466,11 @@ int
 updating_pdr(pfcp_update_pdr_ie_t *create_pdr, int source_iface_value)
 {
 	int size = 0;
+    uint32_t ue_ip_flags = 0; // TODO : set these flags from pdn or config
 
 	size += set_pdr_id(&(create_pdr->pdr_id));
 	size += set_precedence(&(create_pdr->precedence));
-	size += set_pdi(&(create_pdr->pdi));
+	size += set_pdi(&(create_pdr->pdi), ue_ip_flags);
 	if (cp_config->cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
 		size += set_outer_hdr_removal(&(create_pdr->outer_hdr_removal));
 	size += set_far_id(&(create_pdr->far_id));
@@ -784,16 +786,22 @@ set_network_instance(pfcp_ntwk_inst_ie_t *network_instance)
 	return size;
 }
 int
-set_ue_ip(pfcp_ue_ip_address_ie_t *ue_ip)
+set_ue_ip(pfcp_ue_ip_address_ie_t *ue_ip, uint32_t flags)
 {
 	int size = sizeof(pfcp_ue_ip_address_ie_t) -
 		(sizeof(ue_ip->ipv4_address) + sizeof(ue_ip->ipv6_address) + sizeof(ue_ip->ipv6_pfx_dlgtn_bits));
 
 	/* NC : Need to remove hard coded values */
 	ue_ip->ue_ip_addr_spare = 0;
+    if((flags & PDN_ADDR_ALLOC_CONTROL) == 0) {
+	    ue_ip->chv4 = 1;
+	    ue_ip->v4 = 0;
+    } else {
+	    ue_ip->v4 = 1;
+        ue_ip->chv4 = 0;
+    }
 	ue_ip->ipv6d = 0;
 	ue_ip->sd = 0;
-	ue_ip->v4 = 1;
 	ue_ip->v6 = 0;
 
 	if (ue_ip->v4 == 1) {
@@ -1054,6 +1062,7 @@ updating_qer(pfcp_update_qer_ie_t *up_qer)
 void
 creating_traffic_endpoint(pfcp_create_traffic_endpt_ie_t  *create_traffic_endpoint)
 {
+    uint32_t ue_ip_flags = 0; /* TODO : handle this flag from top level */
 	//set traffic endpoint id
 	set_traffic_endpoint(&(create_traffic_endpoint->traffic_endpt_id));
 
@@ -1064,7 +1073,7 @@ creating_traffic_endpoint(pfcp_create_traffic_endpt_ie_t  *create_traffic_endpoi
 	set_network_instance(&(create_traffic_endpoint->ntwk_inst));
 
 	//set ue ip address
-	set_ue_ip(&(create_traffic_endpoint->ue_ip_address));
+	set_ue_ip(&(create_traffic_endpoint->ue_ip_address), ue_ip_flags);
 
 	//set ethernet pdu session info
 	set_ethernet_pdu_sess_info(&(create_traffic_endpoint->eth_pdu_sess_info));
@@ -1108,10 +1117,11 @@ updating_far(pfcp_update_far_ie_t *up_far)
 void
 updating_traffic_endpoint(pfcp_upd_traffic_endpt_ie_t *up_traffic_endpoint)
 {
+    uint32_t ue_ip_flags = 0; /* TODO : handle this flag from top level */
 	set_traffic_endpoint(&(up_traffic_endpoint->traffic_endpt_id));
 	set_fteid(&(up_traffic_endpoint->local_fteid));
 	set_network_instance(&(up_traffic_endpoint->ntwk_inst));
-	set_ue_ip(&(up_traffic_endpoint->ue_ip_address));
+	set_ue_ip(&(up_traffic_endpoint->ue_ip_address), ue_ip_flags);
 	set_framed_routing(&(up_traffic_endpoint->framed_routing));
 
 	uint8_t size = sizeof(pfcp_traffic_endpt_id_ie_t) + sizeof(pfcp_fteid_ie_t) +

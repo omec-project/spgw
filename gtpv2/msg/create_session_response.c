@@ -65,10 +65,10 @@ int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 
     increment_stat(NUM_UE_SGW_ACTIVE_SUBSCRIBERS);
 
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 					"Msg_Type:%s[%u], Teid:%u, "
-					"Procedure:%s, State:%s, Event:%s\n",
-					__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+					"Procedure:%s, State:%s, Event:%s",
+					gtp_type_str(msg->msg_type), msg->msg_type,
 					gtpv2c_rx->teid.has_teid.teid,
 					get_proc_string(msg->proc),
 					get_state_string(msg->state), get_event_string(msg->event));
@@ -88,10 +88,10 @@ int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 			/*Set the appropriate event type.*/
 			msg->event = CS_RESP_RCVD_EVNT;
 
-			LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+			LOG_MSG(LOG_DEBUG, "Callback called for "
 					"Msg_Type:%s[%u], Teid:%u, "
-					"Procedure:%s, State:%s, Event:%s\n",
-					__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+					"Procedure:%s, State:%s, Event:%s",
+					gtp_type_str(msg->msg_type), msg->msg_type,
 					gtpv2c_rx->teid.has_teid.teid,
 					get_proc_string(msg->proc),
 					get_state_string(msg->state), get_event_string(msg->event));
@@ -294,8 +294,7 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 #ifdef OBSOLTE
 	/* Lookup Stored the session information. */
 	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0) {
-		LOG_MSG(LOG_ERROR, "%s %s %d Failed to add response in entry in SM_HASH\n", __file__
-				,__func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
@@ -395,8 +394,7 @@ process_cs_resp_handler(void *data, void *unused_param)
 				cs_error_response(msg, ret, S11_IFACE);
 				process_error_occured_handler_new(data, unused_param);
 			}
-			LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
-					__func__, __LINE__, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
 	}
 

@@ -27,7 +27,7 @@ void dispatch_cca(msg_info_t *msg)
         switch(msg->proc) {
             case DETACH_PROC:
             {
-                LOG_MSG(LOG_DEBUG,"message state %d \n", msg->state);
+                LOG_MSG(LOG_DEBUG,"message state %d ", msg->state);
                 if(msg->state == CCR_SNT_STATE)
                 {
                     cca_t_msg_handler(msg, NULL);
@@ -77,13 +77,13 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
     /* Retrive Gx_context based on Sess ID. */
     ret = get_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val,&gx_context);
     if (ret < 0) {
-        LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]\n", msg->gx_msg.cca.session_id.val);
+        LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", msg->gx_msg.cca.session_id.val);
         return -1;
     }
 
     if(msg->gx_msg.cca.presence.result_code &&
             msg->gx_msg.cca.result_code != 2001){
-        LOG_MSG(LOG_ERROR, "Received CCA-T with DIAMETER Failure [%d]\n",
+        LOG_MSG(LOG_ERROR, "Received CCA-T with DIAMETER Failure [%d]",
                 msg->gx_msg.cca.result_code);
         return -1;
     }
@@ -92,7 +92,7 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
     uint32_t call_id;
     ret = retrieve_call_id((char *)msg->gx_msg.cca.session_id.val, &call_id);
     if (ret < 0) {
-        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s\n", 
+        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s", 
                 msg->gx_msg.cca.session_id.val);
         return -1;
     }
@@ -107,10 +107,10 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
     msg->state = gx_context->state;
     msg->event = CCA_RCVD_EVNT;
     msg->proc = gx_context->proc;
-    LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+    LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:%s[%u], Session Id:%s, "
-            "State:%s, Event:%s\n",
-            __func__, gx_type_str(msg->msg_type), msg->msg_type,
+            "State:%s, Event:%s",
+            gx_type_str(msg->msg_type), msg->msg_type,
             msg->gx_msg.cca.session_id.val,
             get_state_string(msg->state), get_event_string(msg->event));
 
@@ -136,13 +136,13 @@ cca_t_msg_handler(void *data, void *unused_param)
 	/* Retrive Gx_context based on Sess ID. */
 	ret = get_gx_context(msg->gx_msg.cca.session_id.val, &gx_context);
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]\n",
+		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]",
 				msg->gx_msg.cca.session_id.val);
 		return -1;
 	}
 
 	if(remove_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val) < 0) {
-		LOG_MSG(LOG_ERROR, "%s - Error on gx_context_by_sess_id_hash deletion\n", strerror(ret));
+		LOG_MSG(LOG_ERROR, "%s - Error on gx_context_by_sess_id_hash deletion", strerror(ret));
 	}
     LOG_MSG(LOG_DEBUG, "Cleanup - gx session ");
 	rte_free(gx_context);

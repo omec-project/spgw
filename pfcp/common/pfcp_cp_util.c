@@ -46,10 +46,7 @@ add_canonical_result_upflist_entry(canonical_result_t *res,
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (NULL == upf_list) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate memory for upf list "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+				"structure: %s ", rte_strerror(rte_errno));
 		return -1;
 	}
 
@@ -66,7 +63,7 @@ add_canonical_result_upflist_entry(canonical_result_t *res,
 	}
 
 	if (upf_count == 0) {
-		LOG_MSG(LOG_ERROR, "Could not get collocated candidate list. \n");
+		LOG_MSG(LOG_ERROR, "Could not get collocated candidate list. ");
 		return 0;
 	}
 
@@ -94,10 +91,7 @@ add_dns_result_upflist_entry(dns_query_result_t *res,
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (NULL == upf_list) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for upf list "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+				"structure: %s ", rte_strerror(rte_errno));
 		return -1;
 	}
 
@@ -114,7 +108,7 @@ add_dns_result_upflist_entry(dns_query_result_t *res,
 	}
 
 	if (upf_count == 0) {
-		LOG_MSG(LOG_ERROR, "Could not get SGW-U list using DNS query \n");
+		LOG_MSG(LOG_ERROR, "Could not get SGW-U list using DNS query ");
 		return 0;
 	}
 
@@ -137,7 +131,7 @@ record_failed_enbid(char *enbid)
 
 	if (fp == NULL) {
 		LOG_MSG(LOG_ERROR, "Could not open %s for writing failed "
-				"eNodeB query entry.\n", FAILED_ENB_FILE);
+				"eNodeB query entry.", FAILED_ENB_FILE);
 		return 1;
 	}
 
@@ -219,7 +213,7 @@ get_upf_list(pdn_connection_t *pdn)
 
 			if (ctxt->uli.tai != 1) {
 				LOG_MSG(LOG_ERROR, "Could not get SGW-U list using DNS"
-								"query. TAC missing in CSR.\n");
+								"query. TAC missing in CSR.");
 				return 0;
 			}
 
@@ -242,8 +236,7 @@ get_upf_list(pdn_connection_t *pdn)
 			process_dnsreq(sgwupf_node_sel, sgwu_list, &sgwu_count);
 
 			if (!sgwu_count) {
-				LOG_MSG(LOG_ERROR, "Could not get SGW-U list using DNS"
-					"query \n");
+				LOG_MSG(LOG_ERROR, "Could not get SGW-U list using DNS query ");
 				return 0;
 			}
 		}
@@ -316,7 +309,7 @@ get_upf_list(pdn_connection_t *pdn)
 		/* VS: Need to check this */
 		/* Get collocated candidate list */
 		if (!strlen((char *)pdn->fqdn)) {
-			LOG_MSG(LOG_ERROR, "SGW-U node name missing in CSR. \n");
+			LOG_MSG(LOG_ERROR, "SGW-U node name missing in CSR. ");
 			deinit_node_selector(pwupf_node_sel);
 			return 0;
 		}
@@ -326,7 +319,7 @@ get_upf_list(pdn_connection_t *pdn)
 				(char *)pdn->fqdn, pwupf_node_sel, result);
 
 		if (!res_count) {
-			LOG_MSG(LOG_ERROR, "Could not get collocated candidate list. \n");
+			LOG_MSG(LOG_ERROR, "Could not get collocated candidate list. ");
 			deinit_node_selector(pwupf_node_sel);
 			return 0;
 		}
@@ -347,14 +340,13 @@ dns_query_lookup(pdn_connection_t *pdn, uint32_t *upf_ip)
 	upfs_dnsres_t *entry = NULL;
 
 	if (get_upf_list(pdn) == 0){
-		 LOG_MSG(LOG_ERROR, "%s:%d Error:\n",
-			    __func__, __LINE__);
+		 LOG_MSG(LOG_ERROR, "Error:");
 		return GTPV2C_CAUSE_REQUEST_REJECTED;
 	}
 
 	/* Fill msg->upf_ipv4 address */
 	if ((get_upf_ip(pdn->context, &entry, &upf_ip)) != 0) {
-		LOG_MSG(LOG_ERROR, "Failed to get upf ip address\n");
+		LOG_MSG(LOG_ERROR, "Failed to get upf ip address");
 		return GTPV2C_CAUSE_REQUEST_REJECTED;
 	}
 	memcpy(pdn->fqdn, entry->upf_fqdn[entry->current_upf],
@@ -369,7 +361,7 @@ uptime(void)
 	struct sysinfo s_info;
 	int error = sysinfo(&s_info);
 	if(error != 0) {
-		LOG_MSG(LOG_DEBUG, "Error in uptime\n");
+		LOG_MSG(LOG_DEBUG, "Error in uptime");
 	}
 	return s_info.uptime;
 }

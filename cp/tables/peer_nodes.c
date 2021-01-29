@@ -35,7 +35,7 @@ void echo_table_init(void)
     if (!conn_hash_handle) {
         rte_panic("%s::"
                 "\n\thash create failed::"
-                "\n\trte_strerror= %s; rte_errno= %u\n",
+                "\n\trte_strerror= %s; rte_errno= %u",
                 conn_hash_params.name,
                 rte_strerror(rte_errno),
                 rte_errno);
@@ -56,7 +56,7 @@ add_peer_entry(uint32_t ipaddr, peerData_t *peer)
 
 	if (ret < 0) {
 		LOG_MSG(LOG_ERROR,
-				"%s - Error on rte_hash_add_key_data add\n",
+				"%s - Error on rte_hash_add_key_data add",
 				strerror(ret));
 		return -1;
 	}
@@ -72,8 +72,8 @@ get_peer_entry(uint32_t ipaddr, peerData_t **entry)
 			(const void*) &(ipaddr), (void **) entry);
 
 	if (ret < 0) {
-		LOG_MSG(LOG_DEBUG, "%s:%d NO ENTRY FOUND IN PEER HASH HASH [%s]",
-				__func__, __LINE__, inet_ntoa(*((struct in_addr *)&ipaddr)));
+		LOG_MSG(LOG_DEBUG, "NO ENTRY FOUND IN PEER HASH [%s]",
+				inet_ntoa(*((struct in_addr *)&ipaddr)));
 		return -1;
 	}
 	return 0;
@@ -92,11 +92,11 @@ void del_entry_from_hash(uint32_t ipAddr)
 			&ipAddr);
 
 	if (ret == -ENOENT)
-		LOG_MSG(LOG_DEBUG, "key is not found\n");
+		LOG_MSG(LOG_DEBUG, "key is not found");
 	if (ret == -EINVAL)
-		LOG_MSG(LOG_DEBUG, "Invalid Params: Failed to del from hash table\n");
+		LOG_MSG(LOG_DEBUG, "Invalid Params: Failed to del from hash table");
 	if (ret < 0)
-		LOG_MSG(LOG_DEBUG, "VS: Failed to del entry from hash table\n");
+		LOG_MSG(LOG_DEBUG, "VS: Failed to del entry from hash table");
 
 	//conn_cnt--; ajay
 

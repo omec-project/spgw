@@ -76,7 +76,7 @@ parse_bearer_resource_cmd(gtpv2c_header_t *gtpv2c_rx,
 	    || !brc->procedure_transaction_id
 	    || !brc->tad) {
 		LOG_MSG(LOG_ERROR, "Improper Bearer Resource Command - "
-				"Dropping packet\n");
+				"Dropping packet");
 		return -EPERM;
 	}
 
@@ -86,7 +86,7 @@ parse_bearer_resource_cmd(gtpv2c_header_t *gtpv2c_rx,
 			(1 << ebi_index))) {
 		LOG_MSG(LOG_ERROR,
 		    "Received Bearer Resource Command on non-existent LBI - "
-		    "Dropping packet\n");
+		    "Dropping packet");
 		return -EPERM;
 	}
 
@@ -94,7 +94,7 @@ parse_bearer_resource_cmd(gtpv2c_header_t *gtpv2c_rx,
 	if (!brc->bearer) {
 		LOG_MSG(LOG_ERROR,
 		    "Received Bearer Resource Command on non-existent LBI - "
-		    "Bitmap Inconsistency - Dropping packet\n");
+		    "Bitmap Inconsistency - Dropping packet");
 		return -EPERM;
 	}
 
@@ -132,7 +132,7 @@ parse_packet_filter(create_pkt_filter *cpf, pkt_fltr *pf)
 			PACKET_FILTER_COMPONENT_SIZE[filter_component->type]) {
 			LOG_MSG(LOG_ERROR,
 			    "Insufficient space in packet filter for"
-			    " component type %u\n",
+			    " component type %u",
 			    filter_component->type);
 			return GTPV2C_CAUSE_INVALID_LENGTH;
 		}
@@ -152,7 +152,7 @@ parse_packet_filter(create_pkt_filter *cpf, pkt_fltr *pf)
 				LOG_MSG(LOG_ERROR, "Error in ipmask:");
 				LOG_MSG(LOG_ERROR, "IPV4_REMOTE_ADDRESS: %s/",
 				    inet_ntoa(pf->remote_ip_addr));
-				LOG_MSG(LOG_ERROR, "%s\n",
+				LOG_MSG(LOG_ERROR, "%s",
 				    inet_ntoa(filter_component->type_union.
 						    ipv4.mask));
 			}
@@ -177,7 +177,7 @@ parse_packet_filter(create_pkt_filter *cpf, pkt_fltr *pf)
 				LOG_MSG(LOG_ERROR, "Error in ipmask:");
 				LOG_MSG(LOG_ERROR, "IPV4_REMOTE_ADDRESS: %s/",
 					inet_ntoa(pf->local_ip_addr));
-				LOG_MSG(LOG_ERROR, "%s\n",
+				LOG_MSG(LOG_ERROR, "%s",
 					inet_ntoa(
 					filter_component->type_union.ipv4.
 					mask));
@@ -240,7 +240,7 @@ parse_packet_filter(create_pkt_filter *cpf, pkt_fltr *pf)
 			break;
 		default:
 			LOG_MSG(LOG_ERROR, "Invalid/Unsupported TFT Filter"
-					" Component\n");
+					" Component");
 			return GTPV2C_CAUSE_SERVICE_NOT_SUPPORTED;
 		}
 	}
@@ -324,7 +324,7 @@ install_packet_filters(eps_bearer_t *ded_bearer,
 		if (dp_packet_filter_id == -ENOENT) {
 			LOG_MSG(LOG_ERROR,
 			    "Packet filters must be pre-defined by static "
-			    "file prior to reference by s11 Message\n");
+			    "file prior to reference by s11 Message");
 			/* TODO: Implement dynamic installation of packet
 			 * filters on DP  - remove continue*/
 			continue;
@@ -526,7 +526,7 @@ create_dedicated_bearer(gtpv2c_header_t *gtpv2c_rx,
 
 	if (brc->flow_quality_of_service == NULL) {
 		LOG_MSG(LOG_ERROR, "Received Bearer Resource Command without Flow "
-				"QoS IE\n");
+				"QoS IE");
 		return -EPERM;
 	}
 	fqos = IE_TYPE_PTR_FROM_GTPV2C_IE(flow_qos_ie,
@@ -537,10 +537,7 @@ create_dedicated_bearer(gtpv2c_header_t *gtpv2c_rx,
 					RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (ded_bearer == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate dedicated bearer "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+				"structure: %s ", rte_strerror(rte_errno));
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
 	}
 
@@ -613,7 +610,7 @@ delete_packet_filter(gtpv2c_header_t *gtpv2c_rx,
 
 	if (b == NULL) {
 		LOG_MSG(LOG_ERROR, "Requesting the deletion of non-existent "
-				"packet filter\n");
+				"packet filter");
 		LOG_MSG(LOG_ERROR, "\t"
 				"%"PRIx32"\t"
 		"%"PRIx32"\n", brc->context->s11_mme_gtpc_teid,

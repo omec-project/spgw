@@ -71,10 +71,10 @@ process_rel_access_ber_req_handler(proc_context_t *proc_context, msg_info_t *msg
     int ret = 0;
     gtpv2c_header_t *rab_header = &msg->gtpc_msg.rab.header;
 
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:%s[%u], Teid:%u, "
-			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+			"Procedure:%s, State:%s, Event:%s",
+			gtp_type_str(msg->msg_type), msg->msg_type,
 			rab_header->teid.has_teid.teid,
 			get_proc_string(msg->proc),
 			get_state_string(msg->state), get_event_string(msg->event));
@@ -83,7 +83,7 @@ process_rel_access_ber_req_handler(proc_context_t *proc_context, msg_info_t *msg
 	/* TODO: Check return type and do further processing */
 	ret = process_release_access_bearer_request(proc_context, msg); 
     if (ret) {
-        LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
+        LOG_MSG(LOG_ERROR, "Error: %d ", ret);
         return -1;
     }
 
@@ -123,7 +123,7 @@ process_release_access_bearer_request(proc_context_t *rab_proc, msg_info_t *msg)
 		if (!bearer) {
 			LOG_MSG(LOG_ERROR,
 					"Retrive Context for release access bearer is non-existent EBI - "
-					"Bitmap Inconsistency - Dropping packet\n");
+					"Bitmap Inconsistency - Dropping packet");
 			return -EPERM;
 		}
 
@@ -165,8 +165,7 @@ process_release_access_bearer_request(proc_context_t *rab_proc, msg_info_t *msg)
 
 #if 0
 		if (get_sess_entry_seid((rel_acc_ber_req_t->context)->pdns[ebi_index]->seid, &resp) != 0) {
-			LOG_MSG(LOG_ERROR, "%s %s %d Failed to add response in entry in SM_HASH\n",__file__,
-					__func__, __LINE__);
+			LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 			return -1;
 		}
 
@@ -215,7 +214,7 @@ process_rab_proc_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg
 
 	/*Validate the modification is accepted or not. */
 	if(msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value != REQUESTACCEPTED){
-			LOG_MSG(LOG_DEBUG, "Cause received PFCP Modify response is %d\n",
+			LOG_MSG(LOG_DEBUG, "Cause received PFCP Modify response is %d",
 					msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value);
 			proc_rab_failed(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
 			return;
@@ -225,9 +224,9 @@ process_rab_proc_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg
     ue_context_t *temp_context = NULL; 
 	if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 				&temp_context) != 0) {
-		LOG_MSG(LOG_ERROR, "%s: Session entry not found Msg_Type:%u,"
-				"Sess ID:%lu, n",
-				__func__, msg->msg_type,
+		LOG_MSG(LOG_ERROR, "Session entry not found Msg_Type:%u,"
+				"Sess ID:%lu ",
+				msg->msg_type,
 				msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 
 		proc_rab_failed(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
@@ -235,10 +234,10 @@ process_rab_proc_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg
 	}
     assert(temp_context == ue_context);
 
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:PFCP_SESSION_MODIFICATION_RESPONSE[%u], Seid:%lu, "
-			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, msg->msg_type,
+			"Procedure:%s, State:%s, Event:%s",
+			msg->msg_type,
 			msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 			get_proc_string(msg->proc),
 			get_state_string(msg->state), get_event_string(msg->event));
@@ -251,8 +250,7 @@ process_rab_proc_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg
 			gtpv2c_tx);
 	if (ret != 0) {
 		if(ret != -1)
-		    LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
-				__func__, __LINE__, ret);
+		    LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			proc_rab_failed(msg, ret); 
 		return;
 	}
@@ -286,8 +284,7 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
 
     /* Retrive the session information based on session id. */
     if (get_sess_entry_seid(sess_id, &context) != 0){
-        LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-                __func__, __LINE__, sess_id);
+        LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
         return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
     }
 
@@ -296,9 +293,7 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
     /* Retrieve the UE context */
     ret = get_ue_context(teid, &context);
     if (ret < 0) {
-        LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
-                __func__, __LINE__,
-                teid);
+        LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
     }
 
     assert(proc_context->ue_context == context);
@@ -311,12 +306,12 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
 
     if (!bearer) {
         LOG_MSG(LOG_ERROR,
-                "%s:%d Retrive modify bearer context but EBI is non-existent- "
-                "Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
+                "Retrive modify bearer context but EBI is non-existent- "
+                "Bitmap Inconsistency - Dropping packet");
         return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
     }
 
-    LOG_MSG(LOG_DEBUG2, "Send RAB response\n");
+    LOG_MSG(LOG_DEBUG2, "Send RAB response");
     transData_t *gtpc_trans = proc_context->gtpc_trans;
     /* Fill the release bearer response */
     set_release_access_bearer_response(gtpv2c_tx,
@@ -325,8 +320,7 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
     /* Update the UE state */
     pdn->state = IDEL_STATE;
 
-    LOG_MSG(LOG_DEBUG, "%s:%d Sent RAB response to peer : %s\n",
-            __func__, __LINE__,
+    LOG_MSG(LOG_DEBUG, "Sent RAB response to peer : %s",
             inet_ntoa(*((struct in_addr *)&gtpc_trans->peer_sockaddr.sin_addr.s_addr)));
 
     return 0;

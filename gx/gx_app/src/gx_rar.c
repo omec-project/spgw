@@ -288,7 +288,7 @@ enum disp_action * act
 	bytes_recv = recv_from_ipc_channel(g_gx_client_sock, buf);
 	if(bytes_recv > 0){
 		resp = (gx_msg *)buf;
-		LOG_MSG(LOG_DEBUG, "session id [%s] ulBw [%d] dlBW[%d]\n",resp->data.cp_raa.session_id.val,
+		LOG_MSG(LOG_DEBUG, "session id [%s] ulBw [%d] dlBW[%d]",resp->data.cp_raa.session_id.val,
 				resp->data.cp_raa.default_qos_information.max_requested_bandwidth_ul,
 				resp->data.cp_raa.default_qos_information.max_requested_bandwidth_dl);
 
@@ -325,7 +325,7 @@ enum disp_action * act
 	goto fini1;
 
 err:
-	LOG_MSG(LOG_ERROR, "Error (%d) while processing RAR\n", ret);
+	LOG_MSG(LOG_ERROR, "Error (%d) while processing RAR", ret);
 	free(gx_req);
 	goto fini2;
 
