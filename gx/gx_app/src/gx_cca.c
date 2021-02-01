@@ -152,14 +152,14 @@ int gx_cca_cb
 
 	if (ret != FD_REASON_OK)
 	{
-        LOG_MSG(LOG_ERROR,"parsing failed gx_cca_parse\n");
+        LOG_MSG(LOG_ERROR,"parsing failed gx_cca_parse");
 		goto err;
 	}
 	/* Cal the length of buffer needed */
 	buflen = gx_cca_calc_length (&gx_resp.data.cp_cca);
 	send_buf = malloc(buflen + sizeof(gx_resp.msg_type));
 	if( send_buf == NULL){
- 			LOG_MSG(LOG_ERROR,"SendBuff memory fails\n");
+ 			LOG_MSG(LOG_ERROR,"SendBuff memory fails");
 			return 1;
 	}
 	memset(send_buf, 0, buflen);
@@ -167,7 +167,7 @@ int gx_cca_cb
 	memcpy( send_buf, &gx_resp.msg_type, sizeof(gx_resp.msg_type));
 	if ( gx_cca_pack( &(gx_resp.data.cp_cca), (unsigned char *)(send_buf + sizeof(gx_resp.msg_type) + sizeof(gx_resp.seq_num)), buflen ) == 0 )
 	{
-		LOG_MSG(LOG_ERROR, "CCA Packing failure \n");
+		LOG_MSG(LOG_ERROR, "CCA Packing failure ");
 		goto err;
 	}
 

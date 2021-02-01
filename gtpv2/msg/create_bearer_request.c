@@ -209,18 +209,18 @@ int handle_create_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
 	uint8_t ebi_index = msg->gtpc_msg.cb_req.lbi.ebi_ebi - 5;
 
 	if(get_ue_context_by_sgw_s5s8_teid(gtpv2c_rx->teid.has_teid.teid, &context) != 0) {
-		LOG_MSG(LOG_ERROR, "%s:%d UE Context not found... 0x%x\n",__func__,
-					__LINE__, gtpv2c_rx->teid.has_teid.teid);
+		LOG_MSG(LOG_ERROR, "UE Context not found... 0x%x",
+					gtpv2c_rx->teid.has_teid.teid);
 		return -1;
 	}
 	msg->state = context->eps_bearers[ebi_index]->pdn->state;
 	msg->proc =  DED_BER_ACTIVATION_PROC;
 	msg->event = CREATE_BER_REQ_RCVD_EVNT;
 
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:%s[%u], Teid:%u, "
-			"State:%s, Event:%s\n",
-			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+			"State:%s, Event:%s",
+			gtp_type_str(msg->msg_type), msg->msg_type,
 			gtpv2c_rx->teid.has_teid.teid,
 			get_state_string(msg->state), get_event_string(msg->event));
 

@@ -50,6 +50,7 @@ typedef struct user_plane_profile
     char user_plane_profile_name[64];
     char user_plane_service[64];
     uint32_t upf_addr; /* run time information */
+    bool     global_address; /* true : control plane allocates address, false : upf allocates address */
 }user_plane_profile_t;
 
 #define MAX_NETCAP_LEN               (64)

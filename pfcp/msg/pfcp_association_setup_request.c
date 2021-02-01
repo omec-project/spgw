@@ -54,10 +54,10 @@ handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfc
     int decoded = decode_pfcp_assn_setup_req_t((uint8_t *)pfcp_rx,
             &msg->pfcp_msg.pfcp_ass_req);
 
-    LOG_MSG(LOG_DEBUG, "Decoded bytes [%d]\n", decoded);
+    LOG_MSG(LOG_DEBUG, "Decoded bytes [%d]", decoded);
     if(decoded <= 0) 
     {
-        LOG_MSG(LOG_ERROR, "%s: Failed to process pfcp precondition check\n", __func__);
+        LOG_MSG(LOG_ERROR, "Failed to process pfcp precondition check");
 
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPREQ_DROP, peer_addr->sin_addr.s_addr);
         return -1;

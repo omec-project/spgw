@@ -82,7 +82,6 @@
 #define REQUEST_TIMEOUT 		"REQUEST_TIMEOUT"
 #define REQUEST_TRIES			"REQUEST_TRIES"
 
-extern struct ip_table *static_addr_pool;
 extern char* config_update_base_folder; 
 extern bool native_config_folder;
 cp_config_t *cp_config = NULL;
@@ -753,8 +752,8 @@ parse_apn_args(char *temp, char *ptr[3])
 void
 config_change_cbk(char *config_file, uint32_t flags)
 {
-    LOG_MSG(LOG_INIT, "Config change trigger function - %s" 
-                " - file %s and flags = %x ", __FUNCTION__, config_file, flags);
+    LOG_MSG(LOG_INIT, "Config change trigger " 
+                " - file %s and flags = %x ", config_file, flags);
 	if (native_config_folder == false) {
 		/* Move the updated config to standard path */
 		char cmd[256];
@@ -797,8 +796,8 @@ register_config_updates(char *file)
 void
 cpconfig_change_cbk(char *config_file, uint32_t flags)
 {
-    LOG_MSG(LOG_INIT, "Config change trigger function - %s" 
-                " - file %s and flags = %x ", __FUNCTION__, config_file, flags);
+    LOG_MSG(LOG_INIT, "Config change trigger function - " 
+                " file %s and flags = %x ", config_file, flags);
 	if (native_config_folder == false) {
 		/* Move the updated config to standard path */
 		char cmd[256];
@@ -885,12 +884,12 @@ struct in_addr native_linux_name_resolve(const char *name)
             if(rp->ai_family == AF_INET)
             {
                 struct sockaddr_in *addrV4 = (struct sockaddr_in *)rp->ai_addr;
-                LOG_MSG(LOG_DEBUG, "Received DNS response. name %s mapped to  %s\n", name, inet_ntoa(addrV4->sin_addr));
+                LOG_MSG(LOG_DEBUG, "Received DNS response. name %s mapped to  %s", name, inet_ntoa(addrV4->sin_addr));
                 return addrV4->sin_addr;
             }
         }
     }
-    LOG_MSG(LOG_ERROR, "DNS Query for %s failed with error %s\n", name, gai_strerror(err));
+    LOG_MSG(LOG_ERROR, "DNS Query for %s failed with error %s", name, gai_strerror(err));
     return ip;
 }
 

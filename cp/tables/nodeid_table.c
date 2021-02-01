@@ -48,18 +48,14 @@ add_node_id_hash(uint32_t *nodeid, uint64_t *data )
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (temp == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate ue context "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+				"structure: %s ", rte_strerror(rte_errno));
 		return 1;
 	}
 	*temp = *data;
 	ret = rte_hash_add_key_data(node_id_hash,
 			(const void *)&key , (void *)temp);
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR,
-				"%s - Error on rte_hash_add_key_data add\n",
+		LOG_MSG(LOG_ERROR, "%s - Error on rte_hash_add_key_data add",
 				strerror(ret));
 		rte_free((temp));
 		return 1;

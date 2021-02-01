@@ -180,8 +180,7 @@ gen_sess_id_string(char *str_buf, char *timestamp , uint32_t value)
 
 	if (timestamp == NULL)
 	{
-		LOG_MSG(LOG_ERROR, "%s:%d Time stamp is NULL \n",
-				__func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Time stamp is NULL ");
 		return -1;
 	}
 
@@ -190,8 +189,7 @@ gen_sess_id_string(char *str_buf, char *timestamp , uint32_t value)
 
 	if(buf[0] == 0)
 	{
-		LOG_MSG(LOG_ERROR, "%s:%d Failed coversion of integer to string, len:%d \n",
-			__func__, __LINE__, len);
+		LOG_MSG(LOG_ERROR, "Failed coversion of integer to string, len:%d ", len);
 		return -1;
 	}
 
@@ -222,8 +220,7 @@ retrieve_call_id(char *str, uint32_t *call_id)
 
 	if(str == NULL)
 	{
-		LOG_MSG(LOG_ERROR, "%s:%d String is NULL\n",
-				__func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "String is NULL");
 		return -1;
 	}
 
@@ -236,8 +233,7 @@ retrieve_call_id(char *str, uint32_t *call_id)
 
 	*call_id = atoi(buf);
 	if (*call_id == 0) {
-		LOG_MSG(LOG_ERROR, "%s:%d Call ID not found\n",
-				__func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Call ID not found");
 		return -1;
 	}
 	return 0;
@@ -255,8 +251,7 @@ gen_sess_id_for_ccr(char *sess_id, uint32_t call_id)
 
 	if((gen_sess_id_string(sess_id, timestamp, call_id)) < 0)
 	{
-		LOG_MSG(LOG_ERROR, "%s:%d Failed to generate session id for CCR\n",
-				__func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Failed to generate session id for CCR");
 		return -1;
 	}
 	return 0;

@@ -438,10 +438,22 @@ typedef struct ue_tz_t
 	uint8_t dst;
 }ue_tz;
 
-#define PDN_STATIC_ADDR  0x00000001
+#define PDN_STATIC_ADDR         0x00000001 /* UE address is fixed/static and UE pool controlled by control plane */
+#define PDN_ADDR_ALLOC_CONTROL  0x00000002 /* Control Plane has allocated UE address */
+#define PDN_ADDR_ALLOC_UPF      0x00000004 /* User Plane has allocated UE address */
 
-#define SET_PDN_ADDR_STATIC(pdn)  ((pdn->pdn_flags = pdn->pdn_flags | PDN_STATIC_ADDR))
-#define IF_PDN_ADDR_STATIC(pdn)   ((pdn->pdn_flags & PDN_STATIC_ADDR)== PDN_STATIC_ADDR)
+#define SET_PDN_ADDR_STATIC(pdn,flag)  \
+do { \
+    if(flag == true) { \
+      pdn->pdn_flags = pdn->pdn_flags | PDN_STATIC_ADDR;\
+    }\
+}\
+while(0);
+
+#define IF_PDN_ADDR_STATIC(pdn)   ((pdn->pdn_flags & PDN_STATIC_ADDR) == PDN_STATIC_ADDR)
+#define SET_PDN_ADDR_METHOD(pdn, flag) (pdn->pdn_flags = pdn->pdn_flags | flag)
+#define IF_PDN_ADDR_ALLOC_CONTROL(pdn) (pdn->pdn_flags & PDN_ADDR_ALLOC_CONTROL)
+#define IF_PDN_ADDR_ALLOC_UPF(pdn) (pdn->pdn_flags & PDN_ADDR_ALLOC_UPF)
 
 /**
  * @brief  : Maintains pdn connection information

@@ -74,7 +74,7 @@ init_thread_to_thread_socket(void)
 	LOG_MSG(LOG_INIT,"init local local thread to thread socket opened ");
 
 	if (ret < 0) {
-		rte_panic("Bind error for %s:%u - %s\n",
+		rte_panic("Bind error for %s:%u - %s",
 				inet_ntoa(local_sockaddr.sin_addr),
 				ntohs(local_sockaddr.sin_port),
 				strerror(errno));
@@ -167,7 +167,7 @@ void recovery_time_into_file(uint32_t recov_time)
     FILE *fp = NULL;
 
     if ((fp = fopen(HEARTBEAT_TIMESTAMP, "w+")) == NULL) {
-        LOG_MSG(LOG_ERROR, "Unable to open heartbeat recovery file..\n");
+        LOG_MSG(LOG_ERROR, "Unable to open heartbeat recovery file..");
     } else {
         fseek(fp, 0, SEEK_SET);
         fprintf(fp, "%u\n", recov_time);

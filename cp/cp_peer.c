@@ -76,7 +76,7 @@ void handle_timeout(void *data, uint16_t event)
     get_peer_entry(dest_addr.sin_addr.s_addr, &md);
 
     if(md == NULL) {
-        LOG_MSG(LOG_ERROR,"Peer (%s) not found \n", inet_ntoa(dest_addr.sin_addr));
+        LOG_MSG(LOG_ERROR,"Peer (%s) not found ", inet_ntoa(dest_addr.sin_addr));
         return;
     }
 	LOG_MSG(LOG_DEBUG, "%s - %s:%s:%u.%s (%dms) has expired", getPrintableTime(),
@@ -255,7 +255,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 
 	if ( ret < 0) {
 
-		LOG_MSG(LOG_INFO, " Add entry in conn table :%s\n",
+		LOG_MSG(LOG_INFO, " Add entry in conn table :%s",
 					inet_ntoa(*((struct in_addr *)&dstIp)));
 
 		/* No conn entry for dstIp
@@ -282,28 +282,28 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 		if ( !initpeerData( conn_data, "PEER_NODE", (cp_config->periodic_timer * 1000),
 						(cp_config->transmit_timer * 1000)) )
 		{
-		   LOG_MSG(LOG_ERROR, "%s - initialization of %s failed\n", getPrintableTime(), conn_data->name );
+		   LOG_MSG(LOG_ERROR, "%s - initialization of %s failed", getPrintableTime(), conn_data->name );
 		   return -1;
 		}
 
 		if ( startTimer( &conn_data->pt ) < 0) {
-			LOG_MSG(LOG_ERROR, "Periodic Timer failed to start...\n");
+			LOG_MSG(LOG_ERROR, "Periodic Timer failed to start...");
 		}
 		conn_cnt++;
 
 	} else {
 		/* TODO: peer node entry already exit in conn table */
 
-		LOG_MSG(LOG_INFO, "Conn entry already exit in conn table :%s\n",
+		LOG_MSG(LOG_INFO, "Conn entry already exit in conn table :%s",
 					inet_ntoa(*((struct in_addr *)&dstIp)));
 		if ( startTimer( &conn_data->pt ) < 0)
 		{
-			LOG_MSG(LOG_ERROR, "Periodic Timer failed to start...\n");
+			LOG_MSG(LOG_ERROR, "Periodic Timer failed to start...");
 		}
 		//conn_cnt++;
 	}
 
-	LOG_MSG(LOG_INFO, "Current Active Peer Conn Cnt:%u\n", conn_cnt);
+	LOG_MSG(LOG_INFO, "Current Active Peer Conn Cnt:%u", conn_cnt);
 	return 0;
 }
 
@@ -330,7 +330,7 @@ uint8_t process_response(uint32_t dstIp)
 		stopTimer( &conn_data->pt );
 		/* Reset Periodic Timer */
 		if ( startTimer( &conn_data->pt ) == false ) 
-			LOG_MSG(LOG_ERROR, "Periodic Timer failed to stop...\n");
+			LOG_MSG(LOG_ERROR, "Periodic Timer failed to stop...");
 
 		LOG_MSG(LOG_DEBUG, "Periodic Timer stopped - since activity seen with peer node ");
 	}

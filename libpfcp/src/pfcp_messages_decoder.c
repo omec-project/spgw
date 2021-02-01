@@ -1245,7 +1245,9 @@ int decode_pfcp_created_pdr_ie_t(uint8_t *buf,
       uint16_t buf_len = 0;
 
       count = decode_pfcp_ie_header_t(buf + count, &value->header);
+	  count = count/CHAR_SIZE;
 
+	  buf_len = value->header.len;
 
       while (count < buf_len) {
 
@@ -1257,8 +1259,11 @@ int decode_pfcp_created_pdr_ie_t(uint8_t *buf,
             count += decode_pfcp_pdr_id_ie_t(buf + count, &value->pdr_id);
       }  else if (ie_type == PFCP_IE_FTEID) {
             count += decode_pfcp_fteid_ie_t(buf + count, &value->local_fteid);
-      }  else
+      }  else if (ie_type == PFCP_IE_UE_IP_ADDRESS) {
+            count += decode_pfcp_ue_ip_address_ie_t(buf + count, &value->ue_ip_address);
+      }  else {
             count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
+      }
       }
       return count;
 }

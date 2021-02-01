@@ -220,8 +220,8 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 
 		if (bearer->s11u_mme_gtpu_teid) {
 			LOG_MSG(LOG_DEBUG,"S11U Detect- set_create_session_response-"
-					"\n\tbearer->s11u_mme_gtpu_teid= %X;"
-					"\n\tGTPV2C_IFTYPE_S11U_MME_GTPU= %X\n",
+					"\tbearer->s11u_mme_gtpu_teid= %X;"
+					"\tGTPV2C_IFTYPE_S11U_MME_GTPU= %X",
 					htonl(bearer->s11u_mme_gtpu_teid),
 					GTPV2C_IFTYPE_S11U_SGW_GTPU);
 
@@ -355,9 +355,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
     if (csr.indctn_flgs.header.len &&
 			csr.indctn_flgs.indication_uimsi) {
-		LOG_MSG(LOG_ERROR, "%s:%s:%d Unauthenticated IMSI Not Yet Implemented - "
-				"Dropping packet\n",
-			   __FILE__, __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Unauthenticated IMSI Not Yet Implemented - Dropping packet");
 		return -EPERM;
 	}
 
@@ -372,15 +370,13 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 			|| !csr.bearer_contexts_to_be_created.bearer_lvl_qos.header.len
 			|| !csr.msisdn.header.len
 			|| !(csr.pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4) ) {
-		LOG_MSG(LOG_ERROR, "%s:%s:%d Mandatory IE missing. Dropping packet\n",
-			   __FILE__, __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Mandatory IE missing. Dropping packet");
 		return -EPERM;
 	}
 
 	if (csr.pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV6 ||
 			csr.pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4V6) {
-			LOG_MSG(LOG_ERROR, "%s:%s:%d IPv6 Not Yet Implemented - Dropping packet\n",
-			   __FILE__, __func__, __LINE__);
+			LOG_MSG(LOG_ERROR, "IPv6 Not Yet Implemented - Dropping packet");
 			return GTPV2C_CAUSE_PREFERRED_PDN_TYPE_UNSUPPORTED;
 	}
 
@@ -583,16 +579,14 @@ int validate_csreq_msg(create_sess_req_t *csr)
 {
 	if (csr->indctn_flgs.header.len &&
 			csr->indctn_flgs.indication_uimsi) {
-		LOG_MSG(LOG_ERROR, "%s:%s:%d Unauthenticated IMSI Not Yet Implemented - "
-				"Dropping packet\n", __FILE__, __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Unauthenticated IMSI Not Yet Implemented - Dropping packet");
 	
 		return GTPV2C_CAUSE_IMSI_NOT_KNOWN;
 	}
 
 	if ((cp_config->cp_type == SGWC) &&
 			(!csr->pgw_s5s8_addr_ctl_plane_or_pmip.header.len)) {
-		LOG_MSG(LOG_ERROR, "%s:%s:%d Mandatory IE missing. Dropping packet len:%u\n",
-				__FILE__, __func__, __LINE__,
+		LOG_MSG(LOG_ERROR, "Mandatory IE missing. Dropping packet len:%u", 
 				csr->pgw_s5s8_addr_ctl_plane_or_pmip.header.len);
 		return GTPV2C_CAUSE_MANDATORY_IE_MISSING;
 	}
@@ -606,17 +600,15 @@ int validate_csreq_msg(create_sess_req_t *csr)
 			|| !csr->bearer_contexts_to_be_created.bearer_lvl_qos.header.len
 			|| !csr->rat_type.header.len
 			|| !(csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4) ) {
-		LOG_MSG(LOG_ERROR, "%s:%s:%d Mandatory IE missing. Dropping packet\n",
-				__FILE__, __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Mandatory IE missing. Dropping packet");
 		return GTPV2C_CAUSE_MANDATORY_IE_MISSING;
 	}
 
 	if (csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV6 ||
 			csr->pdn_type.pdn_type_pdn_type == PDN_IP_TYPE_IPV4V6) {
-		LOG_MSG(LOG_ERROR, "%s:%s:%d IPv6 Not Yet Implemented - Dropping packet\n",
-				__FILE__, __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "IPv6 Not Yet Implemented - Dropping packet");
 		return GTPV2C_CAUSE_PREFERRED_PDN_TYPE_UNSUPPORTED;
-	}    
+	}
     return 0;
 }
 
@@ -697,7 +689,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     ue_context_t *context = NULL; 
     uint64_t imsi;
     imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
-    ret = ue_context_entry_lookup_imsiKey(imsi, &(context));
+    ret = ue_context_entry_lookup_imsiKey(imsi, &(context), false);
     if(context != NULL) {
         LOG_MSG(LOG_DEBUG0, "[IMSI - %lu] Detected context replacement ", context->imsi64);
         msg->msg_type = GTP_RESERVED; 

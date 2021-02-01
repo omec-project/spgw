@@ -88,10 +88,10 @@ process_ds_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     int ret = 0;
     gtpv2c_header_t *dsr_header = &msg->gtpc_msg.dsr.header;
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 					"Msg_Type:%s[%u], Teid:%u, "
-					"Procedure:%s, State:%s, Event:%s\n",
-					__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+					"Procedure:%s, State:%s, Event:%s",
+					gtp_type_str(msg->msg_type), msg->msg_type,
 					dsr_header->teid.has_teid.teid,
 					get_proc_string(msg->proc),
 					get_state_string(msg->state), get_event_string(msg->event));
@@ -125,17 +125,17 @@ process_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
     pfcp_sess_del_rsp_t *pfcp_sess_del_resp = &msg->pfcp_msg.pfcp_sess_del_resp;
     
 
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:PFCP_SESSION_DELETION_RESPONSE[%u], Seid:%lu, "
-			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, msg->msg_type,
+			"Procedure:%s, State:%s, Event:%s",
+			msg->msg_type,
 			pfcp_sess_del_resp->header.seid_seqno.has_seid.seid,
 			get_proc_string(proc_context->proc_type),
 			get_state_string(msg->state), get_event_string(msg->event));
 
 
 	if(pfcp_sess_del_resp->cause.cause_value != REQUESTACCEPTED) {
-		LOG_MSG(LOG_ERROR, "Cause received in pfcp delete response is %d\n",
+		LOG_MSG(LOG_ERROR, "Cause received in pfcp delete response is %d",
 				pfcp_sess_del_resp->cause.cause_value);
 
 		proc_detach_failure(proc_context, msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
@@ -150,7 +150,7 @@ process_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
             gtpv2c_tx, &ccr_request, &msglen, proc_context);
 
 	if (ret) {
-		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__, __LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		proc_detach_failure(proc_context, msg, ret); 
 		return -1;
 	}
@@ -162,8 +162,7 @@ process_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
                 RTE_CACHE_LINE_SIZE, rte_socket_id());
         if (buffer == NULL) {
             LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
-                    "structure: %s (%s:%d)\n", rte_strerror(rte_errno),
-                    __FILE__, __LINE__);
+                    "structure: %s ", rte_strerror(rte_errno));
             return -1;
         }
 
@@ -171,7 +170,7 @@ process_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 
         if (gx_ccr_pack(&(ccr_request.data.ccr),
                     (unsigned char *)(buffer + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num)), msglen) == 0) {
-            LOG_MSG(LOG_ERROR, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
+            LOG_MSG(LOG_ERROR, "ERROR: Packing CCR Buffer... ");
             return -1;
         }
 		gx_send(my_sock.gx_app_sock, buffer,
@@ -353,7 +352,7 @@ process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *ms
 
 	/*Retrive the session information based on session id. */
 	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0){
-		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu\n", context->pdns[ebi_index]->seid);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", context->pdns[ebi_index]->seid);
 		return -1;
 	}
 
@@ -395,7 +394,7 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 		/* Retrive Gx_context based on Sess ID. */
 		ret = get_gx_context((uint8_t *)pdn->gx_sess_id,&gx_context);
 		if (ret < 0) {
-			LOG_MSG(LOG_ERROR, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
+			LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", 
 					pdn->gx_sess_id);
 			return -1;
 		}
@@ -413,7 +412,7 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 
 		/* VS: Fill the Credit Crontrol Request to send PCRF */
 		if(fill_ccr_request(&ccr_request->data.ccr, context, ebi_index, pdn->gx_sess_id) != 0) {
-			LOG_MSG(LOG_ERROR, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
+			LOG_MSG(LOG_ERROR, "Failed CCR request filling process");
 			return -1;
 		}
 		/* Update UE State */
@@ -467,7 +466,7 @@ fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 					&upf_ctx)) < 0) {
-		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return;
 	}
 
@@ -513,7 +512,7 @@ fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 				break;
 
 			default :
-				LOG_MSG(LOG_DEBUG,"default pfcp sess mod req\n");
+				LOG_MSG(LOG_DEBUG,"default pfcp sess mod req");
 				break;
 		}
 	set_pfcpsmreqflags(&(pfcp_sess_mod_req->pfcpsmreq_flags));

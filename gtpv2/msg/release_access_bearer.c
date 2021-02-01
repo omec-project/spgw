@@ -80,7 +80,7 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
-        LOG_MSG(LOG_WARN, "Retransmitted RAB received. Old RAB is in progress\n");
+        LOG_MSG(LOG_WARN, "Retransmitted RAB received. Old RAB is in progress");
         increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ_DROP, s11_peer_sockaddr->sin_addr.s_addr);
         return -1;
     }

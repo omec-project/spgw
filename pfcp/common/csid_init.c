@@ -50,7 +50,7 @@ add_csid_entry(csid_key *key, uint16_t csid)
 						key, tmp);
 		if (ret) {
 			LOG_MSG(LOG_ERROR, "Failed to add entry for csid : %u"
-					"\n\tError= %s\n", *tmp,
+					"\n\tError= %s", *tmp,
 					rte_strerror(abs(ret)));
 			return -1;
 		}
@@ -158,7 +158,7 @@ get_csid_entry(csid_key *key)
 		csid = rte_zmalloc_socket(NULL, sizeof(csid_t),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (csid == NULL) {
-			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid\n");
+			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid");
 		}
 
 		/* Assign the local csid */
@@ -205,7 +205,7 @@ del_csid_entry(csid_key *key)
 	/* Free data from hash */
 	rte_free(csid);
 
-	LOG_MSG(LOG_DEBUG, "Peer node CSID entry deleted\n");
+	LOG_MSG(LOG_DEBUG, "Peer node CSID entry deleted");
 
 	return 0;
 }
@@ -367,7 +367,7 @@ get_sess_csid_entry(uint16_t csid)
 		tmp = rte_zmalloc_socket(NULL, sizeof(sess_csid),
 				RTE_CACHE_LINE_SIZE, rte_socket_id());
 		if (tmp == NULL) {
-			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid\n");
+			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid");
 			return NULL;
 		}
 
@@ -480,49 +480,49 @@ init_fqcsid_hash_tables(void)
 
 	csid_by_peer_node_hash = rte_hash_create(&pfcp_hash_params[0]);
 	if (!csid_by_peer_node_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[0].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}
 
 	peer_csids_by_csid_hash = rte_hash_create(&pfcp_hash_params[1]);
 	if (!peer_csids_by_csid_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[1].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}
 
 	seids_by_csid_hash = rte_hash_create(&pfcp_hash_params[2]);
 	if (!seids_by_csid_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[2].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}
 
 	local_csids_by_node_addr_hash = rte_hash_create(&pfcp_hash_params[3]);
 	if (!local_csids_by_node_addr_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[3].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}
 
 	local_csids_by_mmecsid_hash = rte_hash_create(&pfcp_hash_params[4]);
 	if (!local_csids_by_mmecsid_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[4].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}
 
 	local_csids_by_pgwcsid_hash = rte_hash_create(&pfcp_hash_params[5]);
 	if (!local_csids_by_pgwcsid_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[5].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}
 
 	local_csids_by_sgwcsid_hash = rte_hash_create(&pfcp_hash_params[6]);
 	if (!local_csids_by_sgwcsid_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[6].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}

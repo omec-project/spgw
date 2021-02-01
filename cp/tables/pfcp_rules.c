@@ -74,35 +74,35 @@ init_pfcp_tables(void)
 
 	pfcp_cntxt_hash = rte_hash_create(&pfcp_hash_params[0]);
 	if (!pfcp_cntxt_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[0].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}
 
 	rule_name_bearer_id_map_hash = rte_hash_create(&pfcp_hash_params[1]);
 	if (!rule_name_bearer_id_map_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[1].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}
 
 	pdr_entry_hash = rte_hash_create(&pfcp_hash_params[2]);
 	if (!pdr_entry_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[2].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}
 
 	qer_entry_hash = rte_hash_create(&pfcp_hash_params[3]);
 	if (!qer_entry_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[3].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}
 
 	urr_entry_hash = rte_hash_create(&pfcp_hash_params[4]);
 	if (!urr_entry_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
+		rte_panic("%s: hash create failed: %s (%u)",
 				pfcp_hash_params[4].name,
 		    rte_strerror(rte_errno), rte_errno);
 	}
@@ -133,18 +133,16 @@ add_rule_name_entry(const rule_name_key_t rule_key, bearer_id_t *bearer)
 		ret = rte_hash_add_key_data(rule_name_bearer_id_map_hash,
 						&rule_key, bearer);
 		if (ret) {
-			LOG_MSG(LOG_ERROR, "%s:%d Failed to add rule entry for Rule_Name = %s"
-					"\n\tError= %s\n",
-					__func__, __LINE__, rule_key.rule_name,
-					rte_strerror(abs(ret)));
+			LOG_MSG(LOG_ERROR, "Failed to add rule entry for Rule_Name = %s"
+					" Error= %s", rule_key.rule_name, rte_strerror(abs(ret)));
 			return -1;
 		}
 	} else {
 		memcpy(tmp, bearer, sizeof(bearer_id_t));
 	}
 
-	LOG_MSG(LOG_DEBUG, "%s: Rule Name entry add for Rule_Name:%s, Bearer_id:%u\n",
-			__func__, rule_key.rule_name, bearer->bearer_id);
+	LOG_MSG(LOG_DEBUG, "Rule Name entry add for Rule_Name:%s, Bearer_id:%u",
+			rule_key.rule_name, bearer->bearer_id);
 	return 0;
 }
 
@@ -167,13 +165,13 @@ get_rule_name_entry(const rule_name_key_t rule_key)
 				&rule_key, (void **)&bearer);
 
 	if ( ret < 0) {
-		/* LOG_MSG(LOG_ERROR, "%s:%d Entry not found for Rule_Name:%s...\n",
-				__func__, __LINE__, rule_key.rule_name); */
+		/* LOG_MSG(LOG_ERROR, "Entry not found for Rule_Name:%s...",
+				rule_key.rule_name); */
 		return -1;
 	}
 
-	LOG_MSG(LOG_DEBUG, "%s: Rule_Name:%s, Bearer_ID:%u\n",
-			__func__, rule_key.rule_name, bearer->bearer_id);
+	LOG_MSG(LOG_DEBUG, "Rule_Name:%s, Bearer_ID:%u",
+			rule_key.rule_name, bearer->bearer_id);
 	return bearer->bearer_id;
 
 }
@@ -199,8 +197,9 @@ del_rule_name_entry(const rule_name_key_t rule_key)
 		/* Rule Name Entry is present. Delete Rule Name Entry */
 		ret = rte_hash_del_key(rule_name_bearer_id_map_hash, &rule_key);
 		if ( ret < 0) {
-			LOG_MSG(LOG_ERROR, "Entry not found for Rule_Name:%s...",
-						rule_key.rule_name);
+            // TODO : if Gx interface is not used then rule is not added in bearer so delete always fails.
+			//LOG_MSG(LOG_ERROR, "Entry not found for Rule_Name:%s...",
+			//			rule_key.rule_name);
 			return -1;
 		}
 		LOG_MSG(LOG_DEBUG, "Rule_Name:%s is found ",
@@ -243,10 +242,8 @@ add_pdr_entry(uint16_t rule_id, pdr_t *cntxt)
 		ret = rte_hash_add_key_data(pdr_entry_hash,
 						&rule_id, cntxt);
 		if (ret) {
-			LOG_MSG(LOG_ERROR, "%s:%d Failed to add entry for PDR_ID = %u"
-					"\n\tError= %s\n",
-					__func__, __LINE__, rule_id,
-					rte_strerror(abs(ret)));
+			LOG_MSG(LOG_ERROR, "Failed to add entry for PDR_ID = %u"
+					"\tError= %s", rule_id, rte_strerror(abs(ret)));
 			return -1;
 		}
 	} else {
@@ -274,13 +271,11 @@ pdr_t *get_pdr_entry(uint16_t rule_id)
 				&rule_id, (void **)&cntxt);
 
 	if ( ret < 0) {
-		LOG_MSG(LOG_ERROR, "%s:%d Entry not found for PDR_ID:%u...\n",
-				__func__, __LINE__, rule_id);
+		LOG_MSG(LOG_ERROR, "Entry not found for PDR_ID:%u...", rule_id);
 		return NULL;
 	}
 
-	LOG_MSG(LOG_DEBUG, "%s: PDR_ID:%u\n",
-			__func__, rule_id);
+	LOG_MSG(LOG_DEBUG, "PDR_ID:%u", rule_id);
 	return cntxt;
 
 }
@@ -330,8 +325,7 @@ del_pdr_entry(uint16_t rule_id)
 		ret = rte_hash_del_key(pdr_entry_hash, &rule_id);
 
 		if ( ret < 0) {
-			LOG_MSG(LOG_ERROR, "%s:%d Entry not found for PDR_ID:%u...\n",
-						__func__, __LINE__, rule_id);
+			LOG_MSG(LOG_ERROR, "Entry not found for PDR_ID:%u...", rule_id);
 			return -1;
 		}
 	}
@@ -340,8 +334,7 @@ del_pdr_entry(uint16_t rule_id)
 	rte_free(cntxt);
 	cntxt = NULL;
 
-	LOG_MSG(LOG_DEBUG, "%s: PDR_ID:%u\n",
-			__func__, rule_id);
+	LOG_MSG(LOG_DEBUG, "PDR_ID:%u", rule_id);
 
 	return 0;
 }
@@ -369,18 +362,15 @@ add_pfcp_cntxt_entry(uint64_t sess_id, struct pfcp_cntxt *cntxt)
 		ret = rte_hash_add_key_data(pfcp_cntxt_hash,
 						&sess_id, cntxt);
 		if (ret) {
-			LOG_MSG(LOG_ERROR, "%s:%d Failed to add entry for Sess_id = %lu"
-					"\n\tError= %s\n",
-					__func__, __LINE__, sess_id,
-					rte_strerror(abs(ret)));
+			LOG_MSG(LOG_ERROR, "Failed to add entry for Sess_id = %lu"
+					"\tError= %s", sess_id, rte_strerror(abs(ret)));
 			return -1;
 		}
 	} else {
 		memcpy(tmp, cntxt, sizeof(struct pfcp_cntxt));
 	}
 
-	LOG_MSG(LOG_DEBUG, "%s: PFCP context entry add for Sess_Id:%lu\n",
-			__func__, sess_id);
+	LOG_MSG(LOG_DEBUG, "PFCP context entry add for Sess_Id:%lu", sess_id);
 	return 0;
 }
 
@@ -403,13 +393,11 @@ get_pfcp_cntxt_entry(uint64_t sess_id)
 				&sess_id, (void **)&cntxt);
 
 	if ( ret < 0) {
-		LOG_MSG(LOG_ERROR, "%s:%d Entry not found for Sess_Id:%lu...\n",
-				__func__, __LINE__, sess_id);
+		LOG_MSG(LOG_ERROR, "Entry not found for Sess_Id:%lu...", sess_id);
 		return NULL;
 	}
 
-	LOG_MSG(LOG_DEBUG, "%s: Sess_Id:%lu\n",
-			__func__, sess_id);
+	LOG_MSG(LOG_DEBUG, "Sess_Id:%lu", sess_id);
 	return cntxt;
 
 }
@@ -436,8 +424,7 @@ del_pfcp_cntxt_entry(uint64_t sess_id)
 		ret = rte_hash_del_key(pfcp_cntxt_hash, &sess_id);
 
 		if ( ret < 0) {
-			LOG_MSG(LOG_ERROR, "%s:%d Entry not found for Sess_Id:%lu...\n",
-						__func__, __LINE__, sess_id);
+			LOG_MSG(LOG_ERROR, "Entry not found for Sess_Id:%lu...", sess_id);
 			return -1;
 		}
 	}
@@ -445,8 +432,7 @@ del_pfcp_cntxt_entry(uint64_t sess_id)
 	/* Free data from hash */
 	rte_free(cntxt);
 
-	LOG_MSG(LOG_DEBUG, "%s: Sess_Id:%lu\n",
-			__func__, sess_id);
+	LOG_MSG(LOG_DEBUG, "Sess_Id:%lu", sess_id);
 
 	return 0;
 }
@@ -475,10 +461,8 @@ add_qer_entry(uint32_t qer_id, qer_t *cntxt)
 		ret = rte_hash_add_key_data(qer_entry_hash,
 						&qer_id, cntxt);
 		if (ret) {
-			LOG_MSG(LOG_ERROR, "%s:%d Failed to add QER entry for QER_ID = %u"
-					"\n\tError= %s\n",
-					__func__, __LINE__, qer_id,
-					rte_strerror(abs(ret)));
+			LOG_MSG(LOG_ERROR, "Failed to add QER entry for QER_ID = %u"
+					"\tError= %s", qer_id, rte_strerror(abs(ret)));
 			return -1;
 		}
 	} else {
@@ -538,8 +522,7 @@ del_qer_entry(uint32_t qer_id)
 		ret = rte_hash_del_key(qer_entry_hash, &qer_id);
 
 		if ( ret < 0) {
-			LOG_MSG(LOG_ERROR, "%s:%d Entry not found for QER_ID:%u...\n",
-						__func__, __LINE__, qer_id);
+			LOG_MSG(LOG_ERROR, "Entry not found for QER_ID:%u...", qer_id);
 			return -1;
 		}
 	}
@@ -548,8 +531,7 @@ del_qer_entry(uint32_t qer_id)
 	if (cntxt != NULL)
 		rte_free(cntxt);
 
-	LOG_MSG(LOG_DEBUG, "%s: QER_ID:%u\n",
-			__func__, qer_id);
+	LOG_MSG(LOG_DEBUG, "QER_ID:%u", qer_id);
 
 	return 0;
 }
@@ -578,18 +560,15 @@ add_urr_entry(uint32_t urr_id, urr_t *cntxt)
 		ret = rte_hash_add_key_data(urr_entry_hash,
 						&urr_id, cntxt);
 		if (ret) {
-			LOG_MSG(LOG_ERROR, "%s:%d Failed to add URR entry for URR_ID = %u"
-					"\n\tError= %s\n",
-					__func__, __LINE__, urr_id,
-					rte_strerror(abs(ret)));
+			LOG_MSG(LOG_ERROR, "Failed to add URR entry for URR_ID = %u"
+					"\tError= %s", urr_id, rte_strerror(abs(ret)));
 			return -1;
 		}
 	} else {
 		memcpy(tmp, cntxt, sizeof(urr_t));
 	}
 
-	LOG_MSG(LOG_DEBUG, "%s: URR entry add for URR_ID:%u\n",
-			__func__, urr_id);
+	LOG_MSG(LOG_DEBUG, "URR entry add for URR_ID:%u", urr_id);
 	return 0;
 }
 
@@ -611,13 +590,11 @@ urr_t *get_urr_entry(uint32_t urr_id)
 				&urr_id, (void **)&cntxt);
 
 	if ( ret < 0) {
-		LOG_MSG(LOG_ERROR, "%s:%d Entry not found for URR_ID:%u...\n",
-				__func__, __LINE__, urr_id);
+		LOG_MSG(LOG_ERROR, "Entry not found for URR_ID:%u...", urr_id);
 		return NULL;
 	}
 
-	LOG_MSG(LOG_DEBUG, "%s: URR_ID:%u\n",
-			__func__, urr_id);
+	LOG_MSG(LOG_DEBUG, "URR_ID:%u", urr_id);
 	return cntxt;
 
 }
@@ -644,8 +621,7 @@ del_urr_entry(uint32_t urr_id)
 		ret = rte_hash_del_key(urr_entry_hash, &urr_id);
 
 		if ( ret < 0) {
-			LOG_MSG(LOG_ERROR, "%s:%d Entry not found for URR_ID:%u...\n",
-						__func__, __LINE__, urr_id);
+			LOG_MSG(LOG_ERROR, "Entry not found for URR_ID:%u...", urr_id);
 			return -1;
 		}
 	}
@@ -653,8 +629,7 @@ del_urr_entry(uint32_t urr_id)
 	/* Free data from hash */
 	rte_free(cntxt);
 
-	LOG_MSG(LOG_DEBUG, "%s: URR_ID:%u\n",
-			__func__, urr_id);
+	LOG_MSG(LOG_DEBUG, "URR_ID:%u", urr_id);
 
 	return 0;
 }

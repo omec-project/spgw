@@ -17,10 +17,10 @@ int handle_delete_pdn_conn_set_req(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 	msg->proc = RESTORATION_RECOVERY_PROC;
 	msg->event = DEL_PDN_CONN_SET_REQ_RCVD_EVNT;
 
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 			" Msg_Type:%s[%u],"
-			"State:%s, Event:%s\n",
-			__func__, gtp_type_str(msg->msg_type), msg->msg_type,
+			"State:%s, Event:%s",
+			gtp_type_str(msg->msg_type), msg->msg_type,
 			get_state_string(msg->state), get_event_string(msg->event));
 
     return 0;

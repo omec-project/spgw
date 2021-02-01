@@ -30,7 +30,7 @@ acquire_ip(struct in_addr *ipv4)
 {
 	static uint32_t next_ip_index;
 	if (unlikely(next_ip_index == LDB_ENTRIES_DEFAULT)) {
-		LOG_MSG(LOG_ERROR, "IP Pool depleted\n");
+		LOG_MSG(LOG_ERROR, "IP Pool depleted");
 		return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
 	}
 	ipv4->s_addr = GET_UE_IP(next_ip_index++);
@@ -81,7 +81,7 @@ add_ipaddr_in_pool(struct ip_table *search_tree, struct in_addr host)
 		if (search_tree->octet[byte] == NULL) {
 			search_tree->octet[byte] = calloc(1, sizeof(struct ip_table));
 			if (search_tree->octet[byte] == NULL)
-				rte_panic("Unable to allocate memory for octet!\n");
+				rte_panic("Unable to allocate memory for octet!");
 		}
 		search_tree = search_tree->octet[byte];
 	}

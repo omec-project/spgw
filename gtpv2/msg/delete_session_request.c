@@ -57,7 +57,7 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 		/* TODO: should be responding with response indicating error
 		 * in request */
 		LOG_MSG(LOG_ERROR,
-			"%s : Received delete session without ebi! - dropping\n", __func__);
+			"Received delete session without ebi! - dropping");
 		return GTPV2C_CAUSE_INVALID_MESSAGE_FORMAT;
 	}
 
@@ -65,18 +65,18 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 	if (!(context->bearer_bitmap & (1 << ebi_index))) {
 		LOG_MSG(LOG_ERROR,
 		    "Received delete session on non-existent EBI - "
-		    "Dropping packet\n");
-		LOG_MSG(LOG_ERROR, "ebi %u\n", lbi.ebi_ebi);
-		LOG_MSG(LOG_ERROR, "ebi_index %u\n", ebi_index);
-		LOG_MSG(LOG_ERROR, "bearer_bitmap %04x\n", context->bearer_bitmap);
-		LOG_MSG(LOG_ERROR, "mask %04x\n", (1 << ebi_index));
+		    "Dropping packet");
+		LOG_MSG(LOG_ERROR, "ebi %u", lbi.ebi_ebi);
+		LOG_MSG(LOG_ERROR, "ebi_index %u", ebi_index);
+		LOG_MSG(LOG_ERROR, "bearer_bitmap %04x", context->bearer_bitmap);
+		LOG_MSG(LOG_ERROR, "mask %04x", (1 << ebi_index));
 		return GTPV2C_CAUSE_INVALID_MESSAGE_FORMAT;
 	}
 
 	pdn_connection_t *pdn = context->eps_bearers[ebi_index]->pdn;
 	if (!pdn) {
 		LOG_MSG(LOG_ERROR, "Received delete session on "
-				"non-existent EBI\n");
+				"non-existent EBI");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
 
@@ -90,35 +90,22 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 	eps_bearer_t *bearer = context->eps_bearers[ebi_index];
 	if (!bearer) {
 		LOG_MSG(LOG_ERROR,
-			"Received delete session on non-existent default EBI\n");
+			"Received delete session on non-existent default EBI");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
 
-#if 0
-#ifdef STATIC_ADDR_ALLOC /* ajay TODO */
-#ifdef MULTI_UPFS
-	struct dp_info *dp = context->upf_context->dp_info; 
-	if (dp != NULL && (IF_PDN_ADDR_STATIC(pdn))) {
-		struct in_addr host = {0};
-		host.s_addr = pdn->ipv4.s_addr;
-		release_ip_node(dp->static_pool_tree, host);
-	}
-#else
 	if (static_addr_pool != NULL && (IF_PDN_ADDR_STATIC(pdn))) {
 		struct in_addr host = {0};
 		host.s_addr = pdn->ipv4.s_addr;
 		release_ip_node(static_addr_pool, host); 
 	}
-#endif
-#endif
-#endif
 
 	if (cp_config->cp_type == SGWC) {
 		/*VS: Fill teid and ip address */
 		*s5s8_pgw_gtpc_teid = htonl(pdn->s5s8_pgw_gtpc_teid);
 		*s5s8_pgw_gtpc_ipv4 = htonl(pdn->s5s8_pgw_gtpc_ipv4.s_addr);
 
-		LOG_MSG(LOG_DEBUG, "s5s8_pgw_gtpc_teid:%u, s5s8_pgw_gtpc_ipv4:%u\n",
+		LOG_MSG(LOG_DEBUG, "s5s8_pgw_gtpc_teid:%u, s5s8_pgw_gtpc_ipv4:%u",
 				*s5s8_pgw_gtpc_teid, *s5s8_pgw_gtpc_ipv4);
 	}
 
@@ -145,7 +132,7 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 					context->s11_sgw_gtpc_teid,
 					si.bearer_id);
 		} else {
-			rte_panic("Incorrect provisioning of bearers\n");
+			rte_panic("Incorrect provisioning of bearers");
 		}
 	}
 #endif
@@ -196,7 +183,7 @@ process_delete_session_request(gtpv2c_header_t *gtpv2c_rx,
 				"\n\tpdn->s5s8_sgw_gtpc_teid= %X;"
 				"\n\tpdn->s5s8_pgw_gtpc_ipv4= %s;"
 				"\n\tpdn->s5s8_pgw_gtpc_teid= %X;"
-				"\n\tgen_delete_s5s8_session_request= %d\n",
+				"\n\tgen_delete_s5s8_session_request= %d",
 				cp_config->cp_type, process_sgwc_s5s8_ds_req_cnt++,
 				inet_ntoa(pdn->ipv4),
 				inet_ntoa(pdn->s5s8_sgw_gtpc_ipv4),
@@ -257,7 +244,7 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
-        LOG_MSG(LOG_ERROR, "Retransmitted DSReq received. Old DSReq is in progress\n");
+        LOG_MSG(LOG_ERROR, "Retransmitted DSReq received. Old DSReq is in progress");
         return -1;
     }
 
@@ -358,8 +345,7 @@ process_pgwc_s5s8_delete_session_request(del_sess_req_t *ds_req)
 
 	/* VS: Stored/Update the session information. */
 	if (get_sess_entry(_resp.seid, &resp) != 0) {
-		LOG_MSG(LOG_ERROR, "%s %s %d Failed to add response in entry in SM_HASH\n", __file__
-				,__func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 		return -1;
 	}
 
@@ -594,7 +580,7 @@ struct gw_info {
 //				"\n\tprocess_pgwc_s5s8_ds_req_cnt= %u;"
 //				"\n\tgtpv2c_s5s8_rx->teid_u.has_teid.teid= %X;"
 //				"\n\trte_hash_lookup_data("
-//					"ue_context_by_fteid_hash,..)= %d\n",
+//					"ue_context_by_fteid_hash,..)= %d",
 //				process_pgwc_s5s8_ds_req_cnt++,
 //				gtpv2c_rx->teid_u.has_teid.teid,
 //				ret);
@@ -616,7 +602,7 @@ struct gw_info {
 //		/* TODO: should be responding with response indicating error
 //		 * in request */
 //		LOG_MSG(LOG_ERROR, "Received delete session without ebi! - "
-//				"dropping\n");
+//				"dropping");
 //		return -EPERM;
 //	}
 //
@@ -630,12 +616,12 @@ struct gw_info {
 //	if (!(context->bearer_bitmap & (1 << ebi_index))) {
 //		LOG_MSG(LOG_ERROR,
 //		    "Received delete session on non-existent EBI - "
-//		    "Dropping packet\n");
-//		LOG_MSG(LOG_ERROR, "ebi %u\n",
+//		    "Dropping packet");
+//		LOG_MSG(LOG_ERROR, "ebi %u",
 //		    *IE_TYPE_PTR_FROM_GTPV2C_IE(uint8_t, ebi_ei_to_be_removed));
-//		LOG_MSG(LOG_ERROR, "ebi_index %u\n", ebi_index);
-//		LOG_MSG(LOG_ERROR, "bearer_bitmap %04x\n", context->bearer_bitmap);
-//		LOG_MSG(LOG_ERROR, "mask %04x\n", (1 << ebi_index));
+//		LOG_MSG(LOG_ERROR, "ebi_index %u", ebi_index);
+//		LOG_MSG(LOG_ERROR, "bearer_bitmap %04x", context->bearer_bitmap);
+//		LOG_MSG(LOG_ERROR, "mask %04x", (1 << ebi_index));
 //		return -EPERM;
 //	}
 //
@@ -643,7 +629,7 @@ struct gw_info {
 //	resp->seid = context->pdns[ebi_index]->seid;  //NK:change for seid
 //	if (!pdn) {
 //		LOG_MSG(LOG_ERROR, "Received delete session on "
-//				"non-existent EBI\n");
+//				"non-existent EBI");
 //		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 //	}
 //
@@ -667,7 +653,7 @@ struct gw_info {
 //			"\n\tpdn->s5s8_pgw_gtpc_ipv4= %s;"
 //			"\n\tpdn->s5s8_pgw_gtpc_teid= %X;"
 //			"\n\trte_hash_lookup_data("
-//				"ue_context_by_fteid_hash,..)= %d\n",
+//				"ue_context_by_fteid_hash,..)= %d",
 //			process_pgwc_s5s8_ds_req_cnt++,
 //			inet_ntoa(pdn->ipv4),
 //			inet_ntoa(pdn->s5s8_sgw_gtpc_ipv4),
@@ -679,7 +665,7 @@ struct gw_info {
 //	eps_bearer_t *bearer = context->eps_bearers[ebi_index];
 //	if (!bearer) {
 //		LOG_MSG(LOG_ERROR, "Received delete session on non-existent "
-//				"default EBI\n");
+//				"default EBI");
 //		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 //	}
 //
@@ -713,7 +699,7 @@ struct gw_info {
 //			context->eps_bearers[i] = NULL;
 //			context->bearer_bitmap &= ~(1 << i);
 //		} else {
-//			rte_panic("Incorrect provisioning of bearers\n");
+//			rte_panic("Incorrect provisioning of bearers");
 //		}
 //	}
 //	--context->num_pdns;
@@ -751,7 +737,7 @@ struct gw_info {
 //
 //	if (pfcp_send(pfcp_fd, pfcp_msg,encoded,
 //				&context->upf_context.upf_sockaddr) < 0 )
-//		LOG_MSG(LOG_DEBUG,"Error sending: %i\n",errno);
+//		LOG_MSG(LOG_DEBUG,"Error sending: %i",errno);
 //	else {
 //	}
 //
@@ -764,7 +750,7 @@ struct gw_info {
 //
 //	/* VS: Stored/Update the session information. */
 //	if (get_sess_entry_seid(_resp.seid, &resp) != 0) {
-//		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH\n");
+//		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 //		return -1;
 //	}
 //
@@ -821,11 +807,11 @@ struct gw_info {
 //				"\n\tprocess_sgwc_s5s8_ds_rep_cnt= %u;"
 //				"\n\tgtpv2c_s5s8_rx->teid_u.has_teid.teid= %X;"
 //				"\n\trte_hash_lookup_data("
-//					"ue_context_by_fteid_hash,..)= %d\n",
+//					"ue_context_by_fteid_hash,..)= %d",
 //				process_sgwc_s5s8_ds_rsp_cnt++,
 //				gtpv2c_rx->teid_u.has_teid.teid,
 //				ret);
-//		LOG_MSG(LOG_DEBUG,"Conext not found\n\n");
+//		LOG_MSG(LOG_DEBUG,"Conext not found");
 //		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 //	}
 //
@@ -834,7 +820,7 @@ struct gw_info {
 //			"\n\tprocess_sgwc_s5s8_ds_rsp_cnt= %u;"
 //			"\n\tgtpv2c_rx->teid_u.has_teid.teid= %X"
 //			"\n\trte_hash_lookup_data("
-//				"ue_context_by_fteid_hash,..)= %d\n",
+//				"ue_context_by_fteid_hash,..)= %d",
 //			process_sgwc_s5s8_ds_rsp_cnt++,
 //			gtpv2c_rx->teid_u.has_teid.teid,
 //			ret);

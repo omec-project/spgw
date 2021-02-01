@@ -35,7 +35,7 @@ int handle_pfcp_session_delete_response(msg_info_t *msg)
 
 	/* Retrive the session information based on session id. */
     if(pfcp_trans == NULL) {
-        LOG_MSG(LOG_ERROR, "Received PFCP response and transaction not found \n");
+        LOG_MSG(LOG_ERROR, "Received PFCP response and transaction not found ");
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP_DROP, peer_addr->sin_addr.s_addr);
 		return -1;
     }
@@ -67,7 +67,7 @@ handle_pfcp_session_delete_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_
     int decoded = decode_pfcp_sess_del_rsp_t((uint8_t*)pfcp_rx, &msg->pfcp_msg.pfcp_sess_del_resp);
 
     if(decoded <=0 ) {
-        LOG_MSG(LOG_DEBUG, "DECODED bytes in Sess Del Resp is %d\n",
+        LOG_MSG(LOG_DEBUG, "DECODED bytes in Sess Del Resp is %d",
                 decoded);
 
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSMODRSP_DROP, peer_addr->sin_addr.s_addr);

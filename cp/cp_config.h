@@ -109,6 +109,7 @@ typedef struct cp_config
 }cp_config_t;
 
 extern cp_config_t *cp_config;
+extern struct ip_table *static_addr_pool;
 
 void init_config(void); 
 #endif

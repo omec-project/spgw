@@ -40,6 +40,7 @@
 #include "util.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_interface.h"
+#include "proc_initial_attach.h"
 
 static int
 assoication_setup_request(upf_context_t *upf_context);
@@ -94,7 +95,7 @@ association_setup_handler(proc_context_t *proc_context, msg_info_t *msg)
     LOG_MSG(LOG_DEBUG1,"Initiate PFCP association setup to UPF %s ", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
     ret = assoication_setup_request(upf_context);
 	if(ret) {
-		LOG_MSG(LOG_ERROR, "Error in setting up Association error: %d \n", ret);
+		LOG_MSG(LOG_ERROR, "Error in setting up Association error: %d ", ret);
         upf_context->state = UPF_SETUP_FAILED; 
         queue_stack_unwind_event(UPF_CONNECTION_SETUP_FAILED, (void *)upf_context, upf_pfcp_setup_failure);
 	    return -1;
@@ -139,8 +140,8 @@ handle_pfcp_association_setup_response(void *msg_t)
     transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
 
     if (pfcp_trans == NULL ) {
-        LOG_MSG(LOG_ERROR, "%s: transaction not found. Dropping association response message. from UPF IP:%s",
-                __func__, inet_ntoa(peer_addr->sin_addr));
+        LOG_MSG(LOG_ERROR, "transaction not found. Dropping association response message. from UPF IP:%s",
+                inet_ntoa(peer_addr->sin_addr));
         return -1;
     }
 
@@ -151,8 +152,7 @@ handle_pfcp_association_setup_response(void *msg_t)
     free(pfcp_trans);
 
 	if(msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED) {
-		LOG_MSG(LOG_DEBUG,
-				"Cause received  Association response is %d\n",
+		LOG_MSG(LOG_ERROR, "Cause received  Association response is %d",
 				msg->pfcp_msg.pfcp_ass_resp.cause.cause_value);
 
 		/* TODO: Add handling to send association to next upf
@@ -171,10 +171,10 @@ handle_pfcp_association_setup_response(void *msg_t)
 	msg->proc = INITIAL_PDN_ATTACH_PROC;
 	msg->event = PFCP_ASSOC_SETUP_RESP_RCVD_EVNT;
 
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:PFCP_ASSOCIATION_SETUP_RESPONSE[%u], UPF_IP:%u, "
-			"Procedure:%s, State:%s, Event:%s\n",
-			__func__, msg->msg_type, GET_UPF_ADDR(upf_context),
+			"Procedure:%s, State:%s, Event:%s",
+			msg->msg_type, GET_UPF_ADDR(upf_context),
 			get_proc_string(msg->proc),
 			get_state_string(msg->state), get_event_string(msg->event));
 #if 0
@@ -185,8 +185,9 @@ handle_pfcp_association_setup_response(void *msg_t)
     }
 #endif
     upf_context->state = PFCP_ASSOC_RESP_RCVD_STATE;
-    upf_context->up_supp_features =
-        msg->pfcp_msg.pfcp_ass_resp.up_func_feat.sup_feat;
+    upf_context->up_supp_features = msg->pfcp_msg.pfcp_ass_resp.up_func_feat.sup_feat;
+    upf_context->add_up_supp_features1 = msg->pfcp_msg.pfcp_ass_resp.up_func_feat.add_sup_feat1;
+    upf_context->add_up_supp_features2 = msg->pfcp_msg.pfcp_ass_resp.up_func_feat.add_sup_feat2;
 
     switch (cp_config->cp_type)
     {
@@ -284,7 +285,7 @@ assoication_setup_request(upf_context_t *upf_context)
     uint32_t seq_num;
     pfcp_assn_setup_req_t pfcp_ass_setup_req = {0};
 
-    LOG_MSG(LOG_DEBUG1, "Initiate PFCP setup to peer address = %s \n", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
+    LOG_MSG(LOG_DEBUG1, "Initiate PFCP setup to peer address = %s ", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
 
     seq_num = fill_pfcp_association_setup_req(&pfcp_ass_setup_req);
     RTE_SET_USED(seq_num);
@@ -317,7 +318,7 @@ process_assoc_resp_timeout_handler(void *data1)
 {
     transData_t *data = (transData_t *)data1;
     upf_context_t *upf_ctxt = (upf_context_t *)(data->cb_data);
-    LOG_MSG(LOG_ERROR, "PFCP association response timeout from %s  \n",
+    LOG_MSG(LOG_ERROR, "PFCP association response timeout from %s  ",
           inet_ntoa(upf_ctxt->upf_sockaddr.sin_addr));
     // transaction will be freed in the cleanup 
     upf_pfcp_setup_failure((void *)upf_ctxt, PFCP_SETUP_TIMEOUT); 
@@ -360,13 +361,21 @@ void upf_pfcp_setup_success(void *data, uint16_t event)
     int ret = 0;
     RTE_SET_USED(ret);
 
-	LOG_MSG(LOG_DEBUG1, "Received PFCP association response from %s\n",inet_ntoa(upf_context->upf_sockaddr.sin_addr));
+	LOG_MSG(LOG_DEBUG1, "Received PFCP association response from %s",inet_ntoa(upf_context->upf_sockaddr.sin_addr));
 
     key = LIST_FIRST(&upf_context->pending_sub_procs);
     while (key != NULL) {
         LIST_REMOVE(key, procentries);
         csreq_proc = key->proc_context;
-        process_pfcp_sess_est_request(csreq_proc, upf_context);
+        pdn_connection_t *pdn = csreq_proc->pdn_context;
+
+        if(IF_PDN_ADDR_ALLOC_UPF(pdn) && (IS_UPF_SUPP_FEAT_UEIP(upf_context) == 0)) {
+            LOG_MSG(LOG_ERROR, "UPF does not support UE IP address allocation feature ");
+            proc_initial_attach_failure(csreq_proc, GTPV2C_CAUSE_REQUEST_REJECTED);
+        } else {
+            process_pfcp_sess_est_request(csreq_proc, upf_context);
+        }
+
         rte_free(key);
         key = LIST_FIRST(&upf_context->pending_sub_procs);
     }

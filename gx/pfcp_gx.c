@@ -177,7 +177,7 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
 			if(strncmp(str_fld[indx], "any", strlen("any")) != 0) {
                 LOG_MSG(LOG_DEBUG, "any not present in the filter ");
 				if( strstr(str_fld[indx], "/") != NULL) {
-                    LOG_MSG(LOG_DEBUG, "/ present in the filter \n");
+                    LOG_MSG(LOG_DEBUG, "/ present in the filter ");
 					int ip_token = 0;
 					char *ip_fld[2];
 					ip_token = rte_strsplit(str_fld[indx], strlen(str_fld[indx]), ip_fld, 2, '/');
@@ -395,8 +395,7 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
 #if 0
         /* VS: Maintain the Rule Name and Bearer ID  mapping with call id */
         if (add_rule_name_entry(key, &id) != 0) {
-            LOG_MSG(LOG_ERROR, "%s:%d Failed to add_rule_name_entry with rule_name\n",
-                    __func__, __LINE__);
+            LOG_MSG(LOG_ERROR, "Failed to add_rule_name_entry with rule_name");
             return -1;
         }
 #endif
@@ -445,7 +444,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 	rule_name_key_t rule_name = {0};
 	GxChargingRuleDefinition *rule_definition = NULL;
 
-  LOG_MSG(LOG_DEBUG, "pdn->policy.count %d, charging_rule_install->count %d \n", pdn->policy.count,
+  LOG_MSG(LOG_DEBUG, "pdn->policy.count %d, charging_rule_install->count %d ", pdn->policy.count,
                       charging_rule_install->count);
 
 	if(install_present)
@@ -540,10 +539,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 							    RTE_CACHE_LINE_SIZE, rte_socket_id());
 							if (context->dynamic_rules[cnt] == NULL) {
 								LOG_MSG(LOG_ERROR, "Failure to allocate dynamic rule memory "
-										"structure: %s (%s:%d)\n",
-										rte_strerror(rte_errno),
-										__file__,
-										__LINE__);
+										"structure: %s ", rte_strerror(rte_errno));
 								return -1;
 							}
 
@@ -569,7 +565,7 @@ check_for_rules_on_default_bearer(pdn_connection_t *pdn)
 			(compare_default_bearer_qos(&pdn->policy.default_bearer_qos,
 					&pcc_rule->dyn_rule->qos) == 0))
         {
-            LOG_MSG(LOG_DEBUG,"check_for_rules_on_default_bearer - installing rules on default bearer ");
+            LOG_MSG(LOG_DEBUG,"installing rules on default bearer ");
             /* Adding rule and bearer id to a hash */
             bearer_id_t *id;
             id = malloc(sizeof(bearer_id_t));
@@ -627,9 +623,8 @@ retrieve_bearer_id(pdn_connection_t *pdn, GxCCA *cca)
 						if (ret == 0)
 							return id;
 					} else {
-						LOG_MSG(LOG_ERROR, "%s:%s:%d AVP:charging_rule_definition missing:"
-								"AVP:Qos Information \n",
-								__file__, __func__, __LINE__);
+						LOG_MSG(LOG_ERROR, "AVP:charging_rule_definition missing:"
+								"AVP:Qos Information ");
 						return -1;
 					}
 				}
@@ -652,8 +647,7 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 	/* Extract the call id from session id */
 	ret = retrieve_call_id((char *)&cca->session_id.val, &call_id);
 	if (ret < 0) {
-	        LOG_MSG(LOG_ERROR, "%s:No Call Id found from session id:%s\n", __func__,
-	                        cca->session_id.val);
+	        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s", cca->session_id.val);
 	        return -1;
 	}
 
@@ -661,8 +655,7 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 	pdn_cntxt = get_pdn_conn_entry(call_id);
 	if (pdn_cntxt == NULL)
 	{
-	      LOG_MSG(LOG_ERROR, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
-	                          __func__, call_id);
+	      LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);
 	      return -1;
 	}
 	*_pdn = pdn_cntxt;
@@ -734,8 +727,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	upd_bearer_req_t ubr_req = {0};
 
 	if (get_sess_entry_seid(pdn->seid, &context) != 0){
-		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-				__func__, __LINE__, pdn->seid);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu",pdn->seid);
 		return DIAMETER_ERROR_USER_UNKNOWN;
 	}
     assert(pdn->context == context);
@@ -763,9 +755,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 
 			bearer = get_bearer(pdn, &pdn->policy.pcc_rule[idx].dyn_rule->qos);
 			if(bearer == NULL){
-				LOG_MSG(LOG_ERROR,
-						"%s:%d Bearer return is Null for that Qos recived in RAR\n",
-				 		__func__, __LINE__);
+				LOG_MSG(LOG_ERROR, "Bearer return is Null for that Qos recived in RAR");
 				return DIAMETER_ERROR_USER_UNKNOWN;
 
 			}
@@ -807,8 +797,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	/* Retrive Gx_context based on Sess ID. */
 	ret = get_gx_context((uint8_t*)pdn->gx_sess_id, &gx_context);
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
-				pdn->gx_sess_id);
+		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 		return DIAMETER_UNKNOWN_SESSION_ID;
 	}
 

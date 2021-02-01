@@ -126,8 +126,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	/* Retrive Gx_context based on Sess ID. */
 	ret = get_gx_context((uint8_t *)pdn->gx_sess_id, &gx_context);
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
-				pdn->gx_sess_id);
+		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 		return -1;
 	}
 
@@ -144,7 +143,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 
 	/* VS: Fill the Credit Crontrol Request to send PCRF */
 	if(fill_ccr_request(&ccr_request.data.ccr, pdn->context, ebi_index, pdn->gx_sess_id) != 0) {
-		LOG_MSG(LOG_ERROR, "%s:%d Failed CCR request filling process\n", __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Failed CCR request filling process");
 		return -1;
 	}
 	/* Update UE State */
@@ -161,10 +160,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (buffer == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+				"structure: %s ", rte_strerror(rte_errno));
 		return -1;
 	}
 
@@ -172,7 +168,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 
 	if (gx_ccr_pack(&(ccr_request.data.ccr),
 				(unsigned char *)(buffer + sizeof(ccr_request.msg_type)+sizeof(ccr_request.seq_num)), msglen) == 0) {
-		LOG_MSG(LOG_ERROR, "ERROR:%s:%d Packing CCR Buffer... \n", __func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "ERROR: Packing CCR Buffer... ");
 		return -1;
 	}
 
@@ -257,9 +253,7 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 
 	/* Delete UE context entry from IMSI Hash */
 	if (ue_context_delete_entry_imsiKey(context->imsi) < 0) {
-		LOG_MSG(LOG_ERROR,
-				"%s %s - Error on ue_context_by_imsi_hash del\n",__file__,
-				strerror(ret));
+		LOG_MSG(LOG_ERROR, "%s - Error on ue_context_by_imsi_hash del", strerror(ret));
 	}
 	rte_free(context);
 	context = NULL;
@@ -290,8 +284,7 @@ cleanup_sess_by_csid_entry(fqcsid_t *csids, uint8_t iface)
 
 			/* Delete UE context entry from UE Hash */
 			if (ue_context_delete_entry_teidKey(teid_key) < 0) {
-				LOG_MSG(LOG_ERROR,
-						"%s - Error on ue_context_by_fteid_hash del\n", __file__);
+				LOG_MSG(LOG_ERROR, "Error on ue_context_by_fteid_hash del");
 			}
 		}
 	}
@@ -302,7 +295,7 @@ cleanup_sess_by_csid_entry(fqcsid_t *csids, uint8_t iface)
 int8_t
 del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 {
-	LOG_MSG(LOG_DEBUG, "%s:START\n", __func__);
+	LOG_MSG(LOG_DEBUG, "START");
 	int ret = 0;
 	uint16_t payload_length = 0;
 	fqcsid_t csids = {0};
@@ -443,7 +436,7 @@ del_peer_node_sess(uint32_t node_addr, uint8_t iface)
 					" Error on delete upf context ");
 		}
 	}
-	LOG_MSG(LOG_DEBUG, "%s:END\n", __func__);
+	LOG_MSG(LOG_DEBUG, "END");
 	return 0;
 }
 

@@ -91,13 +91,14 @@ ue_context_entry_add_imsiKey(ue_context_t *context)
 }
 
 int
-ue_context_entry_lookup_imsiKey(uint64_t imsi, ue_context_t **entry)
+ue_context_entry_lookup_imsiKey(uint64_t imsi, ue_context_t **entry, bool log)
 {
 	int ret = rte_hash_lookup_data(ue_context_by_imsi_hash,
 			(const void*) &(imsi), (void **) entry);
 
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN UE HASH [%lu]", imsi);
+        if(log == true)
+		  LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN UE HASH [%lu]", imsi);
 		return -1;
 	}
 	return 0;

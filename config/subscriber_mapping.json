@@ -45,6 +45,7 @@
         "tag1": "BW"
       },
       "user-plane": "spgwu-headless",
+      "global-address": true,
       "access-tags": {
         "tag1": "ACC"
       }

@@ -60,7 +60,7 @@ test_event_handler(void *data, uint16_t evt_id)
 	    gx_msg rar_request = {0};
 		uint16_t msglen = 0;
 		char *rar_buffer = NULL;
-        LOG_MSG(LOG_INFO, "Received Test events for session Id = %s\n",gx_ctxt->gx_sess_id);
+        LOG_MSG(LOG_INFO, "Received Test events for session Id = %s",gx_ctxt->gx_sess_id);
         rar_request.data.cp_rar.presence.session_id = PRESENT;
         rar_request.data.cp_rar.session_id.len = strlen(gx_ctxt->gx_sess_id);
         memcpy(rar_request.data.cp_rar.session_id.val, gx_ctxt->gx_sess_id, strlen(gx_ctxt->gx_sess_id));
@@ -157,7 +157,7 @@ init_gx_mock_interface(void)
 void 
 handle_unknown_mock_msg(void *event)
 {
-    LOG_MSG(LOG_ERROR, "Received unknown mock msg event %p\n",event);
+    LOG_MSG(LOG_ERROR, "Received unknown mock msg event %p",event);
     return;
 }
 
@@ -169,7 +169,7 @@ handle_mock_create_bearer_request_msg(void *evt)
     msg_info_t *msg = calloc(1, sizeof(msg_info_t));
     outgoing_pkts_event_t *event = (outgoing_pkts_event_t *)evt;
 
-    LOG_MSG(LOG_DEBUG, "Received mock event %p\n",event);
+    LOG_MSG(LOG_DEBUG, "Received mock event %p",event);
 
     if((ret = decode_create_bearer_req((uint8_t *) event->payload,
                     &msg->gtpc_msg.cb_req) == 0))

@@ -63,9 +63,7 @@ start_transaction_timer(void *cb_data,
 	if(trans_entry == NULL )
 	{
 		LOG_MSG(LOG_ERROR, "Failure to allocate transaction entry entry :"
-				"%s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__, __LINE__);
+				"%s ", rte_strerror(rte_errno));
 		return NULL;
 	}
 	trans_entry->cb_data = (void *) cb_data; 
@@ -75,14 +73,13 @@ start_transaction_timer(void *cb_data,
 
 	if (!init_timer(&trans_entry->rt, cp_config->request_timeout, cb_retry, (void *)trans_entry))
 	{
-		LOG_MSG(LOG_ERROR,"%s:%s:%u =>%s - initialization of trans timer failed erro no %d\n",
-				__FILE__, __func__, __LINE__, getPrintableTime(), errno);
+		LOG_MSG(LOG_ERROR,"%s - initialization of trans timer failed erro no %d",
+				getPrintableTime(), errno);
 		return NULL;
 	}
 
     if (starttimer(&trans_entry->rt) < 0) {
-        LOG_MSG(LOG_ERROR, "%s:%s:%u Periodic Timer failed to start...\n",
-                __FILE__, __func__, __LINE__);
+        LOG_MSG(LOG_ERROR, "Periodic Timer failed to start...");
     }
 	return(trans_entry);
 }
@@ -163,11 +160,11 @@ void pfcp_timer_retry_send(int fd, transData_t *t_tx, struct sockaddr_in *peer)
         bytes_tx = sendto(fd, t_tx->buf, t_tx->buf_len, 0,
                 (struct sockaddr *)peer, sizeof(struct sockaddr_in));
 
-        LOG_MSG(LOG_INFO,"SPGWC - retransmitted PFCP message \n");
+        LOG_MSG(LOG_INFO,"SPGWC - retransmitted PFCP message ");
 
         if (bytes_tx != (int) t_tx->buf_len) {
             LOG_MSG(LOG_ERROR, "Transmitted Incomplete Timer Retry Message:"
-                    "%u of %d tx bytes : %s\n",
+                    "%u of %d tx bytes : %s",
                     t_tx->buf_len, bytes_tx, strerror(errno));
         }
     }

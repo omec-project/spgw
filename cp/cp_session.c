@@ -52,7 +52,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 				"\n\tprocess_pgwc_s5s8_ds_req_cnt= %u;"
 				"\n\tgtpv2c_s5s8_rx->teid_u.has_teid.teid= %X;"
 				"\n\trte_hash_lookup_data("
-				"ue_context_by_fteid_hash,..)= %d\n",
+				"ue_context_by_fteid_hash,..)= %d",
 				process_pgwc_s5s8_ds_req_cnt++,
 				ds_req->header.teid.has_teid.teid,
 				ret);
@@ -75,8 +75,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 	if(!ebi) {
 		/* TODO: should be responding with response indicating error
 		 * 		 * in request */
-		LOG_MSG(LOG_ERROR, "Received delete session without ebi! - "
-				"dropping\n");
+		LOG_MSG(LOG_ERROR, "Received delete session without ebi! - dropping");
 		return -EPERM;
 	}
 
@@ -87,28 +86,26 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 	if (!(context->bearer_bitmap & (1 << ebi_index))) {
 		LOG_MSG(LOG_ERROR,
 				"Received delete session on non-existent EBI - "
-				"Dropping packet\n");
-		/*LOG_MSG(LOG_ERROR, "ebi %u\n",
+				"Dropping packet");
+		/*LOG_MSG(LOG_ERROR, "ebi %u",
 		 * 		    *IE_TYPE_PTR_FROM_GTPV2C_IE(uint8_t, ebi_ei_to_be_removed));*/
-		LOG_MSG(LOG_ERROR, "ebi %u\n", ebi);
-		LOG_MSG(LOG_ERROR, "ebi_index %u\n", ebi_index);
-		LOG_MSG(LOG_ERROR, "bearer_bitmap %04x\n", context->bearer_bitmap);
-		LOG_MSG(LOG_ERROR, "mask %04x\n", (1 << ebi_index));
+		LOG_MSG(LOG_ERROR, "ebi %u", ebi);
+		LOG_MSG(LOG_ERROR, "ebi_index %u", ebi_index);
+		LOG_MSG(LOG_ERROR, "bearer_bitmap %04x", context->bearer_bitmap);
+		LOG_MSG(LOG_ERROR, "mask %04x", (1 << ebi_index));
 		return -EPERM;
 	}
 
 	pdn_connection_t *pdn = context->eps_bearers[ebi_index]->pdn;
 	resp->seid = context->pdns[ebi_index]->seid;  //NK:change for seid
 	if (!pdn) {
-		LOG_MSG(LOG_ERROR, "Received delete session on "
-				"non-existent EBI\n");
+		LOG_MSG(LOG_ERROR, "Received delete session on non-existent EBI");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
 
 	if (pdn->default_bearer_id != ebi) {
 		LOG_MSG(LOG_ERROR,
-				"Received delete session referencing incorrect "
-				"default bearer ebi");
+				"Received delete session referencing incorrect default bearer ebi");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
 	/* s11_sgw_gtpc_teid= s5s8_sgw_gtpc_teid =
@@ -117,15 +114,15 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 	resp->s5s8_pgw_gtpc_ipv4 = pdn->s5s8_sgw_gtpc_ipv4.s_addr;
 
 	LOG_MSG(LOG_DEBUG, "NGIC- delete_s5s8_session.c::"
-			"\n\tdelete_pgwc_context(...);"
-			"\n\tprocess_pgwc_s5s8_ds_req_cnt= %u;"
-			"\n\tue_ip= pdn->ipv4= %s;"
-			"\n\tpdn->s5s8_sgw_gtpc_ipv4= %s;"
-			"\n\tpdn->s5s8_sgw_gtpc_teid= %X;"
-			"\n\tpdn->s5s8_pgw_gtpc_ipv4= %s;"
-			"\n\tpdn->s5s8_pgw_gtpc_teid= %X;"
-			"\n\trte_hash_lookup_data("
-			"ue_context_by_fteid_hash,..)= %d\n",
+			" delete_pgwc_context(...);"
+			" process_pgwc_s5s8_ds_req_cnt= %u;"
+			" ue_ip= pdn->ipv4= %s;"
+			" pdn->s5s8_sgw_gtpc_ipv4= %s;"
+			" pdn->s5s8_sgw_gtpc_teid= %X;"
+			" pdn->s5s8_pgw_gtpc_ipv4= %s;"
+			" pdn->s5s8_pgw_gtpc_teid= %X;"
+			" rte_hash_lookup_data("
+			"ue_context_by_fteid_hash,..)= %d",
 			process_pgwc_s5s8_ds_req_cnt++,
 			inet_ntoa(pdn->ipv4),
 			inet_ntoa(pdn->s5s8_sgw_gtpc_ipv4),
@@ -137,7 +134,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 	eps_bearer_t *bearer = context->eps_bearers[ebi_index];
 	if (!bearer) {
 		LOG_MSG(LOG_ERROR, "Received delete session on non-existent "
-				"default EBI\n");
+				"default EBI");
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
 
@@ -228,7 +225,10 @@ delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *sei
 						255);
 					sprintf(key.rule_name, "%s%d", key.rule_name, (bearer->pdn)->call_id);
 					if (del_rule_name_entry(key) != 0) {
-						LOG_MSG(LOG_ERROR," Error on delete rule name entries");
+                        // TODO : if gx interface is not used then rule deletion fails and below log
+                        // floods the logging of spgw. So need to make sure that we add the rule and 
+                        // then enable this log.
+						//LOG_MSG(LOG_ERROR," Error on delete rule name entries");
 					}
 				}
 			}

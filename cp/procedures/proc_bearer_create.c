@@ -52,8 +52,7 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *p)
 			/* TODO for cbr
 			 * mbr_error_response(&msg->gtpc_msg.mbr, ret,
 								cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE); */
-		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
-				__func__, __LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return ret;
 	}
 
@@ -63,8 +62,8 @@ process_pfcp_sess_mod_resp_cbr_handler(void *data, void *p)
 #if 0
 	if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 																			&resp) != 0){
-		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-				__func__, __LINE__, msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu",
+				msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 	if ((SAEGWC != cp_config->cp_type) && ((resp->msg_type == GTP_CREATE_BEARER_RSP) ||
@@ -150,17 +149,14 @@ process_pfcp_sess_mod_resp_cbr(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 
 	/* Retrive the session information based on session id. */
 	if (get_sess_entry_seid(sess_id, &context) != 0){
-		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-				__func__, __LINE__, sess_id);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
 	/* Retrieve the UE context */
 	ret = get_ue_context(teid, &context);
 	if (ret < 0) {
-			LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
-					__func__, __LINE__,
-					teid);
+			LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
 	}
 
 	ebi_index = UE_BEAR_ID(sess_id) - 5;
@@ -171,8 +167,8 @@ process_pfcp_sess_mod_resp_cbr(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 
 	if (!bearer) {
 		LOG_MSG(LOG_ERROR,
-				"%s:%d Retrive modify bearer context but EBI is non-existent- "
-				"Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
+				"Retrive modify bearer context but EBI is non-existent- "
+				"Bitmap Inconsistency - Dropping packet");
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
@@ -181,8 +177,8 @@ process_pfcp_sess_mod_resp_cbr(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
     bearer = context->eps_bearers[ebi];
     if (!bearer) {
         LOG_MSG(LOG_ERROR,
-                "%s:%d Retrive modify bearer context but EBI is non-existent- "
-                "Bitmap Inconsistency - Dropping packet\n", __func__, __LINE__);
+                "Retrive modify bearer context but EBI is non-existent- "
+                "Bitmap Inconsistency - Dropping packet");
         return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
     }
 
@@ -232,7 +228,7 @@ process_create_bearer_resp_and_send_raa( proc_context_t *proc)
     
 	if ( gx_raa_pack(&(resp->data.cp_raa), (unsigned char *)(send_buf + sizeof(resp->msg_type) + sizeof(resp->seq_num)), buflen ) == 0 )
     {
-		LOG_MSG(LOG_DEBUG,"RAA Packing failure \n");
+		LOG_MSG(LOG_DEBUG,"RAA Packing failure ");
     }
     LOG_MSG(LOG_DEBUG, "RAA successfully sent ");
 
@@ -259,8 +255,7 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 #if 0
 	ret = get_ue_context(cb_rsp->header.teid.has_teid.teid, &context);
 	if (ret) {
-		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__,
-				__LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 #endif
@@ -332,7 +327,7 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 
 #if 0
 	if (get_sess_entry_seid(bearer->pdn->seid, &resp) != 0) {
-		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH\n");
+		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 		return -1;
 	}
 
@@ -439,7 +434,7 @@ process_cbresp_handler(void *data, void *unused_param)
 
 	ret = process_pgwc_create_bearer_rsp(&msg->gtpc_msg.cb_rsp);
 	if (ret) {
-		LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return ret;
 	}
 
@@ -455,8 +450,7 @@ process_create_bearer_request_handler(void *data, void *unused_param)
 
 	ret = process_create_bearer_request(&msg->gtpc_msg.cb_req);
 	if (ret) {
-			LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
-					__func__, __LINE__, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
 	}
 
@@ -472,8 +466,7 @@ process_create_bearer_resp_handler(void *data, void *unused_param)
 
 	ret = process_sgwc_create_bearer_rsp(&msg->gtpc_msg.cb_rsp);
 	if (ret) {
-			LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n",
-					__func__, __LINE__, ret);
+			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
 	}
 
@@ -501,8 +494,7 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 
 	ret = get_ue_context_by_sgw_s5s8_teid(cbr->header.teid.has_teid.teid, &context);
 	if (ret) {
-		LOG_MSG(LOG_ERROR, "%s:%d Error: %d \n", __func__,
-				__LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
@@ -510,10 +502,7 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (bearer == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate bearer "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+				"structure: %s ", rte_strerror(rte_errno));
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
 	}
 
@@ -567,7 +556,7 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
 	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0) {
-		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH\n");
+		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 		return -1;
 	}
 

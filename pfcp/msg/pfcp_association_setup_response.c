@@ -20,15 +20,17 @@ handle_pfcp_association_setup_response_msg(msg_info_t **msg_p, pfcp_header_t *pf
     int decoded = decode_pfcp_assn_setup_rsp_t((uint8_t *)pfcp_rx,
             &msg->pfcp_msg.pfcp_ass_resp);
 
-    LOG_MSG(LOG_DEBUG, "Decoded bytes [%d]\n", decoded);
     if(decoded <= 0) 
     {
-        LOG_MSG(LOG_ERROR, "%s: Failed to process pfcp precondition check\n", __func__);
+        LOG_MSG(LOG_ERROR, "Failed to process pfcp precondition check");
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPRSP, peer_addr.sin_addr.s_addr);
         return -1;
     }
     increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPRSP, peer_addr.sin_addr.s_addr);
 
+    pfcp_up_func_feat_ie_t *up_feat = &msg->pfcp_msg.pfcp_ass_resp.up_func_feat;
+    LOG_MSG(LOG_DEBUG,"supported features = %x, Additional Supported Feature1 = %x, Additional Supported Feature2 %x",
+             up_feat->sup_feat, up_feat->add_sup_feat1, up_feat->add_sup_feat2);
     //Dont hold on to any message reference inside this function call...
     handle_pfcp_association_setup_response(msg);
     // caller would free allocated message  

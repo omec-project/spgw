@@ -15,8 +15,8 @@ int process_pfcp_sess_mod_resp_ubr_handler(void *data, void *unused_param)
 
 	if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 																			&resp) != 0){
-		LOG_MSG(LOG_ERROR, "%s:%d NO Session Entry Found for sess ID:%lu\n",
-				__func__, __LINE__, msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu",
+				msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 	if(resp->num_of_bearers)
@@ -25,8 +25,7 @@ int process_pfcp_sess_mod_resp_ubr_handler(void *data, void *unused_param)
 	/* Retrieve the UE context */
 	ret = get_ue_context(teid, &context);
 	if (ret < 0) {
-			LOG_MSG(LOG_ERROR, "%s:%d Failed to update UE State for teid: %u\n",
-					__func__, __LINE__,
+			LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u",
 					teid);
 	}
 

@@ -44,7 +44,7 @@ bearer_context_entry_add_teidKey(uint32_t teid, eps_bearer_t *context)
 
 	if (ret < 0) {
 		LOG_MSG(LOG_ERROR,
-				"%s - Error on rte_hash_add_key_data add\n",
+				"%s - Error on rte_hash_add_key_data add",
 				strerror(ret));
 		return -1;
 	}
@@ -59,7 +59,7 @@ get_bearer_by_teid(uint32_t teid, eps_bearer_t **entry)
 			(const void*) &(teid), (void **) entry);
 
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN bearer HASH [%u]\n", teid);
+		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN bearer HASH [%u]", teid);
 		return -1;
 	}
     LOG_MSG(LOG_DEBUG5,"Get Bearer entry teid - %u ", teid);

@@ -84,14 +84,14 @@ int handle_cca_update_msg(msg_info_t **msg_p)
     /* Retrive Gx_context based on Sess ID. */
     int ret = get_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val,&gx_context);
     if (ret < 0) {
-        LOG_MSG(LOG_ERROR, "%s: NO ENTRY FOUND IN Gx HASH [%s]\n", __func__,
+        LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]",
                 msg->gx_msg.cca.session_id.val);
         return -1;
     }
 
     if(msg->gx_msg.cca.presence.result_code &&
             msg->gx_msg.cca.result_code != 2001){
-        LOG_MSG(LOG_ERROR, "%s:Received CCA with DIAMETER Failure [%d]\n", __func__,
+        LOG_MSG(LOG_ERROR, "Received CCA with DIAMETER Failure [%d]",
                 msg->gx_msg.cca.result_code);
         return -1;
     }
@@ -100,24 +100,23 @@ int handle_cca_update_msg(msg_info_t **msg_p)
     /* Extract the call id from session id */
     ret = retrieve_call_id((char *)msg->gx_msg.cca.session_id.val, &call_id);
     if (ret < 0) {
-        LOG_MSG(LOG_ERROR, "%s:No Call Id found from session id:%s\n", __func__,
+        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s",
                 msg->gx_msg.cca.session_id.val);
         return -1;
     }
     /* Retrieve PDN context based on call id */
     pdn_cntxt = get_pdn_conn_entry(call_id);
     if (pdn_cntxt == NULL) {
-        LOG_MSG(LOG_ERROR, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
-                __func__, call_id);
+        LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);
         return -1;
     }
     /* Retrive the Session state and set the event */
     proc_context_t *proc_context = (proc_context_t *)gx_context->proc_context;
     msg->event = CCA_RCVD_EVNT;
-    LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+    LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:%s[%u], Session Id:%s, "
-            "State:%s, Event:%s\n",
-            __func__, gx_type_str(msg->msg_type), msg->msg_type,
+            "State:%s, Event:%s",
+            gx_type_str(msg->msg_type), msg->msg_type,
             msg->gx_msg.cca.session_id.val,
             get_state_string(msg->state), get_event_string(msg->event));
 
@@ -147,7 +146,7 @@ int cca_u_msg_handler_handover(void *data, void *unused)
 	/* Extract the call id from session id */
 	ret = retrieve_call_id((char *)&msg->gx_msg.cca.session_id.val, &call_id);
 	if (ret < 0) {
-	        LOG_MSG(LOG_ERROR, "%s:No Call Id found from session id:%s\n", __func__,
+	        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s",
 	                       (char*) &msg->gx_msg.cca.session_id.val);
 	        return -1;
 	}
@@ -156,8 +155,8 @@ int cca_u_msg_handler_handover(void *data, void *unused)
 	pdn = get_pdn_conn_entry(call_id);
 	if (pdn == NULL)
 	{
-	      LOG_MSG(LOG_ERROR, "%s:No valid pdn cntxt found for CALL_ID:%u\n",
-	                          __func__, call_id);
+	      LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u",
+	                          call_id);
 	      return -1;
 	}
 
@@ -171,7 +170,7 @@ int cca_u_msg_handler_handover(void *data, void *unused)
 	if (!(pdn->context->bearer_bitmap & (1 << ebi_index))) {
 		LOG_MSG(LOG_ERROR,
 				"Received modify bearer on non-existent EBI - "
-				"Dropping packet\n");
+				"Dropping packet");
 		return -EPERM;
 	}
 
@@ -180,7 +179,7 @@ int cca_u_msg_handler_handover(void *data, void *unused)
 #ifdef FUTURE_NEED
 	ret = send_pfcp_sess_mod_req_handover(pdn, bearer, &resp->gtpc_msg.mbr);
 	 if (ret) {
-	        LOG_MSG(LOG_ERROR, "%s : Error: %d \n", __func__, ret);
+	        LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 	         return ret;
 	}
 #endif

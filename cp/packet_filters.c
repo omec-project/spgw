@@ -151,7 +151,7 @@ push_sdf_rules(uint16_t index)
 		if (sdf_filters[index]->direction ==
 				TFT_DIRECTION_BIDIRECTIONAL)
 			LOG_MSG(LOG_ERROR, "Ignoring uplink portion of packet "
-					"filter for now\n");
+					"filter for now");
 	} else if (sdf_filters[index]->direction & TFT_DIRECTION_UPLINK_ONLY) {
 		snprintf(pktf.u.rule_str, MAX_LEN, "%s/%"PRIu8" %s/%"PRIu8" %"
 			PRIu16" : %"PRIu16" %"PRIu16" : %"PRIu16" 0x%"
@@ -192,10 +192,8 @@ install_sdf_rules(const pkt_fltr *new_packet_filter)
 	    RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (filter == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate dedicated packet filter "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+				"structure: %s ",
+				rte_strerror(rte_errno));
 		return -ENOMEM;
 	}
 
@@ -230,10 +228,7 @@ install_pcc_rules(struct pcc_rules new_pcc_entry)
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (NULL == pcc_filter) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for pcc filter "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+				"structure: %s ", rte_strerror(rte_errno));
 		return -ENOMEM;
 	}
 
@@ -269,10 +264,7 @@ install_meter_profiles(struct dp_id dp_id, struct mtr_entry new_mtr_entry)
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (mtr_profile == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for meter profile "
-				"structure: %s (%s:%d)\n",
-				rte_strerror(rte_errno),
-				__FILE__,
-				__LINE__);
+				"structure: %s ", rte_strerror(rte_errno));
 		return -ENOMEM;
 	}
 
@@ -479,9 +471,7 @@ init_sdf_rules(void)
 
 		ret = install_sdf_rules(&pf);
 		if (ret < 0) {
-			rte_panic("Failure to install sdf rules: "
-					"%s (%s:%d)\n",
-					rte_strerror(rte_errno), __FILE__, __LINE__);
+			rte_panic("Failure to install sdf rules: %s ", rte_strerror(rte_errno));
 		}
 	}
 	num_sdf_filters = FIRST_FILTER_ID; /*Reset num_sdf_filters*/
@@ -651,10 +641,7 @@ init_pcc_rules(void)
 		ret = install_pcc_rules(tmp_pcc);
 		if (ret < 0) {
 			rte_panic("Failure to install packet filters: "
-					"%s (%s:%d)\n",
-					rte_strerror(rte_errno),
-					__FILE__,
-					__LINE__);
+					"%s ", rte_strerror(rte_errno));
 		}
 
 	}

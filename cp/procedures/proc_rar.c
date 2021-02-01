@@ -81,8 +81,7 @@ process_rar_request_handler(void *data, void *unused_param)
 			pdn_connection_t *pdn_cntxt = proc_ctxt->pdn_context;
 			gen_reauth_error_response(pdn_cntxt, ret);
 		}
-		LOG_MSG(LOG_ERROR, "%s:%s:%d Error: %d \n",
-				__FILE__, __func__, __LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return -1;
 	}
 	RTE_SET_USED(unused_param);

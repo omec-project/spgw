@@ -24,8 +24,8 @@ int handle_pfcp_pfd_management_response(msg_info_t *msg)
      */
 	/* check cause ie */
 	if(msg->pfcp_msg.pfcp_pfd_resp.cause.cause_value !=  REQUESTACCEPTED){
-		LOG_MSG(LOG_ERROR, "%s:  Msg_Type:%u, Cause value:%d, offending ie:%u\n",
-					__func__, msg->msg_type, msg->pfcp_msg.pfcp_pfd_resp.cause.cause_value,
+		LOG_MSG(LOG_ERROR, "Msg_Type:%u, Cause value:%d, offending ie:%u",
+					msg->msg_type, msg->pfcp_msg.pfcp_pfd_resp.cause.cause_value,
 			    msg->pfcp_msg.pfcp_pfd_resp.offending_ie.type_of_the_offending_ie);
 		return -1;
 	}
@@ -51,8 +51,7 @@ handle_pfcp_pfd_management_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_
     int decoded = decode_pfcp_pfd_mgmt_rsp_t((uint8_t *)pfcp_rx, &msg->pfcp_msg.pfcp_pfd_resp);
     if(decoded <= 0) 
     {
-        LOG_MSG(LOG_DEBUG, "DEOCED bytes in Pfd Mgmt Resp is %d\n",
-                decoded);
+        LOG_MSG(LOG_DEBUG, "DEOCED bytes in Pfd Mgmt Resp is %d", decoded);
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_PFDMGMTRSP_DROP, peer_addr.sin_addr.s_addr); 
         return -1;
     }

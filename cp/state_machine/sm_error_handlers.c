@@ -109,8 +109,8 @@ process_error_occured_handler_new(void *data, void *unused_param)
 
     if (get_ue_context_while_error(teid, &context) < 0) 
     {
-        LOG_MSG(LOG_ERROR, "%s:%d:SM_ERROR: Error handler UE_Proc: %u UE_State: %u "
-                "%u and Message_Type:%s\n", __func__, __LINE__,
+        LOG_MSG(LOG_ERROR, "SM_ERROR: Error handler UE_Proc: %u UE_State: %u "
+                "%u and Message_Type:%s",
                 msg->proc, msg->state,msg->event,
                 gtp_type_str(msg->msg_type));
 
@@ -255,8 +255,8 @@ process_error_occured_handler(void *data, void *unused_param)
             context = NULL;
         }
     }
-    LOG_MSG(LOG_ERROR, "%s:%d:SM_ERROR: Error handler UE_Proc: %u UE_State: %u "
-            "%u and Message_Type:%s\n", __func__, __LINE__,
+    LOG_MSG(LOG_ERROR, "SM_ERROR: Error handler UE_Proc: %u UE_State: %u "
+            "%u and Message_Type:%s",
             msg->proc, msg->state,msg->event,
             gtp_type_str(msg->msg_type));
 
@@ -314,7 +314,7 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 					 else {
 						if(*imsi_val > 0 && imsi_len > 0) {
 							memcpy(&imsi, imsi_val, imsi_len);
-							ret = ue_context_entry_lookup_imsiKey(imsi, &context);
+							ret = ue_context_entry_lookup_imsiKey(imsi, &context, true);
 
 							if (ret == -ENOENT){
 								return -1;
@@ -366,7 +366,7 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 	 else {
 		del_ue_cntx_imsi:
 		memcpy(&imsi, imsi_val, imsi_len);
-		ret = ue_context_entry_lookup_imsiKey(imsi,&context);
+		ret = ue_context_entry_lookup_imsiKey(imsi,&context, true);
 
 		if (ret == -ENOENT)
 			return -1;

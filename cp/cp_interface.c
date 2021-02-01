@@ -68,11 +68,11 @@ void gtpc_timer_retry_send(int fd, peerData_t *t_tx)
 		bytes_tx = sendto(fd, t_tx->buf, t_tx->buf_len, 0,
 			(struct sockaddr *)&tx_sockaddr, sizeof(struct sockaddr_in));
 
-		LOG_MSG(LOG_DEBUG, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d\n",fd);
+		LOG_MSG(LOG_DEBUG, "NGIC- main.c::gtpv2c_send()""\n\tgtpv2c_if_fd= %d",fd);
 
 	if (bytes_tx != (int) t_tx->buf_len) {
 			LOG_MSG( LOG_ERROR, "Transmitted Incomplete Timer Retry Message:"
-					"%u of %d tx bytes : %s\n",
+					"%u of %d tx bytes : %s",
 					t_tx->buf_len, bytes_tx, strerror(errno));
 		}
 	}

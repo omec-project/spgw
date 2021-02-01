@@ -34,7 +34,7 @@ int gx_send_raa(void *buf)
 	struct msg *ans = NULL;
 	//uint32_t buflen ;
 #ifdef GX_DEBUG
-	LOG_MSG(LOG_DEBUG, "length is %d\n", *(uint32_t*)data );
+	LOG_MSG(LOG_DEBUG, "length is %d", *(uint32_t*)data );
 	hexDump("gx_raa", data, *(uint32_t*)data);
 #endif
 	GxRAA *gx_raa = (GxRAA*)malloc(sizeof(*gx_raa));    /* allocate the RAA structure */

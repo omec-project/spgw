@@ -103,7 +103,7 @@ process_rpt_req_handler(proc_context_t *proc_ctxt, msg_info_t *msg)
 	if (proc_ctxt->proc_type == PAGING_PROC) {
         ret = send_ddn_indication(proc_ctxt, ebi);
 		if (ret) {
-			LOG_MSG(LOG_ERROR, "DDN %s: (%d) \n", __func__, ret);
+			LOG_MSG(LOG_ERROR, "DDN (%d) ", ret);
             increment_mme_peer_stats(MSG_RX_PFCP_SXASXB_SESSREPORTREQ_DROP, context->s11_mme_gtpc_ipv4.s_addr);
 			return -1;
 		}

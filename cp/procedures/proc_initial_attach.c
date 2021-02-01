@@ -157,7 +157,6 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
 void 
 initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg) 
 {
-    RTE_SET_USED(msg);
     ue_context_t *context = csreq_proc->ue_context;
 	upf_context_t *upf_context = context->upf_context;
 
@@ -170,6 +169,12 @@ initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg)
         return;
     } else if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
         LOG_MSG(LOG_DEBUG, "UPF association already formed ");
+        pdn_connection_t *pdn = (pdn_connection_t *)msg->pdn_context;
+        if(IF_PDN_ADDR_ALLOC_UPF(pdn) && (IS_UPF_SUPP_FEAT_UEIP(upf_context) == 0)) {
+            LOG_MSG(LOG_ERROR, "UPF does not support UE IP address allocation feature ");
+            proc_initial_attach_failure(csreq_proc, GTPV2C_CAUSE_REQUEST_REJECTED);
+            return;
+        }
         transData_t *pfcp_trans = process_pfcp_sess_est_request(csreq_proc, upf_context);
         if (pfcp_trans == NULL) {
             LOG_MSG(LOG_ERROR, "Error: pfcp send error ");
@@ -205,6 +210,7 @@ process_create_sess_req(create_sess_req_t *csr,
 	eps_bearer_t *bearer = NULL;
 	pdn_connection_t *pdn = NULL;
     bool static_addr_pdn = false;
+    uint32_t addr_upf_alloc = PDN_ADDR_ALLOC_CONTROL; /* default allocation is by control Plane */
     struct in_addr upf_ipv4 = {0};
     /* ajay - Should we get default context ?*/
     upf_context_t *upf_context=NULL; 
@@ -229,7 +235,7 @@ process_create_sess_req(create_sess_req_t *csr,
     memcpy((void *)(&dpkey.plmn.plmn[0]), (void *)(&csr->uli.tai2), 3);
 
     LOG_MSG(LOG_DEBUG, "Create Session Request ULI mcc %d %d %d " 
-                " mnc %d %d %d \n", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, 
+                " mnc %d %d %d ", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, 
                 csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, 
                 csr->uli.tai2.tai_mnc_digit_2, csr->uli.tai2.tai_mnc_digit_3);
     
@@ -268,17 +274,10 @@ process_create_sess_req(create_sess_req_t *csr,
         struct in_addr *paa_ipv4 = (struct in_addr *) &csr->paa.pdn_addr_and_pfx[0];
         if (csr->paa.pdn_type == PDN_IP_TYPE_IPV4 && paa_ipv4->s_addr != 0) {
             bool found = false;
-#ifdef STATIC_ADDR_ALLOC
-#ifdef MULTI_UPFS
-            if (dpInfo != NULL)
-                found = reserve_ip_node(dpInfo->static_pool_tree, *paa_ipv4);
-#else
             found = reserve_ip_node(static_addr_pool, *paa_ipv4);
-#endif
-#endif
             if (found == false) {
                 LOG_MSG(LOG_ERROR,"Received CSReq with static address %s"
-                        " . Invalid address received \n",
+                        " . Invalid address received ",
                         inet_ntoa(*paa_ipv4));
                 // caller sends out csrsp 
                 return GTPV2C_CAUSE_REQUEST_REJECTED;
@@ -289,14 +288,21 @@ process_create_sess_req(create_sess_req_t *csr,
              * allocation  */
             ue_ip.s_addr = htonl(ue_ip.s_addr); 
             static_addr_pdn = true;
-        } else { 
-		    ret = acquire_ip(&ue_ip);
+        } else {
+            if(sub_profile->up_profile->global_address == true) {
+              // if global address allocation required then pull 1 IP address from central control Plane 
+		      ret = acquire_ip(&ue_ip);
+              if (ret) {
+                      // caller sends out csrsp 
+                      return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
+              }
+            } else {
+                // UPF allocates IP address. Control Plane does no validation
+                addr_upf_alloc = PDN_ADDR_ALLOC_UPF;
+            }
         }
     }
-	if (ret) {
-        // caller sends out csrsp 
-		return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
-    }
+
 
 	LOG_MSG(LOG_INFO, "IMSI - %lu, Acquire ip = %s ",csr->imsi.imsi64, inet_ntoa(ue_ip));
 	/* set s11_sgw_gtpc_teid= key->ue_context_by_fteid_hash */
@@ -331,8 +337,10 @@ process_create_sess_req(create_sess_req_t *csr,
 
 	/* Retrive procedure of CSR */
 	pdn = context->eps_bearers[ebi_index]->pdn;
-    if(static_addr_pdn == true)
-        SET_PDN_ADDR_STATIC(pdn);
+
+    SET_PDN_ADDR_STATIC(pdn, static_addr_pdn);
+
+    SET_PDN_ADDR_METHOD(pdn, addr_upf_alloc);
 
 	/* VS: Stored the RAT TYPE information in UE context */
 	if (csr->rat_type.header.len != 0) {
@@ -557,7 +565,7 @@ int
 process_sess_est_resp_timeout_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     RTE_SET_USED(msg);
-	LOG_MSG(LOG_DEBUG, "PFCP sess establishment request timeout \n");
+	LOG_MSG(LOG_DEBUG, "PFCP sess establishment request timeout ");
     proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
     return 0;
 }
@@ -568,10 +576,10 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
     int ret = 0;
 	uint16_t payload_length = 0;
 
-	LOG_MSG(LOG_DEBUG, "%s: Callback called for"
+	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:PFCP_SESSION_ESTABLISHMENT_RESPONSE[%u], Seid:%lu, "
 			"Procedure:%s, State:%s, Event:%s",
-			__func__, msg->msg_type,
+			msg->msg_type,
 			msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid,
 			get_proc_string(msg->proc),
 			get_state_string(msg->state), get_event_string(msg->event));
@@ -592,8 +600,7 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 			&msg->pfcp_msg.pfcp_sess_est_resp, gtpv2c_tx);
 
 	if (ret) {
-		LOG_MSG(LOG_ERROR, "%s:%d Error: %d ",
-				__func__, __LINE__, ret);
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
         proc_initial_attach_failure(proc_context, ret);
 		return -1;
 	}
@@ -1014,7 +1021,7 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 	dynamic_rule->num_flw_desc = GX_FLOW_COUNT;
 
 	for(uint8_t idx = 0; idx < GX_FLOW_COUNT; idx++) {
-    strcpy(dynamic_rule->flow_desc[idx].sdf_flow_description,"permit out ip from 0.0.0.0/0 to assigned");
+		strcpy(dynamic_rule->flow_desc[idx].sdf_flow_description,"permit out ip from 0.0.0.0/0 to assigned");
 		dynamic_rule->flow_desc[idx].flow_direction = BIDIRECTIONAL;
 		dynamic_rule->flow_desc[idx].sdf_flw_desc.proto_id = PROTO_ID;
 		dynamic_rule->flow_desc[idx].sdf_flw_desc.local_ip_mask = LOCAL_IP_MASK;
@@ -1590,8 +1597,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 #ifdef TEMP
 	if (add_sess_entry_seid(context->pdns[ebi_index]->seid, resp) != 0) {
-		LOG_MSG(LOG_ERROR, " %s %s %d Failed to add response in entry in SM_HASH\n",__file__,
-				__func__, __LINE__);
+		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 		return -1;
 	}
 #endif
@@ -1687,7 +1693,7 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //	LOG_MSG(LOG_DEBUG, "NGIC- create_s5s8_session.c::"
 //			"\n\tprocess_sgwc_s5s8_create_session_response"
 //			"\n\tprocess_sgwc_s5s8_cs_rsp_cnt= %u;"
-//			"\n\tgtpv2c_rx->teid.has_teid.teid= %X\n",
+//			"\n\tgtpv2c_rx->teid.has_teid.teid= %X",
 //			process_sgwc_s5s8_cs_rsp_cnt,
 //			gtpv2c_rx->teid.has_teid.teid);
 //	if (ret < 0 || !context)
@@ -1772,7 +1778,7 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //			"\n\tpdn->s5s8_pgw_gtpc_ipv4= %s;"
 //			"\n\tpdn->s5s8_pgw_gtpc_teid= %X;"
 //			"\n\tbearer->s5s8_pgw_gtpu_ipv4= %s;"
-//			"\n\tbearer->s5s8_pgw_gtpu_teid= %X\n",
+//			"\n\tbearer->s5s8_pgw_gtpu_teid= %X",
 //			process_sgwc_s5s8_cs_rsp_cnt++,
 //			process_spgwc_s11_cs_res_cnt++,
 //			inet_ntoa(pdn->ipv4),
@@ -1809,7 +1815,7 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //
 //
 //	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0)
-//		LOG_MSG(LOG_ERROR, "Error in sending MBR to SGW-U. err_no: %i\n", errno);
+//		LOG_MSG(LOG_ERROR, "Error in sending MBR to SGW-U. err_no: %i", errno);
 //	else
 //	{
 //	}
@@ -1818,7 +1824,7 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //
 //	/* Lookup Stored the session information. */
 //	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0) {
-//		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH\n");
+//		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 //		return -1;
 //	}
 //

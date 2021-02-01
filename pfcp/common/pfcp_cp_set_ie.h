@@ -356,7 +356,7 @@ set_network_instance(pfcp_ntwk_inst_ie_t *network_instance);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-set_ue_ip(pfcp_ue_ip_address_ie_t *ue_ip);
+set_ue_ip(pfcp_ue_ip_address_ie_t *ue_ip, uint32_t ue_ip_flags);
 
 /**
  * @brief  : Set values in ethernet pdu session info ie
@@ -717,7 +717,7 @@ cause_check_delete_session(pfcp_sess_del_req_t
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value);
+creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value, uint32_t flags);
 
 /**
  * @brief  : Set values in create far ie
@@ -819,7 +819,7 @@ set_precedence(pfcp_precedence_ie_t *prec);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-set_pdi(pfcp_pdi_ie_t *pdi);
+set_pdi(pfcp_pdi_ie_t *pdi, uint32_t ue_ip_flags);
 
 /**
  * @brief  : Set values in application id ie

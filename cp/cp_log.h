@@ -34,7 +34,7 @@ extern uint8_t logging_level;
 
 #define LOG_MSG(prio, msg, ...) do {\
 	if(prio<=logging_level) { \
-		fprintf(stdout, "[%s] : %s : %d : " msg " \n", log_level_name[prio], __file__ , __LINE__, ##__VA_ARGS__);\
+		fprintf(stdout, "[%s] : %s : %s : %d : " msg " \n", log_level_name[prio], __file__ , __func__, __LINE__, ##__VA_ARGS__);\
 	}\
 } while (0) 
 

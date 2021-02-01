@@ -467,6 +467,7 @@ typedef struct pfcp_created_pdr_ie_t {
   pfcp_ie_header_t header;
   pfcp_pdr_id_ie_t pdr_id;
   pfcp_fteid_ie_t local_fteid;
+  pfcp_ue_ip_address_ie_t ue_ip_address;
 } pfcp_created_pdr_ie_t;
 
 typedef struct pfcp_created_traffic_endpt_ie_t {

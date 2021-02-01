@@ -99,7 +99,7 @@ static void init_s11(void)
 			    sizeof(struct sockaddr_in));
 
 	if (ret < 0) {
-		rte_panic("Bind error for %s:%u - %s\n",
+		rte_panic("Bind error for %s:%u - %s",
 			inet_ntoa(s11_sockaddr.sin_addr),
 			ntohs(s11_sockaddr.sin_port),
 			strerror(errno));
@@ -142,7 +142,7 @@ static void init_s5s8(void)
 			    sizeof(struct sockaddr_in));
 
 	if (ret < 0) {
-		rte_panic("Bind error for %s:%u - %s\n",
+		rte_panic("Bind error for %s:%u - %s",
 			inet_ntoa(s5s8_sockaddr.sin_addr),
 			ntohs(s5s8_sockaddr.sin_port),
 			strerror(errno));
@@ -184,7 +184,7 @@ process_gtp_msg(void *data, uint16_t event)
     msg_info_t *msg = (msg_info_t *)data;    
     gtpv2c_header_t *gtpv2c_rx = (gtpv2c_header_t *)msg->raw_buf;
     if (gtpv2c_rx->gtpc.version < GTP_VERSION_GTPV2C) {
-        LOG_MSG(LOG_ERROR, "Discarding packet due to gtp version is not supported..\n");
+        LOG_MSG(LOG_ERROR, "Discarding packet due to gtp version is not supported..");
         free(msg->raw_buf);
         free(msg);
         return;
@@ -192,7 +192,7 @@ process_gtp_msg(void *data, uint16_t event)
         send_version_not_supported(&msg->peer_addr, 
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE,
                 gtpv2c_rx->teid.has_teid.seq);
-        LOG_MSG(LOG_ERROR, "Discarding packet due to gtp version is not supported..\n");
+        LOG_MSG(LOG_ERROR, "Discarding packet due to gtp version is not supported..");
         return;
     }
     gtp_msg_handler[gtpv2c_rx->gtpc.message_type](&msg, gtpv2c_rx);
@@ -250,7 +250,7 @@ out_handler_gtp(void *data)
             int bytes_tx = sendto(event->fd, event->payload, event->payload_len, 0,
                     (struct sockaddr *) &event->dest_addr, sizeof(struct sockaddr_in));
 			if(bytes_tx < 0) {
-            	LOG_MSG(LOG_ERROR, "gtpv2c_send() failed on fd= %d\n", event->fd);
+            	LOG_MSG(LOG_ERROR, "gtpv2c_send() failed on fd= %d", event->fd);
 			}
             continue;
         }
@@ -278,7 +278,7 @@ void init_gtp(void)
 		break;
 	default:
 		rte_panic("main.c::init_cp()-"
-				"Unknown spgw_cfg= %u\n", cp_config->cp_type);
+				"Unknown spgw_cfg= %u", cp_config->cp_type);
 		break;
 	}
 	init_gtp_msg_threads();

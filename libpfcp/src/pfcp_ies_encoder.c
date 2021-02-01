@@ -500,7 +500,8 @@ int encode_pfcp_ue_ip_address_ie_t(pfcp_ue_ip_address_ie_t *value,
 {
 	uint16_t encoded = 0;
 	encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
-	encoded += encode_bits(value->ue_ip_addr_spare, 4, buf + (encoded/8), encoded % CHAR_SIZE);
+	encoded += encode_bits(value->ue_ip_addr_spare, 3, buf + (encoded/8), encoded % CHAR_SIZE);
+	encoded += encode_bits(value->chv4, 1, buf + (encoded/8), encoded % CHAR_SIZE);
 	encoded += encode_bits(value->ipv6d, 1, buf + (encoded/8), encoded % CHAR_SIZE);
 	encoded += encode_bits(value->sd, 1, buf + (encoded/8), encoded % CHAR_SIZE);
 	encoded += encode_bits(value->v4, 1, buf + (encoded/8), encoded % CHAR_SIZE);
@@ -839,6 +840,8 @@ int encode_pfcp_up_func_feat_ie_t(pfcp_up_func_feat_ie_t *value,
 	uint16_t encoded = 0;
 	encoded += encode_pfcp_ie_header_t(&value->header, buf + (encoded/CHAR_SIZE));
 	encoded += encode_bits(value->sup_feat, 16, buf + (encoded/8), encoded % CHAR_SIZE);
+	encoded += encode_bits(value->add_sup_feat1, 16, buf + (encoded/8), encoded % CHAR_SIZE);
+	encoded += encode_bits(value->add_sup_feat2, 16, buf + (encoded/8), encoded % CHAR_SIZE);
 
 	return encoded/CHAR_SIZE;
 }
