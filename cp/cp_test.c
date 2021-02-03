@@ -151,7 +151,7 @@ init_gx_mock_interface(void)
 	}
 
     // enable this hook to feed outgoing messages to custom handler 
-    gx_in_mock_handler[GX_RAR_MSG] =  handle_mock_rar_request_msg;
+    //gx_in_mock_handler[GX_RAR_MSG] =  handle_mock_rar_request_msg;
 }
 
 void 

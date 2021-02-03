@@ -694,6 +694,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         LOG_MSG(LOG_DEBUG0, "[IMSI - %lu] Detected context replacement ", context->imsi64);
         msg->msg_type = GTP_RESERVED; 
         msg->ue_context = context;
+        decrement_stat(NUM_UE_SPGW_ACTIVE_SUBSCRIBERS);
         process_error_occured_handler_new((void *)msg, NULL);
         LOG_MSG(LOG_DEBUG0, "[IMSI - %lu] Deleted old call due to context replacement ", context->imsi64);
         msg->msg_type = GTP_CREATE_SESSION_REQ; 

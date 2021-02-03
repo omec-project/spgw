@@ -41,7 +41,7 @@ rar_req_event_handler(void *proc, void *msg_info)
         case RE_AUTH_REQ_RCVD_EVNT: {
             // outcome can be - PDN GW initiated bearer creation, deletion 
             process_rar_request_handler(msg, NULL);
-#define TEST_RAR
+//#define TEST_RAR
 #ifdef TEST_RAR
             LOG_MSG(LOG_DEBUG2,"Send RAA now ?? "); 
             process_create_bearer_resp_and_send_raa(proc_context);
