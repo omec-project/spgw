@@ -263,7 +263,6 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 	ebi_index = cb_rsp->bearer_contexts.eps_bearer_id.ebi_ebi - 5;
 
 	bearer = context->eps_bearers[ebi_index];
-	bearer->eps_bearer_id = cb_rsp->bearer_contexts.eps_bearer_id.ebi_ebi;
 	if(bearer == NULL)
 	{
          LOG_MSG(LOG_ERROR, "Received CBRsp and  bearer not found. Ignore CBRsp");
@@ -274,6 +273,7 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 		return -1;
 	}
 
+	bearer->eps_bearer_id = cb_rsp->bearer_contexts.eps_bearer_id.ebi_ebi;
 	bearer->s1u_enb_gtpu_ipv4.s_addr = cb_rsp->bearer_contexts.s1u_enb_fteid.ipv4_address;
 	bearer->s1u_enb_gtpu_teid = cb_rsp->bearer_contexts.s1u_enb_fteid.teid_gre_key;
 	bearer->s1u_sgw_gtpu_ipv4.s_addr = cb_rsp->bearer_contexts.s1u_sgw_fteid.ipv4_address;
