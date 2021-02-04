@@ -570,12 +570,6 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 
 	pdn = context->eps_bearers[ebi_index]->pdn;
 
-	/* Clear Policy in PDN */
-	pdn->policy.count = 0;
-	pdn->policy.num_charg_rule_install = 0;
-	pdn->policy.num_charg_rule_modify = 0;
-	pdn->policy.num_charg_rule_delete = 0;
-
 	/* Allocate the memory for Gx Context */
 	gx_context = rte_malloc_socket(NULL,
 			sizeof(gx_context_t),
