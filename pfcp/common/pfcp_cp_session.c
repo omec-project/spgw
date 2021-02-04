@@ -148,9 +148,6 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 	if ((cp_config->cp_type == PGWC) ||
 		(cp_config->cp_type == SAEGWC))
 	{
-        LOG_MSG(LOG_DEBUG, "Total pending rules - %d, install rules - %d, modify rules - %d , delete rules - %d ",
-                pdn->policy.count, pdn->policy.num_charg_rule_install, pdn->policy.num_charg_rule_delete, 
-                pdn->policy.num_charg_rule_delete);
         pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
         while (pcc_rule != NULL) {
             pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
@@ -207,7 +204,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 						strlen(pcc_rule->dyn_rule->rule_name));
 				sprintf(key.rule_name, "%s%d", key.rule_name, pdn->call_id);
 				if (add_rule_name_entry(key, id) != 0) {
-					LOG_MSG(LOG_ERROR,"Failed to add_rule_name_entry with rule_name");
+					LOG_MSG(LOG_ERROR,"Failed to add rule name entry %s ", key.rule_name);
 					return 0;
 				}
 			} else if(pcc_rule->action == RULE_ACTION_MODIFY) {
@@ -231,6 +228,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
             pcc_rule = next_pcc_rule;
 		}
 
+#if 0
 		/* TODO: Remove Below section START after install, modify and remove support */
 		if (pdn->policy.num_charg_rule_delete != 0) {
 			memset(pfcp_sess_mod_req,0,sizeof(pfcp_sess_mod_req_t));
@@ -248,6 +246,7 @@ fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 			set_fseid(&(pfcp_sess_mod_req->cp_fseid), pdn->seid, node_value);
 		}
 		/* TODO: Remove Below section END */
+#endif
 
         pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
         while (pcc_rule != NULL) {
@@ -1207,7 +1206,7 @@ void sdf_pkt_filter_add(pfcp_sess_estab_req_t* pfcp_sess_est_req,
 		uint8_t direction)
 {
     if(1)
-        return; // hack to avoid sending sdf filter 
+        return; // TODO : SDF 
 	int len = 0;
 	pfcp_sess_est_req->create_pdr[pdr_counter].pdi.sdf_filter[sdf_filter_count].fd = 1;
 	sdf_pkt_filter_to_string(&(dynamic_rules->flow_desc[flow_cnt]),
@@ -1332,6 +1331,7 @@ int fill_sdf_rules(pfcp_sess_estab_req_t* pfcp_sess_est_req,
     int ret = 0;
     int sdf_filter_count = 0;
     /*VG convert pkt_filter_strucutre to char string*/
+    LOG_MSG(LOG_DEBUG, "filling sdf rules");
 
     pfcp_sess_est_req->create_pdr[pdr_counter].precedence.prcdnc_val = dynamic_rules->precedence;
     // itr is for flow information counter
@@ -1364,6 +1364,7 @@ int fill_sdf_rules(pfcp_sess_estab_req_t* pfcp_sess_est_req,
     }
 
     pfcp_sess_est_req->create_pdr[pdr_counter].pdi.sdf_filter_count = sdf_filter_count;
+    LOG_MSG(LOG_ERROR,"Number of SDF filters %d, pdr_counter = %d ",sdf_filter_count, pdr_counter);
 
     return ret;
 }
@@ -1792,14 +1793,12 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		(cp_config->cp_type == SAEGWC))
 	{
         // 2 PDRs per rule 
-		pfcp_sess_est_req->create_pdr_count = pdn->policy.num_charg_rule_install * 2;
+		pfcp_sess_est_req->create_pdr_count = 2;
 		/*
 		 * For pgw create pdr, far and qer while handling pfcp messages
 		 */
-        LOG_MSG(LOG_DEBUG,"Num charg ruleinstall %d and PDRs in est request = %d ",
-                           pdn->policy.num_charg_rule_install,
-                           pfcp_sess_est_req->create_pdr_count);
         pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
+
         while (pcc_rule != NULL) {
             pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
             LOG_MSG(LOG_DEBUG, "dynamic_rules->num_flw_desc -  %d ", pcc_rule->dyn_rule->num_flw_desc);
@@ -1867,7 +1866,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			enum flow_status f_status = bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
 			// assuming no of qer and pdr is same /*TODO*/
 			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
-		    //fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, 0);
+		    fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, 0);
 
 			bearer->dynamic_rules[bearer->num_dynamic_filters]->pdr[1] = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, bearer->pdr_count++);
 			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id(); // ajay - URR..
@@ -1876,9 +1875,23 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			f_status = bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
 			// assuming no of qer and pdr is same /*TODO*/
 			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
-		    //fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, 1);
+		    fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, 1);
 
 			bearer->num_dynamic_filters++;
+
+			//Adding rule and bearer id to a hash
+			bearer_id_t *id;
+			id = malloc(sizeof(bearer_id_t));
+			memset(id, 0 , sizeof(bearer_id_t));
+			rule_name_key_t key = {0};
+			id->bearer_id = bearer->eps_bearer_id;
+			strncpy(key.rule_name, pcc_rule->dyn_rule->rule_name,
+					strlen(pcc_rule->dyn_rule->rule_name));
+			sprintf(key.rule_name, "%s%d", key.rule_name, pdn->call_id);
+			if (add_rule_name_entry(key, id) != 0) {
+				LOG_MSG(LOG_ERROR,"Failed to add rule name %s ", key.rule_name);
+				return;
+			}
 
             pcc_rule = next_pcc_rule;
 		}
@@ -2394,8 +2407,8 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
 	}
 #endif /* USE_CSID */
 
-	/* Update UE State */
-	bearer->pdn->state = PFCP_SESS_EST_REQ_SNT_STATE;
+	/* Update PDN State */
+	pdn->state = PFCP_SESS_EST_REQ_SNT_STATE;
 
 	/* Set create session response */
 	//if (cp_config->cp_type == PGWC)

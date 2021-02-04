@@ -72,19 +72,45 @@ int
 process_rar_request_handler(void *data, void *unused_param)
 {
     int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
+    msg_info_t *msg = (msg_info_t *)data;
     proc_context_t *proc_ctxt = msg->proc_context;
+    pdn_connection_t *pdn_cntxt = proc_ctxt->pdn_context;
 
 	ret = parse_gx_rar_msg(msg);
 	if (ret) {
 		if(ret != -1){
-			pdn_connection_t *pdn_cntxt = proc_ctxt->pdn_context;
+			RTE_SET_USED(unused_param);
 			gen_reauth_error_response(pdn_cntxt, ret);
 		}
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return -1;
 	}
-	RTE_SET_USED(unused_param);
+	// Now we may have  one/more of the following action,
+	// 1. Delete PDN if all the rules are deleted for default bearer
+	// 2. Update default bearer QoS
+	// 3. Update default bearer to remove/add some rules
+	// 4. Update dedicated bearer to remote/add some rules
+	// 5. Create dedicated bearer to install rules
+
+	// Update default bearer QoS
+    if(pdn_cntxt->policy.default_bearer_qos_valid == true) {
+        // check if default bearer qos is changed. If yes
+        // create procedure and link that procedure with RAR proc
+        // default bearer QoS : QCI, MBR Rate --- Bearer QoS
+        // APN AMBR           : APN AMBR UL/DL : part of QoS information AVP
+        // return
+    }
+
+#if 0
+    // Update default bearer to remove/add some rules
+	if(pdn_cntxt->policy.num_charg_rule_modify) {
+        /*GXFIX : we are not updating pfcp session ? when should we do it ? */
+        /* What if RAR is received which involves modify as well as addition of new rules, we can not
+         * just return from here...*/
+		return gx_update_bearer_req(pdn_cntxt);
+	}
+#endif
+
 	return 0;
 }
 

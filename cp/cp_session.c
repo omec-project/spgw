@@ -167,7 +167,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 						255);
 					sprintf(key.rule_name, "%s%d", key.rule_name, (bearer->pdn)->call_id);
 					if (del_rule_name_entry(key) != 0) {
-						LOG_MSG(LOG_ERROR,"Error on delete rule name entries", ERR_MSG);
+						LOG_MSG(LOG_ERROR,"Error on delete rule name  %s ", key.rule_name);
 					}
 				}
 			}
@@ -225,10 +225,7 @@ delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *sei
 						255);
 					sprintf(key.rule_name, "%s%d", key.rule_name, (bearer->pdn)->call_id);
 					if (del_rule_name_entry(key) != 0) {
-                        // TODO : if gx interface is not used then rule deletion fails and below log
-                        // floods the logging of spgw. So need to make sure that we add the rule and 
-                        // then enable this log.
-						//LOG_MSG(LOG_ERROR," Error on delete rule name entries");
+						LOG_MSG(LOG_ERROR," Error on delete rule name entries %s ", key.rule_name);
 					}
 				}
 			}

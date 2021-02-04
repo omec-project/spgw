@@ -107,12 +107,6 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error)
 	uint16_t msg_len_total = 0;
 
 
-	/* Clear Policy in PDN */
-	pdn->policy.count = 0;
-	pdn->policy.num_charg_rule_install = 0;
-	pdn->policy.num_charg_rule_modify = 0;
-	pdn->policy.num_charg_rule_delete = 0;
-
 	/* Allocate the memory for Gx Context */
 	gx_context = rte_malloc_socket(NULL,
 			sizeof(gx_context_t),

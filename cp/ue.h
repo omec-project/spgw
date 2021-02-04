@@ -335,16 +335,13 @@ typedef struct pcc_rule{
  * These policy shoulbe be applied to the PDN or eps_bearer
  * data strutures only after sucess from access side
  */
-typedef struct policy{
+typedef struct policy {
     /*GXCLEAN : get rid of unwanted fields in this struct */
 	bool default_bearer_qos_valid;
-	uint8_t count;
-	uint8_t num_charg_rule_install;
-	uint8_t num_charg_rule_modify;
-	uint8_t num_charg_rule_delete;
 	bearer_qos_ie default_bearer_qos;
+	uint8_t count;
     TAILQ_HEAD(pending_pcc_head, pcc_rule) pending_pcc_rules; /* list of uninstalled pcc rules */ 
-	pcc_rule_t pcc_rule[32]; /* GXCLEAN - remove this structure. For now its kept just to keep compilation happy  */
+	//pcc_rule_t pcc_rule[32]; /* GXCLEAN - remove this structure. For now its kept just to keep compilation happy  */
 }policy_t;
 
 /**

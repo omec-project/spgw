@@ -998,7 +998,6 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 	pdn->policy.default_bearer_qos_valid = TRUE;
 	bearer_qos_ie *def_qos = &pdn->policy.default_bearer_qos;
 
-	pdn->policy.num_charg_rule_install = DEFAULT_RULE_COUNT;
 	def_qos->qci = QCI_VALUE;
 	def_qos->arp.priority_level = GX_PRIORITY_LEVEL;
 	def_qos->arp.preemption_capability = PREEMPTION_CAPABILITY_DISABLED;

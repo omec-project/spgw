@@ -395,7 +395,7 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
 #if 0
         /* VS: Maintain the Rule Name and Bearer ID  mapping with call id */
         if (add_rule_name_entry(key, &id) != 0) {
-            LOG_MSG(LOG_ERROR, "Failed to add_rule_name_entry with rule_name");
+            LOG_MSG(LOG_ERROR, "Failed to add rule name %s ", key.rule_name);
             return -1;
         }
 #endif
@@ -444,12 +444,11 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 	rule_name_key_t rule_name = {0};
 	GxChargingRuleDefinition *rule_definition = NULL;
 
-  LOG_MSG(LOG_DEBUG, "pdn->policy.count %d, charging_rule_install->count %d ", pdn->policy.count,
-                      charging_rule_install->count);
+	LOG_MSG(LOG_DEBUG, "charging_rule_install->count %d ", charging_rule_install->count);
 
 	if(install_present)
 	{
-		for (int32_t idx1 = 0; idx1 < charging_rule_install->count; idx1++, pdn->policy.count++)
+		for (int32_t idx1 = 0; idx1 < charging_rule_install->count; idx1++)
 		{
             // GXASSUMPTIONS : predefined rules work by using charging_rule_install->name, base_name...
             // We dont support predefined rules as of now 
@@ -469,10 +468,8 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 								rule_name.rule_name, pdn->call_id);
 						if(get_rule_name_entry(rule_name) == -1) {
 							pcc_rule->action = RULE_ACTION_ADD;
-							pdn->policy.num_charg_rule_install++;
 						} else {
 							pcc_rule->action =  RULE_ACTION_MODIFY;
-							pdn->policy.num_charg_rule_modify++;
 						}
                         // GXFIX - looks like we are overriding pcc rules if we have multiple charging rule install
                         // We should implemtnet index..or keep policy as link list in pdn...
@@ -490,7 +487,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 
 	if(remove_present)
 	{
-		for(int32_t idx1 = 0; idx1 < charging_rule_remove->count; idx1++,pdn->policy.count++)
+		for(int32_t idx1 = 0; idx1 < charging_rule_remove->count; idx1++)
 		{
 			if (charging_rule_remove->list[idx1].presence.charging_rule_name == PRESENT)
 			{
@@ -508,7 +505,6 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
                     pcc_rule_t *pcc_rule = calloc(1, sizeof(pcc_rule_t)); 
                     pcc_rule->dyn_rule = calloc(1, sizeof(dynamic_rule_t)); 
 					pcc_rule->action = RULE_ACTION_DELETE;
-					pdn->policy.num_charg_rule_delete++;
 					memset(pcc_rule->dyn_rule->rule_name, '\0', 256);
 					strncpy(pcc_rule->dyn_rule->rule_name,
 							(char *)(charging_rule_remove->list[idx1].charging_rule_name.list[0].val),
@@ -517,7 +513,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
                     TAILQ_INSERT_TAIL(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
 				} else {
                         LOG_MSG(LOG_ERROR, "Rule %s - Received in RAR and not found ", rule_name.rule_name);
-        }
+                }
 			}
 		}
 	}
@@ -577,7 +573,7 @@ check_for_rules_on_default_bearer(pdn_connection_t *pdn)
             sprintf(key.rule_name, "%s%d", key.rule_name,
                     pdn->call_id);
             if (add_rule_name_entry(key, id) != 0) {
-                LOG_MSG(LOG_ERROR, "Failed to add_rule_name_entry with rule_name");
+                LOG_MSG(LOG_ERROR, "Failed to rule %s ", key.rule_name);
                 return -1;
             }
             //GXFEATURE : we can have multiple rules on default bearer...
@@ -726,7 +722,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 
 	upd_bearer_req_t ubr_req = {0};
 
-	if (get_sess_entry_seid(pdn->seid, &context) != 0){
+	if (get_sess_entry_seid(pdn->seid, &context) != 0) {
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu",pdn->seid);
 		return DIAMETER_ERROR_USER_UNKNOWN;
 	}
@@ -748,12 +744,13 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 	*/
 
 
-	for (int32_t idx = 0; idx < pdn->policy.count ; idx++)
-	{
-		if (pdn->policy.pcc_rule[idx].action == RULE_ACTION_MODIFY)
+    pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
+    while (pcc_rule != NULL) {
+        pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
+		if (pcc_rule->action == RULE_ACTION_MODIFY)
 		{
 
-			bearer = get_bearer(pdn, &pdn->policy.pcc_rule[idx].dyn_rule->qos);
+			bearer = get_bearer(pdn, &pcc_rule->dyn_rule->qos);
 			if(bearer == NULL){
 				LOG_MSG(LOG_ERROR, "Bearer return is Null for that Qos recived in RAR");
 				return DIAMETER_ERROR_USER_UNKNOWN;
@@ -767,8 +764,9 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 
 			memset(bearer->dynamic_rules[dyn_rule_count], 0,
 											sizeof(dynamic_rule_t));
+            // TODO : why copy, use the exissting rule ??
 			memcpy((bearer->dynamic_rules[dyn_rule_count]),
-						(pdn->policy.pcc_rule[idx].dyn_rule),
+						(pcc_rule->dyn_rule),
 										sizeof(dynamic_rule_t));
 
 			len = set_bearer_tft(&ubr_req.bearer_contexts[ubr_req.bearer_context_count].tft,
@@ -791,6 +789,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 			send_ubr++;
 
 		}
+        pcc_rule = next_pcc_rule;
 	}
 
 	gx_context_t *gx_context = NULL;
@@ -848,18 +847,19 @@ void
 get_charging_rule_remove_bearer_info(pdn_connection_t *pdn,
 	uint8_t *lbi, uint8_t *ded_ebi, uint8_t *ber_cnt)
 {
-	int8_t bearer_id;
-	uint8_t idx_offset =  pdn->policy.num_charg_rule_install + pdn->policy.num_charg_rule_modify;
 
-	for (int idx = 0; idx < pdn->policy.num_charg_rule_delete; idx++) {
-		if(RULE_ACTION_DELETE == pdn->policy.pcc_rule[idx + idx_offset].action)
+    pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
+    while (pcc_rule != NULL) {
+        pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
+		if(RULE_ACTION_DELETE == pcc_rule->action)
 		{
 			rule_name_key_t rule_name = {0};
-			memcpy(&rule_name.rule_name, &(pdn->policy.pcc_rule[idx + idx_offset].dyn_rule->rule_name),
-				   sizeof(pdn->policy.pcc_rule[idx + idx_offset].dyn_rule->rule_name));
+			memcpy(&rule_name.rule_name, &(pcc_rule->dyn_rule->rule_name),
+				   sizeof(pcc_rule->dyn_rule->rule_name));
 			sprintf(rule_name.rule_name, "%s%d",
 					rule_name.rule_name, pdn->call_id);
 
+	        int8_t bearer_id;
 			bearer_id = get_rule_name_entry(rule_name);
 			if (-1 == bearer_id) {
 				/* TODO: Error handling bearer not found */
@@ -881,6 +881,7 @@ get_charging_rule_remove_bearer_info(pdn_connection_t *pdn,
 				*ber_cnt = *ber_cnt + 1;
 			}
 		}
+        pcc_rule = next_pcc_rule;
 	}
 
 	return;
@@ -890,13 +891,15 @@ int8_t
 get_bearer_info_install_rules(pdn_connection_t *pdn, uint8_t *ebi)
 {
 	int8_t ret = 0;
+    pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
 
-	for (int idx = 0; idx < pdn->policy.num_charg_rule_install; idx++) {
-		if(RULE_ACTION_ADD == pdn->policy.pcc_rule[idx].action)
+    while (pcc_rule != NULL) {
+        pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
+		if(RULE_ACTION_ADD == pcc_rule->action)
 		{
 			rule_name_key_t rule_name = {0};
-			memcpy(&rule_name.rule_name, &(pdn->policy.pcc_rule[idx].dyn_rule->rule_name),
-				   sizeof(pdn->policy.pcc_rule[idx].dyn_rule->rule_name));
+			memcpy(&rule_name.rule_name, &(pcc_rule->dyn_rule->rule_name),
+				   sizeof(pcc_rule->dyn_rule->rule_name));
 			sprintf(rule_name.rule_name, "%s%d",
 					rule_name.rule_name, pdn->call_id);
 			ret = get_rule_name_entry(rule_name);
@@ -909,6 +912,7 @@ get_bearer_info_install_rules(pdn_connection_t *pdn, uint8_t *ebi)
 
 			return 0;
 		}
+        pcc_rule = next_pcc_rule;
 	}
 
 	return 0;
@@ -926,7 +930,6 @@ parse_gx_rar_msg(msg_info_t *msg)
 	int16_t ret = 0;
 	pdn_connection_t *pdn_cntxt = proc_ctxt->pdn_context;
     ue_context_t *ue_context = proc_ctxt->ue_context;
-	gx_context_t *gx_context = proc_ctxt->gx_context;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
 	//TODO :: Definfe generate_rar_seq
@@ -934,12 +937,9 @@ parse_gx_rar_msg(msg_info_t *msg)
 
     /* PCRF Use case - Change in default bearer QoS through RAR */
     GxRAR *rar = &msg->gx_msg.rar;
-	if(rar->presence.default_eps_bearer_qos)
-	{
+	if(rar->presence.default_eps_bearer_qos) {
         // GXFIX - This is bug, we are not doing anything with this RAR request  
-		ret = store_default_bearer_qos_in_policy(pdn_cntxt, rar->default_eps_bearer_qos);
-		if (ret)
-			return ret;
+		store_default_bearer_qos_in_policy(pdn_cntxt, rar->default_eps_bearer_qos);
 	}
 
     bool install_rule_present = (rar->presence.charging_rule_install == PRESENT);
@@ -950,14 +950,7 @@ parse_gx_rar_msg(msg_info_t *msg)
 	    return ret;
     }
 
-    /* Requirement - updating policy only on either default bearer to dedicated bearer */
-    LOG_MSG(LOG_DEBUG, "Modify pcc rules %d ", pdn_cntxt->policy.num_charg_rule_modify);
-	if(pdn_cntxt->policy.num_charg_rule_modify) {
-        /*GXFIX : we are not updating pfcp session ? when should we do it ? */
-        /* What if RAR is received which involves modify as well as addition of new rules, we can not 
-         * just return from here...*/
-		return gx_update_bearer_req(pdn_cntxt);
-	}
+    return 0;
 
 	seq_no = fill_pfcp_gx_sess_mod_req(&pfcp_sess_mod_req, pdn_cntxt);
 
@@ -1009,8 +1002,5 @@ parse_gx_rar_msg(msg_info_t *msg)
 		resp->proc = DED_BER_ACTIVATION_PROC;
 	}
 #endif
-
-	pdn_cntxt->rqst_ptr = gx_context->rqst_ptr;
-
 	return 0;
 }
