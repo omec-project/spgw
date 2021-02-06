@@ -10,6 +10,7 @@
 #include "gx_def.h"
 #include "stdint.h"
 #include "fd.h"
+#include <sys/queue.h>
 
 #ifdef __cplusplus
 extern "C" {

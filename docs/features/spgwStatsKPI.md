@@ -68,6 +68,24 @@
 |Counter|number_of_messages_received|downlink_data_notification|number of DDNAck received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'DDNAck'}]|['sgw_addr', 'reason']|
 |Counter|number_of_messages_received|downlink_data_notification|number of DDNAck received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'DDNAck_drop'}]|['mme_addr', 'reason']|
 |Counter|number_of_messages_received|downlink_data_notification|number of DDNAck received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'DDNAck_drop'}]|['sgw_addr', 'reason']|
+|Counter|number_of_messages_received|create_bearer_response|number of create bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'CBRsp'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_received|create_bearer_response|number of create bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'CBRsp'}]|['sgw_addr', 'reason']|
+|Counter|number_of_messages_received|create_bearer_response|number of create bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'CBRsp_rej'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_received|create_bearer_response|number of create bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'CBRsp_rej'}]|['sgw_addr', 'reason']|
+|Counter|number_of_messages_received|create_bearer_response|number of create bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'CBRsp_drop'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_received|create_bearer_response|number of create bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'CBRsp_drop'}]|['sgw_addr', 'reason']|
+|Counter|number_of_messages_received|update_bearer_response|number of update bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'UBRsp'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_received|update_bearer_response|number of update bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'UBRsp'}]|['sgw_addr', 'reason']|
+|Counter|number_of_messages_received|update_bearer_response|number of update bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'UBRsp_rej'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_received|update_bearer_response|number of update bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'UBRsp_rej'}]|['sgw_addr', 'reason']|
+|Counter|number_of_messages_received|update_bearer_response|number of update bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'UBRsp_drop'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_received|update_bearer_response|number of update bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'UBRsp_drop'}]|['sgw_addr', 'reason']|
+|Counter|number_of_messages_received|delete_bearer_response|number of delete bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'DBRsp'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_received|delete_bearer_response|number of delete bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'DBRsp'}]|['sgw_addr', 'reason']|
+|Counter|number_of_messages_received|delete_bearer_response|number of delete bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'DBRsp_rej'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_received|delete_bearer_response|number of delete bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'DBRsp_rej'}]|['sgw_addr', 'reason']|
+|Counter|number_of_messages_received|delete_bearer_response|number of delete bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'DBRsp_drop'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_received|delete_bearer_response|number of delete bearer response received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_drop': 'DBRsp_drop'}]|['sgw_addr', 'reason']|
 |Counter|number_of_messages_received|gtpc_echo_request|number of Echo Req received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'ECHOReq'}]|['mme_addr']|
 |Counter|number_of_messages_received|gtpc_echo_request|number of Echo Req received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'ECHOReq'}]|['sgw_addr']|
 |Counter|number_of_messages_received|gtpc_echo_request|number of Echo Req received by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's5s8'}, {'msg_type': 'ECHOReq'}]|['mme_addr']|
@@ -174,6 +192,9 @@
 |Counter|number_of_messages_sent|release_access_bearer_response|number of RAB Rsp sent by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's5s8'}, {'msg_type': 'RABRsp'}]|['mme_addr', 'reason']|
 |Counter|number_of_messages_sent|release_access_bearer_response|number of RAB Rsp sent by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's5s8'}, {'msg_rej': 'RABRSP_rej'}]|['mme_addr', 'reason']|
 |Counter|number_of_messages_sent|downlink_data_notification_req|number of DDN Req sent by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'DDNReq'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_sent|create_bearer_req|number of Create Bearer Req sent by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'CBReq'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_sent|update_bearer_req|number of Update Bearer Req sent by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'UBReq'}]|['mme_addr', 'reason']|
+|Counter|number_of_messages_sent|delete_bearer_req|number of Delete Bearer Req sent by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'DBReq'}]|['mme_addr', 'reason']|
 |Counter|number_of_messages_sent|gtpc_echo_request|number of gtp Echo Request sent by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'ECHOReq'}]|['mme_addr']|
 |Counter|number_of_messages_sent|gtpc_echo_request|number of gtp Echo Request sent by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's11'}, {'msg_type': 'ECHOReq'}]|['sgw_addr']|
 |Counter|number_of_messages_sent|gtpc_echo_request|number of gtp Echo Request sent by SPGW|[{'protocol': 'gtpv2'}, {'interface': 's5s8'}, {'msg_type': 'ECHOReq'}]|['mme_addr']|
@@ -321,6 +342,76 @@
 |Counter|number_of_procedures|service_request_proc_result|service request procedure results|[{'cp_mode': 'spgw'}, {'procedure': 'SERVICE_REQUEST_PROC'}, {'result': 'failure'}]|['mme_addr', 'failure_reason']|
 |Counter|number_of_procedures|service_request_proc_result|service request procedure results|[{'cp_mode': 'spgw'}, {'procedure': 'SERVICE_REQUEST_PROC'}, {'result': 'failure'}]|['sgw_addr', 'failure_reason']|
 |Counter|number_of_procedures|service_request_proc_result|service request procedure results|[{'cp_mode': 'spgw'}, {'procedure': 'SERVICE_REQUEST_PROC'}, {'result': 'failure'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc|number of bearer create procedure |[{'cp_mode': 'sgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}]|['mme_addr']|
+|Counter|number_of_procedures|bearer_create_proc|number of bearer create procedure |[{'cp_mode': 'spgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}]|['mme_addr']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'sgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'success'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'sgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'success'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'sgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'success'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'sgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'failure'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'sgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'failure'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'sgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'failure'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'spgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'success'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'spgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'success'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'spgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'success'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'spgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'failure'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'spgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'failure'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_create_proc_result|number of bearer create procedure|[{'cp_mode': 'spgw'}, {'procedure': 'DEDICATED_BEARER_ACTIVATION_PROC'}, {'result': 'failure'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc|number of bearer update procedure |[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_UPDATE_PROC'}]|['mme_addr']|
+|Counter|number_of_procedures|bearer_update_proc|number of bearer update procedure |[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_UPDATE_PROC'}]|['mme_addr']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'success'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'success'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'success'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'failure'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'failure'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'failure'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'success'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'success'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'success'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'failure'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'failure'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_update_proc_result|number of bearer update procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_UPDATE_PROC'}, {'result': 'failure'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc|number of bearer delete procedure |[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_DELETE_PROC'}]|['mme_addr']|
+|Counter|number_of_procedures|bearer_delete_proc|number of bearer delete procedure |[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_DELETE_PROC'}]|['mme_addr']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'success'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'success'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'success'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'failure'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'failure'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'failure'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'success'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'success'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'success'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'failure'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'failure'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|bearer_delete_proc_result|number of bearer delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'BEARER_DELETE_PROC'}, {'result': 'failure'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc|number of network initiated pdn delete procedure |[{'cp_mode': 'sgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}]|['mme_addr']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc|number of network initiated pdn delete procedure |[{'cp_mode': 'spgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}]|['mme_addr']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'success'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'success'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'success'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'failure'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'failure'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'sgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'failure'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'success'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'success'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'success'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'failure'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'failure'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|nw_init_pdn_delete_proc_result|number of network initiated pdn delete procedure|[{'cp_mode': 'spgw'}, {'procedure': 'NW_INIT_PDN_DELETE_PROC'}, {'result': 'failure'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc|number of pcrf initiated RAR procedure |[{'cp_mode': 'sgw'}, {'procedure': 'RAR_PROC'}]|['mme_addr']|
+|Counter|number_of_procedures|gx_rar_proc|number of pcrf initiated RAR procedure |[{'cp_mode': 'spgw'}, {'procedure': 'RAR_PROC'}]|['mme_addr']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'sgw'}, {'procedure': 'RAR_PROC'}, {'result': 'success'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'sgw'}, {'procedure': 'RAR_PROC'}, {'result': 'success'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'sgw'}, {'procedure': 'RAR_PROC'}, {'result': 'success'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'sgw'}, {'procedure': 'RAR_PROC'}, {'result': 'failure'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'sgw'}, {'procedure': 'RAR_PROC'}, {'result': 'failure'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'sgw'}, {'procedure': 'RAR_PROC'}, {'result': 'failure'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'spgw'}, {'procedure': 'RAR_PROC'}, {'result': 'success'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'spgw'}, {'procedure': 'RAR_PROC'}, {'result': 'success'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'spgw'}, {'procedure': 'RAR_PROC'}, {'result': 'success'}]|['pgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'spgw'}, {'procedure': 'RAR_PROC'}, {'result': 'failure'}]|['mme_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'spgw'}, {'procedure': 'RAR_PROC'}, {'result': 'failure'}]|['sgw_addr', 'failure_reason']|
+|Counter|number_of_procedures|gx_rar_proc_result|number of pcrf initiated RAR procedure|[{'cp_mode': 'spgw'}, {'procedure': 'RAR_PROC'}, {'result': 'failure'}]|['pgw_addr', 'failure_reason']|
 
 
 # data_usage

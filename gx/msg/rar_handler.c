@@ -51,29 +51,17 @@ int handle_rar_msg(msg_info_t **msg_p)
         return -1;
     }
 
-#ifdef BADCODE
-    /* Reteive the rqst ptr for RAA */
-    uint32_t buflen = gx_rar_calc_length (&msg->gx_msg.rar);
-    RTE_SET_USED(buflen);
-    //gx_context->rqst_ptr = (uint64_t *)(((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + buflen));
-    memcpy( &gx_context->rqst_ptr ,((unsigned char *)msg->gx_msg.rar + sizeof(msg->gx_msg.msg_type) + buflen), sizeof(unsigned long));
-#endif
-
-    pdn_cntxt->rqst_ptr = gx_context->rqst_ptr;
     msg->ue_context = pdn_cntxt->context;
     msg->pdn_context = pdn_cntxt;
-    /* Retrive the Session state and set the event */
-    msg->state = CONNECTED_STATE;
     msg->event = RE_AUTH_REQ_RCVD_EVNT;
-    /* RAR may trigger update bearer, delete bearer or create bearer... */
-    msg->proc = DED_BER_ACTIVATION_PROC; 
+    msg->proc = RAR_PROC; 
 
     LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:%s[%u], Session Id:%s, "
-            "State:%s, Event:%s",
+            "Event:%s",
             gx_type_str(msg->msg_type), msg->msg_type,
             msg->gx_msg.cca.session_id.val,
-            get_state_string(msg->state), get_event_string(msg->event));
+            get_event_string(msg->event));
 
     /* BUG ? Dont we need transaction ? */
     proc_context_t *rar_proc = alloc_rar_proc(msg);

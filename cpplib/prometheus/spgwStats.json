@@ -172,6 +172,72 @@
             ]
         },
         {
+            "name" : "create_bearer_response",
+            "help" : "number of create bearer response received by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"}
+            ],
+            "label_2": [
+                { "msg_type": "CBRsp" },
+                { "msg_drop": "CBRsp_rej"},
+                { "msg_drop": "CBRsp_drop"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "}
+            ],
+            "dynamic_label_1": [
+                {"reason" : "drop reason"}
+            ]
+        },
+        {
+            "name" : "update_bearer_response",
+            "help" : "number of update bearer response received by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"}
+            ],
+            "label_2": [
+                { "msg_type": "UBRsp" },
+                { "msg_drop": "UBRsp_rej"},
+                { "msg_drop": "UBRsp_drop"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "}
+            ],
+            "dynamic_label_1": [
+                {"reason" : "drop reason"}
+            ]
+        },
+        {
+            "name" : "delete_bearer_response",
+            "help" : "number of delete bearer response received by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"}
+            ],
+            "label_2": [
+                { "msg_type": "DBRsp" },
+                { "msg_drop": "DBRsp_rej"},
+                { "msg_drop": "DBRsp_drop"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "MME address of s11 connection "},
+                {"sgw_addr" : "SGW address of s5s8 connection "}
+            ],
+            "dynamic_label_1": [
+                {"reason" : "drop reason"}
+            ]
+        },
+        {
             "name" : "gtpc_echo_request",
             "help" : "number of Echo Req received by SPGW",
             "label_0": [
@@ -446,7 +512,7 @@
             ]
         }
         ]
-    }, 
+    },
    "msg_tx": {
         "name": "number_of_messages_sent",
         "help": "Number of messages sent by SPGW",
@@ -455,7 +521,7 @@
                 {"direction": "outgoing"}
         ],
         "counters":[
-        { 
+        {
             "name" : "version_not_supported",
             "help" : "number of version not supported sent by SPGW",
             "label_0": [
@@ -571,6 +637,63 @@
             ],
             "label_2": [
                 { "msg_type": "DDNReq" }
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "MME address of s11 connection "}
+            ],
+            "dynamic_label_1": [
+                {"reason" : "drop reason"}
+            ]
+        },
+        {
+            "name" : "create_bearer_req",
+            "help" : "number of Create Bearer Req sent by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"}
+            ],
+            "label_2": [
+                { "msg_type": "CBReq" }
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "MME address of s11 connection "}
+            ],
+            "dynamic_label_1": [
+                {"reason" : "drop reason"}
+            ]
+        },
+        {
+            "name" : "update_bearer_req",
+            "help" : "number of Update Bearer Req sent by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"}
+            ],
+            "label_2": [
+                { "msg_type": "UBReq"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "MME address of s11 connection "}
+            ],
+            "dynamic_label_1": [
+                {"reason" : "drop reason"}
+            ]
+        },        
+        {
+            "name" : "delete_bearer_req",
+            "help" : "number of Delete Bearer Req sent by SPGW",
+            "label_0": [
+                { "protocol": "gtpv2" }
+            ],
+            "label_1": [
+                { "interface":"s11"}
+            ],
+            "label_2": [
+                { "msg_type": "DBReq" }
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "}
@@ -987,8 +1110,194 @@
             "dynamic_label_1": [
                 {"failure_reason" : "Put failure reason here"}
             ]
+        },
+        {
+            "name" : "bearer_create_proc",
+            "help" : "number of bearer create procedure ",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"DEDICATED_BEARER_ACTIVATION_PROC"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "mme address of s11 connection "}
+            ]
+        },
+        {
+            "name" : "bearer_create_proc_result",
+            "help" : "number of bearer create procedure",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"DEDICATED_BEARER_ACTIVATION_PROC"}
+            ],
+            "label_2": [
+                {"result": "success"},
+                {"result": "failure"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "mme address of s11 connection "},
+                {"sgw_addr" : "sgw address of s5s8 connection "},
+                {"pgw_addr" : "pgw address of s5s8 connection "}
+            ],
+            "dynamic_label_1": [
+                {"failure_reason" : "Put failure reason here"}
+            ]
+        },
+        {
+            "name" : "bearer_update_proc",
+            "help" : "number of bearer update procedure ",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"BEARER_UPDATE_PROC"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "mme address of s11 connection "}
+            ]
+        },
+        {
+            "name" : "bearer_update_proc_result",
+            "help" : "number of bearer update procedure",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"BEARER_UPDATE_PROC"}
+            ],
+            "label_2": [
+                {"result": "success"},
+                {"result": "failure"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "mme address of s11 connection "},
+                {"sgw_addr" : "sgw address of s5s8 connection "},
+                {"pgw_addr" : "pgw address of s5s8 connection "}
+            ],
+            "dynamic_label_1": [
+                {"failure_reason" : "Put failure reason here"}
+            ]
+        },
+        {
+            "name" : "bearer_delete_proc",
+            "help" : "number of bearer delete procedure ",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"BEARER_DELETE_PROC"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "mme address of s11 connection "}
+            ]
+        },
+        {
+            "name" : "bearer_delete_proc_result",
+            "help" : "number of bearer delete procedure",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"BEARER_DELETE_PROC"}
+            ],
+            "label_2": [
+                {"result": "success"},
+                {"result": "failure"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "mme address of s11 connection "},
+                {"sgw_addr" : "sgw address of s5s8 connection "},
+                {"pgw_addr" : "pgw address of s5s8 connection "}
+            ],
+            "dynamic_label_1": [
+                {"failure_reason" : "Put failure reason here"}
+            ]
+        },
+        {
+            "name" : "nw_init_pdn_delete_proc",
+            "help" : "number of network initiated pdn delete procedure ",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"NW_INIT_PDN_DELETE_PROC"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "mme address of s11 connection "}
+            ]
+        },
+        {
+            "name" : "nw_init_pdn_delete_proc_result",
+            "help" : "number of network initiated pdn delete procedure",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"NW_INIT_PDN_DELETE_PROC"}
+            ],
+            "label_2": [
+                {"result": "success"},
+                {"result": "failure"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "mme address of s11 connection "},
+                {"sgw_addr" : "sgw address of s5s8 connection "},
+                {"pgw_addr" : "pgw address of s5s8 connection "}
+            ],
+            "dynamic_label_1": [
+                {"failure_reason" : "Put failure reason here"}
+            ]
+        },
+        {
+            "name" : "gx_rar_proc",
+            "help" : "number of pcrf initiated RAR procedure ",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"RAR_PROC"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "mme address of s11 connection "}
+            ]
+        },
+        {
+            "name" : "gx_rar_proc_result",
+            "help" : "number of pcrf initiated RAR procedure",
+            "label_0": [
+                {"cp_mode": "sgw"},
+                {"cp_mode": "spgw"}
+            ],
+            "label_1": [
+                { "procedure":"RAR_PROC"}
+            ],
+            "label_2": [
+                {"result": "success"},
+                {"result": "failure"}
+            ],
+            "dynamic_label_0": [
+                {"mme_addr" : "mme address of s11 connection "},
+                {"sgw_addr" : "sgw address of s5s8 connection "},
+                {"pgw_addr" : "pgw address of s5s8 connection "}
+            ],
+            "dynamic_label_1": [
+                {"failure_reason" : "Put failure reason here"}
+            ]
         }
-        ]
+
+      ]
     },
     "data_usage" : {
         "name": "data_usage_of_subscribers",

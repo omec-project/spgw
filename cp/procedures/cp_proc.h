@@ -17,8 +17,13 @@ enum proc_result {
     PROC_RESULT_FAILURE
 };
 
+#define PROC_FLAGS_RUNNING  0x00000001
 
 typedef void (*event_handler_t) (void*,void*);
+typedef void (*add_child_proc_t) (void*, void*);
+typedef void (*done_child_proc_t) (void*);
+#define MAX_CHILD_PROC 8
+
 /* GTP Req : Create transaction, create proc  and link proc to trans
  * respinse find transaction, linked proc pointer form trans
  */ 
@@ -38,10 +43,16 @@ struct proc_context {
     void            *msg_info;
     void            *gx_context;
     uint32_t        call_id;
-    bool            cbrsp_received;
     uint16_t        rar_seq_num;
 	TAILQ_ENTRY(proc_context) next_sub_proc;
 	TAILQ_ENTRY(proc_context) next_node_proc;
+
+    // child procs 
+    add_child_proc_t child_proc_add; 
+    done_child_proc_t child_proc_done; 
+    uint8_t          child_procs_cnt;
+    void*            child_procs[MAX_CHILD_PROC]; 
+    void*            parent_proc;
 };
 typedef struct proc_context proc_context_t;
 

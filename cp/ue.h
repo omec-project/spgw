@@ -322,7 +322,9 @@ enum rule_action_t {
 	RULE_ACTION_MAX
 };
 
+#define PCC_RULE_OP_PENDING  0x00000001
 typedef struct pcc_rule{
+    uint32_t            flags;
 	enum rule_action_t action;
 	dynamic_rule_t *dyn_rule;
     TAILQ_ENTRY(pcc_rule) next_pcc_rule;
@@ -526,7 +528,6 @@ typedef struct pdn_connection {
 	dynamic_rule_t *dynamic_rules[16];
 
 	/* need to maintain reqs ptr for RAA*/
-	unsigned long rqst_ptr; /* MUSTFIX */
 	policy_t policy;
 
 	/* timer entry data for stop timer session */

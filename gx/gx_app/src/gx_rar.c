@@ -10,8 +10,8 @@
 #include "cp_log.h"
 
 extern int g_gx_client_sock;
-uint16_t rar_seq_num = 10;
-struct msg *global_raa_ans;
+extern gx_trans_data_t *gx_trans_list;
+
 
 int unixsock();
 
@@ -217,7 +217,6 @@ enum disp_action * act
 {
 	int ret = FD_REASON_OK;
 	struct msg *rqst = *msg;
-    global_raa_ans = rqst;
 	//struct msg *ans = rqst;
 	char *send_buf = NULL;
 	gx_msg *gx_req = NULL;
@@ -261,13 +260,18 @@ enum disp_action * act
 	memset(send_buf, 0, (sizeof(gx_req->msg_type) + buflen + sizeof(rqst)));
 
 	/* encoding the rar header value to buffer */
-    rar_seq_num++;
+    uint16_t rar_seq_num = gx_trans_list->rar_seq_num++;
 	memcpy(send_buf, &gx_req->msg_type, sizeof(gx_req->msg_type));
     memcpy(send_buf+sizeof(gx_req->msg_type), &rar_seq_num, sizeof(gx_req->seq_num)); 
 
 	if ( gx_rar_pack( &(gx_req->data.cp_rar), (unsigned char *)(send_buf + sizeof(gx_req->msg_type)) + sizeof(gx_req->seq_num), buflen ) == 0 )
 		LOG_MSG(LOG_ERROR, "RAR Packing failure ");
 
+   
+    pending_gx_trans_t *trans = calloc(1, sizeof(pending_gx_trans_t)); 
+    trans->msg = rqst; 
+    trans->seq_num = rar_seq_num;
+    LIST_INSERT_HEAD(&gx_trans_list->pending_gx_trans, trans, next_trans_entry);
 
 	memcpy((unsigned char *)(send_buf + sizeof(gx_req->msg_type) + buflen), &rqst, sizeof(rqst));
 	send_to_ipc_channel(g_gx_client_sock, send_buf, buflen + sizeof(gx_req->msg_type) + sizeof(rqst));
@@ -275,7 +279,7 @@ enum disp_action * act
 	/* Free the memory sender buffer */
 	free(send_buf);
 
-    LOG_MSG(LOG_DEBUG2, "===== SENT RAR FROM GXAPP TO PCEF and address=== ");
+    LOG_MSG(LOG_DEBUG2, "===== SENT RAR FROM GXAPP TO PCEF and address=== RAR Seq = %d ",rar_seq_num);
 #if GX_DEBUG
 	FD_DUMP_MESSAGE(rqst);
 #endif

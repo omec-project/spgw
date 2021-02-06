@@ -379,32 +379,55 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 
 /* We should queue the event if required */
 void
-start_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
+start_procedure(proc_context_t *new_proc_ctxt, msg_info_t *msg)
 {
     RTE_SET_USED(msg);
     ue_context_t *context = NULL;
-    context = (ue_context_t *)proc_ctxt->ue_context;
+    context = (ue_context_t *)new_proc_ctxt->ue_context;
 
     if(context != NULL) {
-        TAILQ_INSERT_TAIL(&context->pending_sub_procs, proc_ctxt, next_sub_proc); 
+        TAILQ_INSERT_TAIL(&context->pending_sub_procs, new_proc_ctxt, next_sub_proc); 
         assert(!TAILQ_EMPTY(&context->pending_sub_procs)); // not empty
         /* Decide if we wish to run procedure now... If yes move on ...*/
         proc_context_t *p_ctxt = TAILQ_FIRST(&context->pending_sub_procs);
-        if(p_ctxt != proc_ctxt) {
-            LOG_MSG(LOG_DEBUG4, "Some outstanding procedures in queue. Proc Ctxt : %p ",proc_ctxt);
-            return;
+        if(p_ctxt != new_proc_ctxt) {
+            bool allowed_parellel = false;
+            // allow child proc to run if current outstanding proc is parent proc
+            proc_context_t *temp;
+            TAILQ_FOREACH(temp, &context->pending_sub_procs, next_sub_proc) {
+                if(temp == new_proc_ctxt)
+                    continue;
+                LOG_MSG(LOG_DEBUG4, "Some outstanding procedures in queue. Proc Ctxt : %p ",temp);
+                if(temp->proc_type == RAR_PROC) {
+                    if((new_proc_ctxt->proc_type == DED_BER_ACTIVATION_PROC) && (new_proc_ctxt->parent_proc == temp)) {
+                        LOG_MSG(LOG_DEBUG,"CBREQ, RAR is allowed in parellel");
+                        allowed_parellel = true;
+                    }
+                } else {
+                    LOG_MSG(LOG_DEBUG4,"Other proecudure is running %d ", temp->proc_type);
+                    // even if one running proc does not want new proc to run in parellel then we need to wait
+                    allowed_parellel = false; 
+                }
+            }
+            if(allowed_parellel == false) {
+                LOG_MSG(LOG_DEBUG4, "Parellel procedure not allowed ");
+                return;
+            }
+ 
         }
     }
-    start_procedure_direct(proc_ctxt);
+    start_procedure_direct(new_proc_ctxt);
     return;
 }
 
 static void start_procedure_direct(proc_context_t *proc_ctxt)
 {
-    msg_info_t * msg = proc_ctxt->msg_info;
+    msg_info_t *msg = proc_ctxt->msg_info;
     assert(proc_ctxt != NULL);
 
     LOG_MSG(LOG_DEBUG4, "Start direct procedure  %d ",proc_ctxt->proc_type);
+
+    proc_ctxt->flags |= PROC_FLAGS_RUNNING;
 
     switch(proc_ctxt->proc_type) {
         case INITIAL_PDN_ATTACH_PROC: {
@@ -456,8 +479,12 @@ static void start_procedure_direct(proc_context_t *proc_ctxt)
             proc_ctxt->handler(proc_ctxt, msg);
             break;
         }
+        case RAR_PROC: {
+            proc_ctxt->handler(proc_ctxt, msg);
+            break;
+        }
         default:
-            rte_panic("unknown proc");
+            assert("unknown proc");
     }
     return;
 }
@@ -659,14 +686,39 @@ end_procedure(proc_context_t *proc_ctxt)
             free(proc_ctxt);
             break;
         }
+        case DED_BER_ACTIVATION_PROC: {
+            // no change in pdn/context state
+            context = proc_ctxt->ue_context;
+            pdn = proc_ctxt->pdn_context;
+            if(proc_ctxt->parent_proc != NULL) {
+                proc_context_t *p_proc = (proc_context_t *)proc_ctxt->parent_proc;
+                p_proc->child_proc_done(proc_ctxt);
+            } 
+            free(proc_ctxt);
+            break;
+        }
+        case RAR_PROC: {
+            // no change in pdn/context state
+            context = proc_ctxt->ue_context;
+            pdn = proc_ctxt->pdn_context;
+            free(proc_ctxt);
+            break;
+        }
+        default:
+            assert(0);
     }
 
     if(context != NULL) {
         // start new procedure if something is pending 
         LOG_MSG(LOG_DEBUG3, "Continue with subscriber %lu ", imsi64);
-        proc_context_t *p_ctxt = TAILQ_FIRST(&context->pending_sub_procs);
-        if(p_ctxt) {
-            start_procedure_direct(p_ctxt);
+        proc_context_t *temp;
+        TAILQ_FOREACH(temp, &context->pending_sub_procs, next_sub_proc) {
+            if(temp->flags & PROC_FLAGS_RUNNING) {
+                LOG_MSG(LOG_DEBUG3, "Running procedure %p %d ", temp, temp->proc_type);
+                continue;
+            }
+            // TODO: can we run this procedure ???
+            start_procedure_direct(temp);
         }
     } else {
         LOG_MSG(LOG_DEBUG3, "Released subscriber %lu ", imsi64);

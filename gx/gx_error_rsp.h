@@ -7,7 +7,7 @@
 #define __GX_ERROR_RSP__
 #include "./gx_app/include/gx.h"
 #include "sm_struct.h"
-void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error);
+void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error, uint16_t seq);
 /**
  * @brief  : Preocess sending of ccr-t message if there is any error while procesing gx message
  * @param  : msg, information related to message which caused error

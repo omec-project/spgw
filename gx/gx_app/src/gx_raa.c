@@ -5,12 +5,13 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <stdint.h>
+#include <sys/queue.h>
 
 #include "gx.h"
 #include "cp_log.h"
 
-extern struct msg *global_raa_ans;
 extern void hexDump(char *desc, void *address, int len);
+extern gx_trans_data_t *gx_trans_list;
 /*
 *
 *       Fun:    gx_send_raa
@@ -50,8 +51,18 @@ int gx_send_raa(void *buf)
 
 	//memcpy(&rqst_ptr, ((unsigned char *)data + buflen -1), sizeof(unsigned long));
 	//memcpy(&ans, ((unsigned char *)data + *(uint32_t*)data), sizeof(ans));
-    ans = global_raa_ans;
 
+    pending_gx_trans_t *key = NULL; 
+    key = LIST_FIRST(&gx_trans_list->pending_gx_trans);
+    while(key != NULL) {
+        if(key->seq_num == req->seq_num) {
+            ans = (struct msg *)key->msg;
+            LIST_REMOVE(key, next_trans_entry);
+            break;
+        }
+        key = LIST_NEXT(key, next_trans_entry);
+    }
+    assert(ans != NULL);
 	//	ans = (struct msg*)rqst_ptr;
 
 	/* construct the message */
@@ -68,8 +79,24 @@ int gx_send_raa(void *buf)
 	//		"dstest4.test3gpp.net", strlen("dstest4.test3gpp.net"), ret, goto   err );
 	//FDCHECK_MSG_ADD_AVP_OSTR( gxDict.avp_destination_realm, ans, MSG_BRW_LAST_CHILD, fd_g_config->cnf_diamrlm, fd_g_config->cnf_diamrlm_len, ret, goto err );
 
-	FDCHECK_MSG_ADD_AVP_U32(gxDict.avp_result_code, ans, MSG_BRW_LAST_CHILD,
+    if(gx_raa->presence.result_code) {
+	    FDCHECK_MSG_ADD_AVP_U32(gxDict.avp_result_code, ans, MSG_BRW_LAST_CHILD,
 				gx_raa->result_code, ret, goto err );
+    }
+    if(gx_raa->presence.experimental_result) {
+        struct avp *experimental_result = NULL;
+	    FDCHECK_MSG_ADD_AVP_GROUPED_2(gxDict.avp_experimental_result, ans, MSG_BRW_LAST_CHILD,
+				experimental_result, ret, goto err );
+
+        FDCHECK_MSG_ADD_AVP_U32(gxDict.avp_vendor_id, experimental_result,
+                                MSG_BRW_LAST_CHILD, gx_raa->experimental_result.vendor_id,
+                                ret, goto err);
+        FDCHECK_MSG_ADD_AVP_U32(gxDict.avp_experimental_result_code, experimental_result,
+                                MSG_BRW_LAST_CHILD, gx_raa->experimental_result.experimental_result_code,
+                                ret, goto err);
+
+    }
+
 
 	//FDCHECK_MSG_ADD_AVP_OSTR( gxDict.avp_auth_application_id, ans, MSG_BRW_LAST_CHILD,
 	//		gxDict.appGX, sizeof(gxDict.appGX), ret, goto err );
