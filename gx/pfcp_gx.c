@@ -53,36 +53,24 @@ extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 static int
 store_default_bearer_qos_in_policy(pdn_connection_t *pdn, GxDefaultEpsBearerQos qos)
 {
-	int8_t ebi_index = 0;
-	eps_bearer_t *bearer = NULL;
-	if (pdn == NULL)
-		return -1;
-	ebi_index = pdn->default_bearer_id - 5;
-	bearer = pdn->eps_bearers[ebi_index];
-
-
 	pdn->policy.default_bearer_qos_valid = TRUE;
 	bearer_qos_ie *def_qos = &pdn->policy.default_bearer_qos;
 
 
 	if (qos.presence.qos_class_identifier == PRESENT) {
 		def_qos->qci = qos.qos_class_identifier;
-		bearer->qos.qci = qos.qos_class_identifier;
 	}
 
     // GXFIX - 
 	if(qos.presence.allocation_retention_priority == PRESENT) {
 		if(qos.allocation_retention_priority.presence.priority_level == PRESENT){
 			def_qos->arp.priority_level = qos.allocation_retention_priority.priority_level;
-			bearer->qos.arp.priority_level = qos.allocation_retention_priority.priority_level;
 		}
 		if(qos.allocation_retention_priority.presence.pre_emption_capability == PRESENT){
 			def_qos->arp.preemption_capability = qos.allocation_retention_priority.pre_emption_capability;
-			bearer->qos.arp.preemption_capability = qos.allocation_retention_priority.pre_emption_capability;
 		}
 		if(qos.allocation_retention_priority.presence.pre_emption_vulnerability == PRESENT){
 			def_qos->arp.preemption_vulnerability = qos.allocation_retention_priority.pre_emption_vulnerability;
-			bearer->qos.arp.preemption_vulnerability = qos.allocation_retention_priority.pre_emption_vulnerability;
 		}
 	}
 
@@ -800,9 +788,6 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 		return DIAMETER_UNKNOWN_SESSION_ID;
 	}
 
-	pdn->rqst_ptr = gx_context->rqst_ptr;
-
-
 	/* Update UE State */
 	pdn->state = UPDATE_BEARER_REQ_SNT_STATE;
 
@@ -917,11 +902,6 @@ get_bearer_info_install_rules(pdn_connection_t *pdn, uint8_t *ebi)
 
 	return 0;
 }
-void pfcp_modify_rar_trigger_timeout(void *data)
-{
-    RTE_SET_USED(data);
-    return;
-}
 
 int8_t
 parse_gx_rar_msg(msg_info_t *msg)
@@ -929,11 +909,7 @@ parse_gx_rar_msg(msg_info_t *msg)
     proc_context_t *proc_ctxt = msg->proc_context;
 	int16_t ret = 0;
 	pdn_connection_t *pdn_cntxt = proc_ctxt->pdn_context;
-    ue_context_t *ue_context = proc_ctxt->ue_context;
-	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
-	//TODO :: Definfe generate_rar_seq
-	int32_t seq_no = generate_rar_seq();
 
     /* PCRF Use case - Change in default bearer QoS through RAR */
     GxRAR *rar = &msg->gx_msg.rar;
@@ -949,58 +925,6 @@ parse_gx_rar_msg(msg_info_t *msg)
         LOG_MSG(LOG_ERROR, "store dynamic rules in policy failed with return %d ",ret);
 	    return ret;
     }
-
+    LOG_MSG(LOG_DEBUG,"parsing of RAR successful");
     return 0;
-
-	seq_no = fill_pfcp_gx_sess_mod_req(&pfcp_sess_mod_req, pdn_cntxt);
-
-	uint8_t pfcp_msg[1024] = {0};
-	int encoded = encode_pfcp_sess_mod_req_t(&pfcp_sess_mod_req, pfcp_msg);
-	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
-	header->message_len = htons(encoded - 4);
-
-	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &ue_context->upf_context->upf_sockaddr);
-
-    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(ue_context->upf_context));
-
-    transData_t *trans_entry = NULL;
-    if(cp_config->cp_type == PGWC){
-        trans_entry = start_response_wait_timer(ue_context,
-                pfcp_msg, encoded,
-                pfcp_modify_rar_trigger_timeout);
-    }
-    else if(cp_config->cp_type == SAEGWC)
-    {
-        trans_entry = start_response_wait_timer(ue_context,
-                pfcp_msg, encoded, pfcp_modify_rar_trigger_timeout);
-    }
-    trans_entry->self_initiated = 1;
-    uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
-    uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
-    add_pfcp_transaction(local_addr, port_num, seq_no, (void*)trans_entry);
-    trans_entry->sequence = seq_no;
-    proc_ctxt->pfcp_trans = trans_entry;
-    trans_entry->proc_context = proc_ctxt;
-	/* Update UE State */
-	pdn_cntxt->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-
-#ifdef FUTURE_NEED
-	uint8_t bearer_id = 0;
-	/* Set GX rar message */
-	resp->eps_bearer_id = bearer_id + 5;
-	resp->msg_type = GX_RAR_MSG;
-	resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-
-	if(rar->charging_rule_remove.count != 0) {
-		/* Update UE Proc */
-		pdn_cntxt->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
-		resp->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
-	} else {
-		/* Update UE Proc */
-
-		pdn_cntxt->proc = DED_BER_ACTIVATION_PROC;
-		resp->proc = DED_BER_ACTIVATION_PROC;
-	}
-#endif
-	return 0;
 }

@@ -102,6 +102,15 @@ msg_rx_gtpv2_s11_rabreq_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface
 msg_rx_gtpv2_s11_rabreq_rej(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","RABReq_rej"}})),
 msg_rx_gtpv2_s11_ddnack(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","DDNAck"}})),
 msg_rx_gtpv2_s11_ddnack_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","DDNAck_drop"}})),
+msg_rx_gtpv2_s11_cbrsp(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","CBRsp"}})),
+msg_rx_gtpv2_s11_cbrsp_rej(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","CBRsp_rej"}})),
+msg_rx_gtpv2_s11_cbrsp_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","CBRsp_drop"}})),
+msg_rx_gtpv2_s11_ubrsp(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","UBRsp"}})),
+msg_rx_gtpv2_s11_ubrsp_rej(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","UBRsp_rej"}})),
+msg_rx_gtpv2_s11_ubrsp_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","UBRsp_drop"}})),
+msg_rx_gtpv2_s11_dbrsp(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","DBRsp"}})),
+msg_rx_gtpv2_s11_dbrsp_rej(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","DBRsp_rej"}})),
+msg_rx_gtpv2_s11_dbrsp_drop(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_drop","DBRsp_drop"}})),
 msg_rx_gtpv2_s11_echoreq(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","ECHOReq"}})),
 msg_rx_gtpv2_s5s8_echoreq(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s5s8"},{"msg_type","ECHOReq"}})),
 msg_rx_gtpv2_s11_echorsp(msg_rx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","ECHORsp"}})),
@@ -197,6 +206,9 @@ msg_tx_gtpv2_s11_rabrsp_rej(msg_tx_family.Add({{"protocol","gtpv2"},{"interface"
 msg_tx_gtpv2_s5s8_rabrsp(msg_tx_family.Add({{"protocol","gtpv2"},{"interface","s5s8"},{"msg_type","RABRsp"}})),
 msg_tx_gtpv2_s5s8_rabrsp_rej(msg_tx_family.Add({{"protocol","gtpv2"},{"interface","s5s8"},{"msg_rej","RABRSP_rej"}})),
 msg_tx_gtpv2_s11_ddnreq(msg_tx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","DDNReq"}})),
+msg_tx_gtpv2_s11_cbreq(msg_tx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","CBReq"}})),
+msg_tx_gtpv2_s11_ubreq(msg_tx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","UBReq"}})),
+msg_tx_gtpv2_s11_dbreq(msg_tx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","DBReq"}})),
 msg_tx_gtpv2_s11_echoreq(msg_tx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","ECHOReq"}})),
 msg_tx_gtpv2_s5s8_echoreq(msg_tx_family.Add({{"protocol","gtpv2"},{"interface","s5s8"},{"msg_type","ECHOReq"}})),
 msg_tx_gtpv2_s11_echorsp(msg_tx_family.Add({{"protocol","gtpv2"},{"interface","s11"},{"msg_type","ECHORsp"}})),
@@ -290,7 +302,37 @@ procedures_spgw_service_request_proc(procedures_family.Add({{"cp_mode","spgw"},{
 procedures_sgw_service_request_proc_success(procedures_family.Add({{"cp_mode","sgw"},{"procedure","SERVICE_REQUEST_PROC"},{"result","success"}})),
 procedures_sgw_service_request_proc_failure(procedures_family.Add({{"cp_mode","sgw"},{"procedure","SERVICE_REQUEST_PROC"},{"result","failure"}})),
 procedures_spgw_service_request_proc_success(procedures_family.Add({{"cp_mode","spgw"},{"procedure","SERVICE_REQUEST_PROC"},{"result","success"}})),
-procedures_spgw_service_request_proc_failure(procedures_family.Add({{"cp_mode","spgw"},{"procedure","SERVICE_REQUEST_PROC"},{"result","failure"}}))
+procedures_spgw_service_request_proc_failure(procedures_family.Add({{"cp_mode","spgw"},{"procedure","SERVICE_REQUEST_PROC"},{"result","failure"}})),
+procedures_sgw_dedicated_bearer_activation_proc(procedures_family.Add({{"cp_mode","sgw"},{"procedure","DEDICATED_BEARER_ACTIVATION_PROC"}})),
+procedures_spgw_dedicated_bearer_activation_proc(procedures_family.Add({{"cp_mode","spgw"},{"procedure","DEDICATED_BEARER_ACTIVATION_PROC"}})),
+procedures_sgw_dedicated_bearer_activation_proc_success(procedures_family.Add({{"cp_mode","sgw"},{"procedure","DEDICATED_BEARER_ACTIVATION_PROC"},{"result","success"}})),
+procedures_sgw_dedicated_bearer_activation_proc_failure(procedures_family.Add({{"cp_mode","sgw"},{"procedure","DEDICATED_BEARER_ACTIVATION_PROC"},{"result","failure"}})),
+procedures_spgw_dedicated_bearer_activation_proc_success(procedures_family.Add({{"cp_mode","spgw"},{"procedure","DEDICATED_BEARER_ACTIVATION_PROC"},{"result","success"}})),
+procedures_spgw_dedicated_bearer_activation_proc_failure(procedures_family.Add({{"cp_mode","spgw"},{"procedure","DEDICATED_BEARER_ACTIVATION_PROC"},{"result","failure"}})),
+procedures_sgw_bearer_update_proc(procedures_family.Add({{"cp_mode","sgw"},{"procedure","BEARER_UPDATE_PROC"}})),
+procedures_spgw_bearer_update_proc(procedures_family.Add({{"cp_mode","spgw"},{"procedure","BEARER_UPDATE_PROC"}})),
+procedures_sgw_bearer_update_proc_success(procedures_family.Add({{"cp_mode","sgw"},{"procedure","BEARER_UPDATE_PROC"},{"result","success"}})),
+procedures_sgw_bearer_update_proc_failure(procedures_family.Add({{"cp_mode","sgw"},{"procedure","BEARER_UPDATE_PROC"},{"result","failure"}})),
+procedures_spgw_bearer_update_proc_success(procedures_family.Add({{"cp_mode","spgw"},{"procedure","BEARER_UPDATE_PROC"},{"result","success"}})),
+procedures_spgw_bearer_update_proc_failure(procedures_family.Add({{"cp_mode","spgw"},{"procedure","BEARER_UPDATE_PROC"},{"result","failure"}})),
+procedures_sgw_bearer_delete_proc(procedures_family.Add({{"cp_mode","sgw"},{"procedure","BEARER_DELETE_PROC"}})),
+procedures_spgw_bearer_delete_proc(procedures_family.Add({{"cp_mode","spgw"},{"procedure","BEARER_DELETE_PROC"}})),
+procedures_sgw_bearer_delete_proc_success(procedures_family.Add({{"cp_mode","sgw"},{"procedure","BEARER_DELETE_PROC"},{"result","success"}})),
+procedures_sgw_bearer_delete_proc_failure(procedures_family.Add({{"cp_mode","sgw"},{"procedure","BEARER_DELETE_PROC"},{"result","failure"}})),
+procedures_spgw_bearer_delete_proc_success(procedures_family.Add({{"cp_mode","spgw"},{"procedure","BEARER_DELETE_PROC"},{"result","success"}})),
+procedures_spgw_bearer_delete_proc_failure(procedures_family.Add({{"cp_mode","spgw"},{"procedure","BEARER_DELETE_PROC"},{"result","failure"}})),
+procedures_sgw_nw_init_pdn_delete_proc(procedures_family.Add({{"cp_mode","sgw"},{"procedure","NW_INIT_PDN_DELETE_PROC"}})),
+procedures_spgw_nw_init_pdn_delete_proc(procedures_family.Add({{"cp_mode","spgw"},{"procedure","NW_INIT_PDN_DELETE_PROC"}})),
+procedures_sgw_nw_init_pdn_delete_proc_success(procedures_family.Add({{"cp_mode","sgw"},{"procedure","NW_INIT_PDN_DELETE_PROC"},{"result","success"}})),
+procedures_sgw_nw_init_pdn_delete_proc_failure(procedures_family.Add({{"cp_mode","sgw"},{"procedure","NW_INIT_PDN_DELETE_PROC"},{"result","failure"}})),
+procedures_spgw_nw_init_pdn_delete_proc_success(procedures_family.Add({{"cp_mode","spgw"},{"procedure","NW_INIT_PDN_DELETE_PROC"},{"result","success"}})),
+procedures_spgw_nw_init_pdn_delete_proc_failure(procedures_family.Add({{"cp_mode","spgw"},{"procedure","NW_INIT_PDN_DELETE_PROC"},{"result","failure"}})),
+procedures_sgw_rar_proc(procedures_family.Add({{"cp_mode","sgw"},{"procedure","RAR_PROC"}})),
+procedures_spgw_rar_proc(procedures_family.Add({{"cp_mode","spgw"},{"procedure","RAR_PROC"}})),
+procedures_sgw_rar_proc_success(procedures_family.Add({{"cp_mode","sgw"},{"procedure","RAR_PROC"},{"result","success"}})),
+procedures_sgw_rar_proc_failure(procedures_family.Add({{"cp_mode","sgw"},{"procedure","RAR_PROC"},{"result","failure"}})),
+procedures_spgw_rar_proc_success(procedures_family.Add({{"cp_mode","spgw"},{"procedure","RAR_PROC"},{"result","success"}})),
+procedures_spgw_rar_proc_failure(procedures_family.Add({{"cp_mode","spgw"},{"procedure","RAR_PROC"},{"result","failure"}}))
 {
 }
 
@@ -1828,6 +1870,465 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    obj->counter.Increment();
 		} else {
 		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","DDNAck_drop",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::MSG_RX_GTPV2_S11_CBRSP:
+	{
+		msg_rx_m->msg_rx_gtpv2_s11_cbrsp.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_type","CBRsp",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_type","CBRsp",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_type","CBRsp",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::MSG_RX_GTPV2_S11_CBRSP_REJ:
+	{
+		msg_rx_m->msg_rx_gtpv2_s11_cbrsp_rej.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_drop","CBRsp_rej",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_drop","CBRsp_rej",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","CBRsp_rej",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::MSG_RX_GTPV2_S11_CBRSP_DROP:
+	{
+		msg_rx_m->msg_rx_gtpv2_s11_cbrsp_drop.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_drop","CBRsp_drop",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_drop","CBRsp_drop",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","CBRsp_drop",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::MSG_RX_GTPV2_S11_UBRSP:
+	{
+		msg_rx_m->msg_rx_gtpv2_s11_ubrsp.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_type","UBRsp",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_type","UBRsp",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_type","UBRsp",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::MSG_RX_GTPV2_S11_UBRSP_REJ:
+	{
+		msg_rx_m->msg_rx_gtpv2_s11_ubrsp_rej.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_drop","UBRsp_rej",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_drop","UBRsp_rej",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","UBRsp_rej",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::MSG_RX_GTPV2_S11_UBRSP_DROP:
+	{
+		msg_rx_m->msg_rx_gtpv2_s11_ubrsp_drop.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_drop","UBRsp_drop",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_drop","UBRsp_drop",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","UBRsp_drop",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::MSG_RX_GTPV2_S11_DBRSP:
+	{
+		msg_rx_m->msg_rx_gtpv2_s11_dbrsp.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_type","DBRsp",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_type","DBRsp",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_type","DBRsp",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::MSG_RX_GTPV2_S11_DBRSP_REJ:
+	{
+		msg_rx_m->msg_rx_gtpv2_s11_dbrsp_rej.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_drop","DBRsp_rej",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_drop","DBRsp_rej",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","DBRsp_rej",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::MSG_RX_GTPV2_S11_DBRSP_DROP:
+	{
+		msg_rx_m->msg_rx_gtpv2_s11_dbrsp_drop.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject1 *obj = static_cast<msg_rx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject1 *obj = msg_rx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_drop","DBRsp_drop",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject2 *obj = static_cast<msg_rx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject2 *obj = msg_rx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_drop","DBRsp_drop",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_rx_DynamicMetricObject3 *obj = static_cast<msg_rx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_rx_DynamicMetricObject3 *obj = msg_rx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_drop","DBRsp_drop",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->counter.Increment();
@@ -6017,6 +6518,159 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		}
 		break;
 	}
+	case spgwStatsCounter::MSG_TX_GTPV2_S11_CBREQ:
+	{
+		msg_tx_m->msg_tx_gtpv2_s11_cbreq.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_tx_DynamicMetricObject1 *obj = static_cast<msg_tx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_tx_DynamicMetricObject1 *obj = msg_tx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_type","CBReq",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_tx_DynamicMetricObject2 *obj = static_cast<msg_tx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_tx_DynamicMetricObject2 *obj = msg_tx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_type","CBReq",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_tx_DynamicMetricObject3 *obj = static_cast<msg_tx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_tx_DynamicMetricObject3 *obj = msg_tx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_type","CBReq",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::MSG_TX_GTPV2_S11_UBREQ:
+	{
+		msg_tx_m->msg_tx_gtpv2_s11_ubreq.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_tx_DynamicMetricObject1 *obj = static_cast<msg_tx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_tx_DynamicMetricObject1 *obj = msg_tx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_type","UBReq",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_tx_DynamicMetricObject2 *obj = static_cast<msg_tx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_tx_DynamicMetricObject2 *obj = msg_tx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_type","UBReq",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_tx_DynamicMetricObject3 *obj = static_cast<msg_tx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_tx_DynamicMetricObject3 *obj = msg_tx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_type","UBReq",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::MSG_TX_GTPV2_S11_DBREQ:
+	{
+		msg_tx_m->msg_tx_gtpv2_s11_dbreq.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    msg_tx_DynamicMetricObject1 *obj = static_cast<msg_tx_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_tx_DynamicMetricObject1 *obj = msg_tx_m->add_dynamic1("protocol","gtpv2","interface","s11","msg_type","DBReq",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_tx_DynamicMetricObject2 *obj = static_cast<msg_tx_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_tx_DynamicMetricObject2 *obj = msg_tx_m->add_dynamic2("protocol","gtpv2","interface","s11","msg_type","DBReq",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    msg_tx_DynamicMetricObject3 *obj = static_cast<msg_tx_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    msg_tx_DynamicMetricObject3 *obj = msg_tx_m->add_dynamic3("protocol","gtpv2","interface","s11","msg_type","DBReq",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
 	case spgwStatsCounter::MSG_TX_GTPV2_S11_ECHOREQ:
 	{
 		msg_tx_m->msg_tx_gtpv2_s11_echoreq.Increment();
@@ -10141,6 +10795,1536 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		    obj->counter.Increment();
 		} else {
 		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","SERVICE_REQUEST_PROC","result","failure",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_DEDICATED_BEARER_ACTIVATION_PROC:
+	{
+		procedures_m->procedures_sgw_dedicated_bearer_activation_proc.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_DEDICATED_BEARER_ACTIVATION_PROC:
+	{
+		procedures_m->procedures_spgw_dedicated_bearer_activation_proc.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_DEDICATED_BEARER_ACTIVATION_PROC_SUCCESS:
+	{
+		procedures_m->procedures_sgw_dedicated_bearer_activation_proc_success.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","success",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","success",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","success",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_DEDICATED_BEARER_ACTIVATION_PROC_FAILURE:
+	{
+		procedures_m->procedures_sgw_dedicated_bearer_activation_proc_failure.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","failure",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","failure",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","failure",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_DEDICATED_BEARER_ACTIVATION_PROC_SUCCESS:
+	{
+		procedures_m->procedures_spgw_dedicated_bearer_activation_proc_success.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","success",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","success",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","success",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_DEDICATED_BEARER_ACTIVATION_PROC_FAILURE:
+	{
+		procedures_m->procedures_spgw_dedicated_bearer_activation_proc_failure.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","failure",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","failure",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","DEDICATED_BEARER_ACTIVATION_PROC","result","failure",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_BEARER_UPDATE_PROC:
+	{
+		procedures_m->procedures_sgw_bearer_update_proc.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","BEARER_UPDATE_PROC",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","BEARER_UPDATE_PROC",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","BEARER_UPDATE_PROC",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_BEARER_UPDATE_PROC:
+	{
+		procedures_m->procedures_spgw_bearer_update_proc.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","BEARER_UPDATE_PROC",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","BEARER_UPDATE_PROC",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","BEARER_UPDATE_PROC",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_BEARER_UPDATE_PROC_SUCCESS:
+	{
+		procedures_m->procedures_sgw_bearer_update_proc_success.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","BEARER_UPDATE_PROC","result","success",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","BEARER_UPDATE_PROC","result","success",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","BEARER_UPDATE_PROC","result","success",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_BEARER_UPDATE_PROC_FAILURE:
+	{
+		procedures_m->procedures_sgw_bearer_update_proc_failure.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","BEARER_UPDATE_PROC","result","failure",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","BEARER_UPDATE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","BEARER_UPDATE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_BEARER_UPDATE_PROC_SUCCESS:
+	{
+		procedures_m->procedures_spgw_bearer_update_proc_success.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","BEARER_UPDATE_PROC","result","success",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","BEARER_UPDATE_PROC","result","success",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","BEARER_UPDATE_PROC","result","success",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_BEARER_UPDATE_PROC_FAILURE:
+	{
+		procedures_m->procedures_spgw_bearer_update_proc_failure.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","BEARER_UPDATE_PROC","result","failure",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","BEARER_UPDATE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","BEARER_UPDATE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_BEARER_DELETE_PROC:
+	{
+		procedures_m->procedures_sgw_bearer_delete_proc.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","BEARER_DELETE_PROC",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","BEARER_DELETE_PROC",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","BEARER_DELETE_PROC",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_BEARER_DELETE_PROC:
+	{
+		procedures_m->procedures_spgw_bearer_delete_proc.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","BEARER_DELETE_PROC",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","BEARER_DELETE_PROC",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","BEARER_DELETE_PROC",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_BEARER_DELETE_PROC_SUCCESS:
+	{
+		procedures_m->procedures_sgw_bearer_delete_proc_success.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","BEARER_DELETE_PROC","result","success",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","BEARER_DELETE_PROC","result","success",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","BEARER_DELETE_PROC","result","success",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_BEARER_DELETE_PROC_FAILURE:
+	{
+		procedures_m->procedures_sgw_bearer_delete_proc_failure.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","BEARER_DELETE_PROC","result","failure",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","BEARER_DELETE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","BEARER_DELETE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_BEARER_DELETE_PROC_SUCCESS:
+	{
+		procedures_m->procedures_spgw_bearer_delete_proc_success.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","BEARER_DELETE_PROC","result","success",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","BEARER_DELETE_PROC","result","success",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","BEARER_DELETE_PROC","result","success",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_BEARER_DELETE_PROC_FAILURE:
+	{
+		procedures_m->procedures_spgw_bearer_delete_proc_failure.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","BEARER_DELETE_PROC","result","failure",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","BEARER_DELETE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","BEARER_DELETE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_NW_INIT_PDN_DELETE_PROC:
+	{
+		procedures_m->procedures_sgw_nw_init_pdn_delete_proc.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","NW_INIT_PDN_DELETE_PROC",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","NW_INIT_PDN_DELETE_PROC",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","NW_INIT_PDN_DELETE_PROC",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_NW_INIT_PDN_DELETE_PROC:
+	{
+		procedures_m->procedures_spgw_nw_init_pdn_delete_proc.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","NW_INIT_PDN_DELETE_PROC",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","NW_INIT_PDN_DELETE_PROC",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","NW_INIT_PDN_DELETE_PROC",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_NW_INIT_PDN_DELETE_PROC_SUCCESS:
+	{
+		procedures_m->procedures_sgw_nw_init_pdn_delete_proc_success.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","NW_INIT_PDN_DELETE_PROC","result","success",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","NW_INIT_PDN_DELETE_PROC","result","success",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","NW_INIT_PDN_DELETE_PROC","result","success",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_NW_INIT_PDN_DELETE_PROC_FAILURE:
+	{
+		procedures_m->procedures_sgw_nw_init_pdn_delete_proc_failure.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","NW_INIT_PDN_DELETE_PROC","result","failure",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","NW_INIT_PDN_DELETE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","NW_INIT_PDN_DELETE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_NW_INIT_PDN_DELETE_PROC_SUCCESS:
+	{
+		procedures_m->procedures_spgw_nw_init_pdn_delete_proc_success.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","NW_INIT_PDN_DELETE_PROC","result","success",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","NW_INIT_PDN_DELETE_PROC","result","success",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","NW_INIT_PDN_DELETE_PROC","result","success",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_NW_INIT_PDN_DELETE_PROC_FAILURE:
+	{
+		procedures_m->procedures_spgw_nw_init_pdn_delete_proc_failure.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","NW_INIT_PDN_DELETE_PROC","result","failure",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","NW_INIT_PDN_DELETE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","NW_INIT_PDN_DELETE_PROC","result","failure",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_RAR_PROC:
+	{
+		procedures_m->procedures_sgw_rar_proc.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","RAR_PROC",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","RAR_PROC",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","RAR_PROC",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_RAR_PROC:
+	{
+		procedures_m->procedures_spgw_rar_proc.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","RAR_PROC",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","RAR_PROC",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","RAR_PROC",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_RAR_PROC_SUCCESS:
+	{
+		procedures_m->procedures_sgw_rar_proc_success.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","RAR_PROC","result","success",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","RAR_PROC","result","success",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","RAR_PROC","result","success",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SGW_RAR_PROC_FAILURE:
+	{
+		procedures_m->procedures_sgw_rar_proc_failure.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","sgw","procedure","RAR_PROC","result","failure",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","sgw","procedure","RAR_PROC","result","failure",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","sgw","procedure","RAR_PROC","result","failure",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_RAR_PROC_SUCCESS:
+	{
+		procedures_m->procedures_spgw_rar_proc_success.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","RAR_PROC","result","success",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","RAR_PROC","result","success",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","RAR_PROC","result","success",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		}
+		break;
+	}
+	case spgwStatsCounter::PROCEDURES_SPGW_RAR_PROC_FAILURE:
+	{
+		procedures_m->procedures_spgw_rar_proc_failure.Increment();
+		if(labels.size() == 0) {
+		break;
+		}
+		if(labels.size() == 1) {
+		auto it = labels. begin();
+		struct Node s1 = {name, it->first, it->second};
+		auto it1 = metrics_map.find(s1);
+		if(it1 != metrics_map.end()) {
+		    procedures_DynamicMetricObject1 *obj = static_cast<procedures_DynamicMetricObject1 *>(it1->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject1 *obj = procedures_m->add_dynamic1("cp_mode","spgw","procedure","RAR_PROC","result","failure",it->first, it->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		}
+		} else if (labels.size() == 2) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject2 *obj = static_cast<procedures_DynamicMetricObject2 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject2 *obj = procedures_m->add_dynamic2("cp_mode","spgw","procedure","RAR_PROC","result","failure",it1->first, it1->second, it2->first, it2->second);
+		    auto p1 = std::make_pair(s1, obj);
+		    metrics_map.insert(p1);
+		    obj->counter.Increment();
+		} 
+		} else if (labels.size() == 3) {
+		auto it1 = labels. begin();
+		auto it2 = it1++;
+		auto it3 = it2++;
+		struct Node s1 = {name, it1->first+it2->first+it3->first, it1->second+it2->second+it3->second};
+		auto itf = metrics_map.find(s1);
+		if(itf != metrics_map.end()) {
+		    procedures_DynamicMetricObject3 *obj = static_cast<procedures_DynamicMetricObject3 *>(itf->second);
+		    obj->counter.Increment();
+		} else {
+		    procedures_DynamicMetricObject3 *obj = procedures_m->add_dynamic3("cp_mode","spgw","procedure","RAR_PROC","result","failure",it1->first, it1->second, it2->first, it2->second, it3->first, it3->second);
 		    auto p1 = std::make_pair(s1, obj);
 		    metrics_map.insert(p1);
 		    obj->counter.Increment();

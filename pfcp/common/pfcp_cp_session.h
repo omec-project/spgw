@@ -109,10 +109,6 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
  * @param  : pdn , pdn information
  * @return : Returns nothing
  */
-int
-fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
-		pdn_connection_t *pdn);
-
 void
 fill_pfcp_sess_mod_req_pgw_init_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		pdn_connection_t *pdn, eps_bearer_t *bearers[], uint8_t bearer_cntr);

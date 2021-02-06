@@ -637,6 +637,10 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     proc_context_t *csreq_proc = NULL;
 
     msg->source_interface = S11_IFACE;
+    peer_addr = &msg->peer_addr;
+
+    increment_mme_peer_stats(MSG_RX_GTPV2_S11_CSREQ, peer_addr->sin_addr.s_addr);
+
 
     peer_addr = &msg->peer_addr;
 
@@ -676,6 +680,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     if(old_trans != NULL) {
         LOG_MSG(LOG_DEBUG0, "Retransmitted CSReq received. Old CSReq is in progress");
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_CSREQ_DROP, peer_addr->sin_addr.s_addr);
         return -1;
     }
 

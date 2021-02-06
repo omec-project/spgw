@@ -121,171 +121,7 @@ fill_pfcp_sess_set_del_req( pfcp_sess_set_del_req_t *pfcp_sess_set_del_req)
 
 }
 
-int
-fill_pfcp_gx_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
-		pdn_connection_t *pdn)
-{
-	uint8_t bearer_id = 0;
-	uint32_t seq = 0;
-	eps_bearer_t *bearer = NULL;
 
-	memset(pfcp_sess_mod_req,0,sizeof(pfcp_sess_mod_req_t));
-	seq = get_pfcp_sequence_number(PFCP_SESSION_MODIFICATION_REQUEST, seq);
-
-	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_sess_mod_req->header), PFCP_SESSION_MODIFICATION_REQUEST,
-					           HAS_SEID, seq);
-
-	pfcp_sess_mod_req->header.seid_seqno.has_seid.seid = pdn->dp_seid;
-
-  /* PFCPCOMPLIANCE : no need to fill in the FSEID value in the modify */
-
-	char pAddr[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
-	unsigned long node_value = inet_addr(pAddr);
-	set_fseid(&(pfcp_sess_mod_req->cp_fseid), pdn->seid, node_value);
-
-    /* Requirement - updating policy only on either default bearer to dedicated bearer */
-	if ((cp_config->cp_type == PGWC) ||
-		(cp_config->cp_type == SAEGWC))
-	{
-        pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
-        while (pcc_rule != NULL) {
-            pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
-
-			if(pcc_rule->action == RULE_ACTION_ADD) {
-				/*
-				 * Installing new rule
-				 */
-				 bearer = get_bearer(pdn, &pcc_rule->dyn_rule->qos);
-				 if(bearer == NULL) {
-                    LOG_MSG(LOG_DEBUG, "New dedicated Bearer should be created to accomodate-new rule with QCI/ARP ");
-					/*
-					 * create dedicated bearer
-					 */
-					bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
-							RTE_CACHE_LINE_SIZE, rte_socket_id());
-					if(bearer == NULL) {
-						LOG_MSG(LOG_ERROR, "Failure to allocate bearer %s ", rte_strerror(rte_errno));
-						return 0;
-						/* return GTPV2C_CAUSE_SYSTEM_FAILURE; */
-					}
-					bzero(bearer,  sizeof(eps_bearer_t));
-					bearer->pdn = pdn;
-                    /* GXCOMPLIANCE - MME assigns bearer id. Definately current way of using num_bearer is not correct.
-                     * it will be problematic when bearers are deleted/created 
-                     */
-					bearer_id = get_new_bearer_id(pdn); 
-					pdn->eps_bearers[bearer_id] = bearer;
-					pdn->context->eps_bearers[bearer_id] = bearer;
-					pdn->num_bearer++;
-					set_s5s8_pgw_gtpu_teid_using_pdn(bearer, pdn);
-          // GXCONFUSION : find out if this is correct QoS  
-					memcpy(&(bearer->qos), &(pcc_rule->dyn_rule->qos), sizeof(bearer_qos_ie));
-                    // create qer and add it into the table, and update PDR  
-					fill_dedicated_bearer_info(bearer, pdn->context, pdn);
-				 } else {
-                    LOG_MSG(LOG_DEBUG, "Existing Bearer found %d ", bearer->eps_bearer_id);
-                 }
-
-				 bearer->dynamic_rules[bearer->num_dynamic_filters] = pcc_rule->dyn_rule; 
-
-				 fill_pfcp_entry(bearer, pcc_rule->dyn_rule, RULE_ACTION_ADD);
-
-				 fill_create_pfcp_info(pfcp_sess_mod_req, pcc_rule->dyn_rule, bearer);
-				 bearer->num_dynamic_filters++;
-
-				//Adding rule and bearer id to a hash
-				bearer_id_t *id;
-				id = malloc(sizeof(bearer_id_t));
-				memset(id, 0 , sizeof(bearer_id_t));
-				rule_name_key_t key = {0};
-				id->bearer_id = bearer_id;
-				strncpy(key.rule_name, pcc_rule->dyn_rule->rule_name,
-						strlen(pcc_rule->dyn_rule->rule_name));
-				sprintf(key.rule_name, "%s%d", key.rule_name, pdn->call_id);
-				if (add_rule_name_entry(key, id) != 0) {
-					LOG_MSG(LOG_ERROR,"Failed to add rule name entry %s ", key.rule_name);
-					return 0;
-				}
-			} else if(pcc_rule->action == RULE_ACTION_MODIFY) {
-                LOG_MSG(LOG_DEBUG, "policy rule action modify ");
-				/*
-				 * Currently not handling dynamic rule qos modificaiton
-				 */
-				bearer = get_bearer(pdn, &pcc_rule->dyn_rule->qos);
-				if(bearer == NULL)
-				{
-					 LOG_MSG(LOG_ERROR, "Failure to find bearer %s ", rte_strerror(rte_errno));
-					 return 0;
-					 /* return GTPV2C_CAUSE_SYSTEM_FAILURE; */
-				}
-				fill_pfcp_entry(bearer, pcc_rule->dyn_rule, RULE_ACTION_MODIFY);
-				fill_update_pfcp_info(pfcp_sess_mod_req, pcc_rule->dyn_rule);
-
-			} else {
-                LOG_MSG(LOG_ERROR,"unknown action What action it is ? %d ",pcc_rule->action);
-            }
-            pcc_rule = next_pcc_rule;
-		}
-
-#if 0
-		/* TODO: Remove Below section START after install, modify and remove support */
-		if (pdn->policy.num_charg_rule_delete != 0) {
-			memset(pfcp_sess_mod_req,0,sizeof(pfcp_sess_mod_req_t));
-			seq = get_pfcp_sequence_number(PFCP_SESSION_MODIFICATION_REQUEST, seq);
-
-			set_pfcp_seid_header((pfcp_header_t *) &(pfcp_sess_mod_req->header), PFCP_SESSION_MODIFICATION_REQUEST,
-							           HAS_SEID, seq);
-
-			pfcp_sess_mod_req->header.seid_seqno.has_seid.seid = pdn->dp_seid;
-
-			//TODO modify this hard code to generic
-			inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
-			node_value = inet_addr(pAddr);
-
-			set_fseid(&(pfcp_sess_mod_req->cp_fseid), pdn->seid, node_value);
-		}
-		/* TODO: Remove Below section END */
-#endif
-
-        pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
-        while (pcc_rule != NULL) {
-            pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
-            if(RULE_ACTION_DELETE == pcc_rule->action) {
-                /* bearer = get_bearer(pdn, &pdn->policy.pcc_rule[idx + idx_offset].dyn_rule.qos);
-                   if(NULL == bearer)
-                   {
-                   LOG_MSG(LOG_ERROR, "Failure to find bearer "
-                   "structure: %s ", rte_strerror(rte_errno));
-                   return;
-                   } */
-
-                rule_name_key_t rule_name = {0};
-                memset(rule_name.rule_name, '\0', sizeof(rule_name.rule_name));
-                strncpy(rule_name.rule_name, pcc_rule->dyn_rule->rule_name,
-                        strlen(pcc_rule->dyn_rule->rule_name));
-                sprintf(rule_name.rule_name, "%s%d",
-                        rule_name.rule_name, pdn->call_id);
-                int8_t bearer_id = get_rule_name_entry(rule_name);
-                if (-1 == bearer_id) {
-                    /* TODO: Error handling bearer not found */
-                }
-
-                if ((bearer_id + 5) == pdn->default_bearer_id) {
-                    for (uint8_t iCnt = 0; iCnt < MAX_BEARERS; ++iCnt) {
-                        if (NULL != pdn->eps_bearers[iCnt]) {
-                            fill_remove_pfcp_info(pfcp_sess_mod_req, pdn->eps_bearers[iCnt]);
-                        }
-                    }
-                } else {
-                    fill_remove_pfcp_info(pfcp_sess_mod_req, pdn->eps_bearers[bearer_id]);
-                }
-            }
-            pcc_rule = next_pcc_rule;
-        }
-	}
-    return seq;
-}
 #define MAX_PDR_PER_RULE 2
 int
 fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dyn_rule, eps_bearer_t *bearer)
@@ -2967,13 +2803,12 @@ del_rule_entries(ue_context_t *context, uint8_t ebi_index)
 	pdr_t *pdr_ctx =  NULL;
 
 	/*Delete all pdr, far, qer entry from table */
-    if(cp_config->gx_enabled) {
-        for(uint8_t itr = 0; itr < context->eps_bearers[ebi_index]->qer_count ; itr++) {
-            if( del_qer_entry(context->eps_bearers[ebi_index]->qer_id[itr].qer_id) != 0 ){
-                LOG_MSG(LOG_ERROR, "Error %s -  del_pdr_entry deletion",strerror(ret));
-            }
+    for(uint8_t itr = 0; itr < context->eps_bearers[ebi_index]->qer_count ; itr++) {
+        if( del_qer_entry(context->eps_bearers[ebi_index]->qer_id[itr].qer_id) != 0 ){
+            LOG_MSG(LOG_ERROR, "Error %s -  del_pdr_entry deletion",strerror(ret));
         }
     }
+
 	for(uint8_t itr = 0; itr < context->eps_bearers[ebi_index]->pdr_count ; itr++) {
 		pdr_ctx = context->eps_bearers[ebi_index]->pdrs[itr];
 		if(pdr_ctx == NULL) {

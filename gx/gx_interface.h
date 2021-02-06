@@ -61,7 +61,6 @@ typedef struct gx_context_t {
 	uint8_t state;
 	uint8_t proc;
 	char gx_sess_id[MAX_LEN];
-	unsigned long  rqst_ptr; /*In Case of RAA, need to store RAR pointer*/
     void *proc_context;
 } gx_context_t;
  

@@ -94,7 +94,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 	}
 }
 
-void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error)
+void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error, uint16_t seq_num)
 {
 /* VS: Initialize the Gx Parameters */
 	uint16_t msg_len = 0;
@@ -137,7 +137,7 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error)
 	msg_len = gx_raa_calc_length(&raa.data.cp_raa);
 	msg_body_ofs = sizeof(raa.msg_type) + sizeof(raa.seq_num);
 	rqst_ptr_ofs = msg_len + msg_body_ofs;
-	msg_len_total = rqst_ptr_ofs + sizeof(pdn->rqst_ptr);
+	msg_len_total = rqst_ptr_ofs + sizeof(seq_num);
 
 	buffer = rte_zmalloc_socket(NULL, msg_len_total,
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
@@ -152,8 +152,8 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error)
 	if (gx_raa_pack(&(raa.data.cp_raa), (unsigned char *)(buffer + msg_body_ofs), msg_len) == 0 )
 		LOG_MSG(LOG_DEBUG,"RAA Packing failure");
 
-	memcpy((unsigned char *)(buffer + rqst_ptr_ofs), &(pdn->rqst_ptr),
-			sizeof(pdn->rqst_ptr));
+	memcpy((unsigned char *)(buffer + rqst_ptr_ofs), &seq_num,
+			sizeof(seq_num));
 
 	/* VS: Write or Send CCR msg to Gx_App */
 	gx_send(my_sock.gx_app_sock, buffer, msg_len_total);

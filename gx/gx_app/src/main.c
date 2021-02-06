@@ -12,7 +12,8 @@
 #include "cp_log.h"
 
 extern int g_gx_client_sock;
-uint8_t logging_level=LOG_ERROR;
+uint8_t logging_level=LOG_DEBUG;
+gx_trans_data_t *gx_trans_list = NULL;
 
 int done = 0;
 
@@ -84,6 +85,9 @@ int main(int argc, char **argv)
 	const char *fdcfg = "config/gx.conf";
 	char peer_name[256] = {0};
 
+    gx_trans_list = calloc(1, sizeof(gx_trans_data_t));
+    gx_trans_list->rar_seq_num = 1;
+
 	LOG_MSG(LOG_INIT, "Registering signal handler...");
 	if ( signal(SIGINT, signal_handler) == SIG_ERR )
 	{
@@ -148,6 +152,7 @@ int main(int argc, char **argv)
 		LOG_MSG(LOG_ERROR,"Failure (%d) in unixsock()", rval);
 		return 1;
 	}
+
 
 	while (!done)
 		sleep(1);

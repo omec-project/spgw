@@ -9,13 +9,41 @@
 #include "gtp_ies.h"
 #include "cp_proc.h"
 
+proc_context_t*
+alloc_bearer_create_proc(msg_info_t *msg);
+
+void
+bearer_create_event_handler(void *proc, void *msg_info);
+
+void
+proc_bearer_create_failed(proc_context_t *proc, uint8_t cause);
+
+void 
+proc_bearer_create_complete(proc_context_t *proc_context);
+
+void 
+pfcp_modify_session_pre_cbreq_timeout(void *);
+
+void 
+send_pfcp_modify_session_pre_cbreq(void *proc, void *msg);
+
+int
+fill_pfcp_gx_sess_mod_req(proc_context_t *proc,  pfcp_sess_mod_req_t *pfcp_sess_mod_req,
+		pdn_connection_t *pdn);
+
+void 
+process_pfcp_sess_mod_rsp_post_cbr_handler(proc_context_t *proc);
+
+void 
+process_sgwc_pfcp_mod_post_cbrsp_timeout(void *data);
+
 /**
  * @brief  : Handles processing of pfcp session modification response in case create bearer request
  * @param  : arg1, data contained in message
  * @param  : arg2, optional parameter
  * @return : Returns 0 in case of success , -1 otherwise
  */
-int process_pfcp_sess_mod_resp_cbr_handler(void *arg1, void *arg2);
+int process_pfcp_sess_mod_resp_pre_cbr_handler(void *arg1, void *arg2);
 
 /* Function */
 /**
@@ -26,11 +54,8 @@ int process_pfcp_sess_mod_resp_cbr_handler(void *arg1, void *arg2);
  */
 int process_create_bearer_resp_handler(void *arg1, void *arg2);
 
-uint8_t
-process_pfcp_sess_mod_resp_cbr(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx);
-
-
-void process_pfcp_sess_mod_resp_cbr_timeout(void *data);
+void 
+process_cbr_timeout(void *data);
 
 int
 process_pgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg);

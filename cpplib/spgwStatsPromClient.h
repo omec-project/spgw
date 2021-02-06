@@ -49,6 +49,15 @@ enum class spgwStatsCounter {
 	MSG_RX_GTPV2_S11_RABREQ_REJ,
 	MSG_RX_GTPV2_S11_DDNACK,
 	MSG_RX_GTPV2_S11_DDNACK_DROP,
+	MSG_RX_GTPV2_S11_CBRSP,
+	MSG_RX_GTPV2_S11_CBRSP_REJ,
+	MSG_RX_GTPV2_S11_CBRSP_DROP,
+	MSG_RX_GTPV2_S11_UBRSP,
+	MSG_RX_GTPV2_S11_UBRSP_REJ,
+	MSG_RX_GTPV2_S11_UBRSP_DROP,
+	MSG_RX_GTPV2_S11_DBRSP,
+	MSG_RX_GTPV2_S11_DBRSP_REJ,
+	MSG_RX_GTPV2_S11_DBRSP_DROP,
 	MSG_RX_GTPV2_S11_ECHOREQ,
 	MSG_RX_GTPV2_S5S8_ECHOREQ,
 	MSG_RX_GTPV2_S11_ECHORSP,
@@ -131,6 +140,9 @@ enum class spgwStatsCounter {
 	MSG_TX_GTPV2_S5S8_RABRSP,
 	MSG_TX_GTPV2_S5S8_RABRSP_REJ,
 	MSG_TX_GTPV2_S11_DDNREQ,
+	MSG_TX_GTPV2_S11_CBREQ,
+	MSG_TX_GTPV2_S11_UBREQ,
+	MSG_TX_GTPV2_S11_DBREQ,
 	MSG_TX_GTPV2_S11_ECHOREQ,
 	MSG_TX_GTPV2_S5S8_ECHOREQ,
 	MSG_TX_GTPV2_S11_ECHORSP,
@@ -211,7 +223,37 @@ enum class spgwStatsCounter {
 	PROCEDURES_SGW_SERVICE_REQUEST_PROC_SUCCESS,
 	PROCEDURES_SGW_SERVICE_REQUEST_PROC_FAILURE,
 	PROCEDURES_SPGW_SERVICE_REQUEST_PROC_SUCCESS,
-	PROCEDURES_SPGW_SERVICE_REQUEST_PROC_FAILURE
+	PROCEDURES_SPGW_SERVICE_REQUEST_PROC_FAILURE,
+	PROCEDURES_SGW_DEDICATED_BEARER_ACTIVATION_PROC,
+	PROCEDURES_SPGW_DEDICATED_BEARER_ACTIVATION_PROC,
+	PROCEDURES_SGW_DEDICATED_BEARER_ACTIVATION_PROC_SUCCESS,
+	PROCEDURES_SGW_DEDICATED_BEARER_ACTIVATION_PROC_FAILURE,
+	PROCEDURES_SPGW_DEDICATED_BEARER_ACTIVATION_PROC_SUCCESS,
+	PROCEDURES_SPGW_DEDICATED_BEARER_ACTIVATION_PROC_FAILURE,
+	PROCEDURES_SGW_BEARER_UPDATE_PROC,
+	PROCEDURES_SPGW_BEARER_UPDATE_PROC,
+	PROCEDURES_SGW_BEARER_UPDATE_PROC_SUCCESS,
+	PROCEDURES_SGW_BEARER_UPDATE_PROC_FAILURE,
+	PROCEDURES_SPGW_BEARER_UPDATE_PROC_SUCCESS,
+	PROCEDURES_SPGW_BEARER_UPDATE_PROC_FAILURE,
+	PROCEDURES_SGW_BEARER_DELETE_PROC,
+	PROCEDURES_SPGW_BEARER_DELETE_PROC,
+	PROCEDURES_SGW_BEARER_DELETE_PROC_SUCCESS,
+	PROCEDURES_SGW_BEARER_DELETE_PROC_FAILURE,
+	PROCEDURES_SPGW_BEARER_DELETE_PROC_SUCCESS,
+	PROCEDURES_SPGW_BEARER_DELETE_PROC_FAILURE,
+	PROCEDURES_SGW_NW_INIT_PDN_DELETE_PROC,
+	PROCEDURES_SPGW_NW_INIT_PDN_DELETE_PROC,
+	PROCEDURES_SGW_NW_INIT_PDN_DELETE_PROC_SUCCESS,
+	PROCEDURES_SGW_NW_INIT_PDN_DELETE_PROC_FAILURE,
+	PROCEDURES_SPGW_NW_INIT_PDN_DELETE_PROC_SUCCESS,
+	PROCEDURES_SPGW_NW_INIT_PDN_DELETE_PROC_FAILURE,
+	PROCEDURES_SGW_RAR_PROC,
+	PROCEDURES_SPGW_RAR_PROC,
+	PROCEDURES_SGW_RAR_PROC_SUCCESS,
+	PROCEDURES_SGW_RAR_PROC_FAILURE,
+	PROCEDURES_SPGW_RAR_PROC_SUCCESS,
+	PROCEDURES_SPGW_RAR_PROC_FAILURE
 };
 
 struct Node 
@@ -458,6 +500,15 @@ class msg_rx_counters {
 	Counter &msg_rx_gtpv2_s11_rabreq_rej;
 	Counter &msg_rx_gtpv2_s11_ddnack;
 	Counter &msg_rx_gtpv2_s11_ddnack_drop;
+	Counter &msg_rx_gtpv2_s11_cbrsp;
+	Counter &msg_rx_gtpv2_s11_cbrsp_rej;
+	Counter &msg_rx_gtpv2_s11_cbrsp_drop;
+	Counter &msg_rx_gtpv2_s11_ubrsp;
+	Counter &msg_rx_gtpv2_s11_ubrsp_rej;
+	Counter &msg_rx_gtpv2_s11_ubrsp_drop;
+	Counter &msg_rx_gtpv2_s11_dbrsp;
+	Counter &msg_rx_gtpv2_s11_dbrsp_rej;
+	Counter &msg_rx_gtpv2_s11_dbrsp_drop;
 	Counter &msg_rx_gtpv2_s11_echoreq;
 	Counter &msg_rx_gtpv2_s5s8_echoreq;
 	Counter &msg_rx_gtpv2_s11_echorsp;
@@ -601,6 +652,9 @@ class msg_tx_counters {
 	Counter &msg_tx_gtpv2_s5s8_rabrsp;
 	Counter &msg_tx_gtpv2_s5s8_rabrsp_rej;
 	Counter &msg_tx_gtpv2_s11_ddnreq;
+	Counter &msg_tx_gtpv2_s11_cbreq;
+	Counter &msg_tx_gtpv2_s11_ubreq;
+	Counter &msg_tx_gtpv2_s11_dbreq;
 	Counter &msg_tx_gtpv2_s11_echoreq;
 	Counter &msg_tx_gtpv2_s5s8_echoreq;
 	Counter &msg_tx_gtpv2_s11_echorsp;
@@ -758,6 +812,36 @@ class procedures_counters {
 	Counter &procedures_sgw_service_request_proc_failure;
 	Counter &procedures_spgw_service_request_proc_success;
 	Counter &procedures_spgw_service_request_proc_failure;
+	Counter &procedures_sgw_dedicated_bearer_activation_proc;
+	Counter &procedures_spgw_dedicated_bearer_activation_proc;
+	Counter &procedures_sgw_dedicated_bearer_activation_proc_success;
+	Counter &procedures_sgw_dedicated_bearer_activation_proc_failure;
+	Counter &procedures_spgw_dedicated_bearer_activation_proc_success;
+	Counter &procedures_spgw_dedicated_bearer_activation_proc_failure;
+	Counter &procedures_sgw_bearer_update_proc;
+	Counter &procedures_spgw_bearer_update_proc;
+	Counter &procedures_sgw_bearer_update_proc_success;
+	Counter &procedures_sgw_bearer_update_proc_failure;
+	Counter &procedures_spgw_bearer_update_proc_success;
+	Counter &procedures_spgw_bearer_update_proc_failure;
+	Counter &procedures_sgw_bearer_delete_proc;
+	Counter &procedures_spgw_bearer_delete_proc;
+	Counter &procedures_sgw_bearer_delete_proc_success;
+	Counter &procedures_sgw_bearer_delete_proc_failure;
+	Counter &procedures_spgw_bearer_delete_proc_success;
+	Counter &procedures_spgw_bearer_delete_proc_failure;
+	Counter &procedures_sgw_nw_init_pdn_delete_proc;
+	Counter &procedures_spgw_nw_init_pdn_delete_proc;
+	Counter &procedures_sgw_nw_init_pdn_delete_proc_success;
+	Counter &procedures_sgw_nw_init_pdn_delete_proc_failure;
+	Counter &procedures_spgw_nw_init_pdn_delete_proc_success;
+	Counter &procedures_spgw_nw_init_pdn_delete_proc_failure;
+	Counter &procedures_sgw_rar_proc;
+	Counter &procedures_spgw_rar_proc;
+	Counter &procedures_sgw_rar_proc_success;
+	Counter &procedures_sgw_rar_proc_failure;
+	Counter &procedures_spgw_rar_proc_success;
+	Counter &procedures_spgw_rar_proc_failure;
 
 	procedures_DynamicMetricObject1* add_dynamic1(std::string label_k0,std::string label_v0,std::string label_k1,std::string label_v1,std::string dlabel_k0, std::string dlabel_v0) {
 		return new procedures_DynamicMetricObject1(procedures_family,label_k0,label_v0,label_k1,label_v1,dlabel_k0, dlabel_v0);

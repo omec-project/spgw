@@ -12,14 +12,27 @@ proc_context_t* alloc_rar_proc(msg_info_t *msg);
 void
 rar_req_event_handler(void *proc, void *msg_info);
 
+void
+add_rar_child_proc(void *rar_proc, void *child_proc);
+
+void
+done_rar_child_proc(void *proc);
+
+void 
+send_raa(msg_info_t *msg);
+
+void
+proc_rar_failed(msg_info_t *msg, uint8_t cause);
+
+void 
+proc_rar_complete(proc_context_t *proc_context);
 /* Function */
 /**
  * @brief  : Handles processing of rar request
  * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
  * @return : Returns 0 in case of success , -1 otherwise
  */
-int process_rar_request_handler(void *arg1, void *arg2);
+int process_rar_request_handler(void *arg1);
 
 /**
  * @brief  : Parse GX RAR message.

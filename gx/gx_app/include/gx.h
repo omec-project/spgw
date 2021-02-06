@@ -701,4 +701,19 @@ int gx_send_raa(void *data);
 
 int recv_msg_handler( int sock );
 int unixsock(void);
+// placeholder for transactio 
+struct pending_gx_trans{
+    void *msg;
+    uint16_t seq_num;
+    LIST_ENTRY(pending_gx_trans) next_trans_entry;
+};
+typedef struct pending_gx_trans pending_gx_trans_t;
+
+
+struct gx_trans_data {
+   uint16_t rar_seq_num;
+   LIST_HEAD(pending_gx_trans_head, pending_gx_trans) pending_gx_trans; 
+};
+typedef struct gx_trans_data gx_trans_data_t;
+
 #endif /* __GX_H__ */
