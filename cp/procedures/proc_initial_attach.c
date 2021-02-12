@@ -122,17 +122,24 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
     int ret = 0;
 	ue_context_t *context = NULL;
     pdn_connection_t *pdn = NULL;
+    transData_t *gtpc_trans = csreq_proc->gtpc_trans;
 
-    increment_stat(PROCEDURES_SPGW_INITIAL_ATTACH);
+    increment_proc_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH,
+                                  gtpc_trans->peer_sockaddr.sin_addr.s_addr,
+                                  msg->gtpc_msg.csr.uli.tai2.tai_tac);
+
 	ret = process_create_sess_req(&msg->gtpc_msg.csr,
 			                      &context, &pdn, msg);
 	if (ret) {
         // > 0 cause - Send reject message out 
         // -1 : just cleanup call locally 
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+        csreq_proc->tac = msg->gtpc_msg.csr.uli.tai2.tai_tac;
         proc_initial_attach_failure(csreq_proc, ret);
 		return -1;
 	}
+
+    csreq_proc->tac = msg->gtpc_msg.csr.uli.tai2.tai_tac;
     csreq_proc->ue_context = (void *)context;
     csreq_proc->pdn_context = (void *)pdn;
     TAILQ_INSERT_TAIL(&context->pending_sub_procs, csreq_proc, next_sub_proc);
@@ -645,7 +652,7 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 				sizeof(struct sockaddr_in));
 
         increment_mme_peer_stats(MSG_TX_GTPV2_S11_CSRSP, trans_rec->peer_sockaddr.sin_addr.s_addr);
-        increment_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH_SUCCESS, trans_rec->peer_sockaddr.sin_addr.s_addr);
+        increment_proc_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH_SUCCESS, trans_rec->peer_sockaddr.sin_addr.s_addr, proc_context->tac);
     
         proc_initial_attach_complete(proc_context);
         // Dont access proc_context now onward 
@@ -1055,13 +1062,13 @@ void proc_initial_attach_failure(proc_context_t *proc_context, int cause)
     transData_t *trans_rec = proc_context->gtpc_trans;
     if(cause != -1) {
         increment_proc_mme_peer_stats_reason(PROCEDURES_SPGW_INITIAL_ATTACH_FAILURE, 
-                                    trans_rec->peer_sockaddr.sin_addr.s_addr, cause);
+                                    trans_rec->peer_sockaddr.sin_addr.s_addr, cause, proc_context->tac);
         // send cs response 
         cs_error_response(msg, cause,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
     } else {
         increment_proc_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH_FAILURE, 
-                                 trans_rec->peer_sockaddr.sin_addr.s_addr);
+                                 trans_rec->peer_sockaddr.sin_addr.s_addr, proc_context->tac);
     }
     
     // UE context is not allocated and message is rejected

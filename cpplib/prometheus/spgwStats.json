@@ -95,8 +95,8 @@
                 { "interface":"s5s8"}
             ],
             "label_2": [
-                { "msg_type": "mbreq" },
-                { "msg_drop": "mbreq_drop"}
+                { "msg_type": "MBReq" },
+                { "msg_drop": "MBReq_drop"}
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "},
@@ -118,7 +118,7 @@
             ],
             "label_2": [
                 { "msg_type": "DSReq" },
-                { "msg_drop": "dsreq_drop"}
+                { "msg_drop": "DSReq_drop"}
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "},
@@ -139,8 +139,7 @@
             ],
             "label_2": [
                 { "msg_type": "RABReq" },
-                { "msg_drop": "RABReq_drop"},
-                { "msg_drop": "RABReq_rej"}
+                { "msg_drop": "RABReq_drop"}
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "},
@@ -478,11 +477,11 @@
             ],
             "label_2": [
                 { "msg_type": "CCA_I" },
-                { "msg_drop": "CCA_I_DROP"},
+                { "msg_drop": "CCA_I_drop"},
                 { "msg_type": "CCA_U" },
-                { "msg_drop": "CCA_U_DROP"},
+                { "msg_drop": "CCA_U_drop"},
                 { "msg_type": "CCA_T" },
-                { "msg_drop": "CCA_T_DROP"}
+                { "msg_drop": "CCA_T_drop"}
             ],
             "dynamic_label_0": [
                 {"pcrf_addr" : "PCRF address of Gx connection "}
@@ -502,7 +501,7 @@
             ],
             "label_2": [
                 { "msg_type": "RAR" },
-                { "msg_drop": "RAR_DROP"}
+                { "msg_drop": "RAR_drop"}
             ],
             "dynamic_label_0": [
                 {"pcrf_addr" : "PCRF address of Gx connection "}
@@ -551,7 +550,7 @@
             ],
             "label_2": [
                 { "msg_type": "CSRsp" },
-                { "msg_rej": "CSRsp_REJ" }
+                { "msg_rej": "CSRsp_rej" }
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "},
@@ -573,7 +572,7 @@
             ],
             "label_2": [
                 { "msg_type": "MBRsp" },
-                { "msg_rej": "MBRsp_REJ" }
+                { "msg_rej": "MBRsp_rej" }
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "},
@@ -617,7 +616,7 @@
             ],
             "label_2": [
                 { "msg_type": "RABRsp" },
-                { "msg_rej": "RABRSP_rej" }
+                { "msg_rej": "RABRsp_rej" }
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "}
@@ -640,9 +639,6 @@
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "}
-            ],
-            "dynamic_label_1": [
-                {"reason" : "drop reason"}
             ]
         },
         {
@@ -659,9 +655,6 @@
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "}
-            ],
-            "dynamic_label_1": [
-                {"reason" : "drop reason"}
             ]
         },
         {
@@ -678,9 +671,6 @@
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "}
-            ],
-            "dynamic_label_1": [
-                {"reason" : "drop reason"}
             ]
         },        
         {
@@ -697,9 +687,6 @@
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "MME address of s11 connection "}
-            ],
-            "dynamic_label_1": [
-                {"reason" : "drop reason"}
             ]
         },
         {
@@ -971,6 +958,9 @@
                 {"mme_addr" : "mme address of s11 connection "},
                 {"sgw_addr" : "sgw address of s5s8 connection "},
                 {"pgw_addr" : "pgw address of s5s8 connection "}
+            ],
+            "dynamic_label_1": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -982,7 +972,7 @@
                 {"cp_mode": "spgw"}
             ],
             "label_1": [
-                { "proc_type": "INITIAL_ATTACH"}
+                { "procedure": "INITIAL_ATTACH"}
             ],
             "label_2": [
                 {"result": "success"},
@@ -994,6 +984,9 @@
             ],
             "dynamic_label_1": [
                 {"failure_reason" : "Put failure reason here"}
+            ],
+            "dynamic_label_2": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1005,13 +998,16 @@
                 {"cp_mode": "spgw"}
             ],
             "label_1": [
-                {"procedure": "mme_init_detach"},
-                {"procedure": "nw_init_detach"}
+                {"procedure": "MME_INIT_DETACH"},
+                {"procedure": "NW_INIT_DETACH"}
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "mme address of s11 connection "},
                 {"sgw_addr" : "sgw address of s5s8 connection "},
                 {"pgw_addr" : "pgw address of s5s8 connection "}
+            ],
+            "dynamic_label_1": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1037,6 +1033,9 @@
             ],
             "dynamic_label_1": [
                 {"failure_reason" : "Put failure reason here"}
+            ],
+            "dynamic_label_2": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1051,6 +1050,9 @@
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "mme address of s11 connection "}
+            ],
+            "dynamic_label_1": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1072,6 +1074,9 @@
             ],
             "dynamic_label_1": [
                 {"failure_reason" : "Put failure reason here"}
+            ],
+            "dynamic_label_2": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1086,6 +1091,9 @@
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "mme address of s11 connection "}
+            ],
+            "dynamic_label_1": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1109,6 +1117,9 @@
             ],
             "dynamic_label_1": [
                 {"failure_reason" : "Put failure reason here"}
+            ],
+            "dynamic_label_2": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1123,6 +1134,9 @@
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "mme address of s11 connection "}
+            ],
+            "dynamic_label_1": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1146,6 +1160,9 @@
             ],
             "dynamic_label_1": [
                 {"failure_reason" : "Put failure reason here"}
+            ],
+            "dynamic_label_2": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1160,6 +1177,9 @@
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "mme address of s11 connection "}
+            ],
+            "dynamic_label_1": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1183,6 +1203,9 @@
             ],
             "dynamic_label_1": [
                 {"failure_reason" : "Put failure reason here"}
+            ],
+            "dynamic_label_2": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1197,6 +1220,9 @@
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "mme address of s11 connection "}
+            ],
+            "dynamic_label_1": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1220,6 +1246,9 @@
             ],
             "dynamic_label_1": [
                 {"failure_reason" : "Put failure reason here"}
+            ],
+            "dynamic_label_2": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1234,6 +1263,9 @@
             ],
             "dynamic_label_0": [
                 {"mme_addr" : "mme address of s11 connection "}
+            ],
+            "dynamic_label_1": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1257,6 +1289,9 @@
             ],
             "dynamic_label_1": [
                 {"failure_reason" : "Put failure reason here"}
+            ],
+            "dynamic_label_2": [
+                {"tac" : "tac of eNB"}
             ]
         },
         {
@@ -1268,9 +1303,6 @@
             ],
             "label_1": [
                 { "procedure":"RAR_PROC"}
-            ],
-            "dynamic_label_0": [
-                {"mme_addr" : "mme address of s11 connection "}
             ]
         },
         {

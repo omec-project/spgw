@@ -224,18 +224,30 @@ extern "C"
         spgwStats::Instance()->set(id, val);
     }
 
-    void increment_proc_mme_peer_stats_reason(int stat_id, uint32_t peer_addr, uint32_t reason)
+    void increment_proc_mme_peer_stats_reason(int stat_id, uint32_t peer_addr, uint32_t reason, uint16_t tac)
     {
        spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
        std::stringstream r_string;
        r_string<<reason;
-	   spgwStats::Instance()->increment(id, {{"mme_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}, {"reason", r_string.str()}});
+       if(tac) {
+            std::stringstream tac_s;
+            tac_s<<tac;
+	        spgwStats::Instance()->increment(id, {{"mme_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}, {"reason", r_string.str()}, {"tac",tac_s.str()}});
+       } else {
+	        spgwStats::Instance()->increment(id, {{"mme_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}, {"reason", r_string.str()}});
+       }
     }
 
-    void increment_proc_mme_peer_stats(int stat_id, uint32_t peer_addr)
+    void increment_proc_mme_peer_stats(int stat_id, uint32_t peer_addr, uint16_t tac)
     {
        spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
-	   spgwStats::Instance()->increment(id, {{"mme_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}});
+       if(tac) {
+            std::stringstream tac_s;
+            tac_s<<tac;
+	        spgwStats::Instance()->increment(id, {{"mme_addr",inet_ntoa(*((struct in_addr *)&peer_addr))},{"tac",tac_s.str()}});
+       } else {
+	        spgwStats::Instance()->increment(id, {{"mme_addr",inet_ntoa(*((struct in_addr *)&peer_addr))}});
+       }
     }
 
 }
