@@ -87,7 +87,7 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     if(get_ue_context(msg->gtpc_msg.rab.header.teid.has_teid.teid,
                 &context) != 0) {
-        increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ_REJ, s11_peer_sockaddr->sin_addr.s_addr);
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ_DROP, s11_peer_sockaddr->sin_addr.s_addr);
         rab_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
         return -1;

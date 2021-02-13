@@ -62,8 +62,10 @@ void increment_mme_peer_stats(int stat_id, uint32_t peer_addr);
 void increment_sgw_peer_stats(int stat_id, uint32_t peer_addr);
 void increment_pgw_peer_stats(int stat_id, uint32_t peer_addr);
 void increment_gx_peer_stats(int stat_id, uint32_t peer_addr);
-void increment_proc_mme_peer_stats_reason(int stat_id, uint32_t peer_addr, uint32_t reason);
-void increment_proc_mme_peer_stats(int stat_id, uint32_t peer_addr);
+/* Procedure stats start */
+void increment_proc_mme_peer_stats_reason(int stat_id, uint32_t peer_addr, uint32_t reason, uint16_t tac);
+void increment_proc_mme_peer_stats(int stat_id, uint32_t peer_addr, uint16_t tac);
+/* Procedure stats end */
 void set_data_stats(int stat_id, uint64_t imsi, uint32_t bytes);
 
 #endif
