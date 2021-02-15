@@ -10,8 +10,6 @@ int
 process_pfcp_sess_set_del_req_t(pfcp_sess_set_del_req_t *del_set_req,
 		gtpv2c_header_t *gtpv2c_tx)
 {
-	RTE_SET_USED(del_set_req);
-	RTE_SET_USED(gtpv2c_tx);
 	return 0;
 }
 
@@ -36,9 +34,7 @@ int process_pfcp_sess_set_del_req(void *data, void *unused_param)
 			return -1;
 	}
 #else
-	RTE_SET_USED(data);
 #endif /* USE_CSID */
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 
@@ -58,9 +54,7 @@ int process_pfcp_sess_set_del_rsp(void *data, void *unused_param)
 			return -1;
 	}
 #else
-	RTE_SET_USED(data);
 #endif /* USE_CSID */
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 
@@ -146,10 +140,8 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 				sizeof(struct sockaddr_in));
 	}
 #else
-	RTE_SET_USED(data);
 #endif /* USE_CSID */
 
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 
@@ -200,10 +192,8 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 //			(struct sockaddr *) &s5s8_recv_sockaddr,
 //		        sizeof(struct sockaddr_in));
 //#else
-//	RTE_SET_USED(data);
 //#endif /* USE_CSID */
 //
-//	RTE_SET_USED(unused_param);
 //	return 0;
 //}
 /* Function */
@@ -221,10 +211,8 @@ process_del_pdn_conn_set_rsp(void *data, void *unused_param)
 			return -1;
 	}
 #else
-	RTE_SET_USED(data);
 #endif /* USE_CSID */
 
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 

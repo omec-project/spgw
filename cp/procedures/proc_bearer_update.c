@@ -35,7 +35,7 @@ int process_pfcp_sess_mod_resp_ubr_handler(void *data, void *unused_param)
 
 	context->eps_bearers[ebi_index]->pdn->state = CONNECTED_STATE;
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	return 0;
 
 }

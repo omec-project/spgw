@@ -12,8 +12,6 @@ int handle_update_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_r
 {
     int ret = 0;
 
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
 
     if((ret = decode_upd_bearer_rsp((uint8_t *) gtpv2c_rx,
                     &msg->gtpc_msg.ub_rsp) == 0))
@@ -122,7 +120,7 @@ process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 void 
 process_s5s8_upd_bearer_response_pfcp_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p ", data);
     return;
 }
 int
@@ -226,7 +224,6 @@ int process_update_bearer_response_handler(void *data, void *unused_param)
 			return -1;
 	}
 
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 

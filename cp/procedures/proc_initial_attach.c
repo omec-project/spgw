@@ -571,8 +571,7 @@ process_create_sess_req(create_sess_req_t *csr,
 int
 process_sess_est_resp_timeout_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
-    RTE_SET_USED(msg);
-	LOG_MSG(LOG_DEBUG, "PFCP sess establishment request timeout ");
+	LOG_MSG(LOG_DEBUG, "PFCP sess establishment request timeout %p ", msg);
     proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
     return 0;
 }
@@ -1380,7 +1379,7 @@ parse_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 void 
 process_pgwc_s5s8_create_session_request_pfcp_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p", data);
     return;
 }
 
@@ -1395,7 +1394,6 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	pdn_connection_t *pdn = NULL;
 	eps_bearer_t *bearer = NULL;
 	create_sess_req_t csr = {0};
-    RTE_SET_USED(proc);
 
 	struct parse_pgwc_s5s8_create_session_request_t create_s5s8_session_request = { 0 };
 
@@ -1403,7 +1401,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	ret = upf_context_entry_lookup((upf_ipv4->s_addr), &(upf_context));
 
 	if (ret < 0) {
-		LOG_MSG(LOG_DEBUG, "NO ENTRY FOUND IN UPF HASH [%u]", upf_ipv4->s_addr);
+		LOG_MSG(LOG_DEBUG, "NO ENTRY FOUND IN UPF HASH [%u] for proc = %d ", upf_ipv4->s_addr, proc);
 		return 0;
 	}
 
@@ -2044,8 +2042,7 @@ cca_msg_handler(proc_context_t *proc_context, msg_info_t *msg)
 int
 process_gx_ccai_reject_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
-    RTE_SET_USED(msg);
-	LOG_MSG(LOG_ERROR, "Gx IP Can session setup failed ");
+	LOG_MSG(LOG_ERROR, "Gx IP Can session setup failed %p ", msg);
     proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
     return 0;
 }

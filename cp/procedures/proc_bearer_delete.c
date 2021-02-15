@@ -45,14 +45,13 @@ process_mod_resp_delete_handler(void *data, void *unused_param)
 		return -1;
 	}
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	return 0;
 }
 
 uint8_t
 process_delete_bearer_pfcp_sess_response(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 {
-    RTE_SET_USED(gtpv2c_tx);
 	int ret = 0;
 	ue_context_t *context = NULL;
 	uint32_t teid = UE_SESS_ID(sess_id);
@@ -203,7 +202,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
         increment_mme_peer_stats(MSG_TX_GTPV2_DBREQ, s11_mme_sockaddr.sin_addr.s_addr);
 	}
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 
 	return 0;
 }
@@ -250,7 +249,7 @@ process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
 		}
 	}
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 
 	return 0;
 }
@@ -293,7 +292,7 @@ int del_bearer_cmd_ccau_handler(void *data, void *unused_param)
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return ret;
 	}
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	return 0;
 }
 
@@ -312,7 +311,7 @@ process_delete_bearer_response_handler(void *data, void *unused_param)
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return ret;
 	}
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	return 0;
 }
 
@@ -361,14 +360,14 @@ del_bearer_cmd_mbr_resp_handler(void *data, void *unused_param)
 				sizeof(struct sockaddr_in));
 	}
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	return 0;
 }
 
 void
 process_pfcp_sess_del_request_delete_bearer_rsp_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p", data);
     return;
 }
 
@@ -403,7 +402,6 @@ process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSDELREQ, GET_UPF_ADDR(context->upf_context));
     transData_t *trans_entry;
 	trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pfcp_sess_del_request_delete_bearer_rsp_timeout);
-    RTE_SET_USED(trans_entry);
     pdn->trans_entry = trans_entry;
 
 	/* Update UE State */

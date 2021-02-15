@@ -12,19 +12,20 @@
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_interface.h"
 #include "util.h"
+#include "cp_log.h"
 
 
 static
 int validate_csrsp_msg(create_sess_rsp_t *csrsp)
 {
-    RTE_SET_USED(csrsp);
+    LOG_MSG(LOG_NEVER, "csrsp = %p ", csrsp);
     return 0;
 }
 
 static
 int validate_mbrsp_msg(mod_bearer_rsp_t *mbrsp)
 {
-    RTE_SET_USED(mbrsp);
+    LOG_MSG(LOG_NEVER, "mbrsp = %p ", mbrsp);
     return 0;
 }
 
@@ -34,49 +35,49 @@ int validate_mbrsp_msg(mod_bearer_rsp_t *mbrsp)
 static
 int validate_dsrsp_msg(del_sess_rsp_t *dsrsp)
 {
-    RTE_SET_USED(dsrsp);
+    LOG_MSG(LOG_NEVER, "dsrsp = %p ", dsrsp);
     return 0;
 }
 
 static
 int validate_cbreq_msg(create_bearer_req_t *cbreq)
 {
-    RTE_SET_USED(cbreq);
+    LOG_MSG(LOG_NEVER, "gtp message = %p ", cbreq);
     return 0;
 }
 
 static
 int validate_cbrsp_msg(create_bearer_rsp_t *cbrsp)
 {
-    RTE_SET_USED(cbrsp);
+    LOG_MSG(LOG_NEVER, "gtp message = %p ", cbrsp);
     return 0;
 }
 
 static
 int validate_dbreq_msg(del_bearer_req_t *dbreq)
 {
-    RTE_SET_USED(dbreq);
+    LOG_MSG(LOG_NEVER, "gtp message = %p ", dbreq);
     return 0;
 }
 
 static
 int validate_dbrsp_msg(del_bearer_rsp_t *dbrsp)
 {
-    RTE_SET_USED(dbrsp);
+    LOG_MSG(LOG_NEVER, "gtp message = %p ", dbrsp);
     return 0;
 }
 
 static
 int validate_ubreq_msg(upd_bearer_req_t *ubreq)
 {
-    RTE_SET_USED(ubreq);
+    LOG_MSG(LOG_NEVER, "gtp message = %p ", ubreq);
     return 0;
 }
 
 static
 int validate_ubrsp_msg(upd_bearer_rsp_t *ubrsp)
 {
-    RTE_SET_USED(ubrsp);
+    LOG_MSG(LOG_NEVER, "gtp message = %p ", ubrsp);
     return 0;
 }
 

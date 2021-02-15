@@ -22,10 +22,8 @@ process_upd_pdn_conn_set_req(void *data, void *unused_param)
 			return -1;
 	}
 #else
-	RTE_SET_USED(data);
 #endif /* USE_CSID */
 
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 
@@ -47,24 +45,20 @@ process_upd_pdn_conn_set_rsp(void *data, void *unused_param)
 			return -1;
 	}
 #else
-	RTE_SET_USED(data);
 #endif /* USE_CSID */
 
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 
 int8_t
 process_upd_pdn_conn_set_req_t(upd_pdn_conn_set_req_t *upd_pdn_req)
 {
-	RTE_SET_USED(upd_pdn_req);
 	return 0;
 }
 
 int8_t
 process_upd_pdn_conn_set_rsp_t(upd_pdn_conn_set_rsp_t *upd_pdn_rsp)
 {
-	RTE_SET_USED(upd_pdn_rsp);
 	return 0;
 }
 

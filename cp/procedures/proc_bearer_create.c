@@ -75,7 +75,7 @@ bearer_create_event_handler(void *proc, void *msg_info)
 void
 proc_bearer_create_failed(proc_context_t *proc_context, uint8_t cause )
 {
-    RTE_SET_USED(cause);
+    LOG_MSG(LOG_DEBUG, "bearer create failed with cause = %d", cause);
     proc_context->result = PROC_RESULT_FAILURE;
     increment_stat(PROCEDURES_SPGW_DEDICATED_BEARER_ACTIVATION_PROC_FAILURE);
     if(proc_context->state == PFCP_SESS_MOD_REQ_SNT_PRE_CBR_STATE) {
@@ -91,10 +91,11 @@ proc_bearer_create_complete(proc_context_t *proc_context)
 }
 
 void
-send_pfcp_modify_session_pre_cbreq(void *proc_cbr, void *msg_info)
+send_pfcp_modify_session_pre_cbreq(void *proc_cbr, void *msg)
 {
-    RTE_SET_USED(msg_info);
+    msg_info_t *msg_info = (msg_info_t *)msg;
     proc_context_t *proc_ctxt = (proc_context_t*)proc_cbr;
+    assert(msg_info->proc_context == proc_ctxt);
     pdn_connection_t *pdn_cntxt = (pdn_connection_t *)proc_ctxt->pdn_context;
     ue_context_t *ue_context = (ue_context_t*)proc_ctxt->ue_context;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
@@ -140,7 +141,7 @@ pfcp_modify_session_pre_cbreq_timeout(void *data)
 {
     // TODO : add handling here 
     assert(0);
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p",data);
     return;
 }
 
@@ -372,7 +373,7 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 void
 process_cbr_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p",data);
     return;
 }
 
@@ -399,7 +400,7 @@ process_sgwc_pfcp_mod_post_cbrsp_timeout(void *data)
 void
 process_pgwc_create_bearer_rsp_pfcp_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p",data);
     return;
 }
 
@@ -491,7 +492,7 @@ process_cbresp_handler(void *data, void *unused_param)
 		return ret;
 	}
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p",unused_parama);
 	return 0;
 }
 
@@ -507,7 +508,7 @@ process_create_bearer_request_handler(void *data, void *unused_param)
 			return -1;
 	}
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p",unused_parama);
 	return 0;
 }
 
@@ -523,14 +524,14 @@ process_create_bearer_resp_handler(void *data, void *unused_param)
 			return -1;
 	}
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p",unused_parama);
 	return 0;
 }
 
 void 
 process_create_bearer_request_pfcp_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p",data);
     return;
 }
 

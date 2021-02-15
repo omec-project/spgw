@@ -32,21 +32,19 @@ void
 process_local_msg(void *data, uint16_t event)
 {
     LOG_MSG(LOG_INFO,"Process local message event ");
-    RTE_SET_USED(data);
-    RTE_SET_USED(event);
     struct t2tMsg *evt  = (struct t2tMsg *)get_t2tMsg();
     while(evt != NULL) {
         update_subscriber_analyzer_config(evt->data, evt->event);
         free(evt);
         evt  = (struct t2tMsg *)get_t2tMsg();
     }
+    LOG_MSG(LOG_NEVER,"data %p event %d ", data, event);
     return;
 }
 
 void* 
 incoming_event_handler(void* data)
 {
-    RTE_SET_USED(data);
     stack_event_t *event;
     LOG_MSG(LOG_INIT, "Starting main-event handler thread ");
     while(1) {
@@ -60,6 +58,6 @@ incoming_event_handler(void* data)
         }
         usleep(10);
     }
-    LOG_MSG(LOG_ERROR,"exiting event handler thread ");
+    LOG_MSG(LOG_ERROR,"exiting event handler thread %p", data);
     return NULL;
 }

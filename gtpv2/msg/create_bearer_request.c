@@ -197,8 +197,6 @@ process_create_bearer_response(gtpv2c_header_t *gtpv2c_rx)
 int handle_create_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
     ue_context_t *context = NULL;
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
 
     if((ret = decode_create_bearer_req((uint8_t *) gtpv2c_rx,
                     &msg->gtpc_msg.cb_req) == 0))

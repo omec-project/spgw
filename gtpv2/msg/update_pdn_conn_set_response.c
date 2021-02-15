@@ -9,7 +9,6 @@
 int handle_update_pdn_conn_set_rsp(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
 	//TODO:TEID based lookup
-    RTE_SET_USED(gtpv2c_rx);
 	//msg->state = ;
 	msg->proc = RESTORATION_RECOVERY_PROC; 
 	//msg->proc = get_procedure(msg);

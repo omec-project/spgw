@@ -88,7 +88,6 @@ pfcp_association_event_handler(void *proc, void *msg_info)
 int
 association_setup_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
-    RTE_SET_USED(msg);
     int ret = 0;
 	upf_context_t *upf_context = proc_context->upf_context;
     assert (upf_context->state != PFCP_ASSOC_RESP_RCVD_STATE); 
@@ -96,7 +95,7 @@ association_setup_handler(proc_context_t *proc_context, msg_info_t *msg)
     LOG_MSG(LOG_DEBUG1,"Initiate PFCP association setup to UPF %s ", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
     ret = assoication_setup_request(upf_context);
 	if(ret) {
-		LOG_MSG(LOG_ERROR, "Error in setting up Association error: %d ", ret);
+		LOG_MSG(LOG_ERROR, "Error in setting up Association error: %d, msg = %p ", ret, msg);
         upf_context->state = UPF_SETUP_FAILED; 
         queue_stack_unwind_event(UPF_CONNECTION_SETUP_FAILED, (void *)upf_context, upf_pfcp_setup_failure);
 	    return -1;
@@ -289,7 +288,6 @@ assoication_setup_request(upf_context_t *upf_context)
     LOG_MSG(LOG_DEBUG1, "Initiate PFCP setup to peer address = %s ", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
 
     seq_num = fill_pfcp_association_setup_req(&pfcp_ass_setup_req);
-    RTE_SET_USED(seq_num);
 
     uint8_t pfcp_msg[256] = {0};
     int encoded = encode_pfcp_assn_setup_req_t(&pfcp_ass_setup_req, pfcp_msg);
@@ -328,7 +326,6 @@ process_assoc_resp_timeout_handler(void *data1)
 void 
 upf_pfcp_setup_failure(void *data, uint16_t event)
 {
-    RTE_SET_USED(event);
     msg_info_t *msg = NULL;
     upf_context_t *upf_context = (upf_context_t *)data;
     pending_proc_key_t *key;
@@ -347,7 +344,7 @@ upf_pfcp_setup_failure(void *data, uint16_t event)
         rte_free(key);
         key = LIST_FIRST(&upf_context->pending_sub_procs);
     }
-    LOG_MSG(LOG_ERROR, "Deleting UPF context %s",inet_ntoa(upf_context->upf_sockaddr.sin_addr));
+    LOG_MSG(LOG_ERROR, "Deleting UPF context %s, event = %d ",inet_ntoa(upf_context->upf_sockaddr.sin_addr), event);
     upf_context_delete_entry(upf_context->upf_sockaddr.sin_addr.s_addr);
     rte_free(upf_context);
 }
@@ -355,12 +352,9 @@ upf_pfcp_setup_failure(void *data, uint16_t event)
 
 void upf_pfcp_setup_success(void *data, uint16_t event)
 {
-    RTE_SET_USED(event);
     upf_context_t *upf_context = (upf_context_t *)data;
     pending_proc_key_t *key;
     proc_context_t *csreq_proc = NULL;
-    int ret = 0;
-    RTE_SET_USED(ret);
 
 	LOG_MSG(LOG_DEBUG1, "Received PFCP association response from %s",inet_ntoa(upf_context->upf_sockaddr.sin_addr));
 
@@ -371,7 +365,7 @@ void upf_pfcp_setup_success(void *data, uint16_t event)
         pdn_connection_t *pdn = csreq_proc->pdn_context;
 
         if(IF_PDN_ADDR_ALLOC_UPF(pdn) && (IS_UPF_SUPP_FEAT_UEIP(upf_context) == 0)) {
-            LOG_MSG(LOG_ERROR, "UPF does not support UE IP address allocation feature ");
+            LOG_MSG(LOG_ERROR, "UPF does not support UE IP address allocation feature. Event %d ", event);
             proc_initial_attach_failure(csreq_proc, GTPV2C_CAUSE_REQUEST_REJECTED);
         } else {
             process_pfcp_sess_est_request(csreq_proc, upf_context);

@@ -221,9 +221,7 @@ int
 csrsp_fill_peer_node_info(create_sess_req_t *csr, pdn_connection_t *pdn,
 				eps_bearer_t *bearer)
 {
-	RTE_SET_USED(csr);
-	RTE_SET_USED(pdn);
-	RTE_SET_USED(bearer);
+    LOG_MSG(LOG_NEVER, "csr = %p, pdn = %p, bearer = %p ", csr, pdn, bearer);
 	//csid_key peer_info = {0};
 	//fq_csids *csids = NULL;
 
@@ -443,7 +441,7 @@ fill_pfcp_sess_set_del_resp(pfcp_sess_set_del_rsp_t *pfcp_del_resp,
 			sizeof(pfcp_del_resp->cause.cause_value));
 	pfcp_del_resp->cause.cause_value = cause_val;
 
-	RTE_SET_USED(offending_id);
+    LOG_MSG(LOG_NEVER, "offending_id = %d ", offending_id);
 	//pfcp_set_ie_header(&pfcp_del_resp->offending_ie.header, PFCP_IE_OFFENDING_IE,
 	//		sizeof(pfcp_del_resp->offending_ie.type_of_the_offending_ie));
 	//pfcp_del_resp->offending_ie.type_of_the_offending_ie = (uint16_t)offending_id;

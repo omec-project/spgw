@@ -10,8 +10,6 @@
 int handle_update_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
     ue_context_t *context = NULL;
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
 
     if((ret = decode_upd_bearer_req((uint8_t *) gtpv2c_rx,
                     &msg->gtpc_msg.ub_req) == 0))
@@ -153,7 +151,6 @@ int process_update_bearer_request_handler(void *data, void *unused_param)
 		return -1;
 	}
 
-	RTE_SET_USED(unused_param);
 	return 0;
 
 }

@@ -28,7 +28,6 @@ test_in_pkt_handler gx_in_mock_handler[256];
 void* 
 test_event_thread(void* data)
 {
-    RTE_SET_USED(data);
     LOG_MSG(LOG_INIT, "Starting test event handler thread ");
 	stack_event_t *event;
     while(1) {
@@ -42,7 +41,7 @@ test_event_thread(void* data)
         }
         usleep(10);
     }
-    LOG_MSG(LOG_ERROR, "exiting event handler thread ");
+    LOG_MSG(LOG_ERROR, "exiting event handler thread %p", data);
     return NULL;
 }
 
@@ -165,14 +164,13 @@ void
 handle_mock_create_bearer_request_msg(void *evt)
 {
     int ret;
-    RTE_SET_USED(ret);
     msg_info_t *msg = calloc(1, sizeof(msg_info_t));
     outgoing_pkts_event_t *event = (outgoing_pkts_event_t *)evt;
 
     LOG_MSG(LOG_DEBUG, "Received mock event %p",event);
 
-    if((ret = decode_create_bearer_req((uint8_t *) event->payload,
-                    &msg->gtpc_msg.cb_req) == 0))
+    ret = decode_create_bearer_req((uint8_t *) event->payload, &msg->gtpc_msg.cb_req);
+    if(ret == 0)
         return;
 
     uint8_t  cbrsp_pkt[1000];
@@ -232,9 +230,7 @@ handle_mock_create_bearer_request_msg(void *evt)
 void 
 handle_mock_rar_request_msg(void *msg, uint16_t event)
 {
-	RTE_SET_USED(msg);
-	RTE_SET_USED(event);
-	LOG_MSG(LOG_DEBUG, "RAR mock handler called");
+	LOG_MSG(LOG_DEBUG, "RAR mock handler called msg %p, event %d ", msg, event);
 	return;
 }
 

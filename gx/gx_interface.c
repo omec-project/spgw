@@ -334,7 +334,6 @@ void*
 msg_handler_gx(void *data)
 {
     LOG_MSG(LOG_INIT,"Starting gx message handler thread ");
-    RTE_SET_USED(data);
 
     /* Make a connection between control-plane and gx_app */
     if(cp_config->cp_type != SGWC) {
@@ -381,7 +380,7 @@ msg_handler_gx(void *data)
         	queue_stack_unwind_event(GX_MSG_RECEIVED, (void *)msg, process_gx_msg);
 		}
     }
-    LOG_MSG(LOG_ERROR,"exiting gx message handler thread ");
+    LOG_MSG(LOG_ERROR,"exiting gx message handler thread data = %p ", data);
     return NULL;
 }
 
@@ -697,7 +696,6 @@ void*
 out_handler_gx(void *data)
 {
 	LOG_MSG(LOG_INIT,"Starting gx out message handler thread");
-    RTE_SET_USED(data);
     while(1) {
         outgoing_pkts_event_t *event = get_gx_out_event();
         if(event != NULL) {
@@ -714,7 +712,7 @@ out_handler_gx(void *data)
         //PERFORAMANCE ISSUE - use conditional variable 
         usleep(10);
     }
-	LOG_MSG(LOG_ERROR,"gx out message handler thread exited");
+	LOG_MSG(LOG_ERROR,"gx out message handler thread exited , data %p ", data);
     return NULL;
 }
 

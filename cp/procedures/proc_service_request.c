@@ -287,7 +287,6 @@ process_srreq_pfcp_sess_mod_resp(proc_context_t *proc_context,
         uint64_t sess_id, 
         gtpv2c_header_t *gtpv2c_tx)
 {
-    RTE_SET_USED(gtpv2c_tx);
     int ret = 0;
     uint8_t ebi_index = 0;
     eps_bearer_t *bearer  = NULL;

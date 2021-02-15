@@ -64,8 +64,7 @@ int
 handle_unknown_msg(msg_info_t **msg_p, gtpv2c_header_t *rx_msg)
 {
     msg_info_t *msg = *msg_p;
-    RTE_SET_USED(msg);
-	LOG_MSG(LOG_ERROR, "Unhandled GTP message = %d", rx_msg->gtpc.message_type);
+	LOG_MSG(LOG_ERROR, "Unhandled GTP message = %d, msg = %p ", rx_msg->gtpc.message_type, msg);
     return -1;
 }
 
@@ -215,8 +214,7 @@ gtpv2c_send(int gtpv2c_if_fd, uint8_t *gtpv2c_tx_buf,
 		dump_pcap(gtpv2c_pyld_len, gtpv2c_tx_buf);
 	} 
 #endif
-    RTE_SET_USED(dest_addr_len);
-    LOG_MSG(LOG_DEBUG, "queuing message in gtp out channel");
+    LOG_MSG(LOG_DEBUG, "queuing message in gtp out channel %u", dest_addr_len);
     queue_gtp_out_event(gtpv2c_if_fd, gtpv2c_tx_buf, gtpv2c_pyld_len, dest_addr);
 }
 
@@ -246,7 +244,7 @@ out_handler_gtp(void *data)
         usleep(10);
     }
 	LOG_MSG(LOG_ERROR,"Exiting gtp out message handler thread");
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p", data);
     return NULL;
 }
 

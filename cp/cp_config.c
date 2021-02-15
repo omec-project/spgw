@@ -148,7 +148,6 @@ msg_handler_local(void *data)
     int bytes_rx;
     uint8_t rx_buf[128];
     LOG_MSG(LOG_INIT, "Starting local message handler thread ");
-    RTE_SET_USED(data);
     while(1) {
         bytes_rx = recv(my_sock.sock_fd_local, rx_buf, sizeof(rx_buf), 0);
         if(bytes_rx != 0) {
@@ -156,7 +155,7 @@ msg_handler_local(void *data)
             queue_stack_unwind_event(LOCAL_MSG_RECEIVED, (void *)NULL, process_local_msg);
         }
     }
-    LOG_MSG(LOG_ERROR,"Exiting local message handler thread ");
+    LOG_MSG(LOG_ERROR,"Exiting local message handler thread %p", data);
     return NULL;
 }
 

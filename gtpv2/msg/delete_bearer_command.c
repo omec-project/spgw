@@ -165,7 +165,7 @@ process_delete_bearer_command_handler(void *data, void *unused_param)
             sizeof(struct sockaddr_in));
 	}
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 
 	return 0;
 }

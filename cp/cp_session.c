@@ -252,7 +252,7 @@ delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *sei
 
 	//*_context = pdn_ctxt->context;
 	rte_free(pdn_ctxt);
-	RTE_SET_USED(gtpv2c_teid);
+    LOG_MSG(LOG_NEVER, "Deleted sgw context for control teid = %u ", gtpv2c_teid);
 	return 0;
 }
 

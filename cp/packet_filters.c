@@ -123,9 +123,6 @@ int meter_profile_index_get(uint64_t cir)
 void
 push_sdf_rules(uint16_t index)
 {
-	struct dp_id dp_id = { .id = DPN_ID };
-
-    RTE_SET_USED(dp_id);
 	char local_ip[INET_ADDRSTRLEN];
 	char remote_ip[INET_ADDRSTRLEN];
 
@@ -171,6 +168,7 @@ push_sdf_rules(uint16_t index)
 		pktf.u.rule_str);
 
 #ifdef OBSOLETE_APIS
+	struct dp_id dp_id = { .id = DPN_ID };
 	if (sdf_filter_entry_add(dp_id, pktf) < 0)
         assert(0);
 #endif
@@ -218,8 +216,6 @@ install_sdf_rules(const pkt_fltr *new_packet_filter)
 static int
 install_pcc_rules(struct pcc_rules new_pcc_entry)
 {
-	struct dp_id dp_id = { .id = DPN_ID };
-    RTE_SET_USED(dp_id);
 
 	if (num_pcc_filter >= PCC_TABLE_SIZE)
 		return -ENOMEM;
@@ -240,6 +236,7 @@ install_pcc_rules(struct pcc_rules new_pcc_entry)
 	num_pcc_filter++;
 
 #ifdef OBSOLETE_APIS
+	struct dp_id dp_id = { .id = DPN_ID };
 	if (pcc_entry_add(dp_id, new_pcc_entry) < 0 )
         assert(0);
 #endif
@@ -255,8 +252,6 @@ install_pcc_rules(struct pcc_rules new_pcc_entry)
 static int
 install_meter_profiles(struct dp_id dp_id, struct mtr_entry new_mtr_entry)
 {
-    RTE_SET_USED(dp_id);
-
 	if (num_mtr_profiles >= METER_PROFILE_SDF_TABLE_SIZE)
 		return -ENOMEM;
 
@@ -265,7 +260,7 @@ install_meter_profiles(struct dp_id dp_id, struct mtr_entry new_mtr_entry)
 			RTE_CACHE_LINE_SIZE, rte_socket_id());
 	if (mtr_profile == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for meter profile "
-				"structure: %s ", rte_strerror(rte_errno));
+				"structure: %s for dpid = %lu", rte_strerror(rte_errno), dp_id.id);
 		return -ENOMEM;
 	}
 
@@ -658,9 +653,7 @@ parse_adc_rules(void)
 	unsigned i = 0;
 	uint32_t rule_id = 1;
 	const char *entry = NULL;
-	struct dp_id dp_id = { .id = DPN_ID };
 	struct rte_cfgfile *file = rte_cfgfile_load(ADC_RULE_FILE, 0);
-    RTE_SET_USED(dp_id);
 
     assert(file != NULL);
 
@@ -732,6 +725,7 @@ parse_adc_rules(void)
 		adc_rule_id[rule_id - 1] = rule_id;
 		tmp_adc.rule_id = rule_id++;
 #ifdef OBSOLETE_APIS
+	struct dp_id dp_id = { .id = DPN_ID };
 		if (adc_entry_add(dp_id, tmp_adc) < 0)
                 assert(0);
 #endif

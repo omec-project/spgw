@@ -131,7 +131,7 @@ cca_t_msg_handler(void *data, void *unused_param)
 	msg_info_t *msg = (msg_info_t *)data;
 	gx_context_t *gx_context = NULL;
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 
 	/* Retrive Gx_context based on Sess ID. */
 	ret = get_gx_context(msg->gx_msg.cca.session_id.val, &gx_context);

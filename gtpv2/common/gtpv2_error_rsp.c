@@ -31,7 +31,7 @@ extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 void
 clean_up_while_error_pfcp_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p", data);
     return;
 }
 
@@ -164,7 +164,6 @@ void get_error_csrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 */
 void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface) 
 {
-    int ret = 0;
     uint16_t payload_length;
 
     create_sess_rsp_t cs_resp = {0};
@@ -233,6 +232,7 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 #ifdef TEMP
     // error handling should not be part of this function . 
     // caller should do it after sending CSRsp 
+    int ret = 0;
     ret = clean_up_while_error(rsp_info.ebi_index,
             rsp_info.teid,&msg->gtpc_msg.csr.imsi.imsi_number_digits,
             msg->gtpc_msg.csr.imsi.header.len, rsp_info.seq);
@@ -266,7 +266,6 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
         }
         free(gtpc_trans);
     }
-    RTE_SET_USED(ret);
 }
 
 void get_error_mbrsp_info(msg_info_t *msg, err_rsp_info *rsp_info) 
@@ -535,7 +534,6 @@ void rab_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 {
     uint16_t payload_length;
 
-    RTE_SET_USED(iface);
 	err_rsp_info rsp_info = {0};
 
 	get_error_rabrsp_info(msg, &rsp_info); // rab-rsp
@@ -569,6 +567,7 @@ void rab_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
     gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
             (struct sockaddr *) &msg->peer_addr, sizeof(struct sockaddr_in));
     increment_mme_peer_stats(MSG_TX_GTPV2_S11_RABRSP, msg->peer_addr.sin_addr.s_addr);
+    LOG_MSG(LOG_NEVER, "iface = %d ", iface);
 }
 
 #ifdef UPDATE_BEARER_SUPPORT

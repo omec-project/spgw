@@ -18,8 +18,6 @@ int handle_delete_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 {
     ue_context_t *context = NULL;
     uint8_t ebi_index = 5; // ajay - todo use transaction 
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
 
     ret = decode_del_sess_rsp((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.ds_rsp);
     if(ret == 0)
@@ -199,7 +197,7 @@ process_ds_resp_handler(void *data, void *unused_param)
 		return -1;
 	}
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	return 0;
 }
 

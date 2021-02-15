@@ -470,7 +470,6 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 	if (cp_config->cp_type == SGWC) {
         ret = 0;
-        RTE_SET_USED(gtpv2c_s5s8_tx);
 		char sgwu_fqdn[MAX_HOSTNAME_LENGTH] = {0};
 		ret =
 			gen_sgwc_s5s8_create_session_request(gtpv2c_rx,
@@ -547,11 +546,8 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	session.sess_id = SESS_ID(context->s11_sgw_gtpc_teid,
 						bearer->eps_bearer_id);
 
-	struct dp_id dp_id = { .id = DPN_ID };
-    RTE_SET_USED(dp_id);
-    
-
 #ifdef OBSOLETE_APIS
+	struct dp_id dp_id = { .id = DPN_ID };
 	if (session_create(dp_id, session) < 0)
         assert(0);
 #endif

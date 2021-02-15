@@ -132,7 +132,6 @@ SRCS-y += $(SRCDIR)/../gx/gx_app/src/gx_pack.o
 
 CFLAGS += -Wno-psabi # suppress "The ABI for passing parameters with 64-byte alignment has changed in GCC 4.6"
 CFLAGS += -Werror
-CFLAGS += -Wunused-variable
 
 CFLAGS += -I$(SRCDIR)/..
 CFLAGS += -I$(SRCDIR)/../common

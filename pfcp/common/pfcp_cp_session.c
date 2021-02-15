@@ -800,8 +800,7 @@ sdf_pkt_filter_to_string(flow_desc_t *flow,
 {
         sdf_pkt_fltr *sdf_flow = &flow->sdf_flw_desc; 
         strcpy(sdf_str, flow->sdf_flow_description);
-        RTE_SET_USED(direction);
-        RTE_SET_USED(sdf_flow);
+        LOG_MSG(LOG_NEVER, "sdf flow = %p direction = %d ", sdf_flow, direction);
 #if 0
 	char local_ip[INET_ADDRSTRLEN];
 	char remote_ip[INET_ADDRSTRLEN];
@@ -2602,7 +2601,6 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 uint8_t
 process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 {
-    RTE_SET_USED(gtpv2c_tx);
 	int ret = 0;
 	uint8_t ebi_index = 0;
 	eps_bearer_t *bearer  = NULL;
