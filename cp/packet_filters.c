@@ -14,6 +14,7 @@
 #include "gen_utils.h"
 #include "cp_config_defs.h"
 #include "cp_log.h"
+#include "assert.h"
 
 const char *direction_str[] = {
 		[TFT_DIRECTION_DOWNLINK_ONLY] = "DOWNLINK_ONLY ",
@@ -294,13 +295,10 @@ init_mtr_profile(void)
 	const char *entry;
 	struct dp_id dp_id = { .id = DPN_ID };
 
-	if (file == NULL)
-		rte_panic("Cannot load configuration file %s\n",
-				METER_PROFILE_FILE);
+    assert(file != NULL);
 
 	entry = rte_cfgfile_get_entry(file, "GLOBAL", "NUM_OF_IDX");
-	if (!entry)
-		rte_panic("Invalid metering index\n");
+    assert(entry != NULL);
 	no_of_idx = atoi(entry);
 
 	for (i = 1; i <= no_of_idx; ++i) {
@@ -312,26 +310,22 @@ init_mtr_profile(void)
 
 		entry = rte_cfgfile_get_entry(file, sectionname,
 				"CIR");
-		if (!entry)
-			rte_panic("Invalid CIR configuration\n");
+        assert(entry != NULL);
 		mtr_entry.mtr_param.cir = atoi(entry);
 
 		entry = rte_cfgfile_get_entry(file, sectionname,
 				"CBS");
-		if (!entry)
-			rte_panic("Invalid CBS configuration\n");
+        assert(entry != NULL);
 		mtr_entry.mtr_param.cbs = atoi(entry);
 
 		entry = rte_cfgfile_get_entry(file, sectionname,
 				"EBS");
-		if (!entry)
-			rte_panic("Invalid EBS configuration\n");
+        assert(entry != NULL);
 		mtr_entry.mtr_param.ebs = atoi(entry);
 
 		entry = rte_cfgfile_get_entry(file, sectionname,
 				"MTR_PROFILE_IDX");
-		if (!entry)
-			rte_panic("Invalid MTR_PROFILE_IDX configuration\n");
+        assert(entry != NULL);
 		mtr_entry.mtr_profile_index = atoi(entry);
 
 		install_meter_profiles(dp_id, mtr_entry);
@@ -352,14 +346,11 @@ init_sdf_rules(void)
 	const char *entry = NULL;
 	struct rte_cfgfile *file = rte_cfgfile_load(SDF_RULE_FILE, 0);
 
-	if (NULL == file)
-		rte_panic("Cannot load configuration file %s\n",
-				SDF_RULE_FILE);
+    assert(file != NULL);
 
 	entry = rte_cfgfile_get_entry(file, "GLOBAL", "NUM_SDF_FILTERS");
 
-	if (!entry)
-		rte_panic("Invalid sdf configuration file format\n");
+    assert(entry != NULL);
 
 	num_sdf_rules = atoi(entry);
 
@@ -377,24 +368,20 @@ init_sdf_rules(void)
 		if (entry) {
 			if (strcmp(entry, "bidirectional") == 0){
 				pf.direction = TFT_DIRECTION_BIDIRECTIONAL;
-				rte_panic("Invalid SDF direction. Supported : uplink_only,"
-						"downlink_only\n");
+                assert(0); //Invalid SDF direction. Supported : uplink_only, downlink_only
 			}
 			else if (strcmp(entry, "uplink_only") == 0)
 				pf.direction = TFT_DIRECTION_UPLINK_ONLY;
 			else if (strcmp(entry, "downlink_only") == 0)
 				pf.direction = TFT_DIRECTION_DOWNLINK_ONLY;
 			else
-				rte_panic("Invalid SDF direction. Supported : uplink_only,"
-						"downlink_only\n");
+				assert(0); //Invalid SDF direction. Supported : uplink_only,downlink_only
 		}
 
 		entry = rte_cfgfile_get_entry(file, sectionname, "IPV4_REMOTE");
 		if (entry) {
 			if (inet_aton(entry, &pf.remote_ip_addr) == 0)
-				rte_panic("Invalid address %s in section %s "
-						"sdf config file %s\n",
-						entry, sectionname, SDF_RULE_FILE);
+                assert(0);
 		}
 
 		entry = rte_cfgfile_get_entry(file, sectionname,
@@ -404,9 +391,6 @@ init_sdf_rules(void)
 			if (ret == 0
 			    || __builtin_clzl(~tmp_addr.s_addr)
 				+ __builtin_ctzl(tmp_addr.s_addr) != 32){
-				/*rte_panic("Invalid address %s in section %s "
-						"sdf config file %s\n",
-						entry, sectionname, SDF_RULE_FILE);*/
 				LOG_MSG(LOG_ERROR, "Invalid address %s in section %s "
 						"sdf config file %s. Setting to default 32.\n",
 						entry, sectionname, SDF_RULE_FILE);
@@ -435,9 +419,7 @@ init_sdf_rules(void)
 		entry = rte_cfgfile_get_entry(file, sectionname, "IPV4_LOCAL");
 		if (entry) {
 			if (inet_aton(entry, &pf.local_ip_addr) == 0)
-				rte_panic("Invalid address %s in section %s "
-						"sdf config file %s\n",
-						entry, sectionname, SDF_RULE_FILE);
+                assert(0);
 		}
 
 		entry = rte_cfgfile_get_entry(file, sectionname,
@@ -447,9 +429,6 @@ init_sdf_rules(void)
 			if (ret == 0
 			    || __builtin_clzl(~tmp_addr.s_addr)
 			    + __builtin_ctzl(tmp_addr.s_addr) != 32){
-				/*rte_panic("Invalid address %s in section %s "
-						"sdf config file %s\n",
-						entry, sectionname, SDF_RULE_FILE);*/
 				LOG_MSG(LOG_ERROR, "Invalid address %s in section %s "
 						"sdf config file %s. Setting to default 32.\n",
 						entry, sectionname, SDF_RULE_FILE);
@@ -471,7 +450,7 @@ init_sdf_rules(void)
 
 		ret = install_sdf_rules(&pf);
 		if (ret < 0) {
-			rte_panic("Failure to install sdf rules: %s ", rte_strerror(rte_errno));
+            assert(0);
 		}
 	}
 	num_sdf_filters = FIRST_FILTER_ID; /*Reset num_sdf_filters*/
@@ -490,26 +469,21 @@ init_pcc_rules(void)
 	const char *entry = NULL;
 	struct rte_cfgfile *file = rte_cfgfile_load(PCC_RULE_FILE, 0);
 
-	if (NULL == file)
-		rte_panic("Cannot load configuration file %s\n",
-				PCC_RULE_FILE);
+    assert(file != NULL);
 
 	entry = rte_cfgfile_get_entry(file, "GLOBAL", "NUM_PCC_FILTERS");
 
-	if (!entry)
-		rte_panic("Invalid pcc configuration file format\n");
+    assert(entry != NULL);
 	num_pcc_rules = atoi(entry);
 
 	entry = rte_cfgfile_get_entry(file,
 				"GLOBAL", "UL_AMBR_MTR_PROFILE_IDX");
-	if (!entry)
-		rte_panic("Invalid AMBR configuration file format\n");
+    assert(entry != NULL);
 	ulambr_idx = atoi(entry);
 
 	entry = rte_cfgfile_get_entry(file,
 				"GLOBAL", "DL_AMBR_MTR_PROFILE_IDX");
-	if (!entry)
-		rte_panic("Invalid AMBR configuration file format\n");
+    assert(entry != NULL);
 	dlambr_idx = atoi(entry);
 
 	for (i = 1; i <= num_pcc_rules; ++i) {
@@ -525,10 +499,7 @@ init_pcc_rules(void)
 			strncpy(tmp_pcc.rule_name, entry, sizeof(tmp_pcc.rule_name));
 
 		entry = rte_cfgfile_get_entry(file, sectionname, "RATING_GROUP");
-		if (!entry)
-			rte_panic(
-			    "Invalid pcc configuration file format - "
-			    "each filter must contain RATING_GROUP entry\n");
+        assert(entry != NULL);
 		tmp_pcc.rating_group = atoi(entry);
 		if(0 == tmp_pcc.rating_group) {
 			tmp_pcc.rating_group = name_to_num(entry);
@@ -591,15 +562,13 @@ init_pcc_rules(void)
 
 		entry = rte_cfgfile_get_entry(file,
 					sectionname, "UL_MBR_MTR_PROFILE_IDX");
-		if (!entry)
-			rte_panic("Invalid MTR_PROFILE_IDX configuration\n");
+        assert(entry != NULL);
 
 		tmp_pcc.qos.ul_mtr_profile_index = atoi(entry);
 
 		entry = rte_cfgfile_get_entry(file,
 					sectionname, "DL_MBR_MTR_PROFILE_IDX");
-		if (!entry)
-			rte_panic("Invalid MTR_PROFILE_IDX configuration\n");
+        assert(entry != NULL);
 		tmp_pcc.qos.dl_mtr_profile_index = atoi(entry);
 
 		/*Read mapped ADC or SDF rules. Either ADC or SDF rules will be p
@@ -611,8 +580,7 @@ init_pcc_rules(void)
 			/*No ADC entry, so check for SDF entry*/
 			entry = rte_cfgfile_get_entry(file,
 					sectionname, "SDF_FILTER_IDX");
-			if (!entry)
-				rte_panic("Missing SDF or ADC rule for PCC rule %d\n",i);
+            assert(entry != NULL); // Missing SDF or ADC rule for PCC rule 
 
 			char *next = NULL;
 			uint16_t sdf_cnt = 0;
@@ -621,8 +589,7 @@ init_pcc_rules(void)
 				errno = 0;
 				int sdf_idx = strtol(entry, &next, 10);
 				if (errno != 0) {
-					perror("strtol");
-					rte_panic("Invalid SDF index value\n");
+                    assert(0);
 				}
 				if('\0' == *entry) break;
 				/*If non number e.g.',', then ignore and continue*/
@@ -639,10 +606,7 @@ init_pcc_rules(void)
 		}
 
 		ret = install_pcc_rules(tmp_pcc);
-		if (ret < 0) {
-			rte_panic("Failure to install packet filters: "
-					"%s ", rte_strerror(rte_errno));
-		}
+        assert(ret >=0 );
 
 	}
 	num_pcc_filter = FIRST_FILTER_ID; /*Reset num_pcc_filter*/
@@ -698,14 +662,11 @@ parse_adc_rules(void)
 	struct rte_cfgfile *file = rte_cfgfile_load(ADC_RULE_FILE, 0);
     RTE_SET_USED(dp_id);
 
-	if (file == NULL)
-		rte_panic("Cannot load configuration file %s\n",
-				ADC_RULE_FILE);
+    assert(file != NULL);
 
 	entry = rte_cfgfile_get_entry(file, "GLOBAL", "NUM_ADC_RULES");
 
-	if (!entry)
-		rte_panic("Invalid adc configuration file format\n");
+    assert(entry != NULL);
 
 	num_adc_rules = atoi(entry);
 
@@ -720,8 +681,7 @@ parse_adc_rules(void)
 		entry = rte_cfgfile_get_entry(file, sectionname,
 				"ADC_TYPE");
 
-		if (!entry)
-			rte_panic("Invalid ADC TYPE configuration file format\n");
+        assert(entry != NULL);
 
 		tmp_adc.sel_type = atoi(entry);
 

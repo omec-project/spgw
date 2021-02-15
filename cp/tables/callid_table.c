@@ -32,11 +32,7 @@ void create_pdn_callid_hash(void)
         };
 
 	pdn_conn_hash = rte_hash_create(&pfcp_hash_params);
-	if (!pdn_conn_hash) {
-		rte_panic("%s: hash create failed: %s (%u)\n",
-				pfcp_hash_params.name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
+    assert(pdn_conn_hash != NULL);
     return;
 }
 /**

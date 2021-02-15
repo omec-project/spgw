@@ -69,7 +69,7 @@ service_req_event_handler(void *proc, void *msg_info)
             break;
         }
         default:
-            rte_panic("wrong event");
+            assert(0); // wrong event 
     }
     return;
 }

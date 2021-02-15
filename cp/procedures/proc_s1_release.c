@@ -27,6 +27,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "pfcp_cp_interface.h"
 #include "cp_log.h"
+#include "assert.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 

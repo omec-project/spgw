@@ -132,7 +132,7 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 					context->s11_sgw_gtpc_teid,
 					si.bearer_id);
 		} else {
-			rte_panic("Incorrect provisioning of bearers");
+            assert(0);
 		}
 	}
 #endif
@@ -699,7 +699,7 @@ struct gw_info {
 //			context->eps_bearers[i] = NULL;
 //			context->bearer_bitmap &= ~(1 << i);
 //		} else {
-//			rte_panic("Incorrect provisioning of bearers");
+//          assert(0);
 //		}
 //	}
 //	--context->num_pdns;

@@ -31,11 +31,7 @@ create_gx_context_hash(void)
     };
 
     gx_context_by_sess_id_hash = rte_hash_create(&rte_hash_params);
-    if (!gx_context_by_sess_id_hash) {
-        rte_panic("%s hash create failed: %s (%u)\n.",
-                rte_hash_params.name,
-                rte_strerror(rte_errno), rte_errno);
-    }
+    assert(gx_context_by_sess_id_hash != NULL);
 }
 
 int 

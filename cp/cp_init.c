@@ -29,6 +29,7 @@
 #include "cp_test.h"
 #include "cp_timer.h"
 #include "pfcp_cp_util.h"
+#include "assert.h"
 
 /* We should move all the config inside this structure eventually
  * config is scattered all across the place as of now
@@ -62,7 +63,7 @@ init_thread_to_thread_socket(void)
 	my_sock.sock_fd_local = local_fd;
 
 	if (local_fd < 0)
-		rte_panic("Socket call error : %s", strerror(errno));
+        assert(0);
 
 	bzero(local_sockaddr.sin_zero, sizeof(local_sockaddr.sin_zero));
 	local_sockaddr.sin_family = AF_INET;
@@ -74,10 +75,7 @@ init_thread_to_thread_socket(void)
 	LOG_MSG(LOG_INIT,"init local local thread to thread socket opened ");
 
 	if (ret < 0) {
-		rte_panic("Bind error for %s:%u - %s",
-				inet_ntoa(local_sockaddr.sin_addr),
-				ntohs(local_sockaddr.sin_port),
-				strerror(errno));
+        assert(0);
 	}
     my_sock.loopback_sockaddr = local_sockaddr; 
 }

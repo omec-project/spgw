@@ -130,7 +130,7 @@ process_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx)
 
 	if (delete_bearer_rsp.context->eps_bearers[ebi_index]
 	    != delete_bearer_rsp.pdn->eps_bearers[ebi_index])
-		rte_panic("Incorrect provisioning of bearers\n");
+        assert(0);
 
 
 	if (delete_bearer_rsp.ded_bearer->eps_bearer_id

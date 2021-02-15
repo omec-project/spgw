@@ -267,9 +267,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			 * ue_context_by_imsi_hash above was not able
 			 * to be removed.
 			 */
-			rte_panic("%s - Error on "
-				"ue_context_by_imsi_hash del",
-				strerror(ret));
+            assert(0);
 		}
 		rte_free((*context));
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
@@ -365,9 +363,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			 * ue_context_by_imsi_hash above was not able
 			 * to be removed.
 			 */
-			rte_panic("%s - Error on "
-				"pdn by fteid hash del",
-				strerror(ret));
+            assert(0);
 		}
 		rte_free((*context));
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;

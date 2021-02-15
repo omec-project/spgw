@@ -37,6 +37,7 @@
 #include "cp_io_poll.h"
 #include "pfcp_cp_interface.h"
 #include "gx_interface.h"
+#include "assert.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 

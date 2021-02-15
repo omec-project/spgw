@@ -13,6 +13,7 @@
 #include "cp_config.h"
 #include "util.h"
 #include "cp_log.h"
+#include "assert.h"
 
 struct ip_table *static_addr_pool = NULL;
 
@@ -80,8 +81,7 @@ add_ipaddr_in_pool(struct ip_table *search_tree, struct in_addr host)
 		byte = (mask[i] & addr) >> shift[i];
 		if (search_tree->octet[byte] == NULL) {
 			search_tree->octet[byte] = calloc(1, sizeof(struct ip_table));
-			if (search_tree->octet[byte] == NULL)
-				rte_panic("Unable to allocate memory for octet!");
+			assert(search_tree->octet[byte] != NULL);
 		}
 		search_tree = search_tree->octet[byte];
 	}

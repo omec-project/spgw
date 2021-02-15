@@ -145,8 +145,7 @@ void init_pfcp(void)
 	pfcp_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	my_sock.sock_fd_pfcp = pfcp_fd;
 
-	if (pfcp_fd < 0)
-		rte_panic("Socket call error : %s", strerror(errno));
+    assert(pfcp_fd > 0);
 
 	bzero(pfcp_sockaddr.sin_zero,
 			sizeof(pfcp_sockaddr.sin_zero));
@@ -157,12 +156,8 @@ void init_pfcp(void)
 	ret = bind(pfcp_fd, (struct sockaddr *) &pfcp_sockaddr,
 			sizeof(struct sockaddr_in));
 
-	if (ret < 0) {
-		rte_panic("Bind error for %s:%u - %s\n",
-				inet_ntoa(pfcp_sockaddr.sin_addr),
-				ntohs(pfcp_sockaddr.sin_port),
-				strerror(errno));
-	}
+    assert(ret >= 0);
+
 	LOG_MSG(LOG_INIT,  "init_pfcp() pfcp_fd = %d :: pfcp_ip = %s : pfcp_port = %d",
 			pfcp_fd, inet_ntoa(cp_config->pfcp_ip),
 			cp_config->pfcp_port);
