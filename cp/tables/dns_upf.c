@@ -31,11 +31,7 @@ create_upf_by_ue_hash(void)
 	};
 
 	upflist_by_ue_hash = rte_hash_create(&rte_hash_params);
-	if (!upflist_by_ue_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
+    assert(upflist_by_ue_hash != NULL);
 }
 
 int

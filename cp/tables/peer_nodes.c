@@ -32,14 +32,7 @@ void echo_table_init(void)
     /* Create arp_hash for each port */
     conn_hash_params.socket_id = rte_socket_id();
     conn_hash_handle = rte_hash_create(&conn_hash_params);
-    if (!conn_hash_handle) {
-        rte_panic("%s::"
-                "\n\thash create failed::"
-                "\n\trte_strerror= %s; rte_errno= %u",
-                conn_hash_params.name,
-                rte_strerror(rte_errno),
-                rte_errno);
-    }
+    assert(conn_hash_handle != NULL);
     return;
 }
 

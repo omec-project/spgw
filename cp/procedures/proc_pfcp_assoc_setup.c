@@ -41,6 +41,7 @@
 #include "cp_io_poll.h"
 #include "pfcp_cp_interface.h"
 #include "proc_initial_attach.h"
+#include "assert.h"
 
 static int
 assoication_setup_request(upf_context_t *upf_context);
@@ -79,7 +80,7 @@ pfcp_association_event_handler(void *proc, void *msg_info)
             break;
         }
         default:
-            rte_panic("wrong event received");
+            assert(0); //wrong event received
     }
     return;
 }

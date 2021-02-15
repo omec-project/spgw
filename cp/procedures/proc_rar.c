@@ -14,6 +14,7 @@
 #include "pfcp_cp_session.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
+#include "assert.h"
 
 
 proc_context_t*
@@ -87,7 +88,7 @@ rar_req_event_handler(void *proc, void *msg_info)
             break;
         }
         default: {
-            rte_panic("wrong event"); 
+            assert(0); // wrong event 
         }
     }
 }

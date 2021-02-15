@@ -48,7 +48,7 @@ set_next_ie(gtpv2c_header_t *header, uint8_t type,
 
 	if (ntohs(header->gtpc.message_len) + length
 	    + sizeof(gtpv2c_ie) > MAX_GTPV2C_LENGTH) {
-		rte_panic("Insufficient space in UDP buffer for IE\n");
+        assert(0); // Insufficient space in UDP buffer for IE
 	}
 
 	header->gtpc.message_len = htons(
@@ -98,7 +98,7 @@ set_ie_size(gtpv2c_header_t *header, gtpv2c_ie *ie, uint16_t length)
 {
 	if (ntohs(header->gtpc.message_len) + length
 	    + sizeof(gtpv2c_ie) > MAX_GTPV2C_LENGTH) {
-		rte_panic("Insufficient space in UDP buffer for IE\n");
+        assert(0); // Insufficient space in UDP buffer for IE
 	}
 	ie->length = htons(length);
 	header->gtpc.message_len = htons(

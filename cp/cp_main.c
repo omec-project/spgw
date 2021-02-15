@@ -35,6 +35,7 @@
 #include "gx_interface.h"
 #include "cp_test.h"
 #include "cp_log.h"
+#include "assert.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -108,8 +109,7 @@ parse_arg(int argc, char **argv)
             case 'f':
                 {
                     config_update_base_folder = calloc(1, 128);
-                    if (config_update_base_folder == NULL)
-                        rte_panic("Unable to allocate memory for config_update_base_folder var!\n");
+                    assert(config_update_base_folder != NULL);
                     strcpy(config_update_base_folder, optarg);
                     break;
                 }
@@ -124,8 +124,7 @@ parse_arg(int argc, char **argv)
     /* Lets put default values if some configuration is missing */
     if (config_update_base_folder == NULL) {
         config_update_base_folder = (char *) calloc(1, 128);
-        if (config_update_base_folder == NULL)
-            rte_panic("Unable to allocate memory for config_update_base_folder!\n");
+        assert(config_update_base_folder != NULL);
         strcpy(config_update_base_folder, CP_CONFIG_FOLDER);
         native_config_folder = true;
     }
@@ -148,8 +147,7 @@ main(int argc, char **argv)
     LOG_MSG(LOG_INIT, "Starting main thread ");
 
     ret = rte_eal_init(argc, argv);
-    if (ret < 0)
-        rte_panic("Cannot init EAL\n");
+    assert(ret >= 0);
 
     parse_arg(argc - ret, argv + ret);
 
@@ -193,7 +191,7 @@ void sig_handler(int signo)
         assert(0);
     }
     else if (signo == SIGSEGV)
-        rte_panic("received SIGSEGV\n");
+        assert(0);
 }
 
 

@@ -207,7 +207,7 @@ config_cp_ip_port(cp_config_t *cp_config)
     }
 
     if (global_entries == NULL) {
-        rte_panic("Error configuring global entry of %s", STATIC_CP_FILE);
+        assert(0);
     }
 
     rte_cfgfile_section_entries(file, GLOBAL_ENTRIES, global_entries,
@@ -349,8 +349,7 @@ config_cp_ip_port(cp_config_t *cp_config)
                 LOG_MSG(LOG_INIT, "CP: REQUEST_TIMEOUT: %d",
                         cp_config->request_timeout);
             } else {
-                rte_panic("Error configuring "
-                        "CP TIMER "REQUEST_TIMEOUT" invalid entry of %s", STATIC_CP_FILE);
+                assert(0);
             }
         }else {
             /* if CP Request Timer Parameter is not present is cp.cfg */
@@ -368,8 +367,7 @@ config_cp_ip_port(cp_config_t *cp_config)
                 cp_config->request_tries = (uint8_t)atoi(global_entries[i].value);
                 LOG_MSG(LOG_INIT, "CP: REQUEST_TRIES: %d", cp_config->request_tries);
             } else {
-                rte_panic("Error configuring "
-                        "CP TIMER "REQUEST_TRIES" invalid entry of %s", STATIC_CP_FILE);
+                assert(0);
             }
 
         } else {
@@ -399,7 +397,7 @@ config_cp_ip_port(cp_config_t *cp_config)
     }
 
     if (cache_entries == NULL)
-        rte_panic("Error configuring CACHE entry of %s", STATIC_CP_FILE);
+        assert(0);
 
     rte_cfgfile_section_entries(file, CACHE_ENTRIES,
             cache_entries,
@@ -446,7 +444,7 @@ config_cp_ip_port(cp_config_t *cp_config)
     }
 
     if (app_entries == NULL)
-        rte_panic("Error configuring APP entry of %s", STATIC_CP_FILE);
+        assert(0);
 
     rte_cfgfile_section_entries(file, APP_ENTRIES,
             app_entries,
@@ -494,7 +492,7 @@ config_cp_ip_port(cp_config_t *cp_config)
     }
 
     if (ops_entries == NULL)
-        rte_panic("Error configuring OPS entry of %s", STATIC_CP_FILE);
+        assert(0);
 
     rte_cfgfile_section_entries(file, OPS_ENTRIES,
             ops_entries,
@@ -540,7 +538,7 @@ config_cp_ip_port(cp_config_t *cp_config)
                 RTE_CACHE_LINE_SIZE,
                 rte_socket_id());
         if (ip_pool_entries == NULL)
-            rte_panic("Error configuring ip pool entry of %s", STATIC_CP_FILE);
+            assert(0);
     }
 
     rte_cfgfile_section_entries(file, IP_POOL_ENTRIES,
@@ -578,8 +576,7 @@ config_cp_ip_port(cp_config_t *cp_config)
                 RTE_CACHE_LINE_SIZE,
                 rte_socket_id());
         if (static_ip_pool_entries == NULL)
-            rte_panic("Error configuring static ip"
-                    "pool entry of %s\n", STATIC_CP_FILE);
+            assert(0);
     }
 
     rte_cfgfile_section_entries(file, STATIC_IP_POOL_ENTRIES,
@@ -830,7 +827,7 @@ cpconfig_change_cbk(char *config_file, uint32_t flags)
     }
 
     if (global_entries == NULL) {
-        rte_panic("Error configuring global entry of %s", STATIC_CP_FILE);
+        assert(0);
     }
 
     rte_cfgfile_section_entries(file, GLOBAL_ENTRIES, global_entries,

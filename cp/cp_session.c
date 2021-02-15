@@ -23,6 +23,7 @@
 #include "tables/tables.h"
 #include "cp_io_poll.h"
 #include "cp_log.h"
+#include "assert.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -176,7 +177,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 			context->eps_bearers[i] = NULL;
 			context->bearer_bitmap &= ~(1 << i);
 		} else {
-			rte_panic("Incorrect provisioning of bearers\n");
+            assert(0);
 		}
 	}
 	--context->num_pdns;

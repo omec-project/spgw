@@ -31,12 +31,7 @@ create_heartbeat_hash_table(void)
 	};
 
 	heartbeat_recovery_hash = rte_hash_create(&rte_hash_params);
-	if (!heartbeat_recovery_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-				rte_strerror(rte_errno), rte_errno);
-	}
-
+    assert(heartbeat_recovery_hash != NULL);
 }
 
 int

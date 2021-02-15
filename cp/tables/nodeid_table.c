@@ -28,11 +28,7 @@ create_node_id_hash(void)
 	};
 
 	node_id_hash = rte_hash_create(&rte_hash_params);
-	if (!node_id_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-				rte_strerror(rte_errno), rte_errno);
-	}
+    assert(node_id_hash != NULL);
 
 }
 

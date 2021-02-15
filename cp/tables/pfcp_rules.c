@@ -73,39 +73,19 @@ init_pfcp_tables(void)
 	};
 
 	pfcp_cntxt_hash = rte_hash_create(&pfcp_hash_params[0]);
-	if (!pfcp_cntxt_hash) {
-		rte_panic("%s: hash create failed: %s (%u)",
-				pfcp_hash_params[0].name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
+    assert(pfcp_cntxt_hash != NULL);
 
 	rule_name_bearer_id_map_hash = rte_hash_create(&pfcp_hash_params[1]);
-	if (!rule_name_bearer_id_map_hash) {
-		rte_panic("%s: hash create failed: %s (%u)",
-				pfcp_hash_params[1].name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
+    assert(rule_name_bearer_id_map_hash != NULL);
 
 	pdr_entry_hash = rte_hash_create(&pfcp_hash_params[2]);
-	if (!pdr_entry_hash) {
-		rte_panic("%s: hash create failed: %s (%u)",
-				pfcp_hash_params[2].name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
+    assert(pdr_entry_hash != NULL);
 
 	qer_entry_hash = rte_hash_create(&pfcp_hash_params[3]);
-	if (!qer_entry_hash) {
-		rte_panic("%s: hash create failed: %s (%u)",
-				pfcp_hash_params[3].name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
+    assert(qer_entry_hash != NULL);
 
 	urr_entry_hash = rte_hash_create(&pfcp_hash_params[4]);
-	if (!urr_entry_hash) {
-		rte_panic("%s: hash create failed: %s (%u)",
-				pfcp_hash_params[4].name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
+    assert(urr_entry_hash != NULL);
 
 }
 

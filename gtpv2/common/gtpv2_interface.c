@@ -86,8 +86,7 @@ static void init_s11(void)
 	s11_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	my_sock.sock_fd_s11 = s11_fd;
 
-	if (s11_fd < 0)
-		rte_panic("Socket call error : %s", strerror(errno));
+    assert(s11_fd > 0);
 
 	bzero(s11_sockaddr.sin_zero,
 			sizeof(s11_sockaddr.sin_zero));
@@ -98,12 +97,7 @@ static void init_s11(void)
 	ret = bind(s11_fd, (struct sockaddr *) &s11_sockaddr,
 			    sizeof(struct sockaddr_in));
 
-	if (ret < 0) {
-		rte_panic("Bind error for %s:%u - %s",
-			inet_ntoa(s11_sockaddr.sin_addr),
-			ntohs(s11_sockaddr.sin_port),
-			strerror(errno));
-	}
+    assert(ret >= 0);
     my_sock.s11_sockaddr = s11_sockaddr;
 	LOG_MSG(LOG_INIT, "init_s11() s11_fd= %d :: s11_ip= %s : s11_port= %d",
 			s11_fd, inet_ntoa(cp_config->s11_ip), cp_config->s11_port);
@@ -129,8 +123,7 @@ static void init_s5s8(void)
 	s5s8_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	my_sock.sock_fd_s5s8 = s5s8_fd;
 
-	if (s5s8_fd < 0)
-		rte_panic("Socket call error : %s", strerror(errno));
+    assert(s5s8_fd > 0);
 
 	bzero(s5s8_sockaddr.sin_zero,
 			sizeof(s5s8_sockaddr.sin_zero));
@@ -141,12 +134,7 @@ static void init_s5s8(void)
 	ret = bind(s5s8_fd, (struct sockaddr *) &s5s8_sockaddr,
 			    sizeof(struct sockaddr_in));
 
-	if (ret < 0) {
-		rte_panic("Bind error for %s:%u - %s",
-			inet_ntoa(s5s8_sockaddr.sin_addr),
-			ntohs(s5s8_sockaddr.sin_port),
-			strerror(errno));
-	}
+    assert(ret >= 0);
 
     my_sock.s5s8_recv_sockaddr = s5s8_recv_sockaddr;
 
@@ -277,8 +265,7 @@ void init_gtp(void)
 		init_s11();
 		break;
 	default:
-		rte_panic("main.c::init_cp()-"
-				"Unknown spgw_cfg= %u", cp_config->cp_type);
+        assert(0); 
 		break;
 	}
 	init_gtp_msg_threads();

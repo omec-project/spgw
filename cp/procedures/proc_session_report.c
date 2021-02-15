@@ -21,6 +21,7 @@
 #include "proc_session_report.h"
 #include "pfcp_cp_interface.h"
 #include "cp_log.h"
+#include "assert.h"
 
 proc_context_t*
 alloc_session_report_proc(msg_info_t *msg)
@@ -56,7 +57,7 @@ session_report_event_handler(void *proc, void *msg_info)
             break;
         }
         default: {
-            rte_panic("wrong event");
+            assert(0); // wrong event 
         }
     }
     return;

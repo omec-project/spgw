@@ -79,6 +79,8 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
         return -1;
     }
 
+    msg->pdn_context = pdn_cntxt;
+    msg->ue_context = pdn_cntxt->context;
     msg->event = CCA_RCVD_EVNT;
     LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:%s[%u], Session Id:%s, "

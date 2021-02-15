@@ -33,11 +33,7 @@ create_ue_hash(void)
     };
 
     ue_context_by_imsi_hash = rte_hash_create(&rte_hash_imsi_params);
-    if (!ue_context_by_imsi_hash) {
-        rte_panic("%s hash create failed: %s (%u)\n.",
-                rte_hash_imsi_params.name,
-                rte_strerror(rte_errno), rte_errno);
-    }
+    assert(ue_context_by_imsi_hash != NULL);
 
     struct rte_hash_parameters rte_hash_teid_params = {
         .name = "ue_context_by_fteid_hash",
@@ -49,11 +45,7 @@ create_ue_hash(void)
     };
 
     ue_context_by_fteid_hash = rte_hash_create(&rte_hash_teid_params);
-    if (!ue_context_by_fteid_hash) {
-        rte_panic("%s hash create failed: %s (%u)\n.",
-                rte_hash_teid_params.name,
-                rte_strerror(rte_errno), rte_errno);
-    }
+    assert(ue_context_by_fteid_hash != NULL);
 
 	struct rte_hash_parameters rte_hash_seid_params = {
 		.name = "state_machine_hash",
@@ -65,11 +57,7 @@ create_ue_hash(void)
 	};
 
 	seid_session_hash = rte_hash_create(&rte_hash_seid_params);
-    if (!seid_session_hash) {
-        rte_panic("%s hash create failed: %s (%u)\n",
-                rte_hash_seid_params.name,
-                rte_strerror(rte_errno), rte_errno);
-    }
+    assert(seid_session_hash != NULL);
 }
 
 int 

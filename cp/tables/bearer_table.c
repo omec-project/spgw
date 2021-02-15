@@ -11,6 +11,7 @@
 #include "rte_lcore.h"
 #include "rte_debug.h"
 #include "rte_errno.h"
+#include "assert.h"
 
 
 struct rte_hash *bearer_by_fteid_hash;
@@ -28,11 +29,7 @@ create_bearer_hash(void)
     };
 
     bearer_by_fteid_hash = rte_hash_create(&rte_hash_params);
-    if (!bearer_by_fteid_hash) {
-        rte_panic("%s hash create failed: %s (%u)\n.",
-                rte_hash_params.name,
-                rte_strerror(rte_errno), rte_errno);
-    }
+    assert(bearer_by_fteid_hash != NULL);
 }
 
 int 

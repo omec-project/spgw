@@ -33,11 +33,7 @@ create_upf_context_hash(void)
 	};
 
 	upf_context_by_ip_hash = rte_hash_create(&rte_hash_params);
-	if (!upf_context_by_ip_hash) {
-		rte_panic("%s hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-		    rte_strerror(rte_errno), rte_errno);
-	}
+    assert(upf_context_by_ip_hash != NULL);
 }
 
 #ifdef DELETE
@@ -55,12 +51,7 @@ create_associated_upf_hash(void)
 	};
 
 	associated_upf_hash = rte_hash_create(&rte_hash_params);
-	if (!associated_upf_hash) {
-		rte_panic("%s Associated UPF hash create failed: %s (%u)\n.",
-				rte_hash_params.name,
-				rte_strerror(rte_errno), rte_errno);
-	}
-
+    assert(associated_upf_hash != NULL);
 }
 #endif
 
