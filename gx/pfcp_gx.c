@@ -519,8 +519,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 
 						for (cnt = 0; cnt < context->num_dynamic_filters; cnt++) {
 							/* VS: Allocate memory for dynamic rule */
-							context->dynamic_rules[cnt] = rte_zmalloc_socket(NULL, sizeof(dynamic_rule_t),
-							    RTE_CACHE_LINE_SIZE, rte_socket_id());
+							context->dynamic_rules[cnt] = (dynamic_rule_t *)calloc(1, sizeof(dynamic_rule_t));
 							if (context->dynamic_rules[cnt] == NULL) {
 								LOG_MSG(LOG_ERROR, "Failure to allocate dynamic rule memory "
 										"structure: %s ", rte_strerror(rte_errno));

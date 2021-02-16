@@ -532,9 +532,7 @@ create_dedicated_bearer(gtpv2c_header_t *gtpv2c_rx,
 	fqos = IE_TYPE_PTR_FROM_GTPV2C_IE(flow_qos_ie,
 	    brc->flow_quality_of_service);
 
-	ded_bearer = brc->context->ded_bearer =
-			rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
-					RTE_CACHE_LINE_SIZE, rte_socket_id());
+	ded_bearer = brc->context->ded_bearer = (eps_bearer_t *) calloc(1, sizeof(eps_bearer_t));
 	if (ded_bearer == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate dedicated bearer "
 				"structure: %s ", rte_strerror(rte_errno));

@@ -121,7 +121,7 @@ process_create_bearer_response(gtpv2c_header_t *gtpv2c_rx)
 		/* TODO: Investigate correct behavior when new bearers are
 		 * created with an ID of existing bearer
 		 */
-		rte_free(cb_rsp.context->eps_bearers[ebi_index]);
+		free(cb_rsp.context->eps_bearers[ebi_index]);
 	}
 
 	cb_rsp.context->eps_bearers[ebi_index] =

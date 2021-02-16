@@ -159,7 +159,7 @@ process_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx)
 		session_delete(dp_id, si);
 #endif
 
-		rte_free(delete_bearer_rsp.ded_bearer);
+		free(delete_bearer_rsp.ded_bearer);
 	}
 
 	return 0;

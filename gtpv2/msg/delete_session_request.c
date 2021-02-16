@@ -693,7 +693,7 @@ struct gw_info {
 //			session_delete(dp_id, si);
 //			*/
 //
-//			rte_free(pdn->eps_bearers[i]);
+//			free(pdn->eps_bearers[i]);
 //			pdn->eps_bearers[i] = NULL;
 //			context->eps_bearers[i] = NULL;
 //			context->bearer_bitmap &= ~(1 << i);
@@ -702,7 +702,7 @@ struct gw_info {
 //		}
 //	}
 //	--context->num_pdns;
-//	rte_free(pdn);
+//	free(pdn);
 //	context->pdns[ebi_index] = NULL;
 //	context->teid_bitmap = 0;
 //
@@ -849,11 +849,11 @@ struct gw_info {
 //				si.bearer_id);
 //			*seid = si.sess_id;
 //
-//			rte_free(pdn_ctxt->eps_bearers[i]);
+//			free(pdn_ctxt->eps_bearers[i]);
 //			pdn_ctxt->eps_bearers[i] = NULL;
 //			context->eps_bearers[i] = NULL;
 //			context->bearer_bitmap &= ~(1 << i);
-//			rte_free(pdn_ctxt);
+//			free(pdn_ctxt);
 //		}
 //	}
 //	--context->num_pdns;

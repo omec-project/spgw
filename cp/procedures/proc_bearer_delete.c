@@ -569,9 +569,7 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 	pdn = context->eps_bearers[ebi_index]->pdn;
 
 	/* Allocate the memory for Gx Context */
-	gx_context = rte_malloc_socket(NULL,
-			sizeof(gx_context_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	gx_context = (gx_context_t *)calloc(1, sizeof(gx_context_t));
 
 	//strncpy(gx_context->gx_sess_id, context->pdns[ebi_index]->gx_sess_id, strlen(context->pdns[ebi_index]->gx_sess_id));
 
@@ -600,10 +598,7 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 	rqst_ptr_ofs = msg_len + msg_body_ofs;
 	msg_len_total = rqst_ptr_ofs + sizeof(pdn->rqst_ptr);
 
-	//buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(uint64_t) + sizeof(raa.msg_type),
-	//		RTE_CACHE_LINE_SIZE, rte_socket_id());
-	buffer = rte_zmalloc_socket(NULL, msg_len_total,
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	buffer = (char *)calloc(1, msg_len_total);
 	if (buffer == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 				"structure: %s ", rte_strerror(rte_errno));
@@ -671,7 +666,7 @@ delete_dedicated_bearers(pdn_connection_t *pdn,
 		}
 
 		pdn->num_bearer--;
-		rte_free(pdn->eps_bearers[ebi]);
+		free(pdn->eps_bearers[ebi]);
 		pdn->eps_bearers[ebi] = NULL;
 		pdn->context->eps_bearers[ebi] = NULL;
 	}

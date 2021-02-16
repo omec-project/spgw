@@ -38,8 +38,7 @@ add_csid_entry(csid_key *key, uint16_t csid)
 				key, (void **)&tmp);
 
 	if ( ret < 0) {
-		tmp = rte_zmalloc_socket(NULL, sizeof(uint16_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+		tmp = (uint16_t *)calloc(1, sizeof(uint16_t));
 		if (tmp == NULL) {
 			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid");
 		}
@@ -155,8 +154,7 @@ get_csid_entry(csid_key *key)
 		LOG_MSG(LOG_DEBUG, "Entry not found in peer node hash table..");
 
 		/* Allocate the memory for local CSID */
-		csid = rte_zmalloc_socket(NULL, sizeof(csid_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+		csid = (csid_t *)calloc(1, sizeof(csid_t));
 		if (csid == NULL) {
 			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid");
 		}
@@ -203,7 +201,7 @@ del_csid_entry(csid_key *key)
 	ret = rte_hash_del_key(csid_by_peer_node_hash, key);
 
 	/* Free data from hash */
-	rte_free(csid);
+	free(csid);
 
 	LOG_MSG(LOG_DEBUG, "Peer node CSID entry deleted");
 
@@ -297,7 +295,7 @@ del_peer_csids_entry(uint16_t csid)
 	ret = rte_hash_del_key(peer_csids_by_csid_hash, &csid);
 
 	/* Free data from hash */
-	rte_free(tmp);
+	free(tmp);
 	tmp = NULL;
 
 	LOG_MSG(LOG_DEBUG, "Entry deleted for CSID:%u", csid);
@@ -364,8 +362,7 @@ get_sess_csid_entry(uint16_t csid)
 		LOG_MSG(LOG_DEBUG, "Entry not found for CSID: %u", csid);
 
 		/* Allocate the memory for session IDs */
-		tmp = rte_zmalloc_socket(NULL, sizeof(sess_csid),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+		tmp = (sess_csid *)calloc(1, sizeof(sess_csid));
 		if (tmp == NULL) {
 			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid");
 			return NULL;
@@ -414,7 +411,7 @@ del_sess_csid_entry(uint16_t csid)
 	ret = rte_hash_del_key(seids_by_csid_hash, &csid);
 
 	/* Free data from hash */
-	rte_free(tmp);
+	free(tmp);
 
 	LOG_MSG(LOG_DEBUG, "Sessions IDs Entry deleted for CSID:%u", csid);
 	return 0;

@@ -93,8 +93,7 @@ upflist_by_ue_hash_entry_delete(uint64_t *imsi_val, uint16_t imsi_len)
 	}
 
 	/* Free data from hash */
-	if (entry != NULL)
-		rte_free(entry);
+	free(entry);
 
 	return 0;
 }

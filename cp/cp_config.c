@@ -199,15 +199,10 @@ config_cp_ip_port(cp_config_t *cp_config)
     num_global_entries = rte_cfgfile_section_num_entries(file, GLOBAL_ENTRIES);
 
     if (num_global_entries > 0) {
-        global_entries = rte_malloc_socket(NULL,
-                sizeof(struct rte_cfgfile_entry) *
-                num_global_entries,
-                RTE_CACHE_LINE_SIZE, rte_socket_id());
+        global_entries = (struct rte_cfgfile_entry *)calloc(1, sizeof(struct rte_cfgfile_entry) * num_global_entries);
     }
 
-    if (global_entries == NULL) {
-        assert(0);
-    }
+    assert (global_entries != NULL);
 
     rte_cfgfile_section_entries(file, GLOBAL_ENTRIES, global_entries,
             num_global_entries);
@@ -379,7 +374,7 @@ config_cp_ip_port(cp_config_t *cp_config)
         }
     }
 
-    rte_free(global_entries);
+    free(global_entries);
     uint16_t app_nameserver_ip_idx = 0;
     uint16_t ops_nameserver_ip_idx = 0;
 
@@ -388,15 +383,10 @@ config_cp_ip_port(cp_config_t *cp_config)
         rte_cfgfile_section_num_entries(file, CACHE_ENTRIES);
 
     if (num_cache_entries > 0) {
-        cache_entries = rte_malloc_socket(NULL,
-                sizeof(struct rte_cfgfile_entry)
-                *num_cache_entries,
-                RTE_CACHE_LINE_SIZE,
-                rte_socket_id());
+        cache_entries = (struct rte_cfgfile_entry *)calloc(1, sizeof(struct rte_cfgfile_entry) *num_cache_entries);
     }
 
-    if (cache_entries == NULL)
-        assert(0);
+    assert (cache_entries != NULL);
 
     rte_cfgfile_section_entries(file, CACHE_ENTRIES,
             cache_entries,
@@ -428,22 +418,17 @@ config_cp_ip_port(cp_config_t *cp_config)
                 (uint32_t)atoi(cache_entries[i].value);
     }
 
-    rte_free(cache_entries);
+    free(cache_entries);
 
     /* Read app values from cfg seaction. */
     num_app_entries =
         rte_cfgfile_section_num_entries(file, APP_ENTRIES);
 
     if (num_app_entries > 0) {
-        app_entries = rte_malloc_socket(NULL,
-                sizeof(struct rte_cfgfile_entry)
-                *num_app_entries,
-                RTE_CACHE_LINE_SIZE,
-                rte_socket_id());
+        app_entries = (struct rte_cfgfile_entry *)calloc(1, sizeof(struct rte_cfgfile_entry) *num_app_entries);
     }
 
-    if (app_entries == NULL)
-        assert(0);
+    assert (app_entries != NULL);
 
     rte_cfgfile_section_entries(file, APP_ENTRIES,
             app_entries,
@@ -476,22 +461,17 @@ config_cp_ip_port(cp_config_t *cp_config)
 
     cp_config->app_dns.nameserver_cnt = app_nameserver_ip_idx;
 
-    rte_free(app_entries);
+    free(app_entries);
 
     /* Read ops values from cfg seaction. */
     num_ops_entries =
         rte_cfgfile_section_num_entries(file, OPS_ENTRIES);
 
     if (num_ops_entries > 0) {
-        ops_entries = rte_malloc_socket(NULL,
-                sizeof(struct rte_cfgfile_entry)
-                *num_ops_entries,
-                RTE_CACHE_LINE_SIZE,
-                rte_socket_id());
+        ops_entries = (struct rte_cfgfile_entry *)calloc(1, sizeof(struct rte_cfgfile_entry) *num_ops_entries);
     }
 
-    if (ops_entries == NULL)
-        assert(0);
+    assert (ops_entries != NULL);
 
     rte_cfgfile_section_entries(file, OPS_ENTRIES,
             ops_entries,
@@ -523,7 +503,7 @@ config_cp_ip_port(cp_config_t *cp_config)
 
     cp_config->ops_dns.nameserver_cnt = ops_nameserver_ip_idx;
 
-    rte_free(ops_entries);
+    free(ops_entries);
 
     /* Read IP_POOL_CONFIG seaction */
     num_ip_pool_entries = rte_cfgfile_section_num_entries
@@ -531,13 +511,8 @@ config_cp_ip_port(cp_config_t *cp_config)
 
 
     if (num_ip_pool_entries > 0) {
-        ip_pool_entries = rte_malloc_socket(NULL,
-                sizeof(struct rte_cfgfile_entry) *
-                num_ip_pool_entries,
-                RTE_CACHE_LINE_SIZE,
-                rte_socket_id());
-        if (ip_pool_entries == NULL)
-            assert(0);
+        ip_pool_entries = (struct rte_cfgfile_entry *)calloc(1, sizeof(struct rte_cfgfile_entry) * num_ip_pool_entries);
+        assert (ip_pool_entries != NULL);
     }
 
     rte_cfgfile_section_entries(file, IP_POOL_ENTRIES,
@@ -561,7 +536,7 @@ config_cp_ip_port(cp_config_t *cp_config)
         }
     }
 
-    rte_free(ip_pool_entries);
+    free(ip_pool_entries);
 
     /* Read STATIC_IP_POOL_CONFIG seaction */
     num_ip_pool_entries = rte_cfgfile_section_num_entries
@@ -569,13 +544,8 @@ config_cp_ip_port(cp_config_t *cp_config)
 
 
     if (num_ip_pool_entries > 0) {
-        static_ip_pool_entries = rte_malloc_socket(NULL,
-                sizeof(struct rte_cfgfile_entry) *
-                num_ip_pool_entries,
-                RTE_CACHE_LINE_SIZE,
-                rte_socket_id());
-        if (static_ip_pool_entries == NULL)
-            assert(0);
+        static_ip_pool_entries = (struct rte_cfgfile_entry *)calloc(1, sizeof(struct rte_cfgfile_entry) * num_ip_pool_entries);
+        assert(static_ip_pool_entries != NULL);
     }
 
     rte_cfgfile_section_entries(file, STATIC_IP_POOL_ENTRIES,
@@ -587,7 +557,7 @@ config_cp_ip_port(cp_config_t *cp_config)
     for (i = 0; i < num_ip_pool_entries; ++i) {
         LOG_MSG(LOG_INIT, "CP: [%s] = %s",
                 static_ip_pool_entries[i].name,
-                ip_pool_entries[i].value);
+                static_ip_pool_entries[i].value);
         if (strncmp(IP_POOL_IP,
                     static_ip_pool_entries[i].name,
                     strlen(IP_POOL_IP)) == 0) {
@@ -608,7 +578,7 @@ config_cp_ip_port(cp_config_t *cp_config)
         }
     }
 
-    rte_free(static_ip_pool_entries);
+    free(static_ip_pool_entries);
     return;
 }
 
@@ -819,15 +789,10 @@ cpconfig_change_cbk(char *config_file, uint32_t flags)
     num_global_entries = rte_cfgfile_section_num_entries(file, GLOBAL_ENTRIES);
 
     if (num_global_entries > 0) {
-        global_entries = rte_malloc_socket(NULL,
-                sizeof(struct rte_cfgfile_entry) *
-                num_global_entries,
-                RTE_CACHE_LINE_SIZE, rte_socket_id());
+        global_entries = (struct rte_cfgfile_entry *)calloc(1, sizeof(struct rte_cfgfile_entry) * num_global_entries);
     }
 
-    if (global_entries == NULL) {
-        assert(0);
-    }
+    assert (global_entries != NULL);
 
     rte_cfgfile_section_entries(file, GLOBAL_ENTRIES, global_entries,
             num_global_entries);
@@ -840,7 +805,7 @@ cpconfig_change_cbk(char *config_file, uint32_t flags)
             break;
         }
     }
-    rte_free(global_entries);
+    free(global_entries);
     return;
 }
 

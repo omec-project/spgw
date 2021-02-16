@@ -110,23 +110,23 @@ int epc_sponsdn_create(uint32_t max_dn)
 	unsigned i;
 
 	max_host_names = max_dn;
-	host_names = rte_zmalloc("dns", sizeof(host_names[0])*max_dn, 0);
+	host_names = calloc("dns", sizeof(host_names[0])*max_dn, 0);
 	if (!host_names)
 		goto err;
 
-	host_name_tbl = rte_zmalloc("dns name table", sizeof(char *)*max_dn, 0);
+	host_name_tbl = (char *)calloc("dns name table", sizeof(char *)*max_dn, 0);
 	if (!host_name_tbl)
 		goto err;
 
-	host_ids = rte_zmalloc("host_ids", sizeof(host_ids[0])*max_dn, 0);
+	host_ids = (unsigned *)calloc("host_ids", sizeof(host_ids[0])*max_dn, 0);
 	if (!host_ids)
 		goto err;
 
-	rule_ids = rte_zmalloc("rule_ids", sizeof(rule_ids[0])*max_dn, 0);
+	rule_ids = (unsigned *)calloc("rule_ids", sizeof(rule_ids[0])*max_dn, 0);
 	if (!rule_ids)
 		goto err;
 
-	flags = rte_zmalloc("flags", sizeof(flags[0])*max_dn, 0);
+	flags = (unsigned *)calloc("flags", sizeof(flags[0])*max_dn, 0);
 	if (!flags)
 		goto err;
 
@@ -140,13 +140,13 @@ int epc_sponsdn_create(uint32_t max_dn)
 
 err:
 	if (host_names)
-		rte_free(host_names);
+		free(host_names);
 	if (host_name_tbl)
-		rte_free(host_name_tbl);
+		free(host_name_tbl);
 	if (host_ids)
-		rte_free(host_ids);
+		free(host_ids);
 	if (flags)
-		rte_free(flags);
+		free(flags);
 
 	host_names = NULL;
 	host_name_tbl = NULL;
@@ -158,10 +158,10 @@ err:
 void epc_sponsdn_free(void)
 {
 	if (host_names) {
-		rte_free(host_names);
-		rte_free(host_ids);
-		rte_free(rule_ids);
-		rte_free(host_name_tbl);
+		free(host_names);
+		free(host_ids);
+		free(rule_ids);
+		free(host_name_tbl);
 		host_name_tbl = NULL;
 		host_names = NULL;
 		host_ids = NULL;

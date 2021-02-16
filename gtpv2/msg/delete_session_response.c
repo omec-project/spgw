@@ -112,7 +112,7 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *dsr, uint8_t *gtpv2c_t
 			strerror(ret));
 	}
 
-	rte_free(context);
+	free(context);
 	return 0;
 }
 
@@ -239,7 +239,7 @@ process_ds_resp_handler(void *data, void *unused_param)
 //	}
 //
 //	/* Delete UE context entry from UE Hash */
-//	/*rte_free(context);*/
+//	/*free(context);*/
 //	return 0;
 //}
 #endif

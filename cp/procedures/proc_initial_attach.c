@@ -429,13 +429,10 @@ process_create_sess_req(create_sess_req_t *csr,
 	fqcsid_t *tmp = NULL;
 
 	/* Allocate the memory for each session */
-	context->mme_fqcsid = rte_zmalloc_socket(NULL, sizeof(fqcsid_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
-	context->sgw_fqcsid = rte_zmalloc_socket(NULL, sizeof(fqcsid_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	context->mme_fqcsid = (fqcsid_t *)calloc(1, sizeof(fqcsid_t));
+	context->sgw_fqcsid = (fqcsid_t *)calloc(1, sizeof(fqcsid_t));
 	if (cp_config->cp_type != SAEGWC) {
-		context->pgw_fqcsid = rte_zmalloc_socket(NULL, sizeof(fqcsid_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+		context->pgw_fqcsid = (fqcsid_t *)calloc(1, sizeof(fqcsid_t));
 		if (context->pgw_fqcsid == NULL) {
 			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for fqcsids entry");
 			return -1;
@@ -1518,9 +1515,7 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 #ifdef TEMP
 	/* VS: Allocate the memory for response
 	 */
-	resp = rte_malloc_socket(NULL,
-					sizeof(struct x resp_info),
-					RTE_CACHE_LINE_SIZE, rte_socket_id());
+	resp = calloc(1, sizeof(struct x resp_info));
 
 	/* Set create session response */
 	resp->eps_bearer_id = *create_s5s8_session_request.bearer_context_to_be_created_ebi;
@@ -1860,9 +1855,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 
 	/** Allocate the memory for Gx Context
 	 */
-	gx_context = rte_malloc_socket(NULL,
-					sizeof(gx_context_t),
-					RTE_CACHE_LINE_SIZE, rte_socket_id());
+	gx_context = (gx_context_t *)calloc(1, sizeof(gx_context_t));
 
     context->gx_context = gx_context;
     gx_context->proc_context = proc_context;
@@ -1907,9 +1900,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 		uint8_t idx = 0;
 		ccr_request.data.ccr.presence.subscription_id = PRESENT;
 		ccr_request.data.ccr.subscription_id.count = 1; // IMSI & MSISDN
-		ccr_request.data.ccr.subscription_id.list  = rte_malloc_socket(NULL,
-				(sizeof(GxSubscriptionId)*1),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+		ccr_request.data.ccr.subscription_id.list  = (GxSubscriptionId *)calloc(1, sizeof(GxSubscriptionId)*1);
 
 		/* Fill IMSI */
 		if(csr->imsi.header.len != 0)
@@ -1985,8 +1976,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
-	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type)+sizeof(ccr_request.seq_num),
-	    RTE_CACHE_LINE_SIZE, rte_socket_id());
+	buffer = (char *)calloc(1, msg_len + sizeof(ccr_request.msg_type)+sizeof(ccr_request.seq_num));
 	if (buffer == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 				"structure: %s ", rte_strerror(rte_errno));

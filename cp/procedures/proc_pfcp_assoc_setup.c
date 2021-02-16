@@ -108,9 +108,7 @@ buffer_csr_request(proc_context_t *proc_context)
 {
     ue_context_t *ue = proc_context->ue_context;
     upf_context_t *upf_context = ue->upf_context;
-	pending_proc_key_t *key =
-					rte_zmalloc_socket(NULL, sizeof(pending_proc_key_t),
-						RTE_CACHE_LINE_SIZE, rte_socket_id());
+	pending_proc_key_t *key = (pending_proc_key_t*) calloc(1, sizeof(pending_proc_key_t));
 	key->proc_context = (void *)proc_context;
     LIST_INSERT_HEAD(&upf_context->pending_sub_procs, key, procentries);
 	return 0;
@@ -341,12 +339,12 @@ upf_pfcp_setup_failure(void *data, uint16_t event)
         msg->proc_context = key->proc_context; 
         SET_PROC_MSG(proc, msg);
         proc->handler(proc, msg);
-        rte_free(key);
+        free(key);
         key = LIST_FIRST(&upf_context->pending_sub_procs);
     }
     LOG_MSG(LOG_ERROR, "Deleting UPF context %s, event = %d ",inet_ntoa(upf_context->upf_sockaddr.sin_addr), event);
     upf_context_delete_entry(upf_context->upf_sockaddr.sin_addr.s_addr);
-    rte_free(upf_context);
+    free(upf_context);
 }
 
 
@@ -371,7 +369,7 @@ void upf_pfcp_setup_success(void *data, uint16_t event)
             process_pfcp_sess_est_request(csreq_proc, upf_context);
         }
 
-        rte_free(key);
+        free(key);
         key = LIST_FIRST(&upf_context->pending_sub_procs);
     }
 	return ;

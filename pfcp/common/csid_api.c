@@ -467,7 +467,7 @@ del_csid_entry_hash(fqcsid_t *peer_csids,
 		}
 		/* Reset the seid counters */
 		//peer_csids->num_csid = 0;
-		//rte_free(peer_csids);
+		//free(peer_csids);
 		//peer_csids = NULL;
 	}
 

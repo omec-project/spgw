@@ -124,7 +124,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
 
     for(int8_t idx = 0; idx < MAX_BEARERS; idx++) {
         if(context->eps_bearers[idx] != NULL){
-            rte_free(pdn->eps_bearers[idx]);
+            free(pdn->eps_bearers[idx]);
             pdn->eps_bearers[idx] = NULL;
             context->eps_bearers[idx] = NULL;
             if(pdn->num_bearer != 0) {
@@ -149,7 +149,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
         if(pdn->s5s8_sgw_gtpc_teid != 0) {
             bearer_context_delete_entry_teidKey(pdn->s5s8_sgw_gtpc_teid);
         }
-        rte_free(pdn);
+        free(pdn);
         context->num_pdns --;
     }
 
@@ -164,7 +164,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
           LIST_FOREACH(key, &upf_context->pending_sub_procs, procentries) {
               if(key != NULL && (key->proc_context == (void *)proc) ) {
                   LIST_REMOVE(key, procentries);
-                  rte_free(key);
+                  free(key);
                   break;
               }
           }
@@ -187,7 +187,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
     if (context->num_pdns == 0) {
         ue_context_delete_entry_imsiKey((*context).imsi);
         ue_context_delete_entry_teidKey(teid);
-        rte_free(context);
+        free(context);
         context = NULL;
     }
     return 0;
@@ -215,10 +215,10 @@ process_error_occured_handler(void *data, void *unused_param)
                 key = LIST_FIRST(&upf_ctx->pending_sub_procs);
                 while (key != NULL) {
                     LIST_REMOVE(key, procentries);
-                    rte_free(key);
+                    free(key);
                     key = LIST_FIRST(&upf_ctx->pending_sub_procs);
                 }
-                rte_free(upf_ctx);
+                free(upf_ctx);
                 upf_ctx = NULL;
             }
         }
@@ -227,7 +227,7 @@ process_error_occured_handler(void *data, void *unused_param)
 
         for(int8_t idx = 0; idx < MAX_BEARERS; idx++) {
             if(context->eps_bearers[idx] != NULL){
-                rte_free(pdn->eps_bearers[idx]);
+                free(pdn->eps_bearers[idx]);
                 pdn->eps_bearers[idx] = NULL;
                 context->eps_bearers[idx] = NULL;
                 if(pdn->num_bearer != 0) {
@@ -241,14 +241,14 @@ process_error_occured_handler(void *data, void *unused_param)
             if(pdn->s5s8_sgw_gtpc_teid != 0) {
                 bearer_context_delete_entry_teidKey(pdn->s5s8_sgw_gtpc_teid);
             }
-            rte_free(pdn);
+            free(pdn);
             context->num_pdns --;
         }
 
         if (context->num_pdns == 0) {
             ue_context_delete_entry_imsiKey((*context).imsi);
             ue_context_delete_entry_teidKey(teid);
-            rte_free(context);
+            free(context);
             context = NULL;
         }
     }
@@ -316,7 +316,7 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 							}else {
 								ue_context_delete_entry_imsiKey(imsi);
 								ue_context_delete_entry_teidKey(teid);
-								rte_free(context);
+								free(context);
 								context = NULL;
 							}
 						}
@@ -328,13 +328,13 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
                                             LIST_FOREACH(key, &upf_context->pending_sub_procs, procentries) {
 												if(key != NULL && key->teid == context->s11_sgw_gtpc_teid ) {
                                                     LIST_REMOVE(key, procentries);
-                                                    rte_free(key);
+                                                    free(key);
                                                     break;
                                                 }
                                             }
                                             if(LIST_EMPTY(&upf_context->pending_sub_procs)) {
 									        	ret = upf_context_delete_entry(&pdn->upf_ipv4.s_addr);
-												rte_free(upf_context);
+												free(upf_context);
 												upf_context  = NULL;
                                             }
 										}
@@ -346,7 +346,7 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 								return -1;
 							ret = ue_context_delete_entry_teidKey(teid);
 							if (context != NULL)
-								rte_free(context);
+								free(context);
 							context = NULL;
 						}
 					}
@@ -368,7 +368,7 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 
 		ue_context_delete_entry_imsiKey(imsi);
 		ue_context_delete_entry_teidKey(teid); // TODO - teid should be taken from context 
-		rte_free(context);
+		free(context);
 		context = NULL;
 	}
 	return 0;
