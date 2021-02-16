@@ -31,8 +31,6 @@ int handle_delete_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_r
 	stop_transaction_timer(gtpc_trans);
 
 
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
 	gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
 
 	if (msg->gtpc_msg.db_rsp.lbi.header.len) {
@@ -82,8 +80,7 @@ process_delete_bearer_resp_handler(void *data, void *unused_param)
 		process_delete_bearer_resp(&msg->gtpc_msg.db_rsp , 0);
 	}
 
-	RTE_SET_USED(data);
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p, data = %p ", unused_param, data);
 
 	return 0;
 }
@@ -91,7 +88,7 @@ process_delete_bearer_resp_handler(void *data, void *unused_param)
 void 
 process_delete_bearer_resp_pfcp_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p ", data);
     return;
 }
 
@@ -106,11 +103,11 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 	uint8_t default_bearer_id = 0;
 	eps_bearer_t *bearers[MAX_BEARERS];
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
-    RTE_SET_USED(is_del_bearer_cmd);
 
 	ret = get_ue_context(db_rsp->header.teid.has_teid.teid, &context);
 	if (ret) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+        LOG_MSG(LOG_NEVER, "is_del_bearer_cmd = %d", is_del_bearer_cmd);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 

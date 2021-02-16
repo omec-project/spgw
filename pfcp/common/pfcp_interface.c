@@ -39,11 +39,9 @@ int
 handle_unknown_pfcp_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 {
     msg_info_t *msg = *msg_p;
-    RTE_SET_USED(msg);
-    LOG_MSG(LOG_ERROR, "process_msgs-"
-            "\tcase: spgw_cfg= %d;"
+    LOG_MSG(LOG_ERROR, "process_msgs- case: spgw_cfg= %d;"
             "\tReceived unprocessed PFCP Message_Type:%u"
-            "... Discarding\n", cp_config->cp_type, pfcp_rx->message_type);
+            "... Discarding msg %p ", cp_config->cp_type, pfcp_rx->message_type, msg);
 
     return -1;
 }
@@ -103,15 +101,13 @@ out_handler_pfcp(void *data)
 
             int bytes_tx = sendto(event->fd, event->payload, event->payload_len, 0,
                     (struct sockaddr *) &event->dest_addr, sizeof(struct sockaddr_in));
-            LOG_MSG(LOG_DEBUG, "pfcp_send() on fd= %d", event->fd);
-            RTE_SET_USED(bytes_tx);
+            LOG_MSG(LOG_DEBUG, "pfcp_send() on fd= %d bytes_tx = %d ", event->fd, bytes_tx);
             continue;
         }
         //PERFORAMANCE ISSUE - use conditional variable 
         usleep(10);
     }
-	LOG_MSG(LOG_INIT,"Exiting : pfcp out message handler thread");
-    RTE_SET_USED(data);
+	LOG_MSG(LOG_INIT,"Exiting : pfcp out message handler thread data = %p ", data);
     return NULL;
 }
 

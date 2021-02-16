@@ -84,10 +84,8 @@ alloc_sgw_relocation_proc(msg_info_t *msg)
 void 
 sgw_relocation_event_handler(void *proc, void *msg_info)
 {
-    proc_context_t *proc_context = (proc_context_t *)proc;
     msg_info_t *msg = (msg_info_t *) msg_info;
     uint8_t event = msg->event;
-    RTE_SET_USED(proc_context);
 
     LOG_MSG(LOG_DEBUG4, "Received event %d",event);
     switch(event) {
@@ -108,6 +106,7 @@ sgw_relocation_event_handler(void *proc, void *msg_info)
             break;
         }
         default: {
+            LOG_MSG(LOG_NEVER, "proc = %p", proc);
             assert(0); // unknown event 
         }
     }
@@ -164,8 +163,8 @@ process_sess_est_resp_sgw_reloc_handler(void *data, void *unused_param)
 #endif
 	}
 
-	RTE_SET_USED(data);
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "data = %p", data);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	return 0;
 }
 
@@ -184,8 +183,8 @@ process_mb_req_sgw_reloc_handler(void *data, void *unused_param)
 		return ret;
 	}
 
-	RTE_SET_USED(data);
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "data = %p", data);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	return 0;
 }
 
@@ -367,8 +366,8 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 #endif
 	}
 
-	RTE_SET_USED(data);
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "data = %p", data);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	return 0;
 }
 
@@ -505,8 +504,7 @@ int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 #endif
 	increment_stat(NUM_UE_SGW_ACTIVE_SUBSCRIBERS);
 
-	RTE_SET_USED(data);
-	RTE_SET_USED(rx_buf);
+    LOG_MSG(LOG_NEVER, "data = %p and rx_buf = %p ", data, rx_buf);
 
 	return 0;
 }
@@ -1046,7 +1044,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 void 
 send_pfcp_sess_mod_req_handover_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p", data);
     return;
 }
 

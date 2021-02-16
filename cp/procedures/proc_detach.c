@@ -308,21 +308,20 @@ proc_detach_failure(proc_context_t *proc_context, msg_info_t *msg, uint8_t cause
 void 
 proc_detach_complete(proc_context_t *proc_context, msg_info_t *msg)
 {
-    RTE_SET_USED(msg);
     end_procedure(proc_context);
+    LOG_MSG(LOG_NEVER, "msg = %p", msg);
     return;
 }
 
 void process_spgwc_delete_session_request_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p", data);
     return;
 }
 
 int
 process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *msg)
 {
-    RTE_SET_USED(proc_context);
 	ue_context_t *context = msg->ue_context;
 	pdn_connection_t *pdn =  msg->pdn_context;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
@@ -365,6 +364,7 @@ process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *ms
 	resp->proc = pdn->proc;
 #endif
 
+    LOG_MSG(LOG_NEVER, "Proc context = %p ", proc_context);
 	return 0;
 }
 
@@ -375,7 +375,6 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
                            uint16_t *msglen,
                            proc_context_t *proc_context )
 {
-    RTE_SET_USED(sess_id);
 	int ret = 0;
 	uint8_t ebi_index = 0;
 	uint16_t msg_len = 0;
@@ -449,6 +448,7 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 
         gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
     }
+    LOG_MSG(LOG_NEVER, " sess_id = %lu ", sess_id);
 	return 0;
 }
 
@@ -456,18 +456,15 @@ void
 fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		gtpv2c_header_t *header, ue_context_t *context, pdn_connection_t *pdn)
 {
-    RTE_SET_USED(header);
 	uint32_t seq = 0;
 	upf_context_t *upf_ctx = NULL;
 	pdr_t *pdr_ctxt = NULL;
 	int ret = 0;
 	eps_bearer_t *bearer;
 
-	RTE_SET_USED(context);  /* NK:to be checked */
-
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 					&upf_ctx)) < 0) {
-		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+		LOG_MSG(LOG_ERROR, "Error: %d , ue_context = %p ", ret, context);
 		return;
 	}
 
@@ -525,4 +522,5 @@ fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 			!pfcp_sess_mod_req->pfcpsmreq_flags.drobu){
 		pfcp_sess_mod_req->pfcpsmreq_flags.header.len = 0;
 	}
+    LOG_MSG(LOG_NEVER, "header = %p", header);
 }

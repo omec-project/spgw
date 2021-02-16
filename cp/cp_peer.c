@@ -66,7 +66,6 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 
 void handle_timeout(void *data, uint16_t event)
 {
-    RTE_SET_USED(event);
     peerData_t *md = NULL;
 	uint16_t payload_length;
     struct peer_data *temp = (struct peer_data *)data;
@@ -76,7 +75,7 @@ void handle_timeout(void *data, uint16_t event)
     get_peer_entry(dest_addr.sin_addr.s_addr, &md);
 
     if(md == NULL) {
-        LOG_MSG(LOG_ERROR,"Peer (%s) not found ", inet_ntoa(dest_addr.sin_addr));
+        LOG_MSG(LOG_ERROR,"Peer (%s) not found. event %d ", inet_ntoa(dest_addr.sin_addr), event);
         return;
     }
 	LOG_MSG(LOG_DEBUG, "%s - %s:%s:%u.%s (%dms) has expired", getPrintableTime(),

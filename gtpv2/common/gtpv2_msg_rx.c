@@ -39,9 +39,9 @@ void*
 msg_handler_gtp(void *data)
 {
     LOG_MSG(LOG_INIT,"Starting gtp message handler thread ");
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p", data);
     while(1) {
-        int ret = 0, bytes_rx = 0;
+        int bytes_rx = 0;
         struct sockaddr_in peer_sockaddr = {0};
         socklen_t peer_sockaddr_len = sizeof(peer_sockaddr);
 
@@ -70,7 +70,6 @@ msg_handler_gtp(void *data)
         }
 
         if ((unsigned)bytes_rx != (ntohs(gtpv2c_rx->gtpc.message_len) + sizeof(gtpv2c_rx->gtpc))) {
-            ret = GTPV2C_CAUSE_INVALID_LENGTH;
             /* According to 29.274 7.7.7, if message is request,
              * reply with cause = GTPV2C_CAUSE_INVALID_LENGTH
              *  should be sent - ignoring packet for now
@@ -82,7 +81,6 @@ msg_handler_gtp(void *data)
                     sizeof(gtpv2c_rx->gtpc),
                     ntohs(gtpv2c_rx->gtpc.message_len)
                     + sizeof(gtpv2c_rx->gtpc));
-            RTE_SET_USED(ret);
             continue; 
         }
         msg_info_t *msg = calloc(1, sizeof(msg_info_t));

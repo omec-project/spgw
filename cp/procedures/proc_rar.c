@@ -73,8 +73,6 @@ done_rar_child_proc(void *child_proc)
 void
 rar_req_event_handler(void *proc, void *msg_info)
 {
-    proc_context_t *proc_context = (proc_context_t *)proc;
-    RTE_SET_USED(proc_context);
     msg_info_t *msg = (msg_info_t *)msg_info;
     uint8_t event = msg->event;
     switch(event) {
@@ -91,16 +89,17 @@ rar_req_event_handler(void *proc, void *msg_info)
             assert(0); // wrong event 
         }
     }
+    LOG_MSG(LOG_NEVER, "proc = %p", proc);
 }
 
 void
 proc_rar_failed(msg_info_t *msg, uint8_t cause )
 {
-    RTE_SET_USED(cause);
     proc_context_t *proc_context = (proc_context_t *)msg->proc_context;
     proc_context->result = PROC_RESULT_FAILURE;
     increment_stat(PROCEDURES_SPGW_RAR_PROC_FAILURE);
     proc_rar_complete(proc_context);
+    LOG_MSG(LOG_NEVER, "RAR failed with cause = %d ", cause);
 }
 
 void 

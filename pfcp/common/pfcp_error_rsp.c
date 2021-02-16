@@ -16,6 +16,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_interface.h"
+#include "cp_log.h"
 
 extern uint8_t pfcp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -60,7 +61,6 @@ get_error_session_report_info(msg_info_t *msg, pfcp_err_rsp_info_t *rsp_info)
 void 
 session_report_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 {
-    RTE_SET_USED(iface);
 	pfcp_err_rsp_info_t rsp_info = {0};
     pfcp_sess_rpt_rsp_t pfcp_sess_rep_resp = {0};
 	uint16_t encoded = 0;
@@ -82,5 +82,6 @@ session_report_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 	pfcp_hdr->message_len = htons(encoded - 4);
 	pfcp_send(my_sock.sock_fd_pfcp, pfcp_tx_buf, encoded, &rsp_info.peer_addr);
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSREPORTRSP_REJ, rsp_info.peer_addr.sin_addr.s_addr);
+    LOG_MSG(LOG_NEVER, "interface = %d ", iface);
     return;
 }

@@ -34,7 +34,6 @@ uint8_t pfcp_rx[1024]; /* TODO: Decide size */
 void*
 msg_handler_pfcp(void *data)
 {
-    RTE_SET_USED(data);
     LOG_MSG(LOG_INIT,"Starting pfcp message handler thread ");
     while (1) {
         socklen_t addr_len = sizeof(struct sockaddr_in);
@@ -63,6 +62,6 @@ msg_handler_pfcp(void *data)
 			queue_stack_unwind_event(PFCP_MSG_RECEIVED, (void *)msg, process_pfcp_msg);
 		}
     }
-    LOG_MSG(LOG_ERROR,"exiting pfcp message handler thread ");
+    LOG_MSG(LOG_ERROR,"exiting pfcp message handler thread data = %p ", data);
 	return NULL;
 }

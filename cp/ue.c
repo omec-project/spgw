@@ -177,8 +177,6 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		uint8_t ebi, ue_context_t **context, apn_profile_t *apn_requested,
 	  	uint32_t sequence)
 {
-    RTE_SET_USED(apn_requested);
-    RTE_SET_USED(sequence);
 	int ret;
 	int i;
 	uint8_t ebi_index;
@@ -369,6 +367,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
 	}
 	pdn->apn_in_use = apn_requested;
+    LOG_MSG(LOG_NEVER, "sequence = %u ", sequence);
 
 	return 0;
 }
@@ -377,7 +376,6 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 void
 start_procedure(proc_context_t *new_proc_ctxt, msg_info_t *msg)
 {
-    RTE_SET_USED(msg);
     ue_context_t *context = NULL;
     context = (ue_context_t *)new_proc_ctxt->ue_context;
 
@@ -413,6 +411,7 @@ start_procedure(proc_context_t *new_proc_ctxt, msg_info_t *msg)
         }
     }
     start_procedure_direct(new_proc_ctxt);
+    LOG_MSG(LOG_NEVER, "msg = %p ", msg);
     return;
 }
 

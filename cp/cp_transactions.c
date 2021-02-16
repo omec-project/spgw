@@ -105,7 +105,6 @@ bool is_transaction_timer_started(transData_t *data)
 void
 pfcp_node_transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
 {
-    RTE_SET_USED(ti);
 
 #pragma GCC diagnostic push  /* require GCC 4.6 */
 #pragma GCC diagnostic ignored "-Wcast-qual"
@@ -124,13 +123,13 @@ pfcp_node_transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
     upf_context_t *upf_ctxt = (upf_context_t *)(data->cb_data);
     pfcp_timer_retry_send(my_sock.sock_fd_pfcp, data, &upf_ctxt->upf_sockaddr);
     data->itr_cnt++;
+    LOG_MSG(LOG_NEVER, " timeinfo %p ", ti);
     return;
 }
 
 void
 transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
 {
-    RTE_SET_USED(ti);
 
 #pragma GCC diagnostic push  /* require GCC 4.6 */
 #pragma GCC diagnostic ignored "-Wcast-qual"
@@ -142,6 +141,7 @@ transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
         data->rt.ti_id = 0;
     }
     data->timeout_function(data->cb_data);
+    LOG_MSG(LOG_NEVER, " timeinfo %p ", ti);
     return;
 }
 

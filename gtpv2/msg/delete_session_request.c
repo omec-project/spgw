@@ -303,7 +303,6 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 #ifdef FUTURE_NEED
 void process_pgwc_s5s8_delete_session_request_pfcp_timeout(void *data)
 {
-    RTE_SET_USED(data);
     return;
 }
 
@@ -360,7 +359,7 @@ process_pgwc_s5s8_delete_session_request(del_sess_req_t *ds_req)
 
 void process_sgwc_s5s8_delete_session_request_pfcp_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p ", data);
     return;
 }
 

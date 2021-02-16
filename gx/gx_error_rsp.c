@@ -84,11 +84,10 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 				if(remove_gx_context((uint8_t*)pdn->gx_sess_id) < 0){
 					LOG_MSG(LOG_ERROR, " %s - Error on gx_context_by_sess_id_hash deletion", strerror(ret));
 				}
-				RTE_SET_USED(msg);
 				rte_free(gx_context);
 			}
 		}else {
-			LOG_MSG(LOG_ERROR, "NO ENTRY FOUND FOR EBI VALUE [%d]", ebi);
+			LOG_MSG(LOG_ERROR, "NO ENTRY FOUND FOR EBI VALUE [%d], msg = %p ", ebi, msg);
 			return;
 		}
 	}

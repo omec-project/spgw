@@ -68,11 +68,11 @@ void
 proc_session_report_failure(msg_info_t *msg, uint8_t cause)
 {
     proc_context_t *proc_context = msg->proc_context;
-    RTE_SET_USED(cause);
 
     // send PFCP session report response with cause 
 
     proc_session_report_complete(proc_context);
+    LOG_MSG(LOG_NEVER, "session report failed cause = %d ", cause);
     return;
 }
 

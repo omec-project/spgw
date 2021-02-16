@@ -141,7 +141,6 @@ int cca_u_msg_handler_handover(void *data, void *unused)
 	uint32_t call_id = 0;
 	pdn_connection_t *pdn = NULL;
 	uint8_t ebi_index = 0;
-	eps_bearer_t *bearer = NULL;
 
 	/* Extract the call id from session id */
 	ret = retrieve_call_id((char *)&msg->gx_msg.cca.session_id.val, &call_id);
@@ -160,11 +159,6 @@ int cca_u_msg_handler_handover(void *data, void *unused)
 	      return -1;
 	}
 
-#ifdef TEMP
-    proc_context_t *proc_context = pdn->context->current_proc;
-    RTE_SET_USED(proc_context);
-#endif
-
 	ebi_index = pdn->default_bearer_id - 5; 
 
 	if (!(pdn->context->bearer_bitmap & (1 << ebi_index))) {
@@ -174,21 +168,17 @@ int cca_u_msg_handler_handover(void *data, void *unused)
 		return -EPERM;
 	}
 
-	bearer = pdn->eps_bearers[ebi_index];
 
 #ifdef FUTURE_NEED
+	eps_bearer_t *bearer = NULL;
+	bearer = pdn->eps_bearers[ebi_index];
 	ret = send_pfcp_sess_mod_req_handover(pdn, bearer, &resp->gtpc_msg.mbr);
 	 if (ret) {
 	        LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 	         return ret;
 	}
 #endif
-    RTE_SET_USED(ret);
-    RTE_SET_USED(bearer);
-    RTE_SET_USED(pdn);
-	RTE_SET_USED(data);
-	RTE_SET_USED(unused);
-
+    LOG_MSG(LOG_NEVER, "unused = %p ", unused);
 	return 0;
 }
 

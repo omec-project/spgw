@@ -14,7 +14,7 @@
 extern "C" { 
 #endif 
 enum {
-	LOG_NEVER=0,
+	LOG_ALL=0,
 	LOG_INIT,
 	LOG_ERROR,
 	LOG_WARN,
@@ -25,10 +25,11 @@ enum {
     LOG_DEBUG3, // Session/Pdn/Bearer Creation/deletion
     LOG_DEBUG4, // FSM transitions for subscriber 
     LOG_DEBUG5, // table related operations
-	LOG_DEBUG
+	LOG_DEBUG,
+    LOG_NEVER // Dont print this log 
 };
 
-static const char *log_level_name[] = { "NEVER", "INIT", "ERROR", "WARN", "INFO", "DEBUG0", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4", "DEBUG5", "DEBUG"};
+static const char *log_level_name[] = { "ALL", "INIT", "ERROR", "WARN", "INFO", "DEBUG0", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4", "DEBUG5", "DEBUG", "NEVER"};
 
 extern uint8_t logging_level;
 
@@ -63,6 +64,7 @@ static inline void set_logging_level(const char *level) {
 		// default level
 		logging_level = LOG_ERROR;
 	}
+    LOG_MSG(LOG_INIT, "Logging level set to %s", log_level_name[logging_level]);
 	return;
 }
 

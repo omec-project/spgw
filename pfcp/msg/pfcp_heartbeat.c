@@ -41,12 +41,11 @@ process_heartbeat_request(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 	int decoded = 0;
 	uint8_t pfcp_msg[1024]= {0};
 
-	RTE_SET_USED(decoded);
-
 	memset(pfcp_msg, 0, 1024);
 	pfcp_hrtbeat_req_t *pfcp_heartbeat_req = malloc(sizeof(pfcp_hrtbeat_req_t));
 	pfcp_hrtbeat_rsp_t  pfcp_heartbeat_resp = {0};
 	decoded = decode_pfcp_hrtbeat_req_t(buf_rx, pfcp_heartbeat_req);
+    LOG_MSG(LOG_NEVER, "decoded = %d ", decoded);
 	fill_pfcp_heartbeat_resp(&pfcp_heartbeat_resp);
 	pfcp_heartbeat_resp.header.seid_seqno.no_seid.seq_no = pfcp_heartbeat_req->header.seid_seqno.no_seid.seq_no;
 

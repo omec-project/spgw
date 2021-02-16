@@ -97,7 +97,6 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
 int
 process_error_occured_handler_new(void *data, void *unused_param)
 {
-    int ret = 0;
     msg_info_t *msg = (msg_info_t *)data;
     err_rsp_info info_resp = {0};
     ue_context_t *context;
@@ -114,8 +113,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
                 msg->proc, msg->state,msg->event,
                 gtp_type_str(msg->msg_type));
 
-        RTE_SET_USED(unused_param);
-        RTE_SET_USED(ret);
+        LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
         return -1;
     }
 
@@ -199,7 +197,6 @@ process_error_occured_handler_new(void *data, void *unused_param)
 int
 process_error_occured_handler(void *data, void *unused_param)
 {
-    int ret = 0;
     msg_info_t *msg = (msg_info_t *)data;
     err_rsp_info info_resp = {0};
     ue_context_t *context = NULL;
@@ -260,8 +257,6 @@ process_error_occured_handler(void *data, void *unused_param)
             msg->proc, msg->state,msg->event,
             gtp_type_str(msg->msg_type));
 
-    RTE_SET_USED(unused_param);
-    RTE_SET_USED(ret);
     return 0;
 }
 #endif
@@ -377,6 +372,5 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 		context = NULL;
 	}
 	return 0;
-	RTE_SET_USED(seq);
 }
 #endif

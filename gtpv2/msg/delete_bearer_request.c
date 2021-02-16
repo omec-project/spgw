@@ -145,9 +145,6 @@ process_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx)
 		    & delete_bearer_rsp.ded_bearer->s1u_sgw_gtpu_teid) >> 24);
 		delete_bearer_rsp.context->teid_bitmap &= ~(0x01 << index);
 
-		struct dp_id dp_id = { .id = DPN_ID };
-
-        RTE_SET_USED(dp_id);
 
 		struct session_info si;
 		memset(&si, 0, sizeof(si));
@@ -158,6 +155,7 @@ process_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx)
 			SESS_ID(delete_bearer_rsp.context->s11_sgw_gtpc_teid,
 				delete_bearer_rsp.ded_bearer->eps_bearer_id);
 #ifdef OBSOLETE_API
+		struct dp_id dp_id = { .id = DPN_ID };
 		session_delete(dp_id, si);
 #endif
 
@@ -245,8 +243,6 @@ int handle_delete_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
 {
     ue_context_t *context = NULL;
     uint8_t ebi_index;
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
 
     if((ret = decode_del_bearer_req((uint8_t *) gtpv2c_rx,
                     &msg->gtpc_msg.db_req) == 0))
@@ -297,11 +293,9 @@ process_delete_bearer_request_handler(void *data, void *unused_param)
 	ret = process_delete_bearer_request(&msg->gtpc_msg.db_req ,0);
 	if (ret) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+        LOG_MSG(LOG_NEVER, "unused_param = %p, data = %p ", unused_param, data);
 		return -1;
 	}
-
-	RTE_SET_USED(data);
-	RTE_SET_USED(unused_param);
 
 	return 0;
 }
@@ -314,16 +308,16 @@ int process_delete_bearer_req_handler(void *data, void *unused_param)
 	if(ret !=0 ) {
 		/*TODO: set error response*/
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+        LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	}
 
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 
 void
 process_delete_bearer_request_pfcp_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p", data);
     return;
 }
 

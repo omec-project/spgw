@@ -103,7 +103,7 @@ int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 
 void process_sgwc_s5s8_create_sess_rsp_pfcp_timeout(void *data)
 {
-    RTE_SET_USED(data);
+    LOG_MSG(LOG_NEVER, "data = %p ", data);
     return;
 }
 
@@ -398,7 +398,7 @@ process_cs_resp_handler(void *data, void *unused_param)
 			return -1;
 	}
 
-	RTE_SET_USED(unused_param);
+    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	return 0;
 }
 

@@ -7,7 +7,6 @@
 #ifdef FUTURE_NEED
 int handle_update_pdn_conn_set_req(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
-    RTE_SET_USED(gtpv2c_rx);
 	//TODO: TEID based lookup
 	//msg->state = ;
 	msg->proc = RESTORATION_RECOVERY_PROC; 

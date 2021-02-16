@@ -16,8 +16,6 @@ int handle_modify_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_r
                     &msg->gtpc_msg.mb_rsp) == 0)) {
         return -1;
 
-    RTE_SET_USED(gtpv2c_rx);
-    RTE_SET_USED(msg);
 	gtpc_delete_timer_entry(msg->gtpc_msg.mb_rsp.header.teid.has_teid.teid);
 
 	if(msg->gtpc_msg.mb_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){

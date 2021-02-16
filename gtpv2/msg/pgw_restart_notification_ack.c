@@ -9,7 +9,6 @@
 // sgw - RESTORATION_RECOVERY_PROC PGW_RSTRT_NOTIF_REQ_SNT_STATE PGW_RSTRT_NOTIF_ACK_RCVD_EVNT ==> process_pgw_rstrt_notif_ack  
 int handle_pgw_restart_notf_ack(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
-    RTE_SET_USED(gtpv2c_rx);
 	msg->state = PGW_RSTRT_NOTIF_REQ_SNT_STATE;
 	msg->proc = RESTORATION_RECOVERY_PROC;
 	msg->event = PGW_RSTRT_NOTIF_ACK_RCVD_EVNT;
@@ -36,9 +35,7 @@ process_pgw_rstrt_notif_ack(void *data, void *unused_param)
 		return -1;
 	}
 #else
-	RTE_SET_USED(data);
 #endif /* USE_CSID */
-	RTE_SET_USED(unused_param);
 	return 0;
 }
 
