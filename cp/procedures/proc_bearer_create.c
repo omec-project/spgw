@@ -552,8 +552,7 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
-	bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	bearer = (eps_bearer_t *)calloc(1, sizeof(eps_bearer_t));
 	if (bearer == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate bearer "
 				"structure: %s ", rte_strerror(rte_errno));
@@ -673,8 +672,7 @@ fill_pfcp_gx_sess_mod_req(proc_context_t *proc,
 					/*
 					 * create dedicated bearer
 					 */
-					bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
-							RTE_CACHE_LINE_SIZE, rte_socket_id());
+					bearer = (eps_bearer_t *)calloc(1, sizeof(eps_bearer_t));
 					if(bearer == NULL) {
 						LOG_MSG(LOG_ERROR, "Failure to allocate bearer %s ", rte_strerror(rte_errno));
 						return 0;

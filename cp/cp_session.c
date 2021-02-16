@@ -172,7 +172,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 					}
 				}
 			}
-			rte_free(pdn->eps_bearers[i]);
+			free(pdn->eps_bearers[i]);
 			pdn->eps_bearers[i] = NULL;
 			context->eps_bearers[i] = NULL;
 			context->bearer_bitmap &= ~(1 << i);
@@ -181,7 +181,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 		}
 	}
 	--context->num_pdns;
-	rte_free(pdn);
+	free(pdn);
 	context->pdns[ebi_index] = NULL;
 	context->teid_bitmap = 0;
 
@@ -231,7 +231,7 @@ delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *sei
 				}
 			}
 
-			rte_free(pdn_ctxt->eps_bearers[i]);
+			free(pdn_ctxt->eps_bearers[i]);
 			pdn_ctxt->eps_bearers[i] = NULL;
 			pdn_ctxt->context->eps_bearers[i] = NULL;
 			pdn_ctxt->context->pdns[i] = NULL;
@@ -251,7 +251,7 @@ delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *sei
     }
 
 	//*_context = pdn_ctxt->context;
-	rte_free(pdn_ctxt);
+	free(pdn_ctxt);
     LOG_MSG(LOG_NEVER, "Deleted sgw context for control teid = %u ", gtpv2c_teid);
 	return 0;
 }

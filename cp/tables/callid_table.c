@@ -126,7 +126,7 @@ del_pdn_conn_entry(uint32_t call_id)
 	}
 
 	/* Free data from hash */
-	rte_free(pdn);
+	free(pdn);
 
 	LOG_MSG(LOG_DEBUG, "CALL_ID:%u", call_id);
 

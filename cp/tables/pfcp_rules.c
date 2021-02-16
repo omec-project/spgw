@@ -190,10 +190,7 @@ del_rule_name_entry(const rule_name_key_t rule_key)
 	}
 
 	/* Free data from hash */
-	if (bearer != NULL) {
-		rte_free(bearer);
-		bearer = NULL;
-	}
+	free(bearer);
 
 	return 0;
 }
@@ -311,8 +308,7 @@ del_pdr_entry(uint16_t rule_id)
 	}
 
 	/* Free data from hash */
-	rte_free(cntxt);
-	cntxt = NULL;
+	free(cntxt);
 
 	LOG_MSG(LOG_DEBUG, "PDR_ID:%u", rule_id);
 
@@ -410,7 +406,7 @@ del_pfcp_cntxt_entry(uint64_t sess_id)
 	}
 
 	/* Free data from hash */
-	rte_free(cntxt);
+	free(cntxt);
 
 	LOG_MSG(LOG_DEBUG, "Sess_Id:%lu", sess_id);
 
@@ -508,8 +504,7 @@ del_qer_entry(uint32_t qer_id)
 	}
 
 	/* Free data from hash */
-	if (cntxt != NULL)
-		rte_free(cntxt);
+	free(cntxt);
 
 	LOG_MSG(LOG_DEBUG, "QER_ID:%u", qer_id);
 
@@ -607,7 +602,7 @@ del_urr_entry(uint32_t urr_id)
 	}
 
 	/* Free data from hash */
-	rte_free(cntxt);
+	free(cntxt);
 
 	LOG_MSG(LOG_DEBUG, "URR_ID:%u", urr_id);
 

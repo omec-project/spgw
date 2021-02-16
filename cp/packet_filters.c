@@ -187,8 +187,7 @@ install_sdf_rules(const pkt_fltr *new_packet_filter)
 	if (num_sdf_filters >= SDF_FILTER_TABLE_SIZE)
 		return -ENOMEM;
 
-	pkt_fltr *filter = rte_zmalloc_socket(NULL, sizeof(pkt_fltr),
-	    RTE_CACHE_LINE_SIZE, rte_socket_id());
+	pkt_fltr *filter = (pkt_fltr *)calloc(1, sizeof(pkt_fltr));
 	if (filter == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate dedicated packet filter "
 				"structure: %s ",
@@ -220,9 +219,7 @@ install_pcc_rules(struct pcc_rules new_pcc_entry)
 	if (num_pcc_filter >= PCC_TABLE_SIZE)
 		return -ENOMEM;
 
-	struct pcc_rules *pcc_filter = rte_zmalloc_socket(NULL,
-			sizeof(new_pcc_entry),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	struct pcc_rules *pcc_filter = (struct pcc_rules *)calloc(1, sizeof(new_pcc_entry));
 	if (NULL == pcc_filter) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for pcc filter "
 				"structure: %s ", rte_strerror(rte_errno));
@@ -255,9 +252,7 @@ install_meter_profiles(struct dp_id dp_id, struct mtr_entry new_mtr_entry)
 	if (num_mtr_profiles >= METER_PROFILE_SDF_TABLE_SIZE)
 		return -ENOMEM;
 
-	struct mtr_entry *mtr_profile = rte_zmalloc_socket(NULL,
-			sizeof(new_mtr_entry),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	struct mtr_entry *mtr_profile = (struct mtr_entry *)calloc(1, sizeof(new_mtr_entry));
 	if (mtr_profile == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for meter profile "
 				"structure: %s for dpid = %lu", rte_strerror(rte_errno), dp_id.id);

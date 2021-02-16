@@ -156,8 +156,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msglen = gx_ccr_calc_length(&ccr_request.data.ccr);
 
-	buffer = rte_zmalloc_socket(NULL, msglen + sizeof(ccr_request.msg_type),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	buffer = (char *) calloc (1, msglen + sizeof(ccr_request.msg_type));
 	if (buffer == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 				"structure: %s ", rte_strerror(rte_errno));
@@ -243,11 +242,11 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 					/* TODO: Error Handling */
 					return -1;
 				}
-				rte_free(context->eps_bearers[i]);
+				free(context->eps_bearers[i]);
 			}
 		}
 
-		rte_free(pdn);
+		free(pdn);
 		pdn = NULL;
 	}
 
@@ -255,7 +254,7 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 	if (ue_context_delete_entry_imsiKey(context->imsi) < 0) {
 		LOG_MSG(LOG_ERROR, "%s - Error on ue_context_by_imsi_hash del", strerror(ret));
 	}
-	rte_free(context);
+	free(context);
 	context = NULL;
 
     decrement(NUM_UE_SPGW_ACTIVE_SUBSCRIBERS);

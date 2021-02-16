@@ -879,9 +879,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 		uint8_t idx = 0;
 		ccr_request.data.ccr.presence.subscription_id = PRESENT;
 		ccr_request.data.ccr.subscription_id.count = 2; // IMSI & MSISDN
-		ccr_request.data.ccr.subscription_id.list  = rte_malloc_socket(NULL,
-				(sizeof(GxSubscriptionId)*2),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+		ccr_request.data.ccr.subscription_id.list  = (GxSubscriptionId *)calloc(1, sizeof(GxSubscriptionId)*2);
 		/* Fill IMSI */
 		if(pdn->context->imsi != 0)
 		{
@@ -1017,8 +1015,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
-	buffer = rte_zmalloc_socket(NULL, msg_len + sizeof(ccr_request.msg_type),
-	    RTE_CACHE_LINE_SIZE, rte_socket_id());
+	buffer = (char *)calloc(1, msg_len + sizeof(ccr_request.msg_type));
 	if (buffer == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 				"structure: %s ", rte_strerror(rte_errno));

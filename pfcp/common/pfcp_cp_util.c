@@ -41,9 +41,7 @@ static int
 add_canonical_result_upflist_entry(canonical_result_t *res,
 		uint8_t res_count, uint64_t *imsi_val, uint16_t imsi_len)
 {
-	upfs_dnsres_t *upf_list = rte_zmalloc_socket(NULL,
-				sizeof(upfs_dnsres_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+	upfs_dnsres_t *upf_list = (upfs_dnsres_t *)calloc(1, sizeof(upfs_dnsres_t));
 	if (NULL == upf_list) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate memory for upf list "
 				"structure: %s ", rte_strerror(rte_errno));
@@ -86,9 +84,7 @@ static int
 add_dns_result_upflist_entry(dns_query_result_t *res,
 		uint8_t res_count, uint64_t *imsi_val, uint16_t imsi_len)
 {
-	upfs_dnsres_t *upf_list = rte_zmalloc_socket(NULL,
-				sizeof(upfs_dnsres_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+	upfs_dnsres_t *upf_list = (upfs_dnsres_t *)calloc(1, sizeof(upfs_dnsres_t));
 	if (NULL == upf_list) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for upf list "
 				"structure: %s ", rte_strerror(rte_errno));

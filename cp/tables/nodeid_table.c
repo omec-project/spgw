@@ -40,8 +40,7 @@ add_node_id_hash(uint32_t *nodeid, uint64_t *data )
 	uint64_t *temp = NULL;
 	memcpy(&key ,nodeid, sizeof(uint32_t));
 
-	temp =(uint64_t *) rte_zmalloc_socket(NULL, sizeof(uint64_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	temp =(uint64_t *) calloc(1, sizeof(uint64_t));
 	if (temp == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate ue context "
 				"structure: %s ", rte_strerror(rte_errno));
@@ -53,7 +52,7 @@ add_node_id_hash(uint32_t *nodeid, uint64_t *data )
 	if (ret < 0) {
 		LOG_MSG(LOG_ERROR, "%s - Error on rte_hash_add_key_data add",
 				strerror(ret));
-		rte_free((temp));
+		free((temp));
 		return 1;
 	}
 	return 0;

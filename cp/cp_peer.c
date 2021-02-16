@@ -262,9 +262,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 		 * conn_hash_handle
 		 * */
 
-		conn_data = rte_malloc_socket(NULL,
-						sizeof(peerData_t),
-						RTE_CACHE_LINE_SIZE, rte_socket_id());
+		conn_data = (peerData_t *)calloc(1, sizeof(peerData_t));
 
 		conn_data->portId = portId;
 		conn_data->activityFlag = 0;

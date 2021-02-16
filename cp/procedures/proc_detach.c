@@ -159,8 +159,7 @@ process_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 
     /* Lookup value in hash using session id and fill pfcp response and delete entry from hash*/
     if((cp_config->cp_type != SGWC ) &&  (cp_config->gx_enabled)) {
-        buffer = rte_zmalloc_socket(NULL, msglen + sizeof(ccr_request.msg_type),
-                RTE_CACHE_LINE_SIZE, rte_socket_id());
+        buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type));
         if (buffer == NULL) {
             LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
                     "structure: %s ", rte_strerror(rte_errno));

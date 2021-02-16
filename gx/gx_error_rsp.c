@@ -63,8 +63,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 					return;
 				}
 				msglen = gx_ccr_calc_length(&ccr_request.data.ccr);
-				buffer = rte_zmalloc_socket(NULL, msglen + sizeof(ccr_request.msg_type),
-											RTE_CACHE_LINE_SIZE, rte_socket_id());
+				buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type));
 				if (buffer == NULL) {
 				LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 								"structure: %s ", rte_strerror(rte_errno));
@@ -84,7 +83,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 				if(remove_gx_context((uint8_t*)pdn->gx_sess_id) < 0){
 					LOG_MSG(LOG_ERROR, " %s - Error on gx_context_by_sess_id_hash deletion", strerror(ret));
 				}
-				rte_free(gx_context);
+				free(gx_context);
 			}
 		}else {
 			LOG_MSG(LOG_ERROR, "NO ENTRY FOUND FOR EBI VALUE [%d], msg = %p ", ebi, msg);
@@ -107,9 +106,7 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error, uint16_t se
 
 
 	/* Allocate the memory for Gx Context */
-	gx_context = rte_malloc_socket(NULL,
-			sizeof(gx_context_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	gx_context = (gx_context_t *)calloc(1, sizeof(gx_context_t));
 
 	//strncpy(gx_context->gx_sess_id, context->pdns[ebi_index]->gx_sess_id, strlen(context->pdns[ebi_index]->gx_sess_id));
 
@@ -138,8 +135,7 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error, uint16_t se
 	rqst_ptr_ofs = msg_len + msg_body_ofs;
 	msg_len_total = rqst_ptr_ofs + sizeof(seq_num);
 
-	buffer = rte_zmalloc_socket(NULL, msg_len_total,
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	buffer = (char *)calloc(1, msg_len_total);
 	if (buffer == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
 				"structure: %s ", rte_strerror(rte_errno));

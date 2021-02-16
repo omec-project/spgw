@@ -1210,8 +1210,7 @@ fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr)
 {
 	int ret = -1;
 	qer_t *qer_ctxt = NULL;
-	qer_ctxt = rte_zmalloc_socket(NULL, sizeof(qer_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	qer_ctxt = (qer_t*)calloc(1, sizeof(qer_t));
 	if (qer_ctxt == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer %s ", rte_strerror(rte_errno));
 		return ret;
@@ -1237,8 +1236,7 @@ add_qer_into_hash(qer_t *qer)
 {
 	int ret = -1;
 	qer_t *qer_ctxt = NULL;
-	qer_ctxt = rte_zmalloc_socket(NULL, sizeof(qer_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	qer_ctxt = (qer_t *)calloc(1, sizeof(qer_t));
 	if (qer_ctxt == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory %s ", rte_strerror(rte_errno));
 		return ret;
@@ -1299,8 +1297,7 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 	for(int i =0; i < 2; i++)
 	{
 
-		pdr_ctxt = rte_zmalloc_socket(NULL, sizeof(pdr_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+		pdr_ctxt = (pdr_t *)calloc(1, sizeof(pdr_t));
 		if (pdr_ctxt == NULL) {
 			LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory : %s", rte_strerror(rte_errno));
 			return -1;
@@ -1441,8 +1438,7 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 
 	sprintf(nwinst, "mnc%s.mcc%s", mnc, mcc);
 
-	pdr_ctxt = rte_zmalloc_socket(NULL, sizeof(pdr_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	pdr_ctxt = (pdr_t *)calloc(1, sizeof(pdr_t));
 	if (pdr_ctxt == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory : %s", rte_strerror(rte_errno));
 		return NULL;
@@ -1653,8 +1649,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 				bearer = get_bearer(pdn, &pcc_rule->dyn_rule->qos);
 				if(bearer == NULL) {
 					// create dedicated bearer
-					bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
-							RTE_CACHE_LINE_SIZE, rte_socket_id());
+					bearer = (eps_bearer_t *)calloc(1, sizeof(eps_bearer_t));
 					if(bearer == NULL) {
 						LOG_MSG(LOG_ERROR, "Failure to allocate bearer %s ", rte_strerror(rte_errno));
 						return;
@@ -2324,8 +2319,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 
 	fqcsid_t *tmp = NULL;
 	fqcsid_t *fqcsid = NULL;
-	fqcsid = rte_zmalloc_socket(NULL, sizeof(fqcsid_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	fqcsid = (fqcsid_t*)calloc(1, sizeof(fqcsid_t));
 	if (fqcsid == NULL) {
 		LOG_MSG(LOG_ERROR, "Failed to allocate the memory for fqcsids entry");
 		return -1;

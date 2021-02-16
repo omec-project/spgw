@@ -190,8 +190,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 	ret = ue_context_entry_lookup_imsiKey(imsi, &(*context), false);
 
 	if (ret == -1) {
-		(*context) = rte_zmalloc_socket(NULL, sizeof(ue_context_t),
-		    RTE_CACHE_LINE_SIZE, rte_socket_id());
+		(*context) = (ue_context_t *)calloc(1, sizeof(ue_context_t));
 		if (*context == NULL) {
 			LOG_MSG(LOG_ERROR, "Failure to allocate ue context "
 					"structure: %s ", rte_strerror(rte_errno));
@@ -204,7 +203,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			LOG_MSG(LOG_ERROR,
 				"%s - Error on rte_hash_add_key_data add",
 				strerror(ret));
-			rte_free((*context));
+			free((*context));
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
 		}
 	} else {
@@ -267,7 +266,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			 */
             assert(0);
 		}
-		rte_free((*context));
+		free((*context));
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
 	}
 
@@ -285,7 +284,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 					bzero(bearer, sizeof(*bearer));
 					continue;
 				}
-				rte_free(pdn->eps_bearers[i]);
+				free(pdn->eps_bearers[i]);
 				pdn->eps_bearers[i] = NULL;
 				(*context)->eps_bearers[i] = NULL;
 				(*context)->bearer_bitmap &= ~(1 << ebi_index);
@@ -295,9 +294,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			/* of a different pdn connection's dedicated bearer */
 			bearer->pdn->eps_bearers[ebi_index] = NULL;
 			bzero(bearer, sizeof(*bearer));
-			pdn = rte_zmalloc_socket(NULL,
-				sizeof(pdn_connection_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+			pdn = (pdn_connection_t *)calloc(1, sizeof(pdn_connection_t));
 			if (pdn == NULL) {
 				LOG_MSG(LOG_ERROR, "Failure to allocate PDN "
 						"structure: %s ", rte_strerror(rte_errno));
@@ -313,16 +310,14 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		/*
 		 * Allocate default bearer
 		 */
-		bearer = rte_zmalloc_socket(NULL, sizeof(eps_bearer_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+		bearer = (eps_bearer_t *)calloc(1, sizeof(eps_bearer_t));
 		if (bearer == NULL) {
 			LOG_MSG(LOG_ERROR, "Failure to allocate bearer "
 					"structure: %s ", rte_strerror(rte_errno));
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
 		}
 		bearer->eps_bearer_id = ebi;
-		pdn = rte_zmalloc_socket(NULL, sizeof(pdn_connection_t),
-		    RTE_CACHE_LINE_SIZE, rte_socket_id());
+		pdn = (pdn_connection_t *)calloc(1, sizeof(pdn_connection_t));
 		if (pdn == NULL) {
 			LOG_MSG(LOG_ERROR, "Failure to allocate PDN "
 					"structure: %s ", rte_strerror(rte_errno));
@@ -363,7 +358,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			 */
             assert(0);
 		}
-		rte_free((*context));
+		free((*context));
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
 	}
 	pdn->apn_in_use = apn_requested;
@@ -569,7 +564,7 @@ cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
                         return -1;
                     }
                     if (!(context->mme_fqcsid)->num_csid)
-                        rte_free(context->mme_fqcsid);
+                        free(context->mme_fqcsid);
                 }
 
                 /* Clean UP FQ-CSID */
@@ -581,7 +576,7 @@ cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
                         return -1;
                     }
                     if (!(context->up_fqcsid)->num_csid)
-                        rte_free(context->up_fqcsid);
+                        free(context->up_fqcsid);
                 }
             }
 
@@ -589,7 +584,7 @@ cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
 
 #endif /* USE_CSID */
         //Free UE context
-        rte_free(context);
+        free(context);
         *context_t = NULL;
     }
 

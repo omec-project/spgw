@@ -208,7 +208,7 @@ del_sess_entry_seid(uint64_t sess_id)
 	}
 
 	/* Free data from hash */
-	rte_free(resp);
+	free(resp);
 
 	LOG_MSG(LOG_DEBUG2, "Sess ID:%lu", sess_id);
 

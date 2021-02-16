@@ -48,8 +48,7 @@ add_peer_csid_entry(uint16_t *key, csid_t *csid, uint8_t iface)
 				key, (void **)&tmp);
 
 	if ( ret < 0) {
-		tmp = rte_zmalloc_socket(NULL, sizeof(csid_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+		tmp = (csid_t *)calloc(1, sizeof(csid_t));
 		if (tmp == NULL) {
 			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid");
 			return -1;
@@ -110,8 +109,7 @@ get_peer_csid_entry(uint16_t *key, uint8_t iface)
 		LOG_MSG(LOG_DEBUG, "Entry not found in peer node hash table..");
 
 		/* Allocate the memory for local CSID */
-		csid = rte_zmalloc_socket(NULL, sizeof(csid_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+		csid = (csid_t *)calloc(1, sizeof(csid_t));
 		if (csid == NULL) {
 			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for csid");
 			return NULL;
@@ -172,7 +170,7 @@ del_peer_csid_entry(uint16_t *key, uint8_t iface)
 	ret = rte_hash_del_key(hash, key);
 
 	/* Free data from hash */
-	rte_free(csid);
+	free(csid);
 
 	LOG_MSG(LOG_DEBUG, "Peer node CSID entry deleted");
 
@@ -201,8 +199,7 @@ add_peer_addr_csids_entry(uint32_t node_addr, fqcsid_t *csids)
 				&node_addr, (void **)&tmp);
 
 	if ( ret < 0) {
-		tmp = rte_zmalloc_socket(NULL, sizeof(csid_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+		tmp = (csid_t *)calloc(1, sizeof(csid_t));
 		if (tmp == NULL) {
 			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for node addr:"IPV4_ADDR"\n",
 					IPV4_ADDR_HOST_FORMAT(node_addr));
@@ -256,8 +253,7 @@ get_peer_addr_csids_entry(uint32_t node_addr, uint8_t is_mod)
 			return NULL;
 		}
 
-		tmp = rte_zmalloc_socket(NULL, sizeof(fqcsid_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+		tmp = (fqcsid_t *)calloc(1, sizeof(fqcsid_t));
 
 		if (tmp == NULL) {
 			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for node addr:"IPV4_ADDR"\n",
@@ -315,7 +311,7 @@ del_peer_addr_csids_entry(uint32_t node_addr)
 	ret = rte_hash_del_key(hash, &node_addr);
 
 	/* Free data from hash */
-	rte_free(tmp);
+	free(tmp);
 	tmp = NULL;
 
 	LOG_MSG(LOG_DEBUG, "Entry deleted for node addr:"IPV4_ADDR"\n",

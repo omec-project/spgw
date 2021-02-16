@@ -57,8 +57,7 @@ add_data_to_heartbeat_hash_table(uint32_t *ip, uint32_t *recov_time)
 	uint32_t *temp = NULL;
 	memcpy(&key,ip,sizeof(uint32_t));
 
-	temp = rte_zmalloc_socket(NULL, sizeof(uint32_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	temp = (uint32_t *)calloc(1, sizeof(uint32_t));
 	if (temp == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate fseid context "
 				"structure: %s ", rte_strerror(rte_errno));
@@ -79,8 +78,7 @@ add_data_to_heartbeat_hash_table(uint32_t *ip, uint32_t *recov_time)
 void add_ip_to_heartbeat_hash(struct sockaddr_in *peer_addr, uint32_t recovery_time)
 {
 	uint32_t *default_recov_time = NULL;
-	default_recov_time = rte_zmalloc_socket(NULL, sizeof(uint32_t),
-			RTE_CACHE_LINE_SIZE, rte_socket_id());
+	default_recov_time = (uint32_t *)calloc(1, sizeof(uint32_t));
 
 	if(default_recov_time == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate memory in adding ip to heartbeat"

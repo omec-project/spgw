@@ -145,6 +145,6 @@ cca_t_msg_handler(void *data, void *unused_param)
 		LOG_MSG(LOG_ERROR, "%s - Error on gx_context_by_sess_id_hash deletion", strerror(ret));
 	}
     LOG_MSG(LOG_DEBUG, "Cleanup - gx session ");
-	rte_free(gx_context);
+	free(gx_context);
 	return 0;
 }

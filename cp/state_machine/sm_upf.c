@@ -42,8 +42,7 @@ int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt)
 {
     int ret;
     upf_context_t *upf_context = NULL;
-	upf_context  = rte_zmalloc_socket(NULL, sizeof(upf_context_t),
-				RTE_CACHE_LINE_SIZE, rte_socket_id());
+	upf_context  = calloc(1, sizeof(upf_context_t));
 
 	if (upf_context == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate upf context: "
