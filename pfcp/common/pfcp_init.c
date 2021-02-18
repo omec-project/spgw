@@ -6,12 +6,9 @@
 
 #include <stdio.h>
 #include <time.h>
-#include <rte_hash_crc.h>
-#include <rte_errno.h>
 #include "pfcp.h"
 #include "cp_log.h"
 #include "gen_utils.h"
-#include "tables/tables.h"
 
 /*VS:TODO: Need to revist this for hash size */
 

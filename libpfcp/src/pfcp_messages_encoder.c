@@ -113,9 +113,9 @@ int encode_pfcp_create_traffic_endpt_ie_t(pfcp_create_traffic_endpt_ie_t *value,
 			enc_len += encode_pfcp_framed_route_ie_t(&(value->framed_route[i]), buf + enc_len);
 	}
 
-	for (uint8_t i = 0; i < value->frmd_ipv6_rte_count; i++) {
+	for (uint8_t i = 0; i < value->frmd_ipv6_route_count; i++) {
 		if (value->frmd_ipv6_rte[i].header.len)
-			enc_len += encode_pfcp_frmd_ipv6_rte_ie_t(&(value->frmd_ipv6_rte[i]), buf + enc_len);
+			enc_len += encode_pfcp_frmd_ipv6_route_ie_t(&(value->frmd_ipv6_rte[i]), buf + enc_len);
 	}
 
 
@@ -1271,9 +1271,9 @@ int encode_pfcp_upd_traffic_endpt_ie_t(pfcp_upd_traffic_endpt_ie_t *value,
 			enc_len += encode_pfcp_framed_route_ie_t(&(value->framed_route[i]), buf + enc_len);
 	}
 
-	for (uint8_t i = 0; i < value->frmd_ipv6_rte_count; i++) {
+	for (uint8_t i = 0; i < value->frmd_ipv6_route_count; i++) {
 		if (value->frmd_ipv6_rte[i].header.len)
-			enc_len += encode_pfcp_frmd_ipv6_rte_ie_t(&(value->frmd_ipv6_rte[i]), buf + enc_len);
+			enc_len += encode_pfcp_frmd_ipv6_route_ie_t(&(value->frmd_ipv6_rte[i]), buf + enc_len);
 	}
 
 
@@ -1706,9 +1706,9 @@ int encode_pfcp_pdi_ie_t(pfcp_pdi_ie_t *value,
 	}
 
 	/* TODO: Revisit this for change in yang */
-	for (uint8_t i = 0; i < value->frmd_ipv6_rte_count; i++) {
+	for (uint8_t i = 0; i < value->frmd_ipv6_route_count; i++) {
 		if (value->frmd_ipv6_rte[i].header.len)
-			enc_len += encode_pfcp_frmd_ipv6_rte_ie_t(&(value->frmd_ipv6_rte[i]), buf + (enc_len/CHAR_SIZE));
+			enc_len += encode_pfcp_frmd_ipv6_route_ie_t(&(value->frmd_ipv6_rte[i]), buf + (enc_len/CHAR_SIZE));
 	}
 
 

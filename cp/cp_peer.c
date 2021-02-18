@@ -6,8 +6,6 @@
 
 #include <signal.h>
 #include "stdint.h"
-#include "rte_errno.h"
-#include "rte_debug.h"
 #include "cp_interface.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_association.h"
@@ -19,7 +17,6 @@
 #include "cp_peer.h"
 #include "cp_config_defs.h"
 #include "cp_timer.h"
-#include "tables/tables.h"
 #include "spgw_cpp_wrapper.h"
 #include "util.h"
 #include "cp_io_poll.h"
@@ -72,7 +69,7 @@ void handle_timeout(void *data, uint16_t event)
     struct sockaddr_in dest_addr = temp->dest_addr;
     gstimerinfo_t *ti = temp->ti;
     free(temp);
-    get_peer_entry(dest_addr.sin_addr.s_addr, &md);
+    md = (peerData_t *)get_peer_entry(dest_addr.sin_addr.s_addr); 
 
     if(md == NULL) {
         LOG_MSG(LOG_ERROR,"Peer (%s) not found. event %d ", inet_ntoa(dest_addr.sin_addr), event);
@@ -100,7 +97,7 @@ void handle_timeout(void *data, uint16_t event)
 			LOG_MSG(LOG_ERROR, "Stopped Periodic/transmit timer, User Plane node %s is not reachable",
 				inet_ntoa(*(struct in_addr *)&md->dstIP));
             upf_context_t *upf_context = NULL; 
-            upf_context_entry_lookup(dest_addr.sin_addr.s_addr, &upf_context);
+            upf_context = (upf_context_t *)upf_context_entry_lookup(dest_addr.sin_addr.s_addr);
             if(upf_context != NULL)
             {
                 upf_context->state = 0;
@@ -145,7 +142,7 @@ void handle_timeout(void *data, uint16_t event)
 #endif /* USE_CSID */
 		}
 
-		del_entry_from_hash(md->dstIP); // ajay - what to do this ?
+		del_entry_from_hash(md->dstIP);
 
 		return;
 	}
@@ -247,12 +244,11 @@ bool initpeerData( peerData_t *md, const char *name, int ptms, int ttms )
 
 uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 {
-	int ret;
 	peerData_t *conn_data = NULL;
 
-	ret = get_peer_entry(dstIp, &conn_data);
+	conn_data = (peerData_t *)get_peer_entry(dstIp);
 
-	if ( ret < 0) {
+	if ( conn_data == NULL) {
 
 		LOG_MSG(LOG_INFO, " Add entry in conn table :%s",
 					inet_ntoa(*((struct in_addr *)&dstIp)));
@@ -308,14 +304,13 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 
 uint8_t process_response(uint32_t dstIp)
 {
-	int ret = 0;
 	peerData_t *conn_data = NULL;
 
 	// TODO : Common peer table is not good..Currently conn_hash_handle is common for all peers
 	// e.g. gtp, pfcp, ....
-	ret = get_peer_entry(dstIp, &conn_data);
+	conn_data = (peerData_t *)get_peer_entry(dstIp);
 
-	if ( ret < 0) {
+	if ( conn_data == NULL) {
 		LOG_MSG(LOG_ERROR, " Entry not found for NODE :%s",
 				inet_ntoa(*(struct in_addr *)&dstIp));
 	} else {

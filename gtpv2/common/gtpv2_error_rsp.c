@@ -22,7 +22,6 @@
 #include "pfcp.h"
 #include "cp_transactions.h"
 #include "spgw_cpp_wrapper.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
 
@@ -404,8 +403,8 @@ void get_error_dsrsp_info(proc_context_t *detach_proc, msg_info_t *msg, err_rsp_
 			rsp_info->seq = msg->gtpc_msg.dsr.header.teid.has_teid.seq;
 			rsp_info->teid = msg->gtpc_msg.dsr.header.teid.has_teid.teid;
 
-			if(get_ue_context(msg->gtpc_msg.dsr.header.teid.has_teid.teid,
-							&context) != 0) {
+            context = (ue_context_t *)get_ue_context(msg->gtpc_msg.dsr.header.teid.has_teid.teid);
+            if(context == NULL) {
 				LOG_MSG(LOG_ERROR, "UE context not found ");
 				return;
 			}
@@ -506,8 +505,8 @@ void get_error_rabrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 			rsp_info->seq = msg->gtpc_msg.rab.header.teid.has_teid.seq;
 			rsp_info->teid = msg->gtpc_msg.rab.header.teid.has_teid.teid;
 
-			if(get_ue_context(msg->gtpc_msg.rab.header.teid.has_teid.teid,
-							&context) != 0) {
+			context = (ue_context_t *)get_ue_context(msg->gtpc_msg.rab.header.teid.has_teid.teid);
+			if(context == NULL) {
 				LOG_MSG(LOG_ERROR, "UE context not found ");
 				return;
 			}
@@ -581,7 +580,8 @@ void get_error_ubrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 	switch(msg->msg_type) {
 		case PFCP_SESSION_MODIFICATION_RESPONSE: {
 
-			if (get_ue_context(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid), &context) != 0){
+			context = (ue_context_t *)get_ue_context(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid));
+			if (context == NULL){
 				LOG_MSG(LOG_ERROR, "UE context not found ");
 				return;
 			}
@@ -617,7 +617,8 @@ void get_error_ubrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 		case GTP_UPDATE_BEARER_RSP:{
 
 #ifdef FUTURE_NEED
-			if(get_ue_context(msg->gtpc_msg.ub_rsp.header.teid.has_teid.teid, &context)){
+			context = (ue_context_t *)get_ue_context(msg->gtpc_msg.ub_rsp.header.teid.has_teid.teid);
+			if(context == NULL){
 
 				LOG_MSG(LOG_ERROR, "UE context not found ");
 				return;
@@ -691,12 +692,12 @@ void ubr_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 		pdn_connection_t *pdn_cntxt = NULL;
 
 		if(msg->msg_type == GTP_UPDATE_BEARER_REQ){
-			ret = get_ue_context_by_sgw_s5s8_teid(rsp_info.teid, &context);
+			get_ue_context_by_sgw_s5s8_teid(rsp_info.teid, &context);
 		}else{
-			ret = get_ue_context(rsp_info.teid, &context);
+			context = (ue_context_t *)get_ue_context(rsp_info.teid);
 		}
 
-		if (ret) {
+		if (context == NULL) {
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return;
 		}

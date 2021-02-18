@@ -21,7 +21,6 @@
 #include "spgw_cpp_wrapper.h"
 #include "proc_s1_release.h"
 #include "gtpv2_error_rsp.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
@@ -165,7 +164,8 @@ process_release_access_bearer_request(proc_context_t *rab_proc, msg_info_t *msg)
 		}
 
 #if 0
-		if (get_sess_entry_seid((rel_acc_ber_req_t->context)->pdns[ebi_index]->seid, &resp) != 0) {
+		resp = get_sess_entry_seid((rel_acc_ber_req_t->context)->pdns[ebi_index]->seid);
+        if(resp == NULL) {
 			LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 			return -1;
 		}
@@ -223,8 +223,8 @@ process_rab_proc_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg
 
 	/* Retrive the session information based on session id. */
     ue_context_t *temp_context = NULL; 
-	if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
-				&temp_context) != 0) {
+	temp_context = (ue_context_t *)get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+	if (temp_context == NULL) {
 		LOG_MSG(LOG_ERROR, "Session entry not found Msg_Type:%u,"
 				"Sess ID:%lu ",
 				msg->msg_type,
@@ -275,7 +275,6 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
                                uint64_t sess_id, 
                                gtpv2c_header_t *gtpv2c_tx)
 {
-    int ret = 0;
     uint8_t ebi_index = 0;
     eps_bearer_t *bearer  = NULL;
     ue_context_t *context = NULL;
@@ -283,7 +282,8 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
     uint32_t teid = UE_SESS_ID(sess_id);
 
     /* Retrive the session information based on session id. */
-    if (get_sess_entry_seid(sess_id, &context) != 0){
+    context = (ue_context_t *)get_sess_entry_seid(sess_id);
+    if (context == NULL){
         LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
         return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
     }
@@ -291,9 +291,10 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
     assert(proc_context->ue_context == context); // just verification 
 
     /* Retrieve the UE context */
-    ret = get_ue_context(teid, &context);
-    if (ret < 0) {
+    context = (ue_context_t *)get_ue_context(teid);
+    if (context == NULL) {
         LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
+        assert(0);
     }
 
     assert(proc_context->ue_context == context);

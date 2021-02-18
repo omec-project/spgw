@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <stdio.h>
-#include "rte_errno.h"
 #include "pfcp.h"
 #include "gx_interface.h"
 #include "sm_enum.h"
@@ -32,7 +31,6 @@
 #include "pfcp_messages_encoder.h"
 #include "cp_transactions.h"
 #include "gtp_ies.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_interface.h"
@@ -161,8 +159,7 @@ process_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
     if((cp_config->cp_type != SGWC ) &&  (cp_config->gx_enabled)) {
         buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type));
         if (buffer == NULL) {
-            LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
-                    "structure: %s ", rte_strerror(rte_errno));
+            LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
             return -1;
         }
 
@@ -350,7 +347,8 @@ process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *ms
 
 
 	/*Retrive the session information based on session id. */
-	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0){
+	resp = get_sess_entry_seid(context->pdns[ebi_index]->seid);
+	if (resp == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", context->pdns[ebi_index]->seid);
 		return -1;
 	}
@@ -374,7 +372,6 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
                            uint16_t *msglen,
                            proc_context_t *proc_context )
 {
-	int ret = 0;
 	uint8_t ebi_index = 0;
 	uint16_t msg_len = 0;
 	ue_context_t *context = proc_context->ue_context;
@@ -391,12 +388,13 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 		gx_context_t *gx_context = NULL;
 
 		/* Retrive Gx_context based on Sess ID. */
-		ret = get_gx_context((uint8_t *)pdn->gx_sess_id,&gx_context);
-		if (ret < 0) {
-			LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", 
-					pdn->gx_sess_id);
+		ue_context_t *temp_context  = (ue_context_t *)get_gx_context((uint8_t *)pdn->gx_sess_id); 
+		if (temp_context == NULL) {
+			LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 			return -1;
 		}
+        assert(temp_context == context);
+        gx_context = temp_context->gx_context;
 
 		/* VS: Set the Msg header type for CCR-T */
 		ccr_request->msg_type = GX_CCR_MSG ;
@@ -456,16 +454,19 @@ fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		gtpv2c_header_t *header, ue_context_t *context, pdn_connection_t *pdn)
 {
 	uint32_t seq = 0;
-	upf_context_t *upf_ctx = NULL;
 	pdr_t *pdr_ctxt = NULL;
-	int ret = 0;
 	eps_bearer_t *bearer;
 
+#if 0
+	int ret = 0;
+	upf_context_t *upf_ctx = NULL;
 	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
 					&upf_ctx)) < 0) {
 		LOG_MSG(LOG_ERROR, "Error: %d , ue_context = %p ", ret, context);
 		return;
 	}
+#endif
+    LOG_MSG(LOG_NEVER, "context = %p ", context);
 
 	memset(pfcp_sess_mod_req, 0, sizeof(pfcp_sess_mod_req_t));
 

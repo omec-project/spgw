@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "rte_common.h"
 #include "sm_struct.h"
 #include "gtp_messages.h"
 #include "cp_config.h"

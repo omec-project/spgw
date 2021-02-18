@@ -20,10 +20,10 @@
 #include "sm_structs_api.h"
 #include "pfcp.h"
 #include "cp_transactions.h"
-#include "tables/tables.h"
 #include "cp_io_poll.h"
 #include "cp_log.h"
 #include "assert.h"
+#include "spgw_cpp_wrapper.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -44,15 +44,14 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 	ue_context_t *context = NULL;
 	static uint32_t process_pgwc_s5s8_ds_req_cnt;
 
-	ret = get_ue_context(ds_req->header.teid.has_teid.teid, &context);
-	if (ret < 0 || !context) {
+	context = (ue_context_t *)get_ue_context(ds_req->header.teid.has_teid.teid);
+	if (context == NULL) {
 
 		LOG_MSG(LOG_DEBUG, "NGIC- delete_s5s8_session.c::"
 				"\n\tprocess_pgwc_s5s8_delete_session_request:"
 				"\n\tdelete_pgwc_context-ERROR!!!"
 				"\n\tprocess_pgwc_s5s8_ds_req_cnt= %u;"
 				"\n\tgtpv2c_s5s8_rx->teid_u.has_teid.teid= %X;"
-				"\n\trte_hash_lookup_data("
 				"ue_context_by_fteid_hash,..)= %d",
 				process_pgwc_s5s8_ds_req_cnt++,
 				ds_req->header.teid.has_teid.teid,
@@ -122,7 +121,6 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 			" pdn->s5s8_sgw_gtpc_teid= %X;"
 			" pdn->s5s8_pgw_gtpc_ipv4= %s;"
 			" pdn->s5s8_pgw_gtpc_teid= %X;"
-			" rte_hash_lookup_data("
 			"ue_context_by_fteid_hash,..)= %d",
 			process_pgwc_s5s8_ds_req_cnt++,
 			inet_ntoa(pdn->ipv4),
@@ -167,7 +165,7 @@ delete_pgwc_context(del_sess_req_t *ds_req, ue_context_t **_context,
 					memcpy(&key.rule_name, bearer->dynamic_rules[iCnt]->rule_name,
 						255);
 					sprintf(key.rule_name, "%s%d", key.rule_name, (bearer->pdn)->call_id);
-					if (del_rule_name_entry(key) != 0) {
+					if (del_rule_name_entry(key.rule_name) != 0) {
 						LOG_MSG(LOG_ERROR,"Error on delete rule name  %s ", key.rule_name);
 					}
 				}
@@ -225,7 +223,7 @@ delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *sei
 					memcpy(&key.rule_name, bearer->dynamic_rules[iCnt]->rule_name,
 						255);
 					sprintf(key.rule_name, "%s%d", key.rule_name, (bearer->pdn)->call_id);
-					if (del_rule_name_entry(key) != 0) {
+					if (del_rule_name_entry(key.rule_name) != 0) {
 						LOG_MSG(LOG_ERROR," Error on delete rule name entries %s ", key.rule_name);
 					}
 				}

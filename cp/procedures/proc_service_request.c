@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "rte_common.h"
 #include "sm_struct.h"
 #include "gtp_messages.h"
 #include "cp_config.h"
@@ -27,7 +26,6 @@
 #include "pfcp_cp_util.h"
 #include "pfcp_messages_encoder.h"
 #include "gtpv2_set_ie.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_interface.h"
@@ -231,8 +229,8 @@ process_service_request_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info
         return ;
     }
     /* Retrive the session information based on session id. */
-    if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
-                &context) != 0) {
+    context = (ue_context_t *)get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+    if(context == NULL) {
         LOG_MSG(LOG_ERROR, "Session entry not found Msg_Type:%u,"
                 "Sess ID:%lu ",
                 msg->msg_type,
@@ -287,7 +285,6 @@ process_srreq_pfcp_sess_mod_resp(proc_context_t *proc_context,
         uint64_t sess_id, 
         gtpv2c_header_t *gtpv2c_tx)
 {
-    int ret = 0;
     uint8_t ebi_index = 0;
     eps_bearer_t *bearer  = NULL;
     ue_context_t *context;
@@ -295,9 +292,10 @@ process_srreq_pfcp_sess_mod_resp(proc_context_t *proc_context,
     uint32_t teid = UE_SESS_ID(sess_id);
 
     /* Retrieve the UE context */
-    ret = get_ue_context(teid, &context);
-    if (ret < 0) {
-        LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
+    context = (ue_context_t *)get_ue_context(teid);
+    if (context == NULL) {
+        LOG_MSG(LOG_ERROR, "Failed to find UE context for teid: %u", teid);
+        assert(0);
     }
 
     assert(proc_context->ue_context == context);

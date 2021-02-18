@@ -1354,16 +1354,16 @@ int decode_pfcp_framed_routing_ie_t(uint8_t *buf,
     pfcp_framed_routing_ie_t *value);
 
 /**
-* Decodes pfcp_frmd_ipv6_rte_ie_t to buffer.
+* Decodes pfcp_frmd_ipv6_route_ie_t to buffer.
 * @param value 
-*    pfcp_frmd_ipv6_rte_ie_t
+*    pfcp_frmd_ipv6_route_ie_t
 * @param buf
 *   buffer to store decoded values.
 * @return
 *   number of decoded bytes.
 */
-int decode_pfcp_frmd_ipv6_rte_ie_t(uint8_t *buf,
-    pfcp_frmd_ipv6_rte_ie_t *value);
+int decode_pfcp_frmd_ipv6_route_ie_t(uint8_t *buf,
+    pfcp_frmd_ipv6_route_ie_t *value);
 
 /**
 * Decodes pfcp_event_quota_ie_t to buffer.

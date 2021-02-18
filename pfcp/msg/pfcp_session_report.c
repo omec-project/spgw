@@ -7,7 +7,6 @@
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
 #include "sm_structs_api.h"
-#include "tables/tables.h"
 #include "spgw_cpp_wrapper.h"
 #include "proc_session_report.h"
 
@@ -118,8 +117,8 @@ handle_session_report_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 	/* Retrive the session information based on session id. */
     ue_context_t *context = NULL;
     pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->pfcp_msg.pfcp_sess_rep_req;
-	if (get_sess_entry_seid(pfcp_sess_rep_req->header.seid_seqno.has_seid.seid,
-				&context) != 0) {
+	context = (ue_context_t *)get_sess_entry_seid(pfcp_sess_rep_req->header.seid_seqno.has_seid.seid);
+    if(context == NULL) {
 		LOG_MSG(LOG_ERROR, "Session entry not found Msg_Type:%u, Sess ID:%lu",
 				msg->msg_type,
 				pfcp_sess_rep_req->header.seid_seqno.has_seid.seid);

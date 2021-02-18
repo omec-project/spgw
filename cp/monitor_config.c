@@ -16,7 +16,6 @@
 #include <pthread.h>
 #include <string.h>
 #include <monitor_config.h>
-#include "rte_common.h"
 #include "cp_log.h"
 #include <assert.h>
 

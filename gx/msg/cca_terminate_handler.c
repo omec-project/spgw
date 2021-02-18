@@ -11,11 +11,9 @@
 #include "sm_enum.h"
 #include "sm_struct.h"
 #include "sm_hand.h"
-#include "rte_hash.h"
 #include "pfcp_cp_set_ie.h" // ajay - included for Gx context. need cleanup  
 #include "pfcp.h"
 #include "sm_structs_api.h"
-#include "tables/tables.h"
 #include "gen_utils.h"
 #include "spgw_cpp_wrapper.h"
 
@@ -75,11 +73,12 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
     pdn_connection_t *pdn_cntxt = NULL;
     LOG_MSG(LOG_DEBUG, "find gx context ");
     /* Retrive Gx_context based on Sess ID. */
-    ret = get_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val,&gx_context);
-    if (ret < 0) {
+    ue_context_t *temp_ue_context  = (ue_context_t *)get_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val);
+    if (temp_ue_context == NULL) {
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", msg->gx_msg.cca.session_id.val);
         return -1;
     }
+    gx_context = temp_ue_context->gx_context;
 
     if(msg->gx_msg.cca.presence.result_code &&
             msg->gx_msg.cca.result_code != 2001){
@@ -127,22 +126,22 @@ This function Handles the CCA-T received from PCEF
 int
 cca_t_msg_handler(void *data, void *unused_param)
 {
-    int ret = 0;
 	msg_info_t *msg = (msg_info_t *)data;
 	gx_context_t *gx_context = NULL;
 
     LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 
 	/* Retrive Gx_context based on Sess ID. */
-	ret = get_gx_context(msg->gx_msg.cca.session_id.val, &gx_context);
-	if (ret < 0) {
+	ue_context_t *temp_ue_context = (ue_context_t *) get_gx_context(msg->gx_msg.cca.session_id.val);
+	if (temp_ue_context == NULL) {
 		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]",
 				msg->gx_msg.cca.session_id.val);
 		return -1;
 	}
 
+    gx_context = temp_ue_context->gx_context;
 	if(remove_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val) < 0) {
-		LOG_MSG(LOG_ERROR, "%s - Error on gx_context_by_sess_id_hash deletion", strerror(ret));
+		LOG_MSG(LOG_ERROR, "Error on gx_context_by_sess_id_hash deletion");
 	}
     LOG_MSG(LOG_DEBUG, "Cleanup - gx session ");
 	free(gx_context);

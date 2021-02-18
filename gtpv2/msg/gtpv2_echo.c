@@ -51,7 +51,7 @@ set_recovery_ie_t(gtp_recovery_ie_t *recovery, uint8_t type, uint16_t length,
 }
 /**
  * @brief  : Function to build GTP-U echo request
- * @param  : echo_pkt rte_mbuf pointer
+ * @param  : echo_pkt buf pointer
  * @param  : gtpu_seqnb, sequence number
  * @return : void
  */

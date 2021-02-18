@@ -18,9 +18,6 @@
 
 #include <stdint.h>
 #include <arpa/inet.h>
-#include <rte_malloc.h>
-#include <rte_jhash.h>
-#include <rte_hash.h>
 #include "gtpv2_ie.h"
 #include "cp_interface.h"
 #include "packet_filters.h"
@@ -625,14 +622,6 @@ void
 set_s5s8_pgw_gtpc_teid(pdn_connection_t *pdn);
 
 /**
- * @brief  : Initializes UE hash table
- * @param  : No param
- * @return : Returns nothing
- */
-void
-create_ue_hash(void);
-
-/**
  * @brief  : sets the s5s8_pgw gtpu teid given the bearer
  * @param  : bearer
  *           bearer whose tied is to be set
@@ -691,20 +680,6 @@ int
 add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, eps_bearer_t **bearer);
 
 
-
-/* debug */
-
-/**
- * @brief  : print (with a column header) either context by the context and/or
- *           iterating over hash
- * @param  : h
- *           pointer to rte_hash containing ue hash table
- * @param  : context
- *           denotes if some context is to be indicated by '*' character
- * @return : Returns nothing
- */
-void
-print_ue_context_by(struct rte_hash *h, ue_context_t *context);
 
 void start_procedure(proc_context_t *proc, msg_info_t *msg);
 

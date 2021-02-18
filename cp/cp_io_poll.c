@@ -11,11 +11,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <rte_common.h>
-#include <rte_eal.h>
-#include <rte_malloc.h>
-#include <rte_cfgfile.h>
-#include <rte_errno.h>
 #include <errno.h>
 #include "cp_interface.h"
 #include "cp_io_poll.h"
@@ -24,7 +19,6 @@
 #include "cp_config_apis.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_events.h"
-#include "rte_common.h"
 #include "cp_log.h"
 
 

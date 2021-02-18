@@ -2,15 +2,10 @@
 //
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "rte_malloc.h"
-#include "rte_lcore.h" 
 #include "trans_struct.h"
 #include "cp_transactions.h"
-#include "rte_per_lcore.h"
-#include "rte_errno.h"
 #include <string.h>
 #include "errno.h"
-#include "rte_common.h"
 #include "pfcp_messages.h"
 #include "assert.h"
 #include "cp_io_poll.h"
@@ -62,8 +57,7 @@ start_transaction_timer(void *cb_data,
 	trans_entry = (transData_t *)calloc(1, sizeof(transData_t));
 	if(trans_entry == NULL )
 	{
-		LOG_MSG(LOG_ERROR, "Failure to allocate transaction entry entry :"
-				"%s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate transaction entry ");
 		return NULL;
 	}
 	trans_entry->cb_data = (void *) cb_data; 

@@ -188,8 +188,8 @@ typedef struct pfcp_create_traffic_endpt_ie_t {
   pfcp_framed_routing_ie_t framed_routing;
   uint8_t framed_route_count;
   pfcp_framed_route_ie_t framed_route[MAX_LIST_SIZE];
-  uint8_t frmd_ipv6_rte_count;
-  pfcp_frmd_ipv6_rte_ie_t frmd_ipv6_rte[MAX_LIST_SIZE];
+  uint8_t frmd_ipv6_route_count;
+  pfcp_frmd_ipv6_route_ie_t frmd_ipv6_rte[MAX_LIST_SIZE];
 } pfcp_create_traffic_endpt_ie_t;
 
 typedef struct pfcp_upd_bar_sess_mod_req_ie_t {
@@ -208,8 +208,8 @@ typedef struct pfcp_upd_traffic_endpt_ie_t {
   pfcp_framed_routing_ie_t framed_routing;
   uint8_t framed_route_count;
   pfcp_framed_route_ie_t framed_route[MAX_LIST_SIZE];
-  uint8_t frmd_ipv6_rte_count;
-  pfcp_frmd_ipv6_rte_ie_t frmd_ipv6_rte[MAX_LIST_SIZE];
+  uint8_t frmd_ipv6_route_count;
+  pfcp_frmd_ipv6_route_ie_t frmd_ipv6_rte[MAX_LIST_SIZE];
 } pfcp_upd_traffic_endpt_ie_t;
 
 typedef struct pfcp_remove_pdr_ie_t {
@@ -262,8 +262,8 @@ typedef struct pfcp_pdi_ie_t {
 	pfcp_qfi_ie_t qfi[MAX_LIST_SIZE];
 	uint8_t framed_route_count;
 	pfcp_framed_route_ie_t framed_route[MAX_LIST_SIZE];
-	uint8_t frmd_ipv6_rte_count;
-	pfcp_frmd_ipv6_rte_ie_t frmd_ipv6_rte[MAX_LIST_SIZE];
+	uint8_t frmd_ipv6_route_count;
+	pfcp_frmd_ipv6_route_ie_t frmd_ipv6_rte[MAX_LIST_SIZE];
 } pfcp_pdi_ie_t;
 
 typedef struct pfcp_create_pdr_ie_t {

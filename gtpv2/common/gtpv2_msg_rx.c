@@ -6,9 +6,6 @@
 
 #include <stdio.h>
 #include <getopt.h>
-#include <rte_ip.h>
-#include <rte_udp.h>
-#include <rte_cfgfile.h>
 #include "gtpv2_interface.h"
 #include "cp_config.h"
 #include "cp_io_poll.h"

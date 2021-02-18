@@ -3,8 +3,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
-#include "rte_errno.h"
-#include "rte_common.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_enum.h"
 #include "pfcp_cp_set_ie.h"
@@ -33,7 +31,6 @@
 #include "gx_interface.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_interface.h"
@@ -585,8 +582,8 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 	pdr_t *pdr_ctxt = NULL;
 	int ret = 0;
 
-	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
-			&upf_ctx)) < 0) {
+	upf_ctx = (upf_context_t *) upf_context_entry_lookup(pdn->upf_ipv4.s_addr);
+    if(upf_ctx == NULL) {
 		LOG_MSG(LOG_ERROR, "Error: %d ",ret);
 		return 0;
 	}
@@ -1212,7 +1209,7 @@ fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr)
 	qer_t *qer_ctxt = NULL;
 	qer_ctxt = (qer_t*)calloc(1, sizeof(qer_t));
 	if (qer_ctxt == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate qer context ");
 		return ret;
 	}
 	qer_ctxt->qer_id = bearer->qer_id[itr].qer_id;;
@@ -1238,7 +1235,7 @@ add_qer_into_hash(qer_t *qer)
 	qer_t *qer_ctxt = NULL;
 	qer_ctxt = (qer_t *)calloc(1, sizeof(qer_t));
 	if (qer_ctxt == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate qer ");
 		return ret;
 	}
 
@@ -1299,7 +1296,7 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 
 		pdr_ctxt = (pdr_t *)calloc(1, sizeof(pdr_t));
 		if (pdr_ctxt == NULL) {
-			LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory : %s", rte_strerror(rte_errno));
+			LOG_MSG(LOG_ERROR, "Failure to allocate pdr ");
 			return -1;
 		}
 		memset(pdr_ctxt,0,sizeof(pdr_t));
@@ -1440,7 +1437,7 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 
 	pdr_ctxt = (pdr_t *)calloc(1, sizeof(pdr_t));
 	if (pdr_ctxt == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory : %s", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate pdr");
 		return NULL;
 	}
 	memset(pdr_ctxt,0,sizeof(pdr_t));
@@ -1587,6 +1584,29 @@ compare_default_bearer_qos(bearer_qos_ie *default_bearer_qos,
 
 }
 
+/**
+ * Get PDR entry from PDR hash table.
+ * update entry
+ */
+int
+update_pdr_teid(eps_bearer_t *bearer, uint32_t teid, uint32_t ip, uint8_t iface)
+{
+	int ret = -1;
+
+    LOG_MSG(LOG_DEBUG, "update_pdr_teid bearer->pdr_count %d ", bearer->pdr_count);
+	for(uint8_t itr = 0; itr < bearer->pdr_count ; itr++) {
+		if(bearer->pdrs[itr]->pdi.src_intfc.interface_value == iface){
+			bearer->pdrs[itr]->pdi.local_fteid.teid = teid;
+			bearer->pdrs[itr]->pdi.local_fteid.ipv4_address = htonl(ip);
+			LOG_MSG(LOG_DEBUG, "Updated pdr entry Successfully for PDR_ID:%u",
+					bearer->pdrs[itr]->rule_id);
+			ret = 0;
+			break;
+		}
+	}
+	return ret;
+}
+
 void
 fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		pdn_connection_t *pdn, uint32_t seq)
@@ -1600,8 +1620,8 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	upf_context_t *upf_ctx = NULL;
 
     // PERFORMANCE : why we are doing lookup ? Just use it from pdn  
-	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
-			&upf_ctx)) < 0) {
+	upf_ctx = (upf_context_t *) upf_context_entry_lookup(pdn->upf_ipv4.s_addr);
+    if(upf_ctx == NULL) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return;
 	}
@@ -1651,7 +1671,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 					// create dedicated bearer
 					bearer = (eps_bearer_t *)calloc(1, sizeof(eps_bearer_t));
 					if(bearer == NULL) {
-						LOG_MSG(LOG_ERROR, "Failure to allocate bearer %s ", rte_strerror(rte_errno));
+						LOG_MSG(LOG_ERROR, "Failure to allocate bearer ");
 						return;
 						/* return GTPV2C_CAUSE_SYSTEM_FAILURE; */
 					}
@@ -1718,7 +1738,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			strncpy(key.rule_name, pcc_rule->dyn_rule->rule_name,
 					strlen(pcc_rule->dyn_rule->rule_name));
 			sprintf(key.rule_name, "%s%d", key.rule_name, pdn->call_id);
-			if (add_rule_name_entry(key, id) != 0) {
+			if (add_rule_name_entry(key.rule_name, bearer->eps_bearer_id) != 0) {
 				LOG_MSG(LOG_ERROR,"Failed to add rule name %s ", key.rule_name);
 				return;
 			}
@@ -2300,12 +2320,11 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
     proc_context_t *proc_context;
 
 	/* Retrieve the UE context */
-	ret = get_ue_context(teid, &context);
-	if (ret < 0) {
+	context = (ue_context_t *)get_ue_context(teid);
+	if (context == NULL) {
 		LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
-    assert(context != NULL);
     proc_context = msg->proc_context; 
     assert(proc_context != NULL);
 	proc_context->state = PFCP_SESS_EST_RESP_RCVD_STATE;
@@ -2498,10 +2517,9 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		uint16_t msg_len = 0;
 		upf_context_t *upf_context = NULL;
 
-		ret = upf_context_entry_lookup(((context->pdns[ebi_index])->upf_ipv4.s_addr),
-				&(upf_context));
+		upf_context  = (upf_context_t *)upf_context_entry_lookup((context->pdns[ebi_index])->upf_ipv4.s_addr);
 
-		if (ret < 0) {
+		if (upf_context == NULL) {
 			LOG_MSG(LOG_DEBUG, "NO ENTRY FOUND IN UPF HASH [%u]", 
 					(context->pdns[ebi_index])->upf_ipv4.s_addr);
 			return GTPV2C_CAUSE_INVALID_PEER;
@@ -2603,15 +2621,17 @@ process_pfcp_sess_mod_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 	uint32_t teid = UE_SESS_ID(sess_id);
 
 	/* Retrive the session information based on session id. */
-	if (get_sess_entry_seid(sess_id, &context) != 0){
+	context = (ue_context_t *)get_sess_entry_seid(sess_id);
+	if (context == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
 	/* Retrieve the UE context */
-	ret = get_ue_context(teid, &context);
-	if (ret < 0) {
-			LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
+	context = (ue_context_t *)get_ue_context(teid);
+	if (context == NULL) {
+		LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
+        assert(0);
 	}
 
 	ebi_index = UE_BEAR_ID(sess_id) - 5;
@@ -2827,8 +2847,8 @@ fill_pfcp_sess_mod_req_pgw_init_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 	int ret = 0;
 	eps_bearer_t *bearer = NULL;
 
-	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
-					&upf_ctx)) < 0) {
+	upf_ctx = (upf_context_t *) upf_context_entry_lookup(pdn->upf_ipv4.s_addr);
+	if(upf_ctx == NULL) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return;
 	}
@@ -2906,8 +2926,8 @@ fill_pfcp_sess_mod_req_pgw_init_remove_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_re
 	pdr_t *pdr_ctxt = NULL;
 	upf_context_t *upf_ctx = NULL;
 
-	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
-					&upf_ctx)) < 0) {
+	upf_ctx = (upf_context_t *) upf_context_entry_lookup(pdn->upf_ipv4.s_addr);
+	if(upf_ctx == NULL) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return;
 	}
@@ -2956,8 +2976,8 @@ fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod
 	int ret = 0;
 	eps_bearer_t *bearer = NULL;
 
-	if ((ret = upf_context_entry_lookup(pdn->upf_ipv4.s_addr,
-					&upf_ctx)) < 0) {
+	upf_ctx = (upf_context_t *) upf_context_entry_lookup(pdn->upf_ipv4.s_addr);
+    if(upf_ctx == NULL) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return;
 	}

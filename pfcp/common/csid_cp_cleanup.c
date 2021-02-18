@@ -20,7 +20,6 @@
 #include "gx_interface.h"
 #include "sm_enum.h"
 #include "ipc_api.h"
-#include "tables/tables.h"
 #include "cp_io_poll.h"
 
 extern uint8_t s11_tx_buf[MAX_GTPV2C_UDP_LEN];
@@ -117,18 +116,18 @@ uint32_t s5s8_node_addr = 0;
 static int8_t
 fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 {
-	int ret = 0;
 	uint16_t msglen = 0;
 	char *buffer = NULL;
 	gx_msg ccr_request = {0};
 	gx_context_t *gx_context = NULL;
 
 	/* Retrive Gx_context based on Sess ID. */
-	ret = get_gx_context((uint8_t *)pdn->gx_sess_id, &gx_context);
-	if (ret < 0) {
+	ue_context_t *temp_ue_context = (ue_context_t *)get_gx_context((uint8_t *)pdn->gx_sess_id);
+	if (temp_ue_context == NULL) {
 		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 		return -1;
 	}
+    gx_context = temp_ue_context->gx_context;
 
 	/* VS: Set the Msg header type for CCR-T */
 	ccr_request.msg_type = GX_CCR_MSG ;
@@ -158,8 +157,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 
 	buffer = (char *) calloc (1, msglen + sizeof(ccr_request.msg_type));
 	if (buffer == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
-				"structure: %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
 		return -1;
 	}
 
@@ -204,12 +202,11 @@ static int8_t
 del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 {
 	int i = 0;
-	int ret = 0;
 	ue_context_t *context = NULL;
 
-	ret = get_ue_context(teid, &context);
+	context = (ue_context_t *)get_ue_context(teid);
 
-	if (ret < 0 || !context)
+	if (context == NULL)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 
 
@@ -252,7 +249,7 @@ del_sess_by_csid_entry(uint32_t teid, uint8_t iface)
 
 	/* Delete UE context entry from IMSI Hash */
 	if (ue_context_delete_entry_imsiKey(context->imsi) < 0) {
-		LOG_MSG(LOG_ERROR, "%s - Error on ue_context_by_imsi_hash del", strerror(ret));
+		LOG_MSG(LOG_ERROR, "Error on ue_context_by_imsi_hash del");
 	}
 	free(context);
 	context = NULL;

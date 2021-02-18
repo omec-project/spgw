@@ -19,7 +19,6 @@
 #include "pfcp_cp_util.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_io_poll.h"
-#include "tables/tables.h"
 
 static void
 fill_pfcp_heartbeat_resp(pfcp_hrtbeat_rsp_t *pfcp_heartbeat_resp)
@@ -102,7 +101,7 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 
 		if(update_recov_time > recov_time) {
 
-			ret = add_data_to_heartbeat_hash_table(&peer_addr->sin_addr.s_addr, &update_recov_time);
+			add_ip_to_heartbeat_hash(peer_addr, update_recov_time);
 
 		}
 	}

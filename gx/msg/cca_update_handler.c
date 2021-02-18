@@ -11,11 +11,9 @@
 #include "sm_enum.h"
 #include "sm_struct.h"
 #include "sm_hand.h"
-#include "rte_hash.h"
 #include "pfcp_cp_set_ie.h" // ajay - included for Gx context. need cleanup  
 #include "pfcp.h"
 #include "sm_structs_api.h"
-#include "tables/tables.h"
 #include "spgw_cpp_wrapper.h"
 
 
@@ -82,12 +80,13 @@ int handle_cca_update_msg(msg_info_t **msg_p)
 
     pdn_connection_t *pdn_cntxt = NULL;
     /* Retrive Gx_context based on Sess ID. */
-    int ret = get_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val,&gx_context);
-    if (ret < 0) {
+    ue_context_t *temp_ue_context = (ue_context_t *) get_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val);
+    if (temp_ue_context == NULL) {
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]",
                 msg->gx_msg.cca.session_id.val);
         return -1;
     }
+    gx_context = temp_ue_context->gx_context;
 
     if(msg->gx_msg.cca.presence.result_code &&
             msg->gx_msg.cca.result_code != 2001){
@@ -98,7 +97,7 @@ int handle_cca_update_msg(msg_info_t **msg_p)
 
     uint32_t call_id;
     /* Extract the call id from session id */
-    ret = retrieve_call_id((char *)msg->gx_msg.cca.session_id.val, &call_id);
+    int ret = retrieve_call_id((char *)msg->gx_msg.cca.session_id.val, &call_id);
     if (ret < 0) {
         LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s",
                 msg->gx_msg.cca.session_id.val);

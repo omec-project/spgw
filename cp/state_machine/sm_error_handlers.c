@@ -28,7 +28,6 @@
 #include "upf_struct.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
 #include "cp_log.h"
@@ -267,7 +266,6 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 {
 	uint64_t imsi = UINT64_MAX;
 	ue_context_t *context = NULL;
-	upf_context_t *upf_context = NULL;
 	pdn_connection_t *pdn = NULL;
 	pending_proc_key_t *key = NULL;
 	uint8_t ebi_index = ebi - 5;
@@ -279,7 +277,8 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 				&& context->eps_bearers[ebi_index]->pdn != NULL) {
 				pdn = context->eps_bearers[ebi_index]->pdn;
 				if (pdn){
-					if (get_sess_entry_seid(pdn->seid, &resp) == 0) {
+					resp = get_sess_entry_seid(pdn->seid);
+					if (resp != NULL) {
 						if (cp_config->cp_type == SGWC){
 							if(resp->state == PFCP_SESS_DEL_REQ_SNT_STATE) {
 								goto del_ue_cntx_imsi;
@@ -309,9 +308,9 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 					 else {
 						if(*imsi_val > 0 && imsi_len > 0) {
 							memcpy(&imsi, imsi_val, imsi_len);
-							ret = ue_context_entry_lookup_imsiKey(imsi, &context, true);
+							context = (ue_context_t *) ue_context_entry_lookup_imsiKey(imsi);
 
-							if (ret == -ENOENT){
+							if (context == NULL){
 								return -1;
 							}else {
 								ue_context_delete_entry_imsiKey(imsi);
@@ -322,7 +321,9 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 						}
 						else {
 							if(pdn != NULL) {
-								if ((upf_context_entry_lookup(pdn->upf_ipv4.s_addr,&upf_context)) ==  0) {
+	                            upf_context_t *upf_context = NULL;
+								upf_context = (upf_context_t *)upf_context_entry_lookup(pdn->upf_ipv4.s_addr);
+								if (upf_context != NULL) {
 									if(upf_context->state < PFCP_ASSOC_RESP_RCVD_STATE){
 										if(ret >= 0) {
                                             LIST_FOREACH(key, &upf_context->pending_sub_procs, procentries) {
@@ -361,9 +362,9 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 	 else {
 		del_ue_cntx_imsi:
 		memcpy(&imsi, imsi_val, imsi_len);
-		ret = ue_context_entry_lookup_imsiKey(imsi,&context, true);
+		context = (ue_context_t *) ue_context_entry_lookup_imsiKey(imsi);
 
-		if (ret == -ENOENT)
+		if (context == NULL)
 			return -1;
 
 		ue_context_delete_entry_imsiKey(imsi);

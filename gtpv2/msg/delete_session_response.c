@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "tables/tables.h"
 
 #include "gtp_messages.h"
 #include "util.h"
@@ -138,11 +137,11 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
 		LOG_MSG(LOG_ERROR, "Failed to get UE State for teid: %u",
 				ds_resp->header.teid.has_teid.teid);
 	}
-	ret = get_bearer_by_teid(ds_resp->header.teid.has_teid.teid, &bearer);
-	     if(ret < 0) {
-	               LOG_MSG(LOG_ERROR, "Entry not found for teid:%x", ds_resp->header.teid.has_teid.teid);
-	               return -1;
-	       }
+	bearer = (eps_bearer_t *)get_bearer_by_teid(ds_resp->header.teid.has_teid.teid);
+	if(bearer == NULL) {
+	    LOG_MSG(LOG_ERROR, "Bearer Entry not found for teid:%x", ds_resp->header.teid.has_teid.teid);
+	    return -1;
+	}
 	// ebi_index = UE_BEAR_ID(bearer->pdn->seid) -5;
 	//pfcp_sess_del_req.header.seid_seqno.has_seid.seid =
 	//	SESS_ID(ds_resp->header.teid.has_teid.teid,ds_resp->lbi.ebi_ebi);
@@ -165,7 +164,8 @@ process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_resp)
 	bearer->pdn->state = PFCP_SESS_DEL_REQ_SNT_STATE;
 
 	/* VS: Stored/Update the session information. */
-	if (get_sess_entry_seid(bearer->pdn->seid, &resp) != 0) {
+	resp = get_sess_entry_seid(bearer->pdn->seid);
+	if (resp == NULL) {
 		LOG_MSG(LOG_ERROR, "Failed to get response entry in SM_HASH");
 		return -1;
 	}

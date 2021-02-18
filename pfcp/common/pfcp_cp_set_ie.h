@@ -9,15 +9,12 @@
 #define PFCP_CP_SET_IE_H
 
 #include <stdbool.h>
-#include <rte_hash_crc.h>
 #include "pfcp_messages.h"
-
 #include "ue.h"
 #include "gtp_ies.h"
 #include "gtp_messages.h"
 #include "cp_timer.h"
 #include "gtpv2_internal.h"
-#include <sys/queue.h>
 #include "upf_struct.h"
 #include "sm_struct.h"
 

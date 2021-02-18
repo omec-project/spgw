@@ -1714,16 +1714,16 @@ int decode_pfcp_drpd_dl_traffic_thresh_ie_t(uint8_t *buf,
 }
 
 /**
-* decodes pfcp_frmd_ipv6_rte_ie_t to buffer.
+* decodes pfcp_frmd_ipv6_route_ie_t to buffer.
 * @param buf
 * buffer to store decoded values.
 * @param value
-    pfcp_frmd_ipv6_rte_ie_t
+    pfcp_frmd_ipv6_route_ie_t
 * @return
 *   number of decoded bytes.
 */
-int decode_pfcp_frmd_ipv6_rte_ie_t(uint8_t *buf,
-        pfcp_frmd_ipv6_rte_ie_t *value)
+int decode_pfcp_frmd_ipv6_route_ie_t(uint8_t *buf,
+        pfcp_frmd_ipv6_route_ie_t *value)
 {
     uint16_t total_decoded = 0;
     total_decoded += decode_pfcp_ie_header_t(buf + (total_decoded/CHAR_SIZE), &value->header);

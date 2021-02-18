@@ -17,8 +17,6 @@
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <arpa/inet.h>
-#include "rte_hash.h"
-#include "rte_errno.h"
 #include "cp_timer.h"
 #include "errno.h"
 #include "cp_log.h"

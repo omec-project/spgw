@@ -1553,15 +1553,15 @@ int encode_pfcp_drpd_dl_traffic_thresh_ie_t(pfcp_drpd_dl_traffic_thresh_ie_t *va
 
 
 /**
-* Encodes pfcp_frmd_ipv6_rte_ie_t to buffer.
+* Encodes pfcp_frmd_ipv6_route_ie_t to buffer.
 * @param buf
 *   buffer to store encoded values.
 * @param value
-    pfcp_frmd_ipv6_rte_ie_t
+    pfcp_frmd_ipv6_route_ie_t
 * @return
 *   number of encoded bytes.
 */
-int encode_pfcp_frmd_ipv6_rte_ie_t(pfcp_frmd_ipv6_rte_ie_t *value,
+int encode_pfcp_frmd_ipv6_route_ie_t(pfcp_frmd_ipv6_route_ie_t *value,
     uint8_t *buf)
 {
     uint16_t encoded = 0;

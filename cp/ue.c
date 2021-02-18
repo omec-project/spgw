@@ -4,12 +4,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include <rte_errno.h>
 #include "ue.h"
 #include "cp_interface.h"
 #include "cp_log.h"
 #include "cp_config.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "pfcp_cp_session.h"
 #include "gen_utils.h"
@@ -115,58 +113,14 @@ set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer_t *bearer, pdn_connection_t *pdn)
 	pdn->context->teid_bitmap |= (0x01 << index);
 }
 
-void
-print_ue_context_by(struct rte_hash *h, ue_context_t *context)
-{
-	uint64_t *key;
-	int32_t ret;
-	uint32_t next = 0;
-	int i;
-	LOG_MSG(LOG_DEBUG," %16s %1s %16s %16s %8s %8s %11s", "imsi", "u", "mei",
-			"msisdn", "s11-teid", "s11-ipv4", "56789012345");
-	if (context) {
-		LOG_MSG(LOG_DEBUG,"*%16lx %1lx %16lx %16lx %8x %15s ", context->imsi,
-		    (uint64_t) context->unathenticated_imsi, context->mei,
-		    context->msisdn, context->s11_sgw_gtpc_teid,
-		     inet_ntoa(context->s11_sgw_gtpc_ipv4));
-		for (i = 0; i < MAX_BEARERS; ++i) {
-			LOG_MSG(LOG_DEBUG,"%c", (context->bearer_bitmap & (1 << i))
-					? '1' : '0');
-		}
-		LOG_MSG(LOG_DEBUG,"\t0x%04x", context->bearer_bitmap);
-	}
-	if (h == NULL)
-		return;
-	while (1) {
-		ret = rte_hash_iterate(h, (const void **) &key,
-				(void **) &context, &next);
-		if (ret < 0)
-			break;
-		LOG_MSG(LOG_DEBUG," %16lx %1lx %16lx %16lx %8x %15s ",
-			context->imsi,
-			(uint64_t) context->unathenticated_imsi,
-			context->mei,
-		    context->msisdn, context->s11_sgw_gtpc_teid,
-		    inet_ntoa(context->s11_sgw_gtpc_ipv4));
-		for (i = 0; i < MAX_BEARERS; ++i) {
-			LOG_MSG(LOG_DEBUG,"%c", (context->bearer_bitmap & (1 << i))
-					? '1' : '0');
-		}
-		LOG_MSG(LOG_DEBUG,"\t0x%4x", context->bearer_bitmap);
-		puts("");
-	}
-}
-
 int
 add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, eps_bearer_t **bearer)
 {
 	int8_t ret = 0;
-	ret = bearer_context_entry_add_teidKey(fteid_key, (*bearer));
+	ret = bearer_context_entry_add_teidKey(fteid_key, (void *)(*bearer));
 	
 	if (ret < 0) {
-		LOG_MSG(LOG_ERROR,
-			"%s - Error on rte_hash_add_key_data add",
-			strerror(ret));
+		LOG_MSG(LOG_ERROR, "Error on adding teid to bearer mapping ");
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
 	}
 	return 0;
@@ -187,22 +141,19 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 
 	memcpy(&imsi, imsi_val, imsi_len);
 
-	ret = ue_context_entry_lookup_imsiKey(imsi, &(*context), false);
+	*context = (ue_context_t *)ue_context_entry_lookup_imsiKey(imsi);
 
-	if (ret == -1) {
+	if (*context == NULL) {
 		(*context) = (ue_context_t *)calloc(1, sizeof(ue_context_t));
 		if (*context == NULL) {
-			LOG_MSG(LOG_ERROR, "Failure to allocate ue context "
-					"structure: %s ", rte_strerror(rte_errno));
+			LOG_MSG(LOG_ERROR, "Failure to allocate ue context ");
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
 		}
 		(*context)->imsi = imsi;
 		(*context)->imsi_len = imsi_len;
-		ret = ue_context_entry_add_imsiKey(*context); 
+		ret = ue_context_entry_add_imsiKey(imsi, *context); 
 		if (ret < 0) {
-			LOG_MSG(LOG_ERROR,
-				"%s - Error on rte_hash_add_key_data add",
-				strerror(ret));
+			LOG_MSG(LOG_ERROR, "Error on imsi to ue_context add");
 			free((*context));
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
 		}
@@ -296,8 +247,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			bzero(bearer, sizeof(*bearer));
 			pdn = (pdn_connection_t *)calloc(1, sizeof(pdn_connection_t));
 			if (pdn == NULL) {
-				LOG_MSG(LOG_ERROR, "Failure to allocate PDN "
-						"structure: %s ", rte_strerror(rte_errno));
+				LOG_MSG(LOG_ERROR, "Failure to allocate PDN ");
 				return GTPV2C_CAUSE_SYSTEM_FAILURE;
 			}
 			pdn->num_bearer++;
@@ -312,15 +262,13 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		 */
 		bearer = (eps_bearer_t *)calloc(1, sizeof(eps_bearer_t));
 		if (bearer == NULL) {
-			LOG_MSG(LOG_ERROR, "Failure to allocate bearer "
-					"structure: %s ", rte_strerror(rte_errno));
+			LOG_MSG(LOG_ERROR, "Failure to allocate bearer ");
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
 		}
 		bearer->eps_bearer_id = ebi;
 		pdn = (pdn_connection_t *)calloc(1, sizeof(pdn_connection_t));
 		if (pdn == NULL) {
-			LOG_MSG(LOG_ERROR, "Failure to allocate PDN "
-					"structure: %s ", rte_strerror(rte_errno));
+			LOG_MSG(LOG_ERROR, "Failure to allocate PDN ");
 			return GTPV2C_CAUSE_SYSTEM_FAILURE;
 		}
 		pdn->num_bearer++;
@@ -514,8 +462,9 @@ cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
 
 
         /* Delete UPFList entry from UPF Hash */
-        if ((context->dns_enable && upflist_by_ue_hash_entry_delete(&context->imsi, sizeof(context->imsi))) < 0){
+        if ((context->dns_enable) && (upflist_by_ue_hash_entry_delete(context->imsi) < 0)){
             LOG_MSG(LOG_ERROR, "%s - Error on upflist_by_ue_hash deletion of IMSI ", strerror(ret));
+            assert(0);
         }
 
 #ifdef USE_CSID

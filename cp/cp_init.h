@@ -10,10 +10,6 @@
 
 #include <pcap.h>
 #include <byteswap.h>
-#include <rte_version.h>
-#include <stdbool.h>
-#include <rte_ether.h>
-#include <rte_ethdev.h>
 #include "cp_main.h"
 #include "cp_timer.h"
 

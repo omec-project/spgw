@@ -8,7 +8,6 @@
 #include "ue.h"
 #include "vepc_cp_dp_api.h"
 #include "gtpv2_ie_parsing.h"
-#include "tables/tables.h"
 
 extern uint32_t num_adc_rules;
 extern uint32_t adc_rule_id[];
@@ -35,7 +34,7 @@ parse_cb_rsp(gtpv2c_header_t *gtpv2c_rx,
 	gtpv2c_ie *limit_ie;
 	gtpv2c_ie *limit_group_ie;
 
-	int ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
+	int ret = r_t_e_hash_lookup_data(ue_context_by_fteid_hash,
 	    (const void *) &gtpv2c_rx->teid.has_teid.teid,
 	    (void **) &cbr->context);
 

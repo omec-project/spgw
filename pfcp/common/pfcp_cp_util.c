@@ -5,13 +5,6 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <sys/time.h>
-#include <rte_hash.h>
-#include <rte_errno.h>
-#include <rte_debug.h>
-#include <rte_jhash.h>
-#include <rte_lcore.h>
-#include <rte_hash_crc.h>
-
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_messages.h"
@@ -19,10 +12,10 @@
 #include "cp_config.h"
 #include "cp_config_defs.h"
 #include "cp_io_poll.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "pfcp_cp_association.h"
 #include "cdnshelper.h"
+#include "spgw_cpp_wrapper.h"
 
 #define FAILED_ENB_FILE "logs/failed_enb_queries.log"
 
@@ -43,8 +36,7 @@ add_canonical_result_upflist_entry(canonical_result_t *res,
 {
 	upfs_dnsres_t *upf_list = (upfs_dnsres_t *)calloc(1, sizeof(upfs_dnsres_t));
 	if (NULL == upf_list) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate memory for upf list "
-				"structure: %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate memory for upf list ");
 		return -1;
 	}
 
@@ -67,7 +59,9 @@ add_canonical_result_upflist_entry(canonical_result_t *res,
 
 	upf_list->upf_count = upf_count;
 
-	upflist_by_ue_hash_entry_add(imsi_val, imsi_len, upf_list);
+	uint64_t imsi = UINT64_MAX;
+	memcpy(&imsi, imsi_val, imsi_len);
+	upflist_by_ue_hash_entry_add(imsi, upf_list);
 
 	return upf_count;
 }
@@ -86,8 +80,7 @@ add_dns_result_upflist_entry(dns_query_result_t *res,
 {
 	upfs_dnsres_t *upf_list = (upfs_dnsres_t *)calloc(1, sizeof(upfs_dnsres_t));
 	if (NULL == upf_list) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for upf list "
-				"structure: %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for upf list ");
 		return -1;
 	}
 
@@ -110,7 +103,9 @@ add_dns_result_upflist_entry(dns_query_result_t *res,
 
 	upf_list->upf_count = upf_count;
 
-	upflist_by_ue_hash_entry_add(imsi_val, imsi_len, upf_list);
+	uint64_t imsi = UINT64_MAX;
+	memcpy(&imsi, imsi_val, imsi_len);
+	upflist_by_ue_hash_entry_add(imsi, upf_list);
 
 	return upf_count;
 }

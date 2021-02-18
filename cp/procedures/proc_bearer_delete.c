@@ -52,20 +52,19 @@ process_mod_resp_delete_handler(void *data, void *unused_param)
 uint8_t
 process_delete_bearer_pfcp_sess_response(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 {
-	int ret = 0;
 	ue_context_t *context = NULL;
 	uint32_t teid = UE_SESS_ID(sess_id);
 	uint8_t bearer_id = UE_BEAR_ID(sess_id) - 5;
 
-	if (get_sess_entry_seid(sess_id, &context) != 0){
+	context = (ue_context_t *)get_sess_entry_seid(sess_id);
+	if (context == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
-	ret = get_ue_context(teid, &context);
-	if (ret < 0) {
+	context  = (ue_context_t *)get_ue_context(teid);
+	if (context == NULL) {
 		LOG_MSG(LOG_ERROR,"Failed to update UE State for teid: %u", teid);
-
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
@@ -168,7 +167,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 		+ sizeof(gtpv2c_tx->gtpc);
 
     ue_context_t *temp = NULL;
-	get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid, &temp);
+	temp = (ue_context_t*)get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
     assert(temp == ue_context);
 
 	if ((SAEGWC != cp_config->cp_type) &&
@@ -229,9 +228,9 @@ process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-	if (get_sess_entry_seid(
-		msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
-		&resp) != 0) {
+
+	resp = get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
+	if (resp == NULL) {
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu",
 			msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
 
@@ -408,7 +407,8 @@ process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
 	context->pdns[ebi_index]->state = PFCP_SESS_DEL_REQ_SNT_STATE;
 
 	/* Lookup entry in hash table on the basis of session id*/
-	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &context) != 0){
+	context = (ue_context_t *)get_sess_entry_seid(context->pdns[ebi_index]->seid);
+    if(context == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu",
 			context->pdns[ebi_index]->seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -424,21 +424,21 @@ process_pfcp_sess_del_request_delete_bearer_rsp(del_bearer_rsp_t *db_rsp)
 int
 process_pfcp_sess_mod_resp_del_cmd(uint64_t sess_id, gtpv2c_header_t *gtpv2c_rx ,uint8_t *is_del_cmd)
 {
-	int ret = 0;
 	uint8_t ebi_index = 0;
 	eps_bearer_t *bearer  = NULL;
 	ue_context_t *context = NULL;
 	uint32_t teid = UE_SESS_ID(sess_id);
 
 	/* Retrive the session information based on session id. */
-	if (get_sess_entry_seid(sess_id, &resp) != 0){
+	resp = get_sess_entry_seid(sess_id, &resp); 
+	if (resp == NULL ){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
 		return -1;
 	}
 
 	if(resp->msg_type == GTP_DELETE_BEARER_CMD){
-		ret = get_ue_context(teid, &context);
-		if (ret < 0) {
+		context = (ue_context_t *)get_ue_context(teid);
+		if (context == NULL) {
 			LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
 		}
 		resp->state = DELETE_BER_REQ_SNT_STATE;
@@ -460,8 +460,8 @@ process_pfcp_sess_mod_resp_del_cmd(uint64_t sess_id, gtpv2c_header_t *gtpv2c_rx 
 		*is_del_cmd = 0;
 
 		/* Get ue context and update state to connected state */
-		ret = get_ue_context(teid, &context);
-		if (ret < 0) {
+		context = (ue_context_t *) get_ue_context(teid);
+		if (context == NULL) {
 			LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
 		}
 
@@ -483,7 +483,6 @@ process_pfcp_sess_mod_del_cmd_timeout(void *data)
 int
 process_sess_mod_req_del_cmd(pdn_connection_t *pdn)
 {
-	int ret = 0;
 	ue_context_t *context = NULL;
 	eps_bearer_t *bearers[MAX_BEARER];
 	int ebi = 0;
@@ -492,13 +491,14 @@ process_sess_mod_req_del_cmd(pdn_connection_t *pdn)
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 	int ebi_index = 0;
 
-	ret = get_ue_context(teid, &context);
+	context = (ue_context_t *)get_ue_context(teid);
 
-	if (ret < 0) {
+	if (context == NULL) {
 		LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
 	}
 
-	if (get_sess_entry_seid(pdn->seid, &resp) != 0){
+	resp = get_sess_entry_seid(pdn->seid);
+	if (resp == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", pdn->seid);
 		return -1;
 	}
@@ -600,8 +600,7 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 
 	buffer = (char *)calloc(1, msg_len_total);
 	if (buffer == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
-				"structure: %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
 		return -1;
 	}
 
@@ -653,7 +652,7 @@ delete_dedicated_bearers(pdn_connection_t *pdn,
 					rule_name.rule_name, pdn->call_id);
 
 			/* Delete rule name from hash */
-			if (del_rule_name_entry(rule_name)) {
+			if (del_rule_name_entry(rule_name.rule_name)) {
 				/* TODO: Error handling rule not found */
 				return -1;
 			}

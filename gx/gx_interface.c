@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <stdlib.h>
-#include "rte_errno.h"
 #include "gx_interface.h"
 #include "ipc_api.h"
 #include "pfcp.h"
@@ -13,7 +12,6 @@
 #include "pfcp_cp_association.h"
 #include "ue.h"
 #include "gen_utils.h"
-#include "tables/tables.h"
 #include "cp_config.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
@@ -23,7 +21,6 @@
 
 static uint32_t cc_request_number = 0;
 int g_cp_sock ;
-int ret ;
 
 void
 fill_rat_type_ie( int32_t *ccr_rat_type, uint8_t csr_rat_type )
@@ -528,17 +525,17 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 	 * code SHOULD anchor only on pdn.
 	 */
 	/* VS: Initialize the Gx Parameters */
-	int ret = 0;
 	uint16_t msg_len = 0;
 	char *buffer = NULL;
 	gx_msg ccr_request = {0};
 	gx_context_t *gx_context = NULL;
 
-	ret = get_gx_context((uint8_t *)pdn->gx_sess_id, &gx_context);
-	if (ret < 0) {
+	ue_context_t *temp_ue_context = (ue_context_t *)get_gx_context((uint8_t *)pdn->gx_sess_id);
+	if (temp_ue_context == NULL) {
 		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
-	return -1;
+	    return -1;
 	}
+    gx_context = temp_ue_context->gx_context;
 	/* VS: Set the Msg header type for CCR */
 	ccr_request.msg_type = GX_CCR_MSG ;
 
@@ -655,8 +652,7 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
 	buffer = (char *)calloc(1, msg_len + sizeof(ccr_request.msg_type));
 	if (buffer == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
-				"structure: %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
 		return -1;
 	}
 

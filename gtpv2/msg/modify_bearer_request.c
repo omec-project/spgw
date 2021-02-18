@@ -22,7 +22,6 @@
 #include "proc_service_request.h"
 #include "sm_structs_api.h"
 #include "gtpv2_error_rsp.h"
-#include "tables/tables.h"
 #include "util.h"
 
 /**
@@ -59,14 +58,13 @@ void
 set_modify_bearer_response(gtpv2c_header_t *gtpv2c_tx,
 		uint32_t sequence, ue_context_t *context, eps_bearer_t *bearer)
 {
-	int ret = 0;
 	uint64_t _ebi = bearer->eps_bearer_id;
 	uint64_t ebi_index = _ebi - 5;
 	upf_context_t *upf_ctx = NULL;
 
 	/*Retrive bearer id from bearer --> context->pdns[]->upf_ip*/
-	if ((ret = upf_context_entry_lookup(context->pdns[ebi_index]->upf_ipv4.s_addr,
-			&upf_ctx)) < 0) {
+	upf_ctx = (upf_context_t *)upf_context_entry_lookup(context->pdns[ebi_index]->upf_ipv4.s_addr);
+    if(upf_ctx == NULL) {
 		return;
 	}
 
@@ -109,14 +107,14 @@ void
 set_modify_bearer_response_handover(gtpv2c_header_t *gtpv2c_tx,
 		uint32_t sequence, ue_context_t *context, eps_bearer_t *bearer)
 {
-	int ret = 0;
 	uint64_t _ebi = bearer->eps_bearer_id;
 	uint64_t ebi_index = _ebi - 5;
 	upf_context_t *upf_ctx = NULL;
 
 	/*Retrive bearer id from bearer --> context->pdns[]->upf_ip*/
-	if ((ret = upf_context_entry_lookup(context->pdns[ebi_index]->upf_ipv4.s_addr,
-			&upf_ctx)) < 0) {
+    
+	upf_ctx = (upf_context_t *)upf_context_entry_lookup(context->pdns[ebi_index]->upf_ipv4.s_addr);
+	if(upf_ctx == NULL) {
 		return;
 	}
 
@@ -160,11 +158,11 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 
 	decode_mod_bearer_req((uint8_t *) gtpv2c_rx, &mb_req);
 
-	int ret = get_ue_context(mb_req.header.teid.has_teid.teid,
-	                                          &context);
+	context = (ue_context_t *)get_ue_context(mb_req.header.teid.has_teid.teid);
 
-	if (ret < 0 || !context)
+	if (context == NULL) {
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+    }
 
 	if (!mb_req.bearer_contexts_to_be_modified.eps_bearer_id.header.len
 			|| !mb_req.bearer_contexts_to_be_modified.s1_enodeb_fteid.header.len) {
@@ -510,14 +508,13 @@ void set_modify_bearer_request(gtpv2c_header *gtpv2c_tx, create_sess_req_t *csr,
 static
 int validate_mbreq_msg(msg_info_t *msg, mod_bearer_req_t *mb_req)
 {
-    int ret;
     ue_context_t *context = NULL;
 
-	ret = get_ue_context(mb_req->header.teid.has_teid.teid,
-			                              &context);
+	context = (ue_context_t *)get_ue_context(mb_req->header.teid.has_teid.teid);
 
-	if (ret < 0 || !context)
+	if (context == NULL) {
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+    }
 
     msg->ue_context = context;
 
@@ -638,7 +635,8 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
 		uint8_t ebi_index = msg->gtpc_msg.mbr.bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
 
-		if(get_ue_context(msg->gtpc_msg.mbr.header.teid.has_teid.teid, &context) != 0) {
+		context = (ue_context_t *)get_ue_context(msg->gtpc_msg.mbr.header.teid.has_teid.teid);
+		if(context == NULL) {
             increment_sgw_peer_stats(MSG_TX_GTPV2_S5S8_MBRSP_REJ, peer_addr->sin_addr.s_addr);
 			mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
 					    cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);

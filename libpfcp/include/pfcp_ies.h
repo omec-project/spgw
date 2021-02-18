@@ -1397,10 +1397,10 @@ typedef struct pfcp_framed_routing_ie_t {
 /**
 Description -Framed-IPv6-Route
 */
-typedef struct pfcp_frmd_ipv6_rte_ie_t {
+typedef struct pfcp_frmd_ipv6_route_ie_t {
   pfcp_ie_header_t header;
   uint8_t frmd_ipv6_rte;
-} pfcp_frmd_ipv6_rte_ie_t;
+} pfcp_frmd_ipv6_route_ie_t;
 
 /**
 Description -Event Quota

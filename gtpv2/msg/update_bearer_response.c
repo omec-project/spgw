@@ -3,7 +3,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
-#include "tables/tables.h"
 #ifdef FUTURE_NEED
 // saegw - UPDATE_BEARER_PROC UPDATE_BEARER_REQ_SNT_STATE UPDATE_BEARER_RSP_RCVD_EVNT process_update_bearer_response_handler  
 // pgw - UPDATE_BEARER_PROC UPDATE_BEARER_REQ_SNT_STATE UPDATE_BEARER_RSP_RCVD_EVNT process_update_bearer_response_handler 
@@ -41,7 +40,6 @@ int handle_update_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_r
 int
 process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 {
-	int ret = 0;
 	uint8_t bearer_id = 0;
 	upd_bearer_rsp_t ubr_rsp = {0};
 	pdn_connection_t *pdn_cntxt = NULL;
@@ -51,21 +49,22 @@ process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
-	ret = get_pdn_context(ub_rsp->header.teid.has_teid.teid, &pdn_cntxt);
+	pdn_cntxt = (pdn_connection_t *)get_pdn_context(ub_rsp->header.teid.has_teid.teid);
 
-	if ( ret < 0) {
+	if ( pdn_cntxt == NULL) {
 		LOG_MSG(LOG_ERROR,"Entry not found for teid:%x...", ub_rsp->header.teid.has_teid.teid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
-	if (get_sess_entry_seid(pdn_cntxt->seid, &resp) != 0){
+	resp = get_sess_entry_seid(pdn_cntxt->seid);
+	if (resp == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", pdn_cntxt->seid);
 		return -1;
 	}
 
-	ret = get_ue_context(ub_rsp->header.teid.has_teid.teid, &context);
-	if (ret) {
-		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+	context = (ue_context_t *)get_ue_context(ub_rsp->header.teid.has_teid.teid);
+	if (context == NULL) {
+		LOG_MSG(LOG_ERROR, "Error: %d ");
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
@@ -126,29 +125,29 @@ process_s5s8_upd_bearer_response_pfcp_timeout(void *data)
 int
 process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp)
 {
-	int ret = 0;
 	uint8_t ebi_index = 0;
 	pdn_connection_t *pdn_cntxt = NULL;
 	ue_context_t *context = NULL;
 	uint32_t seq = 0;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
-	ret = get_pdn_context(ub_rsp->header.teid.has_teid.teid, &pdn_cntxt);
+	pdn_cntxt = (pdn_connection_t *)get_pdn_context(ub_rsp->header.teid.has_teid.teid);
 
-	if ( ret < 0) {
+	if ( pdn_cntxt == NULL) {
 		LOG_MSG(LOG_ERROR,"Entry not found for teid:%x...", 
 										ub_rsp->header.teid.has_teid.teid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
-	if (get_sess_entry_seid(pdn_cntxt->seid, &resp) != 0){
+	resp = get_sess_entry_seid(pdn_cntxt->seid);
+	if (resp == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", pdn_cntxt->seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
-	ret = get_ue_context(ub_rsp->header.teid.has_teid.teid, &context);
-	if (ret) {
-		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+	context = (ue_context_t *)get_ue_context(ub_rsp->header.teid.has_teid.teid);
+	if (context == NULL) {
+		LOG_MSG(LOG_ERROR, "Error: ");
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 

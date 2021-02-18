@@ -21,7 +21,6 @@
 #include "cp_peer.h"
 #include "spgw_cpp_wrapper.h"
 #include "sm_structs_api.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
 #include "proc_session_report.h"
@@ -53,10 +52,13 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return ret;
     }
 
-    if (gtpv2c_rx->teid.has_teid.teid && get_ue_context(ddn_ack->header.teid.has_teid.teid, &context) != 0) {
-        increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
-        LOG_MSG(LOG_DEBUG0, "Rcvd DDN, Context not found for TEID %u ", gtpv2c_rx->teid.has_teid.teid);
-        return -1;
+    if (gtpv2c_rx->teid.has_teid.teid) {
+        context = (ue_context_t *)get_ue_context(ddn_ack->header.teid.has_teid.teid);
+        if (context == NULL) {
+            increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
+            LOG_MSG(LOG_DEBUG0, "Rcvd DDN, Context not found for TEID %u ", gtpv2c_rx->teid.has_teid.teid);
+            return -1;
+        }
     }
  
     // validate message 

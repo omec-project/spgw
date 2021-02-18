@@ -22,7 +22,7 @@ void init_gtp_msg_threads(void);
 
 /**
  * @brief  : Function to build GTP-U echo request
- * @param  : echo_pkt rte_mbuf pointer
+ * @param  : echo_pkt buf pointer
  * @param  : gtpu_seqnb, sequence number
  * @return : void
  */
@@ -333,7 +333,7 @@ create_downlink_data_notification(ue_context_t *context, uint8_t eps_bearer_id,
 
 /**
  * @brief  : Function to build GTP-U echo request
- * @param  : echo_pkt rte_mbuf pointer
+ * @param  : echo_pkt buf pointer
  * @param  : gtpu_seqnb, sequence number
  * @return : Returns nothing
  */

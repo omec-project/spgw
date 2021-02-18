@@ -5,11 +5,9 @@
 #include "sm_struct.h"
 #include "pfcp_messages.h"
 #include "ue.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_proc.h"
 #include "trans_struct.h"
-#include "rte_common.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_set_ie.h"
 #include "cp_io_poll.h"
@@ -31,7 +29,8 @@ get_error_session_report_info(msg_info_t *msg, pfcp_err_rsp_info_t *rsp_info)
             rsp_info->seq = pfcp_sess_rep_req->header.seid_seqno.has_seid.seq_no;
             rsp_info->peer_addr = msg->peer_addr; 
             uint64_t sess_id = pfcp_sess_rep_req->header.seid_seqno.has_seid.seid;
-            if (get_sess_entry_seid(sess_id, &context) != 0) {
+            context = (ue_context_t *)get_sess_entry_seid(sess_id);
+            if (context == NULL) {
                 rsp_info->dp_seid = 0; 
             } else {
                 uint8_t ebi_index = UE_BEAR_ID(sess_id) - 5; 

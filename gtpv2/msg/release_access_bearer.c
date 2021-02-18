@@ -25,7 +25,6 @@
 #include "gtpv2_error_rsp.h"
 #include "proc_s1_release.h"
 #include "sm_structs_api.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
 
@@ -85,8 +84,8 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
 
-    if(get_ue_context(msg->gtpc_msg.rab.header.teid.has_teid.teid,
-                &context) != 0) {
+    context = (ue_context_t *)get_ue_context(msg->gtpc_msg.rab.header.teid.has_teid.teid);
+    if(context == NULL) {
         increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ_DROP, s11_peer_sockaddr->sin_addr.s_addr);
         rab_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);

@@ -14,24 +14,22 @@
 #include "sm_struct.h"
 #include "gx_error_rsp.h"
 #include "cp_log.h"
-#include "rte_errno.h"
 #include "ipc_api.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp.h"
-#include "tables/tables.h"
 #include "cp_io_poll.h"
 #include "gx_interface.h"
+#include "spgw_cpp_wrapper.h"
 
 void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid) 
 {
 
-	int ret = 0;
 	pdn_connection_t *pdn =  NULL;
 	ue_context_t *context = NULL;
 
 	/* Retrieve the UE context */
-	ret = get_ue_context(teid, &context);
-	if (ret < 0) {
+	context = (ue_context_t *)get_ue_context(teid);
+	if (context == NULL) {
 		LOG_MSG(LOG_ERROR, "Failed to get UE State for teid: %u", teid);
 	}else{
 		int ebi_index = ebi - 5;
@@ -45,10 +43,11 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 			uint16_t msglen = 0;
 			char *buffer = NULL;
 			/* Retrive Gx_context based on Sess ID. */
-			ret = get_gx_context((uint8_t *)pdn->gx_sess_id,&gx_context);
-			if (ret < 0) {
+			ue_context_t *temp_ue_context  = (ue_context_t *)get_gx_context((uint8_t *)pdn->gx_sess_id);
+			if (temp_ue_context == NULL) {
 				LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 			}else{
+                gx_context = temp_ue_context->gx_context;
 				gx_msg ccr_request = {0};
 				/* VS: Set the Msg header type for CCR-T */
 				ccr_request.msg_type = GX_CCR_MSG ;
@@ -65,8 +64,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 				msglen = gx_ccr_calc_length(&ccr_request.data.ccr);
 				buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type));
 				if (buffer == NULL) {
-				LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
-								"structure: %s ", rte_strerror(rte_errno));
+				    LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
 					return;
 				}
 
@@ -81,7 +79,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 				gx_send(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 
 				if(remove_gx_context((uint8_t*)pdn->gx_sess_id) < 0){
-					LOG_MSG(LOG_ERROR, " %s - Error on gx_context_by_sess_id_hash deletion", strerror(ret));
+					LOG_MSG(LOG_ERROR, " Error on gx_context_by_sess_id_hash deletion");
 				}
 				free(gx_context);
 			}
@@ -137,8 +135,7 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error, uint16_t se
 
 	buffer = (char *)calloc(1, msg_len_total);
 	if (buffer == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
-				"structure: %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
 		return;
 	}
 

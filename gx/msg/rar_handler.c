@@ -11,11 +11,9 @@
 #include "sm_enum.h"
 #include "sm_struct.h"
 #include "sm_hand.h"
-#include "rte_hash.h"
 #include "pfcp_cp_set_ie.h" // ajay - included for Gx context. need cleanup  
 #include "pfcp.h"
 #include "sm_structs_api.h"
-#include "tables/tables.h"
 #include "gx_error_rsp.h"
 #include "spgw_cpp_wrapper.h"
 #include "proc_rar.h"
@@ -44,13 +42,13 @@ int handle_rar_msg(msg_info_t **msg_p)
         return -1;
     }
     /* Retrive Gx_context based on Sess ID. */
-    ret = get_gx_context((uint8_t *)msg->gx_msg.rar.session_id.val, &gx_context);
-    if (ret < 0) {
+    ue_context_t *temp_ue_context = (ue_context_t *)get_gx_context((uint8_t *)msg->gx_msg.rar.session_id.val);
+    if (temp_ue_context == NULL) {
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", 
                 msg->gx_msg.rar.session_id.val);
         return -1;
     }
-
+    gx_context = temp_ue_context->gx_context;
     msg->ue_context = pdn_cntxt->context;
     msg->pdn_context = pdn_cntxt;
     msg->event = RE_AUTH_REQ_RCVD_EVNT;
