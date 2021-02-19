@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <rte_debug.h>
 #include "gtp_messages_decoder.h"
 #include "cp_log.h"
 #include "ue.h"
@@ -28,7 +27,6 @@
 #include "cp_peer.h"
 #include "gtpv2_error_rsp.h"
 #include "proc_initial_attach.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "gtpv2_session.h"
 #include "proc_sgw_relocation.h"
@@ -690,7 +688,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     ue_context_t *context = NULL; 
     uint64_t imsi;
     imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
-    ret = ue_context_entry_lookup_imsiKey(imsi, &(context), false);
+    context = (ue_context_t *)ue_context_entry_lookup_imsiKey(imsi);
     if(context != NULL) {
         LOG_MSG(LOG_DEBUG0, "[IMSI - %lu] Detected context replacement ", context->imsi64);
         msg->msg_type = GTP_RESERVED; 

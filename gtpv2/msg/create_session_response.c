@@ -11,7 +11,6 @@
 // sgw   INITIAL_PDN_ATTACH_PROC CS_REQ_SNT_STATE CS_RESP_RCVD_EVNT ==> process_cs_resp_handler
 // sgw SGW_RELOCATION_PROC CS_REQ_SNT_STATE CS_RESP_RCVD_EVNT ==> process_cs_resp_handler 
 
-#include "tables/tables.h"
 #include "gtpv2_set_ie.h"
 #include "gtpv2_interface.h"
 #include "cp_log.h"
@@ -76,9 +75,10 @@ int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 			gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
 
 			/* Retrive UE Context */
-			if (get_ue_context(gtpv2c_rx->teid.has_teid.teid, &context) != 0) {
+			context = (ue_context_t *)get_ue_context(gtpv2c_rx->teid.has_teid.teid);
+			if (context == NULL) {
 				cs_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
-																		  S5S8_IFACE);
+								S5S8_IFACE);
 				return -1;
 			}
 
@@ -293,7 +293,8 @@ process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp)
 
 #ifdef OBSOLTE
 	/* Lookup Stored the session information. */
-	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0) {
+	resp = get_sess_entry_seid(context->pdns[ebi_index]->seid);
+	if (resp == NULL) {
 		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}

@@ -6,7 +6,6 @@
 
 #include <stdint.h>
 #include "sm_hand.h"
-#include "rte_common.h"
 #include "cp_config.h"
 #include "cp_log.h"
 

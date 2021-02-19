@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "tables/tables.h"
 #ifdef FUTURE_NEED
 // saegw - PDN_GW_INIT_BEARER_DEACTIVATION  DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT => process_delete_bearer_resp_handler  
 // saegw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT => process_delete_bearer_response_handler 
@@ -39,7 +38,8 @@ int handle_delete_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_r
 		ebi_index = msg->gtpc_msg.db_rsp.bearer_contexts[0].eps_bearer_id.ebi_ebi - 5;
 	}
 
-	if(get_ue_context(gtpv2c_rx->teid.has_teid.teid, &context) != 0) {
+	context = (ue_context_t *)get_ue_context(gtpv2c_rx->teid.has_teid.teid);
+	if(context == NULL) {
 		return -1;
 	}
 	if((ret = get_ue_state(gtpv2c_rx->teid.has_teid.teid, ebi_index)) > 0){
@@ -104,9 +104,8 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 	eps_bearer_t *bearers[MAX_BEARERS];
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
-	ret = get_ue_context(db_rsp->header.teid.has_teid.teid, &context);
-	if (ret) {
-		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+	context = (ue_context_t *)get_ue_context(db_rsp->header.teid.has_teid.teid);
+	if (context == NULL) {
         LOG_MSG(LOG_NEVER, "is_del_bearer_cmd = %d", is_del_bearer_cmd);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -149,7 +148,8 @@ process_delete_bearer_resp(del_bearer_rsp_t *db_rsp, uint8_t is_del_bearer_cmd)
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
 #if 0
-	if (get_sess_entry_seid(pdn->seid, &resp) != 0) {
+	resp = get_sess_entry_seid(pdn->seid);
+	if (resp == NULL) {
 		LOG_MSG(LOG_ERROR,
 			"Failed to add response in entry in SM_HASH");
 		return -1;

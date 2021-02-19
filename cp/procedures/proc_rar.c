@@ -4,8 +4,6 @@
 
 #include "proc_rar.h"
 #include "cp_proc.h"
-#include "rte_debug.h"
-#include "rte_common.h"
 #include "ue.h"
 #include "gx_error_rsp.h"
 #include "proc_bearer_create.h"
@@ -266,7 +264,7 @@ process_rar_request_handler(void *data)
 			    		rule_name.rule_name, pdn->call_id);
 
 	            int8_t bearer_id;
-			    bearer_id = get_rule_name_entry(rule_name);
+			    bearer_id = get_rule_name_entry(rule_name.rule_name);
 			    if (bearer_id != -1) {
                     bearer = pdn->eps_bearers[bearer_id - 5];
                     if(bearer != NULL) {
@@ -304,7 +302,7 @@ process_rar_request_handler(void *data)
 			    		rule_name.rule_name, pdn->call_id);
 
 	            int8_t bearer_id;
-			    bearer_id = get_rule_name_entry(rule_name);
+			    bearer_id = get_rule_name_entry(rule_name.rule_name);
 			    if (bearer_id != -1) {
 			    	/* TODO: Error handling bearer not found */
 			    	return;

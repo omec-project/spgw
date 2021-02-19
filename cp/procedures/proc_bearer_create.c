@@ -4,7 +4,6 @@
 #include "sm_struct.h"
 #include "gtp_ies.h"
 #include "pfcp_cp_session.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_config.h"
 #include "gx_interface.h"
@@ -22,9 +21,8 @@
 #include "gx_interface.h"
 #include "cp_log.h"
 #include <assert.h>
-#include "rte_errno.h"
-#include "rte_common.h"
 #include "proc_bearer_create.h"
+#include "pfcp.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -37,6 +35,7 @@ alloc_bearer_create_proc(msg_info_t *msg)
     proc->pdn_context = (void *)msg->pdn_context; 
     proc->handler = bearer_create_event_handler;
     SET_PROC_MSG(proc, msg);
+    msg->proc_context = proc;
     return proc;
 }
 
@@ -167,18 +166,24 @@ process_pfcp_sess_mod_resp_pre_cbr_handler(void *data, void *p)
 	uint32_t sequence = get_gtp_sequence(); 
 
 	/* Retrive the session information based on session id. */
-	if ((sess_id != 0) && get_sess_entry_seid(sess_id, &context) != 0){
-		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
-        proc_bearer_create_failed(proc_ctxt, GTPV2C_CAUSE_CONTEXT_NOT_FOUND);
-		return -1;
+	if ((sess_id != 0)) {
+        context = get_sess_entry_seid(sess_id);
+        if(context == NULL) {
+		    LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
+            proc_bearer_create_failed(proc_ctxt, GTPV2C_CAUSE_CONTEXT_NOT_FOUND);
+		    return -1;
+        }
 	}
     assert(proc_ctxt->ue_context == context);
 
 	/* Retrieve the UE context */
-	if((teid != 0) && (get_ue_context(teid, &context) != 0)) {
-		LOG_MSG(LOG_ERROR, "No session entry found for teid: %u", teid);
-        proc_bearer_create_failed(proc_ctxt, GTPV2C_CAUSE_CONTEXT_NOT_FOUND);
-		return -1;
+	if((teid != 0)) {
+        context = (ue_context_t *)get_ue_context(teid);
+        if(context == NULL) {
+		    LOG_MSG(LOG_ERROR, "No session entry found for teid: %u", teid);
+            proc_bearer_create_failed(proc_ctxt, GTPV2C_CAUSE_CONTEXT_NOT_FOUND);
+		    return -1;
+        }
 	}
     assert(proc_ctxt->ue_context == context);
 
@@ -227,8 +232,8 @@ process_pfcp_sess_mod_resp_pre_cbr_handler(void *data, void *p)
 		+ sizeof(gtpv2c_tx->gtpc);
 
 #if 0
-	if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
-																			&resp) != 0){
+	resp = get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+	if(resp == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu",
 				msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -538,7 +543,6 @@ process_create_bearer_request_pfcp_timeout(void *data)
 int
 process_create_bearer_request(create_bearer_req_t *cbr)
 {
-	int ret;
 	uint8_t ebi_index = 0;
 	uint8_t new_ebi_index = 0;
 	eps_bearer_t *bearer = NULL;
@@ -546,16 +550,15 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 	pdn_connection_t *pdn = NULL;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
-	ret = get_ue_context_by_sgw_s5s8_teid(cbr->header.teid.has_teid.teid, &context);
-	if (ret) {
-		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+	context  = (ue_context_t *)get_ue_context_by_sgw_s5s8_teid(cbr->header.teid.has_teid.teid);
+	if (context == NULL) {
+		LOG_MSG(LOG_ERROR, "Error: in getting ue context from teid %u ", cbr->header.teid.has_teid.teid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
 	bearer = (eps_bearer_t *)calloc(1, sizeof(eps_bearer_t));
 	if (bearer == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate bearer "
-				"structure: %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate bearer ");
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
 	}
 
@@ -608,8 +611,9 @@ process_create_bearer_request(create_bearer_req_t *cbr)
 	context->sequence = seq_no;
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
-	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0) {
-		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
+	resp = get_sess_entry_seid(context->pdns[ebi_index]->seid);
+	if (resp == NULL) {
+		LOG_MSG(LOG_ERROR, "Failed to find ue context from seid");
 		return -1;
 	}
 
@@ -674,7 +678,7 @@ fill_pfcp_gx_sess_mod_req(proc_context_t *proc,
 					 */
 					bearer = (eps_bearer_t *)calloc(1, sizeof(eps_bearer_t));
 					if(bearer == NULL) {
-						LOG_MSG(LOG_ERROR, "Failure to allocate bearer %s ", rte_strerror(rte_errno));
+						LOG_MSG(LOG_ERROR, "Failure to allocate bearer");
 						return 0;
 						/* return GTPV2C_CAUSE_SYSTEM_FAILURE; */
 					}
@@ -718,7 +722,7 @@ fill_pfcp_gx_sess_mod_req(proc_context_t *proc,
 				strncpy(key.rule_name, pcc_rule->dyn_rule->rule_name,
 						strlen(pcc_rule->dyn_rule->rule_name));
 				sprintf(key.rule_name, "%s%d", key.rule_name, pdn->call_id);
-				if (add_rule_name_entry(key, id) != 0) {
+				if (add_rule_name_entry(key.rule_name, bearer_id) != 0) {
 					LOG_MSG(LOG_ERROR,"Failed to add rule name entry %s ", key.rule_name);
 					return 0;
 				}
@@ -730,7 +734,7 @@ fill_pfcp_gx_sess_mod_req(proc_context_t *proc,
 				bearer = get_bearer(pdn, &pcc_rule->dyn_rule->qos);
 				if(bearer == NULL)
 				{
-					 LOG_MSG(LOG_ERROR, "Failure to find bearer %s ", rte_strerror(rte_errno));
+					 LOG_MSG(LOG_ERROR, "Failure to find bearer ");
 					 return 0;
 					 /* return GTPV2C_CAUSE_SYSTEM_FAILURE; */
 				}
@@ -772,8 +776,7 @@ fill_pfcp_gx_sess_mod_req(proc_context_t *proc,
                 /* bearer = get_bearer(pdn, &pdn->policy.pcc_rule[idx + idx_offset].dyn_rule.qos);
                    if(NULL == bearer)
                    {
-                   LOG_MSG(LOG_ERROR, "Failure to find bearer "
-                   "structure: %s ", rte_strerror(rte_errno));
+                   LOG_MSG(LOG_ERROR, "Failure to find bearer ");
                    return;
                    } */
 
@@ -783,7 +786,7 @@ fill_pfcp_gx_sess_mod_req(proc_context_t *proc,
                         strlen(pcc_rule->dyn_rule->rule_name));
                 sprintf(rule_name.rule_name, "%s%d",
                         rule_name.rule_name, pdn->call_id);
-                int8_t bearer_id = get_rule_name_entry(rule_name);
+                int8_t bearer_id = get_rule_name_entry(rule_name.rule_name);
                 if (-1 == bearer_id) {
                     /* TODO: Error handling bearer not found */
                 }

@@ -4,8 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include <rte_debug.h>
-#include "rte_hash.h"
 #include "gtp_messages_decoder.h"
 #include "gtpv2_set_ie.h"
 #include "ue.h"
@@ -14,8 +12,8 @@
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_interface.h"
 #include "cp_config_defs.h"
-#include "tables/tables.h"
 #include "util.h"
+#include "spgw_cpp_wrapper.h"
 
 /**
  * @brief  : Maintatins data from parsed delete bearer response
@@ -51,11 +49,11 @@ parse_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx,
 	gtpv2c_ie *limit_ie;
 	gtpv2c_ie *limit_group_ie;
 
-	int ret = get_ue_context(gtpv2c_rx->teid.has_teid.teid,
-	                                          &dbr->context);
+	dbr->context = (ue_context_t *) get_ue_context(gtpv2c_rx->teid.has_teid.teid);
 
-	if (ret < 0 || !dbr->context)
+	if (!dbr->context) {
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+    }
 
 	/** TODO: we should fully verify mandatory fields within received
 	 *  message */
@@ -384,7 +382,8 @@ process_delete_bearer_request(del_bearer_req_t *db_req ,uint8_t is_del_bear_cmd)
 	context->sequence = db_req->header.teid.has_teid.seq;
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
-	if (get_sess_entry_seid(pdn->seid, &resp) != 0) {
+	resp = get_sess_entry_seid(pdn->seid);
+	if (resp == NULL) {
 		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 		return -1;
 	}

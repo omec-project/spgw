@@ -4,16 +4,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include <rte_errno.h>
-#include <rte_hash.h>
 #include "cp_log.h"
 #include "cp_config.h"
 #include "gtp_messages_decoder.h"
 #include "gtpv2_set_ie.h"
 #include "gtpv2_ie_parsing.h"
 #include "gtpv2_interface.h"
-#include "tables/tables.h"
 #include "util.h"
+#include "spgw_cpp_wrapper.h"
 
 #define DEFAULT_BEARER_QOS_PRIORITY (15)
 
@@ -46,13 +44,14 @@ parse_bearer_resource_cmd(gtpv2c_header_t *gtpv2c_rx,
 {
 	gtpv2c_ie *current_ie;
 	gtpv2c_ie *limit_ie;
+    ue_context_t *context = NULL;
 
-	int ret = get_ue_context(gtpv2c_rx->teid.has_teid.teid,
-	                                          &brc->context);
+	context = (ue_context_t *)get_ue_context(gtpv2c_rx->teid.has_teid.teid); 
 
-	if (ret < 0 || !brc->context)
+	if (context == NULL)
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 
+    brc->context = context;
 	/** @todo: fully verify mandatory fields within received message */
 	FOR_EACH_GTPV2C_IE(gtpv2c_rx, current_ie, limit_ie)
 	{
@@ -534,8 +533,7 @@ create_dedicated_bearer(gtpv2c_header_t *gtpv2c_rx,
 
 	ded_bearer = brc->context->ded_bearer = (eps_bearer_t *) calloc(1, sizeof(eps_bearer_t));
 	if (ded_bearer == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate dedicated bearer "
-				"structure: %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate dedicated bearer ");
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
 	}
 

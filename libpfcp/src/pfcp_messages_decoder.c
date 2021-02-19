@@ -122,7 +122,7 @@ int decode_pfcp_create_traffic_endpt_ie_t(uint8_t *buf,
 	buf_len = value->header.len;
 
 	value->framed_route_count = 0;
-	value->frmd_ipv6_rte_count = 0;
+	value->frmd_ipv6_route_count = 0;
 
 
 	while (count < buf_len) {
@@ -146,7 +146,7 @@ int decode_pfcp_create_traffic_endpt_ie_t(uint8_t *buf,
 		}  else if (ie_type == PFCP_IE_FRAMED_ROUTE) {
 			count += decode_pfcp_framed_route_ie_t(buf + count, &value->framed_route[value->framed_route_count++]);
 		}  else if (ie_type == PFCP_IE_FRMD_IPV6_RTE) {
-			count += decode_pfcp_frmd_ipv6_rte_ie_t(buf + count, &value->frmd_ipv6_rte[value->frmd_ipv6_rte_count++]);
+			count += decode_pfcp_frmd_ipv6_route_ie_t(buf + count, &value->frmd_ipv6_rte[value->frmd_ipv6_route_count++]);
 		}  else
 			count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
 	}
@@ -1452,7 +1452,7 @@ int decode_pfcp_upd_traffic_endpt_ie_t(uint8_t *buf,
 	buf_len = value->header.len;
 
 	value->framed_route_count = 0;
-	value->frmd_ipv6_rte_count = 0;
+	value->frmd_ipv6_route_count = 0;
 
 	while (count < buf_len) {
 
@@ -1473,7 +1473,7 @@ int decode_pfcp_upd_traffic_endpt_ie_t(uint8_t *buf,
 		}  else if (ie_type == PFCP_IE_FRAMED_ROUTE) {
 			count += decode_pfcp_framed_route_ie_t(buf + count, &value->framed_route[value->framed_route_count++]);
 		}  else if (ie_type == PFCP_IE_FRMD_IPV6_RTE) {
-			count += decode_pfcp_frmd_ipv6_rte_ie_t(buf + count, &value->frmd_ipv6_rte[value->frmd_ipv6_rte_count++]);
+			count += decode_pfcp_frmd_ipv6_route_ie_t(buf + count, &value->frmd_ipv6_rte[value->frmd_ipv6_route_count++]);
 		}  else
 			count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
 	}
@@ -1933,7 +1933,7 @@ int decode_pfcp_pdi_ie_t(uint8_t *buf,
 	value->eth_pckt_fltr_count = 0;
 	value->qfi_count = 0;
 	value->framed_route_count = 0;
-	value->frmd_ipv6_rte_count = 0;
+	value->frmd_ipv6_route_count = 0;
 
 	while (count < buf_len) {
 
@@ -1966,7 +1966,7 @@ int decode_pfcp_pdi_ie_t(uint8_t *buf,
 		}  else if (ie_type == PFCP_IE_FRAMED_ROUTE) {
 			count += decode_pfcp_framed_route_ie_t(buf + count, &value->framed_route[value->framed_route_count++]);
 		}  else if (ie_type == PFCP_IE_FRMD_IPV6_RTE) {
-			count += decode_pfcp_frmd_ipv6_rte_ie_t(buf + count, &value->frmd_ipv6_rte[value->frmd_ipv6_rte_count++]);
+			count += decode_pfcp_frmd_ipv6_route_ie_t(buf + count, &value->frmd_ipv6_rte[value->frmd_ipv6_route_count++]);
 		}  else {
 			count += sizeof(pfcp_ie_header_t) + ntohs(ie_header->len);
 		}

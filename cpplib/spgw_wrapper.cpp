@@ -4,12 +4,32 @@
 
 #include "spgw_config.h"
 #include "spgw_tables.h"
+#include "upf_tables.h"
+#include "bearer_tables.h"
+#include "pdn_tables.h"
+#include "ue_tables.h"
+#include "peer_tables.h"
+#include "dns_upf_tables.h"
+#include "urr_tables.h"
+#include "qer_tables.h"
+#include "pdr_tables.h"
+#include "rule_tables.h"
 #include "spgwStatsPromClient.h"
 #include <thread>
 #include <sstream>
 #include "spgw_webserver.h"
 
-spgwTables *table = nullptr; 
+spgwTables      *table = nullptr; 
+upfTables       *upf_table = nullptr;
+bearerTables    *bearer_table = nullptr;
+pdnTables       *pdn_table = nullptr;
+ueTables        *ue_table  = nullptr;
+peerTables      *peer_table = nullptr;
+dnsUpfTables    *dns_upf_table = nullptr;
+urrTables       *urr_table = nullptr; 
+qerTables       *qer_table = nullptr; 
+pdrTables       *pdr_table = nullptr; 
+ruleTables      *rule_table = nullptr; 
 
 extern "C"
 {
@@ -56,6 +76,16 @@ extern "C"
     void init_cpp_tables()
     {
         table = new spgwTables();
+        upf_table = new upfTables();
+        bearer_table = new bearerTables();
+        pdn_table = new pdnTables();
+        ue_table  = new ueTables();
+        peer_table = new peerTables();
+        dns_upf_table = new dnsUpfTables();
+        urr_table     = new urrTables();
+        qer_table     = new qerTables();
+        pdr_table     = new pdrTables();
+        rule_table    = new ruleTables();
     }
 
     bool add_pfcp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq, void *trans)
@@ -250,4 +280,255 @@ extern "C"
        }
     }
 
+    /* UPF APIS... Start */
+    int upf_context_entry_add(uint32_t *upf_ip, void *entry)
+    {
+        return upf_table->add_upf(upf_ip, entry);
+    }
+    
+    void* upf_context_entry_lookup(uint32_t upf_ip)
+    {
+        return upf_table->find_upf(upf_ip);
+    }
+    
+    int upf_context_delete_entry(uint32_t upf_ip)
+    {
+        return upf_table->delete_upf(upf_ip);
+    }
+    /* UPF APIS... end */
+
+    /* Bearer APIS... Start */
+    int bearer_context_entry_add_teidKey(uint32_t teid, void *entry)
+    {
+        return bearer_table->add_teid_to_bearer_mapping(teid, entry);
+    }
+    
+    void* get_bearer_by_teid(uint32_t teid)
+    {
+        return bearer_table->find_bearer_from_teid(teid);
+    }
+    
+    int bearer_context_delete_entry_teidKey(uint32_t teid)
+    {
+        return bearer_table->delete_bearer_teid_mapping(teid);
+    }
+    /* Bearer APIS... end */
+
+    /* PDN APIS... Start */
+    int add_pdn_conn_entry(uint32_t call_id, void *entry)
+    {
+        return pdn_table->add_callid_to_pdn_mapping(call_id, entry);
+    }
+    
+    void* get_pdn_conn_entry(uint32_t call_id)
+    {
+        return pdn_table->find_pdn_from_callid(call_id);
+    }
+
+    int del_pdn_conn_entry(uint32_t call_id)
+    {
+        return pdn_table->delete_callid_pdn_mapping(call_id);
+    }
+
+    int pdn_context_entry_add_teidKey(uint32_t teid, void *entry)
+    {
+        return pdn_table->add_teid_to_pdn_mapping(teid, entry);
+    }
+    
+    void* get_pdn_context(uint32_t teid)
+    {
+        return pdn_table->find_pdn_from_teid(teid);
+    }
+
+    int pdn_context_delete_entry_teidKey(uint32_t teid)
+    {
+        return pdn_table->delete_teid_pdn_mapping(teid);
+    }
+    /* PDN APIS... end */
+
+    /* UE APIS... start */
+    int add_sess_entry_seid(uint64_t seid, void *entry)
+    {
+        return ue_table->add_seid_to_ue_mapping(seid, entry);
+    }
+    
+    void* get_sess_entry_seid(uint64_t seid)
+    {
+        return ue_table->find_ue_from_seid(seid);
+    }
+
+    int del_sess_entry_seid(uint64_t seid)
+    {
+        return ue_table->delete_seid_ue_mapping(seid);
+    }
+
+    int ue_context_entry_add_teidKey(uint32_t teid, void *entry)
+    {
+        return ue_table->add_teid_to_ue_mapping(teid, entry);
+    }
+    
+    void* get_ue_context(uint32_t teid)
+    {
+        return ue_table->find_ue_from_teid(teid);
+    }
+
+    int ue_context_delete_entry_teidKey(uint32_t teid)
+    {
+        return ue_table->delete_teid_ue_mapping(teid);
+    }
+
+    int ue_context_entry_add_imsiKey(uint64_t imsi, void *entry)
+    {
+        return ue_table->add_imsi_to_ue_mapping(imsi, entry);
+    }
+    
+    void* ue_context_entry_lookup_imsiKey(uint64_t imsi)
+    {
+        return ue_table->find_ue_from_imsi(imsi);
+    }
+
+    int ue_context_delete_entry_imsiKey(uint64_t imsi)
+    {
+        return ue_table->delete_imsi_ue_mapping(imsi);
+    }
+
+    /* UE APIS... end */
+    /* Peer APIs start */
+    int add_peer_entry(uint32_t peer_addr, void *entry)
+    {
+        return peer_table->add_addr_to_peer_mapping(peer_addr, entry);
+    }
+    
+    void* get_peer_entry(uint32_t peer_addr)
+    {
+        return peer_table->find_peer_from_addr(peer_addr);
+    }
+
+    int del_entry_from_hash(uint32_t peer_addr)
+    {
+        return peer_table->delete_addr_peer_mapping(peer_addr);
+    }
+
+    int peer_heartbeat_entry_lookup(uint32_t peer_ip, uint32_t *recov_time)
+    {
+        return peer_table->find_peer_recov_time(peer_ip, recov_time);
+    }
+
+    void add_ip_to_heartbeat_hash(struct sockaddr_in *peer_addr, uint32_t recovery_time)
+    {
+        peer_table->add_peer_addr_to_recov_time_mapping(peer_addr->sin_addr.s_addr, recovery_time);
+        return ;
+    }
+
+    void delete_entry_heartbeat_hash(struct sockaddr_in *peer_addr)
+    {
+        peer_table->reset_peer_recov_time(peer_addr->sin_addr.s_addr);
+        return;
+    }
+
+    /* Peer APIs end */
+    
+    /* IMSI to DNS_UPF APIs end */
+
+    int upflist_by_ue_hash_entry_add(uint64_t imsi, void *entry)
+    {
+        return dns_upf_table->add_imsi_to_upfdns_mapping(imsi, entry);
+    }
+    
+    void* upflist_by_ue_hash_entry_lookup(uint64_t imsi)
+    {
+        return dns_upf_table->find_upfdns_from_imsi(imsi);
+    }
+
+    int upflist_by_ue_hash_entry_delete(uint64_t imsi)
+    {
+        return dns_upf_table->delete_imsi_upfdns_mapping(imsi);
+    }
+    /* IMSI to DNS_UPF APIs end*/
+
+    /* URR APIs */
+    int add_urr_entry(uint32_t urr_id, void *cntxt) 
+    {
+        return urr_table->add_urrid_to_urrctxt_mapping(urr_id, cntxt);
+    }
+
+    void* get_urr_entry(uint32_t urr_id)
+    {
+        return urr_table->find_urrctxt_from_urrid(urr_id);
+    }
+
+    int del_urr_entry(uint32_t urr_id)
+    {
+        return urr_table->delete_urrid_urrctxt_mapping(urr_id);
+    }
+    /* URR APIs end */
+
+    /* QER APIs */
+    int add_qer_entry(uint32_t qer_id, void *cntxt) 
+    {
+        return qer_table->add_qerid_to_qerctxt_mapping(qer_id, cntxt);
+    }
+
+    void* get_qer_entry(uint32_t qer_id)
+    {
+        return qer_table->find_qerctxt_from_qerid(qer_id);
+    }
+
+    int del_qer_entry(uint32_t qer_id)
+    {
+        return qer_table->delete_qerid_qerctxt_mapping(qer_id);
+    }
+    /* QER APIs end */
+
+    /* PDRs API */
+    int add_pdr_entry(uint16_t pdr_id, void *cntxt)
+    {
+        return pdr_table->add_pdrid_to_pdrctxt_mapping(pdr_id, cntxt);
+    }
+
+    void*  get_pdr_entry(uint16_t pdr_id)
+    {
+        return pdr_table->find_pdrctxt_from_pdrid(pdr_id);
+    }
+
+    int del_pdr_entry(uint16_t pdr_id)
+    {
+        return pdr_table->delete_pdrid_pdrctxt_mapping(pdr_id);
+    }
+    /* PDRs API end */
+
+    /* Rules APIs */
+    int add_rule_name_entry(const char *rule_name, uint8_t bearer)
+    {
+        return rule_table->add_rulename_to_bearerid_mapping(rule_name, bearer);
+    }
+
+    int8_t get_rule_name_entry(const char *rule_name)
+    {
+        return rule_table->find_bearerid_from_rulename(rule_name);
+    }
+
+    int del_rule_name_entry(const char *rule_name)
+    {
+        return rule_table->delete_bearerid_rulename_mapping(rule_name);
+    }
+    /* Rules APIs end */
+    
+    /* Gx context APIs start */
+
+    int gx_context_entry_add(const uint8_t *sess_id, void *context)
+    {
+        return ue_table->add_gx_sessid_to_ue_mapping(sess_id, context);
+    }
+
+    void* get_gx_context(const uint8_t *sess_id) 
+    {
+        return ue_table->find_ue_from_gx_sessid(sess_id);
+    }
+
+    int remove_gx_context(const uint8_t *sess_id)
+    {
+        return ue_table->delete_gx_sessid_ue_mapping(sess_id);
+    }
+    /* Gx context APIs end */
 }

@@ -11,11 +11,9 @@
 #include "sm_enum.h"
 #include "sm_struct.h"
 #include "sm_hand.h"
-#include "rte_hash.h"
 #include "pfcp_cp_set_ie.h" // ajay - included for Gx context. need cleanup  
 #include "pfcp.h"
 #include "sm_structs_api.h"
-#include "tables/tables.h"
 #include "gen_utils.h"
 #include "proc_pfcp_assoc_setup.h"
 #include "gtpv2_error_rsp.h"
@@ -48,11 +46,13 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
 
     pdn_connection_t *pdn_cntxt = NULL;
     /* Retrive Gx_context based on Sess ID. */
-    int ret = get_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val,&gx_context);
-    if (ret < 0) {
+    int ret;
+    ue_context_t *temp_ue_context  = (ue_context_t *)get_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val);
+    if (temp_ue_context == NULL) {
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", msg->gx_msg.cca.session_id.val);
         return -1;
     }
+    gx_context = temp_ue_context->gx_context;
     proc_context_t *proc_context = (proc_context_t *)gx_context->proc_context;
 
     if(msg->gx_msg.cca.presence.result_code &&

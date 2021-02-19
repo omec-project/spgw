@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include <rte_debug.h>
 #include "gtp_messages_decoder.h"
 #include "gtp_messages.h"
 #include "vepc_cp_dp_api.h"
@@ -19,7 +18,6 @@
 #include "sm_structs_api.h"
 #include "gtpv2_error_rsp.h"
 #include "proc_detach.h"
-#include "tables/tables.h"
 #include "util.h"
 
 int
@@ -44,13 +42,13 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 	ue_context_t **_context, uint32_t *s5s8_pgw_gtpc_teid,
 	uint32_t *s5s8_pgw_gtpc_ipv4)
 {
-	int ret;
 	ue_context_t *context = NULL;
 
-	ret = get_ue_context(teid, &context);
+	context = (ue_context_t *)get_ue_context(teid);
 
-	if (ret < 0 || !context)
+	if (context == NULL) {
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+    }
 
 
 	if (!lbi.header.len) {
@@ -159,11 +157,11 @@ process_delete_session_request(gtpv2c_header_t *gtpv2c_rx,
 		static uint32_t process_sgwc_s5s8_ds_req_cnt;
 
 		/* s11_sgw_gtpc_teid= key->ue_context_by_fteid_hash */
-		ret = get_ue_context(ds_req.header.teid.has_teid.teid,
-			                                  &context);
+		context = (ue_context_t *)get_ue_context(ds_req.header.teid.has_teid.teid);
 
-		if (ret < 0 || !context)
+		if (context == NULL) {
 			return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+        }
 
 		uint8_t del_ebi_index = ds_req.lbi.ebi_ebi - 5;
 		pdn = context->pdns[del_ebi_index];
@@ -248,8 +246,8 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
 
-    if(get_ue_context(msg->gtpc_msg.dsr.header.teid.has_teid.teid,
-                &context) != 0) {
+    context = (ue_context_t *)get_ue_context(msg->gtpc_msg.dsr.header.teid.has_teid.teid);
+    if(context == NULL) {
         ds_error_response(NULL, msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
         return -1;
@@ -568,7 +566,7 @@ struct gw_info {
 //	//gtpv2c_rx->teid_u.has_teid.teid = ntohl(gtpv2c_rx->teid_u.has_teid.teid);
 //	/* s11_sgw_gtpc_teid = s5s8_pgw_gtpc_base_teid =
 //	 * key->ue_context_by_fteid_hash */
-//	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
+//	ret = r_t_e_hash_lookup_data(ue_context_by_fteid_hash,
 //	    (const void *) &gtpv2c_rx->teid_u.has_teid.teid,
 //	    (void **) &context);
 //	if (ret < 0 || !context) {
@@ -578,7 +576,6 @@ struct gw_info {
 //				"\n\tdelete_pgwc_context-ERROR!!!"
 //				"\n\tprocess_pgwc_s5s8_ds_req_cnt= %u;"
 //				"\n\tgtpv2c_s5s8_rx->teid_u.has_teid.teid= %X;"
-//				"\n\trte_hash_lookup_data("
 //					"ue_context_by_fteid_hash,..)= %d",
 //				process_pgwc_s5s8_ds_req_cnt++,
 //				gtpv2c_rx->teid_u.has_teid.teid,
@@ -651,7 +648,6 @@ struct gw_info {
 //			"\n\tpdn->s5s8_sgw_gtpc_teid= %X;"
 //			"\n\tpdn->s5s8_pgw_gtpc_ipv4= %s;"
 //			"\n\tpdn->s5s8_pgw_gtpc_teid= %X;"
-//			"\n\trte_hash_lookup_data("
 //				"ue_context_by_fteid_hash,..)= %d",
 //			process_pgwc_s5s8_ds_req_cnt++,
 //			inet_ntoa(pdn->ipv4),
@@ -748,7 +744,8 @@ struct gw_info {
 //	context->state = PFCP_SESS_DEL_REQ_SNT_STATE;
 //
 //	/* VS: Stored/Update the session information. */
-//	if (get_sess_entry_seid(_resp.seid, &resp) != 0) {
+//	resp = get_sess_entry_seid(_resp.seid);
+//	if (resp == NULL) {
 //		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 //		return -1;
 //	}
@@ -795,7 +792,7 @@ struct gw_info {
 //	//gtpv2c_rx->teid_u.has_teid.teid = ntohl(gtpv2c_rx->teid_u.has_teid.teid);
 //	/* s11_sgw_gtpc_teid= s5s8_sgw_gtpc_teid =
 //	 * key->ue_context_by_fteid_hash */
-//	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
+//	ret = r_t_e_hash_lookup_data(ue_context_by_fteid_hash,
 //	    (const void *) &gtpv2c_rx->teid_u.has_teid.teid,
 //	    (void **) &context);
 //	if (ret < 0 || !context) {
@@ -805,7 +802,6 @@ struct gw_info {
 //				"\n\tdelete_sgwc_context-ERROR!!!"
 //				"\n\tprocess_sgwc_s5s8_ds_rep_cnt= %u;"
 //				"\n\tgtpv2c_s5s8_rx->teid_u.has_teid.teid= %X;"
-//				"\n\trte_hash_lookup_data("
 //					"ue_context_by_fteid_hash,..)= %d",
 //				process_sgwc_s5s8_ds_rsp_cnt++,
 //				gtpv2c_rx->teid_u.has_teid.teid,
@@ -818,7 +814,6 @@ struct gw_info {
 //			"\n\tdelete_sgwc_context(...);"
 //			"\n\tprocess_sgwc_s5s8_ds_rsp_cnt= %u;"
 //			"\n\tgtpv2c_rx->teid_u.has_teid.teid= %X"
-//			"\n\trte_hash_lookup_data("
 //				"ue_context_by_fteid_hash,..)= %d",
 //			process_sgwc_s5s8_ds_rsp_cnt++,
 //			gtpv2c_rx->teid_u.has_teid.teid,

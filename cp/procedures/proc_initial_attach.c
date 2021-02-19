@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "rte_common.h"
 #include "sm_struct.h"
 #include "gtp_messages.h"
 #include "cp_config.h"
@@ -24,8 +23,6 @@
 #include "cp_transactions.h"
 #include "proc_initial_attach.h"
 #include "proc_pfcp_assoc_setup.h"
-#include "tables/tables.h"
-#include "rte_errno.h"
 #include "ipc_api.h"
 #include "util.h"
 #include "cp_io_poll.h"
@@ -1395,9 +1392,9 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	struct parse_pgwc_s5s8_create_session_request_t create_s5s8_session_request = { 0 };
 
 	upf_context_t *upf_context = NULL;
-	ret = upf_context_entry_lookup((upf_ipv4->s_addr), &(upf_context));
+	upf_context = (upf_context_t *)upf_context_entry_lookup((upf_ipv4->s_addr));
 
-	if (ret < 0) {
+	if (upf_context == NULL) {
 		LOG_MSG(LOG_DEBUG, "NO ENTRY FOUND IN UPF HASH [%u] for proc = %d ", upf_ipv4->s_addr, proc);
 		return 0;
 	}
@@ -1685,7 +1682,7 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //
 //	/* s11_sgw_gtpc_teid= s5s8_sgw_gtpc_teid =
 //	 * key->ue_context_by_fteid_hash */
-//	ret = rte_hash_lookup_data(ue_context_by_fteid_hash,
+//	ret = r_t_e_hash_lookup_data(ue_context_by_fteid_hash,
 //	    (const void *) &gtpv2c_rx->teid.has_teid.teid,
 //	    (void **) &context);
 //
@@ -1822,7 +1819,8 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //	context->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 //
 //	/* Lookup Stored the session information. */
-//	if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0) {
+//	resp = get_sess_entry_seid(context->pdns[ebi_index]->seid);
+//	if (resp == NULL) {
 //		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
 //		return -1;
 //	}
@@ -1969,7 +1967,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 	gx_context->state = CCR_SNT_STATE;
 
 	/* VS: Maintain the Gx context mapping with Gx Session id */
-	if (gx_context_entry_add((uint8_t*)gx_context->gx_sess_id, gx_context) < 0) {
+	if (gx_context_entry_add((uint8_t*)gx_context->gx_sess_id, context) < 0) {
 		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
@@ -1978,8 +1976,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
 	buffer = (char *)calloc(1, msg_len + sizeof(ccr_request.msg_type)+sizeof(ccr_request.seq_num));
 	if (buffer == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
-				"structure: %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
 		return -1;
 	}
 

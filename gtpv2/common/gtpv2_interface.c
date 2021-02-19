@@ -9,7 +9,6 @@
 #include "cp_interface.h"
 #include "cp_config.h"
 #include "gtp_ies.h"
-#include "rte_common.h"
 #include "util.h"
 #include "cp_events.h"
 #include "gtpv2_error_rsp.h"

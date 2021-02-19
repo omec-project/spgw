@@ -9,9 +9,9 @@
 #include "cp_io_poll.h"
 #include "cp_peer.h"
 #include "pfcp_messages_decoder.h"
-#include "tables/tables.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
+#include "cp_proc.h"
 
 // saegw, INITIAL_PDN_ATTACH_PROC,PFCP_SESS_MOD_REQ_SNT_STATE,PFCP_SESS_MOD_RESP_RCVD_EVNT => process_sess_mod_resp_handler
 // saegw SGW_RELOCATION_PROC PFCP_SESS_MOD_REQ_SNT_STATE PFCP_SESS_MOD_RESP_RCVD_EVNT => process_sess_mod_resp_handler

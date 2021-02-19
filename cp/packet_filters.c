@@ -189,9 +189,7 @@ install_sdf_rules(const pkt_fltr *new_packet_filter)
 
 	pkt_fltr *filter = (pkt_fltr *)calloc(1, sizeof(pkt_fltr));
 	if (filter == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate dedicated packet filter "
-				"structure: %s ",
-				rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate dedicated packet filter ");
 		return -ENOMEM;
 	}
 
@@ -221,8 +219,7 @@ install_pcc_rules(struct pcc_rules new_pcc_entry)
 
 	struct pcc_rules *pcc_filter = (struct pcc_rules *)calloc(1, sizeof(new_pcc_entry));
 	if (NULL == pcc_filter) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for pcc filter "
-				"structure: %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for pcc filter ");
 		return -ENOMEM;
 	}
 
@@ -254,8 +251,7 @@ install_meter_profiles(struct dp_id dp_id, struct mtr_entry new_mtr_entry)
 
 	struct mtr_entry *mtr_profile = (struct mtr_entry *)calloc(1, sizeof(new_mtr_entry));
 	if (mtr_profile == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for meter profile "
-				"structure: %s for dpid = %lu", rte_strerror(rte_errno), dp_id.id);
+		LOG_MSG(LOG_ERROR, "Failure to allocate memeory for meter profile dp_id = %lu ", dp_id.id);
 		return -ENOMEM;
 	}
 

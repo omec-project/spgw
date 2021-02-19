@@ -6,6 +6,7 @@
 #define __SPGW__CPP_WRAPPER__H
 #include "spgw_config_struct.h"
 #include "spgwStatsPromEnum.h"
+#include <netinet/in.h>
 
 spgw_config_profile_t* parse_subscriber_profiles_c(const char *);
 
@@ -67,5 +68,159 @@ void increment_proc_mme_peer_stats_reason(int stat_id, uint32_t peer_addr, uint3
 void increment_proc_mme_peer_stats(int stat_id, uint32_t peer_addr, uint16_t tac);
 /* Procedure stats end */
 void set_data_stats(int stat_id, uint64_t imsi, uint32_t bytes);
+
+/***************UPF Table *********************************/
+int
+upf_context_entry_add(uint32_t *upf_ip, void *entry);
+
+void*
+upf_context_entry_lookup(uint32_t upf_ip);
+
+int
+upf_context_delete_entry(uint32_t upf_ip);
+/*****************UPF Table end *******************************/
+
+/**************Bearer Table **********************************/
+int 
+bearer_context_entry_add_teidKey(uint32_t teid, void *context);
+
+void*
+get_bearer_by_teid(uint32_t teid);
+
+int 
+bearer_context_delete_entry_teidKey(uint32_t teid);
+/*****************Bearer Table end *******************************/
+
+int
+add_pdn_conn_entry(uint32_t call_id, void *pdn);
+
+void*
+get_pdn_conn_entry(uint32_t call_id);
+
+int
+del_pdn_conn_entry(uint32_t call_id);
+
+int
+pdn_context_entry_add_teidKey(uint32_t teid, void *pdn);
+
+void*
+get_pdn_context(uint32_t teid);
+
+int
+pdn_context_delete_entry_teidKey(uint32_t teid);
+
+/* UE APIs */
+int
+add_sess_entry_seid(uint64_t sess_id, void *context);
+
+void*
+get_sess_entry_seid(uint64_t sess_id);
+
+int
+del_sess_entry_seid(uint64_t sess_id);
+
+int 
+ue_context_entry_add_teidKey(uint32_t teid, void *entry);
+
+void* 
+get_ue_context(uint32_t teid);
+
+int 
+ue_context_delete_entry_teidKey(uint32_t teid);
+
+int 
+ue_context_entry_add_imsiKey(uint64_t imsi, void *context);
+
+void*
+ue_context_entry_lookup_imsiKey(uint64_t imsi);
+
+int 
+ue_context_delete_entry_imsiKey(uint64_t imsi);
+
+// peer table APIS 
+
+int 
+add_peer_entry(uint32_t ipaddr, void *peer);
+
+void*
+get_peer_entry(uint32_t ipaddr);
+
+int 
+del_entry_from_hash(uint32_t ipAddr);
+
+int 
+peer_heartbeat_entry_lookup(uint32_t peer_ip, uint32_t *recov_time);
+
+void 
+add_ip_to_heartbeat_hash(struct sockaddr_in *peer_addr, uint32_t recovery_time);
+
+void 
+delete_entry_heartbeat_hash(struct sockaddr_in *peer_addr);
+
+// UPF DNS 
+
+int
+upflist_by_ue_hash_entry_add(uint64_t imsi_val, void *data);
+
+void*
+upflist_by_ue_hash_entry_lookup(uint64_t imsi_val);
+
+int
+upflist_by_ue_hash_entry_delete(uint64_t imsi_val);
+
+/* URR APIS */
+
+int
+add_urr_entry(uint32_t urr_id, void *cntxt);
+
+void*
+get_urr_entry(uint32_t urr_id);
+
+int
+del_urr_entry(uint32_t urr_id);
+/* URR APIS end */
+
+/* QER APIS */
+int
+add_qer_entry(uint32_t qer_id, void *cntxt);
+
+void*
+get_qer_entry(uint32_t qer_id);
+
+int
+del_qer_entry(uint32_t qer_id);
+/* QER APIS end */
+
+/* PDR APIS end */
+
+int
+add_pdr_entry(uint16_t rule_id, void *cntxt);
+
+void* 
+get_pdr_entry(uint16_t rule_id);
+
+int
+del_pdr_entry(uint16_t rule_id);
+
+int 
+add_rule_name_entry(const char *rule_name, uint8_t bearer);
+
+int8_t 
+get_rule_name_entry(const char *rule_name);
+
+int 
+del_rule_name_entry(const char *rule_name);
+
+
+/* Gx APIS */
+
+int 
+gx_context_entry_add(const uint8_t *sess_id, void *context);
+
+void*
+get_gx_context(const uint8_t *sessid); 
+
+int 
+remove_gx_context(const uint8_t *sessid);
 
 #endif

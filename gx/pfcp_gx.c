@@ -4,10 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "pfcp.h"
 #include "cp_config.h"
-#include <rte_ip.h>
-#include <rte_udp.h>
 #include <rte_cfgfile.h>
 #include <rte_string_fns.h>
 
@@ -26,11 +23,12 @@
 #include "gtpv2_interface.h"
 #include "gen_utils.h"
 #include "cp_transactions.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
 #include "proc_rar.h"
 #include "pfcp_cp_interface.h"
+#include "gx.h"
+#include "gx_interface.h"
 
 #define PRESENT 1
 #define NUM_VALS 9
@@ -382,7 +380,8 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
                 rule_definition->charging_rule_name.len);
 #if 0
         /* VS: Maintain the Rule Name and Bearer ID  mapping with call id */
-        if (add_rule_name_entry(key, &id) != 0) {
+        uint8_t bearer_id = 0; assert(0);
+        if (add_rule_name_entry(key.rule_name, bearer_id) != 0) {
             LOG_MSG(LOG_ERROR, "Failed to add rule name %s ", key.rule_name);
             return -1;
         }
@@ -454,7 +453,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 								rule_definition->charging_rule_name.len);
 						sprintf(rule_name.rule_name, "%s%d",
 								rule_name.rule_name, pdn->call_id);
-						if(get_rule_name_entry(rule_name) == -1) {
+						if(get_rule_name_entry(rule_name.rule_name) == -1) {
 							pcc_rule->action = RULE_ACTION_ADD;
 						} else {
 							pcc_rule->action =  RULE_ACTION_MODIFY;
@@ -487,7 +486,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 				sprintf(rule_name.rule_name, "%s%d",
 						rule_name.rule_name, pdn->call_id);
 				/* TODO: Need to remove comment */
-				int8_t bearer_identifer = get_rule_name_entry(rule_name);
+				int8_t bearer_identifer = get_rule_name_entry(rule_name.rule_name);
 				if (bearer_identifer >= 0)
 				{
                     pcc_rule_t *pcc_rule = calloc(1, sizeof(pcc_rule_t)); 
@@ -521,8 +520,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 							/* VS: Allocate memory for dynamic rule */
 							context->dynamic_rules[cnt] = (dynamic_rule_t *)calloc(1, sizeof(dynamic_rule_t));
 							if (context->dynamic_rules[cnt] == NULL) {
-								LOG_MSG(LOG_ERROR, "Failure to allocate dynamic rule memory "
-										"structure: %s ", rte_strerror(rte_errno));
+								LOG_MSG(LOG_ERROR, "Failure to allocate dynamic rule memory ");
 								return -1;
 							}
 
@@ -559,7 +557,7 @@ check_for_rules_on_default_bearer(pdn_connection_t *pdn)
                     strlen(pcc_rule->dyn_rule->rule_name));
             sprintf(key.rule_name, "%s%d", key.rule_name,
                     pdn->call_id);
-            if (add_rule_name_entry(key, id) != 0) {
+            if (add_rule_name_entry(key.rule_name, pdn->default_bearer_id - 5) != 0) {
                 LOG_MSG(LOG_ERROR, "Failed to rule %s ", key.rule_name);
                 return -1;
             }
@@ -694,8 +692,6 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 int16_t
 gx_update_bearer_req(pdn_connection_t *pdn)
 {
-
-	int ret = 0;
 	eps_bearer_t *bearer = NULL;
 	ue_context_t *context = NULL;
 	int update_require = 0, send_ubr = 0;
@@ -709,7 +705,8 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 
 	upd_bearer_req_t ubr_req = {0};
 
-	if (get_sess_entry_seid(pdn->seid, &context) != 0) {
+	context = (ue_context_t *)get_sess_entry_seid(pdn->seid);
+	if (context == NULL) {
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu",pdn->seid);
 		return DIAMETER_ERROR_USER_UNKNOWN;
 	}
@@ -781,11 +778,13 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 
 	gx_context_t *gx_context = NULL;
 	/* Retrive Gx_context based on Sess ID. */
-	ret = get_gx_context((uint8_t*)pdn->gx_sess_id, &gx_context);
-	if (ret < 0) {
+	ue_context_t *temp_ue_context = (ue_context_t *)get_gx_context((uint8_t*)pdn->gx_sess_id);
+	if (temp_ue_context == NULL) {
 		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 		return DIAMETER_UNKNOWN_SESSION_ID;
 	}
+    gx_context = temp_ue_context->gx_context;
+    assert(gx_context != NULL);
 
 	/* Update UE State */
 	pdn->state = UPDATE_BEARER_REQ_SNT_STATE;
@@ -844,7 +843,7 @@ get_charging_rule_remove_bearer_info(pdn_connection_t *pdn,
 					rule_name.rule_name, pdn->call_id);
 
 	        int8_t bearer_id;
-			bearer_id = get_rule_name_entry(rule_name);
+			bearer_id = get_rule_name_entry(rule_name.rule_name);
 			if (-1 == bearer_id) {
 				/* TODO: Error handling bearer not found */
 				return;
@@ -886,7 +885,7 @@ get_bearer_info_install_rules(pdn_connection_t *pdn, uint8_t *ebi)
 				   sizeof(pcc_rule->dyn_rule->rule_name));
 			sprintf(rule_name.rule_name, "%s%d",
 					rule_name.rule_name, pdn->call_id);
-			ret = get_rule_name_entry(rule_name);
+			ret = get_rule_name_entry(rule_name.rule_name);
 			if (-1 == ret) {
 				/* TODO: Error handling bearer not found */
 				return ret;

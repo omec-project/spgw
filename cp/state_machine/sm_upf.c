@@ -5,8 +5,6 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <stdio.h>
-#include "rte_common.h"
-#include "rte_errno.h"
 #include "pfcp.h"
 #include "gx_interface.h"
 #include "sm_enum.h"
@@ -34,7 +32,6 @@
 #include "pfcp_enum.h"
 #include "cp_transactions.h"
 #include "cp_peer.h"
-#include "tables/tables.h"
 #include "cp/cp_log.h"
 
 
@@ -45,9 +42,7 @@ int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt)
 	upf_context  = calloc(1, sizeof(upf_context_t));
 
 	if (upf_context == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate upf context: "
-				"%s ", rte_strerror(rte_errno));
-
+		LOG_MSG(LOG_ERROR, "Failure to allocate upf context: ");
 		return -1;
 	}
     memset(upf_context, 0, sizeof(upf_context_t));

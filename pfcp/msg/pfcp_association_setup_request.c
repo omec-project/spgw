@@ -14,7 +14,6 @@
 #include "pfcp_cp_set_ie.h"
 #include "cp_config.h"
 #include "pfcp_enum.h"
-#include "tables/tables.h"
 #include "cp_peer.h"
 #include "pfcp_cp_util.h"
 #include "cp_io_poll.h"
@@ -67,7 +66,7 @@ handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfc
     uint32_t seq_num = msg->pfcp_msg.pfcp_ass_req.header.seid_seqno.no_seid.seq_no; 
 
     upf_context_t *upf_context = NULL; 
-    upf_context_entry_lookup(peer_addr->sin_addr.s_addr, &upf_context);
+    upf_context = (upf_context_t *)upf_context_entry_lookup(peer_addr->sin_addr.s_addr);
     if(upf_context == NULL) {
         LOG_MSG(LOG_ERROR, "Received PFCP association setup request from UPF %s ",inet_ntoa(peer_addr->sin_addr));
         create_upf_context(peer_addr->sin_addr.s_addr, &upf_context);

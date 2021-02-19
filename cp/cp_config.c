@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include <rte_malloc.h>
 #include <rte_common.h>
 #include <rte_debug.h>
 #include <rte_eal.h>
@@ -29,7 +28,6 @@
 #include "pfcp_cp_association.h"
 #include "ip_pool.h"
 #include "spgw_cpp_wrapper.h"
-#include "tables/tables.h"
 #include "dns_config.h"
 #include "cdnshelper.h"
 #include "cp_log.h"
@@ -869,7 +867,7 @@ get_upf_context(user_plane_profile_t *upf_profile)
 
     if(upf_profile->upf_addr != 0) {
         upf_context_t *upf_context = NULL;
-        upf_context_entry_lookup(upf_profile->upf_addr, &upf_context);
+        upf_context = (upf_context_t*)upf_context_entry_lookup(upf_profile->upf_addr);
         if(upf_context == NULL) {
             create_upf_context(upf_profile->upf_addr, &upf_context);
         }

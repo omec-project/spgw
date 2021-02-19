@@ -1357,15 +1357,15 @@ int encode_pfcp_framed_routing_ie_t(pfcp_framed_routing_ie_t *value,
     uint8_t *buf);
 
 /**
-* Encodes pfcp_frmd_ipv6_rte_ie_t to buffer.
+* Encodes pfcp_frmd_ipv6_route_ie_t to buffer.
 * @param value 
-*    pfcp_frmd_ipv6_rte_ie_t
+*    pfcp_frmd_ipv6_route_ie_t
 * @param buf
 *   buffer to store encoded values.
 * @return
 *   number of encoded bytes.
 */
-int encode_pfcp_frmd_ipv6_rte_ie_t(pfcp_frmd_ipv6_rte_ie_t *value,
+int encode_pfcp_frmd_ipv6_route_ie_t(pfcp_frmd_ipv6_route_ie_t *value,
     uint8_t *buf);
 
 /**

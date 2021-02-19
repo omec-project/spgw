@@ -8,8 +8,6 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <getopt.h>
-#include <rte_ip.h>
-#include <rte_udp.h>
 #include <rte_cfgfile.h>
 #include "cp_init.h"
 #include "cp_main.h"
@@ -27,7 +25,6 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_timer.h"
 #include "cp_peer.h"
-#include "tables/tables.h"
 #include "cp_io_poll.h"
 #include "cdnshelper.h"
 #include "gtpv2_interface.h"

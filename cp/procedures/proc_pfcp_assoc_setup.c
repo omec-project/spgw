@@ -6,7 +6,6 @@
 #include "ue.h"
 #include "upf_struct.h"
 #include <stdio.h>
-#include "rte_common.h"
 #include "pfcp.h"
 #include "gx_interface.h"
 #include "sm_enum.h"
@@ -36,7 +35,6 @@
 #include "cp_transactions.h"
 #include "cp_peer.h"
 #include "proc_pfcp_assoc_setup.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_interface.h"

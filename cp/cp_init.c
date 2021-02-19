@@ -5,8 +5,6 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <signal.h>
-#include <rte_ip.h>
-#include <rte_udp.h>
 #include <rte_hash_crc.h>
 #include <errno.h>
 #include "cp_init.h"
@@ -23,13 +21,13 @@
 #include "cp_io_poll.h"
 #include "gtpv2_interface.h"
 #include "pfcp_cp_interface.h"
-#include "tables/tables.h"
 #include "cdnshelper.h"
 #include "cp_log.h"
 #include "cp_test.h"
 #include "cp_timer.h"
 #include "pfcp_cp_util.h"
 #include "assert.h"
+#include "gx_interface.h"
 
 /* We should move all the config inside this structure eventually
  * config is scattered all across the place as of now
@@ -116,15 +114,6 @@ void init_cp(void)
     init_thread_to_thread_socket();
 
     init_timer_thread();
-
-	echo_table_init();
-	create_ue_hash();
-	create_pdn_hash();
-	create_bearer_hash();
-	create_upf_context_hash();
-	create_gx_context_hash();
-	create_upf_by_ue_hash();
-    create_pdn_callid_hash(); 
 
 	return;
 }

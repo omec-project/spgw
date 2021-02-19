@@ -12,8 +12,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <rte_common.h>
-#include <rte_malloc.h>
 #include <hs.h>
+#include <stdio.h>
 
 #include <rte_common.h>
 #include <rte_byteorder.h>
@@ -110,23 +110,23 @@ int epc_sponsdn_create(uint32_t max_dn)
 	unsigned i;
 
 	max_host_names = max_dn;
-	host_names = calloc("dns", sizeof(host_names[0])*max_dn, 0);
+	host_names = calloc(1, sizeof(host_names[0])*max_dn);
 	if (!host_names)
 		goto err;
 
-	host_name_tbl = (char *)calloc("dns name table", sizeof(char *)*max_dn, 0);
+	host_name_tbl = calloc(1, sizeof(char *)*max_dn);
 	if (!host_name_tbl)
 		goto err;
 
-	host_ids = (unsigned *)calloc("host_ids", sizeof(host_ids[0])*max_dn, 0);
+	host_ids = (unsigned *)calloc(1, sizeof(host_ids[0])*max_dn);
 	if (!host_ids)
 		goto err;
 
-	rule_ids = (unsigned *)calloc("rule_ids", sizeof(rule_ids[0])*max_dn, 0);
+	rule_ids = (unsigned *)calloc(1, sizeof(rule_ids[0])*max_dn);
 	if (!rule_ids)
 		goto err;
 
-	flags = (unsigned *)calloc("flags", sizeof(flags[0])*max_dn, 0);
+	flags = (unsigned *)calloc(1, sizeof(flags[0])*max_dn);
 	if (!flags)
 		goto err;
 

@@ -26,7 +26,6 @@
 #include "sm_structs_api.h"
 #include "spgw_cpp_wrapper.h"
 #include "assert.h"
-#include "tables/tables.h"
 #include "cp_io_poll.h"
 #include "cdnsutil.h"
 #include "pfcp_cp_interface.h"
@@ -291,9 +290,10 @@ get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 {
 	upfs_dnsres_t *entry = NULL;
 
-	if (upflist_by_ue_hash_entry_lookup(&ctxt->imsi,
-			sizeof(ctxt->imsi), &entry) != 0)
+	entry = (upfs_dnsres_t *)upflist_by_ue_hash_entry_lookup(ctxt->imsi);
+	if (entry == NULL)  {
 		return -1;
+    }
 
 	if (entry->current_upf > entry->upf_count) {
 		/* TODO: Add error log : Tried sending

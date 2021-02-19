@@ -5,7 +5,6 @@
 #ifdef FUTURE_NEED
 int process_pfcp_sess_mod_resp_ubr_handler(void *data, void *unused_param)
 {
-	int ret = 0;
 	ue_context_t *context = NULL;
 	uint8_t ebi_index = 0;
 
@@ -13,8 +12,8 @@ int process_pfcp_sess_mod_resp_ubr_handler(void *data, void *unused_param)
 	uint32_t teid = UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 
 
-	if (get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
-																			&resp) != 0){
+	resp = get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+	if (resp == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu",
 				msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
@@ -23,10 +22,10 @@ int process_pfcp_sess_mod_resp_ubr_handler(void *data, void *unused_param)
 		ebi_index = resp->list_bearer_ids[0] - 5;
 
 	/* Retrieve the UE context */
-	ret = get_ue_context(teid, &context);
-	if (ret < 0) {
-			LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u",
-					teid);
+	context = (ue_context_t *)get_ue_context(teid);
+	if (context == NULL) {
+		LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
+		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 
     if(cp_config->gx_enabled) {

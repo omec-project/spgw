@@ -15,19 +15,18 @@
 #include "cp_io_poll.h"
 #include "spgwStatsPromEnum.h"
 #include "cp_config.h"
-#include "tables/tables.h"
 #include "util.h"
 #include "gx.h"
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_set_ie.h"
 #include "sm_structs_api.h"
-#include "rte_errno.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_util.h"
 #include "cp_transactions.h"
 #include "pfcp_cp_interface.h"
 #include "gx_interface.h"
 #include "assert.h"
+#include "pfcp.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -197,11 +196,11 @@ int process_pfcp_sess_mod_req_handover(mod_bearer_req_t *mb_req)
 	pdn_connection_t *pdn =  NULL;
 	//pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 
-	ret = get_ue_context(mb_req->header.teid.has_teid.teid,
-			                              &context);
+	context = (ue_context_t *)get_ue_context(mb_req->header.teid.has_teid.teid);
 
-	if (ret < 0 || !context)
+	if (context == NULL) {
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+    }
 
 	ebi_index = mb_req->bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
 	if (!(context->bearer_bitmap & (1 << ebi_index))) {
@@ -307,7 +306,8 @@ int process_pfcp_sess_mod_req_handover(mod_bearer_req_t *mb_req)
 
 #if 0
 		/*Retrive the session information based on session id. */
-		if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0){
+		resp = get_sess_entry_seid(context->pdns[ebi_index]->seid);
+		if (resp == NULL){
 			LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", context->pdns[ebi_index]->seid);
 			return -1;
 		}
@@ -374,7 +374,6 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 uint8_t
 process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 {
-	int ret = 0;
 	uint8_t ebi_index = 0;
 	eps_bearer_t *bearer  = NULL;
 	ue_context_t *context = NULL;
@@ -382,7 +381,8 @@ process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx
 
 #ifdef TEMP
 	/* Retrive the session information based on session id. */
-	if (get_sess_entry_seid(sess_id, &resp) != 0){
+	resp = get_sess_entry_seid(sess_id);
+	if (resp == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
 		return -1;
 	}
@@ -394,9 +394,10 @@ process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx
 	ebi_index = resp->eps_bearer_id ;
 #endif
 	/* Retrieve the UE context */
-	ret = get_ue_context(teid, &context);
-	if (ret < 0) {
-	         LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
+	context = (ue_context_t *)get_ue_context(teid);
+	if (context == NULL) {
+	    LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
+        assert(0);
 	}
 
 #if 0
@@ -513,7 +514,6 @@ int
 process_sgwc_delete_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 {
 	uint16_t msg_len = 0;
-	int ret = 0;
 	ue_context_t *context = NULL;
 	del_sess_rsp_t del_resp = {0};
 
@@ -521,15 +521,17 @@ process_sgwc_delete_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
 	//gtpv2c_header gtpv2c_rx;
 
 #ifdef TEMP
-	if (get_sess_entry_seid(sess_id, &resp) != 0){
+	resp = get_sess_entry_seid(sess_id);
+	if (resp == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
 		return -1;
 	}
 #endif
 
-	ret = get_ue_context(teid, &context);
-	if (ret < 0) {
+	context  = (ue_context_t *)get_ue_context(teid);
+	if (context == NULL) {
 		LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
+        assert(0);
 	}
 
     uint32_t sequence = 0; // TODO...
@@ -850,11 +852,13 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 	gx_msg ccr_request = {0};
 	gx_context_t *gx_context = NULL;
 
-	int ret = get_gx_context((uint8_t*)pdn->gx_sess_id,&gx_context);
-	  if (ret < 0) {
-		       LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
-			    return -1;
+	ue_context_t *temp_ue_context = (ue_context_t *)get_gx_context((uint8_t*)pdn->gx_sess_id);
+	if (temp_ue_context == NULL) 
+    {
+	    LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
+	    return -1;
 	}
+    gx_context = temp_ue_context->gx_context;
 
 	/* VS: Set the Msg header type for CCR */
 	ccr_request.msg_type = GX_CCR_MSG ;
@@ -1017,8 +1021,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
 	buffer = (char *)calloc(1, msg_len + sizeof(ccr_request.msg_type));
 	if (buffer == NULL) {
-		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory"
-				"structure: %s ", rte_strerror(rte_errno));
+		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
 		return -1;
 	}
 
@@ -1099,14 +1102,11 @@ send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
 	trans_entry = start_response_wait_timer(pdn->context, pfcp_msg, encoded, send_pfcp_sess_mod_req_handover_timeout);
     pdn->trans_entry = trans_entry;
 
-	/*Retrive the session information based on session id. */
-	//if (get_sess_entry_seid(context->pdns[ebi_index]->seid, &resp) != 0)
-	//
-	//
 	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 #ifdef TEMP
 	pdn->proc= SGW_RELOCATION_PROC;//GTP_MODIFY_BEARER_REQ;
-	if (get_sess_entry_seid(pdn->seid, &context) != 0){
+	context = (ue_context_t *)get_sess_entry_seid(pdn->seid);
+	if (context == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", pdn->seid);
 		return -1;
 	}

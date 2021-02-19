@@ -19,13 +19,6 @@ uint8_t process_response(uint32_t dstIp);
 bool initpeerData( peerData_t *md, const char *name, int t1ms, int t2ms );
 
 /**
- * @brief  : Delete entry from connection table
- * @param  : ipAddr, key to search entry to be deleted
- * @return : Returns nothing
- */
-void del_entry_from_hash(uint32_t ipAddr);
-
-/**
  * @brief  : Adds node connection entry
  * @param  : dstIp, node ip address
  * @param  : portId, port number of node

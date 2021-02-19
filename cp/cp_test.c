@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <stdio.h>
-#include <rte_common.h>
 #include "cp_test.h"
 #include "cp_events.h"
 #include "cp_io_poll.h" 

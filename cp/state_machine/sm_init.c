@@ -5,16 +5,13 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <stdio.h>
-#include <rte_hash_crc.h>
-#include <rte_errno.h>
-
 #include "ue.h"
 #include "sm_struct.h"
 #include "cp_config.h"
 #include "gen_utils.h"
 #include "cp_log.h"
 #include "sm_structs_api.h"
-#include "tables/tables.h"
+#include "spgw_cpp_wrapper.h"
 
 
 
@@ -27,12 +24,11 @@ char event_name[64];
 uint8_t
 update_ue_state(uint32_t teid_key, uint8_t state,  uint8_t ebi_index)
 {
-	int ret = 0;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
-	ret = get_ue_context(teid_key, &context);
+	context = (ue_context_t *)get_ue_context(teid_key);
 
-	if ( ret < 0) {
+	if ( context == NULL) {
 		LOG_MSG(LOG_ERROR, "Failed to update UE State for Teid:%x...", 
 				teid_key);
 		return -1;
@@ -49,12 +45,11 @@ update_ue_state(uint32_t teid_key, uint8_t state,  uint8_t ebi_index)
 uint8_t
 get_ue_state(uint32_t teid_key, uint8_t ebi_index)
 {
-	int ret = 0;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
-	ret = get_ue_context(teid_key, &context);
+	context  = (ue_context_t *)get_ue_context(teid_key);
 
-	if ( ret < 0) {
+	if ( context == NULL) {
 		LOG_MSG(LOG_ERROR, "Entry not found for teid:%x...", teid_key);
 		return -1;
 	}
@@ -67,15 +62,14 @@ get_ue_state(uint32_t teid_key, uint8_t ebi_index)
 int8_t
 get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context_t **context)
 {
-	int ret = 0;
 	eps_bearer_t *bearer = NULL;
 
-	ret = get_bearer_by_teid(teid_key, &bearer);
-	if(ret < 0) {
-		LOG_MSG(LOG_ERROR, "Entry not found for teid:%x...", teid_key);
-                return -1;
+	bearer = (eps_bearer_t *)get_bearer_by_teid(teid_key);
+	if(bearer == NULL) {
+		LOG_MSG(LOG_ERROR, "Bearer Entry not found for teid:%x...", teid_key);
+        return -1;
 	}
-	if(bearer != NULL && bearer->pdn != NULL && bearer->pdn->context != NULL ) {
+	if(bearer->pdn != NULL && bearer->pdn->context != NULL ) {
 		*context = bearer->pdn->context;
 		return 0;
 	}
@@ -85,20 +79,20 @@ get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context_t **context)
 int8_t
 get_ue_context_while_error(uint32_t teid_key, ue_context_t **context)
 {
-	int ret = 0;
 	eps_bearer_t *bearer = NULL;
 	/* If teid key is sgwc s11 */
-	ret = get_ue_context(teid_key, context);
-	if( ret < 0) {
+	ue_context_t *temp_context = (ue_context_t*)get_ue_context(teid_key);
+	if( temp_context == NULL) {
 		/* If teid key is sgwc s5s8 */
-		ret = get_bearer_by_teid(teid_key, &bearer);
-		if(ret < 0) {
-			LOG_MSG(LOG_ERROR, "Entry not found for teid:%x...", teid_key);
+		bearer = (eps_bearer_t *)get_bearer_by_teid(teid_key);
+		if(bearer == NULL) {
+			LOG_MSG(LOG_ERROR, "Bearer Entry not found for teid:%x...", teid_key);
 			return -1;
 		}
-
-     	   *context = bearer->pdn->context;
-	}
+     	*context = bearer->pdn->context;
+	} else {
+        *context = temp_context;
+    }
 	return 0;
 }
 
@@ -108,6 +102,7 @@ get_ue_context_while_error(uint32_t teid_key, ue_context_t **context)
  * @param  : value, procedure
  * @return : Returns procedure string
  */
+// TODO : performance ... 
 const char * get_proc_string(int value)
 {
 	switch(value) {

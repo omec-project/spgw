@@ -5,11 +5,9 @@
 #include "pfcp_cp_interface.h"
 #include "pfcp_messages_decoder.h"
 #include "cp_config.h"
-#include "rte_common.h"
 #include "cp_events.h"
 #include "cp_test.h"
 #include "cp_log.h"
-#include "tables/tables.h"
 #include "cp_io_poll.h"
 
 
@@ -159,10 +157,6 @@ void init_pfcp(void)
 			cp_config->pfcp_port);
 
     my_sock.pfcp_sockaddr = pfcp_sockaddr; 
-
-    init_pfcp_tables();
-
-    create_heartbeat_hash_table();
 
 	init_pfcp_msg_threads();
 }

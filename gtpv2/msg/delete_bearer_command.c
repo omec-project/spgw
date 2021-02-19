@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "tables/tables.h"
 #ifdef FUTURE_NEED
 // saegw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC CONNECTED_STATE DELETE_BER_CMD_RCVD_EVNT ==> process_delete_bearer_command_handler
 // pgw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC CONNECTED_STATE DELETE_BER_CMD_RCVD_EVNT - process_delete_bearer_command_handler
@@ -24,7 +23,8 @@ int handle_delete_bearer_cmd_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 
 	ebi_index = msg->gtpc_msg.del_ber_cmd.bearer_contexts[0].eps_bearer_id.ebi_ebi - 5;
 
-	if(get_ue_context(gtpv2c_rx->teid.has_teid.teid, &context) != 0) {
+	context = (ue_context_t *)get_ue_context(gtpv2c_rx->teid.has_teid.teid);
+    if(context == NULL) {
 		return -1;
 	}
 	msg->proc = MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC;
@@ -49,7 +49,7 @@ set_delete_bearer_command(del_bearer_cmd_t *del_bearer_cmd, pdn_connection_t *pd
 	del_bearer_cmd_t del_cmd = {0};
 	ue_context_t *context = NULL;
 	del_cmd.header.gtpc.message_len = 0;
-	get_ue_context(del_bearer_cmd->header.teid.has_teid.teid, &context);
+	context = (ue_context_t *)get_ue_context(del_bearer_cmd->header.teid.has_teid.teid);
 	pdn->context->sequence = del_bearer_cmd->header.teid.has_teid.seq;
 	set_gtpv2c_teid_header((gtpv2c_header_t *) &del_cmd, GTP_DELETE_BEARER_CMD,
 			pdn->s5s8_pgw_gtpc_teid, del_bearer_cmd->header.teid.has_teid.seq);
@@ -173,17 +173,17 @@ process_delete_bearer_command_handler(void *data, void *unused_param)
 int
 process_delete_bearer_cmd_request(del_bearer_cmd_t *del_bearer_cmd, gtpv2c_header_t *gtpv2c_tx)
 {
-	int ret = 0;
 	ue_context_t *context = NULL;
 	eps_bearer_t *bearer = NULL;
 	pdn_connection_t *pdn = NULL;
 	int ebi_index = 0;
 
-	ret = get_ue_context(del_bearer_cmd->header.teid.has_teid.teid, &context);
+	context = (ue_context_t *)get_ue_context(del_bearer_cmd->header.teid.has_teid.teid);
 
-	if (ret < 0) {
+	if (context == NULL) {
 		LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u",
 	                  del_bearer_cmd->header.teid.has_teid.teid);
+        assert(0);
 	}
 	ebi_index = del_bearer_cmd->bearer_contexts[ebi_index].eps_bearer_id.ebi_ebi -5;
 
@@ -206,7 +206,8 @@ process_delete_bearer_cmd_request(del_bearer_cmd_t *del_bearer_cmd, gtpv2c_heade
 
 	}
     pdn->state = CONNECTED_STATE;
-    if (get_sess_entry_seid(pdn->seid, &resp) != 0){
+    resp = get_sess_entry_seid(pdn->seid);
+    if (resp == NULL){
         LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", pdn->seid);
         return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
     }
