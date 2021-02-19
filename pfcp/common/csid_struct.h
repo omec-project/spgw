@@ -18,45 +18,6 @@
 /*TODO: Temp using this static value, later on need to implement linked list */
 #define MAX_SESS_IDS 500
 
-/* rte hash for local csid by peer node information data.
- * hash key: peer_node_info, data: CSID
- * Usage:
- *  1) SGW-C/U : Retrieve the local csids based on the peer nodes
- *  2) PGW-C/U : Retrieve the local csids based on the peer nodes
- */
-struct rte_hash *csid_by_peer_node_hash;
-
-/* rte hash for collection of peer node CSIDs by local CSID.
- * hash key: Local CSID, data: Peer node CSIDs
- */
-struct rte_hash *peer_csids_by_csid_hash;
-
-/* rte hash for session ids of CP/DP by local CSID.
- * hash key: csid, data: Session ids
- */
-struct rte_hash *seids_by_csid_hash;
-
-/* Interface mapping tables */
-/* rte hash for collection of local csids by peer mme node address.
- * hash key: Node IP, data: Local CSIDs
- */
-struct rte_hash *local_csids_by_node_addr_hash;
-
-/* rte hash for collection of local csids by mme CSID.
- * hash key: MME CSID, data: Local CSIDs
- */
-struct rte_hash *local_csids_by_mmecsid_hash;
-
-/* rte hash for collection of local csids by pgw CSID.
- * hash key: PGW CSID, data: Local CSIDs
- */
-struct rte_hash *local_csids_by_pgwcsid_hash;
-
-/* rte hash for collection of local csids by sgw CSID
- * hash key: SGW CSID, data: Local CSIDs
- */
-struct rte_hash *local_csids_by_sgwcsid_hash;
-
 /* Collection of the associated peer node informations */
 typedef struct peer_node_info_t {
 	/* MME IP Address */
