@@ -517,6 +517,11 @@ config_cp_ip_port(cp_config_t *cp_config)
             ip_pool_entries,
             num_ip_pool_entries);
 
+    assert(num_ip_pool_entries == 2);
+
+    bool addr_configured=false;
+    bool mask_configured=false;
+
     for (i = 0; i < num_ip_pool_entries; ++i) {
         LOG_MSG(LOG_INIT, "CP: [%s] = %s",
                 ip_pool_entries[i].name,
@@ -526,11 +531,19 @@ config_cp_ip_port(cp_config_t *cp_config)
                     strlen(IP_POOL_IP)) == 0) {
             inet_aton(ip_pool_entries[i].value,
                     &(cp_config->ip_pool_ip));
+            cp_config->ip_pool_ip.s_addr = ntohl(cp_config->ip_pool_ip.s_addr);
+            addr_configured = true;
         } else if (strncmp
                 (IP_POOL_MASK, ip_pool_entries[i].name,
                  strlen(IP_POOL_MASK)) == 0) {
             inet_aton(ip_pool_entries[i].value,
                     &(cp_config->ip_pool_mask));
+            cp_config->ip_pool_mask.s_addr = ntohl(cp_config->ip_pool_mask.s_addr);
+            mask_configured = true;
+        }
+
+        if(addr_configured && mask_configured) {
+            create_ue_pool_dynamic(cp_config->ip_pool_ip, cp_config->ip_pool_mask);
         }
     }
 
@@ -550,8 +563,8 @@ config_cp_ip_port(cp_config_t *cp_config)
             static_ip_pool_entries,
             num_ip_pool_entries);
 
-    bool addr_configured=false;
-    bool mask_configured=false;
+    addr_configured = false;
+    mask_configured = false;
     for (i = 0; i < num_ip_pool_entries; ++i) {
         LOG_MSG(LOG_INIT, "CP: [%s] = %s",
                 static_ip_pool_entries[i].name,
@@ -562,12 +575,14 @@ config_cp_ip_port(cp_config_t *cp_config)
             inet_aton(static_ip_pool_entries[i].value,
                     &(cp_config->static_ip_pool_ip));
             cp_config->static_ip_pool_ip.s_addr = ntohl(cp_config->static_ip_pool_ip.s_addr);  
+            addr_configured = true;
         } else if (strncmp
                 (IP_POOL_MASK, static_ip_pool_entries[i].name,
                  strlen(IP_POOL_MASK)) == 0) {
             inet_aton(static_ip_pool_entries[i].value,
                     &(cp_config->static_ip_pool_mask));
             cp_config->static_ip_pool_mask.s_addr = ntohl(cp_config->static_ip_pool_mask.s_addr);  
+            mask_configured = true;
         }
         if(addr_configured && mask_configured) {
             addr_configured = true;

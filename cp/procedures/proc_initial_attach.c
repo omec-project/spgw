@@ -278,7 +278,9 @@ process_create_sess_req(create_sess_req_t *csr,
         struct in_addr *paa_ipv4 = (struct in_addr *) &csr->paa.pdn_addr_and_pfx[0];
         if (csr->paa.pdn_type == PDN_IP_TYPE_IPV4 && paa_ipv4->s_addr != 0) {
             bool found = false;
-            found = reserve_ip_node(static_addr_pool, *paa_ipv4);
+            struct in_addr temp = *paa_ipv4;
+            temp.s_addr = ntohl(temp.s_addr);
+            found = reserve_ip_node(static_addr_pool, temp); // api needs address in host order
             if (found == false) {
                 LOG_MSG(LOG_ERROR,"Received CSReq with static address %s"
                         " . Invalid address received ",
@@ -286,16 +288,12 @@ process_create_sess_req(create_sess_req_t *csr,
                 // caller sends out csrsp 
                 return GTPV2C_CAUSE_REQUEST_REJECTED;
             }
-            ue_ip = *paa_ipv4;
-
-            /* we want ue_ip in network order. To keep code aligned with dynamic
-             * allocation  */
-            ue_ip.s_addr = htonl(ue_ip.s_addr); 
+            ue_ip = *paa_ipv4; // network order 
             static_addr_pdn = true;
         } else {
             if(sub_profile->up_profile->global_address == true) {
               // if global address allocation required then pull 1 IP address from central control Plane 
-		      ret = acquire_ip(&ue_ip);
+		      ret = acquire_ip(&ue_ip); // address in network order
               if (ret) {
                       // caller sends out csrsp 
                       return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
@@ -314,6 +312,11 @@ process_create_sess_req(create_sess_req_t *csr,
 			csr->bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi, &context, apn_requested,
 			CSR_SEQUENCE(csr));
 	if (ret) {
+        // Free allocated UE Ip address. ue_ip is in network order  
+        if(static_addr_pdn == false) {
+            ue_ip.s_addr = ntohl(ue_ip.s_addr);
+            release_ip(ue_ip); // api needs address in host order
+        }
 		return ret;
     }
 
@@ -381,7 +384,7 @@ process_create_sess_req(create_sess_req_t *csr,
 	bearer = context->eps_bearers[ebi_index];
 
 	if (cp_config->cp_type == SGWC) {
-		pdn->ipv4.s_addr = htonl(ue_ip.s_addr);
+		pdn->ipv4.s_addr = ntohl(ue_ip.s_addr);
 		/* Note: s5s8_sgw_gtpc_teid =
 		 *                  * s11_sgw_gtpc_teid
 		 *                                   */
@@ -396,10 +399,10 @@ process_create_sess_req(create_sess_req_t *csr,
 		memcpy(pdn->fqdn, (char *)csr->sgw_u_node_name.fqdn,
 				csr->sgw_u_node_name.header.len);
 
-		pdn->ipv4.s_addr = htonl(ue_ip.s_addr);
+		pdn->ipv4.s_addr = ntohl(ue_ip.s_addr);
 		context->pdns[ebi_index]->seid = SESS_ID(pdn->s5s8_pgw_gtpc_teid, bearer->eps_bearer_id);
 	} else {
-		pdn->ipv4.s_addr = htonl(ue_ip.s_addr);
+		pdn->ipv4.s_addr = ntohl(ue_ip.s_addr);
 		context->pdns[ebi_index]->seid = SESS_ID(context->s11_sgw_gtpc_teid, bearer->eps_bearer_id);
 	}
 

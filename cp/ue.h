@@ -685,4 +685,15 @@ void start_procedure(proc_context_t *proc, msg_info_t *msg);
 
 void end_procedure(proc_context_t *proc);
 
+void cleanup_pdn_context(pdn_connection_t *pdn);
+
+/* Bearer API start */
+void cleanup_bearer_context(eps_bearer_t *bearer);
+
+int
+del_rule_entries(ue_context_t *context, uint8_t ebi_index);
+/* Bearer API end */
+
+int
+cleanup_ue_context(ue_context_t **context_t);
 #endif /* UE_H */

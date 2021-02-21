@@ -30,15 +30,22 @@ struct ip_table
 uint32_t
 acquire_ip(struct in_addr *ipv4);
 
+void
+release_ip(struct in_addr ipv4);
+
+void
+create_ue_pool_dynamic(struct in_addr network, struct in_addr mask);
+
 struct ip_table *create_ue_pool(struct in_addr network, struct in_addr mask);
 
-void 
+void
 add_ipaddr_in_pool(struct ip_table *search_tree, struct in_addr host);
 
 bool
 reserve_ip_node(struct ip_table *search_tree , struct in_addr host);
 
-bool 
+bool
 release_ip_node(struct ip_table *search_tree , struct in_addr host);
+
 #endif
 

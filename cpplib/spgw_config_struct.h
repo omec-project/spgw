@@ -100,4 +100,9 @@ struct t2tMsg
     void     *data;
 };
 
+typedef struct ue_pool_dynamic
+{
+    void *dynamic_pool;
+}ue_pool_dynamic_t;
+
 #endif

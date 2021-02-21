@@ -18,6 +18,7 @@
 #include <thread>
 #include <sstream>
 #include "spgw_webserver.h"
+#include "ip_pool_mgmt.h"
 
 spgwTables      *table = nullptr; 
 upfTables       *upf_table = nullptr;
@@ -530,5 +531,30 @@ extern "C"
     {
         return ue_table->delete_gx_sessid_ue_mapping(sess_id);
     }
+
     /* Gx context APIs end */
+    void *create_ue_pool_dynamic_cpp(struct in_addr network, struct in_addr mask)
+    {
+        ue_pool_dynamic_t *temp = (ue_pool_dynamic_t *) calloc(1, sizeof(ue_pool_dynamic_t));
+        ue_pool_mgmt *pool = new(ue_pool_mgmt);
+        temp->dynamic_pool = (void *)pool;
+        pool->gen_pool(network, mask);
+        return (void*)temp;
+    }
+    
+    uint32_t acquire_ip_cpp(void *pool)
+    {
+        ue_pool_dynamic_t *ue_pool = (ue_pool_dynamic_t *)pool;
+        ue_pool_mgmt *temp = reinterpret_cast<ue_pool_mgmt*>(ue_pool->dynamic_pool);
+        return temp->get_ip();
+    }
+
+    void release_ip_cpp(void *pool, struct in_addr addr)
+    {
+        ue_pool_dynamic_t *ue_pool = (ue_pool_dynamic_t *)pool;
+        ue_pool_mgmt *temp = reinterpret_cast<ue_pool_mgmt*>(ue_pool->dynamic_pool);
+        temp->free_ip(addr.s_addr);
+        return;
+    }
+
 }

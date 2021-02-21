@@ -31,7 +31,7 @@ class qerTables
         {
             std::unordered_map<uint32_t, void*>::const_iterator it = qerid_qerctxt_hash.find (qer_id);
             if (it == qerid_qerctxt_hash.end()) {
-                return NULL;
+                return -1;
             }
             void *temp = it->second;
             qerid_qerctxt_hash.erase(it);
