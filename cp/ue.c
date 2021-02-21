@@ -427,33 +427,150 @@ static void start_procedure_direct(proc_context_t *proc_ctxt)
     return;
 }
 
-static int 
-cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
+void
+end_procedure(proc_context_t *proc_ctxt) 
 {
-    uint64_t sess_id = pdn->seid;
-	uint64_t ebi_index = pdn->default_bearer_id - 5;
-    ue_context_t *context = pdn->context;
-    int ret;
+    uint64_t imsi64=0;
+    ue_context_t *context = NULL;
+    pdn_connection_t *pdn = NULL;
 
-	/* Delete entry from session entry */
-    LOG_MSG(LOG_DEBUG4, "Delete session from the pfcp seid table ");
-	if (del_sess_entry_seid(sess_id) != 0) {
-		LOG_MSG(LOG_ERROR, "NO Session Entry Found for Key sess ID:%lu", sess_id);
-		return -1;
-	}
+    /* TODO : add procedure name */
+    LOG_MSG(LOG_DEBUG4, "end procedure  %p ",proc_ctxt);
 
-	if (del_rule_entries(context, ebi_index) != 0) {
-		LOG_MSG(LOG_ERROR, "Error on delete rule entries");
-	}
-	uint32_t teid = UE_SESS_ID(sess_id);
-	ret = delete_sgwc_context(teid, &context, &sess_id);
-	if (ret)
-		return ret;
+    assert(proc_ctxt != NULL);
+
+    if(proc_ctxt->gtpc_trans != NULL) {
+        cleanup_gtpc_trans(proc_ctxt->gtpc_trans);
+    }
+
+    if(proc_ctxt->pfcp_trans != NULL) {
+        cleanup_pfcp_trans(proc_ctxt->pfcp_trans);
+    }
+
+    msg_info_t *msg = (msg_info_t *)proc_ctxt->msg_info;
+    if(msg != NULL) {
+        msg->refCnt--;
+        if(msg->refCnt == 1) { // i m the only one using this 
+            free(msg->raw_buf);
+            free(msg); 
+        }
+    }
+
+    context = proc_ctxt->ue_context;
+    if(context != NULL) {
+        imsi64 = context->imsi64;
+        TAILQ_REMOVE(&context->pending_sub_procs, proc_ctxt, next_sub_proc);
+    }
+
+    switch(proc_ctxt->proc_type) {
+        case INITIAL_PDN_ATTACH_PROC: {
+            context = proc_ctxt->ue_context;
+            pdn = proc_ctxt->pdn_context;
+            if(context != NULL && proc_ctxt->result == PROC_RESULT_SUCCESS) {
+                context->state = UE_STATE_ACTIVE;
+                assert(pdn != NULL);
+                pdn->state = PDN_STATE_ACTIVE;
+            } else if (pdn != NULL && context != NULL){
+                cleanup_pdn_context(pdn);
+                if(context->num_pdns == 0) {
+                    cleanup_ue_context(&context);
+                }
+            }
+            free(proc_ctxt);
+            proc_ctxt = NULL;
+            break;
+        }
+        case S1_RELEASE_PROC: {
+            context = proc_ctxt->ue_context;
+            context->state = UE_STATE_IDLE;
+            pdn = proc_ctxt->pdn_context;
+            pdn->state = PDN_STATE_IDLE;
+            free(proc_ctxt);
+            break;
+        }
+        case SERVICE_REQUEST_PROC: {
+            // No state change 
+            free(proc_ctxt);
+            context = proc_ctxt->ue_context;
+            break;
+        }
+        case DETACH_PROC: {
+            context = proc_ctxt->ue_context;
+            assert(context  != NULL);
+            context->state = UE_STATE_DETACH;
+            pdn = proc_ctxt->pdn_context;
+            assert(pdn != NULL);
+            pdn->state = PDN_STATE_DETACH;
+            free(proc_ctxt);
+            cleanup_pdn_context(pdn);
+            if(context->num_pdns == 0) {
+                cleanup_ue_context(&context);
+            }
+            break;
+        }
+        case USAGE_REPORT_PROC:
+            //no special action as of now..follow paging proc
+        case PAGING_PROC : {
+            context = proc_ctxt->ue_context;
+            context->state = UE_STATE_ACTIVE;
+            pdn = proc_ctxt->pdn_context;
+            pdn->state = PDN_STATE_ACTIVE;
+            free(proc_ctxt);
+            break;
+        }
+        case DED_BER_ACTIVATION_PROC: {
+            // no change in pdn/context state
+            context = proc_ctxt->ue_context;
+            pdn = proc_ctxt->pdn_context;
+            if(proc_ctxt->parent_proc != NULL) {
+                proc_context_t *p_proc = (proc_context_t *)proc_ctxt->parent_proc;
+                p_proc->child_proc_done(proc_ctxt);
+            } 
+            free(proc_ctxt);
+            break;
+        }
+        case RAR_PROC: {
+            // no change in pdn/context state
+            context = proc_ctxt->ue_context;
+            pdn = proc_ctxt->pdn_context;
+            free(proc_ctxt);
+            break;
+        }
+        default:
+            assert(0);
+    }
+
+    if(context != NULL) {
+        // start new procedure if something is pending 
+        LOG_MSG(LOG_DEBUG3, "Continue with subscriber %lu ", imsi64);
+        proc_context_t *temp;
+        TAILQ_FOREACH(temp, &context->pending_sub_procs, next_sub_proc) {
+            if(temp->flags & PROC_FLAGS_RUNNING) {
+                LOG_MSG(LOG_DEBUG3, "Running procedure %p %d ", temp, temp->proc_type);
+                continue;
+            }
+            // TODO: can we run this procedure ???
+            start_procedure_direct(temp);
+        }
+    } else {
+        LOG_MSG(LOG_DEBUG3, "Released subscriber %lu ", imsi64);
+    }
+    // result_success - schedule next proc
+    // result_fail_call_del - abort all outstanding procs and delete the call
+    // result_fail_keep_call - continue with call as is and schedule new proc if any  
+    return;
+}
+
+int 
+cleanup_ue_context(ue_context_t **context_t)
+{
+    ue_context_t *context = *context_t;
+
     LOG_MSG(LOG_DEBUG, "Number of PDNS in UE %lu -  %d  ",context->imsi64, context->num_pdns);
     if(context->num_pdns == 0) {
         /* Delete UE context entry from UE Hash */
         if (ue_context_delete_entry_imsiKey(context->imsi) < 0){
-            LOG_MSG(LOG_ERROR, "%s - Error on ue_context_by_fteid_hash del", strerror(ret));
+            LOG_MSG(LOG_ERROR, "Error on ue_context_by_fteid_hash del");
         }
 
         /* delete context from user context */
@@ -463,13 +580,15 @@ cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
 
         /* Delete UPFList entry from UPF Hash */
         if ((context->dns_enable) && (upflist_by_ue_hash_entry_delete(context->imsi) < 0)){
-            LOG_MSG(LOG_ERROR, "%s - Error on upflist_by_ue_hash deletion of IMSI ", strerror(ret));
+            LOG_MSG(LOG_ERROR, "Error on upflist_by_ue_hash deletion of IMSI ");
             assert(0);
         }
 
 #ifdef USE_CSID
         
+        uint64_t sess_id = pdn->seid;
         fqcsid_t *csids
+        int ret;
 
         if (cp_config->cp_type == PGWC) {
             csids  = context->pgw_fqcsid;
@@ -540,130 +659,3 @@ cleanup_pdn(pdn_connection_t *pdn, ue_context_t **context_t)
     return 0;
 }
 
-void
-end_procedure(proc_context_t *proc_ctxt) 
-{
-    uint64_t imsi64=0;
-    ue_context_t *context = NULL;
-    pdn_connection_t *pdn = NULL;
-
-    /* TODO : add procedure name */
-    LOG_MSG(LOG_DEBUG4, "end procedure  %p ",proc_ctxt);
-
-    assert(proc_ctxt != NULL);
-
-    if(proc_ctxt->gtpc_trans != NULL) {
-        cleanup_gtpc_trans(proc_ctxt->gtpc_trans);
-    }
-
-    if(proc_ctxt->pfcp_trans != NULL) {
-        cleanup_pfcp_trans(proc_ctxt->pfcp_trans);
-    }
-
-    msg_info_t *msg = (msg_info_t *)proc_ctxt->msg_info;
-    if(msg != NULL) {
-        msg->refCnt--;
-        if(msg->refCnt == 1) { // i m the only one using this 
-            free(msg->raw_buf);
-            free(msg); 
-        }
-    }
-
-    context = proc_ctxt->ue_context;
-    if(context != NULL) {
-        imsi64 = context->imsi64;
-        TAILQ_REMOVE(&context->pending_sub_procs, proc_ctxt, next_sub_proc);
-    }
-
-    switch(proc_ctxt->proc_type) {
-        case INITIAL_PDN_ATTACH_PROC: {
-            context = proc_ctxt->ue_context;
-            pdn = proc_ctxt->pdn_context;
-            if(context != NULL && proc_ctxt->result == PROC_RESULT_SUCCESS) {
-                context->state = UE_STATE_ACTIVE;
-                assert(pdn != NULL);
-                pdn->state = PDN_STATE_ACTIVE;
-            } else if (pdn != NULL && context != NULL){
-                cleanup_pdn(pdn, &context);
-            }
-            free(proc_ctxt);
-            proc_ctxt = NULL;
-            break;
-        }
-        case S1_RELEASE_PROC: {
-            context = proc_ctxt->ue_context;
-            context->state = UE_STATE_IDLE;
-            pdn = proc_ctxt->pdn_context;
-            pdn->state = PDN_STATE_IDLE;
-            free(proc_ctxt);
-            break;
-        }
-        case SERVICE_REQUEST_PROC: {
-            // No state change 
-            free(proc_ctxt);
-            context = proc_ctxt->ue_context;
-            break;
-        }
-        case DETACH_PROC: {
-            context = proc_ctxt->ue_context;
-            assert(context  != NULL);
-            context->state = UE_STATE_DETACH;
-            pdn = proc_ctxt->pdn_context;
-            assert(pdn != NULL);
-            pdn->state = PDN_STATE_DETACH;
-            free(proc_ctxt);
-            cleanup_pdn(pdn, &context);
-            break;
-        }
-        case USAGE_REPORT_PROC:
-            //no special action as of now..follow paging proc
-        case PAGING_PROC : {
-            context = proc_ctxt->ue_context;
-            context->state = UE_STATE_ACTIVE;
-            pdn = proc_ctxt->pdn_context;
-            pdn->state = PDN_STATE_ACTIVE;
-            free(proc_ctxt);
-            break;
-        }
-        case DED_BER_ACTIVATION_PROC: {
-            // no change in pdn/context state
-            context = proc_ctxt->ue_context;
-            pdn = proc_ctxt->pdn_context;
-            if(proc_ctxt->parent_proc != NULL) {
-                proc_context_t *p_proc = (proc_context_t *)proc_ctxt->parent_proc;
-                p_proc->child_proc_done(proc_ctxt);
-            } 
-            free(proc_ctxt);
-            break;
-        }
-        case RAR_PROC: {
-            // no change in pdn/context state
-            context = proc_ctxt->ue_context;
-            pdn = proc_ctxt->pdn_context;
-            free(proc_ctxt);
-            break;
-        }
-        default:
-            assert(0);
-    }
-
-    if(context != NULL) {
-        // start new procedure if something is pending 
-        LOG_MSG(LOG_DEBUG3, "Continue with subscriber %lu ", imsi64);
-        proc_context_t *temp;
-        TAILQ_FOREACH(temp, &context->pending_sub_procs, next_sub_proc) {
-            if(temp->flags & PROC_FLAGS_RUNNING) {
-                LOG_MSG(LOG_DEBUG3, "Running procedure %p %d ", temp, temp->proc_type);
-                continue;
-            }
-            // TODO: can we run this procedure ???
-            start_procedure_direct(temp);
-        }
-    } else {
-        LOG_MSG(LOG_DEBUG3, "Released subscriber %lu ", imsi64);
-    }
-    // result_success - schedule next proc
-    // result_fail_call_del - abort all outstanding procs and delete the call
-    // result_fail_keep_call - continue with call as is and schedule new proc if any  
-    return;
-}

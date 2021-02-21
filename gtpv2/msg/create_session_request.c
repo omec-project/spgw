@@ -195,7 +195,6 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 				pdn->s5s8_pgw_gtpc_ipv4, pdn->s5s8_pgw_gtpc_teid);
 	}
 
-	pdn->ipv4.s_addr = htonl(pdn->ipv4.s_addr);
 	LOG_MSG(LOG_DEBUG, "UE address %s, pdn = %p",inet_ntoa(pdn->ipv4), pdn);
 	set_ipv4_paa(&cs_resp.paa, IE_INSTANCE_ZERO, pdn->ipv4);
 

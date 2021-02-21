@@ -290,7 +290,7 @@ void
 set_ipv4_paa(gtp_pdn_addr_alloc_ie_t *paa, enum ie_instance instance,
 		struct in_addr ipv4)
 {
-	uint32_t temp_ipv4 = ipv4.s_addr;
+	uint32_t temp_ipv4 = htonl(ipv4.s_addr);
 	set_ie_header(&paa->header, GTP_IE_PDN_ADDR_ALLOC, instance,
 			sizeof(uint8_t) + sizeof(struct in_addr));
 

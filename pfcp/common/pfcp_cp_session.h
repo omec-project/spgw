@@ -246,9 +246,6 @@ process_pgwc_s5s8_delete_session_request(del_sess_req_t *ds_req);
 int
 delete_dedicated_bearers(pdn_connection_t *pdn, uint8_t bearer_ids[], uint8_t bearer_cntr);
 
-int
-del_rule_entries(ue_context_t *context, uint8_t ebi_index);
-
 /**
  * @brief  : Generate string using sdf packet filters
  * @param  : sdf_flow , sdf packect filter info

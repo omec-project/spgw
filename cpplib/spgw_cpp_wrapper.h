@@ -218,9 +218,18 @@ int
 gx_context_entry_add(const uint8_t *sess_id, void *context);
 
 void*
-get_gx_context(const uint8_t *sessid); 
+get_gx_context(const uint8_t *sessid);
 
-int 
+int
 remove_gx_context(const uint8_t *sessid);
+
+void*
+create_ue_pool_dynamic_cpp(struct in_addr network, struct in_addr mask);
+
+uint32_t
+acquire_ip_cpp(void *pool);
+
+void
+release_ip_cpp(void *pool, struct in_addr ipv4);
 
 #endif

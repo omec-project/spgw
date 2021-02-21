@@ -119,10 +119,9 @@ process_error_occured_handler_new(void *data, void *unused_param)
     ebi_index = info_resp.ebi_index;
     pdn = GET_PDN(context ,ebi_index);
 
-    del_sess_entry_seid(pdn->seid); 
 
     for(int8_t idx = 0; idx < MAX_BEARERS; idx++) {
-        if(context->eps_bearers[idx] != NULL){
+        if(context->eps_bearers[idx] != NULL) {
             free(pdn->eps_bearers[idx]);
             pdn->eps_bearers[idx] = NULL;
             context->eps_bearers[idx] = NULL;
@@ -132,24 +131,13 @@ process_error_occured_handler_new(void *data, void *unused_param)
         }
     }
 
-    pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
-    while (pcc_rule != NULL) {
-        TAILQ_REMOVE(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
-        free(pcc_rule->dyn_rule);
-        free(pcc_rule);
-        pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
-    }
-
-
     LOG_MSG(LOG_DEBUG3, "Delete all bearers of %lu ", context->imsi64);
     // if all bearers released then release pdn context 
     if(pdn->num_bearer == 0) {
-        pdn_context_delete_entry_teidKey(teid);
         if(pdn->s5s8_sgw_gtpc_teid != 0) {
             bearer_context_delete_entry_teidKey(pdn->s5s8_sgw_gtpc_teid);
         }
-        free(pdn);
-        context->num_pdns --;
+        cleanup_pdn_context(pdn);
     }
 
     LOG_MSG(LOG_DEBUG3, "Delete all PDNs of %lu ", context->imsi64);

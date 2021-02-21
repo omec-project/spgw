@@ -14,28 +14,51 @@
 #include "util.h"
 #include "cp_log.h"
 #include "assert.h"
+#include "spgw_config_struct.h"
+#include "spgw_cpp_wrapper.h"
 
 struct ip_table *static_addr_pool = NULL;
+struct ue_pool_dynamic_t *dyn_pool = NULL;
 
 
-/* TODO - Priority 1 - only  1 ip pool is supported. Need better pool management  */
-#define GET_UE_IP(ue_index) \
-			(((cp_config->ip_pool_ip.s_addr | (~cp_config->ip_pool_mask.s_addr)) \
-			  - htonl(ue_index)) - 0x01000000)
-
-
-#define LDB_ENTRIES_DEFAULT (1024 * 1024 * 4)
-/* TODO : Prio2 . Scaling needs change in this area. */
 uint32_t
 acquire_ip(struct in_addr *ipv4)
 {
-	static uint32_t next_ip_index;
-	if (unlikely(next_ip_index == LDB_ENTRIES_DEFAULT)) {
+//#define TESTPOOL
+#ifdef TESTPOOL
+    // Test loop to allocate address and free it ..
+    int i=0;
+  start:
+    i++;
+#endif
+    uint32_t addr = acquire_ip_cpp(dyn_pool);
+    if(addr == 0) {
 		LOG_MSG(LOG_ERROR, "IP Pool depleted");
 		return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
-	}
-	ipv4->s_addr = GET_UE_IP(next_ip_index++);
-	return 0;
+    }
+    ipv4->s_addr = htonl(addr); // give back in network order 
+    LOG_MSG(LOG_ERROR, "IP address assigned to call %s ", inet_ntoa(*ipv4));
+#ifdef TESTPOOL
+    if(i < 10) {
+        release_ip(*ipv4);
+        goto start;
+    }
+#endif
+    return 0;
+}
+
+void
+release_ip(struct in_addr ipv4)
+{
+    ipv4.s_addr = htonl(ipv4.s_addr); // print
+    LOG_MSG(LOG_ERROR, "IP address released %s ", inet_ntoa(ipv4));
+    ipv4.s_addr = htonl(ipv4.s_addr); // release api needs input in host order 
+    release_ip_cpp(dyn_pool, ipv4);
+}
+
+void create_ue_pool_dynamic(struct in_addr network, struct in_addr mask)
+{
+    dyn_pool = create_ue_pool_dynamic_cpp(network, mask);
 }
 
 //network address in host order 
@@ -45,12 +68,23 @@ create_ue_pool(struct in_addr network, struct in_addr mask)
 	// create static pool
 	uint32_t total_address = 1;
     uint32_t n = mask.s_addr;
-	n =  n >> 1;
 	while ((n & 0x1) == 0x0) {
 		total_address = total_address << 1;
 		n =  n >> 1;
 	}
-	LOG_MSG(LOG_INIT,"Number of possible addresses = %d ", total_address);
+	struct in_addr from_ue_ip;
+    from_ue_ip.s_addr = network.s_addr + 1;
+    from_ue_ip.s_addr = htonl(from_ue_ip.s_addr);
+	struct in_addr to_ue_ip;
+    to_ue_ip.s_addr = network.s_addr + (total_address - 2);
+    to_ue_ip.s_addr = htonl(to_ue_ip.s_addr);
+
+	LOG_MSG(LOG_INIT,"Number of possible addresses = %d. From %s ", 
+                    total_address, inet_ntoa(from_ue_ip));
+	LOG_MSG(LOG_INIT,"Number of possible addresses = %d. To %s  ", 
+                    total_address, inet_ntoa(to_ue_ip));
+
+
 	struct ip_table *addr_pool = calloc(1, sizeof(struct ip_table));
 	if (addr_pool == NULL) {
 		LOG_MSG(LOG_ERROR, "Address pool allocation failed. ");
@@ -60,8 +94,6 @@ create_ue_pool(struct in_addr network, struct in_addr mask)
 		struct in_addr ue_ip;
 		ue_ip.s_addr = network.s_addr + i; 
 		add_ipaddr_in_pool(addr_pool, ue_ip);
-		ue_ip.s_addr = htonl(ue_ip.s_addr); // just for print purpose
-		LOG_MSG(LOG_DEBUG, "Add UE IP address = %s  in pool ", inet_ntoa(ue_ip)); 
 	}
 	return addr_pool;
 }
@@ -85,6 +117,7 @@ add_ipaddr_in_pool(struct ip_table *search_tree, struct in_addr host)
 		}
 		search_tree = search_tree->octet[byte];
 	}
+    host.s_addr = htonl(host.s_addr); // printing purpose
 	char *p = inet_ntoa(host);
 	search_tree->ue_address = calloc(1,20); /*abc.efg.hij.klm => 15 char */ 
 	strcpy(search_tree->ue_address, p);
@@ -113,7 +146,7 @@ reserve_ip_node(struct ip_table *search_tree , struct in_addr host)
 	}
 
 	if (search_tree->used == true) {
-		LOG_MSG(LOG_ERROR, "Found address %s in static IP Pool. But this is already used. Rejecy call setup ", search_tree->ue_address);
+		LOG_MSG(LOG_ERROR, "Found address %s in static IP Pool. But this is already used. Reject call setup ", search_tree->ue_address);
 		return false;
 	}
 	LOG_MSG(LOG_DEBUG,"Found address %s in static IP Pool ", search_tree->ue_address);
@@ -150,7 +183,7 @@ release_ip_node(struct ip_table *search_tree , struct in_addr host)
 	}
 
 	if (search_tree->used == true) {
-		LOG_MSG(LOG_DEBUG, "Found address %s in static IP Pool. Freeing the addres ", search_tree->ue_address);
+		LOG_MSG(LOG_DEBUG, "Found address %s in static IP Pool. Freeing the address ", search_tree->ue_address);
 		search_tree->used = false; 
 		return true;
 	}
