@@ -23,6 +23,7 @@
 #include <assert.h>
 #include "proc_bearer_create.h"
 #include "pfcp.h"
+#include "pfcp_enum.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -805,5 +806,187 @@ fill_pfcp_gx_sess_mod_req(proc_context_t *proc,
         }
 	}
     return seq;
+}
+
+static int
+add_qer_into_hash(qer_t *qer)
+{
+	int ret = -1;
+	qer_t *qer_ctxt = NULL;
+	qer_ctxt = (qer_t *)calloc(1, sizeof(qer_t));
+	if (qer_ctxt == NULL) {
+		LOG_MSG(LOG_ERROR, "Failure to allocate qer ");
+		return ret;
+	}
+
+	qer_ctxt->qer_id = qer->qer_id;
+	qer_ctxt->session_id = qer->session_id;
+	qer_ctxt->max_bitrate.ul_mbr = qer->max_bitrate.ul_mbr;
+	qer_ctxt->max_bitrate.dl_mbr = qer->max_bitrate.dl_mbr;
+	qer_ctxt->guaranteed_bitrate.ul_gbr = qer->guaranteed_bitrate.ul_gbr;
+	qer_ctxt->guaranteed_bitrate.dl_gbr = qer-> guaranteed_bitrate.dl_gbr;
+
+	ret = add_qer_entry(qer_ctxt->qer_id, qer_ctxt);
+
+	if(ret != 0) {
+		LOG_MSG(LOG_ERROR, "Adding qer entry Error: %d ", ret);
+		return ret;
+	}
+
+
+	return ret;
+}
+
+// allocate pdr, link pdr to bearer & dynamic_rule  
+int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
+		enum rule_action_t rule_action)
+{
+	/*
+	 * For ever PCC rule create 2 PDR and 2 QER and 2 FAR
+	 * all these struture should be created and filled here
+	 * also store its reference in rule itself
+	 * May be pdr arrary in bearer not needed
+	 */
+	char mnc[4] = {0};
+	char mcc[4] = {0};
+	char nwinst[32] = {0};
+	ue_context_t *context = bearer->pdn->context;
+	pdn_connection_t *pdn = bearer->pdn;
+	pdr_t *pdr_ctxt = NULL;
+	int ret;
+	uint16_t flow_len = 0;
+
+	if (context->serving_nw.mnc_digit_3 == 15) {
+		sprintf(mnc, "0%u%u", context->serving_nw.mnc_digit_1,
+				context->serving_nw.mnc_digit_2);
+	} else {
+		sprintf(mnc, "%u%u%u", context->serving_nw.mnc_digit_1,
+				context->serving_nw.mnc_digit_2,
+				context->serving_nw.mnc_digit_3);
+	}
+
+	sprintf(mcc, "%u%u%u", context->serving_nw.mcc_digit_1,
+			context->serving_nw.mcc_digit_2,
+			context->serving_nw.mcc_digit_3);
+
+	sprintf(nwinst, "mnc%s.mcc%s", mnc, mcc);
+
+	for(int i =0; i < 2; i++)
+	{
+
+		pdr_ctxt = (pdr_t *)calloc(1, sizeof(pdr_t));
+		if (pdr_ctxt == NULL) {
+			LOG_MSG(LOG_ERROR, "Failure to allocate pdr ");
+			return -1;
+		}
+		memset(pdr_ctxt,0,sizeof(pdr_t));
+
+		pdr_ctxt->rule_id =  generate_pdr_id();
+		pdr_ctxt->prcdnc_val =  dyn_rule->precedence;
+		pdr_ctxt->far.far_id_value = generate_far_id();
+		pdr_ctxt->session_id = pdn->seid;
+		/*to be filled in fill_sdf_rule*/
+		pdr_ctxt->pdi.sdf_filter_cnt = 0;
+		dyn_rule->pdr[i] = pdr_ctxt;
+		for(int itr = 0; itr < dyn_rule->num_flw_desc; itr++)
+		{
+			if(dyn_rule->flow_desc[itr].sdf_flow_description != NULL)
+			{
+				flow_len = dyn_rule->flow_desc[itr].flow_desc_len;
+				memcpy(&(pdr_ctxt->pdi.sdf_filter[pdr_ctxt->pdi.sdf_filter_cnt].flow_desc),
+						&(dyn_rule->flow_desc[itr].sdf_flow_description),
+						flow_len);
+				pdr_ctxt->pdi.sdf_filter[pdr_ctxt->pdi.sdf_filter_cnt].len_of_flow_desc = flow_len;
+				pdr_ctxt->pdi.sdf_filter_cnt++;
+			}
+		}
+
+		if (i == SOURCE_INTERFACE_VALUE_ACCESS) {
+			if (cp_config->cp_type == PGWC) {
+				pdr_ctxt->pdi.local_fteid.teid = bearer->s5s8_pgw_gtpu_teid;
+				pdr_ctxt->pdi.local_fteid.ipv4_address =
+						bearer->s5s8_pgw_gtpu_ipv4.s_addr;
+			} else {
+				pdr_ctxt->pdi.local_fteid.teid = bearer->s1u_sgw_gtpu_teid;
+				pdr_ctxt->pdi.local_fteid.ipv4_address =
+						bearer->s1u_sgw_gtpu_ipv4.s_addr;
+			}
+			pdr_ctxt->far.actions.forw = 0;
+
+			pdr_ctxt->far.dst_intfc.interface_value =
+				DESTINATION_INTERFACE_VALUE_CORE;
+		} else {
+			pdr_ctxt->pdi.ue_addr.ipv4_address = pdn->ipv4.s_addr;
+			pdr_ctxt->pdi.local_fteid.teid = 0;
+			pdr_ctxt->pdi.local_fteid.ipv4_address = 0;
+			pdr_ctxt->far.actions.forw = 0;
+			if(cp_config->cp_type == PGWC) {
+				pdr_ctxt->far.outer_hdr_creation.ipv4_address =
+					bearer->s5s8_sgw_gtpu_ipv4.s_addr;
+				pdr_ctxt->far.outer_hdr_creation.teid =
+					bearer->s5s8_sgw_gtpu_teid;
+				pdr_ctxt->far.dst_intfc.interface_value =
+					DESTINATION_INTERFACE_VALUE_ACCESS;
+			}
+		}
+
+		if(rule_action == RULE_ACTION_ADD)
+		{
+			bearer->pdrs[bearer->pdr_count++] = pdr_ctxt;
+		}
+
+		ret = add_pdr_entry(pdr_ctxt->rule_id, pdr_ctxt);
+		if ( ret != 0) {
+			LOG_MSG(LOG_ERROR, "Adding pdr entry Error: %d ", ret);
+			return -1;
+		}
+
+		pdr_ctxt->pdi.src_intfc.interface_value = i;
+		strncpy((char * )pdr_ctxt->pdi.ntwk_inst.ntwk_inst, (char *)nwinst, 32);
+		pdr_ctxt->qer.qer_id = bearer->qer_id[i].qer_id;
+		pdr_ctxt->qer_id[0].qer_id = pdr_ctxt->qer.qer_id;
+		pdr_ctxt->qer.session_id = pdn->seid;
+		pdr_ctxt->qer.max_bitrate.ul_mbr = dyn_rule->qos.ul_mbr;
+		pdr_ctxt->qer.max_bitrate.dl_mbr = dyn_rule->qos.dl_mbr;
+		pdr_ctxt->qer.guaranteed_bitrate.ul_gbr = dyn_rule->qos.ul_gbr;
+		pdr_ctxt->qer.guaranteed_bitrate.dl_gbr = dyn_rule->qos.dl_gbr;
+
+		ret = add_qer_into_hash(&pdr_ctxt->qer);
+
+		if(ret != 0) {
+			LOG_MSG(LOG_ERROR, "Adding qer entry Error: %d ", ret);
+			return ret;
+		}
+		enum flow_status f_status = dyn_rule->flow_status;
+		switch(f_status)
+		{
+			case FL_ENABLED_UPLINK:
+				pdr_ctxt->qer.gate_status.ul_gate  = UL_GATE_OPEN;
+				pdr_ctxt->qer.gate_status.dl_gate  = UL_GATE_CLOSED;
+				break;
+
+			case FL_ENABLED_DOWNLINK:
+				pdr_ctxt->qer.gate_status.ul_gate  = UL_GATE_CLOSED;
+				pdr_ctxt->qer.gate_status.dl_gate  = UL_GATE_OPEN;
+				break;
+
+			case FL_ENABLED:
+				pdr_ctxt->qer.gate_status.ul_gate  = UL_GATE_OPEN;
+				pdr_ctxt->qer.gate_status.dl_gate  = UL_GATE_OPEN;
+				break;
+
+			case FL_DISABLED:
+				pdr_ctxt->qer.gate_status.ul_gate  = UL_GATE_CLOSED;
+				pdr_ctxt->qer.gate_status.dl_gate  = UL_GATE_CLOSED;
+				break;
+			case FL_REMOVED:
+				/*TODO*/
+				break;
+		}
+		// URR support 
+		pdr_ctxt->urr.urr_id = bearer->urr_id[i].urr_id;
+		pdr_ctxt->urr_id[0].urr_id = pdr_ctxt->urr.urr_id;
+	}
+	return 0;
 }
 

@@ -12,6 +12,7 @@
 #include "gtpv2_interface.h"
 #include "util.h"
 #include "spgw_cpp_wrapper.h"
+#include "packet_filters.h"
 
 #define DEFAULT_BEARER_QOS_PRIORITY (15)
 
@@ -281,7 +282,6 @@ install_packet_filters(eps_bearer_t *ded_bearer,
 	uint8_t tad_filter_index = 0;
 	uint8_t bearer_filter_id = 0;
 	int ret;
-	uint64_t mbr;
 
 	create_pkt_filter *cpf = (create_pkt_filter *) &tad[1];
 
@@ -327,6 +327,8 @@ install_packet_filters(eps_bearer_t *ded_bearer,
 			/* TODO: Implement dynamic installation of packet
 			 * filters on DP  - remove continue*/
 			continue;
+           #ifdef TEMP_REMOVAL
+	        uint64_t mbr;
 			mbr = ded_bearer->qos.ul_mbr;
 			/* Convert bit rate into Bytes as CIR stored in bytes */
 			pf.ul_mtr_idx = meter_profile_index_get(mbr);
@@ -338,6 +340,7 @@ install_packet_filters(eps_bearer_t *ded_bearer,
 			dp_packet_filter_id = install_packet_filter(&pf);
 			if (dp_packet_filter_id < 0)
 				return GTPV2C_CAUSE_SYSTEM_FAILURE;
+           #endif
 		}
 
 		ded_bearer->num_packet_filters++;

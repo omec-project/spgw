@@ -175,10 +175,6 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
  * @retrun : Returns 0 in case of success , -1 otherwise
  */
 int
-fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
-		enum rule_action_t rule_action);
-
-int
 fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer,uint8_t itr);
 
 /**
@@ -341,11 +337,6 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer, ue_context_t *context, pdn_conn
  */
 void fill_gate_status(pfcp_sess_estab_req_t *pfcp_sess_est_req,int qer_counter,enum flow_status f_status);
 
-eps_bearer_t *
-get_bearer(pdn_connection_t *pdn, bearer_qos_ie *qos);
-
-eps_bearer_t *
-get_default_bearer(pdn_connection_t *pdn);
 
 int
 fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dyn_rule, eps_bearer_t *bearer);
@@ -356,8 +347,6 @@ fill_update_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 int
 fill_remove_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer_t *bearer);
 
-int8_t
-get_new_bearer_id(pdn_connection_t *pdn_cntxt);
 
 
 /**

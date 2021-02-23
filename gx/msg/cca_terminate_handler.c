@@ -82,6 +82,7 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
 
     if(msg->gx_msg.cca.presence.result_code &&
             msg->gx_msg.cca.result_code != 2001){
+        // TODO : GXMISSING - handle -ve cause codes as well and complete procedure 
         LOG_MSG(LOG_ERROR, "Received CCA-T with DIAMETER Failure [%d]",
                 msg->gx_msg.cca.result_code);
         return -1;

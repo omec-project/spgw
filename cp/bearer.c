@@ -36,13 +36,12 @@ void cleanup_bearer_context(eps_bearer_t *bearer)
 int
 del_rule_entries(ue_context_t *context, uint8_t ebi_index)
 {
-    int ret = 0;
     pdr_t *pdr_ctx =  NULL;
 
     /*Delete all pdr, far, qer entry from table */
     for(uint8_t itr = 0; itr < context->eps_bearers[ebi_index]->qer_count ; itr++) {
         if( del_qer_entry(context->eps_bearers[ebi_index]->qer_id[itr].qer_id) != 0 ){
-            LOG_MSG(LOG_ERROR, "Error %s -  del_pdr_entry deletion",strerror(ret));
+            LOG_MSG(LOG_ERROR, "del_qer_entry deletion");
         }
     }
 

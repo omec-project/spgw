@@ -123,17 +123,4 @@ get_packet_filter(uint16_t index);
 void
 init_packet_filters(void);
 
-/**
- * @brief  : parse adc rules
- * @param  : No Param
- * @return : Returns nothing
- */
-void parse_adc_rules(void);
-
-/**
- * @brief  : Get meter profile index with matching bit rate cir
- * @param  : cir, bit rate
- * @return : Returns meter profile index of matching meter profile
- */
-int meter_profile_index_get(uint64_t cir);
 #endif

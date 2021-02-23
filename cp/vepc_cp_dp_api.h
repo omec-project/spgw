@@ -138,7 +138,7 @@ struct ip_addr {
 		uint32_t ipv4_addr;		/* IPv4 address*/
 		uint8_t  ipv6_addr[IPV6_ADDR_LEN]; /* IPv6 address*/
 	} u;
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  : IPv4 5 tuple rule configuration structure.
@@ -154,7 +154,7 @@ struct ipv4_5tuple_rule {
 	uint16_t dport_e;	/* Range end Dst Port */
 	uint8_t  proto_s;	/* Range start Protocol*/
 	uint8_t  proto_e;	/* Range end Protocol*/
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  : IPv6 5 tuple rule configuration structure.
@@ -170,7 +170,7 @@ struct ipv6_5tuple_rule {
 	uint16_t dport_e;	/* Range end Dst Port */
 	uint8_t  proto_s;	/* Range start Protocol*/
 	uint8_t  proto_e;	/* Range end Protocol*/
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  : 5 tuple rule configuration structure.
@@ -181,7 +181,7 @@ struct  five_tuple_rule {
 		struct ipv4_5tuple_rule ipv4;
 		struct ipv6_5tuple_rule ipv6;
 	} u;
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  : Packet filter configuration structure.
@@ -204,7 +204,7 @@ struct pkt_filter {
 							 * This field is currently not used*/
 	} u;
 	enum rule_type sel_rule_type;
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  :  DNS selector type.
@@ -222,7 +222,7 @@ enum selector_type {
 struct ip_prefix {
 	struct ip_addr ip_addr;	/* IP address*/
 	uint16_t prefix;		/* Prefix*/
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  : Redirect configuration structure.
@@ -255,7 +255,7 @@ struct adc_rules {
 		struct ip_prefix domain_prefix;	/* Domain IP prefix */
 	} u;
 	uint32_t rule_id;				/* Rule ID*/
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 
 /**
@@ -279,7 +279,7 @@ struct mtr_params {
 	/* Excess Burst Size (EBS).  Measured in bytes.*/
 	uint64_t ebs;
 	/* TODO: add TRTCM params */
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  : Meter Profile entry config structure.
@@ -289,7 +289,7 @@ struct mtr_entry {
 	struct mtr_params mtr_param;	/* Meter params*/
 	uint8_t  metering_method;	/* Metering Methods
 								 * -fwd, srtcm, trtcm*/
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  : Direction on which the session is applicable.
@@ -308,7 +308,7 @@ struct ul_s1_info {
 	struct ip_addr enb_addr;	/* eNodeB address*/
 	struct ip_addr sgw_addr;	/* Serving Gateway address*/
 	struct ip_addr s5s8_pgwu_addr;	/* S5S8_PGWU address*/
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  : DownLink S1u interface config structure.
@@ -318,7 +318,7 @@ struct dl_s1_info {
 	struct ip_addr enb_addr;	/* eNodeB address*/
 	struct ip_addr sgw_addr;	/* Serving Gateway address*/
 	struct ip_addr s5s8_sgwu_addr;	/* S5S8_SGWU address*/
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  : Policy and Charging Control structure for DP
@@ -351,7 +351,7 @@ struct pcc_rules {
 	uint8_t  metering_method;		/* Metering Methods
 						 * -fwd, srtcm, trtcm*/
 	uint8_t  mute_notify;			/* Mute on/off*/
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  : Maintains cdr details
@@ -399,7 +399,7 @@ struct ipcan_dp_bearer_cdr {
 	uint64_t vol_threshold;			/* volume threshold in MBytes*/
 	struct chrg_data_vol data_vol;		/* charing per UE by volume*/
 	uint32_t charging_rule_id;			/* Charging Rule ID*/
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 
 /**
@@ -436,7 +436,7 @@ struct session_info {
 	uint32_t ul_apn_mtr_idx;		/* UL APN meter profile index*/
 	uint32_t dl_apn_mtr_idx;		/* DL APN meter profile index*/
 	enum sess_pkt_action action;
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 
 /**
@@ -445,7 +445,7 @@ struct session_info {
 struct dp_id {
 	uint64_t id;			/* table identifier.*/
 	char name[MAX_LEN];		/* name string of identifier*/
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 /**
  * @brief  : Type of CDR record to be flushed.
@@ -469,7 +469,7 @@ struct msg_ue_cdr {
 							 * or all. Please refer enum cdr_type for values*/
     uint8_t action;         /* 0 to append and 1 to clear old logs and
 							 * write new logs into cdr log file.*/
-} __attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+} __attribute__((packed));
 
 
 #define MAX_NB_DPN	8  /* Note: MAX_NB_DPN <= 8 */

@@ -14,6 +14,7 @@ GXASSUMPTIONS : These are some assumptions in the Gx code.
 GXREQ : handle update bearer on both default and dedicated bearer 
 GXCOMPLIANCE - This tag indicates that we are doing something which is not as per standard
 GXFEATURE : Something which we should support
+GXMISSING : missing handling
 
 BUG - Needs fix.  
 

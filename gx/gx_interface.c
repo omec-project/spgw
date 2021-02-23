@@ -692,10 +692,14 @@ out_handler_gx(void *data)
             gx_msg *temp = (gx_msg*)event->payload;
             if(gx_out_mock_handler[temp->msg_type] != NULL) {
                 gx_out_mock_handler[temp->msg_type](event);
+                free(event->payload);
+                free(event);
                 continue;
             }
 
             send_to_ipc_channel(event->fd, (char *)event->payload, event->payload_len);
+            free(event->payload);
+            free(event);
             continue;
         }
         //PERFORAMANCE ISSUE - use conditional variable 

@@ -244,8 +244,8 @@ int epc_sponsdn_dn_del(char **dn, unsigned int num)
 	return 0;
 }
 
-static int event_handler(unsigned int id, __rte_unused unsigned long long from,
-			unsigned long long to, __rte_unused unsigned int flags,
+static int event_handler(unsigned int id, unsigned long long from,
+			unsigned long long to, unsigned int flags,
 			void *ctx)
 {
 	struct ctx *match_ctx = ctx;
@@ -265,9 +265,9 @@ static const struct dns_response *next_response(const struct dns_response *resp)
 
 int epc_sponsdn_scan(const char *resp, unsigned len, char *hname,
 		     unsigned *rule_id, struct in_addr *addr4, int *addr4_cnt,
-		     __rte_unused char **hname_6,
-		     __rte_unused struct in6_addr *addr6,
-		     __rte_unused int *addr6_cnt)
+		     char **hname_6,
+		     struct in6_addr *addr6,
+		     int *addr6_cnt)
 {
 	const struct dns_query *query;
 	const struct dns_response *response;

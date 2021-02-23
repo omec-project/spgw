@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <getopt.h>
-#include <rte_cfgfile.h>
 #include "cp_init.h"
 #include "cp_main.h"
 #include "sm_struct.h"

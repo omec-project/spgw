@@ -48,7 +48,7 @@ int handle_create_bearer_response_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2
 
     if (gtpv2c_rx->teid.has_teid.teid) { 
         context = (ue_context_t*)get_ue_context(cbrsp->header.teid.has_teid.teid);
-        if(context != NULL) { 
+        if(context == NULL) { 
             LOG_MSG(LOG_DEBUG0, "No matching user session found. Dropping CBRsp message for teid = %u", gtpv2c_rx->teid.has_teid.teid);
             increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
             return -1;

@@ -69,5 +69,10 @@ process_pgwc_create_bearer_rsp_pfcp_timeout(void *data);
 
 void
 process_sgwc_create_bearer_rsp_pfcp_timeout(void *data);
-#endif
 
+int
+fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
+		enum rule_action_t rule_action);
+
+
+#endif

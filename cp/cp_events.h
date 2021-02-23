@@ -124,7 +124,7 @@ queue_gx_out_event(int fd,
 {
     LOG_MSG(LOG_DEBUG,"Queue event GX_OUT_PKTS ");
     outgoing_pkts_event_t *event_p = (outgoing_pkts_event_t*)calloc(1, sizeof(outgoing_pkts_event_t));
-    event_p->payload = calloc(1, payload_len + 10);
+    event_p->payload = payload; 
     event_p->fd = fd;
     event_p->payload_len = payload_len;
     memcpy(event_p->payload, payload, payload_len);
