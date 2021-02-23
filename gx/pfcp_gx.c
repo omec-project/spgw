@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "cp_config.h"
-#include <rte_cfgfile.h>
 #include <rte_string_fns.h>
 
 #include "cp_log.h"

@@ -10,8 +10,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <inttypes.h>
-#include <rte_cfgfile.h>
-#include <rte_memory.h>
 #include <time.h>
 #include <math.h>
 #include <sys/stat.h>

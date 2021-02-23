@@ -129,6 +129,7 @@ void init_config(void)
     LOG_MSG(LOG_INIT,"Config file to monitor %s ", cfgfile);
     register_cpconfig_updates(cfgfile);
 
+
     // thread to read incoming socker messages from local socket - config change listen 
     pthread_t readerLocal_t;
     pthread_attr_t localattr;

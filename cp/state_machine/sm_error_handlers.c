@@ -31,6 +31,8 @@
 #include "util.h"
 #include "cp_io_poll.h"
 #include "cp_log.h"
+#include "pfcp_cp_interface.h"
+#include "pfcp_messages_encoder.h"
 
 void
 get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
@@ -119,6 +121,85 @@ process_error_occured_handler_new(void *data, void *unused_param)
     ebi_index = info_resp.ebi_index;
     pdn = GET_PDN(context ,ebi_index);
 
+    //send delete pfcp message to UPF 
+    if(pdn->dp_seid != 0) {
+	    uint8_t pfcp_msg[512]={0};
+	    pfcp_sess_del_req_t pfcp_sess_del_req = {0};
+	    fill_pfcp_sess_del_req(&pfcp_sess_del_req);
+	    pfcp_sess_del_req.header.seid_seqno.has_seid.seid = pdn->dp_seid;
+	    int encoded = encode_pfcp_sess_del_req_t(&pfcp_sess_del_req, pfcp_msg);
+	    pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
+	    header->message_len = htons(encoded - 4);
+        if(context->upf_context != NULL) {
+	        pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
+        }
+    }
+
+    do {
+	    if ((cp_config->gx_enabled) && (cp_config->cp_type != SGWC)) {
+	    	gx_context_t *gx_context = NULL;
+	        gx_msg ccr_request = {0};
+            uint16_t msglen;
+
+	    	/* Retrive Gx_context based on Sess ID. */
+	    	ue_context_t *temp_context  = (ue_context_t *)get_gx_context((uint8_t *)pdn->gx_sess_id); 
+	    	if (temp_context == NULL) {
+	    		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
+                break;
+	    	}
+            assert(temp_context == context);
+            gx_context = temp_context->gx_context;
+
+	    	/* VS: Set the Msg header type for CCR-T */
+	    	ccr_request.msg_type = GX_CCR_MSG ;
+
+	    	/* VS: Set Credit Control Request type */
+	    	ccr_request.data.ccr.presence.cc_request_type = PRESENT;
+	    	ccr_request.data.ccr.cc_request_type = TERMINATION_REQUEST ;
+
+	    	/* VG: Set Credit Control Bearer opertaion type */
+	    	ccr_request.data.ccr.presence.bearer_operation = PRESENT;
+	    	ccr_request.data.ccr.bearer_operation = TERMINATION ;
+
+	    	/* VS: Fill the Credit Crontrol Request to send PCRF */
+	    	if(fill_ccr_request(&ccr_request.data.ccr, context, ebi_index, pdn->gx_sess_id) != 0) {
+	    		LOG_MSG(LOG_ERROR, "Failed CCR request filling process");
+                break;
+	    	}
+
+	    	/* VS: Set the Gx State for events */
+	    	gx_context->state = CCR_SNT_STATE;
+
+	    	/* VS: Calculate the max size of CCR msg to allocate the buffer */
+	    	msglen = gx_ccr_calc_length(&ccr_request.data.ccr);
+
+            char *buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type));
+            if (buffer == NULL) {
+                LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
+                break;
+            }
+
+            memcpy(buffer, &ccr_request.msg_type, sizeof(ccr_request.msg_type));
+
+            if (gx_ccr_pack(&(ccr_request.data.ccr),
+                        (unsigned char *)(buffer + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num)), msglen) == 0) {
+                LOG_MSG(LOG_ERROR, "ERROR: Packing CCR Buffer... ");
+                break;
+            }
+	    	gx_send(my_sock.gx_app_sock, buffer,
+	    			msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
+            struct sockaddr_in saddr_in;
+            saddr_in.sin_family = AF_INET;
+            inet_aton("127.0.0.1", &(saddr_in.sin_addr));
+            increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_T, saddr_in.sin_addr.s_addr);
+			if(remove_gx_context((uint8_t*)pdn->gx_sess_id) < 0){
+				LOG_MSG(LOG_ERROR, " Error on gx_context_by_sess_id_hash deletion");
+			}
+            free(gx_context); 
+            temp_context->gx_context = NULL;
+            del_pdn_conn_entry(pdn->call_id);
+        }
+    }while(0);
 
     for(int8_t idx = 0; idx < MAX_BEARERS; idx++) {
         if(context->eps_bearers[idx] != NULL) {

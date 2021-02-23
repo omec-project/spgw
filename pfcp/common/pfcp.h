@@ -56,7 +56,7 @@ struct pfcp_cntxt {
 //	/* Collection of FARs */
 //	far_t far[MAX_LIST_SIZE];
 
-}__attribute__((packed, aligned(RTE_CACHE_LINE_SIZE)));
+}__attribute__((packed));
 
 
 /**
@@ -190,9 +190,5 @@ get_bearer_info_install_rules(pdn_connection_t *pdn,
  */
 int
 int_to_str(char *buf , uint32_t val);
-
-int8_t
-compare_default_bearer_qos(bearer_qos_ie *default_bearer_qos,
-		bearer_qos_ie *rule_qos);
 
 #endif /* PFCP_H */

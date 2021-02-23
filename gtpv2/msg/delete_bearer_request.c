@@ -144,6 +144,7 @@ process_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx)
 		delete_bearer_rsp.context->teid_bitmap &= ~(0x01 << index);
 
 
+#ifdef OBSOLETE_API
 		struct session_info si;
 		memset(&si, 0, sizeof(si));
 
@@ -152,7 +153,6 @@ process_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx)
 		si.sess_id =
 			SESS_ID(delete_bearer_rsp.context->s11_sgw_gtpc_teid,
 				delete_bearer_rsp.ded_bearer->eps_bearer_id);
-#ifdef OBSOLETE_API
 		struct dp_id dp_id = { .id = DPN_ID };
 		session_delete(dp_id, si);
 #endif

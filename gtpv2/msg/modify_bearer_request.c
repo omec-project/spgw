@@ -151,10 +151,9 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 		gtpv2c_header_t *gtpv2c_tx)
 {
 	mod_bearer_req_t mb_req = {0};
-	uint32_t i;
 	ue_context_t *context = NULL;
 	eps_bearer_t *bearer = NULL;
-	pdn_connection_t *pdn = NULL;
+	//pdn_connection_t *pdn = NULL;
 
 	decode_mod_bearer_req((uint8_t *) gtpv2c_rx, &mb_req);
 
@@ -186,7 +185,7 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 		return -EPERM;
 	}
 
-	pdn = bearer->pdn;
+	//pdn = bearer->pdn;
 
 	/* TODO something with modify_bearer_request.delay if set */
 
@@ -205,6 +204,7 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 	set_modify_bearer_response(gtpv2c_tx, mb_req.header.teid.has_teid.seq,
 	    context, bearer);
 
+#ifdef OBSELETE_APIS
 	/* using the s1u_sgw_gtpu_teid as unique identifier to the session */
 	struct session_info session;
 	memset(&session, 0, sizeof(session));
@@ -235,6 +235,7 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 	 session.dl_pcc_rule_id[0] = FIRST_FILTER_ID;
 
 	 session.num_adc_rules = num_adc_rules;
+	 uint32_t i;
 	 for (i = 0; i < num_adc_rules; ++i)
 			 session.adc_rule_id[i] = adc_rule_id[i];
 
@@ -242,7 +243,6 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 			context->s11_sgw_gtpc_teid,
 			bearer->eps_bearer_id);
 
-#ifdef OBSELETE_APIS
 	struct dp_id dp_id = { .id = DPN_ID };
 	if (session_modify(dp_id, session) < 0)
         assert(0);

@@ -179,6 +179,7 @@ process_gtp_msg(void *data, uint16_t event)
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE,
                 gtpv2c_rx->teid.has_teid.seq);
         LOG_MSG(LOG_ERROR, "Discarding packet due to gtp version is not supported..");
+        // TODO : memory leak ?
         return;
     }
     gtp_msg_handler[gtpv2c_rx->gtpc.message_type](&msg, gtpv2c_rx);
@@ -229,6 +230,8 @@ out_handler_gtp(void *data)
             gtpv2c_header_t *temp = (gtpv2c_header_t *)event->payload;
             if(gtp_out_mock_handler[temp->gtpc.message_type] != NULL) {
                 gtp_out_mock_handler[temp->gtpc.message_type](event);
+                free(event->payload);
+                free(event);
                 continue;
             }
 
@@ -237,6 +240,8 @@ out_handler_gtp(void *data)
 			if(bytes_tx < 0) {
             	LOG_MSG(LOG_ERROR, "gtpv2c_send() failed on fd= %d", event->fd);
 			}
+            free(event->payload);
+            free(event);
             continue;
         }
         //PERFORAMANCE ISSUE - use conditional variable 

@@ -14,6 +14,7 @@ class qerTables
         int add_qerid_to_qerctxt_mapping(uint32_t qer_id, void *entry)
         {
             std::pair<uint32_t, void*> pair(qer_id, entry);
+            /* TODO : error on duplicate addition ?*/
             qerid_qerctxt_hash.insert(pair);
             return 0;
         }

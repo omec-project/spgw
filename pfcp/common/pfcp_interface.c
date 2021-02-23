@@ -94,12 +94,16 @@ out_handler_pfcp(void *data)
             pfcp_header_t *temp = (pfcp_header_t *)event->payload;
             if(pfcp_out_mock_handler[temp->message_type] != NULL) {
                 pfcp_out_mock_handler[temp->message_type](event);
+                free(event->payload);
+                free(event);
                 continue;
             }
 
             int bytes_tx = sendto(event->fd, event->payload, event->payload_len, 0,
                     (struct sockaddr *) &event->dest_addr, sizeof(struct sockaddr_in));
             LOG_MSG(LOG_DEBUG, "pfcp_send() on fd= %d bytes_tx = %d ", event->fd, bytes_tx);
+            free(event->payload);
+            free(event);
             continue;
         }
         //PERFORAMANCE ISSUE - use conditional variable 

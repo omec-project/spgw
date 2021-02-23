@@ -9,7 +9,6 @@
 #include "gtp_messages_decoder.h"
 #include "cp_log.h"
 #include "ue.h"
-#include "packet_filters.h"
 #include "gtp_messages.h"
 #include "gtpv2_set_ie.h"
 #include "vepc_cp_dp_api.h"
@@ -492,6 +491,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 			"\n\tset_create_session_response::done...\n",
 			cp_config->cp_type, process_spgwc_s11_cs_res_cnt++);
 
+#ifdef OBSOLETE_APIS
 	/* using the s1u_sgw_gtpu_teid as unique identifier to the session */
 	struct session_info session;
 	memset(&session, 0, sizeof(session));
@@ -543,11 +543,9 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	session.sess_id = SESS_ID(context->s11_sgw_gtpc_teid,
 						bearer->eps_bearer_id);
 
-#ifdef OBSOLETE_APIS
 	struct dp_id dp_id = { .id = DPN_ID };
 	if (session_create(dp_id, session) < 0)
         assert(0);
-#endif
 
 	if (bearer->s11u_mme_gtpu_teid) {
 		session.num_dl_pcc_rules = 1;
@@ -558,11 +556,10 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		for (i = 0; i < num_adc_rules; ++i)
 			        session.adc_rule_id[i] = adc_rule_id[i];
 
-#ifdef OBSOLETE_APIS
 		if (session_modify(dp_id, session) < 0)
             assert(0);
-#endif
 	}
+#endif
 
 	return 0;
 }

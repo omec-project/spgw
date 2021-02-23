@@ -20,7 +20,6 @@
 #include <arpa/inet.h>
 #include "gtpv2_ie.h"
 #include "cp_interface.h"
-#include "packet_filters.h"
 #include "pfcp_cp_struct.h"
 #include "cp_timer.h"
 #include "cp_peer_struct.h"
@@ -685,7 +684,23 @@ void start_procedure(proc_context_t *proc, msg_info_t *msg);
 
 void end_procedure(proc_context_t *proc);
 
+/* PDN APIs */
 void cleanup_pdn_context(pdn_connection_t *pdn);
+
+eps_bearer_t *
+get_default_bearer(pdn_connection_t *pdn);
+
+eps_bearer_t *
+get_bearer(pdn_connection_t *pdn, bearer_qos_ie *qos);
+
+int8_t
+compare_default_bearer_qos(bearer_qos_ie *default_bearer_qos,
+		bearer_qos_ie *rule_qos);
+
+
+int8_t
+get_new_bearer_id(pdn_connection_t *pdn_cntxt);
+/* PDN APIs end */
 
 /* Bearer API start */
 void cleanup_bearer_context(eps_bearer_t *bearer);
