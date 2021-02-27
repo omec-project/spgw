@@ -18,7 +18,7 @@
 #include "pfcp_cp_association.h"
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_session.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "csid_cp_cleanup.h"
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
@@ -32,7 +32,6 @@
 #include "pfcp_enum.h"
 #include "cp_transactions.h"
 #include "cp_peer.h"
-#include "cp/cp_log.h"
 
 
 int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt) 
@@ -45,11 +44,10 @@ int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt)
 		LOG_MSG(LOG_ERROR, "Failure to allocate upf context: ");
 		return -1;
 	}
-    memset(upf_context, 0, sizeof(upf_context_t));
     *upf_ctxt = upf_context;
-	bzero(upf_context->upf_sockaddr.sin_zero, sizeof(upf_context->upf_sockaddr.sin_zero));
+    memset(upf_context->upf_sockaddr.sin_zero, '\0', sizeof(upf_context->upf_sockaddr.sin_zero));
 	upf_context->upf_sockaddr.sin_family = AF_INET;
-	upf_context->upf_sockaddr.sin_port = htons(cp_config->upf_pfcp_port);
+	upf_context->upf_sockaddr.sin_port = htons(cp_config->pfcp_port);
 	upf_context->upf_sockaddr.sin_addr.s_addr = upf_ip; 
 
 	ret = upf_context_entry_add(&upf_ip, upf_context);
@@ -83,3 +81,63 @@ start_upf_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
     return;
 }
 
+/* Requirement: 
+ * For now I am using linux system call to do the service name dns resolution...
+ * 3gpp based DNS lookup of NRF support would be required to locate UPF. 
+ */
+struct in_addr native_linux_name_resolve(const char *name)
+{
+    struct in_addr ip = {0};
+    LOG_MSG(LOG_INFO, "DNS Query - %s ",name);
+    struct addrinfo hints;
+    struct addrinfo *result=NULL, *rp=NULL;
+    int err;
+
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+    hints.ai_protocol = 0;          /* Any protocol */
+    hints.ai_canonname = NULL;
+    hints.ai_addr = NULL;
+    hints.ai_next = NULL;
+    err = getaddrinfo(name, NULL, &hints, &result);
+    if (err == 0)
+    {
+        for (rp = result; rp != NULL; rp = rp->ai_next)
+        {
+            if(rp->ai_family == AF_INET)
+            {
+                struct sockaddr_in *addrV4 = (struct sockaddr_in *)rp->ai_addr;
+                LOG_MSG(LOG_DEBUG, "Received DNS response. name %s mapped to  %s", name, inet_ntoa(addrV4->sin_addr));
+                return addrV4->sin_addr;
+            }
+        }
+    }
+    LOG_MSG(LOG_ERROR, "DNS Query for %s failed with error %s", name, gai_strerror(err));
+    return ip;
+}
+
+upf_context_t*
+get_upf_context(user_plane_profile_t *upf_profile) 
+{
+    struct in_addr ip = {0};
+    if(upf_profile == NULL) {
+        return NULL;
+    }
+
+    if(upf_profile->upf_addr == 0) {
+        ip = native_linux_name_resolve(upf_profile->user_plane_service); 
+        upf_profile->upf_addr = ip.s_addr; 
+    }
+
+    if(upf_profile->upf_addr != 0) {
+        upf_context_t *upf_context = NULL;
+        upf_context = (upf_context_t*)upf_context_entry_lookup(upf_profile->upf_addr);
+        if(upf_context == NULL) {
+            create_upf_context(upf_profile->upf_addr, &upf_context);
+        }
+        return upf_context;
+    }
+	return NULL; 
+}

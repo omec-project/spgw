@@ -141,6 +141,7 @@ CFLAGS += -I$(SRCDIR)/../pfcp/common
 CFLAGS += -I$(SRCDIR)/../libgtpv2c/include
 CFLAGS += -I$(OSS_UTIL_ROOT)/include
 CFLAGS += -I$(SRCDIR)/../cpplib/
+CFLAGS += -I/usr/include
 
 # Mandatory CFLAGS, LDFLAGS- DO NOT MODIFY
 # #############################################################

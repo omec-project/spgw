@@ -12,7 +12,7 @@
 #include "pfcp_cp_association.h"
 #include "ue.h"
 #include "gen_utils.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_events.h"

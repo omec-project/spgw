@@ -8,7 +8,7 @@
 #include "gtpv2_set_ie.h"
 #include "packet_filters.h"
 #include "cp_log.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include <assert.h>
 #include "ue.h"
 #include "cp_interface.h"

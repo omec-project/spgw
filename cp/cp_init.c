@@ -13,7 +13,7 @@
 #include "cp_timer.h"
 #include "sm_struct.h"
 #include "cp_config_apis.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "cp_interface.h"
 #include "cp_transactions.h"
 #include "gtpv2_internal.h"

@@ -4,7 +4,7 @@
 
 #include "pfcp_cp_interface.h"
 #include "pfcp_messages_decoder.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "cp_events.h"
 #include "cp_test.h"
 #include "cp_log.h"
@@ -67,18 +67,14 @@ int
 pfcp_send(int fd, void *msg_payload, uint32_t size,
 		struct sockaddr_in *peer_addr)
 {
-#if 0
-	socklen_t addr_len = sizeof(*peer_addr);
-	uint32_t bytes = sendto(fd,
-			(uint8_t *) msg_payload,
-			size,
-			MSG_DONTWAIT,
-			(struct sockaddr *)peer_addr,
-			addr_len);
-	return bytes;
-#endif
-    LOG_MSG(LOG_DEBUG,"queuing message in pfcp out channel ");
+    LOG_MSG(LOG_DEBUG,"queuing message in pfcp out channel for peer %s, port = %u ", inet_ntoa(peer_addr->sin_addr), peer_addr->sin_port);
     queue_pfcp_out_event(fd, msg_payload, size, (struct sockaddr *)peer_addr);
+
+#if 0
+    int bytes_tx = sendto(fd, msg_payload, size, 0, (struct sockaddr *) peer_addr, sizeof(struct sockaddr));
+    LOG_MSG(LOG_ERROR, "Number of bytes sent = %d ", bytes_tx);
+    assert(bytes_tx >=0);
+#endif
 	return 1;
 }
 
@@ -98,10 +94,15 @@ out_handler_pfcp(void *data)
                 free(event);
                 continue;
             }
-
+            
             int bytes_tx = sendto(event->fd, event->payload, event->payload_len, 0,
                     (struct sockaddr *) &event->dest_addr, sizeof(struct sockaddr_in));
-            LOG_MSG(LOG_DEBUG, "pfcp_send() on fd= %d bytes_tx = %d ", event->fd, bytes_tx);
+            if(bytes_tx <= 0) {
+                struct sockaddr_in *p = (struct sockaddr_in*)&event->dest_addr;
+                LOG_MSG(LOG_ERROR, "sizeof in_addr = %lu  and sizeof sockaddr = %lu ",sizeof(struct sockaddr_in), sizeof(struct sockaddr));
+                LOG_MSG(LOG_ERROR, "pfcp_send() on fd = %d bytes_tx = %d , error = %s payload len = %d peer %s", 
+                                    event->fd, bytes_tx, strerror(errno), event->payload_len, inet_ntoa(p->sin_addr));
+            }
             free(event->payload);
             free(event);
             continue;

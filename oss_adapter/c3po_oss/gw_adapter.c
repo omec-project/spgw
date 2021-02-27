@@ -15,13 +15,7 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <stdbool.h>
-#include "../../cp/cp_config.h"
-#include "cp_interface.h"
-#include "../../cp/ue.h"
-#include "util.h"
 #include "crest.h"
-
-#include "pfcp_cp_set_ie.h"
 
 MessageType ossS5s8MessageDefs[] = {
         {       3       , "Version Not Supported Indication",dNone      },

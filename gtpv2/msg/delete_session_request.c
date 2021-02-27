@@ -10,7 +10,7 @@
 #include "gtpv2_set_ie.h"
 #include "gtpv2_interface.h"
 #include "sm_struct.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "cp_log.h"
 #include "ip_pool.h"
 #include "cp_peer.h"
@@ -92,10 +92,10 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
 
-	if (static_addr_pool != NULL && (IF_PDN_ADDR_STATIC(pdn))) {
+	if (IF_PDN_ADDR_STATIC(pdn)) {
 		struct in_addr host = {0};
 		host.s_addr = pdn->ipv4.s_addr;
-		release_ip_node(static_addr_pool, host); 
+		release_ip_node(host); 
 	}
 
 	if (cp_config->cp_type == SGWC) {

@@ -11,7 +11,7 @@
 #include "cp_io_poll.h"
 #include "cp_interface.h"
 #include "sm_hand.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "trans_struct.h"
 #include "ue.h"
 #include "cp_proc.h"

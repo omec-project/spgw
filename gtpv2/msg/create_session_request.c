@@ -13,7 +13,7 @@
 #include "gtpv2_set_ie.h"
 #include "vepc_cp_dp_api.h"
 #include "pfcp_cp_set_ie.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "cp_config_apis.h"  /* fetch APIs to build PCO */
 #include "csid_api.h"
 #include "stdint.h"

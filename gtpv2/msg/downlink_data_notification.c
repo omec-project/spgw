@@ -10,7 +10,7 @@
 #include "cp_log.h"
 #include "cp_io_poll.h"
 #include "vepc_cp_dp_api.h"
-#include"cp_config.h"
+#include "spgw_config_struct.h"
 #include "gtpv2_set_ie.h"
 #include "gtpv2_interface.h"
 #include "gtpv2_ie_parsing.h"

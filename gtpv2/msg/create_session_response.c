@@ -23,7 +23,7 @@
 #include "cp_io_poll.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_messages_encoder.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "sm_structs_api.h"
 #include "pfcp_cp_session.h"
 #include "cp_peer.h"

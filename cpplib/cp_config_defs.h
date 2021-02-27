@@ -27,17 +27,11 @@
 
 #define CP_CONFIG_FOLDER		"../config/"
 #define CP_CONFIG_SUB_RULES	    "../config/subscriber_mapping.json"
-#define STATIC_CP_FILE          "../config/cp.cfg"
-#define METER_PROFILE_FILE      "../config/meter_profile.cfg"
-#define PCC_RULE_FILE           "../config/pcc_rules.cfg"
-#define SDF_RULE_FILE           "../config/sdf_rules.cfg"
-#define ADC_RULE_FILE           "../config/adc_rules.cfg"
+#define STATIC_CP_JSON_FILE     "../config/cp.json"
 
 #define DEFAULT_STATS_PATH      "./logs/"
 #define HEARTBEAT_TIMESTAMP     "../config/hrtbeat_recov_time.txt"
 #define RESTART_CNT_FILE        "../config/cp_rstCnt.txt"
-
-#define DEFAULT_IPV4_MTU        (1450)
 
 #define DPN_ID                       (12345)
 #endif

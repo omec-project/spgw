@@ -12,7 +12,7 @@
 #include "cp_log.h"
 #include "cp_io_poll.h"
 #include "gtpv2_internal.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "spgw_cpp_wrapper.h"
 
 extern uint8_t rstCnt;

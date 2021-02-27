@@ -7,7 +7,7 @@
 
 #include "gx_interface.h"
 #include "cp_log.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "sm_enum.h"
 #include "sm_struct.h"
 #include "sm_hand.h"

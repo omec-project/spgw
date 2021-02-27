@@ -12,7 +12,7 @@
 #include "upf_struct.h"
 #include "netinet/in.h"
 #include "pfcp_cp_set_ie.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "pfcp_enum.h"
 #include "cp_peer.h"
 #include "pfcp_cp_util.h"

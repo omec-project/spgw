@@ -11,13 +11,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <rte_common.h>
 #include <hs.h>
 #include <stdio.h>
-
-#include <rte_common.h>
-#include <rte_byteorder.h>
 #include "sponsdn.h"
+#include "errno.h"
 
 /* TODO: is there an existing #define
  * max len per rfc is 255 octets, ignoring the length encoding
@@ -71,7 +68,8 @@ static uint32_t max_host_names;
 
 static inline bool is_compressed_name(uint16_t name)
 {
-	return !!(rte_be_to_cpu_16(name) & 0xe000);
+    name = ntohs(name);
+	return !!(name & 0xe000);
 }
 
 static int compile_tbl(void)
@@ -257,7 +255,7 @@ static int event_handler(unsigned int id, unsigned long long from,
 
 static const struct dns_response *next_response(const struct dns_response *resp)
 {
-	uint16_t len = rte_be_to_cpu_16(resp->data_len);
+	uint16_t len = ntohs(resp->data_len);
 	char *buf = (char *)&resp->addr;
 
 	return (const struct dns_response *)(buf + len);
@@ -279,7 +277,7 @@ int epc_sponsdn_scan(const char *resp, unsigned len, char *hname,
 	if (!header->ans)
 		return -1;
 
-	num_ans = rte_be_to_cpu_16(header->ans);
+	num_ans = ntohs(header->ans);
 	if (!num_ans)
 		return -1;
 
@@ -299,8 +297,10 @@ int epc_sponsdn_scan(const char *resp, unsigned len, char *hname,
 	}
 
 	query = (const struct dns_query *)(resp + ctx.off + 1);
-	if (!(rte_be_to_cpu_16(query->type) == 1 &&	/* Type = A */
-		rte_be_to_cpu_16(query->class) == 1)) { /* Class = IN */
+    uint16_t query_t = ntohs(query->type);
+    uint16_t query_c = ntohs(query->class);
+	if (!(query_t == 1 &&	/* Type = A */
+		  query_c == 1)) { /* Class = IN */
 		return -1;
 	}
 
@@ -308,7 +308,8 @@ int epc_sponsdn_scan(const char *resp, unsigned len, char *hname,
 
 	cnt4 = 0;
 	for (i = 0; i < num_ans; i++, response = next_response(response)) {
-		if (rte_be_to_cpu_16(response->type) != 1)
+        uint16_t res_type = ntohs(response->type);
+		if (res_type != 1)
 			continue;
 
 		if (is_compressed_name(response->name)) {

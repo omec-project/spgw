@@ -5,7 +5,7 @@
 
 #include "sm_struct.h"
 #include "gtp_messages.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "sm_enum.h"
 #include "gtpv2_error_rsp.h"
 #include "assert.h"

@@ -17,7 +17,7 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp.h"
 #include <sys/stat.h>
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "cp_config_apis.h"
 #include "cp_config_defs.h"
 #include "ipc_api.h"
@@ -32,6 +32,7 @@
 #include "cp_test.h"
 #include "cp_log.h"
 #include "assert.h"
+#include "rte_eal.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -83,19 +84,22 @@ parse_arg(int argc, char **argv)
         c = getopt_long(argc, argv, "x:y:l:f:", long_options,
                 &option_index);
 
-        if (c == -1)
+        if (c == -1) {
+            LOG_MSG(LOG_ERROR, "Error in parsing configuration");
             break;
+        }
 
         switch (c) {
-
             case 'x':
                 {
+                    LOG_MSG(LOG_ERROR,"argument -x pcap reader %s ", argv[optind]);
                     pcap_reader = pcap_open_offline(optarg, errbuff);
                     break;
                 }
 
             case 'y':
                 {
+                    LOG_MSG(LOG_ERROR,"argument -y %s ", argv[optind]);
                     pcap = pcap_open_dead(DLT_EN10MB, UINT16_MAX);
                     pcap_dumper = pcap_dump_open(pcap, optarg);
                     s11_pcap_fd = pcap_fileno(pcap);
@@ -104,6 +108,7 @@ parse_arg(int argc, char **argv)
 
             case 'f':
                 {
+                    LOG_MSG(LOG_ERROR,"argument -f base folder %s ", argv[optind]);
                     config_update_base_folder = calloc(1, 128);
                     assert(config_update_base_folder != NULL);
                     strcpy(config_update_base_folder, optarg);
@@ -137,15 +142,25 @@ parse_arg(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    int ret;
+    //int ret;
 
 	set_logging_level("LOG_ERROR");
     LOG_MSG(LOG_INIT, "Starting main thread ");
 
-    ret = rte_eal_init(argc, argv);
-    assert(ret >= 0);
+    //ret = rte_eal_init(argc, argv);
+    //assert(ret >= 0);
+    // skipping eal argument 
+    int i=0;
+    for(i=1; i<=argc; i++) {
+        if(strcmp(argv[i],"--")==0) {
+            break;
+        }
+    }
 
-    parse_arg(argc - ret, argv + ret);
+    char name[] = "ngic_controlplane"; 
+    argv[i] = name;
+    LOG_MSG(LOG_INIT, "Starting main thread argv[0] %s ",argv[i]);
+    parse_arg(argc-i, argv+i);
 
     int state = mkdir(DEFAULT_STATS_PATH, S_IRWXU);
     if (state && errno != EEXIST) {

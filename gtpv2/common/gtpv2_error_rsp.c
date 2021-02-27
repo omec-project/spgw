@@ -6,7 +6,7 @@
 
 #include "gtp_ies.h"
 #include "gtpv2_error_rsp.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "ipc_api.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_session.h"

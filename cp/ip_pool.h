@@ -11,14 +11,6 @@
 #include <netinet/in.h>
 #include <stdbool.h>
 
-struct ip_table
-{
-  struct ip_table *octet[256];
-  char *ue_address; // address 
-  bool used ; 
-};
-
-
 /**
  * @brief  : Simple ip-pool
  * @param  : ipv4
@@ -33,19 +25,10 @@ acquire_ip(struct in_addr *ipv4);
 void
 release_ip(struct in_addr ipv4);
 
-void
-create_ue_pool_dynamic(struct in_addr network, struct in_addr mask);
-
-struct ip_table *create_ue_pool(struct in_addr network, struct in_addr mask);
-
-void
-add_ipaddr_in_pool(struct ip_table *search_tree, struct in_addr host);
-
 bool
-reserve_ip_node(struct ip_table *search_tree , struct in_addr host);
+reserve_ip_node(struct in_addr host);
 
-bool
-release_ip_node(struct ip_table *search_tree , struct in_addr host);
-
+bool 
+release_ip_node(struct in_addr host);
 #endif
 

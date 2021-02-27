@@ -4,7 +4,7 @@
 
 #include "sm_struct.h"
 #include "gtp_messages.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "sm_enum.h"
 #include "gtpv2_error_rsp.h"
 #include "assert.h"
@@ -280,7 +280,7 @@ process_create_sess_req(create_sess_req_t *csr,
             bool found = false;
             struct in_addr temp = *paa_ipv4;
             temp.s_addr = ntohl(temp.s_addr);
-            found = reserve_ip_node(static_addr_pool, temp); // api needs address in host order
+            found = reserve_ip_node(temp); // api needs address in host order
             if (found == false) {
                 LOG_MSG(LOG_ERROR,"Received CSReq with static address %s"
                         " . Invalid address received ",

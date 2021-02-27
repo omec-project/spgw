@@ -9,7 +9,7 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_messages.h"
 #include "cp_log.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "cp_config_defs.h"
 #include "cp_io_poll.h"
 #include "util.h"

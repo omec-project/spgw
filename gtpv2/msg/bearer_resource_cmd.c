@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "cp_log.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "gtp_messages_decoder.h"
 #include "gtpv2_set_ie.h"
 #include "gtpv2_ie_parsing.h"

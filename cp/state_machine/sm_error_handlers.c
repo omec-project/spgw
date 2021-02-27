@@ -18,7 +18,7 @@
 #include "pfcp_cp_association.h"
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_session.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "csid_cp_cleanup.h"
 #include "gtpv2_interface.h"
 #include "upf_struct.h"

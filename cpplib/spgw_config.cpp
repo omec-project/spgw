@@ -13,9 +13,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "cp_log.h"
+#include <mutex>
+#include "ip_pool_mgmt.h"
 
 
-spgwConfigStore *config;
+spgwConfigStore *sub_classifier_config;
+std::mutex config_mtx; 
 
 bool 
 compare_sub_rules(const sub_selection_rule_t *rule1, const sub_selection_rule_t *rule2)
@@ -321,19 +324,25 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
             config_store->access_profile_list.push_back(access_profile);
         }
     }    
+    
+    std::unique_lock<std::mutex> lock(config_mtx);
+    spgwConfigStore *temp = sub_classifier_config;
+    sub_classifier_config = config_store; // move to new config
+    delete temp;
     return temp_config;
 }
 
 sub_profile_t* 
 spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
 {
+    std::unique_lock<std::mutex> lock(config_mtx);
     sub_selection_rule_t *rule = nullptr;
     std::list<sub_selection_rule_t *>::iterator it;
-    if(config == NULL) {
+    if(sub_classifier_config == NULL) {
         LOG_MSG(LOG_ERROR,"Subscriber mapping configuration not available...");
         return NULL;
     }
-    for (it=config->sub_sel_rules.begin(); it!=config->sub_sel_rules.end(); ++it)
+    for (it = sub_classifier_config->sub_sel_rules.begin(); it != sub_classifier_config->sub_sel_rules.end(); ++it)
     {
         rule = *it;
         LOG_MSG(LOG_DEBUG,"Searching rule %d ", rule->rule_priority);
@@ -378,14 +387,14 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
         break;
     }
 
-    if(it != config->sub_sel_rules.end())
+    if(it != sub_classifier_config->sub_sel_rules.end())
     {
         // We reached here means we have matching rule 
         sub_profile_t *temp = new (sub_profile_t);
-        temp->apn_profile = config->get_apn_profile(rule->selected_apn_profile);
-        temp->qos_profile = config->get_qos_profile(rule->selected_qos_profile);
-        temp->up_profile = config->get_user_plane_profile(rule->selected_user_plane_profile);
-        temp->access_profile = config->get_access_profile(rule->selected_access_profile[0]);
+        temp->apn_profile = sub_classifier_config->get_apn_profile(rule->selected_apn_profile);
+        temp->qos_profile = sub_classifier_config->get_qos_profile(rule->selected_qos_profile);
+        temp->up_profile =  sub_classifier_config->get_user_plane_profile(rule->selected_user_plane_profile);
+        temp->access_profile = sub_classifier_config->get_access_profile(rule->selected_access_profile[0]);
         LOG_MSG(LOG_DEBUG,"matching subscriber rule found ");
         return temp;
     }
@@ -396,30 +405,15 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
 // get config reference in global variable
 spgwConfigStore* spgwConfig::get_cp_config_cpp()
 {
-    return config;
-}
-
-// set config reference in global variable 
-void spgwConfig::set_cp_config_cpp(spgw_config_profile_t *new_config)
-{
-    config = reinterpret_cast<spgwConfigStore *>(new_config->config); 
-}
-
-void spgwConfig::switch_config_cpp(spgw_config_profile_t *new_config)
-{
-    spgwConfigStore *temp = config; // take old config pointer reference 
-
-    config = reinterpret_cast<spgwConfigStore *>(new_config->config); 
-
-    // release old config
-     delete temp;
+    return sub_classifier_config;
 }
 
 apn_profile_t* spgwConfig::match_apn_profile_cpp(char *name, uint16_t len)
 {
+    std::unique_lock<std::mutex> lock(config_mtx);
     std::list<apn_profile_t*>::iterator it;
     LOG_MSG(LOG_DEBUG,"Search APN [%s] in APN profile list", name);
-    for (it=config->apn_profile_list.begin(); it!=config->apn_profile_list.end(); ++it)
+    for (it= sub_classifier_config->apn_profile_list.begin(); it != sub_classifier_config->apn_profile_list.end(); ++it)
     {
         apn_profile_t* apn = *it;
         LOG_MSG(LOG_DEBUG, "Compare APN profile [%s] with [%s] ", apn->apn_name, name);
@@ -437,7 +431,8 @@ apn_profile_t* spgwConfig::match_apn_profile_cpp(char *name, uint16_t len)
 void 
 spgwConfig::invalidate_user_plane_address(uint32_t addr) 
 {
-    for (std::list<user_plane_profile_t*>::iterator it=config->user_plane_list.begin(); it!=config->user_plane_list.end(); ++it)
+    std::unique_lock<std::mutex> lock(config_mtx);
+    for (std::list<user_plane_profile_t*>::iterator it=sub_classifier_config->user_plane_list.begin(); it!=sub_classifier_config->user_plane_list.end(); ++it)
     {
         user_plane_profile_t *up=*it;
         if(up->upf_addr == addr)
@@ -447,4 +442,179 @@ spgwConfig::invalidate_user_plane_address(uint32_t addr)
         }
     }
     return ;
+}
+
+int
+spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
+{
+    LOG_MSG(LOG_INIT,"parsing config in %s ", jsonFile);
+    FILE* fp = fopen(jsonFile , "r");
+    if(fp == NULL){
+        LOG_MSG(LOG_ERROR, "The json config file specified does not exists %s", jsonFile);
+        return -1;
+    }
+    char readBuffer[65536];
+    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    fclose(fp);
+    rapidjson::Document doc;
+    doc.ParseStream(is);
+    if(!doc.IsObject()) {
+        LOG_MSG(LOG_ERROR,"Error parsing the json config file %s", jsonFile); 
+        return -1;
+    }
+    if(doc.HasMember("global")) {
+        LOG_MSG(LOG_INIT, "global config present");
+        const rapidjson::Value& global = doc["global"];
+        if(global.HasMember("gxConfig")) {
+            cfg->gx_enabled = global["gxConfig"].GetInt();
+            LOG_MSG(LOG_INIT,"gx_enabled %d ", cfg->gx_enabled);
+        }
+        if(global.HasMember("loggingLevel")) { //: "LOG_DEBUG",
+            std::string log_level = global["loggingLevel"].GetString();
+            LOG_MSG(LOG_INIT, "logging level set to %s ",log_level.c_str());
+            set_logging_level(log_level.c_str());
+        }
+        if(global.HasMember("periodicTimerSec")) {
+            cfg->periodic_timer = global["periodicTimerSec"].GetInt();
+            LOG_MSG(LOG_INIT, "periodic_timer = %d ",cfg->periodic_timer);
+        }
+        if(global.HasMember("requestTimeoutMilliSec")) {
+            cfg->request_timeout = global["requestTimeoutMilliSec"].GetInt();
+            LOG_MSG(LOG_INIT, "request_timeout %d ",cfg->request_timeout);
+        }
+        if(global.HasMember("requestTries")) {
+            cfg->request_tries = global["requestTries"].GetInt();
+            LOG_MSG(LOG_INIT,"request_tries = %d ", cfg->request_tries);
+        }
+        if(global.HasMember("transmitCount")) {
+            cfg->transmit_cnt = global["transmitCount"].GetInt();
+            LOG_MSG(LOG_INIT, "transmit_cnt = %d ",cfg->transmit_cnt);
+        }
+        if(global.HasMember("transmitTimerSec")) {
+            cfg->transmit_timer = global["transmitTimerSec"].GetInt();
+            LOG_MSG(LOG_INIT, "transmit_timer = %d ",cfg->transmit_timer);
+        }
+        if(global.HasMember("urrConfig")) {
+            cfg->urr_enable = global["urrConfig"].GetInt();
+            LOG_MSG(LOG_INIT, "urr_enable = %d ", cfg->urr_enable);
+        }
+        if(global.HasMember("s5s8Port")) {
+            cfg->s5s8_port = global["s5s8Port"].GetInt();
+            LOG_MSG(LOG_INIT, "s5s8Port = %d ", cfg->s5s8_port);
+        }
+        if(global.HasMember("s11Port")) {
+            cfg->s11_port = global["s11Port"].GetInt();
+            LOG_MSG(LOG_INIT, "s11Port = %d ", cfg->s11_port);
+        }
+        if(global.HasMember("pfcpPort")) {
+            cfg->pfcp_port = global["pfcpPort"].GetInt();
+            LOG_MSG(LOG_INIT, "pfcpPort = %d ", cfg->pfcp_port);
+        }
+        if(global.HasMember("prometheusPort")) {
+            cfg->prom_port = global["prometheusPort"].GetInt();
+            LOG_MSG(LOG_INIT, "prometheusPort = %d ", cfg->prom_port);
+        }
+        if(global.HasMember("httpPort")) {
+            cfg->webserver_port = global["httpPort"].GetInt();
+            LOG_MSG(LOG_INIT, "webserver_port = %d ", cfg->webserver_port);
+        }
+
+    }
+
+    if(doc.HasMember("ip_pool_config")) {
+        LOG_MSG(LOG_INIT, "ip_pool_config present");
+        const rapidjson::Value& ip_pool = doc["ip_pool_config"];
+        if(ip_pool.HasMember("staticUeIpPool")) {
+            // fixed default static pool
+            const rapidjson::Value& ue_pool = ip_pool["staticUeIpPool"];
+            std::string pool_name("staticUeIpPool");
+
+            std::string ip = ue_pool["ip"].GetString();
+            inet_aton(ip.c_str(), &(cfg->static_ip_pool_ip));
+            cfg->static_ip_pool_ip.s_addr = ntohl(cfg->static_ip_pool_ip.s_addr);
+            std::cout<<"calling gen pool for IP "<<inet_ntoa(cfg->static_ip_pool_ip)<<std::endl;
+
+            std::string mask = ue_pool["mask"].GetString();
+            inet_aton(mask.c_str(), &(cfg->static_ip_pool_mask));
+            cfg->static_ip_pool_mask.s_addr = ntohl(cfg->static_ip_pool_mask.s_addr);
+            std::cout<<"calling gen pool for mask "<<inet_ntoa(cfg->static_ip_pool_mask)<<std::endl;
+
+        }
+        if(ip_pool.HasMember("ueIpPool")) {
+            // fixed default dynamic pool
+            const rapidjson::Value& ue_pool = ip_pool["ueIpPool"];
+            std::string pool_name("ueIpPool");
+            ue_dynamic_pool *pool = new ue_dynamic_pool(pool_name);
+
+            std::string ip = ue_pool["ip"].GetString();
+            inet_aton(ip.c_str(), &(cfg->ip_pool_ip));
+            std::cout<<"Configured Pool subnet "<<inet_ntoa(cfg->ip_pool_ip)<<std::endl;
+            cfg->ip_pool_ip.s_addr = ntohl(cfg->ip_pool_ip.s_addr);
+
+            std::string mask = ue_pool["mask"].GetString();
+            inet_aton(mask.c_str(), &(cfg->ip_pool_mask));
+            std::cout<<"Configured Pool mask "<<inet_ntoa(cfg->ip_pool_mask)<<std::endl;
+            cfg->ip_pool_mask.s_addr = ntohl(cfg->ip_pool_mask.s_addr);
+
+            ip_pools::getInstance()->addIpPool(pool, pool_name); 
+            pool->gen_pool(cfg->ip_pool_ip, cfg->ip_pool_mask);
+        }
+        // we may have other pool as well.. 
+    }
+
+    if(doc.HasMember("dns")) {
+        LOG_MSG(LOG_INIT, "dns config present");
+        const rapidjson::Value& dns = doc["dns"];
+        if(dns.HasMember("app")) {
+            LOG_MSG(LOG_INIT, "dns app config present");
+            const rapidjson::Value& app = dns["app"];
+            if(app.HasMember("frequencySec")) {
+              cfg->app_dns.freq_sec = app["frequencySec"].GetInt();
+            }
+            if(app.HasMember("filename")) {
+              std::string temp = app["filename"].GetString();
+              strcpy(cfg->app_dns.filename, temp.c_str());
+            }
+            if(app.HasMember("nameserver")) {
+              std::string temp = app["nameserver"].GetString();
+              strcpy(cfg->app_dns.nameserver_ip[0], temp.c_str());
+            }
+        }
+        if(dns.HasMember("cache")) {
+            LOG_MSG(LOG_INIT, "dns cache config present");
+            const rapidjson::Value& cache = dns["cache"];
+            if(cache.HasMember("concurrent")) {
+              cfg->dns_cache.concurrent = cache["concurrent"].GetInt();
+            }
+            if(cache.HasMember("intervalSec")) {
+              cfg->dns_cache.sec = cache["intervalSec"].GetInt();
+            }
+            if(cache.HasMember("percentage")) {
+              cfg->dns_cache.percent = cache["percentage"].GetInt();
+            }
+            if(cache.HasMember("queryTimeoutMilliSec")) {
+              cfg->dns_cache.timeoutms= cache["queryTimeoutMilliSec"].GetInt();
+            }
+            if(cache.HasMember("queryTries")) {
+              cfg->dns_cache.tries = cache["queryTries"].GetInt();
+            }
+        }
+        if(dns.HasMember("ops")) {
+            LOG_MSG(LOG_INIT, "dns ops config present");
+            const rapidjson::Value& ops = dns["ops"];
+            if(ops.HasMember("filename")) {
+              std::string temp = ops["filename"].GetString();
+              strcpy(cfg->ops_dns.filename, temp.c_str());
+            }
+            if(ops.HasMember("nameserver")) {
+              std::string temp = ops["nameserver"].GetString();
+              strcpy(cfg->ops_dns.nameserver_ip[0], temp.c_str());
+            }
+            if(ops.HasMember("frequencySec")) {
+              cfg->ops_dns.freq_sec = ops["frequencySec"].GetInt();
+            }
+        }
+    }
+
+    return 0;
 }

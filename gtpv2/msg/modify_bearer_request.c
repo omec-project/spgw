@@ -17,7 +17,7 @@
 #include "gen_utils.h"
 #include "cp_config_defs.h"
 #include "cp_peer.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "spgw_cpp_wrapper.h"
 #include "proc_service_request.h"
 #include "sm_structs_api.h"

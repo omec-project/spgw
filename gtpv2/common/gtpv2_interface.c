@@ -7,7 +7,7 @@
 #include "gtpv2_interface.h"
 #include "gtp_messages_decoder.h"
 #include "cp_interface.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "gtp_ies.h"
 #include "util.h"
 #include "cp_events.h"

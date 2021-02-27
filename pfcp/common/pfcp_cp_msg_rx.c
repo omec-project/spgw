@@ -16,7 +16,7 @@
 #include "sm_structs_api.h"
 #include "pfcp.h"
 #include "sm_struct.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "gtpv2_error_rsp.h"
 #include "cp_config_defs.h"
 #include "spgw_cpp_wrapper.h"

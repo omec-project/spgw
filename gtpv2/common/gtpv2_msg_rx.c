@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <getopt.h>
 #include "gtpv2_interface.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_set_ie.h"

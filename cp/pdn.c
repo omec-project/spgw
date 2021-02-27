@@ -99,7 +99,11 @@ cleanup_pdn_context(pdn_connection_t *pdn_ctxt)
 
     --pdn_ctxt->context->num_pdns;
 	pdn_ctxt->context->teid_bitmap = 0;
-    release_ip(pdn_ctxt->ipv4);
+    if(IF_PDN_ADDR_STATIC(pdn_ctxt)) {
+        release_ip_node(pdn_ctxt->ipv4);
+    } else {
+        release_ip(pdn_ctxt->ipv4);
+    }
 	free(pdn_ctxt);
     return;
 }

@@ -16,7 +16,7 @@
 #include "cp_main.h"
 #include "pfcp.h"
 #include "ipc_api.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "cp_config_apis.h"
 #include "gtpv2_session.h"
 #include "gtp_messages.h"
@@ -1037,8 +1037,6 @@ void sdf_pkt_filter_add(pfcp_sess_estab_req_t* pfcp_sess_est_req,
 		int flow_cnt,
 		uint8_t direction)
 {
-    if(1)
-        return; // TODO : SDF 
 	int len = 0;
 	pfcp_sess_est_req->create_pdr[pdr_counter].pdi.sdf_filter[sdf_filter_count].fd = 1;
 	sdf_pkt_filter_to_string(&(dynamic_rules->flow_desc[flow_cnt]),

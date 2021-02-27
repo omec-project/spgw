@@ -9,7 +9,7 @@
 #include "cp_interface.h"
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_cp_association.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "sm_struct.h"
 #include "csid_cp_cleanup.h"
 #include "csid_api.h"

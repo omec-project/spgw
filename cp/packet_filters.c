@@ -56,6 +56,8 @@ uint64_t cbs;
 uint64_t ebs;
 uint16_t ulambr_idx;
 uint16_t dlambr_idx;
+#define 	likely(x)   __builtin_expect(!!(x), 1)
+#define 	unlikely(x)   __builtin_expect(!!(x), 0)
 
 int
 get_packet_filter_id(const pkt_fltr *pf)

@@ -33,7 +33,8 @@ static unsigned char *handler(const unsigned char *bytes)
 	static unsigned char ether_frame[1500];
 	const struct udp_hdr *udp_hdr = (const struct udp_hdr *)(bytes + 34);
 
-	if (rte_be_to_cpu_16(udp_hdr->src_port) == 53) {
+    uint16_t port = ntohs(udp_hdr->src_port);
+	if (port == 53) {
 		memcpy(ether_frame, bytes, 1500);
 		return ether_frame;
 	}

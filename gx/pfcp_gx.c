@@ -4,9 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "cp_config.h"
-#include <rte_string_fns.h>
-
+#include "spgw_config_struct.h"
 #include "cp_log.h"
 #include "sm_structs_api.h"
 #include "spgw_cpp_wrapper.h"
@@ -14,7 +12,7 @@
 #include "pfcp.h"
 #include "sm_enum.h"
 #include "pfcp_cp_util.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "pfcp_cp_session.h"
 #include "pfcp_messages.h"
 #include "pfcp_messages_encoder.h"
@@ -28,6 +26,23 @@
 #include "pfcp_cp_interface.h"
 #include "gx.h"
 #include "gx_interface.h"
+
+#define STRTOK_RESULT(source, dest, delim, tokens)\
+do { \
+    char *savedptr = NULL;\
+    char *retptr = strtok_r(source, delim, &savedptr);\
+    if(retptr != NULL) { \
+        dest[tokens] = retptr;\
+        tokens++; \
+    }\
+    while(retptr != NULL) {\
+        char *retptr = strtok_r(NULL, " ", &savedptr); \
+        if(retptr == NULL)\
+            break;\
+        dest[tokens] = retptr;\
+        tokens++; \
+    }\
+}while(0);
 
 #define PRESENT 1
 #define NUM_VALS 9
@@ -140,12 +155,8 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
     /* 0       1   2  3        4         5   6   7          8*/
     //   permit out udp from any to assigned
     //    0      1   2   3    4   5  6
-	nb_token = rte_strsplit(str, strlen(str), str_fld, NUM_VALS, ' ');
-	if (nb_token > NUM_VALS) {
-		LOG_MSG(LOG_ERROR, "AVP:Reach Max limit for sdf string ");
-		return -1;
-	}
-
+    STRTOK_RESULT(str, str_fld, " ", nb_token);
+    printf("nb_tokens = %d \n", nb_token);
 	for(int indx=0; indx < nb_token; indx++) {
         LOG_MSG(LOG_DEBUG,"Index %d string %s ", indx, str_fld[indx]);
         if( indx == 0 ) {
@@ -161,20 +172,17 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
 		} else if (indx == 4) {
 			if(strncmp(str_fld[indx], "any", strlen("any")) != 0) {
                 LOG_MSG(LOG_DEBUG, "any not present in the filter ");
-				if( strstr(str_fld[indx], "/") != NULL) {
-                    LOG_MSG(LOG_DEBUG, "/ present in the filter ");
+				if(strstr(str_fld[indx], "/") != NULL) {
+                    LOG_MSG(LOG_DEBUG, "/ present in the filter %s ", str_fld[indx]);
 					int ip_token = 0;
 					char *ip_fld[2];
-					ip_token = rte_strsplit(str_fld[indx], strlen(str_fld[indx]), ip_fld, 2, '/');
-					if (ip_token > 2) {
-						LOG_MSG(LOG_ERROR, "AVP:Reach Max limit for sdf src ip");
-						return -1;
-					}
+                    char ip_str[32];
+                    strncpy(ip_str, str_fld[indx], strlen(str_fld[indx]));
+                    STRTOK_RESULT(ip_str, ip_fld, "/", ip_token);
 					if(inet_pton(AF_INET, (const char *) ip_fld[0], (void *)(&pkt_filter->local_ip_addr)) < 0){
 						LOG_MSG(LOG_ERROR, "AVP:conv of src ip fails ");
 						return -1;
 					}
-
 					pkt_filter->local_ip_mask = atoi(ip_fld[1]);
 				} else {
 					if(inet_pton(AF_INET, (const char *) str_fld[indx], (void *)(&pkt_filter->local_ip_addr)) < 0){
@@ -192,12 +200,9 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
                     LOG_MSG(LOG_DEBUG, "found - ");
 					int port_token = 0;
 					char *port_fld[2];
-					port_token = rte_strsplit(str_fld[indx], strlen(str_fld[indx]), port_fld, 2, '-');
-
-					if (port_token > 2) {
-						LOG_MSG(LOG_ERROR, "AVP:Reach Max limit for sdf src port ");
-						return -1;
-					}
+                    char port_str[32];
+                    strncpy(port_str, str_fld[indx], strlen(str_fld[indx]));
+                    STRTOK_RESULT(port_str, port_fld, "-", port_token);
 
 					pkt_filter->local_port_low = atoi(port_fld[0]);
 					pkt_filter->local_port_high = atoi(port_fld[1]);
@@ -225,11 +230,9 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
                 if( strstr(str_fld[indx], "/") != NULL) {
                     int ip_token = 0;
                     char *ip_fld[2];
-                    ip_token = rte_strsplit(str_fld[indx], strlen(str_fld[indx]), ip_fld, 2, '/');
-                    if (ip_token > 2) {
-                        LOG_MSG(LOG_ERROR, "AVP:Reach Max limit for sdf dst ip ");
-                        return -1;
-                    }
+                    char ip_str[32];
+                    strncpy(ip_str, str_fld[indx], strlen(str_fld[indx]));
+                    STRTOK_RESULT(ip_str, ip_fld, "/", ip_token);
                     if(inet_pton(AF_INET, (const char *) ip_fld[0], (void *)(&pkt_filter->remote_ip_addr)) < 0){
                         LOG_MSG(LOG_ERROR, "AVP:conv of dst ip fails");
                         return -1;
@@ -249,7 +252,9 @@ fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
 			if( strstr(str_fld[indx], "-") != NULL) {
 				int port_token = 0;
 				char *port_fld[2];
-				port_token = rte_strsplit(str_fld[indx], strlen(str_fld[indx]), port_fld, 2, '-');
+                char port_str[32];
+                strncpy(port_str, str_fld[indx], strlen(str_fld[indx]));
+                STRTOK_RESULT(port_str, port_fld, "-", port_token);
 
 				if (port_token > 2) {
 					LOG_MSG(LOG_ERROR, "AVP:Reach Max limit for sdf dst port");
@@ -320,6 +325,7 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
                 rule_definition->af_charging_identifier.len);
     }
 
+    LOG_MSG(LOG_DEBUG,"sdf - flow information present = %d ", rule_definition->presence.flow_information);
     if (rule_definition->presence.flow_information == PRESENT) {
         dynamic_rule->num_flw_desc = rule_definition->flow_information.count;
 
@@ -340,6 +346,7 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
                 dynamic_rule->flow_desc[idx].flow_desc_len =
                     (rule_definition->flow_information).list[idx].flow_description.len;
 
+                LOG_MSG(LOG_DEBUG, "calling fill_sdf_strctr ");
                 fill_sdf_strctr(dynamic_rule->flow_desc[idx].sdf_flow_description,
                                 &(dynamic_rule->flow_desc[idx].sdf_flw_desc),
                                 pdn);
@@ -460,6 +467,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
                         // GXFIX - looks like we are overriding pcc rules if we have multiple charging rule install
                         // We should implemtnet index..or keep policy as link list in pdn...
                         TAILQ_INSERT_TAIL(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
+                        LOG_MSG(LOG_DEBUG, "calling fill_charging_rule_definition");
 						fill_charging_rule_definition(pdn, pcc_rule->dyn_rule, rule_definition);
 					} else {
 						//TODO: Rule without name not possible; Log IT ?
@@ -925,3 +933,5 @@ parse_gx_rar_msg(msg_info_t *msg)
     LOG_MSG(LOG_DEBUG,"parsing of RAR successful");
     return 0;
 }
+
+

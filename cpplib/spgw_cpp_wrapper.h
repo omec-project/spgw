@@ -4,19 +4,13 @@
 
 #ifndef __SPGW__CPP_WRAPPER__H
 #define __SPGW__CPP_WRAPPER__H
+#include "stdbool.h"
+#include "stdint.h"
 #include "spgw_config_struct.h"
 #include "spgwStatsPromEnum.h"
 #include <netinet/in.h>
 
 spgw_config_profile_t* parse_subscriber_profiles_c(const char *);
-
-/* API to set the config handler in library */
-void set_cp_config(spgw_config_profile_t *);
-
-/* When config is modified, this api is used to switch from old to new config
- * and also old config is deleted 
- */
-void switch_config(spgw_config_profile_t *);
 
 /* API to be called by application to get the profiles */
 sub_profile_t* match_sub_selection(sub_selection_keys_t *key); 
@@ -26,6 +20,7 @@ apn_profile_t * match_apn_profile(char *, uint16_t len);
 
 void invalidate_upf_dns_results(uint32_t ip);
 void init_cpp_tables(void);
+
 
 bool add_pfcp_transaction(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans);
 void* find_pfcp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq);
@@ -223,13 +218,18 @@ get_gx_context(const uint8_t *sessid);
 int
 remove_gx_context(const uint8_t *sessid);
 
-void*
-create_ue_pool_dynamic_cpp(struct in_addr network, struct in_addr mask);
-
 uint32_t
-acquire_ip_cpp(void *pool);
+acquire_ip_cpp(const char *pool);
 
 void
-release_ip_cpp(void *pool, struct in_addr ipv4);
+release_ip_cpp(const char *pool, struct in_addr ipv4);
+
+bool
+reserve_static_ip_cpp(const char *pool_n, struct in_addr host);
+
+bool 
+release_static_ip_cpp(const char *pool_n, struct in_addr addr);
+
+int parse_cp_json(cp_config_t *cfg, const char *file);
 
 #endif

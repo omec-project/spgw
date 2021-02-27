@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 #include "sm_hand.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "cp_log.h"
 
 int
