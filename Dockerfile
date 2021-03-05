@@ -23,23 +23,12 @@ RUN source ./docker-scripts/install_builddeps.sh && \
     source ./docker-scripts/install_dpdk.sh && \
     install_dpdk
 
-FROM dpdkbuild as hyperscanbuild
-RUN source ./docker-scripts/install_builddeps.sh && \
-    source ./docker-scripts/install_hyperscan.sh && \
-    install_hyperscan 
-
-FROM hyperscanbuild as webutils 
+FROM dpdkbuild as webutils
 RUN source ./docker-scripts/install_builddeps.sh && \
     source ./docker-scripts/install_webutils.sh && \
     build_prometheus && build_pistache 
 
-
-FROM webutils as ossutil
-RUN source ./docker-scripts/install_builddeps.sh && \
-    source ./docker-scripts/install_oss_util.sh && \
-    install_oss_util 
-
-FROM ossutil as spgw
+FROM webutils as spgw
 COPY . ./
 ARG CPUS
 ARG RTE_MACHINE=native
@@ -62,8 +51,8 @@ COPY --from=spgw /spgw/libgtpv2c/lib/libgtpv2c.so /usr/local/lib
 COPY --from=spgw /spgw/libpfcp/lib/libpfcp.so /usr/local/lib
 COPY --from=spgw /spgw/third_party/freediameter/build/libfdcore/libfdcore.so /usr/local/lib
 COPY --from=spgw /spgw/third_party/freediameter/build/libfdproto/libfdproto.so /usr/local/lib
-COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/cpp-driver/build/libcassandra.so /usr/local/lib/
-COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/c-ares/.libs/lib*.so.* /usr/local/lib
+#COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/cpp-driver/build/libcassandra.so /usr/local/lib/
+#COPY --from=spgw /spgw/oss_adapter/c3po_oss/oss-util/modules/c-ares/.libs/lib*.so.* /usr/local/lib
 COPY --from=spgw /spgw/cpplib/target/lib/libspgwcpputil.a /usr/local/lib/
 COPY --from=spgw /tmp/prometheus/_build/deploy/usr/local/lib/ /usr/local/lib/
 COPY --from=spgw /spgw/gx/gx_app/bin/gx_app  /bin/

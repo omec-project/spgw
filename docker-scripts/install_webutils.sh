@@ -18,6 +18,8 @@ build_pistache()
     make install
     cp -r ../installpath/include/pistache /usr/local/include
     cp ../installpath/lib/lib*so* /usr/local/lib
+    cp ../installpath/lib/libpistache.a /usr/local/lib
+    ls -l ../installpath/lib
     popd
     popd
 }

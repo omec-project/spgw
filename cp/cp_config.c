@@ -19,7 +19,7 @@
 #include "monitor_config.h"
 #include "spgw_cpp_wrapper.h"
 #include "dns_config.h"
-#include "cdnshelper.h"
+//#include "cdnshelper.h"
 #include "cp_log.h"
 #include "cp_events.h"
 #include "cp_io_poll.h"
@@ -47,9 +47,11 @@ void init_config(void)
     config_cp_ip_port(cp_config);
 
 
+#if 0
     if(cp_config->dns_enable) {
         set_dns_config();
     }
+#endif
 
     /* Parse initial configuration file */
     cp_config->subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
@@ -115,6 +117,7 @@ config_cp_ip_port(cp_config_t *cp_config)
     return;
 }
 
+#if 0
 /**
  * @brief  : Set dns configurations parameters
  * @param  : void
@@ -151,6 +154,7 @@ set_dns_config(void)
 			cp_config->app_dns.freq_sec);
 	load_dns_queries(NS_APP, cp_config->app_dns.filename);
 }
+#endif
 
 void
 config_change_cbk(char *config_file, uint32_t flags)

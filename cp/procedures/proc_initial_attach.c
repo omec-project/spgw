@@ -250,6 +250,7 @@ process_create_sess_req(create_sess_req_t *csr,
         // caller sends out csrsp 
         return GTPV2C_CAUSE_REQUEST_REJECTED ; 
     }
+#if 0
     if(cp_config->dns_enable) {
 		/* VS: Select the UPF based on DNS */
 		ret = dns_query_lookup(pdn, &upf_ipv4.s_addr);
@@ -257,7 +258,9 @@ process_create_sess_req(create_sess_req_t *csr,
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return ret;
 		}
-    } else {
+    } else 
+#endif
+    {
         upf_context = get_upf_context(sub_profile->up_profile); 
         if(upf_context == NULL) {
             return GTPV2C_CAUSE_REQUEST_REJECTED ; 

@@ -7,7 +7,7 @@
 #ifndef PFCP_H
 #define PFCP_H
 
-#include "gx_app/include/gx_struct.h"
+//#include "gx_app/include/gx_struct.h"
 #include "pfcp_struct.h"
 #include "pfcp_cp_struct.h"
 #include "gtpv2_ie.h"

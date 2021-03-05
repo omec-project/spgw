@@ -26,7 +26,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "assert.h"
 #include "cp_io_poll.h"
-#include "cdnsutil.h"
+//#include "cdnsutil.h"
 #include "pfcp_cp_interface.h"
 
 void

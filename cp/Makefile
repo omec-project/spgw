@@ -15,7 +15,6 @@ RTE_TARGET ?= x86_64-native-linuxapp-gcc
 include $(RTE_SDK)/mk/rte.vars.mk
 include $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/*.mk
 
-OSS_UTIL_ROOT = $(NG_CORE)/oss_adapter/c3po_oss/oss-util
 LIBGTPV2C_ROOT = $(SRCDIR)/../libgtpv2c
 LIBPFCP_ROOT = $(SRCDIR)/../libpfcp
 CPPUTILLIB_ROOT = $(SRCDIR)/../cpplib/target
@@ -139,7 +138,6 @@ CFLAGS += -I$(SRCDIR)/../oss_adapter/c3po_oss
 CFLAGS += -I$(SRCDIR)/../gx
 CFLAGS += -I$(SRCDIR)/../pfcp/common
 CFLAGS += -I$(SRCDIR)/../libgtpv2c/include
-CFLAGS += -I$(OSS_UTIL_ROOT)/include
 CFLAGS += -I$(SRCDIR)/../cpplib/
 CFLAGS += -I/usr/include
 
@@ -157,14 +155,13 @@ LDLIBS += -L$(LIBGTPV2C_ROOT)/lib -lgtpv2c
 LDLIBS += -L$(LIBPFCP_ROOT)/lib -lpfcp
 LDLIBS += -L$(CPPUTILLIB_ROOT)/lib -lspgwcpputil
 LDLIBS += -L/usr/local/lib -lprometheus-cpp-pull -lprometheus-cpp-core -lpistache
+LDLIBS += -L/usr/local/lib -lpistache
 $(info LDLIBS is $(LDLIBS))
-LDLIBS += -lpcap
+LDLIBS += -lpcap -lcrypto -lssl
 LDFLAGS += -lstdc++
 LDLIBS += -lstdc++
-#LDLIBS +=  -L$(OSS_UTIL_ROOT)/lib -loss-util
 LDLIBS += -lpthread
 LDLIBS += -lrt
-LDLIBS += -lpistache
 LDLIBS += -lm
 
 # ngic-cp debug/testing/profiling options CFLAGS
@@ -208,9 +205,7 @@ CFLAGS += -DUSE_DNS_QUERY
 #ifneq (,$(findstring USE_DNS_QUERY, $(CFLAGS)))
 	LIBDNSCLIENT_ROOT = $(SRCDIR)/../oss_adapter/c3po_oss/oss-util
 	CFLAGS += -I$(LIBDNSCLIENT_ROOT)/include
-	LDLIBS += $(LIBDNSCLIENT_ROOT)/lib/liboss-util.a
 	LDLIBS +=  -lstdc++
-	LDLIBS += -L$(LIBDNSCLIENT_ROOT)/modules/c-ares -lcares
 #endif
 
 # ngic-cp application security check CFLAGS

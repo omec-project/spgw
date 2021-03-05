@@ -14,7 +14,7 @@
 #include "cp_io_poll.h"
 #include "util.h"
 #include "pfcp_cp_association.h"
-#include "cdnshelper.h"
+//#include "cdnshelper.h"
 #include "spgw_cpp_wrapper.h"
 
 #define FAILED_ENB_FILE "logs/failed_enb_queries.log"
@@ -22,6 +22,7 @@
 #define QUERY_RESULT_COUNT 16
 
 
+#if 0
 /**
  * @brief  : Add canonical result entry in upflist hash
  * @param  : res , result
@@ -344,6 +345,7 @@ dns_query_lookup(pdn_connection_t *pdn, uint32_t *upf_ip)
 					strlen(entry->upf_fqdn[entry->current_upf]));
 	return 0;
 }
+#endif
 
 
 long
