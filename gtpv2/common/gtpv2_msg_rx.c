@@ -35,8 +35,7 @@ uint8_t gtp_rx_buf[MAX_GTPV2C_UDP_LEN];
 void*
 msg_handler_gtp(void *data)
 {
-    LOG_MSG(LOG_INIT,"Starting gtp message handler thread ");
-    LOG_MSG(LOG_NEVER, "data = %p", data);
+    LOG_MSG(LOG_INIT,"Starting gtp message handler thread data = %p",data);
     while(1) {
         int bytes_rx = 0;
         struct sockaddr_in peer_sockaddr = {0};
@@ -51,7 +50,7 @@ msg_handler_gtp(void *data)
 
         if (bytes_rx == 0) {
             LOG_MSG(LOG_ERROR, "SGWC|SAEGWC_s11 recvfrom error:"
-                    "\n\ton %s:%u - %s\n",
+                    "\ton %s:%u - %s",
                     inet_ntoa(peer_sockaddr.sin_addr),
                     peer_sockaddr.sin_port,
                     strerror(errno));
@@ -72,8 +71,8 @@ msg_handler_gtp(void *data)
              *  should be sent - ignoring packet for now
              */
             LOG_MSG(LOG_ERROR, "GTPv2C Received UDP Payload:"
-                    "\n\t(%d bytes) with gtpv2c + "
-                    "header (%u + %lu) = %lu bytes\n",
+                    "\t(%d bytes) with gtpv2c + "
+                    "header (%u + %lu) = %lu bytes",
                     bytes_rx, ntohs(gtpv2c_rx->gtpc.message_len),
                     sizeof(gtpv2c_rx->gtpc),
                     ntohs(gtpv2c_rx->gtpc.message_len)

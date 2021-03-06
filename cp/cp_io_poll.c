@@ -25,7 +25,7 @@
 void 
 process_local_msg(void *data, uint16_t event)
 {
-    LOG_MSG(LOG_INFO,"Process local message event ");
+    LOG_MSG(LOG_DEBUG,"Process local message event start");
     struct t2tMsg *evt  = (struct t2tMsg *)get_t2tMsg();
     while(evt != NULL) {
         LOG_MSG(LOG_NEVER,"data %p event %d ", data, event);
@@ -33,6 +33,7 @@ process_local_msg(void *data, uint16_t event)
         free(evt);
         evt  = (struct t2tMsg *)get_t2tMsg();
     }
+    LOG_MSG(LOG_DEBUG,"Process local message event done");
     return;
 }
 

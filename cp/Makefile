@@ -13,7 +13,6 @@ MAKEFLAGS += -j
 RTE_TARGET ?= x86_64-native-linuxapp-gcc
 
 include $(RTE_SDK)/mk/rte.vars.mk
-include $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/*.mk
 
 LIBGTPV2C_ROOT = $(SRCDIR)/../libgtpv2c
 LIBPFCP_ROOT = $(SRCDIR)/../libpfcp
@@ -113,13 +112,6 @@ SRCS-y += $(SRCDIR)/../gx/msg/cca_update_handler.o
 SRCS-y += $(SRCDIR)/../gx/msg/rar_handler.o
 SRCS-y += $(SRCDIR)/../gx/gx_app/src/gx_pack.o
 
-
-
-#ifneq (,$(findstring C3PO_OSS, $(CFLAGS)))
-#SRCS-y += $(SRCDIR)/../oss_adapter/c3po_oss/cp_adapter.o
-#CFLAGS += -I$(SRCDIR)/../oss_adapter/c3po_oss
-#endif
-
 CFLAGS += -Wno-psabi # suppress "The ABI for passing parameters with 64-byte alignment has changed in GCC 4.6"
 CFLAGS += -Werror
 
@@ -134,7 +126,6 @@ CFLAGS += -I$(SRCDIR)/state_machine
 CFLAGS += -I$(SRCDIR)/../gx/gx_app/include/
 CFLAGS += -I$(LIBGTPV2C_ROOT)/include
 CFLAGS += -I$(LIBPFCP_ROOT)/include
-CFLAGS += -I$(SRCDIR)/../oss_adapter/c3po_oss
 CFLAGS += -I$(SRCDIR)/../gx
 CFLAGS += -I$(SRCDIR)/../pfcp/common
 CFLAGS += -I$(SRCDIR)/../libgtpv2c/include
@@ -192,21 +183,9 @@ ifneq (,$(findstring USE_CSID, $(CFLAGS), $(EXTRA_CFLAGS)))
 
 endif
 
-# Un-comment below line to read fake cp config.
-#CFLAGS += -DSIMU_CP
-
-# Un-comment below line to send fake delete session request from simulator.
-#CFLAGS += -DDEL_SESS_REQ
-
-# Comment below line to read UPF ip from cp.cfg instead of DNS query.
-#ajay - add ticket to support DNS in SPGW 
 CFLAGS += -DUSE_DNS_QUERY
-
-#ifneq (,$(findstring USE_DNS_QUERY, $(CFLAGS)))
-	LIBDNSCLIENT_ROOT = $(SRCDIR)/../oss_adapter/c3po_oss/oss-util
-	CFLAGS += -I$(LIBDNSCLIENT_ROOT)/include
-	LDLIBS +=  -lstdc++
-#endif
+CFLAGS += -I$(LIBDNSCLIENT_ROOT)/include
+LDLIBS +=  -lstdc++
 
 # ngic-cp application security check CFLAGS
 ###############################################################

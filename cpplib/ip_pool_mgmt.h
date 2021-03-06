@@ -39,7 +39,7 @@ class ue_dynamic_pool: public ue_pool
         {
             network_m.s_addr = 0;
             mask_m.s_addr = 0;
-            std::cout<<"ue_dynamic_pool name - "<<pool_name<<std::endl;
+            LOG_MSG(LOG_INIT,"ue_dynamic_pool name %s",pool_name.c_str());
         }
         
         virtual ~ue_dynamic_pool() {}
@@ -108,7 +108,7 @@ class ue_static_pool: public ue_pool
             network_m.s_addr = 0;
             mask_m.s_addr = 0;
             addr_pool_m = NULL;
-            std::cout<<"ue static pool name - "<<pool_name<<std::endl;
+            LOG_MSG(LOG_INIT,"ue static pool name - %s",pool_name.c_str()); 
         }
 
         virtual ~ue_static_pool() {}

@@ -74,7 +74,7 @@ parse_arg(int argc, char **argv)
         {"pcap_file_in", required_argument, NULL, 'x'},
         {"pcap_file_out", required_argument, NULL, 'y'},
         {"log_level",   required_argument, NULL, 'l'},
-        {"config_update_base_folder",optional_argument, NULL, 'f'},
+        {"config_update_base_folder",required_argument, NULL, 'f'},
         {0, 0, 0, 0}
     };
 
@@ -85,7 +85,7 @@ parse_arg(int argc, char **argv)
                 &option_index);
 
         if (c == -1) {
-            LOG_MSG(LOG_ERROR, "Error in parsing configuration");
+            LOG_MSG(LOG_ERROR, "done with  parsing configuration");
             break;
         }
 
@@ -108,10 +108,11 @@ parse_arg(int argc, char **argv)
 
             case 'f':
                 {
-                    LOG_MSG(LOG_ERROR,"argument -f base folder %s ", argv[optind]);
+                    LOG_MSG(LOG_ERROR,"argument %s ", optarg);
                     config_update_base_folder = calloc(1, 128);
                     assert(config_update_base_folder != NULL);
                     strcpy(config_update_base_folder, optarg);
+                    LOG_MSG(LOG_INIT,"config base folder set to %s ", config_update_base_folder);
                     break;
                 }
 
@@ -124,6 +125,7 @@ parse_arg(int argc, char **argv)
 
     /* Lets put default values if some configuration is missing */
     if (config_update_base_folder == NULL) {
+        LOG_MSG(LOG_INIT,"using default config base folder");
         config_update_base_folder = (char *) calloc(1, 128);
         assert(config_update_base_folder != NULL);
         strcpy(config_update_base_folder, CP_CONFIG_FOLDER);

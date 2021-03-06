@@ -88,8 +88,8 @@ msg_handler_local(void *data)
     LOG_MSG(LOG_INIT, "Starting local message handler thread ");
     while(1) {
         bytes_rx = recv(my_sock.sock_fd_local, rx_buf, sizeof(rx_buf), 0);
-        if(bytes_rx != 0) {
-            LOG_MSG(LOG_INFO, "config read event received");
+        if(bytes_rx > 0) {
+            LOG_MSG(LOG_INFO, "config read event received %d ", bytes_rx);
             queue_stack_unwind_event(LOCAL_MSG_RECEIVED, (void *)NULL, process_local_msg);
         }
     }
@@ -194,9 +194,10 @@ cpconfig_change_cbk(char *config_file, uint32_t flags)
 		char cmd[256];
 		sprintf(cmd, "cp %s %s", config_file, STATIC_CP_JSON_FILE);
 		int ret = system(cmd);
-        LOG_MSG(LOG_INIT, "System call return value %d", ret);
+        LOG_MSG(LOG_DEBUG, "System call return value %d", ret);
     }
  
+    parse_cp_json(cp_config, STATIC_CP_JSON_FILE);
 	/* We dont expect quick updates from configmap..One update per interval. Typically 
 	 * worst case 60 seconds for 1 config update. Updates are clubbed and dont come frequent 
 	 * We re-register to avoid recursive callbacks 

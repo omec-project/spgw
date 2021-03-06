@@ -99,7 +99,6 @@ out_handler_pfcp(void *data)
                     (struct sockaddr *) &event->dest_addr, sizeof(struct sockaddr_in));
             if(bytes_tx <= 0) {
                 struct sockaddr_in *p = (struct sockaddr_in*)&event->dest_addr;
-                LOG_MSG(LOG_ERROR, "sizeof in_addr = %lu  and sizeof sockaddr = %lu ",sizeof(struct sockaddr_in), sizeof(struct sockaddr));
                 LOG_MSG(LOG_ERROR, "pfcp_send() on fd = %d bytes_tx = %d , error = %s payload len = %d peer %s", 
                                     event->fd, bytes_tx, strerror(errno), event->payload_len, inet_ntoa(p->sin_addr));
             }

@@ -247,8 +247,7 @@ out_handler_gtp(void *data)
         //PERFORAMANCE ISSUE - use conditional variable 
         usleep(10);
     }
-	LOG_MSG(LOG_ERROR,"Exiting gtp out message handler thread");
-    LOG_MSG(LOG_NEVER, "data = %p", data);
+	LOG_MSG(LOG_ERROR,"Exiting gtp out message handler thread %p", data);
     return NULL;
 }
 

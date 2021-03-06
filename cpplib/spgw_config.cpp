@@ -501,14 +501,22 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
         if(global.HasMember("s5s8Port")) {
             cfg->s5s8_port = global["s5s8Port"].GetInt();
             LOG_MSG(LOG_INIT, "s5s8Port = %d ", cfg->s5s8_port);
+        } else {
+            cfg->s5s8_port = GTPC_UDP_PORT;
         }
+
         if(global.HasMember("s11Port")) {
             cfg->s11_port = global["s11Port"].GetInt();
             LOG_MSG(LOG_INIT, "s11Port = %d ", cfg->s11_port);
+        } else {
+            cfg->s11_port = GTPC_UDP_PORT;
         }
+
         if(global.HasMember("pfcpPort")) {
             cfg->pfcp_port = global["pfcpPort"].GetInt();
             LOG_MSG(LOG_INIT, "pfcpPort = %d ", cfg->pfcp_port);
+        } else {
+            cfg->pfcp_port = SAEGWU_PFCP_PORT;
         }
         if(global.HasMember("prometheusPort")) {
             cfg->prom_port = global["prometheusPort"].GetInt();
@@ -517,6 +525,8 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
         if(global.HasMember("httpPort")) {
             cfg->webserver_port = global["httpPort"].GetInt();
             LOG_MSG(LOG_INIT, "webserver_port = %d ", cfg->webserver_port);
+        } else {
+            cfg->pfcp_port = HTTP_SERVER_PORT;
         }
 
     }
@@ -530,15 +540,25 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
             std::string pool_name("staticUeIpPool");
 
             std::string ip = ue_pool["ip"].GetString();
-            inet_aton(ip.c_str(), &(cfg->static_ip_pool_ip));
-            cfg->static_ip_pool_ip.s_addr = ntohl(cfg->static_ip_pool_ip.s_addr);
-            std::cout<<"calling gen pool for IP "<<inet_ntoa(cfg->static_ip_pool_ip)<<std::endl;
+            struct in_addr static_ip_pool_ip={0};
+            inet_aton(ip.c_str(), &(static_ip_pool_ip));
+            LOG_MSG(LOG_INIT,"static pool network IP %s",inet_ntoa(static_ip_pool_ip));
+            static_ip_pool_ip.s_addr = ntohl(static_ip_pool_ip.s_addr);
 
+            struct in_addr static_ip_pool_mask={0};
             std::string mask = ue_pool["mask"].GetString();
-            inet_aton(mask.c_str(), &(cfg->static_ip_pool_mask));
-            cfg->static_ip_pool_mask.s_addr = ntohl(cfg->static_ip_pool_mask.s_addr);
-            std::cout<<"calling gen pool for mask "<<inet_ntoa(cfg->static_ip_pool_mask)<<std::endl;
+            inet_aton(mask.c_str(), &(static_ip_pool_mask));
+            LOG_MSG(LOG_INIT,"static pool mask %s",inet_ntoa(static_ip_pool_mask));
+            static_ip_pool_mask.s_addr = ntohl(static_ip_pool_mask.s_addr);
 
+            if(cfg->static_ip_pool_ip.s_addr == 0) {
+                cfg->static_ip_pool_ip = static_ip_pool_ip;
+                cfg->static_ip_pool_mask = static_ip_pool_mask;
+                ue_static_pool *pool = new ue_static_pool(pool_name);
+                pool->gen_pool(cfg->static_ip_pool_ip, cfg->static_ip_pool_mask);
+            } else {
+                LOG_MSG(LOG_ERROR, "Static Pool can not be changed %s",ip.c_str());
+            }
         }
         if(ip_pool.HasMember("ueIpPool")) {
             // fixed default dynamic pool
@@ -546,18 +566,25 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
             std::string pool_name("ueIpPool");
             ue_dynamic_pool *pool = new ue_dynamic_pool(pool_name);
 
+            struct in_addr ip_pool_ip{0};
             std::string ip = ue_pool["ip"].GetString();
-            inet_aton(ip.c_str(), &(cfg->ip_pool_ip));
-            std::cout<<"Configured Pool subnet "<<inet_ntoa(cfg->ip_pool_ip)<<std::endl;
-            cfg->ip_pool_ip.s_addr = ntohl(cfg->ip_pool_ip.s_addr);
+            inet_aton(ip.c_str(), &(ip_pool_ip));
+            LOG_MSG(LOG_INIT,"dynamic pool network %s ",inet_ntoa(ip_pool_ip));
+            ip_pool_ip.s_addr = ntohl(ip_pool_ip.s_addr);
 
+            struct in_addr ip_pool_mask={0};
             std::string mask = ue_pool["mask"].GetString();
-            inet_aton(mask.c_str(), &(cfg->ip_pool_mask));
-            std::cout<<"Configured Pool mask "<<inet_ntoa(cfg->ip_pool_mask)<<std::endl;
-            cfg->ip_pool_mask.s_addr = ntohl(cfg->ip_pool_mask.s_addr);
-
-            ip_pools::getInstance()->addIpPool(pool, pool_name); 
-            pool->gen_pool(cfg->ip_pool_ip, cfg->ip_pool_mask);
+            inet_aton(mask.c_str(), &(ip_pool_mask));
+            LOG_MSG(LOG_INIT, "dynamic Pool mask %s",inet_ntoa(ip_pool_mask));
+            ip_pool_mask.s_addr = ntohl(ip_pool_mask.s_addr);
+            if(cfg->ip_pool_ip.s_addr == 0) {
+                cfg->ip_pool_ip = ip_pool_ip;
+                cfg->ip_pool_mask = ip_pool_mask;
+                ip_pools::getInstance()->addIpPool(pool, pool_name); 
+                pool->gen_pool(cfg->ip_pool_ip, cfg->ip_pool_mask);
+            } else {
+                LOG_MSG(LOG_ERROR, "Dynamic Pool can not be changed %s",ip.c_str());
+            }
         }
         // we may have other pool as well.. 
     }

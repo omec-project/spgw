@@ -250,7 +250,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 
 	if ( conn_data == NULL) {
 
-		LOG_MSG(LOG_INFO, " Add entry in conn table :%s",
+		LOG_MSG(LOG_INFO, "Add entry in conn table :%s",
 					inet_ntoa(*((struct in_addr *)&dstIp)));
 
 		/* No conn entry for dstIp
@@ -287,7 +287,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 	} else {
 		/* TODO: peer node entry already exit in conn table */
 
-		LOG_MSG(LOG_INFO, "Conn entry already exit in conn table :%s",
+		LOG_MSG(LOG_DEBUG1, "Connection entry already exist in conn table :%s",
 					inet_ntoa(*((struct in_addr *)&dstIp)));
 		if ( startTimer( &conn_data->pt ) < 0)
 		{
@@ -296,7 +296,7 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 		//conn_cnt++;
 	}
 
-	LOG_MSG(LOG_INFO, "Current Active Peer Conn Cnt:%u", conn_cnt);
+	LOG_MSG(LOG_DEBUG1, "Current Active Peer Conn Cnt:%u", conn_cnt);
 	return 0;
 }
 

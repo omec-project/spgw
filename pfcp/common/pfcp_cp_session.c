@@ -1194,7 +1194,7 @@ int fill_sdf_rules(pfcp_sess_estab_req_t* pfcp_sess_est_req,
     }
 
     pfcp_sess_est_req->create_pdr[pdr_counter].pdi.sdf_filter_count = sdf_filter_count;
-    LOG_MSG(LOG_ERROR,"Number of SDF filters %d, pdr_counter = %d ",sdf_filter_count, pdr_counter);
+    LOG_MSG(LOG_DEBUG,"Number of SDF filters %d, pdr_counter = %d ",sdf_filter_count, pdr_counter);
 
     return ret;
 }

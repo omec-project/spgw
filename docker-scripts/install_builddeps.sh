@@ -9,8 +9,6 @@ CUR_DIR=$PWD
 SPGW_DIR=$PWD
 
 THIRD_PARTY_SW_PATH="third_party"
-OSS_UTIL_DIR="oss-util"
-C3PO_OSS_DIR="oss_adapter/c3po_oss"
 DEPS_DIR=${DEPS_DIR:-"$PWD/$THIRD_PARTY_SW_PATH"}
 
 SUDO=''
