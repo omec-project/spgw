@@ -526,7 +526,7 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
             cfg->webserver_port = global["httpPort"].GetInt();
             LOG_MSG(LOG_INIT, "webserver_port = %d ", cfg->webserver_port);
         } else {
-            cfg->pfcp_port = HTTP_SERVER_PORT;
+            cfg->webserver_port = HTTP_SERVER_PORT;
         }
 
     }
