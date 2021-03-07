@@ -19,7 +19,6 @@
 #include "monitor_config.h"
 #include "spgw_cpp_wrapper.h"
 #include "dns_config.h"
-//#include "cdnshelper.h"
 #include "cp_log.h"
 #include "cp_events.h"
 #include "cp_io_poll.h"
