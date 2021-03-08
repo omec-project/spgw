@@ -22,6 +22,7 @@
 
 #define GTPC_UDP_PORT       (2123)
 #define HTTP_SERVER_PORT    (8080)
+#define PROMETHEUS_HTTP_PORT (9089)
 
 
 #define DP_SITE_NAME_MAX		256

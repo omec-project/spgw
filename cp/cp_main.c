@@ -32,7 +32,6 @@
 #include "cp_test.h"
 #include "cp_log.h"
 #include "assert.h"
-#include "rte_eal.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -147,19 +146,21 @@ main(int argc, char **argv)
     //int ret;
 
 	set_logging_level("LOG_ERROR");
-    LOG_MSG(LOG_INIT, "Starting main thread ");
+    LOG_MSG(LOG_INIT, "Starting main thread %d ",argc);
 
-    //ret = rte_eal_init(argc, argv);
-    //assert(ret >= 0);
-    // skipping eal argument 
+    // skipping eal argument
     int i=0;
-    for(i=1; i<=argc; i++) {
+    for(i=1; i<argc; i++) {
         if(strcmp(argv[i],"--")==0) {
             break;
         }
     }
+    if(i == argc) {
+        i = 0 ;
+        LOG_MSG(LOG_INIT, "Starting main thread . Did not receive extra command line arguments ");
+    }
 
-    char name[] = "ngic_controlplane"; 
+    char name[] = "ngic_controlplane";
     argv[i] = name;
     LOG_MSG(LOG_INIT, "Starting main thread argv[0] %s ",argv[i]);
     parse_arg(argc-i, argv+i);

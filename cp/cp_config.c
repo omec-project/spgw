@@ -108,8 +108,8 @@ config_cp_ip_port(cp_config_t *cp_config)
     cp_config->dns_enable = 0;  // disabled by default
     cp_config->gx_enabled = 0;  // disabled by default
     cp_config->urr_enable = 0;  // disabled by default
-    cp_config->prom_port = 3082;
-    cp_config->webserver_port = 9090; //default webserver_port
+    cp_config->prom_port = PROMETHEUS_HTTP_PORT;
+    cp_config->webserver_port = HTTP_SERVER_PORT; //default webserver_port
 
     parse_cp_json(cp_config, STATIC_CP_JSON_FILE);
 
