@@ -6,7 +6,7 @@
 #include "ue.h"
 #include "pfcp.h"
 #include "sm_structs_api.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "sm_struct.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_session.h"

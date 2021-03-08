@@ -37,7 +37,7 @@ build_fd_lib()
 
 build_gxapp()
 {
-	pushd $CUR_DIR/gx/gx_app
+	pushd $CUR_DIR/cp/gx/gx_app
 	make clean
 	make || { echo -e "\nGxApp: Make GxApp failed\n"; }
     make install
@@ -99,10 +99,10 @@ build_spgw()
 	pushd $SPGW_DIR
 	source setenv.sh
 	build_cpputil_lib
-   	build_c3po_util
+	#build_c3po_util
 	build_pfcp_lib
 
-	make build-lib || { echo -e "\nmake lib failed\n"; }
+	#make build-lib || { echo -e "\nmake lib failed\n"; }
 
 	echo "Building libgtpv2c..."
 	pushd $SPGW_DIR/libgtpv2c

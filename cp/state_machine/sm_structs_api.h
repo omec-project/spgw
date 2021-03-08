@@ -8,6 +8,7 @@
 #ifndef _SM_STRUCT_API_H
 #define _SM_STRUCT_API_H
 #include "sm_struct.h"
+#include "upf_struct.h"
 #include "ue.h"
 
 /**
@@ -71,4 +72,9 @@ get_procedure(msg_info_t *msg);
 void
 start_upf_procedure(proc_context_t *proc, msg_info_t *msg);
 
+upf_context_t*
+get_upf_context(user_plane_profile_t *upf_profile); 
+
+struct in_addr 
+native_linux_name_resolve(const char *name);
 #endif

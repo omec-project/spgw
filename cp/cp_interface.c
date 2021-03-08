@@ -14,40 +14,21 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-#include <rte_ip.h>
-#include <rte_udp.h>
 #include "assert.h"
-
-#include <rte_common.h>
-#include <rte_eal.h>
-#include <rte_jhash.h>
-#include <rte_cfgfile.h>
-#include <rte_debug.h>
-
 #include "util.h"
 #include "cp_interface.h"
 #include "cp_io_poll.h"
 #include "cp_config_defs.h"
 #include "ipc_api.h"
 #include "gtpv2_internal.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "cp_log.h"
 #include "upf_struct.h"
 
 #define PCAP_TTL           (64)
 #define PCAP_VIHL          (0x0045)
 
-#ifdef SGX_CDR
-	#define DEALERIN_IP "dealer_in_ip"
-	#define DEALERIN_PORT "dealer_in_port"
-	#define DEALERIN_MRENCLAVE "dealer_in_mrenclave"
-	#define DEALERIN_MRSIGNER "dealer_in_mrsigner"
-	#define DEALERIN_ISVSVN "dealer_in_isvsvn"
-	#define DP_CERT_PATH "dp_cert_path"
-	#define DP_PKEY_PATH "dp_pkey_path"
-#endif /* SGX_CDR */
-
-extern pcap_dumper_t *pcap_dumper;
+//extern pcap_dumper_t *pcap_dumper;
 
 /**
  * @brief  : Util to send or dump gtpv2c messages
@@ -78,53 +59,55 @@ void gtpc_timer_retry_send(int fd, peerData_t *t_tx)
 }
 
 
-
 void
 dump_pcap(uint16_t payload_length, uint8_t *tx_buf)
 {
+    (void)payload_length;
+    (void)tx_buf;
+#if 0
 	static struct pcap_pkthdr pcap_tx_header;
 	gettimeofday(&pcap_tx_header.ts, NULL);
 	pcap_tx_header.caplen = payload_length
 			+ sizeof(struct ether_hdr)
-			+ sizeof(struct ipv4_hdr)
-			+ sizeof(struct udp_hdr);
+			+ sizeof(struct ipHdr)
+			+ sizeof(struct udpHdr);
 	pcap_tx_header.len = payload_length
 			+ sizeof(struct ether_hdr)
-			+ sizeof(struct ipv4_hdr)
-			+ sizeof(struct udp_hdr);
+			+ sizeof(struct ipHdr)
+			+ sizeof(struct udpHdr);
 	uint8_t dump_buf[MAX_GTPV2C_UDP_LEN
 			+ sizeof(struct ether_hdr)
-			+ sizeof(struct ipv4_hdr)
-			+ sizeof(struct udp_hdr)];
+			+ sizeof(struct ipHdr)
+			+ sizeof(struct udpHdr)];
 	struct ether_hdr *eh = (struct ether_hdr *) dump_buf;
 
 	memset(&eh->d_addr, '\0', sizeof(struct ether_addr));
 	memset(&eh->s_addr, '\0', sizeof(struct ether_addr));
 	eh->ether_type = htons(ETHER_TYPE_IPv4);
 
-	struct ipv4_hdr *ih = (struct ipv4_hdr *) &eh[1];
+	struct ipHdr *ih = (struct ipHdr *) &eh[1];
 
-	ih->dst_addr = cp_config->s11_mme_ip.s_addr; /* ajay correct this */
-	ih->src_addr = cp_config->s11_ip.s_addr;
-	ih->next_proto_id = IPPROTO_UDP;
-	ih->version_ihl = PCAP_VIHL;
-	ih->total_length =
+	ih->daddr = cp_config->s11_mme_ip.s_addr; /* ajay correct this */
+	ih->saddr = cp_config->s11_ip.s_addr;
+	ih->protocol = IPPROTO_UDP;
+	ih->ihl = PCAP_VIHL;
+	ih->tot_len =
 			ntohs(payload_length
-				+ sizeof(struct udp_hdr)
-				+ sizeof(struct ipv4_hdr));
-	ih->time_to_live = PCAP_TTL;
+				+ sizeof(struct udpHdr)
+				+ sizeof(struct ipHdr));
+	ih->ttl = PCAP_TTL;
 
-	struct udp_hdr *uh = (struct udp_hdr *) &ih[1];
+	struct udpHdr *uh = (struct udpHdr *) &ih[1];
 
-	uh->dgram_len = htons(
-	    ntohs(ih->total_length) - sizeof(struct ipv4_hdr));
-	uh->dst_port = htons(GTPC_UDP_PORT);
-	uh->src_port = htons(GTPC_UDP_PORT);
+	uh->uh_ulen = htons(ntohs(ih->total_length) - sizeof(struct ipHdr));
+	uh->uh_dport = htons(GTPC_UDP_PORT);
+	uh->uh_sport = htons(GTPC_UDP_PORT);
 
 	void *payload = &uh[1];
 	memcpy(payload, tx_buf, payload_length);
 	pcap_dump((u_char *) pcap_dumper, &pcap_tx_header,
 			dump_buf);
 	fflush(pcap_dump_file(pcap_dumper));
+#endif
 }
 

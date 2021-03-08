@@ -15,8 +15,6 @@
  */
 #include <stdint.h>
 #include <time.h>
-#include "pfcp_ies.h"
-#include <rte_ether.h>
 /**
  * IPv6 address length
  */

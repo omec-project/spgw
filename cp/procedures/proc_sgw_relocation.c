@@ -14,7 +14,7 @@
 #include "pfcp_cp_session.h"
 #include "cp_io_poll.h"
 #include "spgwStatsPromEnum.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "util.h"
 #include "gx.h"
 #include "gtpv2_error_rsp.h"

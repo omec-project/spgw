@@ -14,7 +14,7 @@
 #include <errno.h>
 #include "cp_interface.h"
 #include "cp_io_poll.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "sm_struct.h"
 #include "cp_config_apis.h"
 #include "spgw_cpp_wrapper.h"
@@ -25,14 +25,15 @@
 void 
 process_local_msg(void *data, uint16_t event)
 {
-    LOG_MSG(LOG_INFO,"Process local message event ");
+    LOG_MSG(LOG_DEBUG,"Process local message event start");
     struct t2tMsg *evt  = (struct t2tMsg *)get_t2tMsg();
     while(evt != NULL) {
-        update_subscriber_analyzer_config(evt->data, evt->event);
+        LOG_MSG(LOG_NEVER,"data %p event %d ", data, event);
+        cp_config->subscriber_rulebase = (spgw_config_profile_t *)evt->data;
         free(evt);
         evt  = (struct t2tMsg *)get_t2tMsg();
     }
-    LOG_MSG(LOG_NEVER,"data %p event %d ", data, event);
+    LOG_MSG(LOG_DEBUG,"Process local message event done");
     return;
 }
 

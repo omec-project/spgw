@@ -4,7 +4,7 @@
 
 #include "sm_struct.h"
 #include "gtp_messages.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "sm_enum.h"
 #include "gtpv2_error_rsp.h"
 #include "assert.h"
@@ -250,6 +250,7 @@ process_create_sess_req(create_sess_req_t *csr,
         // caller sends out csrsp 
         return GTPV2C_CAUSE_REQUEST_REJECTED ; 
     }
+#if 0
     if(cp_config->dns_enable) {
 		/* VS: Select the UPF based on DNS */
 		ret = dns_query_lookup(pdn, &upf_ipv4.s_addr);
@@ -257,7 +258,9 @@ process_create_sess_req(create_sess_req_t *csr,
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return ret;
 		}
-    } else {
+    } else 
+#endif
+    {
         upf_context = get_upf_context(sub_profile->up_profile); 
         if(upf_context == NULL) {
             return GTPV2C_CAUSE_REQUEST_REJECTED ; 
@@ -280,7 +283,7 @@ process_create_sess_req(create_sess_req_t *csr,
             bool found = false;
             struct in_addr temp = *paa_ipv4;
             temp.s_addr = ntohl(temp.s_addr);
-            found = reserve_ip_node(static_addr_pool, temp); // api needs address in host order
+            found = reserve_ip_node(temp); // api needs address in host order
             if (found == false) {
                 LOG_MSG(LOG_ERROR,"Received CSReq with static address %s"
                         " . Invalid address received ",

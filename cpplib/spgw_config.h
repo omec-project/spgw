@@ -108,10 +108,9 @@ class spgwConfig
     static spgw_config_profile_t *parse_subscriber_profiles_cpp(const char *); 
     static spgw_config_profile_t *parse_json_doc(rapidjson::Document &doc);
     static spgwConfigStore* get_cp_config_cpp();
-    static void set_cp_config_cpp(spgw_config_profile_t *);
-    static void switch_config_cpp(spgw_config_profile_t *);
     static sub_profile_t* match_sub_selection_cpp(sub_selection_keys_t *key);
     static apn_profile_t * match_apn_profile_cpp(char *, uint16_t len);
     static void invalidate_user_plane_address(uint32_t addr); 
+    static int parse_cp_json_cpp(cp_config_t *cfg, const char *fileName);
 };
 #endif

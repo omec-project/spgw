@@ -39,7 +39,7 @@ handle_events(int fd, int *wd, struct entry *config)
 	char *ptr;
 
 	/* Loop while events can be read from inotify file descriptor. */
-	LOG_MSG(LOG_INFO, "Received file event for %s ", config->config_file);
+	LOG_MSG(LOG_DEBUG, "Received file event for %s ", config->config_file);
 	/* Read some events. */
 	len = read(fd, buf, sizeof buf);
 	/* If the nonblocking read() found no events to read, then
@@ -106,7 +106,7 @@ handle_events(int fd, int *wd, struct entry *config)
 		}
 
 		if (wd[0] == event->wd) {
-			LOG_MSG(LOG_DEBUG, "calling config change callback ");
+			LOG_MSG(LOG_INFO, "Config change detected for file %s ", config->config_file);
 			handled = true;
 			config->callback(config->config_file, 0);
 			break;
@@ -125,8 +125,7 @@ config_thread_handler(void *config)
 	struct entry *cfg = (struct entry *)config;
 	int fd = 0;
 
-	LOG_MSG(LOG_INIT, "Thread started for monitoring config file %s",
-		   cfg->config_file);
+	LOG_MSG(LOG_INIT, "Thread started for monitoring config file %s", cfg->config_file);
 
 	fd = inotify_init1(IN_NONBLOCK);
 	if (fd == -1) {
@@ -136,8 +135,7 @@ config_thread_handler(void *config)
 
 	wd = inotify_add_watch(fd, cfg->config_file, IN_ALL_EVENTS); //OPEN | IN_CLOSE);
 	if (wd == -1) {
-		LOG_MSG(LOG_ERROR, "Can not watch file. File does not exist - %s ",
-			cfg->config_file);
+		LOG_MSG(LOG_ERROR, "Can not watch file. File does not exist - %s ", cfg->config_file);
 		return NULL;
 	}
 

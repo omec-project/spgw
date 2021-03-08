@@ -49,16 +49,6 @@ extern "C"
         return new_config;
     }
 
-    void set_cp_config(spgw_config_profile_t *new_config)
-    {
-        spgwConfig::set_cp_config_cpp(new_config);
-    }
-
-    void switch_config(spgw_config_profile_t *new_config)
-    {
-        spgwConfig::switch_config_cpp(new_config);
-    }
-
     sub_profile_t *match_sub_selection(sub_selection_keys_t *key)
     {
         return spgwConfig::match_sub_selection_cpp(key);
@@ -72,6 +62,11 @@ extern "C"
     void invalidate_upf_dns_results(uint32_t ip) 
     {
         spgwConfig::invalidate_user_plane_address(ip);
+    }
+    
+    int parse_cp_json(cp_config_t *cfg, const char *file)
+    {
+        return spgwConfig::parse_cp_json_cpp(cfg, file);
     }
 
     void init_cpp_tables()
@@ -532,29 +527,36 @@ extern "C"
         return ue_table->delete_gx_sessid_ue_mapping(sess_id);
     }
 
-    /* Gx context APIs end */
-    void *create_ue_pool_dynamic_cpp(struct in_addr network, struct in_addr mask)
+    /* Dynamic Pool APIs */
+    uint32_t acquire_ip_cpp(const char *pool_n)
     {
-        ue_pool_dynamic_t *temp = (ue_pool_dynamic_t *) calloc(1, sizeof(ue_pool_dynamic_t));
-        ue_pool_mgmt *pool = new(ue_pool_mgmt);
-        temp->dynamic_pool = (void *)pool;
-        pool->gen_pool(network, mask);
-        return (void*)temp;
-    }
-    
-    uint32_t acquire_ip_cpp(void *pool)
-    {
-        ue_pool_dynamic_t *ue_pool = (ue_pool_dynamic_t *)pool;
-        ue_pool_mgmt *temp = reinterpret_cast<ue_pool_mgmt*>(ue_pool->dynamic_pool);
-        return temp->get_ip();
+        std::string pool_name(pool_n); 
+        ue_pool *pool = ip_pools::getInstance()->getIpPool(pool_name);
+        return pool->get_ip();
     }
 
-    void release_ip_cpp(void *pool, struct in_addr addr)
+    /* Dynamic Pool APIs */
+    void release_ip_cpp(const char *pool_n, struct in_addr addr)
     {
-        ue_pool_dynamic_t *ue_pool = (ue_pool_dynamic_t *)pool;
-        ue_pool_mgmt *temp = reinterpret_cast<ue_pool_mgmt*>(ue_pool->dynamic_pool);
-        temp->free_ip(addr.s_addr);
+        std::string pool_name(pool_n); 
+        ue_pool *pool = ip_pools::getInstance()->getIpPool(pool_name);
+        pool->free_ip(addr.s_addr);
         return;
+    }
+    /* Static Pool APIs */
+    bool reserve_static_ip_cpp(const char *pool_n, struct in_addr host)
+    {
+        std::string pool_name(pool_n); 
+        ue_pool *pool = ip_pools::getInstance()->getIpPool(pool_name);
+        return pool->reserve_ip_node(host);
+    }
+
+    /* Static Pool APIs */
+    bool release_static_ip_cpp(const char *pool_n, struct in_addr addr)
+    {
+        std::string pool_name(pool_n); 
+        ue_pool *pool = ip_pools::getInstance()->getIpPool(pool_name);
+        return pool->release_ip_node(addr);
     }
 
 }

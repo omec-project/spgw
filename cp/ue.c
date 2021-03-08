@@ -7,7 +7,7 @@
 #include "ue.h"
 #include "cp_interface.h"
 #include "cp_log.h"
-#include "cp_config.h"
+#include "spgw_config_struct.h"
 #include "util.h"
 #include "pfcp_cp_session.h"
 #include "gen_utils.h"
