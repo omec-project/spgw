@@ -57,7 +57,7 @@ struct cp_params cp_params;
 
 /**
  *
- * @brief  : Parses non-dpdk command line program arguments for control plane
+ * @brief  : Parses command line program arguments for control plane
  * @param  : argc, number of arguments
  * @param  : argv, array of c-string arguments
  * @return : Returns nothing
@@ -134,8 +134,8 @@ parse_arg(int argc, char **argv)
 
 
 /**
- * @brief  : Main function - initializes dpdk environment, parses command line arguments,
- *           calls initialization function, and spawns stats and control plane function
+ * @brief  : Main function - parses command line arguments,
+ *           calls initialization function
  * @param  : argc, number of arguments
  * @param  : argv, array of c-string arguments
  * @return : returns 0

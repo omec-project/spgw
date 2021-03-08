@@ -15,17 +15,28 @@ SPGWC Control Plane
 
 ## Initialization
 
-DPDK EAL arguments are parsed first. Please refer to
-[DPDK Environment Abstraction Layer documentation](
-http://dpdk.org/doc/guides/prog_guide/env_abstraction_layer.html).
-The parsing of Control Plane specific arguments follows. Both EAL and Control
-Plane arguments are described in the installation documentation [here](INSTALL.MD).
-
 * Master thread - Processes signaling messages, establishes PDN connections, and
   manages bearers.
 * config thread - listens for config update triggers
 * prometheus thread - listen the prometheus query and sends back the requested statistics
   to prometheus server.
+* One thread for GTP incoming message read. Read the message from sockets and puts in the
+  event queue for main thread
+* One thread for GTP outgoing message. Take message one by one from the GTP outgoing queue
+  and send the messasge out
+* One thread for PFCP incoming message read. Read the message from sockets and puts in the
+  event queue for main thread
+* One thread for PFCP outgoing message. Take message one by one from the GTP outgoing queue
+  and send the messasge out
+* One thread for Gx incoming message read. Read the message from sockets and puts in the
+  event queue for main thread
+* One thread for Gx outgoing message. Take message one by one from the GTP outgoing queue
+  and send the messasge out
+* One thread for local thread message read. Read the message from sockets and puts in the
+  event queue for main thread queue
+
+
+
 
 ## Master Thread Operation
 
