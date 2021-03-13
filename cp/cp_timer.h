@@ -127,20 +127,6 @@ void stopTimer( gstimerinfo_t *ti );
  */
 void deinitTimer( gstimerinfo_t *ti );
 
-/**
- * @brief  : Timer callback
- * @param  : ti, holds information about timer
- * @param  : data_t, Peer node related information
- * @return : Returns nothing
- */
-void timerCallback( gstimerinfo_t *ti, const void *data_t );
-
-/**
- * @brief  : Convert time into printable format
- * @param  : No param
- * @return : Returns nothing
- */
-const char *getPrintableTime(void);
 
 /**
  * @brief  : Initialize timer

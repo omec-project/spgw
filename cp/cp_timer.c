@@ -26,28 +26,6 @@ static pthread_t _gstimer_thread;
 static pid_t _gstimer_tid;
 
 
-const char *getPrintableTime(void)
-{
-	static char buf[128];
-	struct timeval tv;
-	struct timezone tz;
-	struct tm *ptm;
-
-	gettimeofday(&tv, &tz);
-	ptm = localtime( &tv.tv_sec );
-
-	sprintf( buf, "%04d-%02d-%02d %02d:%02d:%02d.%03ld",
-			ptm->tm_year + 1900,
-			ptm->tm_mon + 1,
-			ptm->tm_mday,
-			ptm->tm_hour,
-			ptm->tm_min,
-			ptm->tm_sec,
-			tv.tv_usec / 1000 );
-
-	return buf;
-}
-
 /**
  * @brief  : Start timer thread
  * @param  : arg, used to control access to thread
@@ -214,8 +192,6 @@ void gst_timer_stop(gstimerinfo_t *ti)
 
 }
 
-
-
 bool startTimer( gstimerinfo_t *ti )
 {
 	return gst_timer_start( ti );
@@ -261,5 +237,3 @@ void deinittimer(timer_t *tid)
 {
 	timer_delete(*tid);
 }
-
-

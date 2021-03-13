@@ -64,6 +64,16 @@ extern "C"
         spgwConfig::invalidate_user_plane_address(ip);
     }
     
+    user_plane_profile_t* get_user_plane_profile_ref(const char *name)
+    {
+        return spgwConfig::get_user_plane_profile_ref(name);
+    }
+
+    int get_user_plane_profiles(profile_names_t *ptr, int max_size) 
+    {
+        return spgwConfig::get_user_plane_profiles(ptr, max_size);
+    }
+    
     int parse_cp_json(cp_config_t *cfg, const char *file)
     {
         return spgwConfig::parse_cp_json_cpp(cfg, file);

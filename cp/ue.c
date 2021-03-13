@@ -358,7 +358,8 @@ start_procedure(proc_context_t *new_proc_ctxt, msg_info_t *msg)
     return;
 }
 
-static void start_procedure_direct(proc_context_t *proc_ctxt)
+static void 
+start_procedure_direct(proc_context_t *proc_ctxt)
 {
     msg_info_t *msg = proc_ctxt->msg_info;
     assert(proc_ctxt != NULL);
@@ -658,4 +659,3 @@ cleanup_ue_context(ue_context_t **context_t)
 
     return 0;
 }
-

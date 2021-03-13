@@ -23,6 +23,7 @@
 #define PEER_TIMEOUT                 0x08
 #define TEST_EVENTS                  0x09
 #define GTP_OUT_PKTS                 0x0a
+#define UPF_ASSOCIATION_SETUP        0x0b
 
 static const char *event_names[] = { 
     "UNKNOWN",
@@ -36,6 +37,7 @@ static const char *event_names[] = {
     "PEER_TIMEOUT",
     "TEST_EVENTS",
     "GTP_OUT_PKTS",
+    "UPF_ASSOCIATION_SETUP",
 };
 
 typedef void (*stack_event_handler) (void *, uint16_t);

@@ -19,8 +19,14 @@ sub_profile_t* match_sub_selection(sub_selection_keys_t *key);
 apn_profile_t * match_apn_profile(char *, uint16_t len);
 
 void invalidate_upf_dns_results(uint32_t ip);
-void init_cpp_tables(void);
 
+user_plane_profile_t* 
+get_user_plane_profile_ref(const char *name);
+
+int 
+get_user_plane_profiles(profile_names_t *profile, int max);
+
+void init_cpp_tables(void);
 
 bool add_pfcp_transaction(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans);
 void* find_pfcp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq);

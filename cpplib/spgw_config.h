@@ -52,7 +52,7 @@ class spgwConfigStore
             }
         }
 
-        apn_profile_t* get_apn_profile(char *name) 
+        apn_profile_t* get_apn_profile(const char *name) 
         {
             for (std::list<apn_profile_t*>::iterator it=apn_profile_list.begin(); it!=apn_profile_list.end(); ++it)
             {
@@ -63,7 +63,7 @@ class spgwConfigStore
             return nullptr;
         }
 
-        user_plane_profile_t* get_user_plane_profile(char *name) 
+        user_plane_profile_t* get_user_plane_profile(const char *name) 
         {
             for (std::list<user_plane_profile_t*>::iterator it=user_plane_list.begin(); it!=user_plane_list.end(); ++it)
             {
@@ -74,7 +74,7 @@ class spgwConfigStore
             return nullptr;
         }
 
-        qos_profile_t* get_qos_profile(char *name) 
+        qos_profile_t* get_qos_profile(const char *name) 
         {
             for (std::list<qos_profile_t*>::iterator it=qos_profile_list.begin(); it!=qos_profile_list.end(); ++it)
             {
@@ -84,7 +84,7 @@ class spgwConfigStore
             }
             return nullptr;
         }
-        access_profile_t* get_access_profile(char *name) 
+        access_profile_t* get_access_profile(const char *name) 
         {
             for (std::list<access_profile_t*>::iterator it=access_profile_list.begin(); it!=access_profile_list.end(); ++it)
             {
@@ -109,8 +109,10 @@ class spgwConfig
     static spgw_config_profile_t *parse_json_doc(rapidjson::Document &doc);
     static spgwConfigStore* get_cp_config_cpp();
     static sub_profile_t* match_sub_selection_cpp(sub_selection_keys_t *key);
-    static apn_profile_t * match_apn_profile_cpp(char *, uint16_t len);
+    static apn_profile_t * match_apn_profile_cpp(const char *, uint16_t len);
+    static user_plane_profile_t* get_user_plane_profile_ref(const char *name);
     static void invalidate_user_plane_address(uint32_t addr); 
+    static int get_user_plane_profiles(profile_names_t *ptr, int max); 
     static int parse_cp_json_cpp(cp_config_t *cfg, const char *fileName);
 };
 #endif

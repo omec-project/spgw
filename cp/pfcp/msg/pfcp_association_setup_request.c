@@ -18,6 +18,7 @@
 #include "pfcp_cp_util.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
+#include "upf_apis.h"
 
 static void
 fill_pfcp_association_setup_rsp(pfcp_assn_setup_rsp_t *pfcp_ass_setup_rsp, uint32_t seq)

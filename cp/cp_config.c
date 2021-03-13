@@ -22,6 +22,8 @@
 #include "cp_log.h"
 #include "cp_events.h"
 #include "cp_io_poll.h"
+#include "sm_hand.h"
+#include "upf_apis.h"
 
 cp_config_t *cp_config = NULL;
 
@@ -76,6 +78,7 @@ void init_config(void)
     pthread_create(&readerLocal_t, &localattr, &msg_handler_local, NULL);
     pthread_attr_destroy(&localattr);
 
+    schedule_pfcp_association(10, NULL);
     return;
 }
 

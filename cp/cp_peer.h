@@ -7,16 +7,20 @@
 #ifndef __CP_PEERS__H
 #define __CP_PEERS__H
 
-uint8_t process_response(uint32_t dstIp);
+struct peer_data {
+    gstimerinfo_t *ti;
+    struct sockaddr_in dest_addr;
+};
+
 /**
- * @brief  : Intialize peer node information
- * @param  : md, Peer node information
- * @param  : name, Peer node name
- * @param  : t1ms, periodic timer interval
- * @param  : t2ms, transmit timer interval
- * @return : Returns true in case of success , false otherwise
+ * @brief  : Timer callback
+ * @param  : ti, holds information about timer
+ * @param  : data_t, Peer node related information
+ * @return : Returns nothing
  */
-bool initpeerData( peerData_t *md, const char *name, int t1ms, int t2ms );
+void timerCallback( gstimerinfo_t *ti, const void *data_t );
+
+uint8_t process_response(uint32_t dstIp);
 
 /**
  * @brief  : Adds node connection entry
@@ -27,6 +31,6 @@ bool initpeerData( peerData_t *md, const char *name, int t1ms, int t2ms );
 uint8_t
 add_node_conn_entry(uint32_t dstIp, uint8_t portId);
 
-
-void handle_timeout(void *data, uint16_t event);
+//timeouts are handled as events 
+void handle_timeout_event(void *data, uint16_t event);
 #endif

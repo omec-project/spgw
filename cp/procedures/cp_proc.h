@@ -54,6 +54,9 @@ struct proc_context {
     void*            child_procs[MAX_CHILD_PROC]; 
     void*            parent_proc;
     uint16_t         tac;
+
+    // printing purpise
+    uint64_t         imsi64;
 };
 typedef struct proc_context proc_context_t;
 

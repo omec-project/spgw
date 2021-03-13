@@ -84,19 +84,18 @@ init_thread_to_thread_socket(void)
 void init_cp(void)
 {
 
-    init_cpp_tables(); 
-
-    // this parses file and allocates cp_config  
-    init_config();
-
-    // TIMER_GET_CURRENT_TP(st_time); DELETE_CODE
-
     start_time = current_ntp_timestamp();
 
     recovery_time_into_file(start_time);
 
-    /* VS: Increment the restart counter value after starting control plane */
     rstCnt = update_rstCnt();
+
+    init_timer_thread();
+
+    init_cpp_tables(); 
+
+    // this parses file and allocates cp_config  
+    init_config();
 
     setup_prometheus(cp_config->prom_port);
 
@@ -112,7 +111,6 @@ void init_cp(void)
 
     init_thread_to_thread_socket();
 
-    init_timer_thread();
 
 	return;
 }
@@ -171,9 +169,8 @@ void init_timer_thread(void)
 	sigaddset(&sigset, SIGUSR1);
 	sigprocmask(SIG_BLOCK, &sigset, NULL);
 
-	if (!gst_init())
-	{
-		LOG_MSG(LOG_ERROR, "%s - gstimer_init() failed!!", getPrintableTime() );
+	if (!gst_init()) {
+		LOG_MSG(LOG_ERROR, "gstimer_init() failed!!");
 	}
 	return;
 }

@@ -59,6 +59,10 @@ typedef struct user_plane_profile
     bool     global_address; /* true : control plane allocates address, false : upf allocates address */
 }user_plane_profile_t;
 
+typedef struct profile_names {
+    char profile_name[64];
+}profile_names_t;
+
 #define MAX_NETCAP_LEN               (64)
 typedef struct apn_profile 
 {

@@ -34,6 +34,7 @@
 #include "pfcp_cp_interface.h"
 #include "gx_interface.h"
 #include "cp_log.h"
+#include "upf_apis.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 static uint32_t s5s8_sgw_gtpc_teid_offset;
@@ -85,6 +86,7 @@ initial_attach_event_handler(void *proc, void *msg_info)
             handle_csreq_msg(proc_context, msg);
             break;
         }
+        case PFCP_ASSOC_SETUP_SUCCESS:
         case PFCP_SESS_EST_EVNT: {
             initiate_upf_session(proc_context, msg);
             break;
@@ -121,6 +123,7 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
     pdn_connection_t *pdn = NULL;
     transData_t *gtpc_trans = csreq_proc->gtpc_trans;
 
+    csreq_proc->imsi64 = msg->gtpc_msg.csr.imsi.imsi64; 
     increment_proc_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH,
                                   gtpc_trans->peer_sockaddr.sin_addr.s_addr,
                                   msg->gtpc_msg.csr.uli.tai2.tai_tac);
@@ -594,7 +597,13 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 	if(msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value != REQUESTACCEPTED) {
 		LOG_MSG(LOG_DEBUG, "Cause received Est response is %d",
 				msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value);
+        ue_context_t *context = (ue_context_t *)proc_context->ue_context;
+        upf_context_t *upf_ctxt = context->upf_context;
         proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REQUEST_REJECTED);
+        if(msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value == NOESTABLISHEDPFCPASSOCIATION) {
+		    LOG_MSG(LOG_INFO, "Initiate pfcp associations ");
+            schedule_pfcp_association(1,upf_ctxt); 
+        }
 		return -1;
 	}
 

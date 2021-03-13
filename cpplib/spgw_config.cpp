@@ -15,7 +15,11 @@
 #include "cp_log.h"
 #include <mutex>
 #include "ip_pool_mgmt.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
+static struct in_addr native_linux_name_resolve(const char *name);
 
 spgwConfigStore *sub_classifier_config;
 std::mutex config_mtx; 
@@ -280,6 +284,8 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
                 const char *temp = userPlaneSection["user-plane"].GetString();
                 LOG_MSG(LOG_INIT,"\tUser Plane - %s ",temp);
                 strcpy(user_plane->user_plane_service, temp);
+                struct in_addr ip = native_linux_name_resolve(temp); 
+                user_plane->upf_addr = ip.s_addr;
             }
             if(userPlaneSection.HasMember("global-address"))
             {
@@ -408,7 +414,8 @@ spgwConfigStore* spgwConfig::get_cp_config_cpp()
     return sub_classifier_config;
 }
 
-apn_profile_t* spgwConfig::match_apn_profile_cpp(char *name, uint16_t len)
+apn_profile_t* 
+spgwConfig::match_apn_profile_cpp(const char *name, uint16_t len)
 {
     std::unique_lock<std::mutex> lock(config_mtx);
     std::list<apn_profile_t*>::iterator it;
@@ -428,6 +435,12 @@ apn_profile_t* spgwConfig::match_apn_profile_cpp(char *name, uint16_t len)
     return nullptr;
 }
 
+user_plane_profile_t*
+spgwConfig::get_user_plane_profile_ref(const char *name)
+{
+    return sub_classifier_config->get_user_plane_profile(name);
+}
+
 void 
 spgwConfig::invalidate_user_plane_address(uint32_t addr) 
 {
@@ -442,6 +455,23 @@ spgwConfig::invalidate_user_plane_address(uint32_t addr)
         }
     }
     return ;
+}
+
+// return lit of user plane profiles 
+int
+spgwConfig::get_user_plane_profiles(profile_names_t *ptr, int max) 
+{
+    int count=0;
+    std::unique_lock<std::mutex> lock(config_mtx);
+    for (std::list<user_plane_profile_t*>::iterator it=sub_classifier_config->user_plane_list.begin(); max && it!=sub_classifier_config->user_plane_list.end(); ++it)
+    {
+        user_plane_profile_t *up=*it;
+        strcpy(ptr->profile_name, up->user_plane_profile_name);
+        ptr = ptr++;
+        max--;
+        count++;
+    }
+    return count;
 }
 
 int
@@ -645,3 +675,42 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
 
     return 0;
 }
+
+/* Requirement: 
+ * For now I am using linux system call to do the service name dns resolution...
+ * 3gpp based DNS lookup of NRF support would be required to locate UPF. 
+ */
+static struct in_addr 
+native_linux_name_resolve(const char *name)
+{
+    struct in_addr ip = {0};
+    LOG_MSG(LOG_INFO, "DNS Query - %s ",name);
+    struct addrinfo hints;
+    struct addrinfo *result=NULL, *rp=NULL;
+    int err;
+
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+    hints.ai_protocol = 0;          /* Any protocol */
+    hints.ai_canonname = NULL;
+    hints.ai_addr = NULL;
+    hints.ai_next = NULL;
+    err = getaddrinfo(name, NULL, &hints, &result);
+    if (err == 0)
+    {
+        for (rp = result; rp != NULL; rp = rp->ai_next)
+        {
+            if(rp->ai_family == AF_INET)
+            {
+                struct sockaddr_in *addrV4 = (struct sockaddr_in *)rp->ai_addr;
+                LOG_MSG(LOG_DEBUG, "Received DNS response. name %s mapped to  %s", name, inet_ntoa(addrV4->sin_addr));
+                return addrV4->sin_addr;
+            }
+        }
+    }
+    LOG_MSG(LOG_ERROR, "DNS Query for %s failed with error %s", name, gai_strerror(err));
+    return ip;
+}
+
