@@ -10,6 +10,9 @@
 #include <freeDiameter/freeDiameter-host.h>
 #include <freeDiameter/libfdcore.h>
 #include <freeDiameter/libfdproto.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* TBD - create proper definition */
 #define TRC2
@@ -612,4 +615,7 @@ static inline int fdmin(int lval, int rval) { return lval < rval ? lval : rval; 
    c == 'c' ? 14 : 15 \
 )
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __FD_H__ */

@@ -10,6 +10,11 @@
 #include "spgwStatsPromEnum.h"
 #include <netinet/in.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 spgw_config_profile_t* parse_subscriber_profiles_c(const char *);
 
 /* API to be called by application to get the profiles */
@@ -238,4 +243,7 @@ release_static_ip_cpp(const char *pool_n, struct in_addr addr);
 
 int parse_cp_json(cp_config_t *cfg, const char *file);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

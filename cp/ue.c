@@ -15,6 +15,9 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* base value and offset for seid generation */
 const uint32_t s11_sgw_gtpc_base_teid = 0xC0FFEE;
 static uint32_t s11_sgw_gtpc_teid_offset;
@@ -33,6 +36,9 @@ static uint32_t pgw_gtpu_base_teid = 0x00000001;
 /*TODO : Decide how to diffrentiate between sgw and pgw teids*/
 
 uint32_t base_s1u_sgw_gtpu_teid = 0xf0000000;
+#ifdef __cplusplus
+}
+#endif
 
 static void start_procedure_direct(proc_context_t *proc_ctxt);
 // Requirement: Understand how this teid range works
@@ -361,7 +367,7 @@ start_procedure(proc_context_t *new_proc_ctxt, msg_info_t *msg)
 static void 
 start_procedure_direct(proc_context_t *proc_ctxt)
 {
-    msg_info_t *msg = proc_ctxt->msg_info;
+    msg_info_t *msg = (msg_info_t *)proc_ctxt->msg_info;
     assert(proc_ctxt != NULL);
 
     LOG_MSG(LOG_DEBUG4, "Start direct procedure  %d ",proc_ctxt->proc_type);
@@ -377,9 +383,9 @@ start_procedure_direct(proc_context_t *proc_ctxt)
 
         case S1_RELEASE_PROC: {
             /* Change UE/PDN state if needed and call procedure event */
-            ue_context_t *context = proc_ctxt->ue_context;
+            ue_context_t *context = (ue_context_t *)proc_ctxt->ue_context;
             context->state = UE_STATE_IDLE_PENDING;
-            pdn_connection_t *pdn = proc_ctxt->pdn_context;
+            pdn_connection_t *pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
             pdn->state = PDN_STATE_IDLE_PENDING;
             proc_ctxt->handler(proc_ctxt, msg);
             break;
@@ -392,9 +398,9 @@ start_procedure_direct(proc_context_t *proc_ctxt)
 
         case DETACH_PROC: {
             /* Change UE/PDN state if needed and call procedure event */
-            ue_context_t *context = proc_ctxt->ue_context;
+            ue_context_t *context = (ue_context_t *)proc_ctxt->ue_context;
             context->state = UE_STATE_DETACH_PENDING;
-            pdn_connection_t *pdn = proc_ctxt->pdn_context;
+            pdn_connection_t *pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
             pdn->state = PDN_STATE_DETACH_PENDING;
             proc_ctxt->handler(proc_ctxt, msg);
             break;
@@ -407,9 +413,9 @@ start_procedure_direct(proc_context_t *proc_ctxt)
         }
         case PAGING_PROC: { 
             /* Change UE/PDN state if needed and call procedure event */
-            ue_context_t *context = proc_ctxt->ue_context;
+            ue_context_t *context = (ue_context_t *)proc_ctxt->ue_context;
             context->state = UE_STATE_PAGING_PENDING;
-            pdn_connection_t *pdn = proc_ctxt->pdn_context;
+            pdn_connection_t *pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
             pdn->state = PDN_STATE_PAGING_PENDING;
             proc_ctxt->handler(proc_ctxt, msg);
             break;
@@ -457,7 +463,7 @@ end_procedure(proc_context_t *proc_ctxt)
         }
     }
 
-    context = proc_ctxt->ue_context;
+    context = (ue_context_t *)proc_ctxt->ue_context;
     if(context != NULL) {
         imsi64 = context->imsi64;
         TAILQ_REMOVE(&context->pending_sub_procs, proc_ctxt, next_sub_proc);
@@ -465,8 +471,8 @@ end_procedure(proc_context_t *proc_ctxt)
 
     switch(proc_ctxt->proc_type) {
         case INITIAL_PDN_ATTACH_PROC: {
-            context = proc_ctxt->ue_context;
-            pdn = proc_ctxt->pdn_context;
+            context = (ue_context_t *)proc_ctxt->ue_context;
+            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
             if(context != NULL && proc_ctxt->result == PROC_RESULT_SUCCESS) {
                 context->state = UE_STATE_ACTIVE;
                 assert(pdn != NULL);
@@ -482,9 +488,9 @@ end_procedure(proc_context_t *proc_ctxt)
             break;
         }
         case S1_RELEASE_PROC: {
-            context = proc_ctxt->ue_context;
+            context = (ue_context_t *)proc_ctxt->ue_context;
             context->state = UE_STATE_IDLE;
-            pdn = proc_ctxt->pdn_context;
+            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
             pdn->state = PDN_STATE_IDLE;
             free(proc_ctxt);
             break;
@@ -492,14 +498,14 @@ end_procedure(proc_context_t *proc_ctxt)
         case SERVICE_REQUEST_PROC: {
             // No state change 
             free(proc_ctxt);
-            context = proc_ctxt->ue_context;
+            context = (ue_context_t *)proc_ctxt->ue_context;
             break;
         }
         case DETACH_PROC: {
-            context = proc_ctxt->ue_context;
+            context = (ue_context_t *)proc_ctxt->ue_context;
             assert(context  != NULL);
             context->state = UE_STATE_DETACH;
-            pdn = proc_ctxt->pdn_context;
+            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
             assert(pdn != NULL);
             pdn->state = PDN_STATE_DETACH;
             free(proc_ctxt);
@@ -512,17 +518,17 @@ end_procedure(proc_context_t *proc_ctxt)
         case USAGE_REPORT_PROC:
             //no special action as of now..follow paging proc
         case PAGING_PROC : {
-            context = proc_ctxt->ue_context;
+            context = (ue_context_t *)proc_ctxt->ue_context;
             context->state = UE_STATE_ACTIVE;
-            pdn = proc_ctxt->pdn_context;
+            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
             pdn->state = PDN_STATE_ACTIVE;
             free(proc_ctxt);
             break;
         }
         case DED_BER_ACTIVATION_PROC: {
             // no change in pdn/context state
-            context = proc_ctxt->ue_context;
-            pdn = proc_ctxt->pdn_context;
+            context = (ue_context_t *)proc_ctxt->ue_context;
+            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
             if(proc_ctxt->parent_proc != NULL) {
                 proc_context_t *p_proc = (proc_context_t *)proc_ctxt->parent_proc;
                 p_proc->child_proc_done(proc_ctxt);
@@ -532,8 +538,8 @@ end_procedure(proc_context_t *proc_ctxt)
         }
         case RAR_PROC: {
             // no change in pdn/context state
-            context = proc_ctxt->ue_context;
-            pdn = proc_ctxt->pdn_context;
+            context = (ue_context_t *)proc_ctxt->ue_context;
+            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
             free(proc_ctxt);
             break;
         }

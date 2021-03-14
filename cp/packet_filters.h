@@ -17,6 +17,9 @@
 
 #include "ue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define FIRST_FILTER_ID 1
 
 extern uint16_t ulambr_idx;
@@ -25,7 +28,7 @@ extern uint16_t dlambr_idx;
 /**
  * @brief  : Maintains packet filter information
  */
-typedef struct pkt_fltr_t {
+typedef struct pkt_fltr {
 	uint8_t direction;
 	uint8_t remote_ip_mask;
 	uint8_t proto;
@@ -37,19 +40,18 @@ typedef struct pkt_fltr_t {
 	uint16_t local_port_high;
 	uint8_t local_ip_mask;
 	struct in_addr remote_ip_addr;
-} pkt_fltr;
+} pkt_fltr_t;
 
 /**
  * @brief  : Maintains packet filter information along with uplink and
  *           downlink info
  */
-typedef struct packet_filter_t {
-	pkt_fltr pkt_fltr;
+typedef struct packet_filter {
+	pkt_fltr_t pkt_fltr;
 	uint16_t ul_mtr_idx;
 	uint16_t dl_mtr_idx;
-} packet_filter;
+} packet_filter_t;
 
-extern const pkt_fltr catch_all;
 
 /**
  * @brief  : Adds packet filter entry
@@ -75,7 +77,7 @@ push_sdf_rules(uint16_t index);
  *           - < 0 - on error
  */
 int
-install_packet_filter(const packet_filter *new_packet_filter);
+install_packet_filter(const packet_filter_t *new_packet_filter);
 
 /**
  * @brief  : Returns the packet filter index.
@@ -83,7 +85,7 @@ install_packet_filter(const packet_filter *new_packet_filter);
  * @return : Packet filter index matching packet filter 'pf'
  */
 int
-get_packet_filter_id(const pkt_fltr *pf);
+get_packet_filter_id(const pkt_fltr_t *pf);
 
 /**
  * @brief  : Clears the packet filter at '*pf' to accept all packets.
@@ -91,7 +93,7 @@ get_packet_filter_id(const pkt_fltr *pf);
  * @return : Returns nothing
  */
 void
-reset_packet_filter(pkt_fltr *pf);
+reset_packet_filter(pkt_fltr_t *pf);
 
 /**
  * @brief  : Returns direction of packet filter (uplink and/or downlink).
@@ -111,7 +113,7 @@ get_packet_filter_direction(uint16_t index);
  * @param  : index, Index of packet filter
  * @return : Packet filter at index
  */
-packet_filter *
+packet_filter_t *
 get_packet_filter(uint16_t index);
 
 /**
@@ -123,4 +125,7 @@ get_packet_filter(uint16_t index);
 void
 init_packet_filters(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

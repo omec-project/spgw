@@ -170,7 +170,7 @@ cleanup_gtpc_trans(transData_t *gtpc_trans)
         port_num = proc->gtpc_trans->peer_sockaddr.sin_port; 
         trans_addr = proc->gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
     }
-    transData_t *trans = delete_gtp_transaction(trans_addr, port_num, seq_num);
+    transData_t *trans = (transData_t *)delete_gtp_transaction(trans_addr, port_num, seq_num);
     if(trans != NULL) {
         assert(gtpc_trans == trans);
     }
@@ -195,7 +195,7 @@ cleanup_pfcp_trans(transData_t *pfcp_trans)
         trans_addr = pfcp_trans->peer_sockaddr.sin_addr.s_addr;
         port_num = pfcp_trans->peer_sockaddr.sin_port;
     }
-    transData_t *trans = delete_pfcp_transaction(trans_addr, port_num, seq_num);
+    transData_t *trans = (transData_t *)delete_pfcp_transaction(trans_addr, port_num, seq_num);
     if(trans != NULL) {
         assert(pfcp_trans == trans);
     }

@@ -9,6 +9,9 @@
 
 
 #include "gtp_messages.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define MBR_BUF_SIZE 5
 
@@ -1647,4 +1650,7 @@ int encode_mbms_sess_stop_req(mbms_sess_stop_req_t *value,
 int encode_rel_acc_bearer_rsp(rel_acc_bearer_rsp_t *value,
     uint8_t *buf);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__GTP_MESSAGES_ENCODE_H__*/

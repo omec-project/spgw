@@ -7,6 +7,9 @@
 #include "cp_proc.h"
 #include "sm_enum.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 proc_context_t* alloc_rar_proc(msg_info_t *msg);
 
 void
@@ -42,4 +45,7 @@ int process_rar_request_handler(void *arg1);
 int8_t
 parse_gx_rar_msg(msg_info_t *msg);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

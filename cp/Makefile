@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 ROOT=.
 
-CC := gcc
+CC := g++
 
 TARGET_DIR := $(ROOT)/bin
 
@@ -131,7 +131,6 @@ LDLIBS += -L$(CPPUTILLIB_ROOT)/lib -lspgwcpputil
 LDLIBS += -L/usr/local/lib -lprometheus-cpp-pull -lprometheus-cpp-core -lpistache
 LDLIBS += -L/usr/local/lib -lpistache
 LDLIBS += -lpcap -lcrypto -lssl
-LDFLAGS += -lstdc++
 LDLIBS += -lstdc++
 LDLIBS += -lpthread
 LDLIBS += -lrt

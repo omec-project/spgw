@@ -26,7 +26,7 @@ int handle_pfcp_session_est_response(msg_info_t *msg)
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
 
-    transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
+    transData_t *pfcp_trans = (transData_t *)delete_pfcp_transaction(local_addr, port_num, seq_num);
 
 	/* Retrive the session information based on session id. */
     if(pfcp_trans == NULL) {

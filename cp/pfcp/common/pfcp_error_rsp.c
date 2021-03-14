@@ -44,7 +44,7 @@ get_error_session_report_info(msg_info_t *msg, pfcp_err_rsp_info_t *rsp_info)
         // DDN timeout 
 		case GTP_DOWNLINK_DATA_NOTIFICATION_ACK: {
             proc_context_t *paging_proc = (proc_context_t *)msg->proc_context;
-            pdn_connection_t *pdn = paging_proc->pdn_context;
+            pdn_connection_t *pdn = (pdn_connection_t *)paging_proc->pdn_context;
             transData_t *pfcp_trans = paging_proc->pfcp_trans;
             rsp_info->peer_addr = pfcp_trans->peer_sockaddr; 
 			rsp_info->dp_seid = pdn->dp_seid; 

@@ -13,6 +13,9 @@
 #include "gtpv2_ie.h"
 #include "ue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 /**
@@ -191,4 +194,7 @@ get_bearer_info_install_rules(pdn_connection_t *pdn,
 int
 int_to_str(char *buf , uint32_t val);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* PFCP_H */

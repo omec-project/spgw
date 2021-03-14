@@ -79,7 +79,7 @@ msg_handler_gtp(void *data)
                     + sizeof(gtpv2c_rx->gtpc));
             continue; 
         }
-        msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+        msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t));
         msg->magic_head = MSG_MAGIC;
         msg->magic_tail = MSG_MAGIC;
         msg->peer_addr = peer_sockaddr;

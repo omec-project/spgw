@@ -7,6 +7,9 @@
 #ifndef __CP_PEERS__H
 #define __CP_PEERS__H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 struct peer_data {
     gstimerinfo_t *ti;
     struct sockaddr_in dest_addr;
@@ -33,4 +36,8 @@ add_node_conn_entry(uint32_t dstIp, uint8_t portId);
 
 //timeouts are handled as events 
 void handle_timeout_event(void *data, uint16_t event);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

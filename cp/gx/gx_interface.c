@@ -151,7 +151,7 @@ fill_subscription_id( GxSubscriptionIdList *subs_id, uint64_t imsi, uint64_t msi
 	subs_id->count = 0;
 
 	if( imsi != 0 ) {
-		subs_id->list = malloc(sizeof( GxSubscriptionId));
+		subs_id->list = (GxSubscriptionId *)malloc(sizeof( GxSubscriptionId));
 		if(subs_id->list == NULL){
 			LOG_MSG(LOG_ERROR,"Memory allocation fails");
 		}
@@ -167,7 +167,7 @@ fill_subscription_id( GxSubscriptionIdList *subs_id, uint64_t imsi, uint64_t msi
 		subs_id->count++;
 	} else 	if( msisdn != 0 ) {
 
-		subs_id->list = malloc(sizeof( GxSubscriptionId));
+		subs_id->list = (GxSubscriptionId *)malloc(sizeof( GxSubscriptionId));
 		if(subs_id->list == NULL){
 			LOG_MSG(LOG_ERROR,"Memory allocation fails");
 		}
@@ -364,7 +364,7 @@ msg_handler_gx(void *data)
         struct sockaddr_in saddr_in;
         saddr_in.sin_family = AF_INET;
         inet_aton("127.0.0.1", &(saddr_in.sin_addr));
-        msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
+        msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t)); 
         msg->magic_head = MSG_MAGIC;
         msg->magic_tail = MSG_MAGIC;
         msg->msg_type = gx_rx->msg_type;
@@ -535,7 +535,7 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 	    return -1;
 	}
-    gx_context = temp_ue_context->gx_context;
+    gx_context = (gx_context_t*)temp_ue_context->gx_context;
 	/* VS: Set the Msg header type for CCR */
 	ccr_request.msg_type = GX_CCR_MSG ;
 
@@ -686,7 +686,7 @@ out_handler_gx(void *data)
 {
 	LOG_MSG(LOG_INIT,"Starting gx out message handler thread");
     while(1) {
-        outgoing_pkts_event_t *event = get_gx_out_event();
+        outgoing_pkts_event_t *event = (outgoing_pkts_event_t*)get_gx_out_event();
         if(event != NULL) {
             //Push packet to test chain 
             gx_msg *temp = (gx_msg*)event->payload;

@@ -5,6 +5,10 @@
 #ifndef __SERVICE_REQUEST_PROC_H
 #define __SERVICE_REQUEST_PROC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 proc_context_t*
 alloc_service_req_proc(msg_info_t *msg);
 
@@ -36,5 +40,8 @@ uint8_t
 process_srreq_pfcp_sess_mod_resp(proc_context_t *proc_context, 
                                  uint64_t sess_id, 
                                  gtpv2c_header_t *gtpv2c_tx);
-#endif
 
+#ifdef __cplusplus
+}
+#endif
+#endif

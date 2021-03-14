@@ -33,7 +33,7 @@ extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 proc_context_t*
 alloc_rab_proc(msg_info_t *msg)
 {
-    proc_context_t *rab_proc = calloc(1, sizeof(proc_context_t));
+    proc_context_t *rab_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     rab_proc->proc_type = msg->proc; 
     rab_proc->handler = rab_event_handler;
     rab_proc->ue_context = msg->ue_context;
@@ -94,7 +94,7 @@ void
 process_release_access_bearer_request_pfcp_timeout(void *data)
 {
     proc_context_t *proc_context = (proc_context_t *)data;
-    msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+    msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t));
     msg->msg_type = PFCP_SESSION_MODIFICATION_RESPONSE;
     msg->proc_context = proc_context;
     SET_PROC_MSG(proc_context, msg);
@@ -112,7 +112,7 @@ process_release_access_bearer_request(proc_context_t *rab_proc, msg_info_t *msg)
 	uint32_t sequence = 0;
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
-    ue_context_t *ue_context = msg->ue_context;
+    ue_context_t *ue_context = (ue_context_t *)msg->ue_context;
     rel_acc_bearer_req_t *rel_acc_ber_req_t = &msg->gtpc_msg.rab;
 
 	for (int i = 0; i < MAX_BEARERS; ++i) {
@@ -210,7 +210,7 @@ process_rab_proc_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg
     int ret = 0;
 	uint16_t payload_length = 0;
     transData_t *gtpc_trans = proc_context->gtpc_trans;
-    ue_context_t *ue_context = proc_context->ue_context; 
+    ue_context_t *ue_context = (ue_context_t *)proc_context->ue_context; 
 
 
 	/*Validate the modification is accepted or not. */
@@ -330,7 +330,7 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
 void 
 proc_rab_failed(msg_info_t *msg, uint8_t cause )
 {
-    proc_context_t *proc_context = msg->proc_context;
+    proc_context_t *proc_context = (proc_context_t *)msg->proc_context;
 
     rab_error_response(msg,
                        cause,

@@ -16,6 +16,9 @@
 #include "gx_struct.h"
 #include "gtpv2_msg_struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Maintains decoded message from different messages
  */
@@ -83,4 +86,7 @@ typedef struct msg_info {
     uint32_t magic_tail;
 }msg_info_t;
 
+#ifdef __cplusplus
+}
+#endif
 #endif

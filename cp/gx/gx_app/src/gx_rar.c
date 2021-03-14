@@ -268,7 +268,7 @@ enum disp_action * act
 		LOG_MSG(LOG_ERROR, "RAR Packing failure ");
 
    
-    pending_gx_trans_t *trans = calloc(1, sizeof(pending_gx_trans_t)); 
+    pending_gx_trans_t *trans = (pending_gx_trans_t *)calloc(1, sizeof(pending_gx_trans_t)); 
     trans->msg = rqst; 
     trans->seq_num = rar_seq_num;
     LIST_INSERT_HEAD(&gx_trans_list->pending_gx_trans, trans, next_trans_entry);

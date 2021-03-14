@@ -7,9 +7,12 @@
 #ifndef PFCP_STRUCT_H
 #define PFCP_STRUCT_H
 
-#define MAX_LIST_SIZE	16
 
 #include "pfcp_ies.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+#define MAX_LIST_SIZE	16
 
 /**
  * @brief  : Maintains Source Interface details
@@ -104,16 +107,16 @@ typedef struct outer_hdr_removal_info_t {
 /**
  * @brief  : Maintains urr id value
  */
-typedef struct urr_id_t {
+typedef struct urr_id {
 	uint32_t urr_id;		/* URR ID */
-}urr;
+}urr_id_t;
 
 /**
  * @brief  : Maintains qer id value
  */
-typedef struct qer_id_t {
+typedef struct qer_id {
 	uint32_t qer_id;		/* QER ID */
-}qer;
+}qer_id_t;
 
 /**
  * @brief  : Maintains activating predefined rule name
@@ -293,4 +296,7 @@ typedef struct suggested_buf_packets_cnt_t {
 	uint8_t pckt_cnt_val;
 } suggstd_buf_pckts_cnt_t;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* PFCP_STRUCT_H */

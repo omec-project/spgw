@@ -9,6 +9,9 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define GTPV2C_BUF_MAX_LEN UINT16_MAX
 
 #pragma pack(1)
@@ -164,4 +167,7 @@ const char *
 gtp_type_str(uint8_t type);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* _LIBGTPV2C_UTIL_H_ */

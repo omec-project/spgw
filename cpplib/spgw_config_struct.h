@@ -12,6 +12,9 @@
 #include <linux/limits.h>
 #include "cp_config_defs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct imsi_selection
 {
     bool      is_valid;
@@ -201,9 +204,13 @@ typedef struct cp_config
 
     uint32_t  gx_enabled;
     uint32_t  urr_enable;
+    bool      pfcp_hb_ts_fail;
 }cp_config_t;
 
 extern cp_config_t *cp_config;
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

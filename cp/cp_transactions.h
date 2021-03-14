@@ -13,6 +13,9 @@
 #include "trans_struct.h"
 #include "upf_struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 transData_t *start_response_wait_timer(void *ue, uint8_t *buf, uint16_t buf_len, timeout_handler_t cb);
 
 void stop_transaction_timer(transData_t *data);
@@ -35,4 +38,7 @@ cleanup_gtpc_trans(transData_t *gtpc_trans);
 void 
 cleanup_pfcp_trans(transData_t *pfcp_trans);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

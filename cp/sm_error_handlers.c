@@ -47,7 +47,7 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
             }
 
         case GTP_RESERVED: {
-                ue_context_t *ue_context = msg->ue_context; 
+                ue_context_t *ue_context = (ue_context_t *)msg->ue_context; 
 			    info_resp->teid = ue_context->s11_sgw_gtpc_teid;
                 // assumed to be triggered due to CSReq 
                 info_resp->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
@@ -55,8 +55,8 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
             }
 
 		case PFCP_ASSOCIATION_SETUP_RESPONSE:{
-            ue_context_t  *ue = msg->ue_context; 
-            pdn_connection_t *pdn = msg->pdn_context;
+            ue_context_t  *ue = (ue_context_t *)msg->ue_context; 
+            pdn_connection_t *pdn = (pdn_connection_t *)msg->pdn_context;
 			info_resp->sender_teid = ue->s11_mme_gtpc_teid;
             // TODO - Need more thought 
 			// info_resp->seq = ue->sequence;
@@ -66,8 +66,8 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
 		}
 
 		case PFCP_SESSION_ESTABLISHMENT_RESPONSE: {
-            ue_context_t  *ue = msg->ue_context; 
-            pdn_connection_t *pdn = msg->pdn_context;
+            ue_context_t  *ue = (ue_context_t *)msg->ue_context; 
+            pdn_connection_t *pdn = (pdn_connection_t*)msg->pdn_context;
 			info_resp->sender_teid = ue->s11_mme_gtpc_teid;
             // TODO - Need more thought 
 			//info_resp->seq = ue->sequence;
@@ -148,7 +148,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
                 break;
 	    	}
             assert(temp_context == context);
-            gx_context = temp_context->gx_context;
+            gx_context = (gx_context_t *)temp_context->gx_context;
 
 	    	/* VS: Set the Msg header type for CCR-T */
 	    	ccr_request.msg_type = GX_CCR_MSG ;

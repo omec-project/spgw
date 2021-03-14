@@ -41,14 +41,14 @@ handle_pfcp_association_setup_response_msg(msg_info_t **msg_p, pfcp_header_t *pf
 
     assert(msg->msg_type == PFCP_ASSOCIATION_SETUP_RESPONSE);
 
-    transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
+    transData_t *pfcp_trans = (transData_t *)delete_pfcp_transaction(local_addr, port_num, seq_num);
 
     if (pfcp_trans == NULL ) {
         LOG_MSG(LOG_ERROR, "transaction not found. Dropping association response message. from UPF IP:%s",
                 inet_ntoa(peer_addr.sin_addr));
         return -1;
     }
-    proc_context_t *proc_context = pfcp_trans->proc_context;
+    proc_context_t *proc_context = (proc_context_t*)pfcp_trans->proc_context;
     assert(proc_context != NULL);
 
     stop_transaction_timer(pfcp_trans);

@@ -10,6 +10,9 @@
 
 #include "pfcp_messages.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * decodes pfcp_header_t to buffer.
  * @param buf
@@ -802,4 +805,7 @@ int decode_pfcp_upd_bar_sess_rpt_rsp_ie_t(uint8_t *buf,
     pfcp_upd_bar_sess_rpt_rsp_ie_t *value);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__PFCP_MESSAGES_DECODE_H__*/

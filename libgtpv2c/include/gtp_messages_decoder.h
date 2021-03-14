@@ -10,6 +10,9 @@
 
 #include "gtp_messages.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * decodes gtpv2c_header_t to buffer.
  * @param buf
@@ -1649,4 +1652,7 @@ int decode_mbms_sess_stop_req(uint8_t *buf,
 int decode_rel_acc_bearer_req(uint8_t *buf, 
         rel_acc_bearer_req_t *value);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__GTP_MESSAGES_DECODE_H__*/

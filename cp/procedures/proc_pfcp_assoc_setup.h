@@ -6,6 +6,9 @@
 #define __PFCP_ASSOCIATION_SETUP_PROC_H
 #include "cp_proc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 proc_context_t*
 alloc_pfcp_association_setup_proc(void *upf);
 
@@ -45,4 +48,8 @@ void
 proc_pfcp_assoc_setup_failure(proc_context_t *proc, int cause);
 void
 proc_pfcp_assoc_setup_complete(proc_context_t *proc);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -9,6 +9,9 @@
 
 
 #include "gtp_ies.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * decodes gtpv2c_header_t to buffer.
@@ -1848,4 +1851,7 @@ int decode_gtp_max_pckt_loss_rate_ie(uint8_t *buf,
     gtp_max_pckt_loss_rate_ie_t *value);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__GTP_IES_DECODE_H__*/

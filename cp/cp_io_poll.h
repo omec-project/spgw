@@ -15,6 +15,9 @@
 #include "cp_main.h"
 #include "gtpv2_msg_struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief udp socket structure.
  */
@@ -78,7 +81,7 @@ struct cb_args_table {
 /*
  * Message Structure
  */
-struct msgbuf {
+struct msgbuf1 {
 	long mtype;
 	struct dp_id dp_id;
 	union __attribute__ ((packed)) {
@@ -103,5 +106,7 @@ void *msg_handler_local(void*);
 void process_local_msg(void *data, uint16_t event);
 void *incoming_event_handler(void*);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* _CP_IO_POLL_H_ */
-

@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#define _GNU_SOURCE
+//#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>

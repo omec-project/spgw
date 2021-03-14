@@ -15,9 +15,12 @@
  */
 #include "ue.h"
 #include "gtp_ies.h"
+#include "gtp_messages_decoder.h"
+#include "gtp_messages_encoder.h"
 
-#include "gtp_messages_decoder.h" // Added new
-#include "gtp_messages_encoder.h" // Added new
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define MAX_GTPV2C_LENGTH (MAX_GTPV2C_UDP_LEN-12) 
 
@@ -695,4 +698,7 @@ set_gtpv2c_echo(gtpv2c_header_t *gtpv2c_tx,
 void
 set_mapped_ue_usage_type(gtp_mapped_ue_usage_type_ie_t *ie, uint16_t usage_type_value);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* GTPV2C_SET_IE_H */

@@ -12,6 +12,10 @@
 #include <string.h>
 #include <unistd.h>
 #include "gtp_ies.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CHAR_SIZE 8
 
 #define GTP_IE_STN_SR 51
@@ -22,4 +26,8 @@ typedef struct gtp_stn_sr_ie_t {
     uint8_t filler :4;
     uint8_t number_digit :4;
 } gtp_stn_sr_ie_t;
+
+#ifdef __cplusplus
+}
+#endif
 #endif

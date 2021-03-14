@@ -14,6 +14,9 @@
 #include "sm_struct.h"
 #include "cp_proc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void init_gtp(void);
 
 void init_gtp_msg_handlers(void);
@@ -438,5 +441,8 @@ int handle_update_pdn_conn_set_rsp(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_pgw_restart_notf_ack(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 #endif
 
+#ifdef __cplusplus
+}
+#endif
 #endif
 

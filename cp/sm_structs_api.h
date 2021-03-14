@@ -11,6 +11,9 @@
 #include "upf_struct.h"
 #include "ue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Update UE state in UE Context.
  * @param  : teid_key, key to search context
@@ -69,4 +72,7 @@ const char * get_event_string(int value);
 uint8_t
 get_procedure(msg_info_t *msg);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

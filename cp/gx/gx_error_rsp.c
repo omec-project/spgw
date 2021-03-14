@@ -47,7 +47,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 			if (temp_ue_context == NULL) {
 				LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 			}else{
-                gx_context = temp_ue_context->gx_context;
+                gx_context = (gx_context_t*)temp_ue_context->gx_context;
 				gx_msg ccr_request = {0};
 				/* VS: Set the Msg header type for CCR-T */
 				ccr_request.msg_type = GX_CCR_MSG ;

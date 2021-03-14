@@ -9,9 +9,12 @@
 #ifndef __TRANS_STRUCT_H
 #define __TRANS_STRUCT_H
 #include <stdint.h>
-#include "cp_timer.h"
 #include <netinet/ip.h>
+#include "cp_timer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Maintains transaction information 
  */
@@ -36,4 +39,8 @@ struct transData
     struct sockaddr_in peer_sockaddr; 
 };
 typedef struct transData transData_t; 
+#ifdef __cplusplus
+}
+#endif
+
 #endif

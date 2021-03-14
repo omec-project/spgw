@@ -15,6 +15,10 @@
 
 #include "gtp_ies.h"
 #include "sv_ies.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define MAX_BEARER  15
 #define CHAR_SIZE 8
 #define ECHO_REQUEST (1)
@@ -1901,4 +1905,8 @@ typedef struct mbms_sess_stop_req_t {
 } mbms_sess_stop_req_t;
 
 #pragma pack()
+
+#ifdef __cplusplus
+}
+#endif
 #endif

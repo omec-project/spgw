@@ -10,6 +10,9 @@
 
 #include "pfcp_ies.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * decodes pfcp_header_t to buffer.
  * @param buf
@@ -1426,4 +1429,7 @@ int decode_pfcp_paging_plcy_indctr_ie_t(uint8_t *buf,
     pfcp_paging_plcy_indctr_ie_t *value);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__PFCP_IES_DECODE_H__*/

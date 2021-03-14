@@ -41,7 +41,7 @@ int handle_pfcp_session_modification_response(msg_info_t *msg)
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
 
-    transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
+    transData_t *pfcp_trans =(transData_t *) delete_pfcp_transaction(local_addr, port_num, seq_num);
 
     if(pfcp_trans == NULL) {
         LOG_MSG(LOG_ERROR, "Received Modify response and transaction not found ");
@@ -51,7 +51,7 @@ int handle_pfcp_session_modification_response(msg_info_t *msg)
 	/* Retrive teid from session id */
 	/* stop and delete timer entry for pfcp mod req */
 	stop_transaction_timer(pfcp_trans);
-    proc_context_t *proc_context = pfcp_trans->proc_context;
+    proc_context_t *proc_context = (proc_context_t *)pfcp_trans->proc_context;
     free(pfcp_trans);
     proc_context->pfcp_trans = NULL;
 

@@ -108,7 +108,7 @@ parse_arg(int argc, char **argv)
             case 'f':
                 {
                     LOG_MSG(LOG_ERROR,"argument %s ", optarg);
-                    config_update_base_folder = calloc(1, 128);
+                    config_update_base_folder = (char *)calloc(1, 128);
                     assert(config_update_base_folder != NULL);
                     strcpy(config_update_base_folder, optarg);
                     LOG_MSG(LOG_INIT,"config base folder set to %s ", config_update_base_folder);
@@ -143,8 +143,6 @@ parse_arg(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    //int ret;
-
 	set_logging_level("LOG_ERROR");
     LOG_MSG(LOG_INIT, "Starting main thread %d ",argc);
 

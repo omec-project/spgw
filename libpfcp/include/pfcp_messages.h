@@ -14,6 +14,9 @@
 #include <unistd.h>
 #include "pfcp_ies.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* PFCP Message Type Values */
 /*NODE RELATED MESSAGED*/
 #define PFCP_HEARTBEAT_REQUEST                      (1)
@@ -741,4 +744,8 @@ typedef struct pfcp_sess_rpt_rsp_t {
 
 /* TODO: Revisit this for change in yang */
 #pragma pack()
+
+#ifdef __cplusplus
+}
+#endif
 #endif

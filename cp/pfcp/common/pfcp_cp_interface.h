@@ -11,6 +11,10 @@
 #include "sm_struct.h"
 #include "pfcp_ies.h"
 #include "stdint.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Process PFCP message.
  * @param  : buf_rx
@@ -84,4 +88,7 @@ void init_pfcp(void);
 void init_pfcp_msg_handlers(void);
 
 void init_pfcp_msg_threads(void);
+#ifdef __cplusplus
+}
+#endif
 #endif

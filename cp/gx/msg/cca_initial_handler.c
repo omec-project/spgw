@@ -25,7 +25,7 @@
 
 void gx_msg_proc_failure(proc_context_t *proc_ctxt)
 {
-    msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+    msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t));
     msg->msg_type = GX_CCAI_FAILED;
     msg->event = GX_CCAI_FAILED;
     msg->proc_context = proc_ctxt; 
@@ -52,7 +52,7 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", msg->gx_msg.cca.session_id.val);
         return -1;
     }
-    gx_context = temp_ue_context->gx_context;
+    gx_context = (gx_context_t *)temp_ue_context->gx_context;
     proc_context_t *proc_context = (proc_context_t *)gx_context->proc_context;
 
     if(msg->gx_msg.cca.presence.result_code &&
@@ -72,7 +72,7 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
     }
 
     /* Retrieve PDN context based on call id */
-    pdn_cntxt = get_pdn_conn_entry(call_id);
+    pdn_cntxt = (pdn_connection_t *)get_pdn_conn_entry(call_id);
     if (pdn_cntxt == NULL) {
         LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);
         gx_msg_proc_failure(proc_context); 

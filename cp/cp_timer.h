@@ -11,6 +11,9 @@
 #include <stdbool.h>
 #include <pthread.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define S11_SGW_PORT_ID   0
 #define S5S8_SGWC_PORT_ID 1
 #define SX_PORT_ID        2
@@ -158,4 +161,7 @@ void stoptimer(timer_t *tid);
  */
 void deinittimer(timer_t *tid);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -58,14 +58,14 @@ int handle_create_bearer_response_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2
     uint32_t local_addr = my_sock.s11_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.s11_sockaddr.sin_port;
 
-    transData_t *gtpc_trans = delete_gtp_transaction(local_addr, port_num, seq_num);
+    transData_t *gtpc_trans = (transData_t *)delete_gtp_transaction(local_addr, port_num, seq_num);
     assert(gtpc_trans);
 	stop_transaction_timer(gtpc_trans);
 
-    proc_context_t *proc_context = gtpc_trans->proc_context;
+    proc_context_t *proc_context = (proc_context_t *)gtpc_trans->proc_context;
 
     if(context == NULL) {
-        context = proc_context->ue_context;
+        context = (ue_context_t*)proc_context->ue_context;
         LOG_MSG(LOG_DEBUG, "Context not found from teid. Found context using procedure. IMSI %lu ", context->imsi64);
     } else {
         assert(proc_context->ue_context == context);

@@ -558,7 +558,6 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
         } else {
             cfg->webserver_port = HTTP_SERVER_PORT;
         }
-
     }
 
     if(doc.HasMember("ip_pool_config")) {

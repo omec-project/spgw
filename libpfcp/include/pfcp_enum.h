@@ -6,6 +6,9 @@
 
 #ifndef __PFCP_ENUM_H
 #define __PFCP_ENUM_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define NODE_ID_IPV4_LEN		        5
 #define NODE_ID_IPV6_LEN             	9
@@ -107,34 +110,7 @@ enum rule_id_type {
 	RULE_ID_TYPE_BAR =4,
 };
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __PFCP_ENUM_H */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

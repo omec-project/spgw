@@ -13,6 +13,10 @@
 #include "cp_main.h"
 #include "cp_timer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /**
  * @brief  : core identifiers for control plane threads
@@ -60,4 +64,7 @@ void recovery_time_into_file(uint32_t recov_time);
 
 void init_timer_thread(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

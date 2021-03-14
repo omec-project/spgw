@@ -39,7 +39,7 @@ static uint16_t pfcp_seqnb	= 1;
 void 
 timerCallback( gstimerinfo_t *ti, const void *data_t )
 {
-    struct peer_data *temp = calloc(1, sizeof(struct peer_data));
+    struct peer_data *temp = (struct peer_data *)calloc(1, sizeof(struct peer_data));
 #pragma GCC diagnostic push  /* require GCC 4.6 */
 #pragma GCC diagnostic ignored "-Wcast-qual"
 	peerData_t *md = (peerData_t*)data_t;

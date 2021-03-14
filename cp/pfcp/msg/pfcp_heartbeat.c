@@ -19,6 +19,7 @@
 #include "spgw_cpp_wrapper.h"
 #include "cp_io_poll.h"
 #include "upf_apis.h"
+#include "spgw_config_struct.h"
 
 static void
 fill_pfcp_heartbeat_resp(pfcp_hrtbeat_rsp_t *pfcp_heartbeat_resp)
@@ -100,7 +101,9 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		if(update_recov_time > recov_time) {
             LOG_MSG(LOG_ERROR,"UPF Peer down event detected %s ", inet_ntoa(peer_addr->sin_addr));
 			add_ip_to_heartbeat_hash(peer_addr, update_recov_time);
-            upf_down_event(peer_addr->sin_addr.s_addr);
+            if(cp_config->pfcp_hb_ts_fail == true) {
+                upf_down_event(peer_addr->sin_addr.s_addr);
+            }
 		}
 	}
 	return 0;

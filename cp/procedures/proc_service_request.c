@@ -38,7 +38,7 @@ alloc_service_req_proc(msg_info_t *msg)
 {
     proc_context_t *service_req_proc;
 
-    service_req_proc = calloc(1, sizeof(proc_context_t));
+    service_req_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     service_req_proc->proc_type = msg->proc; 
     service_req_proc->ue_context = (void *)msg->ue_context;
     service_req_proc->pdn_context = (void *)msg->pdn_context; 
@@ -76,7 +76,7 @@ void
 process_pfcp_sess_mod_request_timeout(void *data)
 {
     proc_context_t *proc_context = (proc_context_t *)data;
-    msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+    msg_info_t *msg = (msg_info_t*)calloc(1, sizeof(msg_info_t));
     msg->msg_type = PFCP_SESSION_MODIFICATION_RESPONSE;
     msg->proc_context = proc_context;
     SET_PROC_MSG(proc_context, msg);
@@ -97,10 +97,10 @@ process_mb_req_handler(proc_context_t *proc_context, msg_info_t *msg)
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
 
-    context = proc_context->ue_context;
+    context = (ue_context_t *)proc_context->ue_context;
     assert(context != NULL);
 
-    bearer = proc_context->bearer_context;
+    bearer = (eps_bearer_t *)proc_context->bearer_context;
     assert(bearer != NULL);
 
     pdn = bearer->pdn;
@@ -300,7 +300,7 @@ process_srreq_pfcp_sess_mod_resp(proc_context_t *proc_context,
 
     assert(proc_context->ue_context == context);
 
-    context = proc_context->ue_context;
+    context = (ue_context_t *)proc_context->ue_context;
 
     ebi_index = UE_BEAR_ID(sess_id) - 5;
     bearer = context->eps_bearers[ebi_index];
@@ -331,7 +331,7 @@ process_srreq_pfcp_sess_mod_resp(proc_context_t *proc_context,
 void
 proc_service_request_failure(msg_info_t *msg, uint8_t cause)
 {
-    proc_context_t *proc_context = msg->proc_context;
+    proc_context_t *proc_context = (proc_context_t *)msg->proc_context;
 
     mbr_error_response(msg, cause,
             cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);

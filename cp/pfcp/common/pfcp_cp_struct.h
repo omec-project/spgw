@@ -9,6 +9,10 @@
 #define PFCP_CP_STRUCT_H
 #include "pfcp_ies.h"
 #include "pfcp_struct.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Maintains far information
  */
@@ -66,8 +70,8 @@ typedef struct pdr_info_t {
 	qer_t qer;
     urr_t urr;  
 	outer_hdr_removal_t outer_hdr_removal;		/* Outer Header Removal */
-	urr urr_id[MAX_LIST_SIZE];					/* Collection of URR IDs */
-	qer qer_id[MAX_LIST_SIZE];					/* Collection of QER IDs */
+	urr_id_t urr_id[MAX_LIST_SIZE];					/* Collection of URR IDs */
+	qer_id_t qer_id[MAX_LIST_SIZE];					/* Collection of QER IDs */
 	actvt_predef_rules rules[MAX_LIST_SIZE];	/* Collection of active predefined rules */
 }pdr_t;
 
@@ -80,4 +84,7 @@ typedef struct bar_info_t {
 	suggstd_buf_pckts_cnt_t suggstd_buf_pckts_cnt;
 }bar_t;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* PFCP_STRUCT_H */

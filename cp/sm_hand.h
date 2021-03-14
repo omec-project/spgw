@@ -10,6 +10,10 @@
 #include "sm_enum.h"
 #include "trans_struct.h"
 #include "upf_struct.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Handles processing of create session response
  * @param  : arg1, data contained in message
@@ -150,4 +154,7 @@ int cca_u_msg_handler_handover(void *arg1, void *argu2);
 int
 process_error_occured_handler_new(void *data, void *unused_param);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

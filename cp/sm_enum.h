@@ -10,6 +10,11 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "trans_struct.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum 
 {
 	INTF_NONE,
@@ -177,4 +182,7 @@ enum PDN_CONTEXT_STATE {
 };
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

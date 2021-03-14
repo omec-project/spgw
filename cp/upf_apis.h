@@ -12,6 +12,9 @@
 #include "cp_proc.h"
 #include "sm_struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int 
 create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt); 
 
@@ -20,6 +23,9 @@ upf_down_event(uint32_t upf_ip);
 
 void 
 initiate_all_pfcp_association(void);
+
+void 
+initiate_pfcp_association(upf_context_t *upf);
 
 void 
 schedule_pfcp_association(uint16_t timeout, upf_context_t *upf);
@@ -43,4 +49,7 @@ void
 upfAssociationTimerCallback( gstimerinfo_t *ti, const void *data_t );
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

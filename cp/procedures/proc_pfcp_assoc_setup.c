@@ -51,10 +51,10 @@ upf_pfcp_setup_failure(void *data, uint16_t event);
 proc_context_t*
 alloc_pfcp_association_setup_proc(void *upf_context)
 {
-    msg_info_t *setup_msg = calloc(1, sizeof(msg_info_t));
+    msg_info_t *setup_msg = (msg_info_t *)calloc(1, sizeof(msg_info_t));
     setup_msg->event = PFCP_ASSOCIATION_SETUP; 
     proc_context_t *pfcp_setup_proc;
-    pfcp_setup_proc = calloc(1, sizeof(proc_context_t));
+    pfcp_setup_proc = (proc_context_t*)calloc(1, sizeof(proc_context_t));
     pfcp_setup_proc->proc_type = PFCP_ASSOC_SETUP_PROC; 
     pfcp_setup_proc->handler = pfcp_association_event_handler;
     SET_PROC_MSG(pfcp_setup_proc, setup_msg);
@@ -90,7 +90,7 @@ int
 association_setup_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     int ret = 0;
-	upf_context_t *upf_context = proc_context->upf_context;
+	upf_context_t *upf_context = (upf_context_t *)proc_context->upf_context;
     assert (upf_context->state != PFCP_ASSOC_RESP_RCVD_STATE); 
     LOG_MSG(LOG_DEBUG1,"Initiate PFCP association setup to UPF %s ", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
     ret = assoication_setup_request(proc_context);
@@ -106,7 +106,7 @@ association_setup_handler(proc_context_t *proc_context, msg_info_t *msg)
 int
 buffer_csr_request(proc_context_t *proc_context)
 {
-    ue_context_t *ue = proc_context->ue_context;
+    ue_context_t *ue = (ue_context_t*)proc_context->ue_context;
     upf_context_t *upf_context = ue->upf_context;
 	pending_proc_key_t *key = (pending_proc_key_t*) calloc(1, sizeof(pending_proc_key_t));
 	key->proc_context = (void *)proc_context;
@@ -252,7 +252,7 @@ fill_pfcp_association_setup_req(pfcp_assn_setup_req_t *pfcp_ass_setup_req)
 static int
 assoication_setup_request(proc_context_t *proc_context)
 {
-	upf_context_t *upf_context = proc_context->upf_context;
+	upf_context_t *upf_context = (upf_context_t *)proc_context->upf_context;
     transData_t *trans_entry;
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
@@ -335,7 +335,7 @@ upf_pfcp_setup_success(void *data, uint16_t event)
     key = LIST_FIRST(&upf_context->pending_sub_procs);
     while (key != NULL) {
         LIST_REMOVE(key, procentries);
-        csreq_proc = key->proc_context;
+        csreq_proc = (proc_context_t *)key->proc_context;
         msg_info_t *msg = (msg_info_t *)csreq_proc->msg_info; 
         msg->msg_type = PFCP_ASSOC_SETUP_SUCCESS;
         msg->event = PFCP_ASSOC_SETUP_SUCCESS;
@@ -359,7 +359,7 @@ proc_pfcp_assoc_setup_success(proc_context_t *proc)
 void 
 proc_pfcp_assoc_setup_failure(proc_context_t *proc_context, int cause)
 {
-	upf_context_t *upf_context = proc_context->upf_context;
+	upf_context_t *upf_context = (upf_context_t *)proc_context->upf_context;
     if(cause != -1) {
         //increment upf stats for association setup message
     } else {

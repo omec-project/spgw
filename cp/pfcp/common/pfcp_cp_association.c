@@ -77,7 +77,7 @@ fill_pfcp_association_update_req(pfcp_assn_upd_req_t *pfcp_ass_update_req)
 
 /* Fill pfd mgmt cstm ie */
 uint16_t
-set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf)
+set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf1 *cstm_buf)
 {
 	pfd_conts->pfd_contents_spare = 0;
 	pfd_conts->pfd_contents_cp = 1;
@@ -109,7 +109,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf)
 			case MSG_PCC_TBL_CRE:
 			case MSG_SESS_TBL_CRE:
 			case MSG_MTR_CRE:
-				pfd_conts->cstm_pfd_cntnt = malloc(sizeof(struct cb_args_table));
+				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct cb_args_table));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt, "%"PRId64" ",cstm_buf->mtype);
 				/* Fill cstm ie contents frome rule structure as string */
@@ -119,7 +119,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf)
 				break;
 
 			case MSG_EXP_CDR:
-				pfd_conts->cstm_pfd_cntnt = malloc(sizeof(struct msg_ue_cdr));
+				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct msg_ue_cdr));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
 												"%"PRId64" ",cstm_buf->mtype);
@@ -136,7 +136,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf)
 				break;
 			case MSG_SDF_ADD:
 			case MSG_SDF_DEL:
-				pfd_conts->cstm_pfd_cntnt = malloc(sizeof(struct pkt_filter));
+				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct pkt_filter));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
 													"%"PRId64" ",cstm_buf->mtype);
@@ -147,7 +147,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf)
 				break;
 			case MSG_ADC_TBL_ADD:
 			case MSG_ADC_TBL_DEL:
-				pfd_conts->cstm_pfd_cntnt = malloc(sizeof(struct adc_rules));
+				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct adc_rules));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
 												"%"PRId64" ",cstm_buf->mtype);
@@ -158,7 +158,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf)
 				break;
 			case MSG_PCC_TBL_ADD:
 			case MSG_PCC_TBL_DEL:
-				pfd_conts->cstm_pfd_cntnt = malloc(sizeof(struct pcc_rules));
+				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct pcc_rules));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
 												"%"PRId64" ",cstm_buf->mtype);
@@ -170,7 +170,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf)
 			case MSG_SESS_CRE:
 			case MSG_SESS_MOD:
 			case MSG_SESS_DEL:
-				pfd_conts->cstm_pfd_cntnt = malloc(sizeof(struct session_info));
+				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct session_info));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
 												"%"PRId64" ",cstm_buf->mtype);
@@ -181,7 +181,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf)
 				break;
 			case MSG_MTR_ADD:
 			case MSG_MTR_DEL:
-				pfd_conts->cstm_pfd_cntnt = malloc(sizeof(struct mtr_entry));
+				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct mtr_entry));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
 													"%"PRId64" ",cstm_buf->mtype);
@@ -347,8 +347,7 @@ int process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq)
 	int encoded = 0;
 
 	pfcp_hrtbeat_req_t pfcp_heartbeat_req  = {0};
-	pfcp_hrtbeat_rsp_t *pfcp_hearbeat_resp =
-						malloc(sizeof(pfcp_hrtbeat_rsp_t));
+	pfcp_hrtbeat_rsp_t *pfcp_hearbeat_resp = (pfcp_hrtbeat_rsp_t*)malloc(sizeof(pfcp_hrtbeat_rsp_t));
 
 	memset(pfcp_hearbeat_resp,0,sizeof(pfcp_hrtbeat_rsp_t));
 	fill_pfcp_heartbeat_req(&pfcp_heartbeat_req, seq);

@@ -9,6 +9,10 @@
 
 #include "pfcp_messages.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ADD 1
 #define MOD 0
 
@@ -312,4 +316,8 @@ fill_pfcp_sess_set_del_resp(pfcp_sess_set_del_rsp_t *pfcp_del_resp,
 int8_t
 del_csid_entry_hash(fqcsid_t *peer_csids,
 			fqcsid_t *local_csids, uint8_t iface);
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* _CSID_STRUCT_H */

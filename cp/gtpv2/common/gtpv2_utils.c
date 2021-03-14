@@ -28,7 +28,6 @@
 #include "proc_service_request.h"
 #include "cp_io_poll.h"
 
-extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
 int
 check_interface_type(uint8_t iface) 
 {

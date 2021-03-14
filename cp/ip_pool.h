@@ -11,6 +11,9 @@
 #include <netinet/in.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Simple ip-pool
  * @param  : ipv4
@@ -30,5 +33,9 @@ reserve_ip_node(struct in_addr host);
 
 bool 
 release_ip_node(struct in_addr host);
+
+#ifdef __cplusplus
+}
+#endif
 #endif
 

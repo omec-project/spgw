@@ -42,7 +42,7 @@ create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt)
 {
     int ret;
     upf_context_t *upf_context = NULL;
-	upf_context  = calloc(1, sizeof(upf_context_t));
+	upf_context  = (upf_context_t *)calloc(1, sizeof(upf_context_t));
 
 	if (upf_context == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate upf context: ");
@@ -84,7 +84,7 @@ upf_down_event(uint32_t upf_ip)
 
     invalidate_upf_dns_results(upf_ip);
 
-    schedule_pfcp_association(0, upf_context);
+    schedule_pfcp_association(1, upf_context);
 }
 
 void
@@ -107,6 +107,18 @@ schedule_pfcp_association(uint16_t timeout, upf_context_t *upf_ctxt)
 	if (startTimer(timer) < 0) {
 		LOG_MSG(LOG_ERROR, "Periodic Timer failed to start...");
 	}
+}
+
+void
+initiate_pfcp_association(upf_context_t *upf_context)
+{
+    struct in_addr peer = upf_context->upf_sockaddr.sin_addr;
+    if(upf_context->state == 0) {
+        LOG_MSG(LOG_INFO, "Initiate association setup with UPF %s", inet_ntoa(peer));
+        proc_context_t *proc = alloc_pfcp_association_setup_proc(upf_context);
+        start_upf_procedure(proc, (msg_info_t *)proc->msg_info);
+    }
+
 }
 
 void
@@ -140,7 +152,7 @@ initiate_all_pfcp_association(void)
         if(upf_context->state == 0) {
             LOG_MSG(LOG_INFO, "Initiate association setup with UPF %s", prof[i].profile_name);
             proc_context_t *proc = alloc_pfcp_association_setup_proc(upf_context);
-            start_upf_procedure(proc, proc->msg_info);
+            start_upf_procedure(proc, (msg_info_t *)proc->msg_info);
         }
     }
 
@@ -171,7 +183,7 @@ start_upf_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
 void 
 end_upf_procedure(proc_context_t *proc_ctxt)
 {
-    upf_context_t *upf_context = proc_ctxt->upf_context;
+    upf_context_t *upf_context = (upf_context_t*)proc_ctxt->upf_context;
 
     if(proc_ctxt->pfcp_trans != NULL) {
         cleanup_pfcp_trans(proc_ctxt->pfcp_trans);
@@ -296,7 +308,7 @@ handleUpfAssociationTimeoutEvent(void *data, uint16_t event)
         initiate_all_pfcp_association();
     } else {
         // default schedule timeout of 10 seconds
-        schedule_pfcp_association(10, upf); 
+        initiate_pfcp_association(upf);
     }
     return;
 }

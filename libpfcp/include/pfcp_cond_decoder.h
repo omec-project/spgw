@@ -11,6 +11,9 @@
 #include "stdlib.h"
 #include "string.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* Inside pfcp_fteid_ie_t */
 /* TODO: Revisit this for change in yang */
 #define DECODE_TEID_COND_2(buf, total_decoded, bit_count, decoded, value) \
@@ -568,4 +571,7 @@ if (1) \
 	memcpy(&value->nai, buf + (total_decoded/CHAR_SIZE), value->length_of_nai); \
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__PFCP_COND_DECODER_H__*/

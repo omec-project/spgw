@@ -7,6 +7,9 @@
 #ifndef  __GX_DEF_H__
 #define  __GX_DEF_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define GX_TDF_DESTINATION_HOST_LEN                          255
 #define GX_PACKET_FILTER_CONTENT_LEN                         255
 #define GX_PHYSICAL_ACCESS_ID_LEN                            255
@@ -371,4 +374,8 @@ enum subscription_id_type{
 	END_USER_NAI,
 	END_USER_PRIVATE,
 };
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* __GX_DEF_H__ */

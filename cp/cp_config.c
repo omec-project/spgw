@@ -25,7 +25,14 @@
 #include "sm_hand.h"
 #include "upf_apis.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 cp_config_t *cp_config = NULL;
+#ifdef __cplusplus
+}
+#endif
+
 
 void init_config(void) 
 {
@@ -113,6 +120,7 @@ config_cp_ip_port(cp_config_t *cp_config)
     cp_config->urr_enable = 0;  // disabled by default
     cp_config->prom_port = PROMETHEUS_HTTP_PORT;
     cp_config->webserver_port = HTTP_SERVER_PORT; //default webserver_port
+    cp_config->pfcp_hb_ts_fail = false; /* Dont detect path failure based on echo timeout */
 
     parse_cp_json(cp_config, STATIC_CP_JSON_FILE);
 

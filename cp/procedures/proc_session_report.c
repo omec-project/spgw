@@ -26,7 +26,7 @@ alloc_session_report_proc(msg_info_t *msg)
 {
     proc_context_t *session_rep_proc;
 
-    session_rep_proc = calloc(1, sizeof(proc_context_t));
+    session_rep_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     session_rep_proc->proc_type = msg->proc; 
     session_rep_proc->ue_context = (void *)msg->ue_context;
     session_rep_proc->pdn_context = (void *)msg->pdn_context;
@@ -65,7 +65,7 @@ session_report_event_handler(void *proc, void *msg_info)
 void
 proc_session_report_failure(msg_info_t *msg, uint8_t cause)
 {
-    proc_context_t *proc_context = msg->proc_context;
+    proc_context_t *proc_context = (proc_context_t *)msg->proc_context;
 
     // send PFCP session report response with cause 
 
@@ -77,7 +77,7 @@ proc_session_report_failure(msg_info_t *msg, uint8_t cause)
 void
 proc_session_report_success(msg_info_t *msg)
 {
-    proc_context_t *proc_context = msg->proc_context;
+    proc_context_t *proc_context = (proc_context_t *)msg->proc_context;
     proc_session_report_complete(proc_context);
     return;
 }
@@ -97,7 +97,7 @@ process_rpt_req_handler(proc_context_t *proc_ctxt, msg_info_t *msg)
     pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->pfcp_msg.pfcp_sess_rep_req;
 	uint64_t sess_id = pfcp_sess_rep_req->header.seid_seqno.has_seid.seid;
 	uint8_t ebi =  UE_BEAR_ID(sess_id);
-    ue_context_t *context = msg->ue_context;
+    ue_context_t *context = (ue_context_t *)msg->ue_context;
 
 	if (proc_ctxt->proc_type == PAGING_PROC) {
         ret = send_ddn_indication(proc_ctxt, ebi);
@@ -142,9 +142,9 @@ send_session_report_response(proc_context_t *proc_ctxt, msg_info_t *msg)
 	uint8_t pfcp_msg[250] = {0};
 	int encoded = 0;
 	pfcp_sess_rpt_rsp_t pfcp_sess_rep_resp = {0};
-    ue_context_t *context = proc_ctxt->ue_context;
+    ue_context_t *context = (ue_context_t *)proc_ctxt->ue_context;
     transData_t *pfcp_trans = proc_ctxt->pfcp_trans;
-    pdn_connection_t *pdn = proc_ctxt->pdn_context;
+    pdn_connection_t *pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
 
 	/*Fill and send pfcp session report response. */
 	fill_pfcp_sess_report_resp(&pfcp_sess_rep_resp, pfcp_trans->sequence);

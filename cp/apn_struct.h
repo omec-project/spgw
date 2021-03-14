@@ -9,6 +9,11 @@
 #define __APN_STRUCT_H
 #include <stdint.h>
 #include <stdlib.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * @brief  : Maintains apn related information
  */
@@ -22,4 +27,7 @@ typedef struct apn {
 	uint8_t apn_idx;
 } apn_t;
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -141,7 +141,7 @@ get_charging_rule_name(GxChargingRuleDefinition *rule_definition, char rule_name
  * @return : Returns 0 in case of success , -1 otherwise
  */
 static int
-fill_sdf_strctr(char *temp_str, sdf_pkt_fltr *pkt_filter, pdn_connection_t *pdn)
+fill_sdf_strctr(char *temp_str, sdf_pkt_fltr_t *pkt_filter, pdn_connection_t *pdn)
 {
 	int nb_token = 0;
 	char *str_fld[NUM_VALS];
@@ -452,8 +452,8 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 					rule_definition =
 						&(charging_rule_install->list[idx].charging_rule_definition.list[idx2]);
 					if (rule_definition->presence.charging_rule_name == PRESENT) {
-                        pcc_rule_t *pcc_rule = calloc(1, sizeof(pcc_rule_t)); 
-                        pcc_rule->dyn_rule = calloc(1, sizeof(dynamic_rule_t)); 
+                        pcc_rule_t *pcc_rule = (pcc_rule_t *)calloc(1, sizeof(pcc_rule_t)); 
+                        pcc_rule->dyn_rule = (dynamic_rule_t *)calloc(1, sizeof(dynamic_rule_t)); 
 						memset(rule_name.rule_name, '\0', sizeof(rule_name.rule_name));
 						strncpy(rule_name.rule_name, (char *)(rule_definition->charging_rule_name.val),
 								rule_definition->charging_rule_name.len);
@@ -496,8 +496,8 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 				int8_t bearer_identifer = get_rule_name_entry(rule_name.rule_name);
 				if (bearer_identifer >= 0)
 				{
-                    pcc_rule_t *pcc_rule = calloc(1, sizeof(pcc_rule_t)); 
-                    pcc_rule->dyn_rule = calloc(1, sizeof(dynamic_rule_t)); 
+                    pcc_rule_t *pcc_rule = (pcc_rule_t *)calloc(1, sizeof(pcc_rule_t)); 
+                    pcc_rule->dyn_rule = (dynamic_rule_t *)calloc(1, sizeof(dynamic_rule_t)); 
 					pcc_rule->action = RULE_ACTION_DELETE;
 					memset(pcc_rule->dyn_rule->rule_name, '\0', 256);
 					strncpy(pcc_rule->dyn_rule->rule_name,
@@ -556,7 +556,7 @@ check_for_rules_on_default_bearer(pdn_connection_t *pdn)
             LOG_MSG(LOG_DEBUG,"installing rules on default bearer ");
             /* Adding rule and bearer id to a hash */
             bearer_id_t *id;
-            id = malloc(sizeof(bearer_id_t));
+            id = (bearer_id_t*)malloc(sizeof(bearer_id_t));
             memset(id, 0 , sizeof(bearer_id_t));
             rule_name_key_t key = {0};
             id->bearer_id = pdn->default_bearer_id - 5;
@@ -640,7 +640,7 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 	}
 
 	/* Retrieve PDN context based on call id */
-	pdn_cntxt = get_pdn_conn_entry(call_id);
+	pdn_cntxt = (pdn_connection_t *)get_pdn_conn_entry(call_id);
 	if (pdn_cntxt == NULL)
 	{
 	      LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);
@@ -790,7 +790,7 @@ gx_update_bearer_req(pdn_connection_t *pdn)
 		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 		return DIAMETER_UNKNOWN_SESSION_ID;
 	}
-    gx_context = temp_ue_context->gx_context;
+    gx_context = (gx_context_t *)temp_ue_context->gx_context;
     assert(gx_context != NULL);
 
 	/* Update UE State */
@@ -911,9 +911,9 @@ get_bearer_info_install_rules(pdn_connection_t *pdn, uint8_t *ebi)
 int8_t
 parse_gx_rar_msg(msg_info_t *msg)
 {
-    proc_context_t *proc_ctxt = msg->proc_context;
+    proc_context_t *proc_ctxt = (proc_context_t *)msg->proc_context;
 	int16_t ret = 0;
-	pdn_connection_t *pdn_cntxt = proc_ctxt->pdn_context;
+	pdn_connection_t *pdn_cntxt = (pdn_connection_t *)proc_ctxt->pdn_context;
 
 
     /* PCRF Use case - Change in default bearer QoS through RAR */

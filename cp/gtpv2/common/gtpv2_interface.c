@@ -224,7 +224,7 @@ out_handler_gtp(void *data)
 {
 	LOG_MSG(LOG_INIT,"Starting gtp out message handler thread");
     while(1) {
-        outgoing_pkts_event_t *event = get_gtp_out_event();
+        outgoing_pkts_event_t *event = (outgoing_pkts_event_t*)get_gtp_out_event();
         if(event != NULL) {
             //Push packet to test chain 
             gtpv2c_header_t *temp = (gtpv2c_header_t *)event->payload;

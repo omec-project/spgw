@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define CONNECTPEER  "ConnectPeer"
 
 
@@ -716,4 +719,7 @@ struct gx_trans_data {
 };
 typedef struct gx_trans_data gx_trans_data_t;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __GX_H__ */

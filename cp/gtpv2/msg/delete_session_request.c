@@ -19,11 +19,7 @@
 #include "gtpv2_error_rsp.h"
 #include "proc_detach.h"
 #include "util.h"
-
-int
-delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
-	ue_context_t **_context, uint32_t *s5s8_pgw_gtpc_teid,
-	uint32_t *s5s8_pgw_gtpc_ipv4);
+#include "gtpv2_session.h"
 
 /**
  * @brief  : Handles the removal of data structures internal to the control plane
@@ -239,7 +235,7 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
     uint16_t source_port = msg->peer_addr.sin_port;
     uint32_t seq_num = msg->gtpc_msg.dsr.header.teid.has_teid.seq;  
-    transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
+    transData_t *old_trans = (transData_t*)find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
         LOG_MSG(LOG_ERROR, "Retransmitted DSReq received. Old DSReq is in progress");

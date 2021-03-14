@@ -11,6 +11,9 @@
 #include "gtp_ies.h"
 #include "util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define MBR_BUF_SIZE 5
 
 /**
@@ -1852,4 +1855,7 @@ int encode_gtp_max_pckt_loss_rate_ie(gtp_max_pckt_loss_rate_ie_t *value,
     uint8_t *buf);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__GTP_IES_ENCODE_H__*/
