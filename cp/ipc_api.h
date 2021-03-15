@@ -19,6 +19,9 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define MULTIPLIER 50
 #define BUFFSIZE MULTIPLIER * 1024
 /**
@@ -102,4 +105,7 @@ send_to_ipc_channel(int sock, char *buf, int len);
 void
 close_ipc_channel(int sock);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* IPC_API_H*/

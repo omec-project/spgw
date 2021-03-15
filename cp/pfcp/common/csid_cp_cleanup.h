@@ -6,6 +6,9 @@
  */
 #ifndef __CSID_CP_CLEANUP_H
 #define __CSID_CP_CLEANUP_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 #ifdef USE_CSID
@@ -42,6 +45,10 @@ int process_pfcp_sess_set_del_req_t(pfcp_sess_set_del_req_t *del_set_req,
 int process_pfcp_sess_set_del_rsp_t(pfcp_sess_set_del_rsp_t *del_set_rsp);
 
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 #endif
 

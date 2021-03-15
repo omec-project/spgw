@@ -25,7 +25,7 @@ int handle_delete_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_r
     uint32_t local_addr = my_sock.s11_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.sin_port;
 
-    transData_t *gtpc_trans = delete_gtp_transaction(local_addr, port_num, seq_num);
+    transData_t *gtpc_trans = (transData_t *)delete_gtp_transaction(local_addr, port_num, seq_num);
     assert(gtpc_trans);
 	stop_transaction_timer(gtpc_trans);
 

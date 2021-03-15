@@ -278,7 +278,7 @@ int del_bearer_cmd_ccau_handler(void *data, void *unused_param)
 	}
 
 	/* Retrieve PDN context based on call id */
-	pdn = get_pdn_conn_entry(call_id);
+	pdn = (pdn_connection_t *)get_pdn_conn_entry(call_id);
 	if (pdn == NULL)
 	{
 	      LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);

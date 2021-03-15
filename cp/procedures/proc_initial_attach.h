@@ -6,6 +6,9 @@
 #define __PROC_INITIAL_ATTACH_H__
 #include "cp_proc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 proc_context_t*
 alloc_initial_proc(msg_info_t *msg);
 
@@ -52,4 +55,7 @@ int cca_msg_handler(proc_context_t *proc, msg_info_t *msg);
 int
 process_gx_ccai_reject_handler(proc_context_t *proc_context, msg_info_t *msg);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

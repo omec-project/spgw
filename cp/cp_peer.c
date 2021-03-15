@@ -23,31 +23,23 @@
 #include "spgwStatsPromEnum.h"
 #include "cp_events.h"
 #include "cp_log.h"
+#include "upf_apis.h"
 
 uint8_t echo_tx_buf[MAX_GTPV2C_UDP_LEN];
 
 int32_t conn_cnt = 0;
 
 /* Sequence number allocation for echo request */
-static uint16_t gtpu_mme_seqnb	= 0;
-static uint16_t gtpu_sgwc_seqnb	= 0;
-static uint16_t gtpu_pgwc_seqnb	= 0;
-static uint16_t gtpu_sx_seqnb	= 1;
+static uint16_t gtpc_mme_seqnb	= 0;
+static uint16_t gtpc_sgwc_seqnb	= 0;
+static uint16_t gtpc_pgwc_seqnb	= 0;
+static uint16_t pfcp_seqnb	= 1;
 
 
-/**
- * rte hash handler.
- *
- * hash handles connection for S1U, SGI and PFCP
- */
-struct peer_data {
-    gstimerinfo_t *ti;
-    struct sockaddr_in dest_addr;
-};
-
-void timerCallback( gstimerinfo_t *ti, const void *data_t )
+void 
+timerCallback( gstimerinfo_t *ti, const void *data_t )
 {
-    struct peer_data *temp = calloc(1, sizeof(struct peer_data));
+    struct peer_data *temp = (struct peer_data *)calloc(1, sizeof(struct peer_data));
 #pragma GCC diagnostic push  /* require GCC 4.6 */
 #pragma GCC diagnostic ignored "-Wcast-qual"
 	peerData_t *md = (peerData_t*)data_t;
@@ -57,11 +49,12 @@ void timerCallback( gstimerinfo_t *ti, const void *data_t )
 	temp->dest_addr.sin_addr.s_addr = md->dstIP;
 	temp->dest_addr.sin_port = htons(GTPC_UDP_PORT);
     temp->ti = ti;
-    queue_stack_unwind_event(PEER_TIMEOUT, (void *)temp, handle_timeout); 
+    queue_stack_unwind_event(PEER_TIMEOUT, (void *)temp, handle_timeout_event); 
     return;
 }
 
-void handle_timeout(void *data, uint16_t event)
+void 
+handle_timeout_event(void *data, uint16_t event)
 {
     peerData_t *md = NULL;
 	uint16_t payload_length;
@@ -75,12 +68,13 @@ void handle_timeout(void *data, uint16_t event)
         LOG_MSG(LOG_ERROR,"Peer (%s) not found. event %d ", inet_ntoa(dest_addr.sin_addr), event);
         return;
     }
-	LOG_MSG(LOG_DEBUG, "%s - %s:%s:%u.%s (%dms) has expired", getPrintableTime(),
+	LOG_MSG(LOG_NEVER, "%s:%s:%u.%s (%dms) has expired", 
 		md->name, inet_ntoa(*(struct in_addr *)&md->dstIP), md->portId,
 		ti == &md->pt ? "Periodic_Timer" :
 		ti == &md->tt ? "Transmit_Timer" : "unknown",
 		ti->ti_ms );
 
+    // No response for configured number of consecutive echo/heartbeat requests
 	if (md->itr_cnt == md->itr) {
 		/* Stop transmit timer for specific Peer Node */
 		stopTimer( &md->tt );
@@ -91,22 +85,11 @@ void handle_timeout(void *data, uint16_t event)
 		/* Deinit transmit timer for specific Peer Node */
 		deinitTimer( &md->pt );
 
-
 		/* TODO: Flush sessions */
         if (md->portId == SX_PORT_ID) {
 			LOG_MSG(LOG_ERROR, "Stopped Periodic/transmit timer, User Plane node %s is not reachable",
 				inet_ntoa(*(struct in_addr *)&md->dstIP));
-            upf_context_t *upf_context = NULL; 
-            upf_context = (upf_context_t *)upf_context_entry_lookup(dest_addr.sin_addr.s_addr);
-            if(upf_context != NULL)
-            {
-                upf_context->state = 0;
-            }
-
-            invalidate_upf_dns_results(dest_addr.sin_addr.s_addr);
-
-			delete_entry_heartbeat_hash(&dest_addr);
-            // invalidate dns results  
+            upf_down_event(dest_addr.sin_addr.s_addr);
 #ifdef USE_CSID
 			del_peer_node_sess(md->dstIP, SX_PORT_ID);
 #endif /* USE_CSID */
@@ -152,8 +135,8 @@ void handle_timeout(void *data, uint16_t event)
 
 	if (md->portId == S11_SGW_PORT_ID) {
 		if (ti == &md->pt)
-			gtpu_mme_seqnb++;
-		build_gtpv2_echo_request(gtpv2c_tx, gtpu_mme_seqnb);
+			gtpc_mme_seqnb++;
+		build_gtpv2_echo_request(gtpv2c_tx, gtpc_mme_seqnb);
 
         increment_mme_peer_stats(MSG_TX_GTPV2_S11_ECHOREQ, dest_addr.sin_addr.s_addr);
 
@@ -162,16 +145,14 @@ void handle_timeout(void *data, uint16_t event)
 		               (struct sockaddr *) &dest_addr,
 		               sizeof(struct sockaddr_in));
 
-		if (ti == &md->tt)
-		{
+		if (ti == &md->tt) {
 			(md->itr_cnt)++;
-
 		}
 
 	} else if (md->portId == S5S8_SGWC_PORT_ID) {
 		if (ti == &md->pt)
-			gtpu_sgwc_seqnb++;
-		build_gtpv2_echo_request(gtpv2c_tx, gtpu_sgwc_seqnb);
+			gtpc_sgwc_seqnb++;
+		build_gtpv2_echo_request(gtpv2c_tx, gtpc_sgwc_seqnb);
 	    payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 
 		gtpv2c_send(my_sock.sock_fd_s5s8, echo_tx_buf, payload_length,
@@ -179,23 +160,21 @@ void handle_timeout(void *data, uint16_t event)
 		                sizeof(struct sockaddr_in));
 
         increment_sgw_peer_stats(MSG_TX_GTPV2_S5S8_ECHOREQ, dest_addr.sin_addr.s_addr);
-		if (ti == &md->tt)
-		{
+		if (ti == &md->tt) {
 			(md->itr_cnt)++;
 		}
 
 	} else if (md->portId == S5S8_PGWC_PORT_ID) {
 		if (ti == &md->pt)
-			gtpu_pgwc_seqnb++;
-		build_gtpv2_echo_request(gtpv2c_tx, gtpu_pgwc_seqnb);
+			gtpc_pgwc_seqnb++;
+		build_gtpv2_echo_request(gtpv2c_tx, gtpc_pgwc_seqnb);
 	    payload_length = ntohs(gtpv2c_tx->gtpc.message_len) + sizeof(gtpv2c_tx->gtpc);
 		gtpv2c_send(my_sock.sock_fd_s5s8, echo_tx_buf, payload_length,
 		                (struct sockaddr *) &dest_addr,
 		                sizeof(struct sockaddr_in));
 
         increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_ECHOREQ, dest_addr.sin_addr.s_addr);
-		if (ti == &md->tt)
-		{
+		if (ti == &md->tt) {
 			(md->itr_cnt)++;
 		}
 
@@ -207,56 +186,36 @@ void handle_timeout(void *data, uint16_t event)
 		//dest_addr.sin_port = htons(8805);
 
 		if (ti == &md->pt){
-			gtpu_sx_seqnb = get_pfcp_sequence_number(PFCP_HEARTBEAT_REQUEST, gtpu_sx_seqnb);;
+			pfcp_seqnb = get_pfcp_sequence_number(PFCP_HEARTBEAT_REQUEST, pfcp_seqnb);;
 		}
 
-		process_pfcp_heartbeat_req(&dest_addr, gtpu_sx_seqnb);
+		process_pfcp_heartbeat_req(&dest_addr, pfcp_seqnb);
         increment_userplane_stats(MSG_TX_PFCP_SXASXB_ECHOREQ, dest_addr.sin_addr.s_addr);
 
-		if (ti == &md->tt)
-		{
+		if (ti == &md->tt) {
 			(md->itr_cnt)++;
-
 		}
 	}
 
 	if (ti == &md->pt) {
-		if ( startTimer( &md->tt ) < 0)
-		{
+		if ( startTimer( &md->tt ) < 0) {
 			LOG_MSG(LOG_ERROR, "Transmit Timer failed to start..");
 		}
-
 		/* Stop periodic timer for specific Peer Node */
 		stopTimer( &md->pt );
 	}
 	return;
 }
 
-bool initpeerData( peerData_t *md, const char *name, int ptms, int ttms )
-{
-	md->name = name;
-
-	if ( !gst_timer_init( &md->pt, ttInterval, timerCallback, ptms, md ) )
-		return False;
-
-	return gst_timer_init( &md->tt, ttInterval, timerCallback, ttms, md );
-}
-
-uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
+uint8_t 
+add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 {
 	peerData_t *conn_data = NULL;
 
 	conn_data = (peerData_t *)get_peer_entry(dstIp);
 
 	if ( conn_data == NULL) {
-
-		LOG_MSG(LOG_INFO, "Add entry in conn table :%s",
-					inet_ntoa(*((struct in_addr *)&dstIp)));
-
-		/* No conn entry for dstIp
-		 * Add conn_data for dstIp at
-		 * conn_hash_handle
-		 * */
+		LOG_MSG(LOG_INFO, "Add peer entry in conn table :%s", inet_ntoa(*((struct in_addr *)&dstIp)));
 
 		conn_data = (peerData_t *)calloc(1, sizeof(peerData_t));
 
@@ -272,37 +231,38 @@ uint8_t add_node_conn_entry(uint32_t dstIp, uint8_t portId)
 			LOG_MSG(LOG_ERROR, "Failed to add entry in hash table");
 		}
 
-		if ( !initpeerData( conn_data, "PEER_NODE", (cp_config->periodic_timer * 1000),
-						(cp_config->transmit_timer * 1000)) )
-		{
-		   LOG_MSG(LOG_ERROR, "%s - initialization of %s failed", getPrintableTime(), conn_data->name );
-		   return -1;
-		}
+	    conn_data->name = "PEER_NODE";
+
+	    if ( !gst_timer_init( &conn_data->pt, ttInterval, timerCallback, cp_config->periodic_timer*1000, conn_data )) {
+		   LOG_MSG(LOG_ERROR, "Peer - %s - initialization of periodic timer failed", 
+                            inet_ntoa(*((struct in_addr *)&dstIp)));
+        }
+
+	    if (!gst_timer_init( &conn_data->tt, ttInterval, timerCallback, cp_config->transmit_timer*1000, conn_data )) {
+		   LOG_MSG(LOG_ERROR, "Peer - %s - initialization of transmit timer failed", 
+                            inet_ntoa(*((struct in_addr *)&dstIp)));
+        }
 
 		if ( startTimer( &conn_data->pt ) < 0) {
 			LOG_MSG(LOG_ERROR, "Periodic Timer failed to start...");
 		}
 		conn_cnt++;
-
 	} else {
 		/* TODO: peer node entry already exit in conn table */
 
-		LOG_MSG(LOG_DEBUG1, "Connection entry already exist in conn table :%s",
+		LOG_MSG(LOG_DEBUG1, "Peer Connection entry already exist in conn table :%s",
 					inet_ntoa(*((struct in_addr *)&dstIp)));
-		if ( startTimer( &conn_data->pt ) < 0)
-		{
-			LOG_MSG(LOG_ERROR, "Periodic Timer failed to start...");
+		if ( startTimer( &conn_data->pt ) < 0) {
+			LOG_MSG(LOG_ERROR, "Periodic Timer failed to start %s ", inet_ntoa(*((struct in_addr *)&dstIp)));
 		}
-		//conn_cnt++;
 	}
 
 	LOG_MSG(LOG_DEBUG1, "Current Active Peer Conn Cnt:%u", conn_cnt);
 	return 0;
 }
 
-
-
-uint8_t process_response(uint32_t dstIp)
+uint8_t 
+process_response(uint32_t dstIp)
 {
 	peerData_t *conn_data = NULL;
 
@@ -320,13 +280,13 @@ uint8_t process_response(uint32_t dstIp)
 		stopTimer( &conn_data->tt );
 		/* Stop periodic timer for specific peer node */
 		stopTimer( &conn_data->pt );
-		/* Reset Periodic Timer */
-		if ( startTimer( &conn_data->pt ) == false ) 
-			LOG_MSG(LOG_ERROR, "Periodic Timer failed to stop...");
 
-		LOG_MSG(LOG_DEBUG, "Periodic Timer stopped - since activity seen with peer node ");
+		LOG_MSG(LOG_NEVER, "Periodic Timer stopped - since activity seen with peer node %s",inet_ntoa(*(struct in_addr *)&dstIp));
+
+		/* Reset Periodic Timer */
+		if ( startTimer( &conn_data->pt ) == false ) { 
+			LOG_MSG(LOG_ERROR, "Periodic Timer failed to start for %s ",inet_ntoa(*(struct in_addr *)&dstIp));
+        }
 	}
 	return 0;
 }
-
-

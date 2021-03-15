@@ -67,7 +67,7 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     uint16_t port_num = my_sock.s11_sockaddr.sin_port;
     uint32_t seq_num = gtpv2c_rx->teid.has_teid.seq;
 
-    transData_t *gtpc_trans = delete_gtp_transaction(local_addr, port_num, seq_num);
+    transData_t *gtpc_trans = (transData_t *)delete_gtp_transaction(local_addr, port_num, seq_num);
 
     /* Retrive the session information based on session id. */
     if(gtpc_trans == NULL) {
@@ -79,10 +79,10 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 	/* stop and delete timer entry for pfcp sess del req */
 	stop_transaction_timer(gtpc_trans);
 
-    proc_context_t *proc_context = gtpc_trans->proc_context;
+    proc_context_t *proc_context = (proc_context_t *)gtpc_trans->proc_context;
 
     if(context == NULL) {
-        context = proc_context->ue_context;
+        context = (ue_context_t*)proc_context->ue_context;
     } else {
         assert(proc_context->ue_context == context);
     }
@@ -156,7 +156,7 @@ void ddn_indication_timeout(void *data)
     proc_context_t *proc_context = (proc_context_t *)data;
     // Option 1 - Retry few times 
     // Opton  2 - after configurable retry, generate timeout event for fsm  
-    msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+    msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t));
     msg->event = DDN_TIMEOUT;
     msg->proc_context = proc_context;
     SET_PROC_MSG(proc_context, msg);
@@ -187,12 +187,11 @@ send_ddn_indication(proc_context_t *proc_ctxt, uint8_t ebi_index)
 		return ret;
     }
 
-	struct sockaddr_in mme_s11_sockaddr_in = {
-		.sin_family = AF_INET,
-		.sin_port = htons(GTPC_UDP_PORT),
-		.sin_addr.s_addr = htonl(context->s11_mme_gtpc_ipv4.s_addr),
-		.sin_zero = {0},
-	};
+	struct sockaddr_in mme_s11_sockaddr_in;
+    memset((void*)&mme_s11_sockaddr_in, 0, sizeof(struct sockaddr_in));
+	mme_s11_sockaddr_in.sin_family = AF_INET;
+	mme_s11_sockaddr_in.sin_port = htons(GTPC_UDP_PORT);
+	mme_s11_sockaddr_in.sin_addr.s_addr = htonl(context->s11_mme_gtpc_ipv4.s_addr);
 
 
 	uint16_t payload_length = ntohs(gtpv2c_tx->gtpc.message_len)

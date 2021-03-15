@@ -8,6 +8,9 @@
 #define __CP_CONFIG_H__
 
 #include "spgw_config_struct.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void init_config(void); 
 
@@ -28,4 +31,7 @@ void cpconfig_change_cbk(char *config_file, uint32_t flags);
 
 extern char* config_update_base_folder; 
 extern bool native_config_folder;
+#ifdef __cplusplus
+}
+#endif
 #endif

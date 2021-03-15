@@ -14,22 +14,12 @@
 #include "assert.h"
 
 const char *direction_str[] = {
-		[TFT_DIRECTION_DOWNLINK_ONLY] = "DOWNLINK_ONLY ",
-		[TFT_DIRECTION_UPLINK_ONLY] = "UPLINK_ONLY   ",
-		[TFT_DIRECTION_BIDIRECTIONAL] = "BIDIRECTIONAL " };
+        "TFT_DIRECTION_NONE",
+		"DOWNLINK_ONLY",
+		"UPLINK_ONLY",
+		"BIDIRECTIONAL",
+};
 
-const pkt_fltr catch_all = {
-		.direction = TFT_DIRECTION_BIDIRECTIONAL,
-		.remote_ip_addr.s_addr = 0,
-		.remote_ip_mask = 0,
-		.remote_port_low = 0,
-		.remote_port_high = UINT16_MAX,
-		.proto = 0,
-		.proto_mask = 0,
-		.local_ip_addr.s_addr = 0,
-		.local_ip_mask = 0,
-		.local_port_low = 0,
-		.local_port_high = UINT16_MAX, };
 
 struct mtr_entry *mtr_profiles[METER_PROFILE_SDF_TABLE_SIZE] = {
 		[0] = NULL, /* index = 0 is invalid */
@@ -39,10 +29,10 @@ struct pcc_rules *pcc_filters[PCC_TABLE_SIZE] = {
 		[0] = NULL, /* index = 0 is invalid */
 };
 
-pkt_fltr *sdf_filters[SDF_FILTER_TABLE_SIZE] = {
+pkt_fltr_t *sdf_filters[SDF_FILTER_TABLE_SIZE] = {
 		[0] = NULL, /* index = 0 is invalid */
 };
-packet_filter *packet_filters[SDF_FILTER_TABLE_SIZE] = {
+packet_filter_t *packet_filters[SDF_FILTER_TABLE_SIZE] = {
 		[0] = NULL, /* index = 0 is invalid */
 };
 
@@ -60,12 +50,12 @@ uint16_t dlambr_idx;
 #define 	unlikely(x)   __builtin_expect(!!(x), 0)
 
 int
-get_packet_filter_id(const pkt_fltr *pf)
+get_packet_filter_id(const pkt_fltr_t *pf)
 {
        uint16_t index;
        for (index = FIRST_FILTER_ID; index < num_packet_filters; ++index) {
                if (!memcmp(pf, &packet_filters[index]->pkt_fltr,
-                               sizeof(pkt_fltr)))
+                               sizeof(pkt_fltr_t)))
                        return index;
        }
        return -ENOENT;
@@ -77,7 +67,7 @@ get_packet_filter_direction(uint16_t index)
        return packet_filters[index]->pkt_fltr.direction;
 }
 
-packet_filter *
+packet_filter_t *
 get_packet_filter(uint16_t index)
 {
        if (unlikely(index >= num_packet_filters))
@@ -86,8 +76,19 @@ get_packet_filter(uint16_t index)
 }
 
 void
-reset_packet_filter(pkt_fltr *pf)
+reset_packet_filter(pkt_fltr_t *pf)
 {
-       memcpy(pf, &catch_all, sizeof(pkt_fltr));
+	pf->direction = TFT_DIRECTION_BIDIRECTIONAL;
+    pf->remote_ip_addr.s_addr = 0;
+    pf->remote_ip_mask = 0;
+    pf->remote_port_low = 0;
+    pf->remote_port_high = UINT16_MAX;
+    pf->proto = 0;
+    pf->proto_mask = 0;
+    pf->local_ip_addr.s_addr = 0;
+    pf->local_ip_mask = 0;
+    pf->local_port_low = 0;
+    pf->local_port_high = UINT16_MAX; 
+    return;
 }
 

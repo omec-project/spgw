@@ -20,7 +20,7 @@ alloc_rar_proc(msg_info_t *msg)
 {
     proc_context_t *rar_proc;
 
-    rar_proc = calloc(1, sizeof(proc_context_t));
+    rar_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     rar_proc->proc_type = msg->proc; 
     rar_proc->ue_context = (void *)msg->ue_context;
     rar_proc->pdn_context = (void *)msg->pdn_context; 
@@ -49,7 +49,7 @@ void
 done_rar_child_proc(void *child_proc)
 {
     int i;
-    proc_context_t *p_proc = ((proc_context_t *)child_proc)->parent_proc;
+    proc_context_t *p_proc = (proc_context_t *)(((proc_context_t *)child_proc)->parent_proc);
     for(i=0; i<MAX_CHILD_PROC; i++) {
         if(p_proc->child_procs[i] == child_proc) {
             p_proc->child_procs_cnt--;
@@ -114,8 +114,7 @@ send_raa(msg_info_t *msg)
 	uint32_t buflen;
     proc_context_t *proc = (proc_context_t*)msg->proc_context;
 
-	gx_msg *resp = malloc(sizeof(gx_msg));
-	memset(resp, 0, sizeof(gx_msg));
+	gx_msg *resp = (gx_msg *)calloc(1,sizeof(gx_msg));
 
 	/* Filling Header value of RAA */
 	resp->msg_type = GX_RAA_MSG ;
@@ -142,7 +141,7 @@ send_raa(msg_info_t *msg)
 	/* Cal the length of buffer needed */
 	buflen = gx_raa_calc_length (&resp->data.cp_raa);
 
-	send_buf = malloc( buflen + sizeof(resp->msg_type)+sizeof(resp->seq_num));
+	send_buf = (char *)malloc( buflen + sizeof(resp->msg_type)+sizeof(resp->seq_num));
 	memset(send_buf, 0, buflen + sizeof(resp->msg_type)+sizeof(resp->seq_num));
 
 	/* encoding the raa header value to buffer */
@@ -169,8 +168,8 @@ process_rar_request_handler(void *data)
 {
     int ret = 0;
     msg_info_t *msg = (msg_info_t *)data;
-    proc_context_t *proc_rar = msg->proc_context;
-    pdn_connection_t *pdn_cntxt = proc_rar->pdn_context;
+    proc_context_t *proc_rar = (proc_context_t *)msg->proc_context;
+    pdn_connection_t *pdn_cntxt = (pdn_connection_t *)proc_rar->pdn_context;
 
     LOG_MSG(LOG_DEBUG, " handle events on RAR procedure");
 	ret = parse_gx_rar_msg(msg);
@@ -202,7 +201,7 @@ process_rar_request_handler(void *data)
                     // New dedicated Bearer should be created to accomodate-new rule with QCI/ARP 
                     // also mark those rules as pending ??
                     LOG_MSG(LOG_DEBUG,"Bearer not found. Create dedicated Bearer  = %s ", pcc_rule->dyn_rule->rule_name);
-                    msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+                    msg_info_t *msg = (msg_info_t*)calloc(1, sizeof(msg_info_t));
                     msg->event = BEARER_CREATE_EVNT; 
                     msg->ue_context = proc_rar->ue_context;
                     msg->pdn_context = proc_rar->pdn_context;

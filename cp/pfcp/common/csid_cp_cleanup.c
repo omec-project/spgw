@@ -127,7 +127,7 @@ fill_ccr_t_request(pdn_connection_t *pdn, uint8_t ebi_index)
 		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 		return -1;
 	}
-    gx_context = temp_ue_context->gx_context;
+    gx_context = (gx_context_t *)temp_ue_context->gx_context;
 
 	/* VS: Set the Msg header type for CCR-T */
 	ccr_request.msg_type = GX_CCR_MSG ;

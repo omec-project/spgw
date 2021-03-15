@@ -12,6 +12,9 @@
 #include "upf_struct.h"
 #include "cp_proc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : This function processes pfcp associatiuon response
  * @param  : msg hold the data from pfcp associatiuon response
@@ -136,4 +139,7 @@ get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
 		uint32_t **upf_ip);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* PFCP_ASSOC_H */

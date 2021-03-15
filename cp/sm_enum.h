@@ -10,6 +10,11 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "trans_struct.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum 
 {
 	INTF_NONE,
@@ -130,14 +135,6 @@ typedef enum
 	DEL_PDN_CONN_SET_RESP_RCVD_EVNT = 36,
 	PFCP_SESS_SET_DEL_REQ_RCVD_EVNT,
 	PFCP_SESS_SET_DEL_RESP_RCVD_EVNT,
-    /* Below bew events added */
-    PFCP_SESS_EST_EVNT,
-	PFCP_ASSOC_SETUP_FAILED,
-	PFCP_SESS_EST_RESP_TIMEOUT_EVNT,
-    GX_CCAI_FAILED,
-    DDN_TIMEOUT, 
-	BEARER_CREATE_EVNT,
-    SEND_RE_AUTH_RSP_EVNT,
 	END_EVNT
 }sm_event;
 
@@ -150,7 +147,16 @@ enum source_interface {
 
 typedef enum 
 {
-    PFCP_ASSOCIATION_SETUP = 1,
+    PFCP_ASSOCIATION_SETUP = 100,
+    PFCP_ASSOCIATION_SETUP_RSP,
+	PFCP_ASSOC_SETUP_SUCCESS,
+	PFCP_ASSOC_SETUP_FAILED,
+    PFCP_SESS_EST_EVNT,
+	PFCP_SESS_EST_RESP_TIMEOUT_EVNT,
+    GX_CCAI_FAILED,
+    DDN_TIMEOUT, 
+	BEARER_CREATE_EVNT,
+    SEND_RE_AUTH_RSP_EVNT,
 }proc_event;
 
 enum UE_CONTEXT_STATE {
@@ -176,4 +182,7 @@ enum PDN_CONTEXT_STATE {
 };
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

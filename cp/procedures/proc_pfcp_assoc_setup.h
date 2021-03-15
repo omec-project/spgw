@@ -6,6 +6,9 @@
 #define __PFCP_ASSOCIATION_SETUP_PROC_H
 #include "cp_proc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 proc_context_t*
 alloc_pfcp_association_setup_proc(void *upf);
 
@@ -26,7 +29,7 @@ int
 buffer_csr_request(proc_context_t *proc_context);
 
 int 
-handle_pfcp_association_setup_response(void *msg_t);
+handle_pfcp_association_setup_response(proc_context_t *proc_context, void *msg_t);
 
 void
 process_assoc_resp_timeout_handler(void *data1);
@@ -37,4 +40,16 @@ upf_pfcp_setup_failure(void *data, uint16_t event);
 void upf_pfcp_setup_success(void *data, uint16_t event);
 
 int buffer_csr_request(proc_context_t *proc_context);
+
+void 
+proc_pfcp_assoc_setup_success(proc_context_t *proc);
+
+void 
+proc_pfcp_assoc_setup_failure(proc_context_t *proc, int cause);
+void
+proc_pfcp_assoc_setup_complete(proc_context_t *proc);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

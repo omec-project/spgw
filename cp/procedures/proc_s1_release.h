@@ -6,6 +6,9 @@
 #define __RAB_PROC__H
 #include "gtp_messages.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 proc_context_t*
 alloc_rab_proc(msg_info_t *msg);
 
@@ -36,4 +39,7 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
                                uint64_t sess_id, 
                                gtpv2c_header_t *gtpv2c_tx);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

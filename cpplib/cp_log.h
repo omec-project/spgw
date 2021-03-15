@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "gen_utils.h"
+#include <time.h>
 
 #ifdef __cplusplus  
 extern "C" { 
@@ -35,7 +36,11 @@ extern uint8_t logging_level;
 
 #define LOG_MSG(prio, msg, ...) do {\
 	if(prio<=logging_level) { \
-		fprintf(stdout, "[%s] : %s : %s : %d : " msg " \n", log_level_name[prio], __file__ , __func__, __LINE__, ##__VA_ARGS__);\
+        char _s[30]; \
+        time_t _t = time(NULL); \
+        struct tm * _p = localtime(&_t);\
+        strftime(_s, 30, "%Y-%m-%d %H:%M:%S", _p);\
+		fprintf(stdout, "[%s] %s : %s : %s : %d : " msg " \n", log_level_name[prio], _s, __file__ , __func__, __LINE__, ##__VA_ARGS__);\
 	}\
 } while (0) 
 

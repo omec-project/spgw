@@ -99,7 +99,7 @@ handle_echo_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 				"\n\tprocess_echo_req "
 				"%s: (%d) %s\n",
 				gtp_type_str(gtpv2c_rx->gtpc.message_type), ret,
-				(ret < 0 ? strerror(-ret) : cause_str(ret)));
+				(ret < 0 ? strerror(-ret) : cause_str((enum cause_value)ret)));
 	}
 
     /* Reset ECHO Timers */
@@ -155,7 +155,7 @@ handle_echo_response(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
                 "\n\tprocess_echo_resp "
                 "%s: (%d) %s\n",
                 gtp_type_str(gtpv2c_rx->gtpc.message_type), ret,
-                (ret < 0 ? strerror(-ret) : cause_str(ret)));
+                (ret < 0 ? strerror(-ret) : cause_str((enum cause_value)ret)));
         /* Error handling not implemented */
         return -1;
     }

@@ -30,7 +30,7 @@ extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 proc_context_t*
 alloc_bearer_create_proc(msg_info_t *msg)
 {
-    proc_context_t *proc = calloc(1, sizeof(proc_context_t));
+    proc_context_t *proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     proc->proc_type = DED_BER_ACTIVATION_PROC;
     proc->ue_context = (void *)msg->ue_context;
     proc->pdn_context = (void *)msg->pdn_context; 
@@ -168,7 +168,7 @@ process_pfcp_sess_mod_resp_pre_cbr_handler(void *data, void *p)
 
 	/* Retrive the session information based on session id. */
 	if ((sess_id != 0)) {
-        context = get_sess_entry_seid(sess_id);
+        context = (ue_context_t *)get_sess_entry_seid(sess_id);
         if(context == NULL) {
 		    LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", sess_id);
             proc_bearer_create_failed(proc_ctxt, GTPV2C_CAUSE_CONTEXT_NOT_FOUND);
@@ -263,12 +263,12 @@ process_pfcp_sess_mod_resp_pre_cbr_handler(void *data, void *p)
 	} else {
 #endif
     
- 	struct sockaddr_in s11_mme_sockaddr = {
-		.sin_family = AF_INET,
-		.sin_port = htons(GTPC_UDP_PORT),
-		.sin_addr.s_addr = htonl(context->s11_mme_gtpc_ipv4.s_addr),
-		.sin_zero = {0},
-	};
+ 	struct sockaddr_in s11_mme_sockaddr;
+    memset(&s11_mme_sockaddr, 0, sizeof(struct sockaddr_in));
+
+	s11_mme_sockaddr.sin_family = AF_INET;
+	s11_mme_sockaddr.sin_port = htons(GTPC_UDP_PORT);
+	s11_mme_sockaddr.sin_addr.s_addr = htonl(context->s11_mme_gtpc_ipv4.s_addr);
 
     gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
             (struct sockaddr *) &s11_mme_sockaddr,
@@ -302,7 +302,7 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 	eps_bearer_t *bearer = NULL;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
     create_bearer_rsp_t *cb_rsp = &msg->gtpc_msg.cb_rsp;
-    ue_context_t *context = proc->ue_context;
+    ue_context_t *context = (ue_context_t *)proc->ue_context;
 
     if(cb_rsp->cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED) {
         proc_bearer_create_failed(proc, cb_rsp->cause.cause_value);
@@ -417,7 +417,7 @@ process_pgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 	uint8_t ebi_index;
     create_bearer_rsp_t *cb_rsp = &msg->gtpc_msg.cb_rsp;
-    ue_context_t *context = proc->ue_context;
+    ue_context_t *context = (ue_context_t *)proc->ue_context;
 
 	ebi_index = cb_rsp->bearer_contexts.eps_bearer_id.ebi_ebi - 5;
 
@@ -716,7 +716,7 @@ fill_pfcp_gx_sess_mod_req(proc_context_t *proc,
 
 				//Adding rule and bearer id to a hash
 				bearer_id_t *id;
-				id = malloc(sizeof(bearer_id_t));
+				id = (bearer_id_t *)malloc(sizeof(bearer_id_t));
 				memset(id, 0 , sizeof(bearer_id_t));
 				rule_name_key_t key = {0};
 				id->bearer_id = bearer_id;
@@ -957,7 +957,7 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 			LOG_MSG(LOG_ERROR, "Adding qer entry Error: %d ", ret);
 			return ret;
 		}
-		enum flow_status f_status = dyn_rule->flow_status;
+		enum flow_status f_status = (enum flow_status)dyn_rule->flow_status;
 		switch(f_status)
 		{
 			case FL_ENABLED_UPLINK:

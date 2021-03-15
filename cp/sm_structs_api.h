@@ -11,6 +11,9 @@
 #include "upf_struct.h"
 #include "ue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Update UE state in UE Context.
  * @param  : teid_key, key to search context
@@ -69,12 +72,7 @@ const char * get_event_string(int value);
 uint8_t
 get_procedure(msg_info_t *msg);
 
-void
-start_upf_procedure(proc_context_t *proc, msg_info_t *msg);
-
-upf_context_t*
-get_upf_context(user_plane_profile_t *upf_profile); 
-
-struct in_addr 
-native_linux_name_resolve(const char *name);
+#ifdef __cplusplus
+}
+#endif
 #endif

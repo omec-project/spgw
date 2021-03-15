@@ -42,7 +42,7 @@ extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 proc_context_t*
 alloc_detach_proc(msg_info_t *msg)
 {
-    proc_context_t *detach_proc = calloc(1, sizeof(proc_context_t));
+    proc_context_t *detach_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     detach_proc->proc_type = msg->proc; 
     detach_proc->handler = detach_event_handler;
     detach_proc->ue_context = msg->ue_context;
@@ -217,7 +217,7 @@ process_pfcp_sess_del_request_timeout(void *data)
     assert(proc_context->pfcp_trans != NULL);
 
     LOG_MSG(LOG_ERROR, "PFCP Session delete timeout ");
-    msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+    msg_info_t *msg = (msg_info_t*)calloc(1, sizeof(msg_info_t));
     msg->msg_type = PFCP_SESSION_DELETION_RESPONSE;
     msg->proc_context = proc_context;
 
@@ -242,7 +242,7 @@ process_pfcp_sess_del_request(proc_context_t *proc_context, msg_info_t *msg)
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
 	uint8_t pfcp_msg[512]={0};
 
-    pdn = proc_context->pdn_context;
+    pdn = (pdn_connection_t *)proc_context->pdn_context;
 
 	/* Lookup and get context of delete request */
 	ret = delete_context(ds_req->lbi, ds_req->header.teid.has_teid.teid,
@@ -318,8 +318,8 @@ void process_spgwc_delete_session_request_timeout(void *data)
 int
 process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *msg)
 {
-	ue_context_t *context = msg->ue_context;
-	pdn_connection_t *pdn =  msg->pdn_context;
+	ue_context_t *context = (ue_context_t *)msg->ue_context;
+	pdn_connection_t *pdn =  (pdn_connection_t *)msg->pdn_context;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
     del_sess_req_t *del_req = &msg->gtpc_msg.dsr;
 
@@ -374,11 +374,11 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 {
 	uint8_t ebi_index = 0;
 	uint16_t msg_len = 0;
-	ue_context_t *context = proc_context->ue_context;
+	ue_context_t *context = (ue_context_t *)proc_context->ue_context;
 	del_sess_rsp_t del_resp = {0};
 	pdn_connection_t *pdn =  NULL;
 
-	pdn = proc_context->pdn_context; 
+	pdn = (pdn_connection_t *)proc_context->pdn_context; 
     ebi_index = pdn->default_bearer_id - 5;
 
 	/* Update the UE state */
@@ -394,7 +394,7 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 			return -1;
 		}
         assert(temp_context == context);
-        gx_context = temp_context->gx_context;
+        gx_context = (gx_context_t *)temp_context->gx_context;
 
 		/* VS: Set the Msg header type for CCR-T */
 		ccr_request->msg_type = GX_CCR_MSG ;

@@ -24,6 +24,9 @@
 #include "ue.h"
 #include "sm_struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* VG1 Temp inlude remove this after handling of CSR on gx*/
 #include "../libgtpv2c/include/gtp_messages.h"
 
@@ -189,4 +192,7 @@ gx_send(int fd, char *buf, uint16_t len);
 
 void init_gx(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* CP_APP_H_ */

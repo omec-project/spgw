@@ -40,9 +40,10 @@
 #include "pfcp_cp_interface.h"
 #include "proc_initial_attach.h"
 #include "assert.h"
+#include "upf_apis.h"
 
 static int
-assoication_setup_request(upf_context_t *upf_context);
+assoication_setup_request(proc_context_t *proc);
 
 void 
 upf_pfcp_setup_failure(void *data, uint16_t event);
@@ -50,18 +51,16 @@ upf_pfcp_setup_failure(void *data, uint16_t event);
 proc_context_t*
 alloc_pfcp_association_setup_proc(void *upf_context)
 {
-
-    msg_info_t *setup_msg = calloc(1, sizeof(msg_info_t));
+    msg_info_t *setup_msg = (msg_info_t *)calloc(1, sizeof(msg_info_t));
     setup_msg->event = PFCP_ASSOCIATION_SETUP; 
     proc_context_t *pfcp_setup_proc;
-    pfcp_setup_proc = calloc(1, sizeof(proc_context_t));
+    pfcp_setup_proc = (proc_context_t*)calloc(1, sizeof(proc_context_t));
     pfcp_setup_proc->proc_type = PFCP_ASSOC_SETUP_PROC; 
     pfcp_setup_proc->handler = pfcp_association_event_handler;
     SET_PROC_MSG(pfcp_setup_proc, setup_msg);
     pfcp_setup_proc->upf_context = upf_context;
-    
     setup_msg->proc_context = pfcp_setup_proc;
-
+    LOG_MSG(LOG_DEBUG,"Proc %p upf contect %p ", pfcp_setup_proc, upf_context);
     return pfcp_setup_proc;
 }
 
@@ -77,6 +76,10 @@ pfcp_association_event_handler(void *proc, void *msg_info)
             association_setup_handler(proc_context, msg); 
             break;
         }
+        case PFCP_ASSOCIATION_SETUP_RSP: {
+            handle_pfcp_association_setup_response(proc_context, msg);
+            break;
+        }
         default:
             assert(0); //wrong event received
     }
@@ -87,11 +90,10 @@ int
 association_setup_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     int ret = 0;
-	upf_context_t *upf_context = proc_context->upf_context;
+	upf_context_t *upf_context = (upf_context_t *)proc_context->upf_context;
     assert (upf_context->state != PFCP_ASSOC_RESP_RCVD_STATE); 
-
     LOG_MSG(LOG_DEBUG1,"Initiate PFCP association setup to UPF %s ", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
-    ret = assoication_setup_request(upf_context);
+    ret = assoication_setup_request(proc_context);
 	if(ret) {
 		LOG_MSG(LOG_ERROR, "Error in setting up Association error: %d, msg = %p ", ret, msg);
         upf_context->state = UPF_SETUP_FAILED; 
@@ -104,7 +106,7 @@ association_setup_handler(proc_context_t *proc_context, msg_info_t *msg)
 int
 buffer_csr_request(proc_context_t *proc_context)
 {
-    ue_context_t *ue = proc_context->ue_context;
+    ue_context_t *ue = (ue_context_t*)proc_context->ue_context;
     upf_context_t *upf_context = ue->upf_context;
 	pending_proc_key_t *key = (pending_proc_key_t*) calloc(1, sizeof(pending_proc_key_t));
 	key->proc_context = (void *)proc_context;
@@ -113,16 +115,11 @@ buffer_csr_request(proc_context_t *proc_context)
 }
 
 int 
-handle_pfcp_association_setup_response(void *msg_t)
+handle_pfcp_association_setup_response(proc_context_t *proc, void *msg_t)
 {
     msg_info_t *msg = (msg_info_t*)msg_t;
-	upf_context_t *upf_context = NULL;
+	upf_context_t *upf_context = (upf_context_t *)proc->upf_context;
     struct sockaddr_in *peer_addr = &msg->peer_addr;
-    uint32_t seq_num = msg->pfcp_msg.pfcp_ass_resp.header.seid_seqno.no_seid.seq_no; 
-    uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
-    uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
-
-    assert(msg->msg_type == PFCP_ASSOCIATION_SETUP_RESPONSE);
     // Requirement : 
     // 0. Validate presence of IE
     // 1. node_id should come as name or ip address
@@ -133,19 +130,6 @@ handle_pfcp_association_setup_response(void *msg_t)
            &msg->pfcp_msg.pfcp_ass_resp.node_id.node_id_value,
             IPV4_SIZE);
 #endif
-    transData_t *pfcp_trans = delete_pfcp_transaction(local_addr, port_num, seq_num);
-
-    if (pfcp_trans == NULL ) {
-        LOG_MSG(LOG_ERROR, "transaction not found. Dropping association response message. from UPF IP:%s",
-                inet_ntoa(peer_addr->sin_addr));
-        return -1;
-    }
-
-    upf_context = (upf_context_t *)(pfcp_trans->cb_data);
-
-    stop_transaction_timer(pfcp_trans);
-    upf_context->trans_entry = NULL;
-    free(pfcp_trans);
 
 	if(msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED) {
 		LOG_MSG(LOG_ERROR, "Cause received  Association response is %d",
@@ -173,13 +157,7 @@ handle_pfcp_association_setup_response(void *msg_t)
 			msg->msg_type, GET_UPF_ADDR(upf_context),
 			get_proc_string(msg->proc),
 			get_state_string(msg->state), get_event_string(msg->event));
-#if 0
-    if(cp_config->cp_type != SGWC) {
-        /* Init rule tables of user-plane */
-        context->upf_context->upf_sockaddr.sin_addr.s_addr = msg->upf_ipv4.s_addr;
-        // init_dp_rule_tables();
-    }
-#endif
+
     upf_context->state = PFCP_ASSOC_RESP_RCVD_STATE;
     upf_context->up_supp_features = msg->pfcp_msg.pfcp_ass_resp.up_func_feat.sup_feat;
     upf_context->add_up_supp_features1 = msg->pfcp_msg.pfcp_ass_resp.up_func_feat.add_sup_feat1;
@@ -234,7 +212,6 @@ handle_pfcp_association_setup_response(void *msg_t)
 
     if ((add_node_conn_entry((uint32_t)peer_addr->sin_addr.s_addr,
                     SX_PORT_ID)) != 0) {
-
         LOG_MSG(LOG_ERROR, "Failed to add connection entry for SGWU/SAEGWU");
     }
     queue_stack_unwind_event(UPF_CONNECTION_SETUP_SUCCESS, (void *)upf_context, upf_pfcp_setup_success);
@@ -273,15 +250,16 @@ fill_pfcp_association_setup_req(pfcp_assn_setup_req_t *pfcp_ass_setup_req)
  * @return : This function dose not return anything
  */
 static int
-assoication_setup_request(upf_context_t *upf_context)
+assoication_setup_request(proc_context_t *proc_context)
 {
+	upf_context_t *upf_context = (upf_context_t *)proc_context->upf_context;
     transData_t *trans_entry;
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
     uint32_t seq_num;
     pfcp_assn_setup_req_t pfcp_ass_setup_req = {0};
 
-    LOG_MSG(LOG_DEBUG1, "Initiate PFCP setup to peer address = %s ", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
+    LOG_MSG(LOG_INFO, "Initiate PFCP setup to peer address = %s ", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
 
     seq_num = fill_pfcp_association_setup_req(&pfcp_ass_setup_req);
 
@@ -295,26 +273,27 @@ assoication_setup_request(upf_context_t *upf_context)
 
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_ASSOCSETUPREQ, GET_UPF_ADDR(upf_context));
 
-    trans_entry = start_pfcp_node_timer((void *)upf_context, pfcp_msg, encoded,  
-                                        process_assoc_resp_timeout_handler);
+    trans_entry = start_response_wait_timer((void *)proc_context, pfcp_msg, encoded, process_assoc_resp_timeout_handler);
     
     trans_entry->self_initiated = 1;
     trans_entry->sequence = seq_num;
     // for now...upf is responding with 0 seq 
     add_pfcp_transaction(local_addr, port_num, seq_num, (void*)trans_entry);  
-    upf_context->trans_entry = trans_entry;
+    proc_context->pfcp_trans = trans_entry;
+    trans_entry->proc_context = proc_context;
+
+    upf_context->proc = proc_context;
     upf_context->state = PFCP_ASSOC_REQ_SNT_STATE;
 
     return 0;
 }
 
 void
-process_assoc_resp_timeout_handler(void *data1)
+process_assoc_resp_timeout_handler(void *data)
 {
-    transData_t *data = (transData_t *)data1;
-    upf_context_t *upf_ctxt = (upf_context_t *)(data->cb_data);
-    LOG_MSG(LOG_ERROR, "PFCP association response timeout from %s  ",
-          inet_ntoa(upf_ctxt->upf_sockaddr.sin_addr));
+    proc_context_t *proc = (proc_context_t *)data;
+    upf_context_t *upf_ctxt = (upf_context_t *)(proc->upf_context);
+    LOG_MSG(LOG_ERROR, "PFCP association response timeout from %s  ", inet_ntoa(upf_ctxt->upf_sockaddr.sin_addr));
     // transaction will be freed in the cleanup 
     upf_pfcp_setup_failure((void *)upf_ctxt, PFCP_SETUP_TIMEOUT); 
 }
@@ -331,22 +310,21 @@ upf_pfcp_setup_failure(void *data, uint16_t event)
         LOG_MSG(LOG_ERROR, "Reject buffered procedure ");
         LIST_REMOVE(key, procentries);
         proc_context_t *proc = (proc_context_t *)key->proc_context;
-        msg = calloc(1, sizeof(msg_info_t));
+        msg = (msg_info_t *)proc->msg_info; 
         msg->msg_type = PFCP_ASSOC_SETUP_FAILED;
         msg->event = PFCP_ASSOC_SETUP_FAILED;
-        msg->proc_context = key->proc_context; 
-        SET_PROC_MSG(proc, msg);
         proc->handler(proc, msg);
         free(key);
         key = LIST_FIRST(&upf_context->pending_sub_procs);
     }
-    LOG_MSG(LOG_ERROR, "Deleting UPF context %s, event = %d ",inet_ntoa(upf_context->upf_sockaddr.sin_addr), event);
-    upf_context_delete_entry(upf_context->upf_sockaddr.sin_addr.s_addr);
-    free(upf_context);
+    LOG_MSG(LOG_ERROR, "PFCP association setup failed for %s, event = %d ",inet_ntoa(upf_context->upf_sockaddr.sin_addr), event);
+    proc_context_t *upf_proc = (proc_context_t *)upf_context->proc;
+    proc_pfcp_assoc_setup_failure(upf_proc, 0);
 }
 
 
-void upf_pfcp_setup_success(void *data, uint16_t event)
+void 
+upf_pfcp_setup_success(void *data, uint16_t event)
 {
     upf_context_t *upf_context = (upf_context_t *)data;
     pending_proc_key_t *key;
@@ -357,19 +335,45 @@ void upf_pfcp_setup_success(void *data, uint16_t event)
     key = LIST_FIRST(&upf_context->pending_sub_procs);
     while (key != NULL) {
         LIST_REMOVE(key, procentries);
-        csreq_proc = key->proc_context;
-        pdn_connection_t *pdn = csreq_proc->pdn_context;
-
-        if(IF_PDN_ADDR_ALLOC_UPF(pdn) && (IS_UPF_SUPP_FEAT_UEIP(upf_context) == 0)) {
-            LOG_MSG(LOG_ERROR, "UPF does not support UE IP address allocation feature. Event %d ", event);
-            proc_initial_attach_failure(csreq_proc, GTPV2C_CAUSE_REQUEST_REJECTED);
-        } else {
-            process_pfcp_sess_est_request(csreq_proc, upf_context);
-        }
-
+        csreq_proc = (proc_context_t *)key->proc_context;
+        msg_info_t *msg = (msg_info_t *)csreq_proc->msg_info; 
+        msg->msg_type = PFCP_ASSOC_SETUP_SUCCESS;
+        msg->event = PFCP_ASSOC_SETUP_SUCCESS;
+        csreq_proc->handler(csreq_proc, msg);
         free(key);
         key = LIST_FIRST(&upf_context->pending_sub_procs);
     }
+    proc_context_t *upf_proc = (proc_context_t *)upf_context->proc;
+    proc_pfcp_assoc_setup_success(upf_proc);
 	return ;
 }
 
+void 
+proc_pfcp_assoc_setup_success(proc_context_t *proc)
+{
+    proc->result = PROC_RESULT_SUCCESS;
+    // increment stats 
+    proc_pfcp_assoc_setup_complete(proc);
+}
+
+void 
+proc_pfcp_assoc_setup_failure(proc_context_t *proc_context, int cause)
+{
+	upf_context_t *upf_context = (upf_context_t *)proc_context->upf_context;
+    if(cause != -1) {
+        //increment upf stats for association setup message
+    } else {
+        //increment upf stats for association setup message
+    }
+    proc_context->result = PROC_RESULT_FAILURE;
+    proc_pfcp_assoc_setup_complete(proc_context);
+    LOG_MSG(LOG_INFO, "Schedule PFCP association setup");
+    schedule_pfcp_association(5, upf_context);
+}
+
+void
+proc_pfcp_assoc_setup_complete(proc_context_t *proc)
+{
+    end_upf_procedure(proc);
+    return;
+}

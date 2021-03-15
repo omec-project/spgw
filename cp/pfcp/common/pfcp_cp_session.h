@@ -13,6 +13,9 @@
 #include "pfcp_cp_set_ie.h"
 #include "gtp_messages.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define NUM_UE 10000
 #define NUM_DP 100
 
@@ -378,4 +381,7 @@ void sdf_pkt_filter_upd_bearer(pfcp_sess_mod_req_t* pfcp_sess_mod_req,
     int flow_cnt,
     uint8_t direction);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* PFCP_CP_SESSION_H */

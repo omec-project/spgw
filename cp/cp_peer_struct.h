@@ -14,6 +14,9 @@
 #include "cp_timer.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief  : Maintains peer node related information for control plane
@@ -47,5 +50,8 @@ typedef struct peerData {
 } peerData_t;
 
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

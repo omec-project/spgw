@@ -57,7 +57,7 @@ struct cp_params cp_params;
 
 /**
  *
- * @brief  : Parses non-dpdk command line program arguments for control plane
+ * @brief  : Parses command line program arguments for control plane
  * @param  : argc, number of arguments
  * @param  : argv, array of c-string arguments
  * @return : Returns nothing
@@ -108,7 +108,7 @@ parse_arg(int argc, char **argv)
             case 'f':
                 {
                     LOG_MSG(LOG_ERROR,"argument %s ", optarg);
-                    config_update_base_folder = calloc(1, 128);
+                    config_update_base_folder = (char *)calloc(1, 128);
                     assert(config_update_base_folder != NULL);
                     strcpy(config_update_base_folder, optarg);
                     LOG_MSG(LOG_INIT,"config base folder set to %s ", config_update_base_folder);
@@ -134,8 +134,8 @@ parse_arg(int argc, char **argv)
 
 
 /**
- * @brief  : Main function - initializes dpdk environment, parses command line arguments,
- *           calls initialization function, and spawns stats and control plane function
+ * @brief  : Main function - parses command line arguments,
+ *           calls initialization function
  * @param  : argc, number of arguments
  * @param  : argv, array of c-string arguments
  * @return : returns 0
@@ -143,8 +143,6 @@ parse_arg(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    //int ret;
-
 	set_logging_level("LOG_ERROR");
     LOG_MSG(LOG_INIT, "Starting main thread %d ",argc);
 

@@ -7,6 +7,9 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * max length of name string.
  */
@@ -28,5 +31,9 @@ extern int32_t conn_cnt;
  */
 void sig_handler(int signo);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* _MAIN_H_ */
 

@@ -5,6 +5,9 @@
 #ifndef __DETACH_PROC__H
 #define __DETACH_PROC__H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 proc_context_t*
 alloc_detach_proc(msg_info_t *msg);
 
@@ -57,5 +60,8 @@ fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		gtpv2c_header_t *header, ue_context_t *context, pdn_connection_t *pdn);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif
 

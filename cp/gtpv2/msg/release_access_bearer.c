@@ -76,7 +76,7 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
     uint16_t source_port = msg->peer_addr.sin_port;
     uint32_t seq_num = msg->gtpc_msg.rab.header.teid.has_teid.seq;  
-    transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
+    transData_t *old_trans = (transData_t*)find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
         LOG_MSG(LOG_WARN, "Retransmitted RAB received. Old RAB is in progress");

@@ -38,7 +38,7 @@ msg_handler_pfcp(void *data)
     while (1) {
         socklen_t addr_len = sizeof(struct sockaddr_in);
         int bytes_pfcp_rx = 0;
-        msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
+        msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t)); 
         struct sockaddr_in peer_addr = {0};
 
         bytes_pfcp_rx = recvfrom(my_sock.sock_fd_pfcp, pfcp_rx, sizeof(pfcp_rx), 0, (struct sockaddr *)(&peer_addr), &addr_len);

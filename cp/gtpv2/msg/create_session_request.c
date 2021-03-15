@@ -317,11 +317,11 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 #endif /* USE_CSID */
     if(context->pco != NULL)
     {
-        char *pco_buf = calloc(1, 260);
+        char *pco_buf = (char *)calloc(1, 260);
         if (pco_buf != NULL) {
             //Should we even pass the CSReq in case of PCO not able to allocate ?
             //TODO -  pass upf context to build PCO 
-            uint16_t len = build_pco_response(pco_buf, context->pco, context);
+            uint16_t len = build_pco_response(pco_buf, (pco_ie_t *)context->pco, context);
             set_pco(&cs_resp.pco_new, IE_INSTANCE_ZERO, pco_buf, len);
         }
     } 
@@ -666,7 +666,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
     uint16_t source_port = msg->peer_addr.sin_port;
     uint32_t seq_num = msg->gtpc_msg.csr.header.teid.has_teid.seq;  
-    transData_t *old_trans = find_gtp_transaction(source_addr, source_port, seq_num);
+    transData_t *old_trans = (transData_t*)find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
         LOG_MSG(LOG_DEBUG0, "Retransmitted CSReq received. Old CSReq is in progress");

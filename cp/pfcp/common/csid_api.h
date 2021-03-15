@@ -9,6 +9,9 @@
 #include "gtp_messages.h"
 #include "ue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #ifdef USE_CSID
 int8_t
 update_peer_csid_link(fqcsid_t *fqcsid, fqcsid_t *fqcsid_t);
@@ -32,6 +35,11 @@ fill_fqcsid_sess_est_req(pfcp_sess_estab_req_t *pfcp_sess_est_req, ue_context_t 
 
 int
 fill_peer_node_info(pdn_connection_t *pdn, eps_bearer_t *bearer);
+
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 #endif
 

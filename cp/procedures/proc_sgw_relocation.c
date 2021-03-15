@@ -70,7 +70,7 @@ proc_context_t*
 alloc_sgw_relocation_proc(msg_info_t *msg)
 {
     proc_context_t *sgw_reloc_proc;
-    sgw_reloc_proc = calloc(1, sizeof(proc_context_t));
+    sgw_reloc_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     sgw_reloc_proc->proc_type = msg->proc; 
     sgw_reloc_proc->handler = sgw_relocation_event_handler;
 
@@ -858,7 +858,7 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 	    LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 	    return -1;
 	}
-    gx_context = temp_ue_context->gx_context;
+    gx_context = (gx_context_t *)temp_ue_context->gx_context;
 
 	/* VS: Set the Msg header type for CCR */
 	ccr_request.msg_type = GX_CCR_MSG ;

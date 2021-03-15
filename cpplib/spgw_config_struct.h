@@ -12,6 +12,9 @@
 #include <linux/limits.h>
 #include "cp_config_defs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct imsi_selection
 {
     bool      is_valid;
@@ -58,6 +61,10 @@ typedef struct user_plane_profile
     uint32_t upf_addr; /* run time information */
     bool     global_address; /* true : control plane allocates address, false : upf allocates address */
 }user_plane_profile_t;
+
+typedef struct profile_names {
+    char profile_name[64];
+}profile_names_t;
 
 #define MAX_NETCAP_LEN               (64)
 typedef struct apn_profile 
@@ -197,9 +204,13 @@ typedef struct cp_config
 
     uint32_t  gx_enabled;
     uint32_t  urr_enable;
+    bool      pfcp_hb_ts_fail;
 }cp_config_t;
 
 extern cp_config_t *cp_config;
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

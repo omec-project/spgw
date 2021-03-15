@@ -25,6 +25,9 @@
 #include "gtp_ies.h"
 #include "gtp_messages.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define GTP_VERSION_GTPV2C                                   (2)
 
@@ -105,14 +108,16 @@ typedef struct gtpv2c_ie_t {
 /**
  * @brief  : Maintains information of cause ie
  */
+struct cause_ie_hdr_t {
+	uint8_t cause_value;
+	uint8_t cause_source :1;
+	uint8_t bearer_context_error :1;
+	uint8_t pdn_connection_error :1;
+	uint8_t spare_0 :5;
+};
+
 typedef struct cause_ie {
-	struct cause_ie_hdr_t {
-		uint8_t cause_value;
-		uint8_t cause_source :1;
-		uint8_t bearer_context_error :1;
-		uint8_t pdn_connection_error :1;
-		uint8_t spare_0 :5;
-	} cause_ie_hdr;
+	struct cause_ie_hdr_t cause_ie_hdr;
 	/* if gtpv2c_ie->length=2, the following fields are not active,
 	 *  otherwise gtpv2c_ie->length=6
 	 */
@@ -169,22 +174,28 @@ typedef struct eps_bearer_id_ie {
 /**
  * @brief  : Maintains information of paa ie
  */
+struct paa_ie_hdr_t {
+	uint8_t pdn_type :3;
+	uint8_t spare :5;
+};
+
+struct ipv6 {
+	uint8_t prefix_length;
+	struct in6_addr ipv6;
+};
+
+struct paa_ipv4v6 {
+	uint8_t prefix_length;
+	struct in6_addr ipv6;
+	struct in_addr ipv4;
+};
+
 typedef struct paa_ie {
-	struct paa_ie_hdr_t {
-		uint8_t pdn_type :3;
-		uint8_t spare :5;
-	} paa_ie_hdr;
+	struct paa_ie_hdr_t paa_ie_hdr;
 	union ip_type_union_t {
 		struct in_addr ipv4;
-		struct ipv6 {
-			uint8_t prefix_length;
-			struct in6_addr ipv6;
-		} ipv6;
-		struct paa_ipv4v6 {
-			uint8_t prefix_length;
-			struct in6_addr ipv6;
-			struct in_addr ipv4;
-		} paa_ipv4v6;
+		struct ipv6 ipv6;
+		struct paa_ipv4v6 paa_ipv4v6;
 	} ip_type_union;
 } paa_ie;
 
@@ -335,6 +346,28 @@ typedef struct delete_pkt_filter_t {
 	uint8_t spare :4;
 } delete_pkt_filter;
 
+struct ipv4_t {
+	struct in_addr ipv4;
+	struct in_addr mask;
+	uint8_t next_component;
+};
+
+struct port_t {
+	uint16_t port;
+	uint8_t next_component;
+};
+
+struct port_range_t {
+	uint16_t port_low;
+	uint16_t port_high;
+	uint8_t next_component;
+};
+
+struct proto_t {
+	uint8_t proto;
+	uint8_t next_component;
+};
+
 /**
  * Packet filter component from Table 10.5.162/3GPP TS 24.008
  */
@@ -344,24 +377,10 @@ typedef struct delete_pkt_filter_t {
 typedef struct packet_filter_component_t {
 	uint8_t type;
 	union type_union_u {
-		struct ipv4_t {
-			struct in_addr ipv4;
-			struct in_addr mask;
-			uint8_t next_component;
-		} ipv4;
-		struct port_t {
-			uint16_t port;
-			uint8_t next_component;
-		} port;
-		struct port_range_t {
-			uint16_t port_low;
-			uint16_t port_high;
-			uint8_t next_component;
-		} port_range;
-		struct proto_t {
-			uint8_t proto;
-			uint8_t next_component;
-		} proto;
+		struct ipv4_t ipv4;
+		struct port_t port;
+		struct port_range_t port_range;
+		struct proto_t proto;
 	} type_union;
 } packet_filter_component;
 
@@ -423,13 +442,12 @@ enum flow_status {
  */
 
 static const uint8_t PACKET_FILTER_COMPONENT_SIZE[REMOTE_PORT_RANGE + 1] = {
-	[IPV4_REMOTE_ADDRESS] = sizeof(struct ipv4_t),
-	[IPV4_LOCAL_ADDRESS] = sizeof(struct ipv4_t),
-	[PROTOCOL_ID_NEXT_HEADER] = sizeof(struct proto_t),
-	[SINGLE_LOCAL_PORT] = sizeof(struct port_t),
-	[LOCAL_PORT_RANGE] = sizeof(struct port_range_t),
-	[SINGLE_REMOTE_PORT] = sizeof(struct port_t),
-	[REMOTE_PORT_RANGE] = sizeof(struct port_range_t),
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x0 to 0xf */
+    sizeof(struct ipv4_t),sizeof(struct ipv4_t),0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x10 to 0x1f */
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x20 to 0x2f */
+    sizeof(struct proto_t),0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x30 to 0x3f */
+    sizeof(struct port_t), sizeof(struct port_range_t),0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x40 to 0x4f */
+    sizeof(struct port_t), sizeof(struct port_range_t)/* 0x50 0x51 */
 };
 
 #define AUTHORIZATION_TOKEN              (1)
@@ -458,20 +476,24 @@ typedef struct bearer_tft_ie_t traffic_aggregation_description;
 /**
  * @brief  : Maintains information of fteid ie
  */
+struct fteid_ie_hdr_t {
+	uint8_t interface_type :6;
+	uint8_t v6 :1;
+	uint8_t v4 :1;
+	uint32_t teid_or_gre;
+};
+
+struct ipv4v6 {
+	struct in_addr ipv4;
+	struct in6_addr ipv6;
+};
+
 typedef struct fteid_ie {
-	struct fteid_ie_hdr_t {
-		uint8_t interface_type :6;
-		uint8_t v6 :1;
-		uint8_t v4 :1;
-		uint32_t teid_or_gre;
-	} fteid_ie_hdr;
+	struct fteid_ie_hdr_t fteid_ie_hdr;
 	union ip_t {
 		struct in_addr ipv4;
 		struct in6_addr ipv6;
-		struct ipv4v6 {
-			struct in_addr ipv4;
-			struct in6_addr ipv6;
-		} ipv4v6;
+		struct ipv4v6 ipv4v6;
 	} ip_u;
 } fteid_ie;
 
@@ -551,5 +573,8 @@ typedef struct fqdn_type_ie {
 #define APN_PTR_FROM_APN_IE(gtpv2c_ie_ptr)    \
 		IE_TYPE_PTR_FROM_GTPV2C_IE(char, gtpv2c_ie_ptr)
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* IE_H */
 

@@ -7,6 +7,9 @@
 #ifndef __PROC_SESSION_REPORT_H
 #define __PROC_SESSION_REPORT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 proc_context_t*
 alloc_session_report_proc(msg_info_t *msg);
 
@@ -37,4 +40,7 @@ send_session_report_response(proc_context_t *proc_ctxt, msg_info_t *msg);
 
 void ddn_indication_timeout(void *);
 
+#ifdef __cplusplus
+}
+#endif
 #endif 

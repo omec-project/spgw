@@ -7,6 +7,10 @@
 #define __GX_ERROR_RSP__
 #include "./gx_app/include/gx.h"
 #include "sm_struct.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error, uint16_t seq);
 /**
  * @brief  : Preocess sending of ccr-t message if there is any error while procesing gx message
@@ -16,5 +20,8 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error, uint16_t se
  * @return : Returns nothing
  */
 void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid);
-#endif
 
+#ifdef __cplusplus
+}
+#endif
+#endif

@@ -10,6 +10,9 @@
 #include "trans_struct.h"
 #include "sm_struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define UPF_ASSOCIATION_PENDING  0x00000001 
 
 enum proc_result {
@@ -54,6 +57,9 @@ struct proc_context {
     void*            child_procs[MAX_CHILD_PROC]; 
     void*            parent_proc;
     uint16_t         tac;
+
+    // printing purpise
+    uint64_t         imsi64;
 };
 typedef struct proc_context proc_context_t;
 
@@ -67,4 +73,8 @@ typedef struct proc_context proc_context_t;
     proc->msg_info = (void *)msg;\
     msg->refCnt++; \
 }
+
+#ifdef __cplusplus
+}
+#endif
 #endif

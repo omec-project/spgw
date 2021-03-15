@@ -11,6 +11,9 @@
 #include <stdbool.h>
 #include <pthread.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define S11_SGW_PORT_ID   0
 #define S5S8_SGWC_PORT_ID 1
 #define SX_PORT_ID        2
@@ -127,20 +130,6 @@ void stopTimer( gstimerinfo_t *ti );
  */
 void deinitTimer( gstimerinfo_t *ti );
 
-/**
- * @brief  : Timer callback
- * @param  : ti, holds information about timer
- * @param  : data_t, Peer node related information
- * @return : Returns nothing
- */
-void timerCallback( gstimerinfo_t *ti, const void *data_t );
-
-/**
- * @brief  : Convert time into printable format
- * @param  : No param
- * @return : Returns nothing
- */
-const char *getPrintableTime(void);
 
 /**
  * @brief  : Initialize timer
@@ -172,4 +161,7 @@ void stoptimer(timer_t *tid);
  */
 void deinittimer(timer_t *tid);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

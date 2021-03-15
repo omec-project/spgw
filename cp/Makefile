@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 ROOT=.
 
-CC := gcc
+CC := g++
 
 TARGET_DIR := $(ROOT)/bin
 
@@ -39,9 +39,9 @@ SOURCES += cp_timer.o
 SOURCES += cp_transactions.o
 SOURCES += cp_session.o
 SOURCES += ipc_api.o
-SOURCES += state_machine/sm_init.o
-SOURCES += state_machine/sm_upf.o
-SOURCES += state_machine/sm_error_handlers.o
+SOURCES += sm_upf.o
+SOURCES += sm_init.o
+SOURCES += sm_error_handlers.o
 SOURCES += procedures/proc_session_report.o
 SOURCES += procedures/proc_initial_attach.o
 SOURCES += procedures/proc_pfcp_assoc_setup.o
@@ -122,7 +122,6 @@ CFLAGS += -I./gx/gx_app/include
 CFLAGS += -I./gtpv2/common
 CFLAGS += -I./pfcp/common
 CFLAGS += -I./procedures
-CFLAGS += -I./state_machine
 CFLAGS += -I$(SRCDIR)/../gx
 CFLAGS += -I/usr/include
 
@@ -132,7 +131,6 @@ LDLIBS += -L$(CPPUTILLIB_ROOT)/lib -lspgwcpputil
 LDLIBS += -L/usr/local/lib -lprometheus-cpp-pull -lprometheus-cpp-core -lpistache
 LDLIBS += -L/usr/local/lib -lpistache
 LDLIBS += -lpcap -lcrypto -lssl
-LDFLAGS += -lstdc++
 LDLIBS += -lstdc++
 LDLIBS += -lpthread
 LDLIBS += -lrt

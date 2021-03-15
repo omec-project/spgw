@@ -35,16 +35,6 @@ start_response_wait_timer(void *ue_context,
     return start_transaction_timer(ue_context, buf, buf_len, cb, transaction_retry_callback);
 }
 
-transData_t*
-start_pfcp_node_timer(void *upf_context, 
-                      uint8_t *buf, 
-                      uint16_t buf_len, 
-                      timeout_handler_t cb)
-{
-    return start_transaction_timer(upf_context, buf, buf_len, cb, pfcp_node_transaction_retry_callback);
-}
-
-
 static transData_t* 
 start_transaction_timer(void *cb_data, 
                         uint8_t *buf, 
@@ -65,10 +55,8 @@ start_transaction_timer(void *cb_data,
 	memcpy(trans_entry->buf,(uint8_t *)buf, buf_len);
     trans_entry->timeout_function = cb_timeout;
 
-	if (!init_timer(&trans_entry->rt, cp_config->request_timeout, cb_retry, (void *)trans_entry))
-	{
-		LOG_MSG(LOG_ERROR,"%s - initialization of trans timer failed erro no %d",
-				getPrintableTime(), errno);
+	if (!init_timer(&trans_entry->rt, cp_config->request_timeout, cb_retry, (void *)trans_entry)) {
+		LOG_MSG(LOG_ERROR,"initialization of trans timer failed erro no %d", errno);
 		return NULL;
 	}
 
@@ -109,6 +97,7 @@ pfcp_node_transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
         if(data->rt.ti_id != 0) {
              stoptimer(&data->rt.ti_id);
              deinittimer(&data->rt.ti_id);
+             data->rt.ti_id = 0;
         }
         data->timeout_function(data);
         return;
@@ -181,7 +170,7 @@ cleanup_gtpc_trans(transData_t *gtpc_trans)
         port_num = proc->gtpc_trans->peer_sockaddr.sin_port; 
         trans_addr = proc->gtpc_trans->peer_sockaddr.sin_addr.s_addr; 
     }
-    transData_t *trans = delete_gtp_transaction(trans_addr, port_num, seq_num);
+    transData_t *trans = (transData_t *)delete_gtp_transaction(trans_addr, port_num, seq_num);
     if(trans != NULL) {
         assert(gtpc_trans == trans);
     }
@@ -206,7 +195,7 @@ cleanup_pfcp_trans(transData_t *pfcp_trans)
         trans_addr = pfcp_trans->peer_sockaddr.sin_addr.s_addr;
         port_num = pfcp_trans->peer_sockaddr.sin_port;
     }
-    transData_t *trans = delete_pfcp_transaction(trans_addr, port_num, seq_num);
+    transData_t *trans = (transData_t *)delete_pfcp_transaction(trans_addr, port_num, seq_num);
     if(trans != NULL) {
         assert(pfcp_trans == trans);
     }

@@ -18,6 +18,9 @@
 #include "upf_struct.h"
 #include "sm_struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* TODO: Move following lines to another file */
 #define HAS_SEID 1
 #define NO_SEID  0
@@ -61,7 +64,7 @@
 #define BUFFERED_ENTRIES_DEFAULT (1024)
 #define SWGC_S5S8_HANDOVER_ENTRIES_DEFAULT     (50)
 
-struct msgbuf;
+struct msgbuf1;
 
 #pragma pack(1)
 
@@ -849,7 +852,7 @@ set_activate_predefined_rules(pfcp_actvt_predef_rules_ie_t *act_predef_rule);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 uint16_t
-set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf *cstm_buf);
+set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf1 *cstm_buf);
 
 /**
  * @brief  : Fill pfcp pfd management request
@@ -928,4 +931,7 @@ set_downlink_drop_traffic_threshold(pfcp_drpd_dl_traffic_thresh_ie_t *drpd_dl_tr
 int
 set_far_id_quota_action(pfcp_far_id_ie_t *far_id_for_quota_act);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* PFCP_CP_SET_IE_H */

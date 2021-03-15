@@ -11,6 +11,9 @@
 #include "trans_struct.h"
 #include "upf_struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Handles processing of create session response
  * @param  : arg1, data contained in message
@@ -147,10 +150,11 @@ int process_pfcp_sess_set_del_rsp(void *arg1, void *arg2);
 /* Function */
 int cca_u_msg_handler_handover(void *arg1, void *argu2);
 
-int create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt); 
 
 int
 process_error_occured_handler_new(void *data, void *unused_param);
 
-void upf_pfcp_setup_success(void *data, uint16_t event);
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -9,6 +9,9 @@
 #include "gtp_ies.h"
 #include "cp_proc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 proc_context_t*
 alloc_bearer_create_proc(msg_info_t *msg);
 
@@ -75,4 +78,7 @@ fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 		enum rule_action_t rule_action);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

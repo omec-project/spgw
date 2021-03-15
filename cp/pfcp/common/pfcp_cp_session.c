@@ -795,7 +795,7 @@ void
 sdf_pkt_filter_to_string(flow_desc_t *flow,
 		char *sdf_str , uint8_t direction)
 {
-        sdf_pkt_fltr *sdf_flow = &flow->sdf_flw_desc; 
+        sdf_pkt_fltr_t *sdf_flow = &flow->sdf_flw_desc; 
         strcpy(sdf_str, flow->sdf_flow_description);
         LOG_MSG(LOG_NEVER, "sdf flow = %p direction = %d ", sdf_flow, direction);
 #if 0
@@ -977,7 +977,7 @@ fill_pdr_far_qer_using_bearer(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
                 creating_qer(&(pfcp_sess_mod_req->create_qer[itr1]));
                 pfcp_sess_mod_req->create_qer[itr1].qer_id.qer_id_value  =
                     bearer->qer_id[itr1].qer_id;
-                qer_context = get_qer_entry(pfcp_sess_mod_req->create_qer[itr1].qer_id.qer_id_value);
+                qer_context = (qer_t*)get_qer_entry(pfcp_sess_mod_req->create_qer[itr1].qer_id.qer_id_value);
                 /* Assign the value from the PDR */
                 if(qer_context){
                     pfcp_sess_mod_req->create_qer[itr1].maximum_bitrate.ul_mbr  =
@@ -1477,7 +1477,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id();
 			fill_qer_entry(pdn, bearer, bearer->qer_count++);
 
-			enum flow_status f_status = bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
+			enum flow_status f_status = (enum flow_status)bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
 			// assuming no of qer and pdr is same /*TODO*/
 			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
 		    fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, 0);
@@ -1486,7 +1486,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id(); // ajay - URR..
 			fill_qer_entry(pdn, bearer, bearer->qer_count++);
 
-			f_status = bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
+			f_status = (enum flow_status)bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
 			// assuming no of qer and pdr is same /*TODO*/
 			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
 		    fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, 1);
@@ -1495,7 +1495,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 
 			//Adding rule and bearer id to a hash
 			bearer_id_t *id;
-			id = malloc(sizeof(bearer_id_t));
+			id = (bearer_id_t *)malloc(sizeof(bearer_id_t));
 			memset(id, 0 , sizeof(bearer_id_t));
 			rule_name_key_t key = {0};
 			id->bearer_id = bearer->eps_bearer_id;
@@ -1745,7 +1745,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
                         creating_qer(&(pfcp_sess_est_req->create_qer[qer_idx]));
                         pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value  =
                             bearer->qer_id[qer_idx].qer_id;
-                        qer_context = get_qer_entry(pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value);
+                        qer_context = (qer_t *)get_qer_entry(pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value);
                         /* Assign the value from the PDR */
                         if(qer_context){
                             //pfcp_sess_est_req->create_pdr[qer_idx].qer_id[0].qer_id_value =
@@ -1792,7 +1792,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		/*
 		 * call fill_sdf_rules twice because one rule create 2 PDRs
 		 */
-		enum flow_status f_status = pcc_rule->dyn_rule->flow_status;
+		enum flow_status f_status = (enum flow_status)pcc_rule->dyn_rule->flow_status;
 
 		fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, pdr_idx);
 		fill_gate_status(pfcp_sess_est_req, pdr_idx, f_status);
@@ -1932,7 +1932,7 @@ process_pfcp_sess_est_request_timeout(void *data)
 {
     LOG_MSG(LOG_ERROR, "PFCP Session Establishment Request timeout");
     proc_context_t *proc_context = (proc_context_t *)data;
-    msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+    msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t));
     SET_PROC_MSG(proc_context,msg);
     msg->proc_context = proc_context;
     msg->event = PFCP_SESS_EST_RESP_TIMEOUT_EVNT;
@@ -1944,8 +1944,8 @@ transData_t*
 process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_ctx)
 {
 	eps_bearer_t *bearer = NULL;
-	pdn_connection_t *pdn = proc_context->pdn_context;
-	ue_context_t *context = proc_context->ue_context;
+	pdn_connection_t *pdn = (pdn_connection_t *)proc_context->pdn_context;
+	ue_context_t *context = (ue_context_t *)proc_context->ue_context;
 	pfcp_sess_estab_req_t pfcp_sess_est_req = {0};
 	uint32_t sequence = 0;
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
@@ -2089,7 +2089,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
-    proc_context = msg->proc_context; 
+    proc_context = (proc_context_t *)msg->proc_context; 
     assert(proc_context != NULL);
 	proc_context->state = PFCP_SESS_EST_RESP_RCVD_STATE;
 
@@ -2224,7 +2224,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 
 #endif /* USE_CSID */
 
-    pdn = proc_context->pdn_context;
+    pdn = (pdn_connection_t *)proc_context->pdn_context;
     assert(pdn != NULL);
     assert(sess_id == pdn->seid);
     uint8_t ebi_index = pdn->default_bearer_id - 5; 

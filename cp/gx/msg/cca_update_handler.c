@@ -86,7 +86,7 @@ int handle_cca_update_msg(msg_info_t **msg_p)
                 msg->gx_msg.cca.session_id.val);
         return -1;
     }
-    gx_context = temp_ue_context->gx_context;
+    gx_context = (gx_context_t *)temp_ue_context->gx_context;
 
     if(msg->gx_msg.cca.presence.result_code &&
             msg->gx_msg.cca.result_code != 2001){
@@ -104,7 +104,7 @@ int handle_cca_update_msg(msg_info_t **msg_p)
         return -1;
     }
     /* Retrieve PDN context based on call id */
-    pdn_cntxt = get_pdn_conn_entry(call_id);
+    pdn_cntxt = (pdn_connection_t *)get_pdn_conn_entry(call_id);
     if (pdn_cntxt == NULL) {
         LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);
         return -1;
@@ -150,7 +150,7 @@ int cca_u_msg_handler_handover(void *data, void *unused)
 	}
 
 	/* Retrieve PDN context based on call id */
-	pdn = get_pdn_conn_entry(call_id);
+	pdn = (pdn_connection_t *)get_pdn_conn_entry(call_id);
 	if (pdn == NULL)
 	{
 	      LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u",

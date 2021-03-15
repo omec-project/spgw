@@ -9,6 +9,9 @@
 
 #include "pfcp_enum.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* Inside pfcp_fteid_ie_t */
 #define ENCODE_TEID_COND_2(value, bit_count, destination, offset, encoded) \
 	if (value->ch == 0) \
@@ -577,4 +580,7 @@
 		encoded +=  value->length_of_nai * CHAR_SIZE; \
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__PFCP_COND_ENCODER_H__*/

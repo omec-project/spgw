@@ -257,8 +257,8 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 
     if(gtpc_trans != NULL) {
         gtpc_trans->cb_data = NULL;
-        proc_context_t *trans_proc = gtpc_trans->proc_context; 
-        proc_context_t *msg_proc = msg->proc_context; 
+        proc_context_t *trans_proc = (proc_context_t *)gtpc_trans->proc_context; 
+        proc_context_t *msg_proc = (proc_context_t *)msg->proc_context; 
         if(msg_proc != NULL) {
             assert(trans_proc == msg_proc);
             msg_proc->gtpc_trans = NULL;
@@ -414,7 +414,7 @@ void get_error_dsrsp_info(proc_context_t *detach_proc, msg_info_t *msg, err_rsp_
 
 		case PFCP_SESSION_DELETION_RESPONSE: {
             // pfcp timeout OR user plane rejection 
-            ue_context_t *ue_context = detach_proc->ue_context;
+            ue_context_t *ue_context = (ue_context_t *)detach_proc->ue_context;
             transData_t *gtpc_trans = detach_proc->gtpc_trans;
             msg->peer_addr = gtpc_trans->peer_sockaddr; 
 			rsp_info->sender_teid = ue_context->s11_mme_gtpc_teid;
@@ -516,7 +516,7 @@ void get_error_rabrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 		case PFCP_SESSION_MODIFICATION_RESPONSE: {
             proc_context_t *rab_proc = (proc_context_t *)msg->proc_context;
-            ue_context_t *ue_context = rab_proc->ue_context;
+            ue_context_t *ue_context = (ue_context_t *)rab_proc->ue_context;
             transData_t *gtpc_trans = rab_proc->gtpc_trans;
             msg->peer_addr = gtpc_trans->peer_sockaddr; 
 			rsp_info->sender_teid = ue_context->s11_mme_gtpc_teid;

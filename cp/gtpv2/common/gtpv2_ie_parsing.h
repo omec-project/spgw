@@ -5,6 +5,10 @@
 
 #ifndef __GTPv2_PARSING_HELPER
 #define __GTPv2_PARSING_HELPER
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Helper macro to calculate the address of some offset from some base address
  * @param  : base, base or starting address
@@ -123,4 +127,7 @@ get_next_ie(gtpv2c_ie *gtpv2c_ie_ptr, gtpv2c_ie *limit);
 
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

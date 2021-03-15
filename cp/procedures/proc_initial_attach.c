@@ -34,10 +34,16 @@
 #include "pfcp_cp_interface.h"
 #include "gx_interface.h"
 #include "cp_log.h"
+#include "upf_apis.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 static uint32_t s5s8_sgw_gtpc_teid_offset;
-extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
+#ifdef __cplusplus
+}
+#endif
 
 /* local functions. Need to find suitable place for declarations  */
 
@@ -64,7 +70,7 @@ proc_context_t*
 alloc_initial_proc(msg_info_t *msg)
 {
     proc_context_t *csreq_proc;
-    csreq_proc = calloc(1, sizeof(proc_context_t));
+    csreq_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     csreq_proc->proc_type = msg->proc; 
     csreq_proc->handler = initial_attach_event_handler;
     msg->proc_context = csreq_proc;
@@ -85,6 +91,7 @@ initial_attach_event_handler(void *proc, void *msg_info)
             handle_csreq_msg(proc_context, msg);
             break;
         }
+        case PFCP_ASSOC_SETUP_SUCCESS:
         case PFCP_SESS_EST_EVNT: {
             initiate_upf_session(proc_context, msg);
             break;
@@ -121,6 +128,7 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
     pdn_connection_t *pdn = NULL;
     transData_t *gtpc_trans = csreq_proc->gtpc_trans;
 
+    csreq_proc->imsi64 = msg->gtpc_msg.csr.imsi.imsi64; 
     increment_proc_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH,
                                   gtpc_trans->peer_sockaddr.sin_addr.s_addr,
                                   msg->gtpc_msg.csr.uli.tai2.tai_tac);
@@ -161,7 +169,7 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
 void 
 initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg) 
 {
-    ue_context_t *context = csreq_proc->ue_context;
+    ue_context_t *context = (ue_context_t *)csreq_proc->ue_context;
 	upf_context_t *upf_context = context->upf_context;
 
     if (upf_context->state == PFCP_ASSOC_REQ_SNT_STATE) {
@@ -193,7 +201,7 @@ initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg)
         buffer_csr_request(csreq_proc);
         csreq_proc->flags |= UPF_ASSOCIATION_PENDING;
         proc_context_t *proc_context = alloc_pfcp_association_setup_proc((void *)context->upf_context); 
-        start_upf_procedure(proc_context, proc_context->msg_info);
+        start_upf_procedure(proc_context, (msg_info_t*)proc_context->msg_info);
         return;
     }
     return;
@@ -336,7 +344,7 @@ process_create_sess_req(create_sess_req_t *csr,
     }
 
     if(csr->pco_new.header.len != 0) {
-        context->pco = calloc(1, sizeof(pco_ie_t));
+        context->pco = (pco_ie_t *)calloc(1, sizeof(pco_ie_t));
         memcpy(context->pco, (void *)(&csr->pco_new), sizeof(pco_ie_t));
     }
 
@@ -594,7 +602,13 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 	if(msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value != REQUESTACCEPTED) {
 		LOG_MSG(LOG_DEBUG, "Cause received Est response is %d",
 				msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value);
+        ue_context_t *context = (ue_context_t *)proc_context->ue_context;
+        upf_context_t *upf_ctxt = context->upf_context;
         proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REQUEST_REJECTED);
+        if(msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value == NOESTABLISHEDPFCPASSOCIATION) {
+		    LOG_MSG(LOG_INFO, "Initiate pfcp associations ");
+            schedule_pfcp_association(1,upf_ctxt); 
+        }
 		return -1;
 	}
 
@@ -997,7 +1011,7 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 void
 fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 {
-	dynamic_rule_t *dynamic_rule = calloc(1, sizeof(dynamic_rule_t)); 
+	dynamic_rule_t *dynamic_rule = (dynamic_rule_t*)calloc(1, sizeof(dynamic_rule_t)); 
 	uint8_t ebi_index = pdn->default_bearer_id - 5;
 	eps_bearer_t *bearer = pdn->eps_bearers[ebi_index];
 
@@ -1048,7 +1062,7 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 	dynamic_rule->qos.dl_mbr =  REQUESTED_BANDWIDTH_DL;
 	dynamic_rule->qos.ul_gbr =  GURATEED_BITRATE_UL;
 	dynamic_rule->qos.dl_gbr =  GURATEED_BITRATE_DL;
-    pcc_rule_t *pcc_rule = calloc(1, sizeof(pcc_rule_t)); 
+    pcc_rule_t *pcc_rule = (pcc_rule_t *)calloc(1, sizeof(pcc_rule_t)); 
     pcc_rule->action = RULE_ACTION_ADD; 
     pcc_rule->dyn_rule = dynamic_rule;
     TAILQ_INSERT_TAIL(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
@@ -1057,7 +1071,7 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 // TODO : need to define local cause above 255. That way we can increment stats 
 void proc_initial_attach_failure(proc_context_t *proc_context, int cause)
 {
-    msg_info_t *msg = proc_context->msg_info;
+    msg_info_t *msg = (msg_info_t *)proc_context->msg_info;
     transData_t *trans_rec = proc_context->gtpc_trans;
     if(cause != -1) {
         increment_proc_mme_peer_stats_reason(PROCEDURES_SPGW_INITIAL_ATTACH_FAILURE, 
@@ -1852,7 +1866,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 	char *buffer = NULL;
 	gx_msg ccr_request = {0};
 	gx_context_t *gx_context = NULL;
-    ue_context_t *context = proc_context->ue_context;
+    ue_context_t *context = (ue_context_t *)proc_context->ue_context;
 
 	/* VS: Generate unique call id per PDN connection */
 	context->pdns[ebi_index]->call_id = generate_call_id();

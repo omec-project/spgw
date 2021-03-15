@@ -115,7 +115,7 @@ parse_bearer_resource_cmd(gtpv2c_header_t *gtpv2c_rx,
  *           - < 0 for all other errors
  */
 static int
-parse_packet_filter(create_pkt_filter *cpf, pkt_fltr *pf)
+parse_packet_filter(create_pkt_filter *cpf, pkt_fltr_t *pf)
 {
 	reset_packet_filter(pf);
 
@@ -309,7 +309,7 @@ install_packet_filters(eps_bearer_t *ded_bearer,
 			return -EPERM;
 		}
 
-		packet_filter pf;
+		packet_filter_t pf;
 		ret = parse_packet_filter(cpf, &pf.pkt_fltr);
 		if (ret)
 			return -ret;

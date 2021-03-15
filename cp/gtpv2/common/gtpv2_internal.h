@@ -7,6 +7,9 @@
 #ifndef __GTPV2_INTERNAL_H__
 #define __GTPV2_INTERNAL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* IMSI length on gtpv2c */
 #define BINARY_IMSI_LEN 8
 
@@ -15,4 +18,8 @@
 #define BINARY_MSISDN_LEN 6
 
 #define MAX_GTPV2C_UDP_LEN    (4096)
+
+#ifdef __cplusplus
+}
+#endif
 #endif

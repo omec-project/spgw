@@ -36,7 +36,7 @@ int handle_rar_msg(msg_info_t **msg_p)
     }
     pdn_connection_t *pdn_cntxt = NULL;
     /* Retrieve PDN context based on call id */
-    pdn_cntxt = get_pdn_conn_entry(call_id);
+    pdn_cntxt = (pdn_connection_t *)get_pdn_conn_entry(call_id);
     if (pdn_cntxt == NULL) {
         LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);
         return -1;
@@ -48,7 +48,7 @@ int handle_rar_msg(msg_info_t **msg_p)
                 msg->gx_msg.rar.session_id.val);
         return -1;
     }
-    gx_context = temp_ue_context->gx_context;
+    gx_context = (gx_context_t *)temp_ue_context->gx_context;
     msg->ue_context = pdn_cntxt->context;
     msg->pdn_context = pdn_cntxt;
     msg->event = RE_AUTH_REQ_RCVD_EVNT;

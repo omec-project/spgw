@@ -13,6 +13,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define IE_HEADER_SIZE sizeof(ie_header_t)
 
 #define CHAR_SIZE 8
@@ -1927,4 +1930,7 @@ typedef struct pco_ie_t {
 
 #pragma pack()
 
+#ifdef __cplusplus
+}
+#endif
 #endif

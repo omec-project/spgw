@@ -50,9 +50,9 @@ test_event_handler(void *data, uint16_t evt_id)
     if(evt_id == TEST_EVENTS) {
         sleep(30);
         pdn_connection_t *pdn_ctxt = (pdn_connection_t *)data; 
-        gx_context_t *gx_ctxt = pdn_ctxt->context->gx_context;
+        gx_context_t *gx_ctxt = (gx_context_t *)pdn_ctxt->context->gx_context;
 
-        msg_info_t *msg = calloc(1, sizeof(msg_info_t)); 
+        msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t)); 
         msg->msg_type = GX_RAR_MSG;
         msg->source_interface = GX_IFACE;
 	    gx_msg rar_request = {0};
@@ -64,14 +64,14 @@ test_event_handler(void *data, uint16_t evt_id)
         memcpy(rar_request.data.cp_rar.session_id.val, gx_ctxt->gx_sess_id, strlen(gx_ctxt->gx_sess_id));
         rar_request.data.cp_rar.presence.charging_rule_install = PRESENT;
         rar_request.data.cp_rar.charging_rule_install.count = 1;
-        rar_request.data.cp_rar.charging_rule_install.list = calloc(1, sizeof(GxChargingRuleInstall));
+        rar_request.data.cp_rar.charging_rule_install.list = (GxChargingRuleInstall *)calloc(1, sizeof(GxChargingRuleInstall));
         rar_request.data.cp_rar.charging_rule_install.list[0].presence.charging_rule_name = PRESENT;
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_name.count  = 1;
-        rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_name.list  = calloc(1, sizeof(GxChargingRuleNameOctetString));
+        rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_name.list  = (GxChargingRuleNameOctetString *)calloc(1, sizeof(GxChargingRuleNameOctetString));
         strcpy((char *)rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_name.list[0].val,"PRESENT");
         rar_request.data.cp_rar.charging_rule_install.list[0].presence.charging_rule_definition = PRESENT;
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.count = 1;
-        rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list = calloc(1, sizeof(GxChargingRuleDefinition));
+        rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list = (GxChargingRuleDefinition *)calloc(1, sizeof(GxChargingRuleDefinition));
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].presence.charging_rule_name = PRESENT;
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].charging_rule_name.len = strlen("rule2");
         strcpy((char *)rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].charging_rule_name.val,"rule2");
@@ -97,7 +97,7 @@ test_event_handler(void *data, uint16_t evt_id)
 
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].presence.flow_information = PRESENT;
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].flow_information.count =  1;
-        rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].flow_information.list =  calloc(1,sizeof(GxFlowInformation));
+        rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].flow_information.list =  (GxFlowInformation *)calloc(1,sizeof(GxFlowInformation));
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].flow_information.list[0].presence.flow_description =  PRESENT;
         char rule[300]="permit out udp from any to assigned";
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].flow_information.list[0].flow_description.len =strlen(rule);
@@ -107,7 +107,7 @@ test_event_handler(void *data, uint16_t evt_id)
         rar_request.data.cp_rar.charging_rule_install.list[0].charging_rule_definition.list[0].flow_information.list[0].flow_direction = BIDIRECTIONAL;
 
         msglen = gx_rar_calc_length(&rar_request.data.cp_rar);
-        rar_buffer = calloc(1, msglen+sizeof(rar_request.msg_type)+4);
+        rar_buffer = (char *)calloc(1, msglen+sizeof(rar_request.msg_type)+4);
 	    memcpy(rar_buffer, &rar_request.msg_type, sizeof(rar_request.msg_type));
 	    gx_rar_pack(&(rar_request.data.cp_rar), (unsigned char *)(rar_buffer + sizeof(rar_request.msg_type) + sizeof(rar_request.seq_num)), msglen); 
         msg->raw_buf = rar_buffer;
@@ -163,7 +163,7 @@ void
 handle_mock_create_bearer_request_msg(void *evt)
 {
     int ret;
-    msg_info_t *msg = calloc(1, sizeof(msg_info_t));
+    msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t));
     outgoing_pkts_event_t *event = (outgoing_pkts_event_t *)evt;
 
     LOG_MSG(LOG_DEBUG, "Received mock event %p",event);
@@ -184,18 +184,18 @@ handle_mock_create_bearer_request_msg(void *evt)
         cbrsp.header.teid.has_teid.teid = 0; 
         cbrsp.header.teid.has_teid.seq = msg->gtpc_msg.cb_req.header.teid.has_teid.seq; 
 
-        set_cause_accepted(&cbrsp.cause, 0); 
+        set_cause_accepted(&cbrsp.cause, IE_INSTANCE_ZERO); 
 
-        set_ebi(&cbrsp.bearer_contexts.eps_bearer_id, 0, 6);
-        set_cause_accepted(&cbrsp.bearer_contexts.cause, 0);
+        set_ebi(&cbrsp.bearer_contexts.eps_bearer_id, IE_INSTANCE_ZERO, 6);
+        set_cause_accepted(&cbrsp.bearer_contexts.cause, IE_INSTANCE_ZERO);
         struct in_addr en_addr; 
         en_addr.s_addr = 0x01010101;
-        set_ipv4_fteid(&cbrsp.bearer_contexts.s1u_enb_fteid, GTPV2C_IFTYPE_S1U_ENODEB_GTPU, 0, en_addr, 100); 
+        set_ipv4_fteid(&cbrsp.bearer_contexts.s1u_enb_fteid, GTPV2C_IFTYPE_S1U_ENODEB_GTPU, IE_INSTANCE_ZERO, en_addr, 100); 
 
         struct in_addr sgw_addr; 
         sgw_addr.s_addr = cbreq_bc->s1u_sgw_fteid.ipv4_address;
         uint32_t teid = cbreq_bc->s1u_sgw_fteid.teid_gre_key;
-        set_ipv4_fteid(&cbrsp.bearer_contexts.s1u_sgw_fteid, GTPV2C_IFTYPE_S1U_SGW_GTPU, 0, sgw_addr, teid);
+        set_ipv4_fteid(&cbrsp.bearer_contexts.s1u_sgw_fteid, GTPV2C_IFTYPE_S1U_SGW_GTPU, IE_INSTANCE_ZERO, sgw_addr, teid);
         set_ie_header(&cbrsp.bearer_contexts.header, 
                       GTP_IE_BEARER_CONTEXT, IE_INSTANCE_ZERO,
 			          (cbrsp.bearer_contexts.eps_bearer_id.header.len
@@ -215,7 +215,7 @@ handle_mock_create_bearer_request_msg(void *evt)
 
     {
         struct sockaddr_in peer_sockaddr = {0};
-        msg_info_t *cbrsp_event = calloc(1, sizeof(msg_info_t));
+        msg_info_t *cbrsp_event = (msg_info_t *)calloc(1, sizeof(msg_info_t));
         cbrsp_event->peer_addr = peer_sockaddr;
         cbrsp_event->source_interface = S11_IFACE;
         cbrsp_event->msg_type = GTP_CREATE_BEARER_RSP;

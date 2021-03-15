@@ -13,6 +13,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define CHAR_SIZE 8
 
 #define PFCP_IE_CREATE_PDR (1)
@@ -1432,7 +1435,7 @@ Description -Averaging Window
 typedef struct pfcp_avgng_wnd_ie_t {
   pfcp_ie_header_t header;
   uint32_t avgng_wnd;
-} pfcp_avgng_wnd_ie_t;
+}pfcp_avgng_wnd_ie_t;
 
 /**
 Description -Paging Policy Indicator
@@ -1467,7 +1470,7 @@ struct src_intfc_intfc_valType_t {
   uint8_t two :1;
   uint8_t three :1;
   uint8_t fourto15 :1;
-} src_intfc_intfc_valType_t;
+};
 
 enum redir_addr_type_type {
   IPV4ADDRESS =0,
@@ -1483,7 +1486,7 @@ struct dst_intfc_intfc_valType_t {
   uint8_t three :1;
   uint8_t four :1;
   uint8_t fiveto15 :1;
-} dst_intfc_intfc_valType_t;
+};
 
 struct up_func_featType_t {
   uint8_t bucp :1;
@@ -1500,7 +1503,7 @@ struct up_func_featType_t {
   uint8_t quoac :1;
   uint8_t trace :1;
   uint8_t frrt :1;
-} up_func_featType_t;
+};
 
 enum node_id_type_type {
   NODE_ID_TYPE_TYPE_IPV4ADDRESS =0,
@@ -1517,12 +1520,12 @@ struct outer_hdr_creation_descType_t {
   uint8_t ipv6 :1;
   uint8_t ctag :1;
   uint8_t stag :1;
-} outer_hdr_creation_descType_t;
+};
 
 struct cp_func_featType_t {
   uint8_t load :1;
   uint8_t ovrl :1;
-} cp_func_featType_t;
+};
 
 enum flow_direction_type {
   UNSPECIFIED =0,
@@ -1554,4 +1557,8 @@ enum base_time_int_type_type {
 };
 
 #pragma pack()
+
+#ifdef __cplusplus
+}
+#endif
 #endif

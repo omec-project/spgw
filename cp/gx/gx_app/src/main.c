@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 	const char *fdcfg = "config/gx.conf";
 	char peer_name[256] = {0};
 
-    gx_trans_list = calloc(1, sizeof(gx_trans_data_t));
+    gx_trans_list = (gx_trans_data_t *)calloc(1, sizeof(gx_trans_data_t));
     gx_trans_list->rar_seq_num = 1;
 
 	LOG_MSG(LOG_INIT, "Registering signal handler...");

@@ -8,6 +8,9 @@
 #include "ue.h"
 #include "sm_struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct pfcp_err_rsp_info
 {
@@ -19,4 +22,8 @@ typedef struct pfcp_err_rsp_info
 
 void session_report_error_response(msg_info_t *msg, uint8_t cause_value, int iface);
 void get_error_session_report_info(msg_info_t *msg, pfcp_err_rsp_info_t *err_rsp_info);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -161,7 +161,7 @@ uint16_t
 set_ie_copy(gtpv2c_header_t *header, gtpv2c_ie *src_ie)
 {
 	uint16_t len = ntohs(src_ie->length);
-	gtpv2c_ie *ie = set_next_ie(header, src_ie->type, src_ie->instance, len);
+	gtpv2c_ie *ie = set_next_ie(header, src_ie->type, (enum ie_instance)src_ie->instance, len);
 	memcpy(((uint8_t *)ie)+sizeof(gtpv2c_ie),((uint8_t *)src_ie)+sizeof(gtpv2c_ie),len);
 	return get_ie_return(ie);
 }
@@ -623,7 +623,7 @@ set_bearer_tft_ie(gtpv2c_header_t *header, enum ie_instance instance,
 			continue;
 
 		++tft->num_pkt_filters;
-		packet_filter *pf =
+		packet_filter_t *pf =
 				get_packet_filter(bearer->packet_filter_map[i]);
 		if (pf == NULL)
 			continue;
@@ -795,7 +795,7 @@ set_ue_timezone(gtp_ue_time_zone_ie_t *ue_timezone, create_sess_req_t *csr,  enu
 void
 set_mapped_ue_usage_type(gtp_mapped_ue_usage_type_ie_t *ie, uint16_t usage_type_value)
 {
-	set_ie_header(&ie->header, GTP_IE_MAPPED_UE_USAGE_TYPE, 0,
+	set_ie_header(&ie->header, GTP_IE_MAPPED_UE_USAGE_TYPE, IE_INSTANCE_ZERO,
 			sizeof(uint16_t));
 	ie->mapped_ue_usage_type = usage_type_value;
 }

@@ -14,6 +14,10 @@
 #include "cp_timer.h"
 #include "cp_peer_struct.h"
 #include "trans_struct.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 struct dp_info;
 
 #define MAX_HOSTNAME_LENGTH							(256)
@@ -41,8 +45,13 @@ typedef struct upf_context {
 	uint32_t s5s8_sgwu_ip;
 	uint32_t s5s8_pgwu_ip;
 	uint8_t  state;
-    transData_t *trans_entry; /* association setup req/rsp transaction */ /* TODO - - Cleanup Get rid of this */
+    void     *proc; // association setup procedure  
+    gstimerinfo_t  upf_pt;
     LIST_HEAD(pending_sub_procs_head, pending_proc_key) pending_sub_procs;
     TAILQ_HEAD(upf_procs_head, proc_context) pending_node_procs;
 } upf_context_t;
+
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -78,7 +78,7 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", msg->gx_msg.cca.session_id.val);
         return -1;
     }
-    gx_context = temp_ue_context->gx_context;
+    gx_context = (gx_context_t*)temp_ue_context->gx_context;
 
     if(msg->gx_msg.cca.presence.result_code &&
             msg->gx_msg.cca.result_code != 2001){
@@ -98,7 +98,7 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
     }
 
     /* Retrieve PDN context based on call id */
-    pdn_cntxt = get_pdn_conn_entry(call_id);
+    pdn_cntxt = (pdn_connection_t *)get_pdn_conn_entry(call_id);
     if (pdn_cntxt == NULL) {
         LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);
         return -1;
@@ -140,7 +140,7 @@ cca_t_msg_handler(void *data, void *unused_param)
 		return -1;
 	}
 
-    gx_context = temp_ue_context->gx_context;
+    gx_context = (gx_context_t *)temp_ue_context->gx_context;
 	if(remove_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val) < 0) {
 		LOG_MSG(LOG_ERROR, "Error on gx_context_by_sess_id_hash deletion");
 	}

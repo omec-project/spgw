@@ -11,6 +11,9 @@
 #include "sm_struct.h"
 #include "gtpv2_ie.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Maintains data to be filled in error response
  */
@@ -117,4 +120,8 @@ void clean_up_while_error_pfcp_timeout(void *data);
 
 void rab_error_response(msg_info_t *msg, uint8_t cause_value, int iface);
 void get_error_rabrsp_info(msg_info_t *msg, err_rsp_info *err_rsp_info);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

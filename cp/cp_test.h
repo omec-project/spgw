@@ -6,6 +6,9 @@
 #define __CP_TEST__H_
 #include "cp_events.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void init_mock_test(void);
 void *test_event_thread(void*);
 void test_event_handler(void*, uint16_t);
@@ -26,4 +29,7 @@ extern test_in_pkt_handler gx_in_mock_handler[256];
 
 void handle_mock_rar_request_msg(void *, uint16_t);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

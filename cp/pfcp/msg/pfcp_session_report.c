@@ -25,7 +25,7 @@ static
 int handle_pfcp_session_report_req_msg(msg_info_t *msg)
 {
     struct sockaddr_in *peer_addr = &msg->peer_addr;
-    ue_context_t *context = msg->ue_context;
+    ue_context_t *context = (ue_context_t *)msg->ue_context;
     assert(msg->msg_type == PFCP_SESSION_REPORT_REQUEST);
     pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->pfcp_msg.pfcp_sess_rep_req;
 
@@ -34,7 +34,7 @@ int handle_pfcp_session_report_req_msg(msg_info_t *msg)
     uint32_t source_addr = peer_addr->sin_addr.s_addr;
     uint16_t source_port = peer_addr->sin_port;
     uint32_t seq_num = pfcp_sess_rep_req->header.seid_seqno.has_seid.seq_no;  
-    transData_t *old_trans = find_pfcp_transaction(source_addr, source_port, seq_num);
+    transData_t *old_trans = (transData_t*)find_pfcp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
         // drop packet 

@@ -8,6 +8,9 @@
 #include "sm_struct.h"
 #include "ue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 proc_context_t* alloc_sgw_relocation_proc(msg_info_t *msg);
 void sgw_relocation_event_handler(void *proc, void *msg);
@@ -78,4 +81,7 @@ send_pfcp_sess_mod_req_handover(pdn_connection_t *pdn, eps_bearer_t *bearer,
 void 
 send_pfcp_sess_mod_req_handover_timeout(void *data);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

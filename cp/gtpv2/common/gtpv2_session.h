@@ -13,6 +13,9 @@
 #include "spgw_config_struct.h"
 #include "ipc_api.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief  : Maintains seid, bearer id, sgw teid , pgw ip for cp
@@ -131,4 +134,7 @@ process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp);
 int
 process_s5s8_upd_bearer_response(upd_bearer_rsp_t *ub_rsp);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

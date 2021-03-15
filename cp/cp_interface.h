@@ -11,6 +11,9 @@
 #include "trans_struct.h"
 #include "cp_peer_struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern pcap_dumper_t *pcap_dumper;
 /**
  * @brief  : Writes packet at @tx_buf of length @payload_length to pcap file specified
@@ -25,5 +28,8 @@ dump_pcap(uint16_t payload_length, uint8_t *tx_buf);
 
 void
 gtpc_timer_retry_send(int fd, peerData_t *t_tx);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _INTERFACE_H_ */

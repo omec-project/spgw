@@ -32,6 +32,10 @@
 #ifdef USE_CSID
 #include "csid_struct.h"
 #endif /* USE_CSID */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define SDF_FILTER_TABLE "sdf_filter_table"
 #define ADC_TABLE "adc_rule_table"
@@ -264,7 +268,7 @@ typedef struct ebi_id_t {
 /**
  * @brief  : Maintains sdf packet filter information
  */
-typedef struct sdf_pkt_fltr_t {
+typedef struct sdf_pkt_fltr {
 	uint8_t proto_id;
 	uint8_t proto_mask;
 	uint8_t direction;
@@ -277,14 +281,14 @@ typedef struct sdf_pkt_fltr_t {
 	uint16_t remote_port_high;
 	struct in_addr local_ip_addr;
 	struct in_addr remote_ip_addr;
-} sdf_pkt_fltr;
+} sdf_pkt_fltr_t;
 
 /**
  * @brief  : Maintains flow description data
  */
 typedef struct flow_description {
 	int32_t flow_direction;
-	sdf_pkt_fltr sdf_flw_desc;
+	sdf_pkt_fltr_t sdf_flw_desc;
 	char sdf_flow_description[512];
 	uint16_t flow_desc_len;
 }flow_desc_t;
@@ -427,11 +431,11 @@ typedef struct ue_context {
     TAILQ_HEAD(proc_sub_head, proc_context) pending_sub_procs;
 } ue_context_t;
 
-typedef struct ue_tz_t
+typedef struct ue_tz
 {
 	uint8_t tz;
 	uint8_t dst;
-}ue_tz;
+}ue_tz_t;
 
 #define PDN_STATIC_ADDR         0x00000001 /* UE address is fixed/static and UE pool controlled by control plane */
 #define PDN_ADDR_ALLOC_CONTROL  0x00000002 /* Control Plane has allocated UE address */
@@ -485,8 +489,8 @@ typedef struct pdn_connection {
 	struct in_addr s5s8_pgw_gtpc_ipv4;
 
 	uint8_t ue_time_zone_flag;
-	ue_tz ue_tz;
-	ue_tz old_ue_tz;
+	ue_tz_t ue_tz;
+	ue_tz_t old_ue_tz;
 	bool old_ue_tz_valid;
 
 	uint8_t rat_type;
@@ -544,10 +548,10 @@ typedef struct eps_bearer {
 
 	/* As per discussion der will be only one qer per bearer */
 	uint8_t qer_count;
-	qer qer_id[NUMBER_OF_QER_PER_BEARER];
+	qer_id_t qer_id[NUMBER_OF_QER_PER_BEARER];
 
 	uint8_t urr_count;
-	urr urr_id[NUMBER_OF_URR_PER_BEARER];
+	urr_id_t urr_id[NUMBER_OF_URR_PER_BEARER];
 
 
 	bearer_qos_ie qos;
@@ -711,4 +715,10 @@ del_rule_entries(ue_context_t *context, uint8_t ebi_index);
 
 int
 cleanup_ue_context(ue_context_t **context_t);
+
+extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* UE_H */

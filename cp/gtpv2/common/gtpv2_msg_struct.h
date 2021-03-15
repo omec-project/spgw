@@ -9,6 +9,9 @@
 #include "gtp_ies.h"
 #include "gtpv2_ie.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Table 7.2.1-1: Information Elements in a Create Session Response -
  *           incomplete list
@@ -23,4 +26,7 @@ typedef struct parse_sgwc_s5s8_create_session_response_t {
 	gtpv2c_ie *s5s8_pgw_gtpu_fteid;
 }sgwc_s5s8_create_session_response_t;
 
+#ifdef __cplusplus
+}
+#endif
 #endif

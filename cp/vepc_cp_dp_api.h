@@ -15,6 +15,10 @@
  */
 #include <stdint.h>
 #include <time.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * IPv6 address length
  */
@@ -472,4 +476,7 @@ struct msg_ue_cdr {
 
 #define MAX_NB_DPN	8  /* Note: MAX_NB_DPN <= 8 */
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* _CP_DP_API_H_ */

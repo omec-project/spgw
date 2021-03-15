@@ -10,6 +10,9 @@
 
 #include "pfcp_messages.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define MBR_BUF_SIZE 5
 
 /**
@@ -805,4 +808,7 @@ int encode_pfcp_upd_bar_sess_rpt_rsp_ie_t(pfcp_upd_bar_sess_rpt_rsp_ie_t *value,
     uint8_t *buf);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__PFCP_MESSAGES_ENCODE_H__*/

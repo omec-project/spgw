@@ -11,7 +11,6 @@ WORKDIR /spgw
 SHELL ["/bin/bash", "-c"]
 
 COPY git_url.cfg . 
-COPY patches ./patches
 COPY docker-scripts ./docker-scripts/
 RUN source ./docker-scripts/install_builddeps.sh && \
     install_builddeps

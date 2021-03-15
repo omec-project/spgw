@@ -14,6 +14,9 @@
 #include "ue.h"
 #include "gtp_messages.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief  : Get upf list
  * @param  : pdn, pdn connection information
@@ -57,4 +60,7 @@ current_ntp_timestamp(void);
 void
 time_to_ntp(struct timeval *tv, uint8_t *ntp);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* PFCP_UTIL_H */

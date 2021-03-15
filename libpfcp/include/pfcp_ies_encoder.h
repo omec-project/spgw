@@ -10,6 +10,9 @@
 
 #include "pfcp_ies.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define MBR_BUF_SIZE 5
 
 /**
@@ -1429,4 +1432,7 @@ int encode_pfcp_paging_plcy_indctr_ie_t(pfcp_paging_plcy_indctr_ie_t *value,
     uint8_t *buf);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*__PFCP_IES_ENCODE_H__*/

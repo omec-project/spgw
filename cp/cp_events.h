@@ -13,6 +13,10 @@
 #include <string.h>
 #include "cp_log.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define UPF_CONNECTION_SETUP_SUCCESS 0x01 
 #define UPF_CONNECTION_SETUP_FAILED  0x02
 #define PFCP_SETUP_TIMEOUT           0x03
@@ -23,6 +27,7 @@
 #define PEER_TIMEOUT                 0x08
 #define TEST_EVENTS                  0x09
 #define GTP_OUT_PKTS                 0x0a
+#define UPF_ASSOCIATION_SETUP        0x0b
 
 static const char *event_names[] = { 
     "UNKNOWN",
@@ -36,6 +41,7 @@ static const char *event_names[] = {
     "PEER_TIMEOUT",
     "TEST_EVENTS",
     "GTP_OUT_PKTS",
+    "UPF_ASSOCIATION_SETUP",
 };
 
 typedef void (*stack_event_handler) (void *, uint16_t);
@@ -91,7 +97,7 @@ queue_gtp_out_event(int fd,
 {
     LOG_MSG(LOG_DEBUG, "Queue event GTP_OUT_PKTS ");
     outgoing_pkts_event_t *event_p = (outgoing_pkts_event_t*)calloc(1, sizeof(outgoing_pkts_event_t));
-    event_p->payload = calloc(1, payload_len + 10);
+    event_p->payload = (uint8_t*)calloc(1, payload_len + 10);
     event_p->fd = fd;
     event_p->payload_len = payload_len;
     event_p->dest_addr = *dest_addr;
@@ -108,7 +114,7 @@ queue_pfcp_out_event(int fd,
 {
     LOG_MSG(LOG_DEBUG,"Queue event PFCP_OUT_PKTS ");
     outgoing_pkts_event_t *event_p = (outgoing_pkts_event_t*)calloc(1, sizeof(outgoing_pkts_event_t));
-    event_p->payload = calloc(1, payload_len + 10);
+    event_p->payload = (uint8_t*)calloc(1, payload_len + 10);
     event_p->fd = fd;
     event_p->payload_len = payload_len;
     event_p->dest_addr = *dest_addr;
@@ -132,4 +138,7 @@ queue_gx_out_event(int fd,
     return;
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif

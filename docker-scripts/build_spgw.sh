@@ -7,12 +7,13 @@ source setenv.sh
 
 build_fd_lib()
 {
-        mkdir -p $DEPS_DIR && pushd $DEPS_DIR
-        git clone $FREEDIAMETER
-        if [ $? -ne 0 ] ; then
-            echo "Failed to clone FreeDiameter, please check the errors."
-            return
-        fi
+    echo $DEPS_DIR 
+    mkdir -p $DEPS_DIR && pushd $DEPS_DIR
+    git clone $FREEDIAMETER
+    if [ $? -ne 0 ] ; then
+        echo "Failed to clone FreeDiameter, please check the errors."
+        return
+    fi
 
 	pushd freediameter
 	if [ ! -e "build" ]; then
