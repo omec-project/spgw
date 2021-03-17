@@ -36,9 +36,8 @@ test_event_thread(void* data)
             LOG_MSG(LOG_INFO,"handle stack unwind event %s ",event_names[event->event]);
             event->cb(event->data, event->event);
             free(event);
-            continue;
         }
-        usleep(10);
+        usleep(100); // every pkt 0.1 ms default scheduling delay
     }
     LOG_MSG(LOG_ERROR, "exiting event handler thread %p", data);
     return NULL;

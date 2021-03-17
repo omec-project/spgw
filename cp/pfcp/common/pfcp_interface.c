@@ -104,10 +104,9 @@ out_handler_pfcp(void *data)
             }
             free(event->payload);
             free(event);
-            continue;
         }
         //PERFORAMANCE ISSUE - use conditional variable 
-        usleep(10);
+        usleep(100); // every pkt 0.1 ms default scheduling delay 
     }
 	LOG_MSG(LOG_INIT,"Exiting : pfcp out message handler thread data = %p ", data);
     return NULL;

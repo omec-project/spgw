@@ -242,10 +242,8 @@ out_handler_gtp(void *data)
 			}
             free(event->payload);
             free(event);
-            continue;
         }
-        //PERFORAMANCE ISSUE - use conditional variable 
-        usleep(10);
+        usleep(100); // every pkt 0.1 ms default scheduling delay 
     }
 	LOG_MSG(LOG_ERROR,"Exiting gtp out message handler thread %p", data);
     return NULL;
