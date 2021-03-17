@@ -700,10 +700,9 @@ out_handler_gx(void *data)
             send_to_ipc_channel(event->fd, (char *)event->payload, event->payload_len);
             free(event->payload);
             free(event);
-            continue;
         }
         //PERFORAMANCE ISSUE - use conditional variable 
-        usleep(10);
+        usleep(100); // every pkt 0.1 ms default scheduling delay
     }
 	LOG_MSG(LOG_ERROR,"gx out message handler thread exited , data %p ", data);
     return NULL;
