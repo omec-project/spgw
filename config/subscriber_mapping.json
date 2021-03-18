@@ -53,6 +53,8 @@
   },
   "qos-profiles": {
     "mobile": {
+      "qci": 9,
+      "arp": 1,
       "apn-ambr": [
         12345678,
         12345678

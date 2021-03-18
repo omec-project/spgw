@@ -307,6 +307,7 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
         const rapidjson::Value& qosProfileSection = doc["qos-profiles"];
         for (rapidjson::Value::ConstMemberIterator itr = qosProfileSection.MemberBegin(); itr != qosProfileSection.MemberEnd(); ++itr)
         {
+            const rapidjson::Value& qosSection = itr->value;
             qos_profile_t *qos_profile = new (qos_profile_t);
             std::string key = itr->name.GetString();
             strcpy(qos_profile->qos_profile_name, key.c_str());
@@ -314,6 +315,17 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
             const rapidjson::Value& qosPlaneSection = itr->value; 
             qos_profile->apn_ambr_ul = qosPlaneSection["apn-ambr"][0].GetInt64();
             qos_profile->apn_ambr_dl = qosPlaneSection["apn-ambr"][1].GetInt64();
+            if(qosSection.HasMember("qci")) {
+                qos_profile->qci = qosSection["qci"].GetUint();
+            } else {
+                qos_profile->qci = 9;
+            }
+            if(qosSection.HasMember("arp")) {
+                qos_profile->arp = qosSection["arp"].GetUint();
+            } else {
+                qos_profile->arp = 1;
+            }
+
             LOG_MSG(LOG_INIT,"\t\tQoS apn ambr uplink - %u, downlink %u ",qos_profile->apn_ambr_ul, qos_profile->apn_ambr_dl);
             config_store->qos_profile_list.push_back(qos_profile);
         }

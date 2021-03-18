@@ -1758,6 +1758,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
                                 qer_context->guaranteed_bitrate.ul_gbr;
                             pfcp_sess_est_req->create_qer[qer_idx].guaranteed_bitrate.dl_gbr  =
                                 qer_context->guaranteed_bitrate.dl_gbr;
+                            pfcp_sess_est_req->create_qer[qer_idx].qos_flow_ident.qfi_value = 9;
                         }
                         qer_idx++;
                     }

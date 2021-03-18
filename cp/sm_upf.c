@@ -117,6 +117,8 @@ initiate_pfcp_association(upf_context_t *upf_context)
         LOG_MSG(LOG_INFO, "Initiate association setup with UPF %s", inet_ntoa(peer));
         proc_context_t *proc = alloc_pfcp_association_setup_proc(upf_context);
         start_upf_procedure(proc, (msg_info_t *)proc->msg_info);
+    } else {
+        LOG_MSG(LOG_INFO, "Dont Initiate association setup with UPF %s, state = %d ", inet_ntoa(peer), upf_context->state);
     }
 
 }
@@ -199,8 +201,10 @@ end_upf_procedure(proc_context_t *proc_ctxt)
     }
 
     if(proc_ctxt->result == PROC_RESULT_FAILURE) {
-        upf_context_delete_entry(upf_context->upf_sockaddr.sin_addr.s_addr);
-        free(upf_context);
+        //upf_context_delete_entry(upf_context->upf_sockaddr.sin_addr.s_addr);
+        //free(upf_context);
+        // Dont delete upf context 
+        upf_context->proc = NULL;
     } else {
         upf_context->proc = NULL;
     }
@@ -305,9 +309,11 @@ handleUpfAssociationTimeoutEvent(void *data, uint16_t event)
     upf_context_t *upf = (upf_context_t *)data;
     LOG_MSG(LOG_DEBUG,"Event received to establish pfcp association %p %d",data, event);
     if(upf == NULL) {
+        LOG_MSG(LOG_DEBUG,"Initiate association with all UPFs");
         initiate_all_pfcp_association();
     } else {
         // default schedule timeout of 10 seconds
+        LOG_MSG(LOG_DEBUG,"Initiate association with specific UPF %p", data);
         initiate_pfcp_association(upf);
     }
     return;
