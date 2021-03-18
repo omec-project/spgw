@@ -60,7 +60,7 @@ alloc_pfcp_association_setup_proc(void *upf_context)
     SET_PROC_MSG(pfcp_setup_proc, setup_msg);
     pfcp_setup_proc->upf_context = upf_context;
     setup_msg->proc_context = pfcp_setup_proc;
-    LOG_MSG(LOG_DEBUG,"Proc %p upf contect %p ", pfcp_setup_proc, upf_context);
+    LOG_MSG(LOG_DEBUG,"Proc %p upf context %p ", pfcp_setup_proc, upf_context);
     return pfcp_setup_proc;
 }
 
@@ -366,6 +366,7 @@ proc_pfcp_assoc_setup_failure(proc_context_t *proc_context, int cause)
         //increment upf stats for association setup message
     }
     proc_context->result = PROC_RESULT_FAILURE;
+    upf_context->state = 0;
     proc_pfcp_assoc_setup_complete(proc_context);
     LOG_MSG(LOG_INFO, "Schedule PFCP association setup");
     schedule_pfcp_association(5, upf_context);

@@ -1013,7 +1013,7 @@ creating_qer(pfcp_create_qer_ie_t *qer)
 	//size += set_dl_flow_level_mark(&(qer->dl_flow_lvl_marking));
 
 	//set qfi
-	//size += set_qfi(&(qer->qos_flow_ident));
+	size += set_qfi(&(qer->qos_flow_ident));
 
 	//set rqi
 	//size += set_rqi(&(qer->reflective_qos));

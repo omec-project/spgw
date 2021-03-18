@@ -52,6 +52,8 @@ typedef struct qos_profile
     char qos_profile_name[64];
     uint32_t apn_ambr_ul;
     uint32_t apn_ambr_dl;
+    uint8_t  qci;
+    uint8_t  arp;
 }qos_profile_t;
 
 typedef struct user_plane_profile
