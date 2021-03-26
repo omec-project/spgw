@@ -511,10 +511,15 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
             cfg->gx_enabled = global["gxConfig"].GetInt();
             LOG_MSG(LOG_INIT,"gx_enabled %d ", cfg->gx_enabled);
         }
-        if(global.HasMember("loggingLevel")) { //: "LOG_DEBUG",
+        if(global.HasMember("loggingLevel")) {
             std::string log_level = global["loggingLevel"].GetString();
             LOG_MSG(LOG_INIT, "logging level set to %s ",log_level.c_str());
             set_logging_level(log_level.c_str());
+        }
+        if(global.HasMember("heartbeatFailure")) {
+            bool heartbeat_fail = global["heartbeatFailure"].GetBool();
+            LOG_MSG(LOG_INIT, "heartbeat failure set to %d ",heartbeat_fail);
+            cfg->pfcp_hb_ts_fail = heartbeat_fail;
         }
         if(global.HasMember("periodicTimerSec")) {
             cfg->periodic_timer = global["periodicTimerSec"].GetInt();
