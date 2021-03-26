@@ -580,13 +580,6 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 	uint32_t seq = 0;
 	upf_context_t *upf_ctx = NULL;
 	pdr_t *pdr_ctxt = NULL;
-	int ret = 0;
-
-	upf_ctx = (upf_context_t *) upf_context_entry_lookup(pdn->upf_ipv4.s_addr);
-    if(upf_ctx == NULL) {
-		LOG_MSG(LOG_ERROR, "Error: %d ",ret);
-		return 0;
-	}
 
 	if( header != NULL)
 		LOG_MSG(LOG_DEBUG, "TEID[%d]", header->teid.has_teid.teid);
@@ -785,8 +778,14 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		set_query_urr_refernce(&(pfcp_sess_mod_req->query_urr_ref));
 	}
 
-	if (upf_ctx->up_supp_features & UP_TRACE)
-		set_trace_info(&(pfcp_sess_mod_req->trc_info));
+	upf_ctx = (upf_context_t *) upf_context_entry_lookup(pdn->upf_ipv4.s_addr);
+    //if UPF context is available then dont set trace info.
+    // its weird that we are still sending modify message out still no upf context.
+    // message would go nowhere. But its easy to handle the failure
+    if(upf_ctx != NULL) {
+        if (upf_ctx->up_supp_features & UP_TRACE)
+            set_trace_info(&(pfcp_sess_mod_req->trc_info));
+    }
 
     return seq;
 }

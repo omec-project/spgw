@@ -64,7 +64,7 @@ handle_pfcp_session_est_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
     /*Decode the received msg and stored into the struct. */
     int decoded = decode_pfcp_sess_estab_rsp_t((uint8_t*)pfcp_rx,
             &msg->pfcp_msg.pfcp_sess_est_resp);
-    LOG_MSG(LOG_DEBUG, "DEOCED bytes in Sess Estab Resp is %d",
+    LOG_MSG(LOG_DEBUG, "DECODED bytes in Sess Estab Resp is %d",
             decoded);
 
     if(decoded <= 0) 
