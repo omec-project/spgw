@@ -42,11 +42,13 @@ int handle_pfcp_session_delete_response(msg_info_t *msg)
 
 	/* Retrive teid from session id */
 	/* stop and delete timer entry for pfcp sess del req */
-	stop_transaction_timer(pfcp_trans);
     proc_context_t *proc_context = (proc_context_t *)pfcp_trans->proc_context; 
+
+	stop_transaction_timer(pfcp_trans);
+    delayed_free(pfcp_trans);
     proc_context->pfcp_trans = NULL; 
-    free(pfcp_trans);
-    msg->proc_context = pfcp_trans->proc_context;
+
+    msg->proc_context = proc_context;
     msg->event = PFCP_SESS_DEL_RESP_RCVD_EVNT;
     SET_PROC_MSG(proc_context, msg);
     proc_context->handler((void *)proc_context, msg); 

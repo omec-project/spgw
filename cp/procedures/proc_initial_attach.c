@@ -71,6 +71,7 @@ alloc_initial_proc(msg_info_t *msg)
 {
     proc_context_t *csreq_proc;
     csreq_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
+    strcpy(csreq_proc->proc_name, "INITIAL_ATTACH");
     csreq_proc->proc_type = msg->proc; 
     csreq_proc->handler = initial_attach_event_handler;
     msg->proc_context = csreq_proc;
@@ -100,7 +101,10 @@ initial_attach_event_handler(void *proc, void *msg_info)
             process_sess_est_resp_handler(proc_context, msg);
             break; 
         }
-        case PFCP_ASSOC_SETUP_FAILED:
+        case PFCP_ASSOC_SETUP_FAILED: {
+            process_sess_est_resp_association_failed_handler(proc_context, msg);
+            break;
+        }
         case PFCP_SESS_EST_RESP_TIMEOUT_EVNT: {
             process_sess_est_resp_timeout_handler(proc_context, msg);
             break; 
@@ -577,10 +581,33 @@ process_create_sess_req(create_sess_req_t *csr,
 }
 
 int
+process_sess_est_resp_association_failed_handler(proc_context_t *proc_context, msg_info_t *msg)
+{
+    transData_t *pfcp_trans = (transData_t *)proc_context->pfcp_trans;
+	LOG_MSG(LOG_ERROR, "PFCP session establishment failed due to association failed. IMSI %lu, " 
+                       "PFCP sequence %d ", proc_context->imsi64, pfcp_trans ? pfcp_trans->sequence:0);
+    proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
+    return 0;
+}
+
+int
 process_sess_est_resp_timeout_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
-	LOG_MSG(LOG_DEBUG, "PFCP sess establishment request timeout %p ", msg);
-    proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
+    transData_t *pfcp_trans = (transData_t *)proc_context->pfcp_trans;
+    pfcp_trans->itr_cnt++;
+    if(pfcp_trans->itr_cnt < cp_config->request_tries) {
+	    LOG_MSG(LOG_ERROR, "PFCP session establishment request retry. IMSI %lu, " 
+                           "PFCP sequence %d, attempt %d, pfcp_fd = %d ", proc_context->imsi64, 
+                           pfcp_trans->sequence, pfcp_trans->itr_cnt, my_sock.sock_fd_pfcp);
+
+        pfcp_timer_retry_send(my_sock.sock_fd_pfcp, pfcp_trans, &pfcp_trans->peer_sockaddr);
+        restart_response_wait_timer(pfcp_trans);
+    } else {
+	    LOG_MSG(LOG_ERROR, "PFCP session establishment request timeout. IMSI %lu, " 
+                       "PFCP sequence %d ", proc_context->imsi64, pfcp_trans->sequence);
+        proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REMOTE_PEER_NOT_RESPONDING);
+    }
+    
     return 0;
 }
 
@@ -2053,3 +2080,144 @@ process_gx_ccai_reject_handler(proc_context_t *proc_context, msg_info_t *msg)
     proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
     return 0;
 }
+
+transData_t*
+process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_ctx)
+{
+	eps_bearer_t *bearer = NULL;
+	pdn_connection_t *pdn = (pdn_connection_t *)proc_context->pdn_context;
+	ue_context_t *context = (ue_context_t *)proc_context->ue_context;
+	pfcp_sess_estab_req_t pfcp_sess_est_req = {0};
+	uint32_t sequence = 0;
+    uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
+    uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
+
+	bearer = pdn->eps_bearers[pdn->default_bearer_id - 5];
+	if (cp_config->cp_type == SGWC) {
+		set_s1u_sgw_gtpu_teid(bearer, context);
+		update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, upf_ctx->s1u_ip, SOURCE_INTERFACE_VALUE_ACCESS);
+		set_s5s8_sgw_gtpu_teid(bearer, context);
+		update_pdr_teid(bearer, bearer->s5s8_sgw_gtpu_teid, upf_ctx->s5s8_sgwu_ip, SOURCE_INTERFACE_VALUE_CORE);
+	} else if (cp_config->cp_type == SAEGWC) {
+		set_s1u_sgw_gtpu_teid(bearer, context);
+		update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, upf_ctx->s1u_ip, SOURCE_INTERFACE_VALUE_ACCESS);
+	} else if (cp_config->cp_type == PGWC){
+		set_s5s8_pgw_gtpu_teid(bearer, context);
+		update_pdr_teid(bearer, bearer->s5s8_pgw_gtpu_teid, upf_ctx->s5s8_pgwu_ip, SOURCE_INTERFACE_VALUE_ACCESS);
+	}
+
+	sequence = get_pfcp_sequence_number(PFCP_SESSION_ESTABLISHMENT_REQUEST, sequence);
+
+	/* Need to discuss with himanshu */
+	if (cp_config->cp_type == PGWC) {
+		/* VS: Update the PGWU IP address */
+		bearer->s5s8_pgw_gtpu_ipv4.s_addr =
+			htonl(upf_ctx->s5s8_pgwu_ip);
+
+		/* Filling PDN structure*/
+		pfcp_sess_est_req.pdn_type.header.type = PFCP_IE_PDN_TYPE;
+		pfcp_sess_est_req.pdn_type.header.len = sizeof(uint8_t);
+		pfcp_sess_est_req.pdn_type.pdn_type_spare = 0;
+		pfcp_sess_est_req.pdn_type.pdn_type =  1;
+	} else {
+		bearer->s5s8_sgw_gtpu_ipv4.s_addr = htonl(upf_ctx->s5s8_sgwu_ip);
+		bearer->s1u_sgw_gtpu_ipv4.s_addr = htonl(upf_ctx->s1u_ip);
+	}
+
+	fill_pfcp_sess_est_req(&pfcp_sess_est_req, pdn, sequence);
+
+
+#ifdef USE_CSID
+	/* Add the entry for peer nodes */
+	if (fill_peer_node_info(pdn, bearer)) {
+		LOG_MSG(LOG_ERROR, "Failed to fill peer node info and assignment of the CSID Error: %s",
+				strerror(errno));
+		return NULL;
+	}
+
+	/* Add entry for cp session id with link local csid */
+	sess_csid *tmp = NULL;
+	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
+		tmp = get_sess_csid_entry(
+				(context->sgw_fqcsid)->local_csid[(context->sgw_fqcsid)->num_csid - 1]);
+	} else {
+		/* PGWC */
+		tmp = get_sess_csid_entry(
+				(context->pgw_fqcsid)->local_csid[(context->pgw_fqcsid)->num_csid - 1]);
+	}
+
+	if (tmp == NULL) {
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
+		return NULL;
+	}
+
+	/* Link local csid with session id */
+	tmp->cp_seid[tmp->seid_cnt++] = pdn->seid;
+
+	/* Fill the fqcsid into the session est request */
+	if (fill_fqcsid_sess_est_req(&pfcp_sess_est_req, context)) {
+		LOG_MSG(LOG_ERROR, "Failed to fill FQ-CSID in Sess EST Req ERROR: %s",
+				strerror(errno));
+		return NULL;
+	}
+#endif /* USE_CSID */
+
+	/* Update PDN State */
+	pdn->state = PFCP_SESS_EST_REQ_SNT_STATE;
+
+	/* Set create session response */
+	//if (cp_config->cp_type == PGWC)
+	//	resp->sequence = (htonl(context->sequence) >> 8);
+	//else
+	//	resp->sequence = context->sequence;
+
+
+	//proc->eps_bearer_id = pdn->default_bearer_id - 5;
+	//resp->s11_sgw_gtpc_teid = context->s11_sgw_gtpc_teid;
+	//resp->context = context;
+	//proc_context->msg_type = GTP_CREATE_SESSION_REQ;
+	proc_context->state = PFCP_SESS_EST_REQ_SNT_STATE;
+	//proc->proc = context->pdns[pdn->default_bearer_id - 5]->proc;
+
+    transData_t *trans_entry = NULL;
+	uint8_t pfcp_msg[1024]={0};
+	int encoded = encode_pfcp_sess_estab_req_t(&pfcp_sess_est_req, pfcp_msg);
+
+	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
+	header->message_len = htons(encoded - 4);
+
+	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
+
+    /*pfcp-session-estab-req-sent*/
+    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSESTREQ,GET_UPF_ADDR(context->upf_context)); 
+
+    trans_entry = start_response_wait_timer(proc_context, pfcp_msg, encoded, process_pfcp_sess_est_request_timeout);
+    SET_TRANS_SELF_INITIATED(trans_entry);
+    trans_entry->sequence = sequence;
+    trans_entry->peer_sockaddr = context->upf_context->upf_sockaddr; 
+    add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
+
+    if (add_sess_entry_seid(pdn->seid, context) != 0) {
+        LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
+        assert(0);
+    }
+
+    proc_context->pfcp_trans = trans_entry;
+    trans_entry->proc_context = (void *)proc_context;
+
+	return trans_entry;
+}
+
+void
+process_pfcp_sess_est_request_timeout(void *data)
+{
+    LOG_MSG(LOG_ERROR, "PFCP Session Establishment Request timeout");
+    proc_context_t *proc_context = (proc_context_t *)data;
+    msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t));
+    SET_PROC_MSG(proc_context,msg);
+    msg->proc_context = proc_context;
+    msg->event = PFCP_SESS_EST_RESP_TIMEOUT_EVNT;
+    proc_context->handler(proc_context, msg); 
+    return;
+}
+

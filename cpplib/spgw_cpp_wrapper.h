@@ -243,6 +243,10 @@ release_static_ip_cpp(const char *pool_n, struct in_addr addr);
 
 int parse_cp_json(cp_config_t *cfg, const char *file);
 
+void add_delayed_free_memory_task(void *data);
+
+void* delete_delayed_free_memory_task(int *size);
+
 #ifdef __cplusplus
 }
 #endif

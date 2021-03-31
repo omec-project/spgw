@@ -708,7 +708,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     /* Create new transaction */
     transData_t *trans = (transData_t *) calloc(1, sizeof(transData_t));  
-    trans->self_initiated = 0;
+    RESET_TRANS_SELF_INITIATED(trans);
     add_gtp_transaction(source_addr, source_port, seq_num, trans);
 
 	/*Set the appropriate event type.*/

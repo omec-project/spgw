@@ -27,6 +27,7 @@ alloc_session_report_proc(msg_info_t *msg)
     proc_context_t *session_rep_proc;
 
     session_rep_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
+    strcpy(session_rep_proc->proc_name, "SESSION_REPORT");
     session_rep_proc->proc_type = msg->proc; 
     session_rep_proc->ue_context = (void *)msg->ue_context;
     session_rep_proc->pdn_context = (void *)msg->pdn_context;

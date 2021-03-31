@@ -50,16 +50,16 @@ handle_pfcp_association_setup_response_msg(msg_info_t **msg_p, pfcp_header_t *pf
     }
     proc_context_t *proc_context = (proc_context_t*)pfcp_trans->proc_context;
     assert(proc_context != NULL);
+    proc_context->pfcp_trans = NULL;
 
     stop_transaction_timer(pfcp_trans);
+    delayed_free(pfcp_trans);
 
-    msg->proc_context = pfcp_trans->proc_context;
+    msg->proc_context = proc_context;
     msg->event = PFCP_ASSOCIATION_SETUP_RSP; 
     msg->proc  = proc_context->state;
     SET_PROC_MSG(proc_context, msg);
 
-    free(pfcp_trans);
-    proc_context->pfcp_trans = NULL;
 
     // Note : important to note that we are holding on this msg now 
     *msg_p = NULL;

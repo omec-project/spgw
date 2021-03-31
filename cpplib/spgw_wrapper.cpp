@@ -19,6 +19,7 @@
 #include <sstream>
 #include "spgw_webserver.h"
 #include "ip_pool_mgmt.h"
+#include "delayed_task.h"
 
 spgwTables      *table = nullptr; 
 upfTables       *upf_table = nullptr;
@@ -569,4 +570,16 @@ extern "C"
         return pool->release_ip_node(addr);
     }
 
+    void add_delayed_free_memory_task(void *trans)
+    {
+        delayTask *instance = delayTask::Instance();
+        instance->add_delayed_free_memory_task(trans); 
+        return;
+    }
+
+    void* delete_delayed_free_memory_task(int *size)
+    {
+        delayTask *instance = delayTask::Instance();
+        return instance->delete_delayed_free_memory_task(size); 
+    }
 }

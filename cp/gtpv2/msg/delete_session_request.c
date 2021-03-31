@@ -282,7 +282,7 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     /* Create new transaction */
     transData_t *gtpc_trans = (transData_t *) calloc(1, sizeof(transData_t));  
-    gtpc_trans->self_initiated = 0;
+    RESET_TRANS_SELF_INITIATED(gtpc_trans);
     add_gtp_transaction(source_addr, source_port, seq_num, gtpc_trans);
     gtpc_trans->proc_context = (void *)detach_proc;
     detach_proc->gtpc_trans = gtpc_trans;

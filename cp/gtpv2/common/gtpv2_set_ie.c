@@ -521,7 +521,7 @@ uint16_t
 set_ebi_ie(gtpv2c_header_t *header, enum ie_instance instance, uint8_t ebi)
 {
 	if (ebi & 0xF0)
-		LOG_MSG(LOG_ERROR, "Invalid EBI used %"PRIu8"\n", ebi);
+		LOG_MSG(LOG_ERROR, "Invalid EBI used %d", ebi);
 	return set_uint8_ie(header, GTP_IE_EPS_BEARER_ID, instance, ebi);
 }
 

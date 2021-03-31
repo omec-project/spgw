@@ -33,7 +33,8 @@ SPGWLIB_SRCS := ./spgw_config.cpp \
 				./spgw_tables.cpp \
 				./spgwStatsPromClient.cpp \
 				./spgw_wrapper.cpp \
-				./spgw_webserver.cpp 
+				./spgw_webserver.cpp \
+				./delayed_task.cpp  
                  
 
 SRCDIR := .

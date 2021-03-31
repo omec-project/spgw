@@ -44,6 +44,9 @@ process_sess_est_resp_handler(proc_context_t *p, msg_info_t *d);
 int
 process_sess_est_resp_timeout_handler(proc_context_t *proc, msg_info_t *data);
 
+int
+process_sess_est_resp_association_failed_handler(proc_context_t *proc, msg_info_t *data);
+
 /**
  * @brief  : Handles processing of cca message
  * @param  : arg1, data contained in message
@@ -54,6 +57,15 @@ int cca_msg_handler(proc_context_t *proc, msg_info_t *msg);
 
 int
 process_gx_ccai_reject_handler(proc_context_t *proc_context, msg_info_t *msg);
+/**
+ * @brief  : Process pfcp session establishment request
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+transData_t *
+process_pfcp_sess_est_request(proc_context_t *proc_context,  upf_context_t *upf_ctx);
+
+void process_pfcp_sess_est_request_timeout(void *data);
+
 
 #ifdef __cplusplus
 }

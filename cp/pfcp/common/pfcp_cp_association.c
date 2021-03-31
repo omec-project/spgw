@@ -111,7 +111,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf1 *cstm_buf)
 			case MSG_MTR_CRE:
 				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct cb_args_table));
 				/* Fill msg type */
-				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt, "%"PRId64" ",cstm_buf->mtype);
+				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt, "%ld ",cstm_buf->mtype);
 				/* Fill cstm ie contents frome rule structure as string */
 				memcpy(pfd_conts->cstm_pfd_cntnt+struct_len, (uint8_t *)&cstm_buf->msg_union.msg_table,
 														sizeof(cstm_buf->msg_union.msg_table));
@@ -122,7 +122,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf1 *cstm_buf)
 				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct msg_ue_cdr));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
-												"%"PRId64" ",cstm_buf->mtype);
+												"%ld ",cstm_buf->mtype);
 				/* Fill cstm ie contents frome rule structure as string */
 				memcpy(pfd_conts->cstm_pfd_cntnt + struct_len,
 					  (uint8_t *)&cstm_buf->msg_union.ue_cdr, sizeof(struct msg_ue_cdr));
@@ -139,7 +139,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf1 *cstm_buf)
 				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct pkt_filter));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
-													"%"PRId64" ",cstm_buf->mtype);
+													"%ld ",cstm_buf->mtype);
 				/* Fill cstm ie contents frome rule structure as string */
 				memcpy(pfd_conts->cstm_pfd_cntnt + struct_len,
 					  (uint8_t *)&cstm_buf->msg_union.pkt_filter_entry, sizeof(struct pkt_filter));
@@ -150,7 +150,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf1 *cstm_buf)
 				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct adc_rules));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
-												"%"PRId64" ",cstm_buf->mtype);
+												"%ld ",cstm_buf->mtype);
 				/* Fill cstm ie contents frome rule structure as string */
 				memcpy(pfd_conts->cstm_pfd_cntnt + struct_len,
 					  (uint8_t *)&cstm_buf->msg_union.adc_filter_entry, sizeof(struct adc_rules));
@@ -161,7 +161,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf1 *cstm_buf)
 				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct pcc_rules));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
-												"%"PRId64" ",cstm_buf->mtype);
+												"%ld ",cstm_buf->mtype);
 				/* Fill cstm ie contents frome rule structure as string */
 				memcpy(pfd_conts->cstm_pfd_cntnt + struct_len,
 					  (uint8_t *)&cstm_buf->msg_union.pcc_entry, sizeof(struct pcc_rules));
@@ -173,7 +173,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf1 *cstm_buf)
 				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct session_info));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
-												"%"PRId64" ",cstm_buf->mtype);
+												"%ld ",cstm_buf->mtype);
 				/* Fill cstm ie contents frome rule structure as string */
 				memcpy(pfd_conts->cstm_pfd_cntnt + struct_len,
 					  (uint8_t *)&cstm_buf->msg_union.sess_entry, sizeof(struct session_info));
@@ -184,7 +184,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf1 *cstm_buf)
 				pfd_conts->cstm_pfd_cntnt = (uint8_t*)malloc(sizeof(struct mtr_entry));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
-													"%"PRId64" ",cstm_buf->mtype);
+													"%ld ",cstm_buf->mtype);
 				/* Fill cstm ie contents frome rule structure as string */
 				memcpy(pfd_conts->cstm_pfd_cntnt + struct_len ,
 					  (uint8_t *)&cstm_buf->msg_union.mtr_entry, sizeof(struct mtr_entry));
@@ -195,7 +195,7 @@ set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf1 *cstm_buf)
 				pfd_conts->cstm_pfd_cntnt = malloc(sizeof(struct downlink_data_notification));
 				/* Fill msg type */
 				struct_len = sprintf((char *)pfd_conts->cstm_pfd_cntnt,
-																"%"PRId64" ",cstm_buf->mtype);
+																"%d ",cstm_buf->mtype);
 				/* Fill cstm ie contents frome rule structure as string */
 				memcpy(pfd_conts->cstm_pfd_cntnt + struct_len ,
 			          (uint8_t *)&cstm_buf->msg_union.mtr_entry, sizeof(struct downlink_data_notification));

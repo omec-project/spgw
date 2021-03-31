@@ -172,7 +172,7 @@ start_upf_procedure(proc_context_t *proc_ctxt, msg_info_t *msg)
     /* Logic here to decide if we want to run the procedure right away or delay
      * the execution */
     proc_ctxt = TAILQ_FIRST(&upf_context->pending_node_procs);
-    LOG_MSG(LOG_DEBUG, "Start procedure number (%d) ",proc_ctxt->proc_type);
+    LOG_MSG(LOG_DEBUG, "Start procedure %s ",proc_ctxt->proc_name);
     switch(proc_ctxt->proc_type) {
         case PFCP_ASSOC_SETUP_PROC: {
             proc_ctxt->handler(proc_ctxt, msg);

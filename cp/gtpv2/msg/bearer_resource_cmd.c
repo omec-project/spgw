@@ -611,8 +611,7 @@ delete_packet_filter(gtpv2c_header_t *gtpv2c_rx,
 		LOG_MSG(LOG_ERROR, "Requesting the deletion of non-existent "
 				"packet filter");
 		LOG_MSG(LOG_ERROR, "\t"
-				"%"PRIx32"\t"
-		"%"PRIx32"\n", brc->context->s11_mme_gtpc_teid,
+				"%x\t %x \n", brc->context->s11_mme_gtpc_teid,
 		    brc->context->s11_sgw_gtpc_teid);
 		return -ENOENT;
 	}

@@ -15,6 +15,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define DELAYED_DELETE 0x01
+#define SELF_INITIATED 0x02
+
+
+#define IS_TRANS_SELF_INITIATED(trans) ((trans->flags & SELF_INITIATED) != 0x00)
+#define SET_TRANS_SELF_INITIATED(trans) (trans->flags = trans->flags | SELF_INITIATED)
+#define RESET_TRANS_SELF_INITIATED(trans) (trans->flags = trans->flags & (~SELF_INITIATED))
+
+#define IS_TRANS_DELAYED_DELETE(trans) ((trans->flags & DELAYED_DELETE) != 0x00)
+#define SET_TRANS_DELAYED_DELETE(trans) (trans->flags = trans->flags | DELAYED_DELETE)
+#define RESET_TRANS_DELAYED_DELETE(trans) (trans->flags = trans->flags & (~DELAYED_DELETE))
+
 /**
  * @brief  : Maintains transaction information 
  */
@@ -22,16 +35,16 @@ typedef void (*timeout_handler_t)(void *);
 
 struct transData 
 {
+    uint8_t     flags;
     uint8_t     iface;
     uint8_t     msg_type;
-    uint8_t     self_initiated;
+    uint8_t     itr_cnt;
     uint32_t    sequence;
 	uint16_t    buf_len;
 	uint8_t     buf[1024];
     void        *cb_data; /* UE context or upf context */ 
     void        *proc_context;
 	gstimerinfo_t  rt;
-    uint8_t itr_cnt;
     timeout_handler_t timeout_function;
 
     /* This is important field, since sender FTEID and actual sender address can be different */
