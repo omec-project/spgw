@@ -55,6 +55,7 @@ alloc_pfcp_association_setup_proc(void *upf_context)
     setup_msg->event = PFCP_ASSOCIATION_SETUP; 
     proc_context_t *pfcp_setup_proc;
     pfcp_setup_proc = (proc_context_t*)calloc(1, sizeof(proc_context_t));
+    strcpy(pfcp_setup_proc->proc_name, "PFCP_ASSOCIATION_SETUP");
     pfcp_setup_proc->proc_type = PFCP_ASSOC_SETUP_PROC; 
     pfcp_setup_proc->handler = pfcp_association_event_handler;
     SET_PROC_MSG(pfcp_setup_proc, setup_msg);
@@ -275,7 +276,7 @@ assoication_setup_request(proc_context_t *proc_context)
 
     trans_entry = start_response_wait_timer((void *)proc_context, pfcp_msg, encoded, process_assoc_resp_timeout_handler);
     
-    trans_entry->self_initiated = 1;
+    SET_TRANS_SELF_INITIATED(trans_entry);
     trans_entry->sequence = seq_num;
     // for now...upf is responding with 0 seq 
     add_pfcp_transaction(local_addr, port_num, seq_num, (void*)trans_entry);  

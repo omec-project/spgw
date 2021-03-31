@@ -14,6 +14,7 @@
 #include "gtpv2_session.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
+#include "sm_enum.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -340,14 +341,14 @@ start_procedure(proc_context_t *new_proc_ctxt, msg_info_t *msg)
             TAILQ_FOREACH(temp, &context->pending_sub_procs, next_sub_proc) {
                 if(temp == new_proc_ctxt)
                     continue;
-                LOG_MSG(LOG_DEBUG4, "Some outstanding procedures in queue. Proc Ctxt : %p ",temp);
+                LOG_MSG(LOG_DEBUG4, "outstanding procedures in queue. %s ",temp->proc_name);
                 if(temp->proc_type == RAR_PROC) {
                     if((new_proc_ctxt->proc_type == DED_BER_ACTIVATION_PROC) && (new_proc_ctxt->parent_proc == temp)) {
                         LOG_MSG(LOG_DEBUG,"CBREQ, RAR is allowed in parellel");
                         allowed_parellel = true;
                     }
                 } else {
-                    LOG_MSG(LOG_DEBUG4,"Other proecudure is running %d ", temp->proc_type);
+                    LOG_MSG(LOG_DEBUG4,"Other proecudure is running %s ", temp->proc_name);
                     // even if one running proc does not want new proc to run in parellel then we need to wait
                     allowed_parellel = false; 
                 }
@@ -370,7 +371,7 @@ start_procedure_direct(proc_context_t *proc_ctxt)
     msg_info_t *msg = (msg_info_t *)proc_ctxt->msg_info;
     assert(proc_ctxt != NULL);
 
-    LOG_MSG(LOG_DEBUG4, "Start direct procedure  %d ",proc_ctxt->proc_type);
+    LOG_MSG(LOG_DEBUG4, "Start direct procedure  %s ",proc_ctxt->proc_name);
 
     proc_ctxt->flags |= PROC_FLAGS_RUNNING;
 
@@ -553,7 +554,7 @@ end_procedure(proc_context_t *proc_ctxt)
         proc_context_t *temp;
         TAILQ_FOREACH(temp, &context->pending_sub_procs, next_sub_proc) {
             if(temp->flags & PROC_FLAGS_RUNNING) {
-                LOG_MSG(LOG_DEBUG3, "Running procedure %p %d ", temp, temp->proc_type);
+                LOG_MSG(LOG_DEBUG3, "Running procedure %s ", temp->proc_name);
                 continue;
             }
             // TODO: can we run this procedure ???

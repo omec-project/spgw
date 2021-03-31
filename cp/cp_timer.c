@@ -116,10 +116,7 @@ static bool _create_timer(timer_t *timer_id, const void *data)
 	se.sigev_notify = SIGEV_THREAD_ID;
 	se._sigev_un._tid = _gstimer_tid;
 	se.sigev_signo = SIGRTMIN;
-#pragma GCC diagnostic push  /* require GCC 4.6 */
-#pragma GCC diagnostic ignored "-Wcast-qual"
 	se.sigev_value.sival_ptr = (void*)data;
-#pragma GCC diagnostic pop   /* require GCC 4.6 */
 	/*
 	 * create the timer
 	 */

@@ -263,7 +263,7 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
             assert(trans_proc == msg_proc);
             msg_proc->gtpc_trans = NULL;
         }
-        free(gtpc_trans);
+        delayed_free(gtpc_trans);
     }
 }
 

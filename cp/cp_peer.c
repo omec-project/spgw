@@ -40,10 +40,7 @@ void
 timerCallback( gstimerinfo_t *ti, const void *data_t )
 {
     struct peer_data *temp = (struct peer_data *)calloc(1, sizeof(struct peer_data));
-#pragma GCC diagnostic push  /* require GCC 4.6 */
-#pragma GCC diagnostic ignored "-Wcast-qual"
 	peerData_t *md = (peerData_t*)data_t;
-#pragma GCC diagnostic pop   /* require GCC 4.6 */
 	/* setting sendto destination addr */
 	temp->dest_addr.sin_family = AF_INET;
 	temp->dest_addr.sin_addr.s_addr = md->dstIP;

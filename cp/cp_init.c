@@ -75,6 +75,34 @@ init_thread_to_thread_socket(void)
     my_sock.loopback_sockaddr = local_sockaddr; 
 }
 
+void* delayed_task_handler(void *data)
+{
+    LOG_MSG(LOG_DEBUG,"Started delayed_task_handler %p", data);
+    /* Free transaction here */
+    while(1) {
+        int size=0;
+        int time = 1000000; 
+        void *temp = delete_delayed_free_memory_task(&size);
+        if(temp != NULL) {
+            free(temp);
+            if(size > 100) {
+                size = 100;
+                time = 10;
+            }
+        }
+        for(int i=0;i<size; i++) {
+            int size1;
+            void *temp1 = delete_delayed_free_memory_task(&size1);
+            if(temp1 != NULL) {
+                free(temp1);
+            }
+            usleep(1); 
+        }
+        usleep(time);
+    }
+    return NULL;
+}
+
 /**
  * @brief  : Initializes Control Plane data structures, packet filters, and calls for the
  *           Data Plane to create required tables
@@ -87,6 +115,8 @@ void init_cp(void)
     recovery_time_into_file(start_time);
 
     rstCnt = update_rstCnt();
+
+
 
     init_timer_thread();
 
@@ -109,6 +139,12 @@ void init_cp(void)
 
     init_thread_to_thread_socket();
 
+    pthread_t delay_t;
+    pthread_attr_t delayattr;
+    pthread_attr_init(&delayattr);
+    pthread_attr_setdetachstate(&delayattr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&delay_t, &delayattr, &delayed_task_handler, NULL);
+    pthread_attr_destroy(&delayattr);
 
 	return;
 }

@@ -527,6 +527,9 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
         }
         if(global.HasMember("requestTimeoutMilliSec")) {
             cfg->request_timeout = global["requestTimeoutMilliSec"].GetInt();
+            if(cfg->request_timeout == 5000) {
+                cfg->request_timeout = 1500;
+            }
             LOG_MSG(LOG_INIT, "request_timeout %d ",cfg->request_timeout);
         }
         if(global.HasMember("requestTries")) {

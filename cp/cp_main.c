@@ -168,12 +168,7 @@ main(int argc, char **argv)
         assert(0);
     }
 
-
     init_cp();
-
-#ifdef DELETE
-    create_associated_upf_hash();
-#endif
 
 #ifdef USE_CSID
     init_fqcsid_hash_tables();

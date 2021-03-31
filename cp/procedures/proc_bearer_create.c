@@ -31,6 +31,7 @@ proc_context_t*
 alloc_bearer_create_proc(msg_info_t *msg)
 {
     proc_context_t *proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
+    strcpy(proc->proc_name, "BEARER_CREATE");
     proc->proc_type = DED_BER_ACTIVATION_PROC;
     proc->ue_context = (void *)msg->ue_context;
     proc->pdn_context = (void *)msg->pdn_context; 
@@ -124,7 +125,8 @@ send_pfcp_modify_session_pre_cbreq(void *proc_cbr, void *msg)
         trans_entry = start_response_wait_timer(ue_context,
                 pfcp_msg, encoded, pfcp_modify_session_pre_cbreq_timeout);
     }
-    trans_entry->self_initiated = 1;
+    SET_TRANS_SELF_INITIATED(trans_entry);
+
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
     add_pfcp_transaction(local_addr, port_num, seq_no, (void*)trans_entry);
@@ -282,7 +284,7 @@ process_pfcp_sess_mod_resp_pre_cbr_handler(void *data, void *p)
                                             payload_length, 
                                             process_cbr_timeout);
 
-    gtpc_trans->self_initiated = 1;
+    SET_TRANS_SELF_INITIATED(gtpc_trans);
     gtpc_trans->proc_context = (void *)proc_ctxt;
     proc_ctxt->gtpc_trans = gtpc_trans;
     gtpc_trans->sequence = sequence;
@@ -360,7 +362,7 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
     increment_userplane_stats(MSG_TX_PFCP_SXA_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
     transData_t *trans_entry;
     trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_sgwc_pfcp_mod_post_cbrsp_timeout);
-    trans_entry->self_initiated = 1;
+    SET_TRANS_SELF_INITIATED(trans_entry);
     bearer->pdn->trans_entry = trans_entry; 
     proc->pfcp_trans = trans_entry;
     trans_entry->proc_context = proc;
@@ -470,7 +472,7 @@ process_pgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, GET_UPF_ADDR(context->upf_context));
     transData_t *trans_entry;
     trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pgwc_create_bearer_rsp_pfcp_timeout);
-    trans_entry->self_initiated = 1;
+    SET_TRANS_SELF_INITIATED(trans_entry);
     bearer->pdn->trans_entry = trans_entry; 
     proc->pfcp_trans = trans_entry;
     trans_entry->proc_context = proc;

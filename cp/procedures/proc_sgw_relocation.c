@@ -73,7 +73,7 @@ alloc_sgw_relocation_proc(msg_info_t *msg)
     sgw_reloc_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     sgw_reloc_proc->proc_type = msg->proc; 
     sgw_reloc_proc->handler = sgw_relocation_event_handler;
-
+    strcpy(sgw_reloc_proc->proc_name, "SGW_RELOC_PROC");
     msg->proc_context = sgw_reloc_proc;
     SET_PROC_MSG(sgw_reloc_proc, msg);
  

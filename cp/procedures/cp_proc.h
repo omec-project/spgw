@@ -33,6 +33,7 @@ typedef void (*done_child_proc_t) (void*);
 // MUSTDO ? : TODO : we need union in this procedure ???
 struct proc_context {
     uint32_t        proc_type;
+    char            proc_name[32];
     uint32_t        state;
     uint32_t        flags;
     uint32_t        result;

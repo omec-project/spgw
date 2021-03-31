@@ -120,8 +120,7 @@ process_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx)
 	if (delete_bearer_rsp.ded_bearer == NULL) {
 		LOG_MSG(LOG_ERROR,
 		    "Received Delete Bearer Response for"
-		    " non-existant EBI: %"PRIu8"\n",
-		    ebi);
+		    " non-existant EBI: %d", ebi);
 		return -EPERM;
 	}
 	delete_bearer_rsp.pdn = delete_bearer_rsp.ded_bearer->pdn;

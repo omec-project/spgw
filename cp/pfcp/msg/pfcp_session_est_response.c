@@ -34,19 +34,14 @@ int handle_pfcp_session_est_response(msg_info_t *msg)
         // TODOSTATS
 		return -1;
     }
-    /*
-     * if session found then detect retransmission
-     * if no retransmission then delete the existing session
-     * handler new event  
-     */
-	/* Retrive teid from session id */
-	/* stop and delete the timer session for pfcp  est. req. */
-	stop_transaction_timer(pfcp_trans);
 
     proc_context_t *proc_context = (proc_context_t *)pfcp_trans->proc_context; 
     proc_context->pfcp_trans = NULL; 
-    msg->proc_context = pfcp_trans->proc_context;
-    free(pfcp_trans); /* EST Response */
+	/* stop and delete the timer session for pfcp  est. req. */
+	stop_transaction_timer(pfcp_trans);
+    delayed_free(pfcp_trans);
+
+    msg->proc_context = proc_context;
     msg->event = PFCP_SESS_EST_RESP_RCVD_EVNT;
     SET_PROC_MSG(proc_context, msg);
     proc_context->handler((void*)proc_context, msg);

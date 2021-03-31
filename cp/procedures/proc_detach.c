@@ -43,6 +43,7 @@ proc_context_t*
 alloc_detach_proc(msg_info_t *msg)
 {
     proc_context_t *detach_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
+    strcpy(detach_proc->proc_name, "UE_DETACH");
     detach_proc->proc_type = msg->proc; 
     detach_proc->handler = detach_event_handler;
     detach_proc->ue_context = msg->ue_context;
@@ -213,10 +214,20 @@ void
 process_pfcp_sess_del_request_timeout(void *data)
 {
     proc_context_t *proc_context = (proc_context_t *)data;
+    ue_context_t *context = (ue_context_t *)proc_context->ue_context;
     assert(proc_context->gtpc_trans != NULL);
     assert(proc_context->pfcp_trans != NULL);
+    transData_t *pfcp_trans = (transData_t *)proc_context->pfcp_trans;
+    pfcp_trans->itr_cnt++;
+    if(pfcp_trans->itr_cnt < cp_config->request_tries) {
+	    LOG_MSG(LOG_ERROR, "PFCP session delete request retry(%d). IMSI %lu, " 
+                       "PFCP sequence %d ", pfcp_trans->itr_cnt, context->imsi64, pfcp_trans->sequence);
+        pfcp_timer_retry_send(my_sock.sock_fd_pfcp, pfcp_trans, &pfcp_trans->peer_sockaddr);
+        restart_response_wait_timer(pfcp_trans);
+        return;
+    }
 
-    LOG_MSG(LOG_ERROR, "PFCP Session delete timeout ");
+    LOG_MSG(LOG_ERROR, "PFCP Session delete timeout %lu, PFCP Sequence %d ", context->imsi64, pfcp_trans->sequence);
     msg_info_t *msg = (msg_info_t*)calloc(1, sizeof(msg_info_t));
     msg->msg_type = PFCP_SESSION_DELETION_RESPONSE;
     msg->proc_context = proc_context;
@@ -269,9 +280,10 @@ process_pfcp_sess_del_request(proc_context_t *proc_context, msg_info_t *msg)
     increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSDELREQ, context->upf_context->upf_sockaddr.sin_addr.s_addr);
     transData_t *trans_entry;
     trans_entry = start_response_wait_timer(proc_context, pfcp_msg, encoded, process_pfcp_sess_del_request_timeout);
-    trans_entry->self_initiated = 1;
+    SET_TRANS_SELF_INITIATED(trans_entry);
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
     trans_entry->sequence = sequence;
+    trans_entry->peer_sockaddr = context->upf_context->upf_sockaddr; 
 
     // link new transaction and proc context 
     proc_context->pfcp_trans = trans_entry;
