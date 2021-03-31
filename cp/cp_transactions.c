@@ -137,14 +137,14 @@ void
 transaction_retry_callback(gstimerinfo_t *ti, const void *data_t )
 {
     transData_t *data =  (transData_t *) data_t;
+    if(IS_TRANS_DELAYED_DELETE(data)) {
+        // transaction is marked for free
+        return;
+    }
     if(data->rt.ti_id != 0) {
         stoptimer(&data->rt.ti_id);
         deinittimer(&data->rt.ti_id);
         data->rt.ti_id = 0;
-    }
-    if(IS_TRANS_DELAYED_DELETE(data)) {
-        // transaction is marked for free 
-        return;
     }
     data->timeout_function(data->cb_data);
     LOG_MSG(LOG_NEVER, " timeinfo %p ", ti);
@@ -233,6 +233,11 @@ cleanup_pfcp_trans(transData_t *pfcp_trans)
 
 void delayed_free(transData_t *trans)
 {
+
+    if(IS_TRANS_DELAYED_DELETE(trans)) {
+        LOG_MSG(LOG_DEBUG,"Transaction already marked for delayed delete %p ",trans);
+        return;
+    }
     SET_TRANS_DELAYED_DELETE(trans);
     LOG_MSG(LOG_DEBUG,"Set transaction for delayed delete %p ",trans);
     add_delayed_free_memory_task(trans);

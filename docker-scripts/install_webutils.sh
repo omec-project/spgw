@@ -9,6 +9,7 @@ build_pistache()
     pushd /tmp
     git clone -q $PISTACHE_SERVER /tmp/pistache
     pushd /tmp/pistache
+    git checkout 9dc080b9ebbe6fc1726b45e9db1550305938313e
     git submodule update --init
     mkdir -p {build,installpath}
     cd build
@@ -16,9 +17,9 @@ build_pistache()
     /tmp/cmake-3.18.0-Linux-x86_64/bin/cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release  -DPISTACHE_BUILD_EXAMPLES=true -DPISTACHE_BUILD_TESTS=true -DPISTACHE_BUILD_DOCS=false  -DPISTACHE_USE_SSL=true -DCMAKE_INSTALL_PREFIX=$PWD/../installpath ../
     make -j
     make install
-    cp -r ../installpath/include/pistache /usr/local/include
+    cp -r ../include/pistache /usr/local/include
     cp ../installpath/lib/lib*so* /usr/local/lib
-    cp ../installpath/lib/libpistache.a /usr/local/lib
+    cp ./src/libpistache.a /usr/local/lib
     ls -l ../installpath/lib
     popd
     popd
