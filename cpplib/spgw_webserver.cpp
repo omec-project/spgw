@@ -166,6 +166,7 @@ void spgwWebserverThread(uint16_t port)
     Address addr(ip, p);
 
     auto opts = Pistache::Http::Endpoint::options()
+        .maxRequestSize(16000)
         .threads(1); /* 1 thread is good enough. We dont expect heavy load */
 
     Http::Endpoint server(addr);
