@@ -416,6 +416,7 @@ process_gx_msg(void *data, uint16_t event)
         }
         case GX_RAR_MSG: {
             LOG_MSG(LOG_DEBUG,"Received RAR with sequence number %d ", gx_rx->seq_num);
+            break;
             if (gx_rar_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + sizeof(gx_rx->seq_num),
                         &msg->gx_msg.rar) <= 0) {
                 free(msg->raw_buf);

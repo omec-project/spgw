@@ -69,12 +69,6 @@ pfcp_send(int fd, void *msg_payload, uint32_t size,
 {
     LOG_MSG(LOG_DEBUG,"queuing message in pfcp out channel for peer %s, port = %u ", inet_ntoa(peer_addr->sin_addr), peer_addr->sin_port);
     queue_pfcp_out_event(fd, (uint8_t*)msg_payload, size, (struct sockaddr *)peer_addr);
-
-#if 0
-    int bytes_tx = sendto(fd, msg_payload, size, 0, (struct sockaddr *) peer_addr, sizeof(struct sockaddr));
-    LOG_MSG(LOG_ERROR, "Number of bytes sent = %d ", bytes_tx);
-    assert(bytes_tx >=0);
-#endif
 	return 1;
 }
 

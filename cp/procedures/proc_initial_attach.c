@@ -694,6 +694,9 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
         increment_mme_peer_stats(MSG_TX_GTPV2_S11_CSRSP, trans_rec->peer_sockaddr.sin_addr.s_addr);
         increment_proc_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH_SUCCESS, trans_rec->peer_sockaddr.sin_addr.s_addr, proc_context->tac);
     
+        ue_context_t *context = (ue_context_t *)proc_context->ue_context;
+        pdn_connection_t *pdn = (pdn_connection_t *)proc_context->pdn_context;
+        increment_ue_info_stats(SUBSCRIBERS_INFO_SPGW_PDN, context->imsi64, pdn->ipv4.s_addr);
         proc_initial_attach_complete(proc_context);
         // Dont access proc_context now onward 
         
@@ -2108,7 +2111,6 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
 
 	sequence = get_pfcp_sequence_number(PFCP_SESSION_ESTABLISHMENT_REQUEST, sequence);
 
-	/* Need to discuss with himanshu */
 	if (cp_config->cp_type == PGWC) {
 		/* VS: Update the PGWU IP address */
 		bearer->s5s8_pgw_gtpu_ipv4.s_addr =
@@ -2165,19 +2167,7 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
 	/* Update PDN State */
 	pdn->state = PFCP_SESS_EST_REQ_SNT_STATE;
 
-	/* Set create session response */
-	//if (cp_config->cp_type == PGWC)
-	//	resp->sequence = (htonl(context->sequence) >> 8);
-	//else
-	//	resp->sequence = context->sequence;
-
-
-	//proc->eps_bearer_id = pdn->default_bearer_id - 5;
-	//resp->s11_sgw_gtpc_teid = context->s11_sgw_gtpc_teid;
-	//resp->context = context;
-	//proc_context->msg_type = GTP_CREATE_SESSION_REQ;
 	proc_context->state = PFCP_SESS_EST_REQ_SNT_STATE;
-	//proc->proc = context->pdns[pdn->default_bearer_id - 5]->proc;
 
     transData_t *trans_entry = NULL;
 	uint8_t pfcp_msg[1024]={0};
