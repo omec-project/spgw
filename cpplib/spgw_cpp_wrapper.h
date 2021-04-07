@@ -73,6 +73,8 @@ void increment_gx_peer_stats(int stat_id, uint32_t peer_addr);
 void increment_proc_mme_peer_stats_reason(int stat_id, uint32_t peer_addr, uint32_t reason, uint16_t tac);
 void increment_proc_mme_peer_stats(int stat_id, uint32_t peer_addr, uint16_t tac);
 /* Procedure stats end */
+void increment_ue_info_stats(int stat_id, uint64_t imsi, uint32_t ipv4); 
+
 void set_data_stats(int stat_id, uint64_t imsi, uint32_t bytes);
 
 /***************UPF Table *********************************/

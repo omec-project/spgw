@@ -1353,6 +1353,32 @@
             ]
         }
         ]
+    },
+    "subscribers_info" : {
+        "name": "subscribers_info",
+        "help": "subcriber connection details",
+        "type": "Gauge",
+        "family_labels": [
+            { "subscriber_info": "details" }
+        ],
+        "gauges": [
+        {
+            "name": "data_usage_of_subscribers",
+            "help": "data usage of subscribers ",
+            "label_0": [
+                { "cp_mode": "spgw" }
+            ],
+            "label_1": [
+                {"level":"pdn"}
+            ],
+            "dynamic_label_0": [
+                { "imsi" :  "Subscriber IMSI " }
+            ],
+            "dynamic_label_1": [
+                { "mobile_ip" :  "Subscriber IP address" }
+            ]
+        }
+        ]
     }
 }
 

@@ -187,7 +187,7 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 			pdr->pdi.ue_ip_address.header.len = 0;
 			pdr->pdi.ntwk_inst.header.len = 0;
 		}
-#if 0
+#if 1
         pdr->pdi.sdf_filter[pdr->pdi.sdf_filter_count].fd = 1;
 		memcpy(&(pdr->pdi.sdf_filter[pdr->pdi.sdf_filter_count].flow_desc),
 			&(dyn_rule->pdr[i]->pdi.sdf_filter[pdr->pdi.sdf_filter_count].flow_desc),
@@ -1401,6 +1401,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	inet_ntop(AF_INET, &(cp_config->pfcp_ip), pAddr, INET_ADDRSTRLEN);
 	unsigned long node_value = inet_addr(pAddr);
 	set_node_id(&(pfcp_sess_est_req->node_id), node_value);
+
 	set_fseid(&(pfcp_sess_est_req->cp_fseid), pdn->seid, node_value);
 
 	if ((cp_config->cp_type == PGWC) ||
@@ -1470,19 +1471,22 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
             bearer->urr_count++;
 
 			bearer->dynamic_rules[bearer->num_dynamic_filters] = pcc_rule->dyn_rule;
-			// Create 2 PDRs and 2 QERsfor every rule
+
+            // Fill 1st PDR entry and corresponding rules  
 			bearer->dynamic_rules[bearer->num_dynamic_filters]->pdr[0] = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, bearer->pdr_count++);
 
 			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id();
 			fill_qer_entry(pdn, bearer, bearer->qer_count++);
 
 			enum flow_status f_status = (enum flow_status)bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
-			// assuming no of qer and pdr is same /*TODO*/
+			// assuming no of qer and pdr is same
 			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
 		    fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, 0);
 
+            // Fill 2nd PDR entry and corresponding rules  
 			bearer->dynamic_rules[bearer->num_dynamic_filters]->pdr[1] = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, bearer->pdr_count++);
-			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id(); // ajay - URR..
+
+			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id();
 			fill_qer_entry(pdn, bearer, bearer->qer_count++);
 
 			f_status = (enum flow_status)bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/

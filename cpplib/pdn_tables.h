@@ -59,5 +59,3 @@ class pdnTables
         std::unordered_map<uint32_t,void*> pdn_by_fteid_hash;
 };
 #endif
-
-

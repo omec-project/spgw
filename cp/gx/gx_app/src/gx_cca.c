@@ -157,7 +157,7 @@ int gx_cca_cb
 	}
 	/* Cal the length of buffer needed */
 	buflen = gx_cca_calc_length (&gx_resp.data.cp_cca);
-	send_buf = malloc(buflen + sizeof(gx_resp.msg_type));
+	send_buf = malloc(buflen + sizeof(gx_resp.msg_type)+100);
 	if( send_buf == NULL){
  			LOG_MSG(LOG_ERROR,"SendBuff memory fails");
 			return 1;

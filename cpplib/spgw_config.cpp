@@ -604,6 +604,7 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
                 cfg->static_ip_pool_ip = static_ip_pool_ip;
                 cfg->static_ip_pool_mask = static_ip_pool_mask;
                 ue_static_pool *pool = new ue_static_pool(pool_name);
+                ip_pools::getInstance()->addIpPool(pool, pool_name); 
                 pool->gen_pool(cfg->static_ip_pool_ip, cfg->static_ip_pool_mask);
             } else {
                 LOG_MSG(LOG_ERROR, "Static Pool can not be changed %s",ip.c_str());

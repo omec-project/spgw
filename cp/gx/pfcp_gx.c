@@ -8,7 +8,6 @@
 #include "cp_log.h"
 #include "sm_structs_api.h"
 #include "spgw_cpp_wrapper.h"
-//REVIEW: Need to check this: No need to add this header files
 #include "pfcp.h"
 #include "sm_enum.h"
 #include "pfcp_cp_util.h"
@@ -335,6 +334,7 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
                     == PRESENT) {
                 dynamic_rule->flow_desc[idx].flow_direction =
                     (rule_definition->flow_information).list[idx].flow_direction;
+                LOG_MSG(LOG_DEBUG,"Flow direction %d",dynamic_rule->flow_desc[idx].flow_direction);
             }
 
             /* CHAR*/
@@ -346,7 +346,7 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
                 dynamic_rule->flow_desc[idx].flow_desc_len =
                     (rule_definition->flow_information).list[idx].flow_description.len;
 
-                LOG_MSG(LOG_DEBUG, "calling fill_sdf_strctr ");
+                LOG_MSG(LOG_DEBUG, "calling fill_sdf_strctr %s ",dynamic_rule->flow_desc[idx].sdf_flow_description);
                 fill_sdf_strctr(dynamic_rule->flow_desc[idx].sdf_flow_description,
                                 &(dynamic_rule->flow_desc[idx].sdf_flw_desc),
                                 pdn);
@@ -354,7 +354,7 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
                 /*VG assign direction in flow desc */
                 dynamic_rule->flow_desc[idx].sdf_flw_desc.direction =(uint8_t)
                     (rule_definition->flow_information).list[idx].flow_direction;
-
+                LOG_MSG(LOG_DEBUG,"Flow direction %d",dynamic_rule->flow_desc[idx].flow_direction);
             }
         }
     }
