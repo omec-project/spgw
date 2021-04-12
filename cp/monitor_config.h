@@ -1,9 +1,6 @@
-/*
-* Copyright 2019-present Open Networking Foundation
-*
-* SPDX-License-Identifier: Apache-2.0
-*
-*/
+// Copyright 2020-present Open Networking Foundation
+//
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifndef __MONITOR_CONFIG__
 #define __MONITOR_CONFIG__

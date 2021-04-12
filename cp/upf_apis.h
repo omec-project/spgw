@@ -1,4 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
@@ -9,7 +10,7 @@
 #include "upf_struct.h"
 #include "spgw_config_struct.h"
 #include "cp_timer.h"
-#include "cp_proc.h"
+#include "proc_struct.h"
 #include "sm_struct.h"
 
 #ifdef __cplusplus

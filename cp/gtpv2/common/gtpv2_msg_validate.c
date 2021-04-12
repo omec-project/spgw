@@ -1,9 +1,6 @@
-/*
- * Copyright 2020-present Open Networking Foundation
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- */
+// SPDX-FileCopyrightText: 2020-present Open Networking Foundation <info@opennetworking.org>
+//
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "sm_struct.h"
 #include "gtp_messages.h"
@@ -88,47 +85,47 @@ int validate_gtpv2_message_content(msg_info_t *msg)
     {
     	case GTP_CREATE_SESSION_RSP:
         {
-            ret = validate_csrsp_msg(&msg->gtpc_msg.cs_rsp);
+            ret = validate_csrsp_msg(&msg->rx_msg.cs_rsp);
             break;
         }        
         case GTP_MODIFY_BEARER_RSP:
         {
-            ret = validate_mbrsp_msg(&msg->gtpc_msg.mb_rsp);
+            ret = validate_mbrsp_msg(&msg->rx_msg.mb_rsp);
             break;
         }
         case GTP_DELETE_SESSION_RSP:
         {
-            ret = validate_dsrsp_msg(&msg->gtpc_msg.ds_rsp);
+            ret = validate_dsrsp_msg(&msg->rx_msg.ds_rsp);
             break;
         }        
         case GTP_CREATE_BEARER_REQ:
         {
-            ret = validate_cbreq_msg(&msg->gtpc_msg.cb_req);
+            ret = validate_cbreq_msg(&msg->rx_msg.cb_req);
             break;
         } 
         case GTP_CREATE_BEARER_RSP:
         {
-            ret = validate_cbrsp_msg(&msg->gtpc_msg.cb_rsp);
+            ret = validate_cbrsp_msg(&msg->rx_msg.cb_rsp);
             break;
         }        
         case GTP_DELETE_BEARER_REQ:
         {
-            ret = validate_dbreq_msg(&msg->gtpc_msg.db_req);
+            ret = validate_dbreq_msg(&msg->rx_msg.db_req);
             break;
         } 
         case GTP_DELETE_BEARER_RSP:
         {
-            ret = validate_dbrsp_msg(&msg->gtpc_msg.db_rsp);
+            ret = validate_dbrsp_msg(&msg->rx_msg.db_rsp);
             break;
         }        
         case GTP_UPDATE_BEARER_REQ:
         {
-            ret = validate_ubreq_msg(&msg->gtpc_msg.ub_req);
+            ret = validate_ubreq_msg(&msg->rx_msg.ub_req);
             break;
         } 
         case GTP_UPDATE_BEARER_RSP:
         {
-            ret = validate_ubrsp_msg(&msg->gtpc_msg.ub_rsp);
+            ret = validate_ubrsp_msg(&msg->rx_msg.ub_rsp);
             break;
         }        
         default:

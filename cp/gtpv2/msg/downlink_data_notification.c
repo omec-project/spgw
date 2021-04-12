@@ -25,6 +25,7 @@
 #include "cp_io_poll.h"
 #include "proc_session_report.h"
 #include "cp_transactions.h"
+#include "proc.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -37,7 +38,7 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     int ret = 0;
     struct sockaddr_in *peer_addr = &msg->peer_addr;
     ue_context_t *context = NULL;
-    dnlnk_data_notif_ack_t *ddn_ack = &msg->gtpc_msg.ddn_ack;
+    dnlnk_data_notif_ack_t *ddn_ack = &msg->rx_msg.ddn_ack;
 	// uint8_t delay = 0; /*TODO move this when more implemented?*/
 
     increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK, peer_addr->sin_addr.s_addr);
@@ -52,16 +53,12 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return ret;
     }
 
-    if (gtpv2c_rx->teid.has_teid.teid) {
-        context = (ue_context_t *)get_ue_context(ddn_ack->header.teid.has_teid.teid);
-        if (context == NULL) {
-            increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
-            LOG_MSG(LOG_DEBUG0, "Rcvd DDN, Context not found for TEID %u ", gtpv2c_rx->teid.has_teid.teid);
-            return -1;
-        }
+    context = (ue_context_t *)get_ue_context(ddn_ack->header.teid.has_teid.teid);
+    if (context == NULL) {
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
+        LOG_MSG(LOG_DEBUG0, "Rcvd DDN, Context not found for TEID %u ", gtpv2c_rx->teid.has_teid.teid);
+        return -1;
     }
- 
-    // validate message 
 
     uint32_t local_addr = my_sock.s11_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.s11_sockaddr.sin_port;
@@ -69,14 +66,13 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     transData_t *gtpc_trans = (transData_t *)delete_gtp_transaction(local_addr, port_num, seq_num);
 
-    /* Retrive the session information based on session id. */
     if(gtpc_trans == NULL) {
         LOG_MSG(LOG_DEBUG3, "Unsolicitated DDN Ack response ");
         increment_mme_peer_stats(MSG_RX_GTPV2_S11_DDNACK_DROP, peer_addr->sin_addr.s_addr);
         return -1;
     }
 
-	/* stop and delete timer entry for pfcp sess del req */
+	/* stop and delete timer entry for DDN req */
 	stop_transaction_timer(gtpc_trans);
 
     proc_context_t *proc_context = (proc_context_t *)gtpc_trans->proc_context;
@@ -101,11 +97,11 @@ handle_ddn_ack(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:%s[%u], Teid:%u, "
-            "Procedure:%s, State:%s, Event:%s\n",
+            "Procedure:%s, Event:%s\n",
             gtp_type_str(msg->msg_type), msg->msg_type,
             gtpv2c_rx->teid.has_teid.teid,
             get_proc_string(msg->proc),
-            get_state_string(msg->state), get_event_string(msg->event));
+            get_event_string(msg->event));
 
     proc_context->handler(proc_context, msg);
 
@@ -175,7 +171,7 @@ send_ddn_indication(proc_context_t *proc_ctxt, uint8_t ebi_index)
 {
     ue_context_t *context = (ue_context_t *)proc_ctxt->ue_context;
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
-	static uint32_t ddn_sequence = 1; /* TODO : Requirement, sequence number management */
+	uint32_t ddn_sequence = get_gtp_sequence(); 
     int ret;
 
 	ret = create_downlink_data_notification(context,
@@ -218,8 +214,6 @@ send_ddn_indication(proc_context_t *proc_ctxt, uint8_t ebi_index)
     add_gtp_transaction(local_addr, port_num, ddn_sequence, gtpc_trans);
 
     increment_mme_peer_stats(MSG_TX_GTPV2_S11_DDNREQ, mme_s11_sockaddr_in.sin_addr.s_addr);
-
-	ddn_sequence += 2;
 
 	return 0;
 }

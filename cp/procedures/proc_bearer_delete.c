@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifdef FUTURE_NEED
@@ -16,7 +18,7 @@ process_mod_resp_delete_handler(void *data, void *unused_param)
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
 	ret = process_pfcp_sess_mod_resp(
-			msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
+			msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 			gtpv2c_tx);
 	if (ret) {
 		mbr_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
@@ -35,9 +37,9 @@ process_mod_resp_delete_handler(void *data, void *unused_param)
 
         increment_pgw_peer_stats(MSG_TX_GTPV2_DBRSP, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 		add_gtpv2c_if_timer_entry(
-			UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
+			UE_SESS_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
 			&my_sock.s5s8_recv_sockaddr, gtp_tx_buf, payload_length,
-			UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
+			UE_BEAR_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
 			S5S8_IFACE);
 
 	} else {
@@ -156,7 +158,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
 	ret = process_delete_bearer_pfcp_sess_response(
-		msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
+		msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 		gtpv2c_tx);
 	if (ret != 0) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
@@ -167,7 +169,7 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 		+ sizeof(gtpv2c_tx->gtpc);
 
     ue_context_t *temp = NULL;
-	temp = (ue_context_t*)get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+	temp = (ue_context_t*)get_sess_entry_seid(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
     assert(temp == ue_context);
 
 	if ((SAEGWC != cp_config->cp_type) &&
@@ -181,9 +183,9 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 
 		if (resp->msg_type != GTP_DELETE_BEARER_RSP) {
 			add_gtpv2c_if_timer_entry(
-				UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
+				UE_SESS_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
 				&my_sock.s5s8_recv_sockaddr, gtp_tx_buf, payload_length,
-				UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
+				UE_BEAR_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
 				S5S8_IFACE);
 		}
 
@@ -193,9 +195,9 @@ process_pfcp_sess_mod_resp_dbr_handler(void *data, void *unused_param)
 				sizeof(struct sockaddr_in));
 
 		add_gtpv2c_if_timer_entry(
-				UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
+				UE_SESS_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
 				&s11_mme_sockaddr, gtp_tx_buf, payload_length,
-				UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
+				UE_BEAR_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
 				S11_IFACE);
 
         increment_mme_peer_stats(MSG_TX_GTPV2_DBREQ, s11_mme_sockaddr.sin_addr.s_addr);
@@ -218,7 +220,7 @@ process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
 	ret = process_delete_bearer_pfcp_sess_response(
-		msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
+		msg->rx_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid,
 		gtpv2c_tx);
 	if (ret != 0) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
@@ -229,10 +231,10 @@ process_pfcp_sess_del_resp_dbr_handler(void *data, void *unused_param)
 		+ sizeof(gtpv2c_tx->gtpc);
 
 
-	resp = get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
+	resp = get_sess_entry_seid(msg->rx_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
 	if (resp == NULL) {
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu",
-			msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
+			msg->rx_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
 
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
@@ -270,10 +272,10 @@ int del_bearer_cmd_ccau_handler(void *data, void *unused_param)
 	pdn_connection_t *pdn = NULL;
 
 	/* Extract the call id from session id */
-	ret = retrieve_call_id((char *)&msg->gx_msg.cca.session_id.val, &call_id);
+	ret = retrieve_call_id((char *)&msg->rx_msg.cca.session_id.val, &call_id);
 	if (ret < 0) {
 	        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s", 
-	                       (char*) &msg->gx_msg.cca.session_id.val);
+	                       (char*) &msg->rx_msg.cca.session_id.val);
 	        return -1;
 	}
 
@@ -305,7 +307,7 @@ process_delete_bearer_response_handler(void *data, void *unused_param)
 {
 	msg_info_t *msg = (msg_info_t *)data;
 	int ret = 0;
-	ret = process_delete_bearer_resp(&msg->gtpc_msg.db_rsp, 1);
+	ret = process_delete_bearer_resp(&msg->rx_msg.db_rsp, 1);
 	if (ret != 0) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return ret;
@@ -331,7 +333,7 @@ del_bearer_cmd_mbr_resp_handler(void *data, void *unused_param)
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 	ret = process_pfcp_sess_mod_resp_del_cmd
-			(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
+			(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 			 gtpv2c_tx ,&flag);
 
 	if (ret) {
@@ -672,6 +674,4 @@ delete_dedicated_bearers(pdn_connection_t *pdn,
 
 	return 0;
 }
-
 #endif
-

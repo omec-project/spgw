@@ -12,18 +12,18 @@ int handle_modify_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_r
     pdn_connection_t *pdn = NULL;
 
     if((ret = decode_mod_bearer_rsp((uint8_t *) gtpv2c_rx,
-                    &msg->gtpc_msg.mb_rsp) == 0)) {
+                    &msg->rx_msg.mb_rsp) == 0)) {
         return -1;
 
-	gtpc_delete_timer_entry(msg->gtpc_msg.mb_rsp.header.teid.has_teid.teid);
+	gtpc_delete_timer_entry(msg->rx_msg.mb_rsp.header.teid.has_teid.teid);
 
-	if(msg->gtpc_msg.mb_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
-		cs_error_response(msg, msg->gtpc_msg.mb_rsp.cause.cause_value,
+	if(msg->rx_msg.mb_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
+		cs_error_response(msg, msg->rx_msg.mb_rsp.cause.cause_value,
 				cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 		return -1;
 	}
 
-	if(get_ue_context_by_sgw_s5s8_teid(msg->gtpc_msg.mb_rsp.header.teid.has_teid.teid, &context) != 0)
+	if(get_ue_context_by_sgw_s5s8_teid(msg->rx_msg.mb_rsp.header.teid.has_teid.teid, &context) != 0)
 	{
 		cs_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
 						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
@@ -31,7 +31,7 @@ int handle_modify_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_r
 
 		return -1;
 	}
-	uint8_t ebi_index = msg->gtpc_msg.mb_rsp.bearer_contexts_modified.eps_bearer_id.ebi_ebi - 5;
+	uint8_t ebi_index = msg->rx_msg.mb_rsp.bearer_contexts_modified.eps_bearer_id.ebi_ebi - 5;
 	pdn = GET_PDN(context, ebi_index);
 	msg->state = pdn->state;
 	msg->proc = pdn->proc;

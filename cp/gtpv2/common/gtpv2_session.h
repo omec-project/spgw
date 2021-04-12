@@ -41,17 +41,6 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 	uint32_t *s5s8_pgw_gtpc_ipv4);
 
 /**
- * @brief  : Fill Create Sess Request
- * @param  : cs_req, request structure to be filled
- * @param  : context, ue context info
- * @param  : ebi_index, index of bearer in bearer array
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-fill_cs_request(create_sess_req_t *cs_req, ue_context_t *context,
-		uint8_t ebi_index);
-
-/**
  * @brief  : Process create session response received on s5s8 interface in sgwc
  * @param  : cs_rsp, holds info received in response
  * @return : Returns 0 in case of success , -1 otherwise

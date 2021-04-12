@@ -29,7 +29,7 @@ int handle_delete_pdn_conn_set_req(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
     int ret;
 
-    if ((ret = decode_del_pdn_conn_set_req((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.del_pdn_req) == 0))
+    if ((ret = decode_del_pdn_conn_set_req((uint8_t *) gtpv2c_rx, &msg->rx_msg.del_pdn_req) == 0))
         return -1;
 }
 #endif

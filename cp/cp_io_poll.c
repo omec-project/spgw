@@ -46,7 +46,7 @@ incoming_event_handler(void* data)
         event  = (stack_event_t *)get_stack_unwind_event();
         if(event != NULL)
         {
-            LOG_MSG(LOG_DEBUG,"handle stack unwind event %s ",event_names[event->event]);
+            //LOG_MSG(LOG_DEBUG,"handle stack unwind event %s ",event_names[event->event]);
             event->cb(event->data, event->event);
             free(event);
         }

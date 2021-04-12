@@ -13,18 +13,18 @@ int handle_update_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_r
 
 
     if((ret = decode_upd_bearer_rsp((uint8_t *) gtpv2c_rx,
-                    &msg->gtpc_msg.ub_rsp) == 0))
+                    &msg->rx_msg.ub_rsp) == 0))
         return -1;
 
-	if(msg->gtpc_msg.ub_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
-			ubr_error_response(msg, msg->gtpc_msg.ub_rsp.cause.cause_value,
+	if(msg->rx_msg.ub_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
+			ubr_error_response(msg, msg->rx_msg.ub_rsp.cause.cause_value,
 									cp_config->cp_type == SGWC ? S5S8_IFACE : GX_IFACE);
 			return -1;
 	}
 
 	gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
 
-	uint8_t ebi_index = msg->gtpc_msg.ub_rsp.bearer_contexts[0].eps_bearer_id.ebi_ebi - 5;
+	uint8_t ebi_index = msg->rx_msg.ub_rsp.bearer_contexts[0].eps_bearer_id.ebi_ebi - 5;
 	//Vikrant Which ebi to be selected as multiple bearer in request
 	if((ret = get_ue_state(gtpv2c_rx->teid.has_teid.teid ,ebi_index)) > 0){
 			msg->state = ret;
@@ -209,12 +209,12 @@ int process_update_bearer_response_handler(void *data, void *unused_param)
 	msg_info_t *msg = (msg_info_t *)data;
 	if (SGWC == cp_config->cp_type) {
 
-		ret = process_s11_upd_bearer_response(&msg->gtpc_msg.ub_rsp);
+		ret = process_s11_upd_bearer_response(&msg->rx_msg.ub_rsp);
 		if(ret && ret != -1)
 				ubr_error_response(msg, ret, S5S8_IFACE);
 	} else {
 
-		ret = process_s5s8_upd_bearer_response(&msg->gtpc_msg.ub_rsp);
+		ret = process_s5s8_upd_bearer_response(&msg->rx_msg.ub_rsp);
 		if(ret && ret != -1)
 				ubr_error_response(msg, ret, GX_IFACE);
 	}

@@ -8,28 +8,17 @@
 #define PFCP_CP_SESSION_H
 
 #include "pfcp_messages.h"
-
 #include "sm_struct.h"
 #include "pfcp_cp_set_ie.h"
 #include "gtp_messages.h"
+#include "ue.h"
+#include "pdn.h"
+#include "bearer.h"
+#include "policy.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define NUM_UE 10000
-#define NUM_DP 100
-
-/**
- * @brief  : This structure holds data related to association with dp
- */
-typedef struct association_context{
-	uint8_t       rx_buf[NUM_DP][NUM_UE];
-	char sgwu_fqdn[NUM_DP][MAX_HOSTNAME_LENGTH];
-	uint32_t      upf_ip;
-	uint32_t      csr_cnt;
-}association_context_t;
-
-extern association_context_t assoc_ctxt[NUM_DP] ;
 
 /**
  * @brief  : Fill pfcp session establishment response
@@ -120,16 +109,6 @@ void
 fill_pfcp_sess_mod_req_pgw_init_remove_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 		pdn_connection_t *pdn, eps_bearer_t *bearers[], uint8_t bearer_cntr);
 
-/**
- * @brief  : Process pfcp session establishment response
- * @param  : pfcp_sess_est_rsp, structure to be filled
- * @param  : gtpv2c_tx, holds info in gtpv2c header
- * @retrun : Returns 0 in case of success
- */
-int8_t
-process_pfcp_sess_est_resp(msg_info_t *msg, 
-                           pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, 
-                           gtpv2c_header_t *gtpv2c_tx);
 
 void
 fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod_req,

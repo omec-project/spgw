@@ -1,4 +1,3 @@
-
 // Copyright 2020-present Open Networking Foundation
 //
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
@@ -17,6 +16,9 @@ service_req_event_handler(void *proc, void *msg);
 
 void
 proc_service_request_complete(proc_context_t *proc_context);
+
+void
+proc_service_request_success(proc_context_t *proc);
 
 void
 proc_service_request_failure(msg_info_t *msg, uint8_t cause);

@@ -11,7 +11,6 @@
 #include "cp_init.h"
 #include "cp_main.h"
 #include "sm_struct.h"
-#include "sm_structs_api.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_util.h"
 #include "pfcp_cp_set_ie.h"

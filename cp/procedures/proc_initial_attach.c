@@ -1,11 +1,12 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "sm_struct.h"
 #include "gtp_messages.h"
 #include "spgw_config_struct.h"
-#include "sm_enum.h"
 #include "gtpv2_error_rsp.h"
 #include "assert.h"
 #include "cp_peer.h"
@@ -35,15 +36,11 @@
 #include "gx_interface.h"
 #include "cp_log.h"
 #include "upf_apis.h"
+#include "proc.h"
+#include "ue.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 static uint32_t s5s8_sgw_gtpc_teid_offset;
-#ifdef __cplusplus
-}
-#endif
 
 /* local functions. Need to find suitable place for declarations  */
 
@@ -72,7 +69,7 @@ alloc_initial_proc(msg_info_t *msg)
     proc_context_t *csreq_proc;
     csreq_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     strcpy(csreq_proc->proc_name, "INITIAL_ATTACH");
-    csreq_proc->proc_type = msg->proc; 
+    csreq_proc->proc_type = INITIAL_PDN_ATTACH_PROC; 
     csreq_proc->handler = initial_attach_event_handler;
     msg->proc_context = csreq_proc;
     SET_PROC_MSG(csreq_proc, msg);
@@ -92,23 +89,6 @@ initial_attach_event_handler(void *proc, void *msg_info)
             handle_csreq_msg(proc_context, msg);
             break;
         }
-        case PFCP_ASSOC_SETUP_SUCCESS:
-        case PFCP_SESS_EST_EVNT: {
-            initiate_upf_session(proc_context, msg);
-            break;
-        } 
-        case PFCP_SESS_EST_RESP_RCVD_EVNT: {
-            process_sess_est_resp_handler(proc_context, msg);
-            break; 
-        }
-        case PFCP_ASSOC_SETUP_FAILED: {
-            process_sess_est_resp_association_failed_handler(proc_context, msg);
-            break;
-        }
-        case PFCP_SESS_EST_RESP_TIMEOUT_EVNT: {
-            process_sess_est_resp_timeout_handler(proc_context, msg);
-            break; 
-        }
         case CCA_RCVD_EVNT: {
             cca_msg_handler(proc_context, msg); 
             break;
@@ -117,10 +97,64 @@ initial_attach_event_handler(void *proc, void *msg_info)
             process_gx_ccai_reject_handler(proc_context, msg);
             break; 
         }
+
+        case PFCP_ASSOC_SETUP_SUCCESS:
+        case PFCP_SESS_EST_EVNT: {
+            initiate_upf_session(proc_context, msg);
+            break;
+        } 
+        case PFCP_ASSOC_SETUP_FAILED: {
+            process_sess_est_resp_association_failed_handler(proc_context, msg);
+            break;
+        }
+
+        case PFCP_SESS_EST_RESP_RCVD_EVNT: {
+            process_sess_est_resp_handler(proc_context, msg);
+            break; 
+        }
+        case PFCP_SESS_EST_RESP_TIMEOUT_EVNT: {
+            process_sess_est_resp_timeout_handler(proc_context, msg);
+            break; 
+        }
         default: {
             assert(0); // unhandled event 
         }
     }
+    return;
+}
+
+void proc_initial_attach_success(proc_context_t *proc_context)
+{
+    increment_stat(NUM_UE_SPGW_ACTIVE_SUBSCRIBERS);
+    proc_initial_attach_complete(proc_context);
+}
+ 
+// TODO : need to define local cause above 255. That way we can increment stats 
+void proc_initial_attach_failure(proc_context_t *proc_context, int cause)
+{
+    msg_info_t *msg = (msg_info_t *)proc_context->msg_info;
+    transData_t *trans_rec = proc_context->gtpc_trans;
+    if(cause != -1) {
+        increment_proc_mme_peer_stats_reason(PROCEDURES_SPGW_INITIAL_ATTACH_FAILURE, 
+                                    trans_rec->peer_sockaddr.sin_addr.s_addr, cause, proc_context->tac);
+        // send cs response 
+        cs_error_response(msg, cause,
+                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+    } else {
+        increment_proc_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH_FAILURE, 
+                                 trans_rec->peer_sockaddr.sin_addr.s_addr, proc_context->tac);
+    }
+    
+    // UE context is not allocated and message is rejected
+    proc_context->result = PROC_RESULT_FAILURE;
+    proc_initial_attach_complete(proc_context);
+    return;
+}
+
+void 
+proc_initial_attach_complete(proc_context_t *proc_context)
+{
+    end_procedure(proc_context);
     return;
 }
 
@@ -132,30 +166,30 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
     pdn_connection_t *pdn = NULL;
     transData_t *gtpc_trans = csreq_proc->gtpc_trans;
 
-    csreq_proc->imsi64 = msg->gtpc_msg.csr.imsi.imsi64; 
+    csreq_proc->imsi64 = msg->rx_msg.csr.imsi.imsi64; 
     increment_proc_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH,
                                   gtpc_trans->peer_sockaddr.sin_addr.s_addr,
-                                  msg->gtpc_msg.csr.uli.tai2.tai_tac);
+                                  msg->rx_msg.csr.uli.tai2.tai_tac);
 
-	ret = process_create_sess_req(&msg->gtpc_msg.csr,
+	ret = process_create_sess_req(&msg->rx_msg.csr,
 			                      &context, &pdn, msg);
 	if (ret) {
         // > 0 cause - Send reject message out 
         // -1 : just cleanup call locally 
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
-        csreq_proc->tac = msg->gtpc_msg.csr.uli.tai2.tai_tac;
+        csreq_proc->tac = msg->rx_msg.csr.uli.tai2.tai_tac;
         proc_initial_attach_failure(csreq_proc, ret);
 		return -1;
 	}
 
-    csreq_proc->tac = msg->gtpc_msg.csr.uli.tai2.tai_tac;
+    csreq_proc->tac = msg->rx_msg.csr.uli.tai2.tai_tac;
     csreq_proc->ue_context = (void *)context;
     csreq_proc->pdn_context = (void *)pdn;
     TAILQ_INSERT_TAIL(&context->pending_sub_procs, csreq_proc, next_sub_proc);
 
     if ((cp_config->cp_type == PGWC) || (cp_config->cp_type == SAEGWC)) {
         if(cp_config->gx_enabled) {
-            if (gen_ccr_request(csreq_proc, pdn->default_bearer_id-5, &msg->gtpc_msg.csr)) {
+            if (gen_ccr_request(csreq_proc, pdn->default_bearer_id-5, &msg->rx_msg.csr)) {
                 LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
                 return -1;
             }
@@ -177,7 +211,7 @@ initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg)
 	upf_context_t *upf_context = context->upf_context;
 
     if (upf_context->state == PFCP_ASSOC_REQ_SNT_STATE) {
-        LOG_MSG(LOG_DEBUG,"UPF association formation in progress. Buffer new CSReq  ");
+        LOG_MSG(LOG_DEBUG1,"UPF association formation in progress. Buffer new CSReq  ");
         // After every setup timeout we would flush the buffered entries..
         // dont worry about #of packets in buffer for now 
         buffer_csr_request(csreq_proc);
@@ -619,20 +653,20 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 
 	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:PFCP_SESSION_ESTABLISHMENT_RESPONSE[%u], Seid:%lu, "
-			"Procedure:%s, State:%s, Event:%s",
+			"Procedure:%s, Event:%s",
 			msg->msg_type,
-			msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid,
+			msg->rx_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid,
 			get_proc_string(msg->proc),
-			get_state_string(msg->state), get_event_string(msg->event));
+			get_event_string(msg->event));
 
 
-	if(msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value != REQUESTACCEPTED) {
+	if(msg->rx_msg.pfcp_sess_est_resp.cause.cause_value != REQUESTACCEPTED) {
 		LOG_MSG(LOG_DEBUG, "Cause received Est response is %d",
-				msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value);
+				msg->rx_msg.pfcp_sess_est_resp.cause.cause_value);
         ue_context_t *context = (ue_context_t *)proc_context->ue_context;
         upf_context_t *upf_ctxt = context->upf_context;
         proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REQUEST_REJECTED);
-        if(msg->pfcp_msg.pfcp_sess_est_resp.cause.cause_value == NOESTABLISHEDPFCPASSOCIATION) {
+        if(msg->rx_msg.pfcp_sess_est_resp.cause.cause_value == NOESTABLISHEDPFCPASSOCIATION) {
 		    LOG_MSG(LOG_INFO, "Initiate pfcp associations ");
             schedule_pfcp_association(1,upf_ctxt); 
         }
@@ -644,7 +678,7 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
 	ret = process_pfcp_sess_est_resp(msg,
-			&msg->pfcp_msg.pfcp_sess_est_resp, gtpv2c_tx);
+			&msg->rx_msg.pfcp_sess_est_resp, gtpv2c_tx);
 
 	if (ret) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
@@ -666,9 +700,9 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 		if (SGWC == cp_config->cp_type) {
 #if 0
 			add_gtpv2c_if_timer_entry(
-				UE_SESS_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid),
+				UE_SESS_ID(msg->rx_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid),
 				&s5s8_recv_sockaddr, gtp_tx_buf, payload_length,
-				UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid) - 5,
+				UE_BEAR_ID(msg->rx_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid) - 5,
 				S5S8_IFACE);
 #endif
 		}
@@ -697,10 +731,312 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
         ue_context_t *context = (ue_context_t *)proc_context->ue_context;
         pdn_connection_t *pdn = (pdn_connection_t *)proc_context->pdn_context;
         increment_ue_info_stats(SUBSCRIBERS_INFO_SPGW_PDN, context->imsi64, pdn->ipv4.s_addr);
-        proc_initial_attach_complete(proc_context);
+        proc_initial_attach_success(proc_context);
         // Dont access proc_context now onward 
         
 	}
+	return 0;
+}
+
+int8_t
+process_pfcp_sess_est_resp(msg_info_t *msg, 
+                           pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, 
+                           gtpv2c_header_t *gtpv2c_tx)
+{
+	int ret = 0;
+	eps_bearer_t *bearer = NULL;
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
+	uint64_t sess_id = pfcp_sess_est_rsp->header.seid_seqno.has_seid.seid;
+	uint64_t dp_sess_id = pfcp_sess_est_rsp->up_fseid.seid;
+	uint32_t teid = UE_SESS_ID(sess_id);
+
+	LOG_MSG(LOG_DEBUG, "sess_id %lu teid = %u ", sess_id, teid);
+    proc_context_t *proc_context;
+
+	/* Retrieve the UE context */
+	context = (ue_context_t *)get_ue_context(teid);
+	if (context == NULL) {
+		LOG_MSG(LOG_ERROR, "Failed to update UE State for teid: %u", teid);
+		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
+	}
+    proc_context = (proc_context_t *)msg->proc_context; 
+    assert(proc_context != NULL);
+	proc_context->state = PFCP_SESS_EST_RESP_RCVD_STATE;
+
+#ifdef USE_CSID
+	if (cp_config->cp_type == PGWC) {
+		memcpy(&pfcp_sess_est_rsp->pgw_u_fqcsid,
+			&pfcp_sess_est_rsp->sgw_u_fqcsid, sizeof(pfcp_fqcsid_ie_t));
+		memset(&pfcp_sess_est_rsp->sgw_u_fqcsid, 0, sizeof(pfcp_fqcsid_ie_t));
+	}
+
+	fqcsid_t *tmp = NULL;
+	fqcsid_t *fqcsid = NULL;
+	fqcsid = (fqcsid_t*)calloc(1, sizeof(fqcsid_t));
+	if (fqcsid == NULL) {
+		LOG_MSG(LOG_ERROR, "Failed to allocate the memory for fqcsids entry");
+		return -1;
+	}
+	/* SGW FQ-CSID */
+	if (pfcp_sess_est_rsp->sgw_u_fqcsid.header.len) {
+		/* Stored the SGW CSID by SGW Node address */
+		tmp = get_peer_addr_csids_entry(pfcp_sess_est_rsp->sgw_u_fqcsid.node_address,
+				ADD);
+
+		if (tmp == NULL) {
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
+			return -1;
+		}
+		tmp->node_addr = pfcp_sess_est_rsp->sgw_u_fqcsid.node_address;
+
+		for(uint8_t itr = 0; itr < pfcp_sess_est_rsp->sgw_u_fqcsid.number_of_csids; itr++) {
+			uint8_t match = 0;
+			for (uint8_t itr1 = 0; itr1 < tmp->num_csid; itr1++) {
+				if (tmp->local_csid[itr1] == pfcp_sess_est_rsp->sgw_u_fqcsid.pdn_conn_set_ident[itr]) {
+					match = 1;
+				}
+			}
+			if (!match) {
+				tmp->local_csid[tmp->num_csid++] =
+					pfcp_sess_est_rsp->sgw_u_fqcsid.pdn_conn_set_ident[itr];
+			}
+		}
+		memcpy(fqcsid, tmp, sizeof(fqcsid_t));
+	} else {
+		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
+			tmp = get_peer_addr_csids_entry(pfcp_sess_est_rsp->up_fseid.ipv4_address,
+					ADD);
+			if (tmp == NULL) {
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
+				return -1;
+			}
+			tmp->node_addr = pfcp_sess_est_rsp->sgw_u_fqcsid.node_address;
+			memcpy(fqcsid, tmp, sizeof(fqcsid_t));
+		}
+	}
+
+	/* PGW FQ-CSID */
+	if (pfcp_sess_est_rsp->pgw_u_fqcsid.header.len) {
+		/* Stored the PGW CSID by PGW Node address */
+		tmp = get_peer_addr_csids_entry(pfcp_sess_est_rsp->pgw_u_fqcsid.node_address,
+				ADD);
+
+		if (tmp == NULL) {
+			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
+			return -1;
+		}
+		tmp->node_addr = pfcp_sess_est_rsp->pgw_u_fqcsid.node_address;
+
+		for(uint8_t itr = 0; itr < pfcp_sess_est_rsp->pgw_u_fqcsid.number_of_csids; itr++) {
+			uint8_t match = 0;
+			for (uint8_t itr1 = 0; itr1 < tmp->num_csid; itr1++) {
+				if (tmp->local_csid[itr1] == pfcp_sess_est_rsp->pgw_u_fqcsid.pdn_conn_set_ident[itr]) {
+					match = 1;
+				}
+			}
+			if (!match) {
+				tmp->local_csid[tmp->num_csid++] =
+					pfcp_sess_est_rsp->pgw_u_fqcsid.pdn_conn_set_ident[itr];
+			}
+		}
+		memcpy(fqcsid, tmp, sizeof(fqcsid_t));
+	} else {
+		if (cp_config->cp_type == PGWC) {
+			tmp = get_peer_addr_csids_entry(pfcp_sess_est_rsp->up_fseid.ipv4_address,
+					ADD);
+			if (tmp == NULL) {
+				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
+				return -1;
+			}
+			tmp->node_addr = pfcp_sess_est_rsp->pgw_u_fqcsid.node_address;
+			memcpy(fqcsid, tmp, sizeof(fqcsid_t));
+		}
+	}
+
+	/* TODO: Add the handling if SGW or PGW not support Partial failure */
+	/* Link peer node SGW or PGW csid with local csid */
+	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
+		ret = update_peer_csid_link(fqcsid, context->sgw_fqcsid);
+	} else if (cp_config->cp_type == PGWC) {
+		ret = update_peer_csid_link(fqcsid, context->pgw_fqcsid);
+	}
+
+	if (ret) {
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
+		return -1;
+	}
+
+	/* Update entry for up session id with link local csid */
+	sess_csid *sess_t = NULL;
+	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
+		if (context->sgw_fqcsid) {
+			sess_t = get_sess_csid_entry(
+					(context->sgw_fqcsid)->local_csid[(context->sgw_fqcsid)->num_csid - 1]);
+		}
+	} else {
+		/* PGWC */
+		if (context->pgw_fqcsid) {
+			sess_t = get_sess_csid_entry(
+					(context->pgw_fqcsid)->local_csid[(context->pgw_fqcsid)->num_csid - 1]);
+		}
+	}
+
+	if (sess_t == NULL) {
+		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
+		return -1;
+	}
+
+	/* Link local csid with session id */
+	sess_t->up_seid[sess_t->seid_cnt - 1] = dp_sess_id;
+
+	/* Update the UP CSID in the context */
+	context->up_fqcsid = fqcsid;
+
+#endif /* USE_CSID */
+
+    pdn = (pdn_connection_t *)proc_context->pdn_context;
+    assert(pdn != NULL);
+    assert(sess_id == pdn->seid);
+    uint8_t ebi_index = pdn->default_bearer_id - 5; 
+    assert(context->eps_bearers[ebi_index] != NULL);
+	pdn = context->eps_bearers[ebi_index]->pdn;
+    assert(proc_context->pdn_context == pdn);
+	bearer = context->eps_bearers[ebi_index];
+    assert(bearer != NULL);
+	pdn->dp_seid = dp_sess_id;
+    if(pfcp_sess_est_rsp->created_pdr.ue_ip_address.v4 != 0)
+        pdn->ipv4.s_addr = ntohl(pfcp_sess_est_rsp->created_pdr.ue_ip_address.ipv4_address);
+    struct in_addr temp_addr = pdn->ipv4; 
+    temp_addr.s_addr = temp_addr.s_addr;
+	LOG_MSG(LOG_DEBUG, "DP session id %lu. UE address = %s  ", dp_sess_id, inet_ntoa(temp_addr));
+
+	/* Update the UE state */
+	pdn->state = PFCP_SESS_EST_RESP_RCVD_STATE;
+
+	if (cp_config->cp_type == SAEGWC) {
+        transData_t *gtpc_trans = proc_context->gtpc_trans; 
+		set_create_session_response(
+				gtpv2c_tx, gtpc_trans->sequence, context, pdn, bearer);
+	}
+    else if (cp_config->cp_type == PGWC) {
+		/*TODO: This needs to be change after support libgtpv2 on S5S8*/
+		/* set_pgwc_s5s8_create_session_response(gtpv2c_tx,
+				(htonl(context->sequence) >> 8), pdn, bearer); */
+
+		create_sess_rsp_t cs_resp = {0};
+
+		//uint32_t  seq_no = 0;
+		//seq_no = bswap_32(resp->sequence);
+		//seq_no = seq_no >> 8;
+        uint32_t sequence = 0; // TODO...use transactions 
+		fill_pgwc_create_session_response(&cs_resp,
+			sequence, context, ebi_index);
+
+#ifdef USE_CSID
+		if ((context->pgw_fqcsid)->num_csid) {
+			set_gtpc_fqcsid_t(&cs_resp.pgw_fqcsid, IE_INSTANCE_ZERO,
+					context->pgw_fqcsid);
+		}
+#endif /* USE_CSID */
+
+		uint16_t msg_len = encode_create_sess_rsp(&cs_resp, (uint8_t*)gtpv2c_tx);
+		msg_len = msg_len - 4;
+		gtpv2c_header_t *header;
+		header = (gtpv2c_header_t*) gtpv2c_tx;
+			header->gtpc.message_len = htons(msg_len);
+
+		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
+						htonl(pdn->s5s8_sgw_gtpc_ipv4.s_addr);
+	} else if (cp_config->cp_type == SGWC) {
+		uint16_t msg_len = 0;
+		upf_context_t *upf_context = NULL;
+
+		upf_context  = (upf_context_t *)upf_context_entry_lookup((context->pdns[ebi_index])->upf_ipv4.s_addr);
+
+		if (upf_context == NULL) {
+			LOG_MSG(LOG_DEBUG, "NO ENTRY FOUND IN UPF HASH [%u]", 
+					(context->pdns[ebi_index])->upf_ipv4.s_addr);
+			return GTPV2C_CAUSE_INVALID_PEER;
+		}
+
+		ret = add_bearer_entry_by_sgw_s5s8_tied(pdn->s5s8_sgw_gtpc_teid, &context->eps_bearers[ebi_index]);
+		if(ret) {
+			return ret;
+		}
+
+		if(context->indication_flag.oi == 1) {
+
+			memset(gtpv2c_tx, 0, MAX_GTPV2C_UDP_LEN);
+			set_modify_bearer_request(gtpv2c_tx, pdn, bearer);
+
+			my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
+				htonl(pdn->s5s8_pgw_gtpc_ipv4.s_addr);
+
+			//resp->state = MBR_REQ_SNT_STATE;
+			//pdn->state = resp->state;
+			//pdn->proc = SGW_RELOCATION_PROC;
+			return 0;
+		}
+
+		/*Add procedure based call here
+		 * for pdn -> CSR
+		 * for sgw relocation -> MBR
+		 */
+
+		create_sess_req_t cs_req = {0};
+
+		ret = fill_cs_request(&cs_req, context, ebi_index);
+
+#ifdef USE_CSID
+		/* Set the SGW FQ-CSID */
+		if ((context->sgw_fqcsid)->num_csid) {
+			set_gtpc_fqcsid_t(&cs_req.sgw_fqcsid, IE_INSTANCE_ONE,
+					context->sgw_fqcsid);
+			cs_req.sgw_fqcsid.node_address = ntohl(cp_config->s5s8_ip.s_addr);
+		}
+
+		/* Set the MME FQ-CSID */
+		if ((context->mme_fqcsid)->num_csid) {
+			set_gtpc_fqcsid_t(&cs_req.mme_fqcsid, IE_INSTANCE_ZERO,
+					context->mme_fqcsid);
+		}
+#endif /* USE_CSID */
+		if (ret < 0) {
+			LOG_MSG(LOG_DEBUG, "Failed to create the CSR request ");
+			return 0;
+		}
+
+		msg_len = encode_create_sess_req(
+				&cs_req,
+				(uint8_t*)gtpv2c_tx);
+
+		msg_len = msg_len - 4;
+		gtpv2c_header_t *header;
+		header = (gtpv2c_header_t*) gtpv2c_tx;
+		header->gtpc.message_len = htons(msg_len);
+
+		if (ret < 0)
+			LOG_MSG(LOG_ERROR, "Failed to generate S5S8 SGWC CSR.");
+
+		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
+				htonl(context->pdns[ebi_index]->s5s8_pgw_gtpc_ipv4.s_addr);
+
+#ifdef TEMP
+		/* Update the session state */
+		resp->state = CS_REQ_SNT_STATE;
+		/* stored teid in csr header for clean up */
+		resp->gtpc_msg.csr.header.teid.has_teid.teid = context->pdns[ebi_index]->s5s8_sgw_gtpc_teid;
+#endif
+
+		/* Update the UE state */
+		pdn->state = CS_REQ_SNT_STATE;
+		return 0;
+	}
+
+
+	/* Update the UE state */
+	pdn->state = CONNECTED_STATE;
 	return 0;
 }
 
@@ -1098,33 +1434,8 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
     TAILQ_INSERT_TAIL(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
 }
 
-// TODO : need to define local cause above 255. That way we can increment stats 
-void proc_initial_attach_failure(proc_context_t *proc_context, int cause)
-{
-    msg_info_t *msg = (msg_info_t *)proc_context->msg_info;
-    transData_t *trans_rec = proc_context->gtpc_trans;
-    if(cause != -1) {
-        increment_proc_mme_peer_stats_reason(PROCEDURES_SPGW_INITIAL_ATTACH_FAILURE, 
-                                    trans_rec->peer_sockaddr.sin_addr.s_addr, cause, proc_context->tac);
-        // send cs response 
-        cs_error_response(msg, cause,
-                cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-    } else {
-        increment_proc_mme_peer_stats(PROCEDURES_SPGW_INITIAL_ATTACH_FAILURE, 
-                                 trans_rec->peer_sockaddr.sin_addr.s_addr, proc_context->tac);
-    }
-    
-    // UE context is not allocated and message is rejected
-    proc_context->result = PROC_RESULT_FAILURE;
-    proc_initial_attach_complete(proc_context);
-    return;
-}
 
-void proc_initial_attach_complete(proc_context_t *proc_context)
-{
-    end_procedure(proc_context);
-    return;
-}
+
 
 /**
  * @brief  : parses gtpv2c message and populates parse_sgwc_s5s8_create_session_response_t structure
@@ -2057,19 +2368,19 @@ cca_msg_handler(proc_context_t *proc_context, msg_info_t *msg)
 	pdn_connection_t *pdn = NULL;
 
 	/* Handle the CCR-T Message */
-	if (msg->gx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
-		LOG_MSG(LOG_DEBUG, "Received GX CCR-T Response..!! ");
+	if (msg->rx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
+		LOG_MSG(LOG_ERROR, "Expected GX CCAI and received GX CCR-T Response..!! ");
         gx_msg_proc_failure(proc_context);
 		return 0;
 	}
 
-	/* VS: Retrive the ebi index */
-	ret = parse_gx_cca_msg(&msg->gx_msg.cca, &pdn);
+	ret = parse_gx_cca_msg(&msg->rx_msg.cca, &pdn);
 	if (ret) {
-		LOG_MSG(LOG_ERROR, "Failed to establish IPCAN session, Send Failed CSResp back to SGWC");
+		LOG_MSG(LOG_ERROR, "Failed to establish IPCAN session, Send Failed CSResp back to MME");
         gx_msg_proc_failure(proc_context);
 		return ret;
 	}
+    assert(proc_context->pdn_context == pdn);
 
     msg->event = PFCP_SESS_EST_EVNT;
     proc_context->handler(proc_context, msg); 

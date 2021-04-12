@@ -39,33 +39,33 @@ void get_error_csrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 	switch(msg->msg_type) {
 		case GTP_CREATE_SESSION_REQ: {
-			rsp_info->sender_teid = msg->gtpc_msg.csr.sender_fteid_ctl_plane.teid_gre_key;
-			rsp_info->seq = msg->gtpc_msg.csr.header.teid.has_teid.seq;
-			rsp_info->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi;
-			rsp_info->teid =  msg->gtpc_msg.csr.header.teid.has_teid.teid;
+			rsp_info->sender_teid = msg->rx_msg.csr.sender_fteid_ctl_plane.teid_gre_key;
+			rsp_info->seq = msg->rx_msg.csr.header.teid.has_teid.seq;
+			rsp_info->ebi_index = msg->rx_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi;
+			rsp_info->teid =  msg->rx_msg.csr.header.teid.has_teid.teid;
 
-			if (!msg->gtpc_msg.csr.bearer_contexts_to_be_created.header.len)
+			if (!msg->rx_msg.csr.bearer_contexts_to_be_created.header.len)
 				rsp_info->offending = GTP_IE_CREATE_SESS_REQUEST_BEARER_CTXT_TO_BE_CREATED;
 
-			if (!msg->gtpc_msg.csr.sender_fteid_ctl_plane.header.len)
+			if (!msg->rx_msg.csr.sender_fteid_ctl_plane.header.len)
 				rsp_info->offending = GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT;
 
-			if (!msg->gtpc_msg.csr.imsi.header.len)
+			if (!msg->rx_msg.csr.imsi.header.len)
 				rsp_info->offending = GTP_IE_IMSI;
 
-			if (!msg->gtpc_msg.csr.apn_ambr.header.len)
+			if (!msg->rx_msg.csr.apn_ambr.header.len)
 				rsp_info->offending = GTP_IE_AGG_MAX_BIT_RATE;
 
-			if (!msg->gtpc_msg.csr.pdn_type.header.len)
+			if (!msg->rx_msg.csr.pdn_type.header.len)
 					rsp_info->offending = GTP_IE_PDN_TYPE;
 
-			if (!msg->gtpc_msg.csr.bearer_contexts_to_be_created.bearer_lvl_qos.header.len)
+			if (!msg->rx_msg.csr.bearer_contexts_to_be_created.bearer_lvl_qos.header.len)
 				rsp_info->offending = GTP_IE_BEARER_QLTY_OF_SVC;
 
-			if (!msg->gtpc_msg.csr.rat_type.header.len)
+			if (!msg->rx_msg.csr.rat_type.header.len)
 				rsp_info->offending = GTP_IE_RAT_TYPE;
 
-			if (!msg->gtpc_msg.csr.apn.header.len)
+			if (!msg->rx_msg.csr.apn.header.len)
 				rsp_info->offending = GTP_IE_ACC_PT_NAME;
 
 			break;
@@ -100,26 +100,26 @@ void get_error_csrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 		case GTP_CREATE_SESSION_RSP:{
 #ifdef FUTURE_NEED
-			if (get_ue_context_while_error(msg->gtpc_msg.cs_rsp.header.teid.has_teid.teid, &context) != 0){
+			if (get_ue_context_while_error(msg->rx_msg.cs_rsp.header.teid.has_teid.teid, &context) != 0){
 				LOG_MSG(LOG_ERROR, "UE context not found ");
 				return;
 			}
 
 			rsp_info->sender_teid = context->s11_mme_gtpc_teid;
 			rsp_info->seq = context->sequence;
-			if(msg->gtpc_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi)
-				rsp_info->ebi_index = msg->gtpc_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi;
-			rsp_info->teid = msg->gtpc_msg.cs_rsp.header.teid.has_teid.teid;
+			if(msg->rx_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi)
+				rsp_info->ebi_index = msg->rx_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi;
+			rsp_info->teid = msg->rx_msg.cs_rsp.header.teid.has_teid.teid;
 #endif
 			break;
 		}
 		case GTP_MODIFY_BEARER_RSP: {
 #ifdef FUTURE_NEED
-			rsp_info->seq = msg->gtpc_msg.mb_rsp.header.teid.has_teid.seq;
-			rsp_info->teid = msg->gtpc_msg.mb_rsp.header.teid.has_teid.teid;
-			rsp_info->ebi_index = msg->gtpc_msg.mb_rsp.bearer_contexts_modified.eps_bearer_id.ebi_ebi;
+			rsp_info->seq = msg->rx_msg.mb_rsp.header.teid.has_teid.seq;
+			rsp_info->teid = msg->rx_msg.mb_rsp.header.teid.has_teid.teid;
+			rsp_info->ebi_index = msg->rx_msg.mb_rsp.bearer_contexts_modified.eps_bearer_id.ebi_ebi;
 
-			if (get_ue_context_while_error(msg->gtpc_msg.mb_rsp.header.teid.has_teid.teid, &context) != 0){
+			if (get_ue_context_while_error(msg->rx_msg.mb_rsp.header.teid.has_teid.teid, &context) != 0){
 							LOG_MSG(LOG_ERROR, "UE context not found ");
 
 			}
@@ -131,7 +131,7 @@ void get_error_csrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 		case GX_CCA_MSG: {
 #ifdef FUTURE_NEED
-			if(parse_gx_cca_msg(&msg->gx_msg.cca, &pdn) < 0) {
+			if(parse_gx_cca_msg(&msg->rx_msg.cca, &pdn) < 0) {
 				return;
 			}
 			if(pdn != NULL && pdn->context != NULL ) {
@@ -233,8 +233,8 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
     // caller should do it after sending CSRsp 
     int ret = 0;
     ret = clean_up_while_error(rsp_info.ebi_index,
-            rsp_info.teid,&msg->gtpc_msg.csr.imsi.imsi_number_digits,
-            msg->gtpc_msg.csr.imsi.header.len, rsp_info.seq);
+            rsp_info.teid,&msg->rx_msg.csr.imsi.imsi_number_digits,
+            msg->rx_msg.csr.imsi.header.len, rsp_info.seq);
 #endif
 
     
@@ -274,8 +274,8 @@ void get_error_mbrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
             proc_context_t *proc_context = (proc_context_t *)msg->proc_context;
             if(proc_context == NULL)
             {
-			    rsp_info->seq = msg->gtpc_msg.mbr.header.teid.has_teid.seq;
-			    rsp_info->ebi_index = msg->gtpc_msg.mbr.bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi;
+			    rsp_info->seq = msg->rx_msg.mbr.header.teid.has_teid.seq;
+			    rsp_info->ebi_index = msg->rx_msg.mbr.bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi;
                 return;
             }
             ue_context_t  *ue_record = (ue_context_t *)proc_context->ue_context; 
@@ -290,11 +290,11 @@ void get_error_mbrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 		case GTP_MODIFY_BEARER_RSP: {
 #ifdef FUTURE_NEED
 	        ue_context_t *context = NULL;
-			rsp_info->seq = msg->gtpc_msg.mb_rsp.header.teid.has_teid.seq;
-			rsp_info->teid = msg->gtpc_msg.mb_rsp.header.teid.has_teid.teid;
-			rsp_info->ebi_index = msg->gtpc_msg.mb_rsp.bearer_contexts_modified.eps_bearer_id.ebi_ebi;
+			rsp_info->seq = msg->rx_msg.mb_rsp.header.teid.has_teid.seq;
+			rsp_info->teid = msg->rx_msg.mb_rsp.header.teid.has_teid.teid;
+			rsp_info->ebi_index = msg->rx_msg.mb_rsp.bearer_contexts_modified.eps_bearer_id.ebi_ebi;
 
-			if (get_ue_context_while_error(msg->gtpc_msg.mb_rsp.header.teid.has_teid.teid, &context) != 0){
+			if (get_ue_context_while_error(msg->rx_msg.mb_rsp.header.teid.has_teid.teid, &context) != 0){
 							LOG_MSG(LOG_ERROR, "UE context not found ");
 
 			}
@@ -317,7 +317,7 @@ void get_error_mbrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 		}
 		case GX_CCA_MSG: {
 #ifdef FUTURE_NEED
-			if(parse_gx_cca_msg(&msg->gx_msg.cca, &pdn) < 0) {
+			if(parse_gx_cca_msg(&msg->rx_msg.cca, &pdn) < 0) {
 				return;
 			}
 			if(pdn != NULL && pdn->context != NULL ) {
@@ -400,10 +400,10 @@ void get_error_dsrsp_info(proc_context_t *detach_proc, msg_info_t *msg, err_rsp_
 	switch(msg->msg_type) {
 		case GTP_DELETE_SESSION_REQ: {
             // immediate rejection of dsreq ( validation of msg, ....)
-			rsp_info->seq = msg->gtpc_msg.dsr.header.teid.has_teid.seq;
-			rsp_info->teid = msg->gtpc_msg.dsr.header.teid.has_teid.teid;
+			rsp_info->seq = msg->rx_msg.dsr.header.teid.has_teid.seq;
+			rsp_info->teid = msg->rx_msg.dsr.header.teid.has_teid.teid;
 
-            context = (ue_context_t *)get_ue_context(msg->gtpc_msg.dsr.header.teid.has_teid.teid);
+            context = (ue_context_t *)get_ue_context(msg->rx_msg.dsr.header.teid.has_teid.teid);
             if(context == NULL) {
 				LOG_MSG(LOG_ERROR, "UE context not found ");
 				return;
@@ -425,7 +425,7 @@ void get_error_dsrsp_info(proc_context_t *detach_proc, msg_info_t *msg, err_rsp_
 
 		case GTP_DELETE_SESSION_RSP: {
             // in case of SGW mode -- DSRsp from pgw  
-			if(get_ue_context_while_error(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid, &context) != 0) {
+			if(get_ue_context_while_error(msg->rx_msg.ds_rsp.header.teid.has_teid.teid, &context) != 0) {
 				LOG_MSG(LOG_ERROR, "UE context not found ");
 				return;
 
@@ -502,10 +502,10 @@ void get_error_rabrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 	switch(msg->msg_type) {
 		case GTP_RELEASE_ACCESS_BEARERS_REQ: {
-			rsp_info->seq = msg->gtpc_msg.rab.header.teid.has_teid.seq;
-			rsp_info->teid = msg->gtpc_msg.rab.header.teid.has_teid.teid;
+			rsp_info->seq = msg->rx_msg.rab.header.teid.has_teid.seq;
+			rsp_info->teid = msg->rx_msg.rab.header.teid.has_teid.teid;
 
-			context = (ue_context_t *)get_ue_context(msg->gtpc_msg.rab.header.teid.has_teid.teid);
+			context = (ue_context_t *)get_ue_context(msg->rx_msg.rab.header.teid.has_teid.teid);
 			if(context == NULL) {
 				LOG_MSG(LOG_ERROR, "UE context not found ");
 				return;
@@ -580,14 +580,14 @@ void get_error_ubrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 	switch(msg->msg_type) {
 		case PFCP_SESSION_MODIFICATION_RESPONSE: {
 
-			context = (ue_context_t *)get_ue_context(UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid));
+			context = (ue_context_t *)get_ue_context(UE_SESS_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid));
 			if (context == NULL){
 				LOG_MSG(LOG_ERROR, "UE context not found ");
 				return;
 			}
 			rsp_info->sender_teid = context->s11_mme_gtpc_teid;
 			rsp_info->seq = context->sequence;
-			rsp_info->teid = UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+			rsp_info->teid = UE_SESS_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 			if(resp)
 				rsp_info->ebi_index = resp->eps_bearer_id;
 			break;
@@ -595,18 +595,18 @@ void get_error_ubrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 
 		case GTP_UPDATE_BEARER_REQ :{
 #ifdef FUTURE_NEED
-			if(get_ue_context_by_sgw_s5s8_teid(msg->gtpc_msg.ub_req.header.teid.has_teid.teid,
+			if(get_ue_context_by_sgw_s5s8_teid(msg->rx_msg.ub_req.header.teid.has_teid.teid,
 																				&context) != 0) {
 				LOG_MSG(LOG_ERROR, "UE context not found ");
 				return;
 
 			}
 			pdn_connection_t *pdn_cntxt = NULL;
-			rsp_info->seq = msg->gtpc_msg.ub_req.header.teid.has_teid.seq;
+			rsp_info->seq = msg->rx_msg.ub_req.header.teid.has_teid.seq;
 			rsp_info->teid = context->s11_sgw_gtpc_teid;
-			for(uint8_t i =0; i < msg->gtpc_msg.ub_req.bearer_context_count;i++){
+			for(uint8_t i =0; i < msg->rx_msg.ub_req.bearer_context_count;i++){
 				rsp_info->bearer_id[rsp_info->bearer_count++] =
-							msg->gtpc_msg.ub_req.bearer_contexts[i].eps_bearer_id.ebi_ebi;
+							msg->rx_msg.ub_req.bearer_contexts[i].eps_bearer_id.ebi_ebi;
 			}
 			pdn_cntxt = context->eps_bearers[rsp_info->ebi_index]->pdn;
 			rsp_info->sender_teid = pdn_cntxt->s5s8_pgw_gtpc_teid;
@@ -617,18 +617,18 @@ void get_error_ubrsp_info(msg_info_t *msg, err_rsp_info *rsp_info)
 		case GTP_UPDATE_BEARER_RSP:{
 
 #ifdef FUTURE_NEED
-			context = (ue_context_t *)get_ue_context(msg->gtpc_msg.ub_rsp.header.teid.has_teid.teid);
+			context = (ue_context_t *)get_ue_context(msg->rx_msg.ub_rsp.header.teid.has_teid.teid);
 			if(context == NULL){
 
 				LOG_MSG(LOG_ERROR, "UE context not found ");
 				return;
 			}
 			pdn_connection_t *pdn_cntxt = NULL;
-			rsp_info->seq = msg->gtpc_msg.ub_rsp.header.teid.has_teid.seq;
+			rsp_info->seq = msg->rx_msg.ub_rsp.header.teid.has_teid.seq;
 			rsp_info->teid = context->s11_sgw_gtpc_teid;
-			for(uint8_t i =0; i < msg->gtpc_msg.ub_rsp.bearer_context_count;i++){
+			for(uint8_t i =0; i < msg->rx_msg.ub_rsp.bearer_context_count;i++){
 				rsp_info->bearer_id[rsp_info->bearer_count++] =
-							msg->gtpc_msg.ub_rsp.bearer_contexts[i].eps_bearer_id.ebi_ebi;
+							msg->rx_msg.ub_rsp.bearer_contexts[i].eps_bearer_id.ebi_ebi;
 			}
 			pdn_cntxt = context->eps_bearers[rsp_info->ebi_index]->pdn;
 			rsp_info->sender_teid = pdn_cntxt->s5s8_pgw_gtpc_teid;

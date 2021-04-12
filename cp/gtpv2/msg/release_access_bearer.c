@@ -27,6 +27,7 @@
 #include "sm_structs_api.h"
 #include "util.h"
 #include "cp_io_poll.h"
+#include "proc.h"
 
 /**
  * @brief  : from parameters, populates gtpv2c message 'release access bearer response'
@@ -66,7 +67,7 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     /* Reset periodic timers */
     process_response(s11_peer_sockaddr->sin_addr.s_addr);
 
-    ret = decode_rel_acc_bearer_req((uint8_t *)gtpv2c_rx, &msg->gtpc_msg.rab);
+    ret = decode_rel_acc_bearer_req((uint8_t *)gtpv2c_rx, &msg->rx_msg.rab);
     if (ret == 0) {
         increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ_DROP, s11_peer_sockaddr->sin_addr.s_addr);
         return -1;
@@ -75,7 +76,7 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     /* Find old transaction */
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
     uint16_t source_port = msg->peer_addr.sin_port;
-    uint32_t seq_num = msg->gtpc_msg.rab.header.teid.has_teid.seq;  
+    uint32_t seq_num = msg->rx_msg.rab.header.teid.has_teid.seq;  
     transData_t *old_trans = (transData_t*)find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
@@ -84,7 +85,7 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
 
-    context = (ue_context_t *)get_ue_context(msg->gtpc_msg.rab.header.teid.has_teid.teid);
+    context = (ue_context_t *)get_ue_context(msg->rx_msg.rab.header.teid.has_teid.teid);
     if(context == NULL) {
         increment_mme_peer_stats(MSG_RX_GTPV2_S11_RABREQ_DROP, s11_peer_sockaddr->sin_addr.s_addr);
         rab_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
@@ -92,7 +93,6 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
     msg->ue_context = context;
-	msg->proc = S1_RELEASE_PROC;
 
     for(uint8_t ebi_index = 0; ebi_index <= 11; ebi_index++) {
         pdn_connection_t *pdn = GET_PDN(context, ebi_index);
@@ -116,7 +116,7 @@ int handle_rab_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     trans->sequence = seq_num;
     trans->peer_sockaddr = msg->peer_addr;
 
-    start_procedure(rab_proc, msg);
+    start_procedure(rab_proc);
     // Note : important to note that we are holding on this msg now 
     *msg_p = NULL;
 

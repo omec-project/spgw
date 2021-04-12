@@ -8,7 +8,6 @@
 #define SM_STRUCT_H
 
 #include "stdio.h"
-#include "sm_enum.h"
 #include "sm_hand.h"
 #include "pfcp_messages.h"
 #include "gtp_messages.h"
@@ -19,6 +18,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+enum source_interface {
+	GX_IFACE = 1,
+	S11_IFACE = 2,
+	S5S8_IFACE = 3,
+	PFCP_IFACE = 4,
+};
+
 /**
  * @brief  : Maintains decoded message from different messages
  */
@@ -27,15 +34,10 @@ extern "C" {
 typedef struct msg_info {
     uint32_t magic_head;
 	uint8_t msg_type;
-	uint8_t state;
 	uint8_t event;
 	uint8_t proc;
 
-	/* VS: GX Msg retrieve teid of key for UE Context */
-	uint8_t eps_bearer_id;
-	uint32_t teid;
-
-	union gtpc_msg_info {
+	union rx_msg_info {
 		create_sess_req_t csr;
 		create_sess_rsp_t cs_rsp;
 		mod_bearer_req_t mbr;
@@ -56,8 +58,6 @@ typedef struct msg_info {
 		del_pdn_conn_set_req_t del_pdn_req;
 		del_pdn_conn_set_rsp_t del_pdn_rsp;
 		del_bearer_cmd_t  del_ber_cmd;
-	}gtpc_msg;
-	union pfcp_msg_info_t {
 		pfcp_pfd_mgmt_rsp_t pfcp_pfd_resp;
 		pfcp_assn_setup_req_t pfcp_ass_req;
 		pfcp_assn_setup_rsp_t pfcp_ass_resp;
@@ -67,12 +67,9 @@ typedef struct msg_info {
 		pfcp_sess_rpt_req_t pfcp_sess_rep_req;
 		pfcp_sess_set_del_req_t pfcp_sess_set_del_req;
 		pfcp_sess_set_del_rsp_t pfcp_sess_set_del_rsp;
-	}pfcp_msg;
-
-	union gx_msg_info_t {
 		GxCCA cca;
 		GxRAR rar;
-	}gx_msg;
+	}rx_msg;
 
     uint32_t source_interface;
     struct sockaddr_in peer_addr;

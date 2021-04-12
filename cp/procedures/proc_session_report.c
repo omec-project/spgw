@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "sm_hand.h"
@@ -20,6 +22,7 @@
 #include "pfcp_cp_interface.h"
 #include "cp_log.h"
 #include "assert.h"
+#include "proc.h"
 
 proc_context_t*
 alloc_session_report_proc(msg_info_t *msg)
@@ -95,7 +98,7 @@ int
 process_rpt_req_handler(proc_context_t *proc_ctxt, msg_info_t *msg)
 {
     int ret = 0;
-    pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->pfcp_msg.pfcp_sess_rep_req;
+    pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->rx_msg.pfcp_sess_rep_req;
 	uint64_t sess_id = pfcp_sess_rep_req->header.seid_seqno.has_seid.seid;
 	uint8_t ebi =  UE_BEAR_ID(sess_id);
     ue_context_t *context = (ue_context_t *)msg->ue_context;

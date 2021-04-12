@@ -1,10 +1,13 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+#include "pdn.h"
 #include "ue.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_log.h"
 #include "ip_pool.h"
+#include "proc.h"
 
 eps_bearer_t* 
 get_default_bearer(pdn_connection_t *pdn)
@@ -17,7 +20,8 @@ eps_bearer_t*
 get_bearer(pdn_connection_t *pdn, bearer_qos_ie *qos)
 {
 	eps_bearer_t *bearer = NULL;
-    LOG_MSG(LOG_DEBUG, "New rule - Qoc qci %d , arp-vulner %d , arp-level %d , arp-capability %d ",qos->qci, qos->arp.preemption_vulnerability, qos->arp.priority_level, qos->arp.preemption_capability);
+    LOG_MSG(LOG_DEBUG, "New rule - Qoc qci %d, arp-vulner %d, arp-level %d, arp-capability %d",qos->qci, 
+           qos->arp.preemption_vulnerability, qos->arp.priority_level, qos->arp.preemption_capability);
 	for(uint8_t idx = 0; idx < MAX_BEARERS; idx++)
 	{
 		bearer = pdn->eps_bearers[idx];
@@ -113,3 +117,42 @@ get_new_bearer_id(pdn_connection_t *pdn_cntxt)
 {
 	return pdn_cntxt->num_bearer;
 }
+
+uint8_t
+get_ue_state(uint32_t teid_key, uint8_t ebi_index)
+{
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
+	context  = (ue_context_t *)get_ue_context(teid_key);
+
+	if ( context == NULL) {
+		LOG_MSG(LOG_ERROR, "Entry not found for teid:%x...", teid_key);
+		return -1;
+	}
+	pdn = GET_PDN(context , ebi_index);
+	LOG_MSG(LOG_DEBUG, "Teid:%u, State:%s",
+			teid_key, get_state_string(pdn->state));
+	return pdn->state;
+}
+
+uint8_t
+update_ue_state(uint32_t teid_key, uint8_t state,  uint8_t ebi_index)
+{
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
+	context = (ue_context_t *)get_ue_context(teid_key);
+
+	if ( context == NULL) {
+		LOG_MSG(LOG_ERROR, "Failed to update UE State for Teid:%x...", 
+				teid_key);
+		return -1;
+	}
+	pdn = GET_PDN(context , ebi_index);
+	pdn->state = state;
+
+	LOG_MSG(LOG_DEBUG, "Change UE State for Teid:%u, State:%s",
+			teid_key, get_state_string(pdn->state));
+	return 0;
+
+}
+

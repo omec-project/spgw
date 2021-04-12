@@ -1,6 +1,8 @@
 /*
  * Copyright 2020-present Open Networking Foundation
+ * Copyright (c) 2017 Intel Corporation
  *
+ * SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
  * SPDX-License-Identifier: Apache-2.0
  *
  */

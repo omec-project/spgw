@@ -19,6 +19,12 @@
 #include "cp_test.h"
 #include "cp_log.h"
 
+#define TIMESTAMP_LEN 14
+/* VS: Need to decide the base value of call id */
+/* const uint32_t call_id_base_value = 0xFFFFFFFF; */
+const uint32_t call_id_base_value = 0x00000000;
+static uint32_t call_id_offset;
+
 static uint32_t cc_request_number = 0;
 int g_cp_sock ;
 
@@ -392,20 +398,20 @@ process_gx_msg(void *data, uint16_t event)
         case GX_CCA_MSG: {
     		LOG_MSG(LOG_DEBUG,"Received CCA. Sequence number = %d ", gx_rx->seq_num);
             if (gx_cca_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + sizeof(gx_rx->seq_num),
-                        &msg->gx_msg.cca) <= 0) {
+                        &msg->rx_msg.cca) <= 0) {
                 free(msg->raw_buf);
                 free(msg);
                 LOG_MSG(LOG_ERROR, "Received CCA. Sequence number = %d. Unpacked failed ", gx_rx->seq_num);
                 return;
             }
-            LOG_MSG(LOG_DEBUG,"Received CCA session id  %s ", msg->gx_msg.cca.session_id.val);
-            if(msg->gx_msg.cca.cc_request_type == INITIAL_REQUEST) {
+            LOG_MSG(LOG_DEBUG,"Received CCA session id  %s ", msg->rx_msg.cca.session_id.val);
+            if(msg->rx_msg.cca.cc_request_type == INITIAL_REQUEST) {
                 LOG_MSG(LOG_DEBUG,"Received CCA-initial ");
                 handle_cca_initial_msg(&msg);
-            } else if (msg->gx_msg.cca.cc_request_type == UPDATE_REQUEST) {
+            } else if (msg->rx_msg.cca.cc_request_type == UPDATE_REQUEST) {
                 LOG_MSG(LOG_DEBUG,"Received CCA-update");
                 handle_cca_update_msg(&msg); 
-            } else if (msg->gx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
+            } else if (msg->rx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
                 LOG_MSG(LOG_DEBUG,"Received CCA-terminate ");
                 handle_ccr_terminate_msg(&msg);
             } else {
@@ -416,9 +422,8 @@ process_gx_msg(void *data, uint16_t event)
         }
         case GX_RAR_MSG: {
             LOG_MSG(LOG_DEBUG,"Received RAR with sequence number %d ", gx_rx->seq_num);
-            break;
             if (gx_rar_unpack((unsigned char *)gx_rx + sizeof(gx_rx->msg_type) + sizeof(gx_rx->seq_num),
-                        &msg->gx_msg.rar) <= 0) {
+                        &msg->rx_msg.rar) <= 0) {
                 free(msg->raw_buf);
                 free(msg);
                 return;
@@ -673,6 +678,113 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 	return 0;
 }
 
+/**
+ * @brief  : Generate CCR session id with the combination of timestamp and call id
+ * @param  : str_buf is used to store generated session id
+ * @param  : timestamp is used to pass timestamp
+ * @param  : value is used to pas call id
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+static int
+gen_sess_id_string(char *str_buf, char *timestamp , uint32_t value)
+{
+	char buf[MAX_LEN] = {0};
+	int len = 0;
+
+	if (timestamp == NULL)
+	{
+		LOG_MSG(LOG_ERROR, "Time stamp is NULL ");
+		return -1;
+	}
+
+	/* itoa(value, buf, 10);  10 Means base value, i.e. indicate decimal value */
+	len = int_to_str(buf, value);
+
+	if(buf[0] == 0)
+	{
+		LOG_MSG(LOG_ERROR, "Failed coversion of integer to string, len:%d ", len);
+		return -1;
+	}
+
+	sprintf(str_buf, "%s%s", timestamp, buf);
+	return 0;
+}
+
+/**
+ * @brief  : Get the system current timestamp.
+ * @param  : timestamp is used for storing system current timestamp
+ * @return : Returns 0 in case of success
+ */
+static uint8_t
+get_timestamp(char *timestamp)
+{
+
+	time_t t = time(NULL);
+	struct tm *tmp = localtime(&t);
+
+	strftime(timestamp, MAX_LEN, "%Y%m%d%H%M%S", tmp);
+	return 0;
+}
+
+/**
+ * Return the CCR session id.
+ */
+int8_t
+gen_sess_id_for_ccr(char *sess_id, uint32_t call_id)
+{
+	char timestamp[MAX_LEN] = {0};
+
+	get_timestamp(timestamp);
+
+	if((gen_sess_id_string(sess_id, timestamp, call_id)) < 0)
+	{
+		LOG_MSG(LOG_ERROR, "Failed to generate session id for CCR");
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ * Retrieve the call id from the CCR session id.
+ */
+int
+retrieve_call_id(char *str, uint32_t *call_id)
+{
+	uint8_t idx = 0, index = 0;
+	char buf[MAX_LEN] = {0};
+
+	if(str == NULL)
+	{
+		LOG_MSG(LOG_ERROR, "String is NULL");
+		return -1;
+	}
+
+	idx = TIMESTAMP_LEN; /* TIMESTAMP STANDARD BYTE SIZE */
+	for(;str[idx] != '\0'; ++idx)
+	{
+		buf[index] = str[idx];
+		++index;
+	}
+
+	*call_id = atoi(buf);
+	if (*call_id == 0) {
+		LOG_MSG(LOG_ERROR, "Call ID not found");
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ * Generate the CALL ID
+ */
+uint32_t
+generate_call_id(void)
+{
+	uint32_t call_id = 0;
+	call_id = call_id_base_value + (++call_id_offset);
+
+	return call_id;
+}
 void 
 gx_send(int fd, char *buf, uint16_t len)
 {

@@ -1,7 +1,7 @@
-
 // Copyright 2020-present Open Networking Foundation
 //
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+
 #ifndef __RAB_PROC__H
 #define __RAB_PROC__H
 #include "gtp_messages.h"

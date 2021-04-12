@@ -12,6 +12,8 @@
 #include "pfcp_cp_struct.h"
 #include "gtpv2_ie.h"
 #include "ue.h"
+#include "pdn.h"
+#include "bearer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,13 +115,6 @@ generate_urr_id(void);
 uint32_t
 generate_qer_id(void);
 
-/**
- * @brief  : Generate the CALL ID
- * @param  : void
- * @return : Returns call id  on success , 0 otherwise
- */
-uint32_t
-generate_call_id(void);
 
 /**
  * @brief  : Generate the Sequence
@@ -129,40 +124,6 @@ generate_call_id(void);
 uint32_t
 generate_rar_seq(void);
 
-/**
- * @brief  : Retrieve Call ID from CCR Session ID
- * @param  : str represents CCR session ID
- * @param  : call_id , variable to store retrived call id
- * @return : Returns 0  on success , 0 otherwise
- */
-int
-retrieve_call_id(char *str, uint32_t *call_id);
-
-/**
- * @brief  : Generate the SESSION ID
- * @param  : cp session id
- * @return : Returns dp session id  on success , 0 otherwise
- */
-uint64_t
-generate_dp_sess_id(uint64_t cp_sess_id);
-
-/**
- * @brief  : Generate the CCR Session ID with combination of timestamp and call id.
- * @param  : sess id
- * @param  : call id
- * @return : Returns 0 on success
- */
-int8_t
-gen_sess_id_for_ccr(char *sess_id, uint32_t call_id);
-
-/**
- * @brief  : Parse GX CCA message and fill ue context
- * @param  : cca holds data from gx cca message
- * @param  : _context , ue context to be filled
- * @return : Returns 0 on success, -1 otherwise
- */
-int8_t
-parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn);
 
 /**
  * Updates the already existing bearer

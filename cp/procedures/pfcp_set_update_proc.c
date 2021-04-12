@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifdef FUTURE_NEED
@@ -16,7 +18,7 @@ process_upd_pdn_conn_set_req(void *data, void *unused_param)
 	msg_info_t *msg = (msg_info_t *)data;
 	int ret = 0;
 
-	ret = process_upd_pdn_conn_set_req_t(&msg->gtpc_msg.upd_pdn_req);
+	ret = process_upd_pdn_conn_set_req_t(&msg->rx_msg.upd_pdn_req);
 	if (ret) {
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
@@ -39,7 +41,7 @@ process_upd_pdn_conn_set_rsp(void *data, void *unused_param)
 	msg_info_t *msg = (msg_info_t *)data;
 	int ret = 0;
 
-	ret = process_upd_pdn_conn_set_rsp_t(&msg->gtpc_msg.upd_pdn_rsp);
+	ret = process_upd_pdn_conn_set_rsp_t(&msg->rx_msg.upd_pdn_rsp);
 	if (ret) {
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;

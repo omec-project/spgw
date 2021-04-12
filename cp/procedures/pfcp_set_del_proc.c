@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifdef FUTURE_NEED
@@ -27,7 +29,7 @@ int process_pfcp_sess_set_del_req(void *data, void *unused_param)
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
-	ret = process_pfcp_sess_set_del_req_t(&msg->pfcp_msg.pfcp_sess_set_del_req,
+	ret = process_pfcp_sess_set_del_req_t(&msg->rx_msg.pfcp_sess_set_del_req,
 			gtpv2c_tx);
 	if (ret) {
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
@@ -48,7 +50,7 @@ int process_pfcp_sess_set_del_rsp(void *data, void *unused_param)
 	int ret = 0;
 	msg_info_t *msg = (msg_info_t *)data;
 
-	ret = process_pfcp_sess_set_del_rsp_t(&msg->pfcp_msg.pfcp_sess_set_del_rsp);
+	ret = process_pfcp_sess_set_del_rsp_t(&msg->rx_msg.pfcp_sess_set_del_rsp);
 	if (ret) {
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
@@ -85,7 +87,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
-	ret = process_del_pdn_conn_set_req_t(&msg->gtpc_msg.del_pdn_req,
+	ret = process_del_pdn_conn_set_req_t(&msg->rx_msg.del_pdn_req,
 			gtpv2c_tx);
 	if (ret) {
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
@@ -95,7 +97,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-	if (msg->gtpc_msg.del_pdn_req.pgw_fqcsid.number_of_csids) {
+	if (msg->rx_msg.del_pdn_req.pgw_fqcsid.number_of_csids) {
 		/* Send the delete PDN set request to MME */
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
@@ -104,7 +106,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 		memset(gtpv2c_tx, 0, sizeof(gtpv2c_header_t));
 	}
 
-	if (msg->gtpc_msg.del_pdn_req.mme_fqcsid.number_of_csids) {
+	if (msg->rx_msg.del_pdn_req.mme_fqcsid.number_of_csids) {
 		/* Send the delete PDN set request to PGW */
 		if (cp_config->cp_type == SGWC ) {
 			gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
@@ -116,7 +118,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 	}
 	/* Send Response back to peer node */
 	ret = fill_gtpc_del_set_pdn_conn_rsp(gtpv2c_tx,
-			msg->gtpc_msg.del_pdn_req.header.teid.has_teid.seq,
+			msg->rx_msg.del_pdn_req.header.teid.has_teid.seq,
 			GTPV2C_CAUSE_REQUEST_ACCEPTED);
 	if (ret) {
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
@@ -126,14 +128,14 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-	if (msg->gtpc_msg.del_pdn_req.pgw_fqcsid.number_of_csids) {
+	if (msg->rx_msg.del_pdn_req.pgw_fqcsid.number_of_csids) {
 		/* Send response to PGW */
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 		        sizeof(struct sockaddr_in));
 	}
 
-	if (msg->gtpc_msg.del_pdn_req.mme_fqcsid.number_of_csids) {
+	if (msg->rx_msg.del_pdn_req.mme_fqcsid.number_of_csids) {
 		/* Send the delete PDN set request to MME */
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &s11_mme_sockaddr,
@@ -156,7 +158,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 //	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 //	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 //
-//	ret = process_del_pdn_conn_set_req_t(&msg->gtpc_msg.del_pdn_req,
+//	ret = process_del_pdn_conn_set_req_t(&msg->rx_msg.del_pdn_req,
 //			gtpv2c_tx);
 //	if (ret) {
 //			LOG_MSG(LOG_ERROR, FORMAT"Error: %d ",
@@ -176,7 +178,7 @@ process_del_pdn_conn_set_req(void *data, void *unused_param)
 //
 //	/* Send Response back to peer node */
 //	ret = fill_gtpc_del_set_pdn_conn_rsp(gtpv2c_tx,
-//			msg->gtpc_msg.del_pdn_req.header.teid.has_teid.seq,
+//			msg->rx_msg.del_pdn_req.header.teid.has_teid.seq,
 //			GTPV2C_CAUSE_REQUEST_ACCEPTED);
 //	if (ret) {
 //			LOG_MSG(LOG_ERROR, FORMAT"Error: %d ",
@@ -205,7 +207,7 @@ process_del_pdn_conn_set_rsp(void *data, void *unused_param)
 	msg_info_t *msg = (msg_info_t *)data;
 	int ret = 0;
 
-	ret = process_del_pdn_conn_set_rsp_t(&msg->gtpc_msg.del_pdn_rsp);
+	ret = process_del_pdn_conn_set_rsp_t(&msg->rx_msg.del_pdn_rsp);
 	if (ret) {
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;

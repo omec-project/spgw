@@ -20,6 +20,7 @@
 #include "proc_detach.h"
 #include "util.h"
 #include "gtpv2_session.h"
+#include "proc.h"
 
 /**
  * @brief  : Handles the removal of data structures internal to the control plane
@@ -222,7 +223,7 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     /* Decode delete session request */
     ret = decode_del_sess_req((uint8_t *) gtpv2c_rx,
-            &msg->gtpc_msg.dsr);
+            &msg->rx_msg.dsr);
     if (ret == 0)
         return -1;
 
@@ -234,7 +235,7 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     /* Find old transaction */
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
     uint16_t source_port = msg->peer_addr.sin_port;
-    uint32_t seq_num = msg->gtpc_msg.dsr.header.teid.has_teid.seq;  
+    uint32_t seq_num = msg->rx_msg.dsr.header.teid.has_teid.seq;  
     transData_t *old_trans = (transData_t*)find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
@@ -242,14 +243,14 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
 
-    context = (ue_context_t *)get_ue_context(msg->gtpc_msg.dsr.header.teid.has_teid.teid);
+    context = (ue_context_t *)get_ue_context(msg->rx_msg.dsr.header.teid.has_teid.teid);
     if(context == NULL) {
         ds_error_response(NULL, msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
         return -1;
     }
     msg->ue_context = context;
-    ebi_index = msg->gtpc_msg.dsr.lbi.ebi_ebi - 5;
+    ebi_index = msg->rx_msg.dsr.lbi.ebi_ebi - 5;
 
 	if (!(context->bearer_bitmap & (1 << ebi_index))) {
 		LOG_MSG(LOG_ERROR, "Received delete session on non-existent EBI - "
@@ -271,8 +272,8 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     msg->pdn_context = pdn;
     msg->event = DS_REQ_RCVD_EVNT;
 
-    if((msg->gtpc_msg.dsr.indctn_flgs.header.len !=0)  && 
-            (msg->gtpc_msg.dsr.indctn_flgs.indication_si != 0)) {
+    if((msg->rx_msg.dsr.indctn_flgs.header.len !=0)  && 
+            (msg->rx_msg.dsr.indctn_flgs.indication_si != 0)) {
         msg->proc = SGW_RELOCATION_DETACH_PROC;
     } else {
         msg->proc = DETACH_PROC;
@@ -288,7 +289,7 @@ handle_delete_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     detach_proc->gtpc_trans = gtpc_trans;
     gtpc_trans->sequence = seq_num;
     gtpc_trans->peer_sockaddr = msg->peer_addr;
-    start_procedure(detach_proc, msg);
+    start_procedure(detach_proc);
     // Note : important to note that we are holding on this msg now 
     *msg_p = NULL;
     return 0;

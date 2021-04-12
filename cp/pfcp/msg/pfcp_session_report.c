@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "pfcp_cp_interface.h"
@@ -9,6 +11,7 @@
 #include "sm_structs_api.h"
 #include "spgw_cpp_wrapper.h"
 #include "proc_session_report.h"
+#include "proc.h"
 
 // Triggers to receive session report are
 // 1. Downlink packet received when user is in idle state
@@ -27,7 +30,7 @@ int handle_pfcp_session_report_req_msg(msg_info_t *msg)
     struct sockaddr_in *peer_addr = &msg->peer_addr;
     ue_context_t *context = (ue_context_t *)msg->ue_context;
     assert(msg->msg_type == PFCP_SESSION_REPORT_REQUEST);
-    pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->pfcp_msg.pfcp_sess_rep_req;
+    pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->rx_msg.pfcp_sess_rep_req;
 
 
     /* Find old transaction */
@@ -79,13 +82,13 @@ int handle_pfcp_session_report_req_msg(msg_info_t *msg)
 
 	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:PFCP_SESSION_REPORT_REQUEST[%u], Seid:%lu, "
-			"Procedure:%s, State:%s, Event:%s",
+			"Procedure:%s, Event:%s",
 			msg->msg_type,
-			msg->pfcp_msg.pfcp_sess_rep_req.header.seid_seqno.has_seid.seid,
+			msg->rx_msg.pfcp_sess_rep_req.header.seid_seqno.has_seid.seid,
 			get_proc_string(msg->proc),
-			get_state_string(msg->state), get_event_string(msg->event));
+			get_event_string(msg->event));
 
-    start_procedure(sess_report_proc, msg);
+    start_procedure(sess_report_proc);
 
     return 0;
 }
@@ -104,7 +107,7 @@ handle_session_report_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 
     /*Decode the received msg and stored into the struct*/
     int decoded = decode_pfcp_sess_rpt_req_t((uint8_t *)pfcp_rx,
-                        &msg->pfcp_msg.pfcp_sess_rep_req);
+                        &msg->rx_msg.pfcp_sess_rep_req);
 
     if(decoded <= 0)
     {
@@ -116,7 +119,7 @@ handle_session_report_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
 
 	/* Retrive the session information based on session id. */
     ue_context_t *context = NULL;
-    pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->pfcp_msg.pfcp_sess_rep_req;
+    pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->rx_msg.pfcp_sess_rep_req;
 	context = (ue_context_t *)get_sess_entry_seid(pfcp_sess_rep_req->header.seid_seqno.has_seid.seid);
     if(context == NULL) {
 		LOG_MSG(LOG_ERROR, "Session entry not found Msg_Type:%u, Sess ID:%lu",
