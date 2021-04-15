@@ -1,4 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -25,9 +26,12 @@
 #include "cp_peer_struct.h"
 #include "upf_struct.h"
 #include "spgw_config_struct.h"
-#include "cp_proc.h"
+#include "proc_struct.h"
 #include <sys/queue.h>
 #include "sm_struct.h"
+#include "pdn.h"
+#include "bearer.h"
+#include "sess_const.h"
 
 #ifdef USE_CSID
 #include "csid_struct.h"
@@ -37,32 +41,13 @@ extern "C" {
 #endif
 
 
-#define SDF_FILTER_TABLE "sdf_filter_table"
-#define ADC_TABLE "adc_rule_table"
-#define PCC_TABLE "pcc_table"
-#define SESSION_TABLE "session_table"
-#define METER_PROFILE_SDF_TABLE "meter_profile_sdf_table"
-#define METER_PROFILE_APN_TABLE "meter_profile_apn_table"
-
 #define SDF_FILTER_TABLE_SIZE        (1024)
 #define ADC_TABLE_SIZE               (1024)
 #define PCC_TABLE_SIZE               (1025)
 #define METER_PROFILE_SDF_TABLE_SIZE (2048)
 
 
-#define MAX_BEARERS                  (15)
-#define MAX_FILTERS_PER_UE           (16)
 
-
-#define MAX_APN_LEN               (64)
-
-
-/* Need to handle case of multiple charging rule for signle bearer
- * this count will change once added handling
- * */
-#define NUMBER_OF_PDR_PER_BEARER 2
-#define NUMBER_OF_QER_PER_BEARER 2
-#define NUMBER_OF_URR_PER_BEARER 2
 
 #define QER_INDEX_FOR_ACCESS_INTERFACE 0
 #define QER_INDEX_FOR_CORE_INTERFACE 1
@@ -76,7 +61,7 @@ extern "C" {
 	)
 
 #define DEFAULT_RULE_COUNT                  1
-#define QCI_VALUE                           6
+#define QCI_VALUE                           9
 #define GX_PRIORITY_LEVEL                   1
 #define PREEMPTION_CAPABILITY_DISABLED      1
 #define PREEMPTION_VALNERABILITY_ENABLED    0
@@ -265,86 +250,6 @@ typedef struct ebi_id_t {
 	uint64_t ebi_id;
 }ebi_id;
 
-/**
- * @brief  : Maintains sdf packet filter information
- */
-typedef struct sdf_pkt_fltr {
-	uint8_t proto_id;
-	uint8_t proto_mask;
-	uint8_t direction;
-	uint8_t action;
-	uint8_t local_ip_mask;
-	uint8_t remote_ip_mask;
-	uint16_t local_port_low;
-	uint16_t local_port_high;
-	uint16_t remote_port_low;
-	uint16_t remote_port_high;
-	struct in_addr local_ip_addr;
-	struct in_addr remote_ip_addr;
-} sdf_pkt_fltr_t;
-
-/**
- * @brief  : Maintains flow description data
- */
-typedef struct flow_description {
-	int32_t flow_direction;
-	sdf_pkt_fltr_t sdf_flw_desc;
-	char sdf_flow_description[512];
-	uint16_t flow_desc_len;
-}flow_desc_t;
-
-/**
- * @brief  : Maintains information about dynamic rule
- */
-typedef struct dynamic_rule{
-	int32_t online;
-	int32_t offline;
-	int32_t flow_status;
-	int32_t reporting_level;
-	uint32_t precedence;
-	uint32_t service_id;
-	uint32_t rating_group;
-	uint32_t def_bearer_indication;
-	char rule_name[256];
-	char af_charging_id_string[256];
-	bearer_qos_ie qos;
-	/* Need to think on it */
-	uint8_t num_flw_desc;
-	flow_desc_t flow_desc[32];
-	pdr_t *pdr[2];
-}dynamic_rule_t;
-
-enum rule_action_t {
-	RULE_ACTION_INVALID,
-	RULE_ACTION_ADD = 1,
-	RULE_ACTION_MODIFY = 2,
-	RULE_ACTION_DELETE = 3,
-	RULE_ACTION_MAX
-};
-
-#define PCC_RULE_OP_PENDING  0x00000001
-typedef struct pcc_rule{
-    uint32_t            flags;
-	enum rule_action_t action;
-	dynamic_rule_t *dyn_rule;
-    TAILQ_ENTRY(pcc_rule) next_pcc_rule;
-}pcc_rule_t;
-/* Currently policy from PCRF can be two thing
- * 1. Default bearer QOS
- * 2. PCC Rule
- * Default bearer QOS can be modified
- * PCC Rules can be Added, Modified or Deleted
- * These policy shoulbe be applied to the PDN or eps_bearer
- * data strutures only after sucess from access side
- */
-typedef struct policy {
-    /*GXCLEAN : get rid of unwanted fields in this struct */
-	bool default_bearer_qos_valid;
-	bearer_qos_ie default_bearer_qos;
-	uint8_t count;
-    TAILQ_HEAD(pending_pcc_head, pcc_rule) pending_pcc_rules; /* list of uninstalled pcc rules */ 
-	//pcc_rule_t pcc_rule[32]; /* GXCLEAN - remove this structure. For now its kept just to keep compilation happy  */
-}policy_t;
 
 /**
  * @brief  : Maintains selection mode info
@@ -361,10 +266,23 @@ typedef struct indication_flag_t {
 	uint8_t oi:1;
 }indication_flag_t;
 
+
+enum UE_CONTEXT_STATE {
+    UE_STATE_UNKNOWN,
+    UE_STATE_ACTIVE_PENDING,
+    UE_STATE_ACTIVE,
+    UE_STATE_IDLE_PENDING, 
+    UE_STATE_IDLE,
+    UE_STATE_DETACH_PENDING,
+    UE_STATE_PAGING_PENDING,
+    UE_STATE_DETACH
+};
+
+
 /**
  * @brief  : Maintains ue related information
  */
-typedef struct ue_context {
+struct ue_context {
 	uint8_t state;
 	uint64_t imsi;
     uint64_t imsi64; // this is printable...logically we should get rid of above variable 
@@ -429,158 +347,9 @@ typedef struct ue_context {
     void *pco; 
 
     TAILQ_HEAD(proc_sub_head, proc_context) pending_sub_procs;
-} ue_context_t;
+};
+typedef struct ue_context ue_context_t;
 
-typedef struct ue_tz
-{
-	uint8_t tz;
-	uint8_t dst;
-}ue_tz_t;
-
-#define PDN_STATIC_ADDR         0x00000001 /* UE address is fixed/static and UE pool controlled by control plane */
-#define PDN_ADDR_ALLOC_CONTROL  0x00000002 /* Control Plane has allocated UE address */
-#define PDN_ADDR_ALLOC_UPF      0x00000004 /* User Plane has allocated UE address */
-
-#define SET_PDN_ADDR_STATIC(pdn,flag)  \
-do { \
-    if(flag == true) { \
-      pdn->pdn_flags = pdn->pdn_flags | PDN_STATIC_ADDR;\
-    }\
-}\
-while(0);
-
-#define IF_PDN_ADDR_STATIC(pdn)   ((pdn->pdn_flags & PDN_STATIC_ADDR) == PDN_STATIC_ADDR)
-#define SET_PDN_ADDR_METHOD(pdn, flag) (pdn->pdn_flags = pdn->pdn_flags | flag)
-#define IF_PDN_ADDR_ALLOC_CONTROL(pdn) (pdn->pdn_flags & PDN_ADDR_ALLOC_CONTROL)
-#define IF_PDN_ADDR_ALLOC_UPF(pdn) (pdn->pdn_flags & PDN_ADDR_ALLOC_UPF)
-
-/**
- * @brief  : Maintains pdn connection information
- */
-typedef struct pdn_connection {
-	uint8_t state;
-	uint8_t bearer_control_mode;
-
-	/*VS : Call ID ref. to session id of CCR */
-	uint32_t call_id;
-
-	apn_profile_t *apn_in_use;
-	ambr_ie apn_ambr;
-	uint32_t apn_restriction;
-
-	ambr_ie session_ambr;
-	ambr_ie session_gbr;
-
-	struct in_addr upf_ipv4;
-	uint64_t seid;
-	uint64_t dp_seid;
-
-	struct in_addr ipv4;
-	struct in6_addr ipv6;
-
-	/* VS: Need to Discuss teid and IP should be part of UE context */
-	uint32_t s5s8_sgw_gtpc_teid;
-	struct in_addr s5s8_sgw_gtpc_ipv4;
-
-	bool old_sgw_addr_valid;
-	struct in_addr old_sgw_addr;
-
-	uint32_t s5s8_pgw_gtpc_teid;
-	struct in_addr s5s8_pgw_gtpc_ipv4;
-
-	uint8_t ue_time_zone_flag;
-	ue_tz_t ue_tz;
-	ue_tz_t old_ue_tz;
-	bool old_ue_tz_valid;
-
-	uint8_t rat_type;
-	uint8_t old_ret_type;
-	bool old_rat_type_valid;
-
-
-	/* VS: Support partial failure functionality of FQ-CSID */
-#ifdef USE_CSID
-	/*TODO: Need to think on it */
-	uint8_t peer_cnt;
-	/* Need to think on index can we use the ebi as index*/
-	csid_key *peer_info[MAX_BEARERS];
-	/* Collection of the associated peer node CSIDs*/
-	fq_csids *csids[MAX_BEARERS];
-#endif /* USE_CSID */
-
-	pdn_type_ie pdn_type;
-	/* See  3GPP TS 32.298 5.1.2.2.7 for Charging Characteristics fields*/
-	charging_characteristics_ie charging_characteristics;
-
-	uint8_t default_bearer_id;
-	/* VS: Need to think on it */
-	uint8_t num_bearer;
-
-	/* VS: Create a cyclic linking to access the data structures of UE */
-	ue_context_t *context;
-
-	uint8_t fqdn[FQDN_LEN];
-	struct eps_bearer *eps_bearers[MAX_BEARERS]; /* index by ebi - 1 */
-
-	struct eps_bearer *packet_filter_map[MAX_FILTERS_PER_UE];
-
-	char gx_sess_id[MAX_LEN];
-	dynamic_rule_t *dynamic_rules[16];
-
-	/* need to maintain reqs ptr for RAA*/
-	policy_t policy;
-
-	/* timer entry data for stop timer session */
-	peerData_t *timer_entry; // ajay - is this GTP peer or pfcp peer ?
-    transData_t *trans_entry;
-
-    uint32_t pdn_flags; 
-} pdn_connection_t;
-
-/**
- * @brief  : Maintains eps bearer related information
- */
-typedef struct eps_bearer {
-	uint8_t eps_bearer_id;
-	/* Packet Detection identifier/Rule_ID */
-	uint8_t pdr_count;
-	pdr_t *pdrs[NUMBER_OF_PDR_PER_BEARER];
-
-	/* As per discussion der will be only one qer per bearer */
-	uint8_t qer_count;
-	qer_id_t qer_id[NUMBER_OF_QER_PER_BEARER];
-
-	uint8_t urr_count;
-	urr_id_t urr_id[NUMBER_OF_URR_PER_BEARER];
-
-
-	bearer_qos_ie qos;
-
-	/*VSD: Fill the ID in intial attach */
-	/* Generate ID while creating default bearer */
-	uint32_t charging_id;
-
-	struct in_addr s1u_sgw_gtpu_ipv4;
-	uint32_t s1u_sgw_gtpu_teid;
-	struct in_addr s5s8_sgw_gtpu_ipv4;
-	uint32_t s5s8_sgw_gtpu_teid;
-	struct in_addr s5s8_pgw_gtpu_ipv4;
-	uint32_t s5s8_pgw_gtpu_teid;
-	struct in_addr s1u_enb_gtpu_ipv4;
-	uint32_t s1u_enb_gtpu_teid;
-
-	struct in_addr s11u_mme_gtpu_ipv4;
-	uint32_t s11u_mme_gtpu_teid;
-
-	pdn_connection_t *pdn;
-
-	uint8_t num_packet_filters;
-	int packet_filter_map[MAX_FILTERS_PER_UE];
-
-	uint8_t num_dynamic_filters;
-	dynamic_rule_t *dynamic_rules[16];
-
-} eps_bearer_t;
 
 /**
  * @brief  : sets base teid value given range by DP
@@ -616,15 +385,6 @@ set_s5s8_sgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context);
 
 
 /**
- * @brief  : sets the s5s8_pgw gtpc teid given the pdn_connection
- * @param  : pdn
- *           pdn_connection_t whose s5s8 tied is to be set
- * @return : Returns nothing
- */
-void
-set_s5s8_pgw_gtpc_teid(pdn_connection_t *pdn);
-
-/**
  * @brief  : sets the s5s8_pgw gtpu teid given the bearer
  * @param  : bearer
  *           bearer whose tied is to be set
@@ -635,16 +395,17 @@ set_s5s8_pgw_gtpc_teid(pdn_connection_t *pdn);
 void
 set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer_t *bearer, pdn_connection_t *pdn);
 
+void
+set_s5s8_pgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context);
+
 /**
- * @brief  : sets the s5s8_pgw gtpu teid given the bearer
- * @param  : bearer
- *           bearer whose tied is to be set
- * @param  : context
- *           ue context of bearer, whose teid is to be set
+ * @brief  : sets the s5s8_pgw gtpc teid given the pdn_connection
+ * @param  : pdn
+ *           pdn_connection_t whose s5s8 tied is to be set
  * @return : Returns nothing
  */
 void
-set_s5s8_pgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context);
+set_s5s8_pgw_gtpc_teid(pdn_connection_t *pdn);
 
 /**
  * @brief  : creates an UE Context (if needed), and pdn connection with a default bearer
@@ -667,56 +428,24 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		uint8_t ebi, ue_context_t **context, apn_profile_t *apn_requested,
 		uint32_t sequence);
 
-/**
- * Create the ue eps Bearer context by PDN (if needed), and key is sgwc s5s8 teid.
- * @param fteid_key
- *    value of information element of the sgwc s5s8 teid
- * @param bearer
- *  Eps Bearer context
- * @return
- *    \- 0 if successful
- *    \- > if error occurs during packet filter parsing corresponds to
- *          3gpp specified cause error value
- *   \- < 0 for all other errors
-*/
-int
-add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, eps_bearer_t **bearer);
-
-
-
-void start_procedure(proc_context_t *proc, msg_info_t *msg);
-
-void end_procedure(proc_context_t *proc);
-
-/* PDN APIs */
-void cleanup_pdn_context(pdn_connection_t *pdn);
-
-eps_bearer_t *
-get_default_bearer(pdn_connection_t *pdn);
-
-eps_bearer_t *
-get_bearer(pdn_connection_t *pdn, bearer_qos_ie *qos);
-
-int8_t
-compare_default_bearer_qos(bearer_qos_ie *default_bearer_qos,
-		bearer_qos_ie *rule_qos);
-
-
-int8_t
-get_new_bearer_id(pdn_connection_t *pdn_cntxt);
-/* PDN APIs end */
-
-/* Bearer API start */
-void cleanup_bearer_context(eps_bearer_t *bearer);
-
 int
 del_rule_entries(ue_context_t *context, uint8_t ebi_index);
-/* Bearer API end */
 
 int
 cleanup_ue_context(ue_context_t **context_t);
 
 extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
+
+/**
+ * Retrive ue context entry from Bearer table,using sgwc s5s8 teid.
+ */
+int8_t
+get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context_t **context);
+
+/* This function use only in clean up while error */
+int8_t
+get_ue_context_while_error(uint32_t teid_key, ue_context_t **context);
+
 
 #ifdef __cplusplus
 }

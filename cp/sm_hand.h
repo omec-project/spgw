@@ -7,21 +7,12 @@
 #ifndef __SM_HAND_H__
 #define __SM_HAND_H__ 
 #include <stdio.h>
-#include "sm_enum.h"
 #include "trans_struct.h"
 #include "upf_struct.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-/**
- * @brief  : Handles processing of create session response
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_cs_resp_handler(void *arg1, void *arg2);
-
 
 /* Function */
 /**
@@ -31,24 +22,6 @@ int process_cs_resp_handler(void *arg1, void *arg2);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int process_error_occured_handler(void *t1, void *t2);
-
-/* Function */
-/**
- * @brief  : Handles processing of create bearer response for pgwc
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_cbresp_handler(void *arg1, void *arg2);
-
-/* Function */
-/**
- * @brief  : Handles processing of create bearer request
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_create_bearer_request_handler(void *arg1, void *arg2);
 
 
 /* Function */
@@ -61,14 +34,6 @@ int process_create_bearer_request_handler(void *arg1, void *arg2);
 int pfd_management_handler(void *arg1, void *arg2);
 
 /* Function */
-/**
- * @brief  : Handles processing of modification response received in case of delete request
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_mod_resp_delete_handler(void *arg1, void *arg2);
-
 
 /**
  * @brief  : Handles processing of pfcp session delete response in handover scenario
@@ -110,9 +75,6 @@ int process_delete_bearer_command_handler(void *arg1, void *arg2);
 
 /* Function */
 int del_bearer_cmd_ccau_handler(void *arg1, void *arg2);
-
-/* Function */
-int process_delete_bearer_response_handler(void *arg1, void *arg2);
 
 /* Function */
 int del_bearer_cmd_mbr_resp_handler(void *arg1, void *arg2);

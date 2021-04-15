@@ -1,18 +1,23 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "proc_rar.h"
-#include "cp_proc.h"
+#include "proc_struct.h"
 #include "ue.h"
 #include "gx_error_rsp.h"
 #include "proc_bearer_create.h"
+#include "proc_nw_init_detach.h"
 #include "gx_interface.h"
 #include "cp_log.h"
 #include "pfcp_cp_session.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
 #include "assert.h"
+#include "pfcp.h"
+#include "proc.h"
 
 
 proc_context_t*
@@ -21,6 +26,7 @@ alloc_rar_proc(msg_info_t *msg)
     proc_context_t *rar_proc;
 
     rar_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
+    strcpy(rar_proc->proc_name, "RAR");
     rar_proc->proc_type = msg->proc; 
     rar_proc->ue_context = (void *)msg->ue_context;
     rar_proc->pdn_context = (void *)msg->pdn_context; 
@@ -209,7 +215,7 @@ process_rar_request_handler(void *data)
                     proc->parent_proc = proc_rar; 
                     proc_rar->child_proc_add(proc_rar, proc);
                     proc_created = true;
-                    start_procedure(proc, NULL);
+                    start_procedure(proc);
                     break;
                 }
             }
@@ -219,8 +225,6 @@ process_rar_request_handler(void *data)
             break;
         }
     }
-
-    return 0;
 
 #if 0
     // Update Bearer 
@@ -251,21 +255,21 @@ process_rar_request_handler(void *data)
     // update the bearer due to rule modification 
     while(1) {
         eps_bearer_t *bearer;
-        pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
+        pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn_cntxt->policy.pending_pcc_rules);
         bool proc_created = false;
         while (pcc_rule != NULL) {
             pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
-            if((pcc_rule->flags & PCC_RULE_OP_PENDING == 0) && (pcc_rule->action == RULE_ACTION_MODIFY)) {
+            if(((pcc_rule->flags & PCC_RULE_OP_PENDING) == 0) && (pcc_rule->action == RULE_ACTION_MODIFY)) {
 			    rule_name_key_t rule_name = {0};
 			    memcpy(&rule_name.rule_name, &(pcc_rule->dyn_rule->rule_name),
 			    	   sizeof(pcc_rule->dyn_rule->rule_name));
 			    sprintf(rule_name.rule_name, "%s%d",
-			    		rule_name.rule_name, pdn->call_id);
+			    		rule_name.rule_name, pdn_cntxt->call_id);
 
 	            int8_t bearer_id;
 			    bearer_id = get_rule_name_entry(rule_name.rule_name);
 			    if (bearer_id != -1) {
-                    bearer = pdn->eps_bearers[bearer_id - 5];
+                    bearer = pdn_cntxt->eps_bearers[bearer_id - 5];
                     if(bearer != NULL) {
                         // Update existing bearer 
                         // also mark those rules as pending ??
@@ -282,35 +286,46 @@ process_rar_request_handler(void *data)
             break;
         }
     }
+#endif
 
     // delete the bearer due to rule deletion...
     // Its expected that all the bearer for which update operation is seen, delete rules
     // are already handled. Now we are left with rules for the bearers which have not 
     // seen update operation  
+    LOG_MSG(LOG_DEBUG,"Check for rule delete");
     while(1) {
         eps_bearer_t *bearer;
-        pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
+        pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn_cntxt->policy.pending_pcc_rules);
         bool proc_created = false;
         while (pcc_rule != NULL) {
             pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
-            if((pcc_rule->flags & PCC_RULE_OP_PENDING == 0) && (pcc_rule->action == RULE_ACTION_DELETE)) {
+            LOG_MSG(LOG_DEBUG,"Check for rule delete %s ", pcc_rule->dyn_rule->rule_name);
+            if(((pcc_rule->flags & PCC_RULE_OP_PENDING) == 0) && (pcc_rule->action == RULE_ACTION_DELETE)) {
 			    rule_name_key_t rule_name = {0};
 			    memcpy(&rule_name.rule_name, &(pcc_rule->dyn_rule->rule_name),
 			    	   sizeof(pcc_rule->dyn_rule->rule_name));
 			    sprintf(rule_name.rule_name, "%s%d",
-			    		rule_name.rule_name, pdn->call_id);
+			    		rule_name.rule_name, pdn_cntxt->call_id);
 
 	            int8_t bearer_id;
 			    bearer_id = get_rule_name_entry(rule_name.rule_name);
-			    if (bearer_id != -1) {
+                LOG_MSG(LOG_DEBUG,"rule delete %s bearer_id = %d ", rule_name.rule_name, bearer_id);
+			    if (bearer_id == -1) {
 			    	/* TODO: Error handling bearer not found */
-			    	return;
+                    pcc_rule = next_pcc_rule;
+                    continue;
 			    }
-                bearer = pdn->eps_bearers[bearer_id - 5];
+                bearer = pdn_cntxt->eps_bearers[bearer_id];
                 if(bearer != NULL) {
-                    proc_context_t *proc = alloc_delete_bearer_proc(msg, bearer);
+                    msg_info_t *msg1 = (msg_info_t*)calloc(1, sizeof(msg_info_t));
+                    msg1->event = SEND_PFCP_DEL_SESSION_REQ; 
+                    msg1->ue_context = proc_rar->ue_context;
+                    msg1->pdn_context = proc_rar->pdn_context;
+                    proc_context_t *proc = alloc_nw_init_detach_proc(msg1);
                     if(proc != NULL) {
                       proc_created = true;
+                      proc->parent_proc = proc_rar; 
+                      proc_rar->child_proc_add(proc_rar, proc);
                       start_procedure(proc);
                       break;
                     }
@@ -318,11 +333,12 @@ process_rar_request_handler(void *data)
             }
             pcc_rule = next_pcc_rule;
         }
-        if(proc_created == false) {
+        if(proc_created == true) {
             break;
         }
     }
 
+#if 0
 	// Update default bearer QoS
     if(pdn_cntxt->policy.default_bearer_qos_valid == true) {
         // check if default bearer qos is changed. If yes

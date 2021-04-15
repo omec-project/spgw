@@ -1,10 +1,11 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifndef __PROC_INITIAL_ATTACH_H__
 #define __PROC_INITIAL_ATTACH_H__
-#include "cp_proc.h"
+#include "proc_struct.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,6 +15,9 @@ alloc_initial_proc(msg_info_t *msg);
 
 void 
 initial_attach_event_handler(void *proc, void *m); 
+
+void 
+proc_initial_attach_success(proc_context_t *proc_context);
 
 void 
 proc_initial_attach_complete(proc_context_t *proc_context);
@@ -66,6 +70,16 @@ process_pfcp_sess_est_request(proc_context_t *proc_context,  upf_context_t *upf_
 
 void process_pfcp_sess_est_request_timeout(void *data);
 
+/**
+ * @brief  : Process pfcp session establishment response
+ * @param  : pfcp_sess_est_rsp, structure to be filled
+ * @param  : gtpv2c_tx, holds info in gtpv2c header
+ * @retrun : Returns 0 in case of success
+ */
+int8_t
+process_pfcp_sess_est_resp(msg_info_t *msg, 
+                           pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, 
+                           gtpv2c_header_t *gtpv2c_tx);
 
 #ifdef __cplusplus
 }

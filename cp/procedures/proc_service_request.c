@@ -1,11 +1,12 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "sm_struct.h"
 #include "gtp_messages.h"
 #include "spgw_config_struct.h"
-#include "sm_enum.h"
 #include "gtpv2_error_rsp.h"
 #include "assert.h"
 #include "cp_log.h"
@@ -29,6 +30,7 @@
 #include "util.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_interface.h"
+#include "proc.h"
 
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
@@ -40,7 +42,7 @@ alloc_service_req_proc(msg_info_t *msg)
 
     service_req_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     strcpy(service_req_proc->proc_name, "SERVICE_REQ");
-    service_req_proc->proc_type = msg->proc; 
+    service_req_proc->proc_type = SERVICE_REQUEST_PROC; 
     service_req_proc->ue_context = (void *)msg->ue_context;
     service_req_proc->pdn_context = (void *)msg->pdn_context; 
     service_req_proc->bearer_context = (void *)msg->bearer_context;
@@ -74,6 +76,32 @@ service_req_event_handler(void *proc, void *msg_info)
 }
 
 void
+proc_service_request_success(proc_context_t *proc_context)
+{
+    proc_service_request_complete(proc_context);
+}
+
+void
+proc_service_request_failure(msg_info_t *msg, uint8_t cause)
+{
+    proc_context_t *proc_context = (proc_context_t *)msg->proc_context;
+
+    mbr_error_response(msg, cause,
+            cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
+
+    increment_stat(PROCEDURES_SPGW_SERVICE_REQUEST_PROC_FAILURE);
+    proc_service_request_complete(proc_context);
+    return;
+}
+
+void
+proc_service_request_complete(proc_context_t *proc_context)
+{
+    end_procedure(proc_context);
+    return;
+}
+
+void
 process_pfcp_sess_mod_request_timeout(void *data)
 {
     proc_context_t *proc_context = (proc_context_t *)data;
@@ -102,7 +130,7 @@ process_pfcp_sess_mod_request_timeout(void *data)
 int
 process_mb_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
-    mod_bearer_req_t *mb_req = &msg->gtpc_msg.mbr;
+    mod_bearer_req_t *mb_req = &msg->rx_msg.mbr;
     uint8_t ebi_index = 0;
     ue_context_t *context;
     eps_bearer_t *bearer;
@@ -237,20 +265,20 @@ process_service_request_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info
     uint16_t payload_length = 0;
 
     /*Validate the modification is accepted or not. */
-    if(msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value != REQUESTACCEPTED){
+    if(msg->rx_msg.pfcp_sess_mod_resp.cause.cause_value != REQUESTACCEPTED){
         LOG_MSG(LOG_DEBUG, "Cause received Modify response is %d",
-                msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value);
+                msg->rx_msg.pfcp_sess_mod_resp.cause.cause_value);
         // TODO : mapping the pfcp cause on GTP
         proc_service_request_failure(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
         return ;
     }
     /* Retrive the session information based on session id. */
-    context = (ue_context_t *)get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+    context = (ue_context_t *)get_sess_entry_seid(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
     if(context == NULL) {
         LOG_MSG(LOG_ERROR, "Session entry not found Msg_Type:%u,"
                 "Sess ID:%lu ",
                 msg->msg_type,
-                msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+                msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
         proc_service_request_failure(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
         return;
     }
@@ -258,18 +286,18 @@ process_service_request_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info
 
     LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:PFCP_SESSION_MODIFICATION_RESPONSE[%u], Seid:%lu, "
-            "Procedure:%s, State:%s, Event:%s",
+            "Procedure:%s, Event:%s",
             msg->msg_type,
-            msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
+            msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
             get_proc_string(msg->proc),
-            get_state_string(msg->state), get_event_string(msg->event));
+            get_event_string(msg->event));
 
 
     bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
     gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
     ret = process_srreq_pfcp_sess_mod_resp(proc_context, 
-            msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
+            msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
             gtpv2c_tx);
     if (ret != 0) {
         LOG_MSG(LOG_ERROR, "Error: %d ", ret);
@@ -291,7 +319,7 @@ process_service_request_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info
     increment_mme_peer_stats(MSG_TX_GTPV2_S11_MBRSP, trans->peer_sockaddr.sin_addr.s_addr);
 
     increment_stat(PROCEDURES_SPGW_SERVICE_REQUEST_PROC_SUCCESS);
-    proc_service_request_complete(proc_context);
+    proc_service_request_success(proc_context);
 
     return;
 }
@@ -344,22 +372,4 @@ process_srreq_pfcp_sess_mod_resp(proc_context_t *proc_context,
     return 0;
 }
 
-void
-proc_service_request_failure(msg_info_t *msg, uint8_t cause)
-{
-    proc_context_t *proc_context = (proc_context_t *)msg->proc_context;
 
-    mbr_error_response(msg, cause,
-            cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-
-    increment_stat(PROCEDURES_SPGW_SERVICE_REQUEST_PROC_FAILURE);
-    proc_service_request_complete(proc_context);
-    return;
-}
-
-void
-proc_service_request_complete(proc_context_t *proc_context)
-{
-    end_procedure(proc_context);
-    return;
-}

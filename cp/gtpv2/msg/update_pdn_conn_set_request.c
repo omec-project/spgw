@@ -23,7 +23,7 @@ int handle_update_pdn_conn_set_req(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 int 
 handle_update_pdn_conn_set_req(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
-    //if ((ret = decode_upd_pdn_conn_set_req((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.upd_pdn_req) == 0))
+    //if ((ret = decode_upd_pdn_conn_set_req((uint8_t *) gtpv2c_rx, &msg->rx_msg.upd_pdn_req) == 0))
     //    return -1;
 }
 #endif

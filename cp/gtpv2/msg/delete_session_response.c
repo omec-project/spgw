@@ -18,14 +18,14 @@ int handle_delete_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
     ue_context_t *context = NULL;
     uint8_t ebi_index = 5; // ajay - todo use transaction 
 
-    ret = decode_del_sess_rsp((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.ds_rsp);
+    ret = decode_del_sess_rsp((uint8_t *) gtpv2c_rx, &msg->rx_msg.ds_rsp);
     if(ret == 0)
         return -1;
 
 
-	gtpc_delete_timer_entry(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid);
+	gtpc_delete_timer_entry(msg->rx_msg.ds_rsp.header.teid.has_teid.teid);
 
-	if(get_ue_context_by_sgw_s5s8_teid(msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid, &context) != 0)
+	if(get_ue_context_by_sgw_s5s8_teid(msg->rx_msg.ds_rsp.header.teid.has_teid.teid, &context) != 0)
 	 {
 
 		ds_error_response(proc_context, msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
@@ -33,11 +33,11 @@ int handle_delete_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 		return -1;
 	}
 
-	if(msg->gtpc_msg.ds_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
+	if(msg->rx_msg.ds_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
 		LOG_MSG(LOG_ERROR, "Cause Req Error : msg type :%u, cause ie : %u ",
-				msg->msg_type, msg->gtpc_msg.ds_rsp.cause.cause_value);
+				msg->msg_type, msg->rx_msg.ds_rsp.cause.cause_value);
 
-		 ds_error_response(proc_context, msg, msg->gtpc_msg.ds_rsp.cause.cause_value,
+		 ds_error_response(proc_context, msg, msg->rx_msg.ds_rsp.cause.cause_value,
 						cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 		return -1;
 	}
@@ -56,11 +56,11 @@ int handle_delete_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 
 	LOG_MSG(LOG_DEBUG, "Callback called for "
 		"Msg_Type:%s[%u], Teid:%u, "
-		"Procedure:%s, State:%s, Event:%s",
+		"Procedure:%s, Event:%s",
 		gtp_type_str(msg->msg_type), msg->msg_type,
-		msg->gtpc_msg.ds_rsp.header.teid.has_teid.teid,
+		msg->rx_msg.ds_rsp.header.teid.has_teid.teid,
 		get_proc_string(msg->proc),
-		get_state_string(msg->state), get_event_string(msg->event));
+		get_event_string(msg->event));
 #if 0
 // SGW egress ???
 			msg->state = context->pdns[ebi_index]->state;
@@ -183,7 +183,7 @@ process_ds_resp_handler(void *data, void *unused_param)
 	msg_info_t *msg = (msg_info_t *)data;
 
 	if (cp_config->cp_type == SGWC) {
-		ret = process_sgwc_s5s8_delete_session_response(&msg->gtpc_msg.ds_rsp);
+		ret = process_sgwc_s5s8_delete_session_response(&msg->rx_msg.ds_rsp);
 		if (ret) {
 			if(ret  != -1)
 				ds_error_response(proc_context, msg, ret,

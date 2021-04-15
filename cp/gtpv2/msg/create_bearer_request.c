@@ -198,12 +198,12 @@ int handle_create_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
     ue_context_t *context = NULL;
 
     if((ret = decode_create_bearer_req((uint8_t *) gtpv2c_rx,
-                    &msg->gtpc_msg.cb_req) == 0))
+                    &msg->rx_msg.cb_req) == 0))
         return -1;
 
 
 	gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
-	uint8_t ebi_index = msg->gtpc_msg.cb_req.lbi.ebi_ebi - 5;
+	uint8_t ebi_index = msg->rx_msg.cb_req.lbi.ebi_ebi - 5;
 
 	if(get_ue_context_by_sgw_s5s8_teid(gtpv2c_rx->teid.has_teid.teid, &context) != 0) {
 		LOG_MSG(LOG_ERROR, "UE Context not found... 0x%x",

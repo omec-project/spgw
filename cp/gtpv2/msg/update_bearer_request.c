@@ -11,11 +11,11 @@ int handle_update_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
     ue_context_t *context = NULL;
 
     if((ret = decode_upd_bearer_req((uint8_t *) gtpv2c_rx,
-                    &msg->gtpc_msg.ub_req) == 0))
+                    &msg->rx_msg.ub_req) == 0))
         return -1;
 
 
-	uint8_t ebi_index = msg->gtpc_msg.ub_req.bearer_contexts[0].eps_bearer_id.ebi_ebi - 5;
+	uint8_t ebi_index = msg->rx_msg.ub_req.bearer_contexts[0].eps_bearer_id.ebi_ebi - 5;
 	gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
 
 	//Vikrant Which ebi to be selected as multiple bearer in request
@@ -144,7 +144,7 @@ int process_update_bearer_request_handler(void *data, void *unused_param)
     int ret = 0;
 	msg_info_t *msg = (msg_info_t *)data;
 
-	ret = process_update_bearer_request(&msg->gtpc_msg.ub_req);
+	ret = process_update_bearer_request(&msg->rx_msg.ub_req);
 	if (ret) {
 		if(ret != -1)
 			ubr_error_response(msg, ret, S5S8_IFACE);

@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "pfcp_cp_interface.h"
@@ -11,7 +13,7 @@
 #include "pfcp_messages_decoder.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
-#include "cp_proc.h"
+#include "proc_struct.h"
 
 
 // saegw - DETACH_PROC PFCP_SESS_DEL_REQ_SNT_STATE PFCP_SESS_DEL_RESP_RCVD_EVNT => process_sess_del_resp_handler
@@ -27,7 +29,7 @@ int handle_pfcp_session_delete_response(msg_info_t *msg)
     struct sockaddr_in *peer_addr = &msg->peer_addr;
 
     assert(msg->msg_type == PFCP_SESSION_DELETION_RESPONSE);
-    uint32_t seq_num = msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seq_no; 
+    uint32_t seq_num = msg->rx_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seq_no; 
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
 
@@ -65,12 +67,10 @@ handle_pfcp_session_delete_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_
 
     process_response(peer_addr->sin_addr.s_addr);
 
-    /* Decode pfcp session delete response*/
-    int decoded = decode_pfcp_sess_del_rsp_t((uint8_t*)pfcp_rx, &msg->pfcp_msg.pfcp_sess_del_resp);
+    int decoded = decode_pfcp_sess_del_rsp_t((uint8_t*)pfcp_rx, &msg->rx_msg.pfcp_sess_del_resp);
 
     if(decoded <=0 ) {
-        LOG_MSG(LOG_DEBUG, "DECODED bytes in Sess Del Resp is %d",
-                decoded);
+        LOG_MSG(LOG_DEBUG, "DECODED bytes in Sess Del Resp is %d", decoded);
         increment_userplane_stats(MSG_RX_PFCP_SXASXB_SESSDELRSP_DROP, peer_addr->sin_addr.s_addr);
         return -1;
     }

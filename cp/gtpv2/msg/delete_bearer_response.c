@@ -4,80 +4,108 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#ifdef FUTURE_NEED
+#include "cp_log.h"
+#include "gtpv2_ie.h"
+#include "gtpv2_msg_struct.h"
+#include "ue.h"
+#include "sm_struct.h"
+#include "proc_struct.h"
+#include "cp_peer.h"
+#include "gtp_messages_decoder.h"
+#include "spgw_cpp_wrapper.h"
+#include "cp_io_poll.h"
+#include "util.h"
+#include "sm_structs_api.h"
+#include "cp_transactions.h"
+#include "gtpv2_interface.h"
+#include "proc.h"
+
 // saegw - PDN_GW_INIT_BEARER_DEACTIVATION  DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT => process_delete_bearer_resp_handler  
 // saegw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT => process_delete_bearer_response_handler 
 // pgw - PDN_GW_INIT_BEARER_DEACTIVATION DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT ==> process_delete_bearer_resp_handler
 // pgw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT ==> process_delete_bearer_response_handler
 // sgw - PDN_GW_INIT_BEARER_DEACTIVATION DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT : process_delete_bearer_resp_handler 
 // sgw - MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC DELETE_BER_REQ_SNT_STATE DELETE_BER_RESP_RCVD_EVNT - process_delete_bearer_response_handler 
-int handle_delete_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
+int 
+handle_delete_bearer_response_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 {
-    uint8_t ebi_index;
-    ue_context_t *context = NULL;
     int ret = 0;
+    msg_info_t *msg = *msg_p;
+    struct sockaddr_in *peer_addr = &msg->peer_addr;
+    del_bearer_rsp_t *dbrsp = &msg->rx_msg.db_rsp;
 
-    if((ret = decode_del_bearer_rsp((uint8_t *) gtpv2c_rx,
-                    &msg->gtpc_msg.db_rsp) == 0))
+    /* Reset periodic timers */
+    process_response(peer_addr->sin_addr.s_addr);
+
+    ret = decode_del_bearer_rsp((uint8_t *) gtpv2c_rx, dbrsp);
+    if (!ret) {
+        LOG_MSG(LOG_DEBUG0, "DBrsp decode failure ");
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_DBRSP_DROP, peer_addr->sin_addr.s_addr);
+        return ret;
+    }
+
+    ue_context_t *context = (ue_context_t *)get_ue_context(dbrsp->header.teid.has_teid.teid);
+    if (context == NULL) {
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_DBRSP_DROP, peer_addr->sin_addr.s_addr);
+        LOG_MSG(LOG_DEBUG0, "Rcvd DBRsp, Context not found for TEID %u ", dbrsp->header.teid.has_teid.teid);
         return -1;
+    }
+ 
 
-    uint32_t seq_num = gtpv2c_rx->teid.has_teid.seq;
+    uint32_t seq_num = dbrsp->header.teid.has_teid.seq;
     uint32_t local_addr = my_sock.s11_sockaddr.sin_addr.s_addr;
-    uint16_t port_num = my_sock.sin_port;
+    uint16_t port_num = my_sock.s11_sockaddr.sin_port;
 
     transData_t *gtpc_trans = (transData_t *)delete_gtp_transaction(local_addr, port_num, seq_num);
-    assert(gtpc_trans);
+    if(gtpc_trans == NULL) {
+        LOG_MSG(LOG_DEBUG3, "Unsolicitated DBRsp response seq = %d ", seq_num);
+        LOG_MSG(LOG_DEBUG3, "Unsolicitated DBRsp response seq = %d ", ntohl(seq_num));
+        increment_mme_peer_stats(MSG_RX_GTPV2_S11_DBRSP_DROP, peer_addr->sin_addr.s_addr);
+        return -1;
+    }
 	stop_transaction_timer(gtpc_trans);
 
+    proc_context_t *proc_context = (proc_context_t *)gtpc_trans->proc_context;
 
-	gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
+    if(context == NULL) {
+        context = (ue_context_t*)proc_context->ue_context;
+    } else {
+        assert(proc_context->ue_context == context);
+    }
 
-	if (msg->gtpc_msg.db_rsp.lbi.header.len) {
-		ebi_index = msg->gtpc_msg.db_rsp.lbi.ebi_ebi - 5;
-	} else {
-		ebi_index = msg->gtpc_msg.db_rsp.bearer_contexts[0].eps_bearer_id.ebi_ebi - 5;
-	}
+    msg->proc_context = gtpc_trans->proc_context;
+    msg->event = RCVD_GTP_DEL_BEARER_RSP;
+    msg->proc  = proc_context->state;
+    SET_PROC_MSG(proc_context, msg);
+    // Note : important to note that we are holding on this msg now 
+    *msg_p = NULL;
 
-	context = (ue_context_t *)get_ue_context(gtpv2c_rx->teid.has_teid.teid);
-	if(context == NULL) {
-		return -1;
-	}
-	if((ret = get_ue_state(gtpv2c_rx->teid.has_teid.teid, ebi_index)) > 0){
-		msg->state = ret;
-	}else{
-		return -1;
-	}
+    LOG_MSG(LOG_DEBUG, "Callback called for "
+            "Msg_Type:%s[%u], Teid:%u, "
+            "Procedure:%s, Event:%s",
+            gtp_type_str(msg->msg_type), msg->msg_type,
+            dbrsp->header.teid.has_teid.teid,
+            get_proc_string(msg->proc),
+            get_event_string(msg->event));
 
-	if(context->eps_bearers[ebi_index]->pdn->proc == MME_INI_DEDICATED_BEARER_DEACTIVATION_PROC){
-		msg->proc = context->eps_bearers[ebi_index]->pdn->proc;
-	}else{
-		msg->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
-		context->eps_bearers[ebi_index]->pdn->proc = msg->proc;
-	}
-	msg->event = DELETE_BER_RESP_RCVD_EVNT;
-	LOG_MSG(LOG_DEBUG, "Callback called for "
-			"Msg_Type:%s[%u], Teid:%u, "
-			"State:%s, Event:%s",
-			gtp_type_str(msg->msg_type), msg->msg_type,
-			gtpv2c_rx->teid.has_teid.teid,
-			get_state_string(msg->state), get_event_string(msg->event));
+    proc_context->handler(proc_context, msg);
 
-
-    process_delete_bearer_response_handler(msg, NULL);
+    //process_delete_bearer_response_handler(msg, NULL);
     return 0;
 }
 
+#ifdef FUTURE_NEED
 int
 process_delete_bearer_resp_handler(void *data, void *unused_param)
 {
 	msg_info_t *msg = (msg_info_t *)data;
 
-	if (msg->gtpc_msg.db_rsp.lbi.header.len != 0) {
+	if (msg->rx_msg.db_rsp.lbi.header.len != 0) {
 		/* Delete Default Bearer. Send PFCP Session Deletion Request */
-		process_pfcp_sess_del_request_delete_bearer_rsp(&msg->gtpc_msg.db_rsp);
+		process_pfcp_sess_del_request_delete_bearer_rsp(&msg->rx_msg.db_rsp);
 	} else {
 		/* Delete Dedicated Bearer. Send PFCP Session Modification Request */
-		process_delete_bearer_resp(&msg->gtpc_msg.db_rsp , 0);
+		process_delete_bearer_resp(&msg->rx_msg.db_rsp , 0);
 	}
 
     LOG_MSG(LOG_NEVER, "unused_param = %p, data = %p ", unused_param, data);

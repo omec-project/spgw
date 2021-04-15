@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "pfcp_ies.h"
@@ -52,7 +54,7 @@ handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfc
  
     /*Decode the received msg and stored into the struct. */
     int decoded = decode_pfcp_assn_setup_req_t((uint8_t *)pfcp_rx,
-            &msg->pfcp_msg.pfcp_ass_req);
+            &msg->rx_msg.pfcp_ass_req);
 
     LOG_MSG(LOG_DEBUG, "Decoded bytes [%d]", decoded);
     if(decoded <= 0) 
@@ -64,7 +66,7 @@ handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfc
     }
     increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPREQ, peer_addr->sin_addr.s_addr);
 
-    uint32_t seq_num = msg->pfcp_msg.pfcp_ass_req.header.seid_seqno.no_seid.seq_no; 
+    uint32_t seq_num = msg->rx_msg.pfcp_ass_req.header.seid_seqno.no_seid.seq_no; 
 
     upf_context_t *upf_context = NULL; 
     upf_context = (upf_context_t *)upf_context_entry_lookup(peer_addr->sin_addr.s_addr);
@@ -74,38 +76,38 @@ handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfc
     }
 
     upf_context->up_supp_features =
-        msg->pfcp_msg.pfcp_ass_req.up_func_feat.sup_feat;
+        msg->rx_msg.pfcp_ass_req.up_func_feat.sup_feat;
 
     switch (cp_config->cp_type)
     {
         case SGWC :
-            if (msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].assosi == 1 &&
-                    msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].src_intfc ==
+            if (msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].assosi == 1 &&
+                    msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].src_intfc ==
                     SOURCE_INTERFACE_VALUE_ACCESS )
                 upf_context->s1u_ip =
-                    msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].ipv4_address;
+                    msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].ipv4_address;
 
-            if( msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[1].assosi == 1 &&
-                    msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[1].src_intfc ==
+            if( msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[1].assosi == 1 &&
+                    msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[1].src_intfc ==
                     SOURCE_INTERFACE_VALUE_CORE )
                 upf_context->s5s8_sgwu_ip =
-                    msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[1].ipv4_address;
+                    msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[1].ipv4_address;
             break;
 
         case PGWC :
-            if (msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].assosi == 1 &&
-                    msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].src_intfc ==
+            if (msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].assosi == 1 &&
+                    msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].src_intfc ==
                     SOURCE_INTERFACE_VALUE_ACCESS )
                 upf_context->s5s8_pgwu_ip =
-                    msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].ipv4_address;
+                    msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].ipv4_address;
             break;
 
         case SAEGWC :
-            if( msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].assosi == 1 &&
-                    msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].src_intfc ==
+            if( msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].assosi == 1 &&
+                    msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].src_intfc ==
                     SOURCE_INTERFACE_VALUE_ACCESS )
                 upf_context->s1u_ip =
-                    msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].ipv4_address;
+                    msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].ipv4_address;
             break;
 
     }
@@ -113,15 +115,15 @@ handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfc
     /* teid_range from first user plane ip IE is used since, for same CP ,
      * DP will assigne single teid_range , So all IE's will have same value for teid_range*/
     /* Change teid base address here */
-    if(msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].teidri != 0){
+    if(msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].teidri != 0){
         /* Requirement : This data should go in the upf context */
-        set_base_teid(msg->pfcp_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].teid_range);
+        set_base_teid(msg->rx_msg.pfcp_ass_req.user_plane_ip_rsrc_info[0].teid_range);
     }
 
 
     /* Adding ip to cp  heartbeat when dp returns the association response*/
     add_ip_to_heartbeat_hash(peer_addr,
-            msg->pfcp_msg.pfcp_ass_req.rcvry_time_stmp.rcvry_time_stmp_val);
+            msg->rx_msg.pfcp_ass_req.rcvry_time_stmp.rcvry_time_stmp_val);
 
     if ((add_node_conn_entry((uint32_t)peer_addr->sin_addr.s_addr,
                     SX_PORT_ID)) != 0) {

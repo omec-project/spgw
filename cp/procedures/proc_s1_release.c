@@ -1,6 +1,7 @@
-
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "ue.h"
@@ -27,6 +28,7 @@
 #include "pfcp_cp_interface.h"
 #include "cp_log.h"
 #include "assert.h"
+#include "proc.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -35,7 +37,7 @@ alloc_rab_proc(msg_info_t *msg)
 {
     proc_context_t *rab_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
     strcpy(rab_proc->proc_name, "S1_RELEASE");
-    rab_proc->proc_type = msg->proc; 
+    rab_proc->proc_type = S1_RELEASE_PROC; 
     rab_proc->handler = rab_event_handler;
     rab_proc->ue_context = msg->ue_context;
     rab_proc->pdn_context = msg->pdn_context;
@@ -70,15 +72,15 @@ int
 process_rel_access_ber_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     int ret = 0;
-    gtpv2c_header_t *rab_header = &msg->gtpc_msg.rab.header;
+    gtpv2c_header_t *rab_header = &msg->rx_msg.rab.header;
 
 	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:%s[%u], Teid:%u, "
-			"Procedure:%s, State:%s, Event:%s",
+			"Procedure:%s, Event:%s",
 			gtp_type_str(msg->msg_type), msg->msg_type,
 			rab_header->teid.has_teid.teid,
 			get_proc_string(msg->proc),
-			get_state_string(msg->state), get_event_string(msg->event));
+			get_event_string(msg->event));
 
 
 	/* TODO: Check return type and do further processing */
@@ -127,7 +129,7 @@ process_release_access_bearer_request(proc_context_t *rab_proc, msg_info_t *msg)
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
     ue_context_t *ue_context = (ue_context_t *)msg->ue_context;
-    rel_acc_bearer_req_t *rel_acc_ber_req_t = &msg->gtpc_msg.rab;
+    rel_acc_bearer_req_t *rel_acc_ber_req_t = &msg->rx_msg.rab;
 
 	for (int i = 0; i < MAX_BEARERS; ++i) {
 		if (ue_context->eps_bearers[i] == NULL)
@@ -229,21 +231,21 @@ process_rab_proc_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg
 
 
 	/*Validate the modification is accepted or not. */
-	if(msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value != REQUESTACCEPTED){
+	if(msg->rx_msg.pfcp_sess_mod_resp.cause.cause_value != REQUESTACCEPTED){
 			LOG_MSG(LOG_DEBUG, "Cause received PFCP Modify response is %d",
-					msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value);
+					msg->rx_msg.pfcp_sess_mod_resp.cause.cause_value);
 			proc_rab_failed(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
 			return;
 	}
 
 	/* Retrive the session information based on session id. */
     ue_context_t *temp_context = NULL; 
-	temp_context = (ue_context_t *)get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+	temp_context = (ue_context_t *)get_sess_entry_seid(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 	if (temp_context == NULL) {
 		LOG_MSG(LOG_ERROR, "Session entry not found Msg_Type:%u,"
 				"Sess ID:%lu ",
 				msg->msg_type,
-				msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+				msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 
 		proc_rab_failed(msg, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
 		return ;
@@ -252,17 +254,17 @@ process_rab_proc_pfcp_mod_sess_rsp(proc_context_t *proc_context, msg_info_t *msg
 
 	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:PFCP_SESSION_MODIFICATION_RESPONSE[%u], Seid:%lu, "
-			"Procedure:%s, State:%s, Event:%s",
+			"Procedure:%s, Event:%s",
 			msg->msg_type,
-			msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
+			msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 			get_proc_string(msg->proc),
-			get_state_string(msg->state), get_event_string(msg->event));
+			get_event_string(msg->event));
 
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
 	ret = process_rab_pfcp_sess_mod_resp(proc_context,
-			msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
+			msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 			gtpv2c_tx);
 	if (ret != 0) {
 		if(ret != -1)

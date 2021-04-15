@@ -28,36 +28,35 @@
 #include "pfcp_cp_session.h"
 #include "cp_peer.h"
 #include "pfcp_cp_interface.h"
+#include "proc.h"
 
 int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
     ue_context_t *context = NULL;
-    int ret = decode_create_sess_rsp((uint8_t *)gtpv2c_rx, &msg->gtpc_msg.cs_rsp);
+    int ret = decode_create_sess_rsp((uint8_t *)gtpv2c_rx, &msg->rx_msg.cs_rsp);
     if(!ret) {
         // Match transaction and generate response on s11 interface 
         return -1;
     }
 
-	//gtpc_delete_timer_entry(msg->gtpc_msg.cs_rsp.header.teid.has_teid.teid);
+	//gtpc_delete_timer_entry(msg->rx_msg.cs_rsp.header.teid.has_teid.teid);
 
-	if(msg->gtpc_msg.cs_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
-		cs_error_response(msg, msg->gtpc_msg.cs_rsp.cause.cause_value,
+	if(msg->rx_msg.cs_rsp.cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED){
+		cs_error_response(msg, msg->rx_msg.cs_rsp.cause.cause_value,
 				        cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 		return -1;
 	}
 
     // Requirement : teid can be 0 from PDN GW 
-	if(get_ue_context_by_sgw_s5s8_teid(msg->gtpc_msg.cs_rsp.header.teid.has_teid.teid, &context) != 0)
+	if(get_ue_context_by_sgw_s5s8_teid(msg->rx_msg.cs_rsp.header.teid.has_teid.teid, &context) != 0)
 	{
 		cs_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
 					cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 		return -1;
 	}
 
-	uint8_t ebi_index = msg->gtpc_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi - 5;
-	pdn_connection_t *pdn = GET_PDN(context, ebi_index);
-	msg->state = pdn->state;
-	//msg->proc = pdn->proc;
+	//uint8_t ebi_index = msg->rx_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi - 5;
+	//pdn_connection_t *pdn = GET_PDN(context, ebi_index);
 
 	/*Set the appropriate event type.*/
 	msg->event = CS_RESP_RCVD_EVNT;
@@ -66,11 +65,11 @@ int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_
 
 	LOG_MSG(LOG_DEBUG, "Callback called for "
 					"Msg_Type:%s[%u], Teid:%u, "
-					"Procedure:%s, State:%s, Event:%s",
+					"Procedure:%s, Event:%s",
 					gtp_type_str(msg->msg_type), msg->msg_type,
 					gtpv2c_rx->teid.has_teid.teid,
 					get_proc_string(msg->proc),
-					get_state_string(msg->state), get_event_string(msg->event));
+					get_event_string(msg->event));
 #if 0
 			gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
 
@@ -389,7 +388,7 @@ process_cs_resp_handler(void *data, void *unused_param)
     int ret = 0;
 	msg_info_t *msg = (msg_info_t *)data;
 
-	ret = process_sgwc_s5s8_create_sess_rsp(&msg->gtpc_msg.cs_rsp);
+	ret = process_sgwc_s5s8_create_sess_rsp(&msg->rx_msg.cs_rsp);
 	if (ret) {
 			if(ret != -1){
 				cs_error_response(msg, ret, S11_IFACE);

@@ -1,12 +1,17 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "ue.h"
+#include "pdn.h"
+#include "bearer.h"
 #include "spgw_cpp_wrapper.h"
 #include "pfcp.h"
 #include "cp_log.h"
 #include "pfcp_cp_session.h"
+#include "util.h"
 
 void cleanup_bearer_context(eps_bearer_t *bearer)
 {
@@ -57,3 +62,17 @@ del_rule_entries(ue_context_t *context, uint8_t ebi_index)
     }
     return 0;
 }
+
+int
+add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, eps_bearer_t **bearer)
+{
+	int8_t ret = 0;
+	ret = bearer_context_entry_add_teidKey(fteid_key, (void *)(*bearer));
+	
+	if (ret < 0) {
+		LOG_MSG(LOG_ERROR, "Error on adding teid to bearer mapping ");
+		return GTPV2C_CAUSE_SYSTEM_FAILURE;
+	}
+	return 0;
+}
+

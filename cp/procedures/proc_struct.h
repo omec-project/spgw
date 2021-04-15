@@ -4,27 +4,78 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#ifndef SM_ENUM_H
-#define SM_ENUM_H
 
-#include <stdio.h>
-#include <stdint.h>
+#ifndef __PROC_STRUCT_H
+#define __PROC_STRUCT_H
+
+#include <sys/queue.h>
 #include "trans_struct.h"
+#include "sm_struct.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define UPF_ASSOCIATION_PENDING  0x00000001 
 
-typedef enum 
-{
-	INTF_NONE,
-	PGW_S5_S8,
-    SGW_S11_S4,
-    SGW_S5_S8,
-    PGW_GX,
-    PGW_SXB,
-    SGW_SXA,
-}PKT_RX_INTERFACE;
+enum proc_result {
+    PROC_RESULT_SUCCESS,
+    PROC_RESULT_FAILURE
+};
+
+#define PROC_FLAGS_RUNNING  0x00000001
+
+typedef void (*event_handler_t) (void*,void*);
+typedef void (*add_child_proc_t) (void*, void*);
+typedef void (*done_child_proc_t) (void*);
+#define MAX_CHILD_PROC 8
+
+/* GTP Req : Create transaction, create proc  and link proc to trans
+ * respinse find transaction, linked proc pointer form trans
+ */ 
+// MUSTDO ? : TODO : we need union in this procedure ???
+struct proc_context {
+    uint32_t        proc_type;
+    char            proc_name[32];
+    uint32_t        state;
+    uint32_t        flags;
+    uint32_t        result;
+    void*           ue_context;
+    void*           pdn_context;
+    void*           bearer_context;
+    void*           upf_context;
+    transData_t*    pfcp_trans;
+    transData_t*    gtpc_trans;
+    event_handler_t handler;
+    void            *msg_info;
+    void            *gx_context;
+    uint32_t        call_id;
+    uint16_t        rar_seq_num;
+	TAILQ_ENTRY(proc_context) next_sub_proc;
+	TAILQ_ENTRY(proc_context) next_node_proc;
+
+    // child procs 
+    add_child_proc_t child_proc_add; 
+    done_child_proc_t child_proc_done; 
+    uint8_t          child_procs_cnt;
+    void*            child_procs[MAX_CHILD_PROC]; 
+    void*            parent_proc;
+    uint16_t         tac;
+
+    // printing purpise
+    uint64_t         imsi64;
+};
+typedef struct proc_context proc_context_t;
+
+// BUG : Should i check refCnt ?
+#define SET_PROC_MSG(proc, msg) { \
+    if(proc->msg_info != NULL) { \
+       msg_info_t *_tmp = (msg_info_t *)proc->msg_info;\
+       free(_tmp->raw_buf); \
+       free(_tmp); \
+    } \
+    proc->msg_info = (void *)msg;\
+    msg->refCnt++; \
+}
 
 typedef enum 
 {
@@ -45,9 +96,9 @@ typedef enum
     S1_RELEASE_PROC,
     PFCP_ASSOC_SETUP_PROC,
     SGW_RELOCATION_DETACH_PROC,
+	NW_INIT_DETACH_PROC,
 	END_PROC
 }sm_proc;
-
 
 /* VS: Defined different states of the STATE Machine */
 typedef enum 
@@ -135,19 +186,9 @@ typedef enum
 	DEL_PDN_CONN_SET_RESP_RCVD_EVNT = 36,
 	PFCP_SESS_SET_DEL_REQ_RCVD_EVNT,
 	PFCP_SESS_SET_DEL_RESP_RCVD_EVNT,
-	END_EVNT
-}sm_event;
-
-enum source_interface {
-	GX_IFACE = 1,
-	S11_IFACE = 2,
-	S5S8_IFACE = 3,
-	PFCP_IFACE = 4,
-};
-
-typedef enum 
-{
-    PFCP_ASSOCIATION_SETUP = 100,
+    SEND_PFCP_DEL_SESSION_REQ, 
+    SEND_GTP_DEL_BEARER_REQ,
+    PFCP_ASSOCIATION_SETUP,
     PFCP_ASSOCIATION_SETUP_RSP,
 	PFCP_ASSOC_SETUP_SUCCESS,
 	PFCP_ASSOC_SETUP_FAILED,
@@ -157,29 +198,12 @@ typedef enum
     DDN_TIMEOUT, 
 	BEARER_CREATE_EVNT,
     SEND_RE_AUTH_RSP_EVNT,
-}proc_event;
+    DEFAULT_BEARER_DELETE,
+    NW_DETACH_DBREQ_TIMEOUT,
+    RCVD_GTP_DEL_BEARER_RSP,
+	END_EVNT
+}sm_event;
 
-enum UE_CONTEXT_STATE {
-    UE_STATE_UNKNOWN,
-    UE_STATE_ACTIVE_PENDING,
-    UE_STATE_ACTIVE,
-    UE_STATE_IDLE_PENDING, 
-    UE_STATE_IDLE,
-    UE_STATE_DETACH_PENDING,
-    UE_STATE_PAGING_PENDING,
-    UE_STATE_DETACH
-};
-
-enum PDN_CONTEXT_STATE {
-    PDN_STATE_UNKNOWN,
-    PDN_STATE_ACTIVE_PENDING,
-    PDN_STATE_ACTIVE,
-    PDN_STATE_PAGING_PENDING,
-    PDN_STATE_DETACH_PENDING,
-    PDN_STATE_IDLE_PENDING,
-    PDN_STATE_IDLE,
-    PDN_STATE_DETACH
-};
 
 
 #ifdef __cplusplus

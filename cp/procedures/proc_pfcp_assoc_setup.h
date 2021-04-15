@@ -4,7 +4,7 @@
 
 #ifndef __PFCP_ASSOCIATION_SETUP_PROC_H 
 #define __PFCP_ASSOCIATION_SETUP_PROC_H
-#include "cp_proc.h"
+#include "proc_struct.h"
 
 #ifdef __cplusplus
 extern "C" {

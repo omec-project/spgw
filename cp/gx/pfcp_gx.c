@@ -9,7 +9,6 @@
 #include "sm_structs_api.h"
 #include "spgw_cpp_wrapper.h"
 #include "pfcp.h"
-#include "sm_enum.h"
 #include "pfcp_cp_util.h"
 #include "spgw_config_struct.h"
 #include "pfcp_cp_session.h"
@@ -62,30 +61,35 @@ extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
  * @return : Returns 0 in case of success , -1 otherwise
  * */
 static int
-store_default_bearer_qos_in_policy(pdn_connection_t *pdn, GxDefaultEpsBearerQos qos)
+store_default_bearer_qos_in_policy(pdn_connection_t *pdn, GxDefaultEpsBearerQos qos, bool default_bearer)
 {
-	pdn->policy.default_bearer_qos_valid = TRUE;
-	bearer_qos_ie *def_qos = &pdn->policy.default_bearer_qos;
+    bearer_qos_ie *def_qos;
+    eps_bearer_t *def_bearer = get_default_bearer(pdn); 
+    if(default_bearer) {
+        def_qos = &def_bearer->qos;
+    } else {
+        pdn->policy.default_bearer_qos_valid = TRUE;
+        def_qos = &pdn->policy.default_bearer_qos;
+    }
 
-
-	if (qos.presence.qos_class_identifier == PRESENT) {
-		def_qos->qci = qos.qos_class_identifier;
-	}
+    if (qos.presence.qos_class_identifier == PRESENT) {
+        def_qos->qci = qos.qos_class_identifier;
+    }
 
     // GXFIX - 
-	if(qos.presence.allocation_retention_priority == PRESENT) {
-		if(qos.allocation_retention_priority.presence.priority_level == PRESENT){
-			def_qos->arp.priority_level = qos.allocation_retention_priority.priority_level;
-		}
-		if(qos.allocation_retention_priority.presence.pre_emption_capability == PRESENT){
-			def_qos->arp.preemption_capability = qos.allocation_retention_priority.pre_emption_capability;
-		}
-		if(qos.allocation_retention_priority.presence.pre_emption_vulnerability == PRESENT){
-			def_qos->arp.preemption_vulnerability = qos.allocation_retention_priority.pre_emption_vulnerability;
-		}
-	}
+    if(qos.presence.allocation_retention_priority == PRESENT) {
+        if(qos.allocation_retention_priority.presence.priority_level == PRESENT){
+            def_qos->arp.priority_level = qos.allocation_retention_priority.priority_level;
+        }
+        if(qos.allocation_retention_priority.presence.pre_emption_capability == PRESENT){
+            def_qos->arp.preemption_capability = qos.allocation_retention_priority.pre_emption_capability;
+        }
+        if(qos.allocation_retention_priority.presence.pre_emption_vulnerability == PRESENT){
+            def_qos->arp.preemption_vulnerability = qos.allocation_retention_priority.pre_emption_vulnerability;
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
 #if 0
@@ -656,13 +660,28 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 	if (cca->presence.default_eps_bearer_qos != PRESENT) {
 		LOG_MSG(LOG_ERROR, "AVP:default_eps_bearer_qos is missing ");
 		return -1;
+	} 
+	if (cca->presence.qos_information == PRESENT) {
+        eps_bearer_t *def_bearer = get_default_bearer(pdn_cntxt);
+		LOG_MSG(LOG_INFO, "AVP:received qos information from PCRF ");
+        GxQosInformation *qos = &(cca->qos_information.list[0]);
+        if(qos->presence.apn_aggregate_max_bitrate_ul == PRESENT) {
+            pdn_cntxt->apn_ambr.ambr_uplink = qos->apn_aggregate_max_bitrate_ul;
+            def_bearer->qos.ul_mbr = qos->apn_aggregate_max_bitrate_ul;
+            
+        }
+        if(qos->presence.apn_aggregate_max_bitrate_dl == PRESENT) {
+            pdn_cntxt->apn_ambr.ambr_downlink = qos->apn_aggregate_max_bitrate_dl;
+            def_bearer->qos.dl_mbr = qos->apn_aggregate_max_bitrate_dl;
+        }
 	}
-	ret = store_default_bearer_qos_in_policy(pdn_cntxt, cca->default_eps_bearer_qos);
+
+    // TODO : handle update bearer for non default bearer through CCAI
+	ret = store_default_bearer_qos_in_policy(pdn_cntxt, cca->default_eps_bearer_qos, true);
 	if (ret) {
         LOG_MSG(LOG_ERROR, "AVP:default_eps_bearer_qos failed to store ");
         return ret;
     }
-
 
 	/* VS: Compare the default qos and CCA charging rule qos info and retrieve the bearer identifier */
 	//bearer_id = retrieve_bearer_id(pdn_cntxt, cca);
@@ -917,10 +936,10 @@ parse_gx_rar_msg(msg_info_t *msg)
 
 
     /* PCRF Use case - Change in default bearer QoS through RAR */
-    GxRAR *rar = &msg->gx_msg.rar;
+    GxRAR *rar = &msg->rx_msg.rar;
 	if(rar->presence.default_eps_bearer_qos) {
         // GXFIX - This is bug, we are not doing anything with this RAR request  
-		store_default_bearer_qos_in_policy(pdn_cntxt, rar->default_eps_bearer_qos);
+		store_default_bearer_qos_in_policy(pdn_cntxt, rar->default_eps_bearer_qos, false);
 	}
 
     bool install_rule_present = (rar->presence.charging_rule_install == PRESENT);

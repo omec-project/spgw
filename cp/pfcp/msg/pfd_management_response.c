@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "pfcp_cp_interface.h"
@@ -7,6 +9,7 @@
 #include "cp_log.h"
 #include "pfcp_messages_decoder.h"
 #include "spgw_cpp_wrapper.h"
+#include "proc.h"
 
 
 
@@ -23,14 +26,14 @@ int handle_pfcp_pfd_management_response(msg_info_t *msg)
      * handler new event  
      */
 	/* check cause ie */
-	if(msg->pfcp_msg.pfcp_pfd_resp.cause.cause_value !=  REQUESTACCEPTED){
+	if(msg->rx_msg.pfcp_pfd_resp.cause.cause_value !=  REQUESTACCEPTED){
 		LOG_MSG(LOG_ERROR, "Msg_Type:%u, Cause value:%d, offending ie:%u",
-					msg->msg_type, msg->pfcp_msg.pfcp_pfd_resp.cause.cause_value,
-			    msg->pfcp_msg.pfcp_pfd_resp.offending_ie.type_of_the_offending_ie);
+					msg->msg_type, msg->rx_msg.pfcp_pfd_resp.cause.cause_value,
+			    msg->rx_msg.pfcp_pfd_resp.offending_ie.type_of_the_offending_ie);
 		return -1;
 	}
 
-	msg->state = PFCP_PFD_MGMT_RESP_RCVD_STATE;
+	//msg->state = PFCP_PFD_MGMT_RESP_RCVD_STATE;
 	msg->event = PFCP_PFD_MGMT_RESP_RCVD_EVNT;
 	msg->proc = INITIAL_PDN_ATTACH_PROC;
 
@@ -48,7 +51,7 @@ handle_pfcp_pfd_management_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_
  
     process_response(peer_addr.sin_addr.s_addr);
     /* Decode pfd mgmt response */
-    int decoded = decode_pfcp_pfd_mgmt_rsp_t((uint8_t *)pfcp_rx, &msg->pfcp_msg.pfcp_pfd_resp);
+    int decoded = decode_pfcp_pfd_mgmt_rsp_t((uint8_t *)pfcp_rx, &msg->rx_msg.pfcp_pfd_resp);
     if(decoded <= 0) 
     {
         LOG_MSG(LOG_DEBUG, "DEOCED bytes in Pfd Mgmt Resp is %d", decoded);

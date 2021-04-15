@@ -698,6 +698,8 @@ set_gtpv2c_echo(gtpv2c_header_t *gtpv2c_tx,
 void
 set_mapped_ue_usage_type(gtp_mapped_ue_usage_type_ie_t *ie, uint16_t usage_type_value);
 
+void
+set_apn_ambr(gtp_agg_max_bit_rate_ie_t *ambr, uint32_t ul_ambr, uint32_t dl_ambr);
 #ifdef __cplusplus
 }
 #endif

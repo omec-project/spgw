@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2017 Intel Corporation
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "trans_struct.h"
@@ -14,7 +16,7 @@
 #include "spgw_config_struct.h"
 #include "trans_struct.h"
 #include "ue.h"
-#include "cp_proc.h"
+#include "proc_struct.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_log.h"
 

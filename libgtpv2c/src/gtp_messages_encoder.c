@@ -4983,54 +4983,54 @@ int encode_del_bearer_req(del_bearer_req_t *value,
     encoded += encode_gtpv2c_header_t(&value->header, buf +encoded);
 
 
-if (value->lbi.header.len)
+    if (value->lbi.header.len)
         encoded += encode_gtp_eps_bearer_id_ie(&(value->lbi), buf + encoded);
 
-for(uint8_t iCnt = 0; iCnt < value->bearer_count; iCnt++) {
-	if (value->eps_bearer_ids[iCnt].header.len)
-        	encoded += encode_gtp_eps_bearer_id_ie(&(value->eps_bearer_ids[iCnt]), buf + encoded);
-}
+    for(uint8_t iCnt = 0; iCnt < value->bearer_count; iCnt++) {
+        if (value->eps_bearer_ids[iCnt].header.len)
+            encoded += encode_gtp_eps_bearer_id_ie(&(value->eps_bearer_ids[iCnt]), buf + encoded);
+    }
 
-if (value->failed_bearer_contexts.header.len)
+    if (value->failed_bearer_contexts.header.len)
         encoded += encode_gtp_bearer_context_ie(&(value->failed_bearer_contexts), buf + encoded);
 
-if (value->pti.header.len)
+    if (value->pti.header.len)
         encoded += encode_gtp_proc_trans_id_ie(&(value->pti), buf + encoded);
 
-if (value->pco.header.len)
+    if (value->pco.header.len)
         encoded += encode_gtp_prot_cfg_opts_ie(&(value->pco), buf + encoded);
 
-if (value->pgw_fqcsid.header.len)
+    if (value->pgw_fqcsid.header.len)
         encoded += encode_gtp_fqcsid_ie(&(value->pgw_fqcsid), buf + encoded);
 
-if (value->sgw_fqcsid.header.len)
+    if (value->sgw_fqcsid.header.len)
         encoded += encode_gtp_fqcsid_ie(&(value->sgw_fqcsid), buf + encoded);
 
-if (value->indctn_flgs.header.len)
+    if (value->indctn_flgs.header.len)
         encoded += encode_gtp_indication_ie(&(value->indctn_flgs), buf + encoded);
 
-if (value->pgws_node_lvl_load_ctl_info.header.len)
+    if (value->pgws_node_lvl_load_ctl_info.header.len)
         encoded += encode_gtp_load_ctl_info_ie(&(value->pgws_node_lvl_load_ctl_info), buf + encoded);
 
-if (value->pgws_apn_lvl_load_ctl_info.header.len)
+    if (value->pgws_apn_lvl_load_ctl_info.header.len)
         encoded += encode_gtp_load_ctl_info_ie(&(value->pgws_apn_lvl_load_ctl_info), buf + encoded);
 
-if (value->sgws_node_lvl_load_ctl_info.header.len)
+    if (value->sgws_node_lvl_load_ctl_info.header.len)
         encoded += encode_gtp_load_ctl_info_ie(&(value->sgws_node_lvl_load_ctl_info), buf + encoded);
 
-if (value->pgws_ovrld_ctl_info.header.len)
+    if (value->pgws_ovrld_ctl_info.header.len)
         encoded += encode_gtp_ovrld_ctl_info_ie(&(value->pgws_ovrld_ctl_info), buf + encoded);
 
-if (value->sgws_ovrld_ctl_info.header.len)
+    if (value->sgws_ovrld_ctl_info.header.len)
         encoded += encode_gtp_ovrld_ctl_info_ie(&(value->sgws_ovrld_ctl_info), buf + encoded);
 
-if (value->nbifom_cntnr.header.len)
+    if (value->nbifom_cntnr.header.len)
         encoded += encode_gtp_full_qual_cntnr_ie(&(value->nbifom_cntnr), buf + encoded);
 
-if (value->epco.header.len)
+    if (value->epco.header.len)
         encoded += encode_gtp_extnded_prot_cfg_opts_ie(&(value->epco), buf + encoded);
 
-if (value->priv_ext.header.len)
+    if (value->priv_ext.header.len)
         encoded += encode_gtp_priv_ext_ie(&(value->priv_ext), buf + encoded);
 
     return encoded;

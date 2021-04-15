@@ -4,8 +4,7 @@
 #ifndef __PROC_RAR_H__
 #define __PROC_RAR_H__
 #include "sm_struct.h"
-#include "cp_proc.h"
-#include "sm_enum.h"
+#include "proc_struct.h"
 
 #ifdef __cplusplus
 extern "C" {

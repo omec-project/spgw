@@ -1,12 +1,15 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+
 #include "pfcp_error_rsp.h"
 #include "sm_struct.h"
 #include "pfcp_messages.h"
 #include "ue.h"
 #include "util.h"
-#include "cp_proc.h"
+#include "proc_struct.h"
 #include "trans_struct.h"
 #include "pfcp_messages_encoder.h"
 #include "pfcp_cp_set_ie.h"
@@ -25,7 +28,7 @@ get_error_session_report_info(msg_info_t *msg, pfcp_err_rsp_info_t *rsp_info)
 	switch(msg->msg_type) {
         case PFCP_SESSION_REPORT_REQUEST: {
 	        ue_context_t *context = NULL;
-            pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->pfcp_msg.pfcp_sess_rep_req;
+            pfcp_sess_rpt_req_t *pfcp_sess_rep_req = &msg->rx_msg.pfcp_sess_rep_req;
             rsp_info->seq = pfcp_sess_rep_req->header.seid_seqno.has_seid.seq_no;
             rsp_info->peer_addr = msg->peer_addr; 
             uint64_t sess_id = pfcp_sess_rep_req->header.seid_seqno.has_seid.seid;

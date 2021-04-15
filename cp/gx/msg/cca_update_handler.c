@@ -8,13 +8,13 @@
 #include "gx_interface.h"
 #include "cp_log.h"
 #include "spgw_config_struct.h"
-#include "sm_enum.h"
 #include "sm_struct.h"
 #include "sm_hand.h"
 #include "pfcp_cp_set_ie.h" // ajay - included for Gx context. need cleanup  
 #include "pfcp.h"
 #include "sm_structs_api.h"
 #include "spgw_cpp_wrapper.h"
+#include "proc.h"
 
 
 #if 0
@@ -80,27 +80,27 @@ int handle_cca_update_msg(msg_info_t **msg_p)
 
     pdn_connection_t *pdn_cntxt = NULL;
     /* Retrive Gx_context based on Sess ID. */
-    ue_context_t *temp_ue_context = (ue_context_t *) get_gx_context((uint8_t*)msg->gx_msg.cca.session_id.val);
+    ue_context_t *temp_ue_context = (ue_context_t *) get_gx_context((uint8_t*)msg->rx_msg.cca.session_id.val);
     if (temp_ue_context == NULL) {
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]",
-                msg->gx_msg.cca.session_id.val);
+                msg->rx_msg.cca.session_id.val);
         return -1;
     }
     gx_context = (gx_context_t *)temp_ue_context->gx_context;
 
-    if(msg->gx_msg.cca.presence.result_code &&
-            msg->gx_msg.cca.result_code != 2001){
+    if(msg->rx_msg.cca.presence.result_code &&
+            msg->rx_msg.cca.result_code != 2001){
         LOG_MSG(LOG_ERROR, "Received CCA with DIAMETER Failure [%d]",
-                msg->gx_msg.cca.result_code);
+                msg->rx_msg.cca.result_code);
         return -1;
     }
 
     uint32_t call_id;
     /* Extract the call id from session id */
-    int ret = retrieve_call_id((char *)msg->gx_msg.cca.session_id.val, &call_id);
+    int ret = retrieve_call_id((char *)msg->rx_msg.cca.session_id.val, &call_id);
     if (ret < 0) {
         LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s",
-                msg->gx_msg.cca.session_id.val);
+                msg->rx_msg.cca.session_id.val);
         return -1;
     }
     /* Retrieve PDN context based on call id */
@@ -114,10 +114,10 @@ int handle_cca_update_msg(msg_info_t **msg_p)
     msg->event = CCA_RCVD_EVNT;
     LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:%s[%u], Session Id:%s, "
-            "State:%s, Event:%s",
+            " Event:%s",
             gx_type_str(msg->msg_type), msg->msg_type,
-            msg->gx_msg.cca.session_id.val,
-            get_state_string(msg->state), get_event_string(msg->event));
+            msg->rx_msg.cca.session_id.val,
+            get_event_string(msg->event));
 
     SET_PROC_MSG(proc_context,msg);
     msg->proc_context = proc_context;
@@ -142,10 +142,10 @@ int cca_u_msg_handler_handover(void *data, void *unused)
 	uint8_t ebi_index = 0;
 
 	/* Extract the call id from session id */
-	ret = retrieve_call_id((char *)&msg->gx_msg.cca.session_id.val, &call_id);
+	ret = retrieve_call_id((char *)&msg->rx_msg.cca.session_id.val, &call_id);
 	if (ret < 0) {
 	        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s",
-	                       (char*) &msg->gx_msg.cca.session_id.val);
+	                       (char*) &msg->rx_msg.cca.session_id.val);
 	        return -1;
 	}
 

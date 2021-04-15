@@ -3636,78 +3636,78 @@ int decode_upd_bearer_req(uint8_t *buf,
 int decode_del_bearer_rsp(uint8_t *buf,
       del_bearer_rsp_t *value)
 {
-      uint16_t count = 0;
-      uint16_t buf_len = 0;
+    uint16_t count = 0;
+    uint16_t buf_len = 0;
 
     value->bearer_count = 0;
 
     count += decode_gtpv2c_header_t(buf + count, &value->header);
     if (value->header.gtpc.teid_flag)
-      buf_len = value->header.gtpc.message_len - 8;
-      else
-      buf_len = value->header.gtpc.message_len - 4;
-      buf = buf + count;
-      count = 0;
-            while (count < buf_len) {
+        buf_len = value->header.gtpc.message_len - 8;
+    else
+        buf_len = value->header.gtpc.message_len - 4;
+    buf = buf + count;
+    count = 0;
+    while (count < buf_len) {
 
-          ie_header_t *ie_header = (ie_header_t *) (buf + count);
+        ie_header_t *ie_header = (ie_header_t *) (buf + count);
 
-          if (ie_header->type == GTP_IE_CAUSE && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        if (ie_header->type == GTP_IE_CAUSE && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_cause_ie(buf + count, &value->cause);
-      }  else if (ie_header->type == GTP_IE_EPS_BEARER_ID && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_EPS_BEARER_ID && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_eps_bearer_id_ie(buf + count, &value->lbi);
-      }  else if (ie_header->type == GTP_IE_BEARER_CONTEXT && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_BEARER_CONTEXT && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_del_bearer_response_bearer_ctxt_ie(buf + count, &value->bearer_contexts[value->bearer_count++]);
-      }  else if (ie_header->type == GTP_IE_RECOVERY && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_RECOVERY && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_recovery_ie(buf + count, &value->recovery);
-      }  else if (ie_header->type == GTP_IE_FQCSID && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_FQCSID && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_fqcsid_ie(buf + count, &value->mme_fqcsid);
-      }  else if (ie_header->type == GTP_IE_FQCSID && ie_header->instance == GTP_IE_INSTANCE_ONE) {
+        }  else if (ie_header->type == GTP_IE_FQCSID && ie_header->instance == GTP_IE_INSTANCE_ONE) {
             count += decode_gtp_fqcsid_ie(buf + count, &value->sgw_fqcsid);
-      }  else if (ie_header->type == GTP_IE_FQCSID && ie_header->instance == GTP_IE_INSTANCE_TWO) {
+        }  else if (ie_header->type == GTP_IE_FQCSID && ie_header->instance == GTP_IE_INSTANCE_TWO) {
             count += decode_gtp_fqcsid_ie(buf + count, &value->epdg_fqcsid);
-      }  else if (ie_header->type == GTP_IE_FQCSID && ie_header->instance == GTP_IE_INSTANCE_THREE) {
+        }  else if (ie_header->type == GTP_IE_FQCSID && ie_header->instance == GTP_IE_INSTANCE_THREE) {
             count += decode_gtp_fqcsid_ie(buf + count, &value->twan_fqcsid);
-      }  else if (ie_header->type == GTP_IE_PROT_CFG_OPTS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_PROT_CFG_OPTS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_prot_cfg_opts_ie(buf + count, &value->pco);
-      }  else if (ie_header->type == GTP_IE_UE_TIME_ZONE && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_UE_TIME_ZONE && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_ue_time_zone_ie(buf + count, &value->ue_time_zone);
-      }  else if (ie_header->type == GTP_IE_USER_LOC_INFO && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_USER_LOC_INFO && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_user_loc_info_ie(buf + count, &value->uli);
-      }  else if (ie_header->type == GTP_IE_ULI_TIMESTAMP && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_ULI_TIMESTAMP && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_uli_timestamp_ie(buf + count, &value->uli_timestamp);
-      }  else if (ie_header->type == GTP_IE_TWAN_IDENTIFIER && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_TWAN_IDENTIFIER && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_twan_identifier_ie(buf + count, &value->twan_identifier);
-      }  else if (ie_header->type == GTP_IE_TWAN_IDNT_TS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_TWAN_IDNT_TS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_twan_idnt_ts_ie(buf + count, &value->twan_idnt_ts);
-      }  else if (ie_header->type == GTP_IE_OVRLD_CTL_INFO && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_OVRLD_CTL_INFO && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_ovrld_ctl_info_ie(buf + count, &value->mmes4_sgsns_ovrld_ctl_info);
-      }  else if (ie_header->type == GTP_IE_OVRLD_CTL_INFO && ie_header->instance == GTP_IE_INSTANCE_ONE) {
+        }  else if (ie_header->type == GTP_IE_OVRLD_CTL_INFO && ie_header->instance == GTP_IE_INSTANCE_ONE) {
             count += decode_gtp_ovrld_ctl_info_ie(buf + count, &value->sgws_ovrld_ctl_info);
-      }  else if (ie_header->type == GTP_IE_IP_ADDRESS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_IP_ADDRESS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_ip_address_ie(buf + count, &value->mmes4_sgsn_idnt);
-      }  else if (ie_header->type == GTP_IE_OVRLD_CTL_INFO && ie_header->instance == GTP_IE_INSTANCE_TWO) {
+        }  else if (ie_header->type == GTP_IE_OVRLD_CTL_INFO && ie_header->instance == GTP_IE_INSTANCE_TWO) {
             count += decode_gtp_ovrld_ctl_info_ie(buf + count, &value->twanepdgs_ovrld_ctl_info);
-      }  else if (ie_header->type == GTP_IE_TWAN_IDENTIFIER && ie_header->instance == GTP_IE_INSTANCE_ONE) {
+        }  else if (ie_header->type == GTP_IE_TWAN_IDENTIFIER && ie_header->instance == GTP_IE_INSTANCE_ONE) {
             count += decode_gtp_twan_identifier_ie(buf + count, &value->wlan_loc_info);
-      }  else if (ie_header->type == GTP_IE_TWAN_IDNT_TS && ie_header->instance == GTP_IE_INSTANCE_ONE) {
+        }  else if (ie_header->type == GTP_IE_TWAN_IDNT_TS && ie_header->instance == GTP_IE_INSTANCE_ONE) {
             count += decode_gtp_twan_idnt_ts_ie(buf + count, &value->wlan_loc_ts);
-      }  else if (ie_header->type == GTP_IE_IP_ADDRESS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_IP_ADDRESS && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_ip_address_ie(buf + count, &value->ue_local_ip_addr);
-      }  else if (ie_header->type == GTP_IE_PORT_NUMBER && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_PORT_NUMBER && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_port_number_ie(buf + count, &value->ue_udp_port);
-      }  else if (ie_header->type == GTP_IE_FULL_QUAL_CNTNR && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_FULL_QUAL_CNTNR && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_full_qual_cntnr_ie(buf + count, &value->nbifom_cntnr);
-      }  else if (ie_header->type == GTP_IE_PORT_NUMBER && ie_header->instance == GTP_IE_INSTANCE_ONE) {
+        }  else if (ie_header->type == GTP_IE_PORT_NUMBER && ie_header->instance == GTP_IE_INSTANCE_ONE) {
             count += decode_gtp_port_number_ie(buf + count, &value->ue_tcp_port);
-      }  else if (ie_header->type == GTP_IE_SECDRY_RAT_USAGE_DATA_RPT && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
+        }  else if (ie_header->type == GTP_IE_SECDRY_RAT_USAGE_DATA_RPT && ie_header->instance == GTP_IE_INSTANCE_ZERO) {
             count += decode_gtp_secdry_rat_usage_data_rpt_ie(buf + count, &value->secdry_rat_usage_data_rpt);
-      }  else if (ie_header->type == GTP_IE_PRIV_EXT) {
+        }  else if (ie_header->type == GTP_IE_PRIV_EXT) {
             count += decode_gtp_priv_ext_ie(buf + count, &value->priv_ext);
-      }  else
+        }  else
             count += sizeof(ie_header_t) + ntohs(ie_header->len);
-      }
-      return count;
+    }
+    return count;
 }
 /**
 * Decodes gtp_mod_bearer_response_bearer_ctxt_marked_removal_ie_t to buffer.

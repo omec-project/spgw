@@ -474,7 +474,6 @@ struct msg_ue_cdr {
 } __attribute__((packed));
 
 
-#define MAX_NB_DPN	8  /* Note: MAX_NB_DPN <= 8 */
 
 #ifdef __cplusplus
 }

@@ -14,7 +14,6 @@
 #include "cp_log.h"
 #include "gen_utils.h"
 #include "util.h"
-#include "sm_enum.h"
 #include "cp_transactions.h"
 #include "sm_structs_api.h"
 #include "gtpv2_session.h"
@@ -35,7 +34,7 @@ int handle_create_bearer_response_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2
     int ret = 0;
     struct sockaddr_in *peer_addr = &msg->peer_addr;
 
-    create_bearer_rsp_t *cbrsp = &msg->gtpc_msg.cb_rsp;
+    create_bearer_rsp_t *cbrsp = &msg->rx_msg.cb_rsp;
 
     /* Reset periodic timers */
     process_response(peer_addr->sin_addr.s_addr);

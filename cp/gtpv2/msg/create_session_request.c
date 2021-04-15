@@ -29,6 +29,7 @@
 #include "util.h"
 #include "gtpv2_session.h"
 #include "proc_sgw_relocation.h"
+#include "proc.h"
 
 extern uint32_t num_adc_rules;
 extern uint32_t adc_rule_id[];
@@ -177,6 +178,7 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 			sequence);
 
 	set_cause_accepted(&cs_resp.cause, IE_INSTANCE_ZERO);
+    set_apn_ambr(&cs_resp.apn_ambr, pdn->apn_ambr.ambr_uplink, pdn->apn_ambr.ambr_downlink); 
 
 	ip.s_addr = ntohl(cp_config->s11_ip.s_addr);
 
@@ -641,18 +643,18 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
 	msg->msg_type = gtpv2c_rx->gtpc.message_type;
 
-    if ((ret = decode_check_csr(gtpv2c_rx, &msg->gtpc_msg.csr)) != 0) {
+    if ((ret = decode_check_csr(gtpv2c_rx, &msg->rx_msg.csr)) != 0) {
         if(ret != -1)
             cs_error_response(msg, ret,
                     cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
         return -1;
     }
 
-    if(msg->gtpc_msg.csr.up_func_sel_indctn_flgs.dcnr) {
+    if(msg->rx_msg.csr.up_func_sel_indctn_flgs.dcnr) {
         LOG_MSG(LOG_DEBUG, "Received CSReq for dcnr capable UE ");
     }
 
-    ret = validate_csreq_msg(&msg->gtpc_msg.csr);
+    ret = validate_csreq_msg(&msg->rx_msg.csr);
     if(ret != 0 ) {
         cs_error_response(msg, ret,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
@@ -665,7 +667,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     /* Find old transaction */
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
     uint16_t source_port = msg->peer_addr.sin_port;
-    uint32_t seq_num = msg->gtpc_msg.csr.header.teid.has_teid.seq;  
+    uint32_t seq_num = msg->rx_msg.csr.header.teid.has_teid.seq;  
     transData_t *old_trans = (transData_t*)find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL) {
@@ -683,7 +685,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
      */
     ue_context_t *context = NULL; 
     uint64_t imsi;
-    imsi = msg->gtpc_msg.csr.imsi.imsi_number_digits;
+    imsi = msg->rx_msg.csr.imsi.imsi_number_digits;
     context = (ue_context_t *)ue_context_entry_lookup_imsiKey(imsi);
     if(context != NULL) {
         LOG_MSG(LOG_DEBUG0, "[IMSI - %lu] Detected context replacement ", context->imsi64);
@@ -698,11 +700,11 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
    
     if(msg->source_interface == S5S8_IFACE) {
         /* when CSR received from SGWC add it as a peer*/
-	    add_node_conn_entry(ntohl(msg->gtpc_msg.csr.sender_fteid_ctl_plane.ipv4_address),
+	    add_node_conn_entry(ntohl(msg->rx_msg.csr.sender_fteid_ctl_plane.ipv4_address),
 								S5S8_SGWC_PORT_ID);
     } else if(msg->source_interface == S11_IFACE) {
         /* when CSR received from MME add it as a peer*/
-	    add_node_conn_entry(ntohl(msg->gtpc_msg.csr.sender_fteid_ctl_plane.ipv4_address),
+	    add_node_conn_entry(ntohl(msg->rx_msg.csr.sender_fteid_ctl_plane.ipv4_address),
 								S11_SGW_PORT_ID );
     }
 
@@ -714,14 +716,11 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 	/*Set the appropriate event type.*/
 	msg->event = CS_REQ_RCVD_EVNT;
 
-    if (1 == msg->gtpc_msg.csr.indctn_flgs.indication_oi) {
-        /*Set SGW Relocation Case */
-        msg->proc = SGW_RELOCATION_PROC;
-        /* Allocate new Proc */
+    if (1 == msg->rx_msg.csr.indctn_flgs.indication_oi) {
+        /* SGW Relocation Case */
         csreq_proc = alloc_sgw_relocation_proc(msg);
     } else { 
         /* SGW + PGW + SAEGW case */
-        msg->proc = INITIAL_PDN_ATTACH_PROC;
         csreq_proc = alloc_initial_proc(msg);
     }
 
@@ -730,7 +729,7 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     csreq_proc->gtpc_trans = trans;
     trans->sequence = seq_num;
     trans->peer_sockaddr = msg->peer_addr;
-    start_procedure(csreq_proc, msg);
+    start_procedure(csreq_proc);
     // NOTE : this is important so that caller does not free msg pointer 
     *msg_p = NULL;
     return 0;

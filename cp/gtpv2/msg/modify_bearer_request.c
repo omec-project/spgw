@@ -23,6 +23,7 @@
 #include "sm_structs_api.h"
 #include "gtpv2_error_rsp.h"
 #include "util.h"
+#include "proc.h"
 
 /**
  * @brief  : Maintains parsed data from modify bearer request
@@ -574,7 +575,6 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
     int ret;
     struct sockaddr_in *peer_addr;
     ue_context_t *context = NULL;
-    pdn_connection_t *pdn = NULL;
     uint32_t iface = msg->source_interface; 
 
     peer_addr = &msg->peer_addr;
@@ -589,7 +589,7 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     /*Decode the received msg and stored into the struct. */
     if((ret = decode_mod_bearer_req((uint8_t *) gtpv2c_rx,
-                    &msg->gtpc_msg.mbr) == 0)) {
+                    &msg->rx_msg.mbr) == 0)) {
         if(iface == S11_IFACE) {
             increment_mme_peer_stats(MSG_RX_GTPV2_S11_MBREQ_DROP, peer_addr->sin_addr.s_addr);
         } else {
@@ -598,7 +598,7 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         return -1;
     }
 
-    ret = validate_mbreq_msg(msg, &msg->gtpc_msg.mbr);
+    ret = validate_mbreq_msg(msg, &msg->rx_msg.mbr);
     if(ret != 0 ) {
         mbr_error_response(msg, ret,
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
@@ -613,7 +613,7 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
     uint32_t source_addr = msg->peer_addr.sin_addr.s_addr;
     uint16_t source_port = msg->peer_addr.sin_port;
-    uint32_t seq_num = msg->gtpc_msg.mbr.header.teid.has_teid.seq;  
+    uint32_t seq_num = msg->rx_msg.mbr.header.teid.has_teid.seq;  
     transData_t *old_trans = (transData_t*)find_gtp_transaction(source_addr, source_port, seq_num);
 
     if(old_trans != NULL)
@@ -633,27 +633,24 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 
 		gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);//0xd0ffee;
 
-		uint8_t ebi_index = msg->gtpc_msg.mbr.bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
 
-		context = (ue_context_t *)get_ue_context(msg->gtpc_msg.mbr.header.teid.has_teid.teid);
+		context = (ue_context_t *)get_ue_context(msg->rx_msg.mbr.header.teid.has_teid.teid);
 		if(context == NULL) {
             increment_sgw_peer_stats(MSG_TX_GTPV2_S5S8_MBRSP_REJ, peer_addr->sin_addr.s_addr);
 			mbr_error_response(msg, GTPV2C_CAUSE_CONTEXT_NOT_FOUND,
 					    cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
 			return -1;
 		}
-		pdn = GET_PDN(context, ebi_index);
-		msg->state = pdn->state;
-		//msg->proc = pdn->proc;
+		//uint8_t ebi_index = msg->rx_msg.mbr.bearer_contexts_to_be_modified.eps_bearer_id.ebi_ebi - 5;
+		//pdn = GET_PDN(context, ebi_index);
 		msg->event = MB_REQ_RCVD_EVNT;
-		add_node_conn_entry(ntohl(msg->gtpc_msg.mbr.sender_fteid_ctl_plane.ipv4_address),
+		add_node_conn_entry(ntohl(msg->rx_msg.mbr.sender_fteid_ctl_plane.ipv4_address),
 									S5S8_PGWC_PORT_ID);
 
         assert(NULL); /* ajay - add function */ 
 	} else {
 		/*Set the appropriate event type.*/
 		msg->event = MB_REQ_RCVD_EVNT;
-        msg->proc  = SERVICE_REQUEST_PROC;
 
         /* Allocate new Proc */
         proc_context_t *mbreq_proc = alloc_service_req_proc(msg);
@@ -669,7 +666,7 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         trans->proc_context = (void *)mbreq_proc;
         mbreq_proc->gtpc_trans = trans;
         
-        start_procedure(mbreq_proc, msg);
+        start_procedure(mbreq_proc);
         // Note : important to note that we are holding on this msg now 
         *msg_p = NULL;
 	}

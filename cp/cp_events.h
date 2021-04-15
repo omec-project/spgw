@@ -29,6 +29,7 @@ extern "C" {
 #define GTP_OUT_PKTS                 0x0a
 #define UPF_ASSOCIATION_SETUP        0x0b
 
+#if 0
 static const char *event_names[] = { 
     "UNKNOWN",
     "UPF_CONNECTION_SETUP_SUCCESS", 
@@ -43,6 +44,7 @@ static const char *event_names[] = {
     "GTP_OUT_PKTS",
     "UPF_ASSOCIATION_SETUP",
 };
+#endif
 
 typedef void (*stack_event_handler) (void *, uint16_t);
 typedef struct stack_event {
@@ -54,7 +56,7 @@ typedef struct stack_event {
 static inline void 
 queue_stack_unwind_event(uint16_t event, void *context, stack_event_handler cb)
 {
-    LOG_MSG(LOG_DEBUG, "Queue event %s ",event_names[event]);
+    //LOG_MSG(LOG_DEBUG, "Queue event %s ",event_names[event]);
     stack_event_t *event_p = (stack_event_t *)calloc(1, sizeof(stack_event_t));
     event_p->event = event;
     event_p->data = context;
@@ -95,7 +97,7 @@ queue_gtp_out_event(int fd,
                     uint16_t payload_len,
                     struct sockaddr *dest_addr)
 {
-    LOG_MSG(LOG_DEBUG, "Queue event GTP_OUT_PKTS ");
+    //LOG_MSG(LOG_DEBUG, "Queue event GTP_OUT_PKTS ");
     outgoing_pkts_event_t *event_p = (outgoing_pkts_event_t*)calloc(1, sizeof(outgoing_pkts_event_t));
     event_p->payload = (uint8_t*)calloc(1, payload_len + 10);
     event_p->fd = fd;
@@ -112,7 +114,7 @@ queue_pfcp_out_event(int fd,
                     uint16_t payload_len,
                     struct sockaddr *dest_addr)
 {
-    LOG_MSG(LOG_DEBUG,"Queue event PFCP_OUT_PKTS ");
+    //LOG_MSG(LOG_DEBUG,"Queue event PFCP_OUT_PKTS ");
     outgoing_pkts_event_t *event_p = (outgoing_pkts_event_t*)calloc(1, sizeof(outgoing_pkts_event_t));
     event_p->payload = (uint8_t*)calloc(1, payload_len + 10);
     event_p->fd = fd;
@@ -128,7 +130,7 @@ queue_gx_out_event(int fd,
                     uint8_t *payload,
                     uint16_t payload_len)
 {
-    LOG_MSG(LOG_DEBUG,"Queue event GX_OUT_PKTS ");
+    //LOG_MSG(LOG_DEBUG,"Queue event GX_OUT_PKTS ");
     outgoing_pkts_event_t *event_p = (outgoing_pkts_event_t*)calloc(1, sizeof(outgoing_pkts_event_t));
     event_p->payload = payload; 
     event_p->fd = fd;

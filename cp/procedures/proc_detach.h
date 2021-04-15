@@ -1,5 +1,5 @@
-
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 #ifndef __DETACH_PROC__H

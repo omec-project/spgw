@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include "pfcp.h"
 #include "gx_interface.h"
-#include "sm_enum.h"
 #include "sm_hand.h"
 #include "pfcp_cp_util.h"
 #include "sm_struct.h"
@@ -41,8 +40,8 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
 
 	switch(msg->msg_type){
         case GTP_CREATE_SESSION_REQ: {
-                info_resp->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
-                info_resp->teid =  msg->gtpc_msg.csr.header.teid.has_teid.teid;
+                info_resp->ebi_index = msg->rx_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
+                info_resp->teid =  msg->rx_msg.csr.header.teid.has_teid.teid;
                 break;
             }
 
@@ -50,7 +49,7 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
                 ue_context_t *ue_context = (ue_context_t *)msg->ue_context; 
 			    info_resp->teid = ue_context->s11_sgw_gtpc_teid;
                 // assumed to be triggered due to CSReq 
-                info_resp->ebi_index = msg->gtpc_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
+                info_resp->ebi_index = msg->rx_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
                 break;
             }
 
@@ -78,16 +77,16 @@ get_info_filled(msg_info_t *msg, err_rsp_info *info_resp)
 
 		case GTP_CREATE_SESSION_RSP:{
 
-			if(msg->gtpc_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi)
-				info_resp->ebi_index = msg->gtpc_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi - 5;
-			info_resp->teid = msg->gtpc_msg.cs_rsp.header.teid.has_teid.teid;
+			if(msg->rx_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi)
+				info_resp->ebi_index = msg->rx_msg.cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi - 5;
+			info_resp->teid = msg->rx_msg.cs_rsp.header.teid.has_teid.teid;
 			break;
 		}
 
 		case PFCP_SESSION_DELETION_RESPONSE: {
 
-			info_resp->teid = UE_SESS_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
-			info_resp->ebi_index = UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid) - 5;
+			info_resp->teid = UE_SESS_ID(msg->rx_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid);
+			info_resp->ebi_index = UE_BEAR_ID(msg->rx_msg.pfcp_sess_del_resp.header.seid_seqno.has_seid.seid) - 5;
 
 			break;
 		}
@@ -109,9 +108,8 @@ process_error_occured_handler_new(void *data, void *unused_param)
 
     if (get_ue_context_while_error(teid, &context) < 0) 
     {
-        LOG_MSG(LOG_ERROR, "SM_ERROR: Error handler UE_Proc: %u UE_State: %u "
-                "%u and Message_Type:%s",
-                msg->proc, msg->state,msg->event,
+        LOG_MSG(LOG_ERROR, "SM_ERROR: Error handler UE_Proc: %u event : %u and Message_Type:%s",
+                msg->proc, msg->event,
                 gtp_type_str(msg->msg_type));
 
         LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);

@@ -242,17 +242,17 @@ int handle_delete_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
     uint8_t ebi_index;
 
     if((ret = decode_del_bearer_req((uint8_t *) gtpv2c_rx,
-                    &msg->gtpc_msg.db_req) == 0))
+                    &msg->rx_msg.db_req) == 0))
         return -1;
 
 
 
 	gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
 
-	if (msg->gtpc_msg.db_req.lbi.header.len) {
-		ebi_index = msg->gtpc_msg.db_req.lbi.ebi_ebi - 5;
+	if (msg->rx_msg.db_req.lbi.header.len) {
+		ebi_index = msg->rx_msg.db_req.lbi.ebi_ebi - 5;
 	} else {
-		ebi_index = msg->gtpc_msg.db_req.eps_bearer_ids[0].ebi_ebi - 5;
+		ebi_index = msg->rx_msg.db_req.eps_bearer_ids[0].ebi_ebi - 5;
 	}
 
 	if(get_ue_context_by_sgw_s5s8_teid(gtpv2c_rx->teid.has_teid.teid, &context) != 0) {
@@ -266,16 +266,15 @@ int handle_delete_bearer_request_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx
 		msg->proc = PDN_GW_INIT_BEARER_DEACTIVATION;
 		context->eps_bearers[ebi_index]->pdn->proc = msg->proc;
 	}
-	msg->state = context->eps_bearers[ebi_index]->pdn->state;
 	msg->event = DELETE_BER_REQ_RCVD_EVNT;
 
 	context->eps_bearers[ebi_index]->pdn->proc = msg->proc;
 
 	LOG_MSG(LOG_DEBUG, "%s: Callback called for "
 			"Msg_Type:%s[%u], Teid:%u, "
-			"State:%s, Event:%s\n", gtp_type_str(msg->msg_type), msg->msg_type,
+			"Event:%s", gtp_type_str(msg->msg_type), msg->msg_type,
 			gtpv2c_rx->teid.has_teid.teid,
-			get_state_string(msg->state), get_event_string(msg->event));
+			get_event_string(msg->event));
 
 
     return 0;
@@ -287,7 +286,7 @@ process_delete_bearer_request_handler(void *data, void *unused_param)
     int ret = 0;
 	msg_info_t *msg = (msg_info_t *)data;
 
-	ret = process_delete_bearer_request(&msg->gtpc_msg.db_req ,0);
+	ret = process_delete_bearer_request(&msg->rx_msg.db_req ,0);
 	if (ret) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
         LOG_MSG(LOG_NEVER, "unused_param = %p, data = %p ", unused_param, data);
@@ -301,7 +300,7 @@ process_delete_bearer_request_handler(void *data, void *unused_param)
 int process_delete_bearer_req_handler(void *data, void *unused_param)
 {
 	msg_info_t *msg = (msg_info_t *)data;
-	int ret = process_delete_bearer_request(&msg->gtpc_msg.db_req, 1);
+	int ret = process_delete_bearer_request(&msg->rx_msg.db_req, 1);
 	if(ret !=0 ) {
 		/*TODO: set error response*/
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);

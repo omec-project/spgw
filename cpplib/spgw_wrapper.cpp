@@ -295,6 +295,14 @@ extern "C"
         return;
     }
 
+    void decrement_ue_info_stats(int stat_id, uint64_t imsi, uint32_t ipv4) 
+    {
+        ipv4 = htonl(ipv4);
+        spgwStatsCounter id = static_cast<spgwStatsCounter>(stat_id); 
+        spgwStats::Instance()->decrement(id, {{"imsi",std::to_string(imsi)}, {"mobile_ip",inet_ntoa(*((struct in_addr *)&ipv4))}}); 
+        return;
+    }
+
     /* UPF APIS... Start */
     int upf_context_entry_add(uint32_t *upf_ip, void *entry)
     {

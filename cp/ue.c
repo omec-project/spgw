@@ -14,22 +14,18 @@
 #include "gtpv2_session.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
-#include "sm_enum.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 /* base value and offset for seid generation */
 const uint32_t s11_sgw_gtpc_base_teid = 0xC0FFEE;
 static uint32_t s11_sgw_gtpc_teid_offset;
 const uint32_t s5s8_sgw_gtpc_base_teid = 0xE0FFEE;
-const uint32_t s5s8_pgw_gtpc_base_teid = 0xD0FFEE;
 static uint32_t s5s8_pgw_gtpc_teid_offset;
 
 /* base value and offset for teid generation */
 static uint32_t sgw_gtpc_base_teid = 0xC0FFEE;
 static uint32_t sgw_gtpc_teid_offset;
 static uint32_t pgw_gtpc_base_teid = 0xD0FFEE;
+const uint32_t s5s8_pgw_gtpc_base_teid = 0xD0FFEE;
 static uint32_t pgw_gtpc_teid_offset;
 static uint8_t teid_range = 0xf0;
 static uint32_t sgw_gtpu_base_teid = 0xf0000001;
@@ -37,11 +33,7 @@ static uint32_t pgw_gtpu_base_teid = 0x00000001;
 /*TODO : Decide how to diffrentiate between sgw and pgw teids*/
 
 uint32_t base_s1u_sgw_gtpu_teid = 0xf0000000;
-#ifdef __cplusplus
-}
-#endif
 
-static void start_procedure_direct(proc_context_t *proc_ctxt);
 // Requirement: Understand how this teid range works
 void
 set_base_teid(uint8_t val)
@@ -89,7 +81,15 @@ set_s5s8_sgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context)
 }
 
 void
-set_s5s8_pgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context){
+set_s5s8_pgw_gtpc_teid(pdn_connection_t *pdn)
+{
+	pdn->s5s8_pgw_gtpc_teid = s5s8_pgw_gtpc_base_teid + s5s8_pgw_gtpc_teid_offset;
+	++s5s8_pgw_gtpc_teid_offset;
+}
+
+void
+set_s5s8_pgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context)
+{
 	uint8_t index = __builtin_ffs(~(context->teid_bitmap)) - 1;
 	if (cp_config->cp_type == PGWC){
 		pgw_gtpu_base_teid = pgw_gtpc_base_teid + pgw_gtpc_teid_offset;
@@ -100,13 +100,6 @@ set_s5s8_pgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context){
 	context->teid_bitmap |= (0x01 << index);
 }
 
-void
-set_s5s8_pgw_gtpc_teid(pdn_connection_t *pdn)
-{
-	pdn->s5s8_pgw_gtpc_teid = s5s8_pgw_gtpc_base_teid
-		+ s5s8_pgw_gtpc_teid_offset;
-	++s5s8_pgw_gtpc_teid_offset;
-}
 
 void
 set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer_t *bearer, pdn_connection_t *pdn)
@@ -120,18 +113,6 @@ set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer_t *bearer, pdn_connection_t *pdn)
 	pdn->context->teid_bitmap |= (0x01 << index);
 }
 
-int
-add_bearer_entry_by_sgw_s5s8_tied(uint32_t fteid_key, eps_bearer_t **bearer)
-{
-	int8_t ret = 0;
-	ret = bearer_context_entry_add_teidKey(fteid_key, (void *)(*bearer));
-	
-	if (ret < 0) {
-		LOG_MSG(LOG_ERROR, "Error on adding teid to bearer mapping ");
-		return GTPV2C_CAUSE_SYSTEM_FAILURE;
-	}
-	return 0;
-}
 
 int
 create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
@@ -200,12 +181,10 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			++s11_sgw_gtpc_teid_offset;
 
 		} else if (cp_config->cp_type == PGWC){
-			(*context)->s11_sgw_gtpc_teid = s5s8_pgw_gtpc_base_teid
-				+ s5s8_pgw_gtpc_teid_offset;
+			(*context)->s11_sgw_gtpc_teid = s5s8_pgw_gtpc_base_teid + s5s8_pgw_gtpc_teid_offset;
 		}
 	}else if (cp_config->cp_type == PGWC){
-		(*context)->s11_sgw_gtpc_teid = s5s8_pgw_gtpc_base_teid
-			+ s5s8_pgw_gtpc_teid_offset;
+		(*context)->s11_sgw_gtpc_teid = s5s8_pgw_gtpc_base_teid + s5s8_pgw_gtpc_teid_offset;
 	}
 
     TAILQ_INIT(&((*context)->pending_sub_procs));
@@ -322,252 +301,6 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 	return 0;
 }
 
-/* We should queue the event if required */
-void
-start_procedure(proc_context_t *new_proc_ctxt, msg_info_t *msg)
-{
-    ue_context_t *context = NULL;
-    context = (ue_context_t *)new_proc_ctxt->ue_context;
-
-    if(context != NULL) {
-        TAILQ_INSERT_TAIL(&context->pending_sub_procs, new_proc_ctxt, next_sub_proc); 
-        assert(!TAILQ_EMPTY(&context->pending_sub_procs)); // not empty
-        /* Decide if we wish to run procedure now... If yes move on ...*/
-        proc_context_t *p_ctxt = TAILQ_FIRST(&context->pending_sub_procs);
-        if(p_ctxt != new_proc_ctxt) {
-            bool allowed_parellel = false;
-            // allow child proc to run if current outstanding proc is parent proc
-            proc_context_t *temp;
-            TAILQ_FOREACH(temp, &context->pending_sub_procs, next_sub_proc) {
-                if(temp == new_proc_ctxt)
-                    continue;
-                LOG_MSG(LOG_DEBUG4, "outstanding procedures in queue. %s ",temp->proc_name);
-                if(temp->proc_type == RAR_PROC) {
-                    if((new_proc_ctxt->proc_type == DED_BER_ACTIVATION_PROC) && (new_proc_ctxt->parent_proc == temp)) {
-                        LOG_MSG(LOG_DEBUG,"CBREQ, RAR is allowed in parellel");
-                        allowed_parellel = true;
-                    }
-                } else {
-                    LOG_MSG(LOG_DEBUG4,"Other proecudure is running %s ", temp->proc_name);
-                    // even if one running proc does not want new proc to run in parellel then we need to wait
-                    allowed_parellel = false; 
-                }
-            }
-            if(allowed_parellel == false) {
-                LOG_MSG(LOG_DEBUG4, "Parellel procedure not allowed ");
-                return;
-            }
- 
-        }
-    }
-    start_procedure_direct(new_proc_ctxt);
-    LOG_MSG(LOG_NEVER, "msg = %p ", msg);
-    return;
-}
-
-static void 
-start_procedure_direct(proc_context_t *proc_ctxt)
-{
-    msg_info_t *msg = (msg_info_t *)proc_ctxt->msg_info;
-    assert(proc_ctxt != NULL);
-
-    LOG_MSG(LOG_DEBUG4, "Start direct procedure  %s ",proc_ctxt->proc_name);
-
-    proc_ctxt->flags |= PROC_FLAGS_RUNNING;
-
-    switch(proc_ctxt->proc_type) {
-        case INITIAL_PDN_ATTACH_PROC: {
-            /* Change UE/PDN state if needed and call procedure event */
-            proc_ctxt->handler(proc_ctxt, msg);
-            break;
-        } 
-
-        case S1_RELEASE_PROC: {
-            /* Change UE/PDN state if needed and call procedure event */
-            ue_context_t *context = (ue_context_t *)proc_ctxt->ue_context;
-            context->state = UE_STATE_IDLE_PENDING;
-            pdn_connection_t *pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
-            pdn->state = PDN_STATE_IDLE_PENDING;
-            proc_ctxt->handler(proc_ctxt, msg);
-            break;
-        }
-
-        case SERVICE_REQUEST_PROC: {
-            proc_ctxt->handler(proc_ctxt, msg);
-            break;
-        }
-
-        case DETACH_PROC: {
-            /* Change UE/PDN state if needed and call procedure event */
-            ue_context_t *context = (ue_context_t *)proc_ctxt->ue_context;
-            context->state = UE_STATE_DETACH_PENDING;
-            pdn_connection_t *pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
-            pdn->state = PDN_STATE_DETACH_PENDING;
-            proc_ctxt->handler(proc_ctxt, msg);
-            break;
-        }
-
-        case USAGE_REPORT_PROC: {
-            // no change in procedures
-            proc_ctxt->handler(proc_ctxt, msg);
-            break;
-        }
-        case PAGING_PROC: { 
-            /* Change UE/PDN state if needed and call procedure event */
-            ue_context_t *context = (ue_context_t *)proc_ctxt->ue_context;
-            context->state = UE_STATE_PAGING_PENDING;
-            pdn_connection_t *pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
-            pdn->state = PDN_STATE_PAGING_PENDING;
-            proc_ctxt->handler(proc_ctxt, msg);
-            break;
-        }
-        case DED_BER_ACTIVATION_PROC: {
-            proc_ctxt->handler(proc_ctxt, msg);
-            break;
-        }
-        case RAR_PROC: {
-            proc_ctxt->handler(proc_ctxt, msg);
-            break;
-        }
-        default:
-            assert("unknown proc");
-    }
-    return;
-}
-
-void
-end_procedure(proc_context_t *proc_ctxt) 
-{
-    uint64_t imsi64=0;
-    ue_context_t *context = NULL;
-    pdn_connection_t *pdn = NULL;
-
-    /* TODO : add procedure name */
-    LOG_MSG(LOG_DEBUG4, "end procedure  %p ",proc_ctxt);
-
-    assert(proc_ctxt != NULL);
-
-    if(proc_ctxt->gtpc_trans != NULL) {
-        cleanup_gtpc_trans(proc_ctxt->gtpc_trans);
-    }
-
-    if(proc_ctxt->pfcp_trans != NULL) {
-        cleanup_pfcp_trans(proc_ctxt->pfcp_trans);
-    }
-
-    msg_info_t *msg = (msg_info_t *)proc_ctxt->msg_info;
-    if(msg != NULL) {
-        msg->refCnt--;
-        if(msg->refCnt == 1) { // i m the only one using this 
-            free(msg->raw_buf);
-            free(msg); 
-        }
-    }
-
-    context = (ue_context_t *)proc_ctxt->ue_context;
-    if(context != NULL) {
-        imsi64 = context->imsi64;
-        TAILQ_REMOVE(&context->pending_sub_procs, proc_ctxt, next_sub_proc);
-    }
-
-    switch(proc_ctxt->proc_type) {
-        case INITIAL_PDN_ATTACH_PROC: {
-            context = (ue_context_t *)proc_ctxt->ue_context;
-            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
-            if(context != NULL && proc_ctxt->result == PROC_RESULT_SUCCESS) {
-                context->state = UE_STATE_ACTIVE;
-                assert(pdn != NULL);
-                pdn->state = PDN_STATE_ACTIVE;
-            } else if (pdn != NULL && context != NULL){
-                cleanup_pdn_context(pdn);
-                if(context->num_pdns == 0) {
-                    cleanup_ue_context(&context);
-                }
-            }
-            free(proc_ctxt);
-            proc_ctxt = NULL;
-            break;
-        }
-        case S1_RELEASE_PROC: {
-            context = (ue_context_t *)proc_ctxt->ue_context;
-            context->state = UE_STATE_IDLE;
-            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
-            pdn->state = PDN_STATE_IDLE;
-            free(proc_ctxt);
-            break;
-        }
-        case SERVICE_REQUEST_PROC: {
-            // No state change 
-            free(proc_ctxt);
-            context = (ue_context_t *)proc_ctxt->ue_context;
-            break;
-        }
-        case DETACH_PROC: {
-            context = (ue_context_t *)proc_ctxt->ue_context;
-            assert(context  != NULL);
-            context->state = UE_STATE_DETACH;
-            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
-            assert(pdn != NULL);
-            pdn->state = PDN_STATE_DETACH;
-            free(proc_ctxt);
-            cleanup_pdn_context(pdn);
-            if(context->num_pdns == 0) {
-                cleanup_ue_context(&context);
-            }
-            break;
-        }
-        case USAGE_REPORT_PROC:
-            //no special action as of now..follow paging proc
-        case PAGING_PROC : {
-            context = (ue_context_t *)proc_ctxt->ue_context;
-            context->state = UE_STATE_ACTIVE;
-            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
-            pdn->state = PDN_STATE_ACTIVE;
-            free(proc_ctxt);
-            break;
-        }
-        case DED_BER_ACTIVATION_PROC: {
-            // no change in pdn/context state
-            context = (ue_context_t *)proc_ctxt->ue_context;
-            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
-            if(proc_ctxt->parent_proc != NULL) {
-                proc_context_t *p_proc = (proc_context_t *)proc_ctxt->parent_proc;
-                p_proc->child_proc_done(proc_ctxt);
-            } 
-            free(proc_ctxt);
-            break;
-        }
-        case RAR_PROC: {
-            // no change in pdn/context state
-            context = (ue_context_t *)proc_ctxt->ue_context;
-            pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
-            free(proc_ctxt);
-            break;
-        }
-        default:
-            assert(0);
-    }
-
-    if(context != NULL) {
-        // start new procedure if something is pending 
-        LOG_MSG(LOG_DEBUG3, "Continue with subscriber %lu ", imsi64);
-        proc_context_t *temp;
-        TAILQ_FOREACH(temp, &context->pending_sub_procs, next_sub_proc) {
-            if(temp->flags & PROC_FLAGS_RUNNING) {
-                LOG_MSG(LOG_DEBUG3, "Running procedure %s ", temp->proc_name);
-                continue;
-            }
-            // TODO: can we run this procedure ???
-            start_procedure_direct(temp);
-        }
-    } else {
-        LOG_MSG(LOG_DEBUG3, "Released subscriber %lu ", imsi64);
-    }
-    // result_success - schedule next proc
-    // result_fail_call_del - abort all outstanding procs and delete the call
-    // result_fail_keep_call - continue with call as is and schedule new proc if any  
-    return;
-}
 
 int 
 cleanup_ue_context(ue_context_t **context_t)
@@ -666,3 +399,42 @@ cleanup_ue_context(ue_context_t **context_t)
 
     return 0;
 }
+
+int8_t
+get_ue_context_by_sgw_s5s8_teid(uint32_t teid_key, ue_context_t **context)
+{
+	eps_bearer_t *bearer = NULL;
+
+	bearer = (eps_bearer_t *)get_bearer_by_teid(teid_key);
+	if(bearer == NULL) {
+		LOG_MSG(LOG_ERROR, "Bearer Entry not found for teid:%x...", teid_key);
+        return -1;
+	}
+	if(bearer->pdn != NULL && bearer->pdn->context != NULL ) {
+		*context = bearer->pdn->context;
+		return 0;
+	}
+	return -1;
+}
+
+/* This function use only in clean up while error */
+int8_t
+get_ue_context_while_error(uint32_t teid_key, ue_context_t **context)
+{
+	eps_bearer_t *bearer = NULL;
+	/* If teid key is sgwc s11 */
+	ue_context_t *temp_context = (ue_context_t*)get_ue_context(teid_key);
+	if( temp_context == NULL) {
+		/* If teid key is sgwc s5s8 */
+		bearer = (eps_bearer_t *)get_bearer_by_teid(teid_key);
+		if(bearer == NULL) {
+			LOG_MSG(LOG_ERROR, "Bearer Entry not found for teid:%x...", teid_key);
+			return -1;
+		}
+     	*context = bearer->pdn->context;
+	} else {
+        *context = temp_context;
+    }
+	return 0;
+}
+

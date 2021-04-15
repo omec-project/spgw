@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "pfcp_cp_interface.h"
@@ -11,7 +13,7 @@
 #include "pfcp_messages_decoder.h"
 #include "cp_io_poll.h"
 #include "spgw_cpp_wrapper.h"
-#include "cp_proc.h"
+#include "proc_struct.h"
 
 // saegw, INITIAL_PDN_ATTACH_PROC,PFCP_SESS_MOD_REQ_SNT_STATE,PFCP_SESS_MOD_RESP_RCVD_EVNT => process_sess_mod_resp_handler
 // saegw SGW_RELOCATION_PROC PFCP_SESS_MOD_REQ_SNT_STATE PFCP_SESS_MOD_RESP_RCVD_EVNT => process_sess_mod_resp_handler
@@ -37,7 +39,7 @@ static
 int handle_pfcp_session_modification_response(msg_info_t *msg)
 {
     assert(msg->msg_type == PFCP_SESSION_MODIFICATION_RESPONSE);
-    uint32_t seq_num = msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seq_no; 
+    uint32_t seq_num = msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seq_no; 
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
 
@@ -74,7 +76,7 @@ handle_pfcp_session_mod_response_msg(msg_info_t **msg_p, pfcp_header_t *pfcp_rx)
     process_response(peer_addr.sin_addr.s_addr);
     /*Decode the received msg and stored into the struct. */
     int decoded = decode_pfcp_sess_mod_rsp_t((uint8_t *)pfcp_rx,
-            &msg->pfcp_msg.pfcp_sess_mod_resp);
+            &msg->rx_msg.pfcp_sess_mod_resp);
 
     if(decoded <= 0)
     {

@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 #include "sm_struct.h"
 #include "gtp_ies.h"
@@ -24,6 +26,7 @@
 #include "proc_bearer_create.h"
 #include "pfcp.h"
 #include "pfcp_enum.h"
+#include "proc.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -164,7 +167,7 @@ process_pfcp_sess_mod_resp_pre_cbr_handler(void *data, void *p)
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
-    uint64_t sess_id = msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid; 
+    uint64_t sess_id = msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid; 
 	uint32_t teid = UE_SESS_ID(sess_id);
 	uint32_t sequence = get_gtp_sequence(); 
 
@@ -191,9 +194,9 @@ process_pfcp_sess_mod_resp_pre_cbr_handler(void *data, void *p)
     assert(proc_ctxt->ue_context == context);
 
     /*Validate the modification is accepted or not. */
-    if(msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value != REQUESTACCEPTED){
+    if(msg->rx_msg.pfcp_sess_mod_resp.cause.cause_value != REQUESTACCEPTED){
         LOG_MSG(LOG_DEBUG, "Cause received Modify response is %d",
-                msg->pfcp_msg.pfcp_sess_mod_resp.cause.cause_value);
+                msg->rx_msg.pfcp_sess_mod_resp.cause.cause_value);
         // TODO : mapping the pfcp cause on GTP
         proc_bearer_create_failed(proc_ctxt, GTPV2C_CAUSE_INVALID_REPLY_FROM_REMOTE_PEER);
         return -1;
@@ -235,10 +238,10 @@ process_pfcp_sess_mod_resp_pre_cbr_handler(void *data, void *p)
 		+ sizeof(gtpv2c_tx->gtpc);
 
 #if 0
-	resp = get_sess_entry_seid(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+	resp = get_sess_entry_seid(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 	if(resp == NULL){
 		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu",
-				msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
+				msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid);
 		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
 	}
 	if ((SAEGWC != cp_config->cp_type) && ((resp->msg_type == GTP_CREATE_BEARER_RSP) ||
@@ -248,9 +251,9 @@ process_pfcp_sess_mod_resp_pre_cbr_handler(void *data, void *p)
 		        sizeof(struct sockaddr_in));
 		if(resp->msg_type != GTP_CREATE_BEARER_RSP){
 			add_gtpv2c_if_timer_entry(
-					UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
+					UE_SESS_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
 					&(my_sock.s5s8_recv_sockaddr), gtp_tx_buf, payload_length,
-					UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
+					UE_BEAR_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
 					S5S8_IFACE);
 		}
         // standalone sgw case 
@@ -303,7 +306,7 @@ process_sgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 	uint8_t ebi_index;
 	eps_bearer_t *bearer = NULL;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
-    create_bearer_rsp_t *cb_rsp = &msg->gtpc_msg.cb_rsp;
+    create_bearer_rsp_t *cb_rsp = &msg->rx_msg.cb_rsp;
     ue_context_t *context = (ue_context_t *)proc->ue_context;
 
     if(cb_rsp->cause.cause_value != GTPV2C_CAUSE_REQUEST_ACCEPTED) {
@@ -418,7 +421,7 @@ process_pgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
 	eps_bearer_t *bearer = NULL;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
 	uint8_t ebi_index;
-    create_bearer_rsp_t *cb_rsp = &msg->gtpc_msg.cb_rsp;
+    create_bearer_rsp_t *cb_rsp = &msg->rx_msg.cb_rsp;
     ue_context_t *context = (ue_context_t *)proc->ue_context;
 
 	ebi_index = cb_rsp->bearer_contexts.eps_bearer_id.ebi_ebi - 5;
@@ -494,7 +497,7 @@ process_cbresp_handler(void *data, void *unused_param)
     int ret = 0;
 	msg_info_t *msg = (msg_info_t *)data;
 
-	ret = process_pgwc_create_bearer_rsp(&msg->gtpc_msg.cb_rsp);
+	ret = process_pgwc_create_bearer_rsp(&msg->rx_msg.cb_rsp);
 	if (ret) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return ret;
@@ -510,7 +513,7 @@ process_create_bearer_request_handler(void *data, void *unused_param)
     int ret = 0;
 	msg_info_t *msg = (msg_info_t *)data;
 
-	ret = process_create_bearer_request(&msg->gtpc_msg.cb_req);
+	ret = process_create_bearer_request(&msg->rx_msg.cb_req);
 	if (ret) {
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;
@@ -526,7 +529,7 @@ process_create_bearer_resp_handler(void *data, void *unused_param)
     int ret = 0;
 	msg_info_t *msg = (msg_info_t *)data;
 
-	ret = process_sgwc_create_bearer_rsp(&msg->gtpc_msg.cb_rsp);
+	ret = process_sgwc_create_bearer_rsp(&msg->rx_msg.cb_rsp);
 	if (ret) {
 			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 			return -1;

@@ -14,6 +14,7 @@
 #include "pfcp_cp_session.h"
 #include "gtp_ies.h"
 #include "cp_log.h"
+#include "pdn.h"
 
 test_out_pkt_handler gtp_out_mock_handler[256];
 test_out_pkt_handler pfcp_out_mock_handler[256];
@@ -33,7 +34,7 @@ test_event_thread(void* data)
         event  = (stack_event_t *)get_test_stack_unwind_event();
         if(event != NULL)
         {
-            LOG_MSG(LOG_INFO,"handle stack unwind event %s ",event_names[event->event]);
+            //LOG_MSG(LOG_INFO,"handle stack unwind event %s ",event_names[event->event]);
             event->cb(event->data, event->event);
             free(event);
         }
@@ -167,21 +168,21 @@ handle_mock_create_bearer_request_msg(void *evt)
 
     LOG_MSG(LOG_DEBUG, "Received mock event %p",event);
 
-    ret = decode_create_bearer_req((uint8_t *) event->payload, &msg->gtpc_msg.cb_req);
+    ret = decode_create_bearer_req((uint8_t *) event->payload, &msg->rx_msg.cb_req);
     if(ret == 0)
         return;
 
     uint8_t  cbrsp_pkt[1000];
     uint16_t cbrsp_len;
     {
-        gtp_create_bearer_request_bearer_ctxt_ie_t *cbreq_bc = &msg->gtpc_msg.cb_req.bearer_contexts;
+        gtp_create_bearer_request_bearer_ctxt_ie_t *cbreq_bc = &msg->rx_msg.cb_req.bearer_contexts;
         create_bearer_rsp_t cbrsp = {0}; 
         cbrsp.header.gtpc.teid_flag =  1;
         cbrsp.header.gtpc.version = 2; 
         cbrsp.header.gtpc.message_type = GTP_CREATE_BEARER_RSP; 
         cbrsp.header.gtpc.message_len = 10; 
         cbrsp.header.teid.has_teid.teid = 0; 
-        cbrsp.header.teid.has_teid.seq = msg->gtpc_msg.cb_req.header.teid.has_teid.seq; 
+        cbrsp.header.teid.has_teid.seq = msg->rx_msg.cb_req.header.teid.has_teid.seq; 
 
         set_cause_accepted(&cbrsp.cause, IE_INSTANCE_ZERO); 
 

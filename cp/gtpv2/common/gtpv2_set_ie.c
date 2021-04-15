@@ -865,3 +865,12 @@ set_pco(pco_ie_t *pco, enum ie_instance instance, char *pco_buf, uint8_t len)
     assert(pco->header.len != 0);
     return;
 }
+
+void
+set_apn_ambr(gtp_agg_max_bit_rate_ie_t *ambr, uint32_t ul_ambr, uint32_t dl_ambr)
+{
+	set_ie_header(&ambr->header, GTP_IE_AGG_MAX_BIT_RATE, IE_INSTANCE_ZERO, sizeof(uint64_t));
+    ambr->apn_ambr_uplnk = ul_ambr;
+    ambr->apn_ambr_dnlnk = dl_ambr;
+    return;
+}

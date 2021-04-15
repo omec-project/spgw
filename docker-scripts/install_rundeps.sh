@@ -16,7 +16,8 @@ install_run_cp_deps() {
 		netbase\
 		openssh-server\
 		sshpass \
-		libpcap0.8 
+		libpcap0.8\
+        gdb
 
 }
 

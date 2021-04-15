@@ -1,12 +1,12 @@
-
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include <stdio.h>
 #include "pfcp.h"
 #include "gx_interface.h"
-#include "sm_enum.h"
 #include "sm_hand.h"
 #include "pfcp_cp_util.h"
 #include "sm_struct.h"
@@ -36,6 +36,7 @@
 #include "pfcp_cp_interface.h"
 #include "gx_interface.h"
 #include "assert.h"
+#include "proc.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 
@@ -87,17 +88,17 @@ int
 process_ds_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     int ret = 0;
-    gtpv2c_header_t *dsr_header = &msg->gtpc_msg.dsr.header;
+    gtpv2c_header_t *dsr_header = &msg->rx_msg.dsr.header;
 	LOG_MSG(LOG_DEBUG, "Callback called for "
 					"Msg_Type:%s[%u], Teid:%u, "
-					"Procedure:%s, State:%s, Event:%s",
+					"Procedure:%s, Event:%s",
 					gtp_type_str(msg->msg_type), msg->msg_type,
 					dsr_header->teid.has_teid.teid,
 					get_proc_string(msg->proc),
-					get_state_string(msg->state), get_event_string(msg->event));
+					get_event_string(msg->event));
 
 
-	if (cp_config->cp_type == SGWC && msg->gtpc_msg.dsr.indctn_flgs.indication_oi == 1) {
+	if (cp_config->cp_type == SGWC && msg->rx_msg.dsr.indctn_flgs.indication_oi == 1) {
 		/* Indication flag 1 mean dsr needs to be sent to PGW otherwise dont send it to PGW */
 		ret = process_sgwc_delete_session_request(proc_context, msg);
 	} else {
@@ -122,16 +123,18 @@ process_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 	uint16_t msglen = 0;
 	char *buffer = NULL;
 	gx_msg ccr_request = {0};
-    pfcp_sess_del_rsp_t *pfcp_sess_del_resp = &msg->pfcp_msg.pfcp_sess_del_resp;
+    pfcp_sess_del_rsp_t *pfcp_sess_del_resp = &msg->rx_msg.pfcp_sess_del_resp;
+    ue_context_t *context = (ue_context_t *)proc_context->ue_context;
+    pdn_connection_t *pdn = (pdn_connection_t*)proc_context->pdn_context;
     
 
 	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:PFCP_SESSION_DELETION_RESPONSE[%u], Seid:%lu, "
-			"Procedure:%s, State:%s, Event:%s",
+			"Procedure:%s, Event:%s",
 			msg->msg_type,
 			pfcp_sess_del_resp->header.seid_seqno.has_seid.seid,
 			get_proc_string(proc_context->proc_type),
-			get_state_string(msg->state), get_event_string(msg->event));
+			get_event_string(msg->event));
 
 
 	if(pfcp_sess_del_resp->cause.cause_value != REQUESTACCEPTED) {
@@ -204,6 +207,7 @@ process_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
         increment_mme_peer_stats(MSG_TX_GTPV2_S11_DSRSP, peer_addr.sin_addr.s_addr);
         decrement_stat(NUM_UE_SPGW_ACTIVE_SUBSCRIBERS);
         increment_stat(PROCEDURES_SPGW_MME_INIT_DETACH_SUCCESS);
+        decrement_ue_info_stats(SUBSCRIBERS_INFO_SPGW_PDN, context->imsi64, pdn->ipv4.s_addr);
 
 	}
     proc_detach_complete(proc_context, msg);
@@ -246,7 +250,7 @@ process_pfcp_sess_del_request(proc_context_t *proc_context, msg_info_t *msg)
 	uint32_t s5s8_pgw_gtpc_teid = 0;
 	uint32_t s5s8_pgw_gtpc_ipv4 = 0;
 	pfcp_sess_del_req_t pfcp_sess_del_req = {0};
-    del_sess_req_t *ds_req = &msg->gtpc_msg.dsr;
+    del_sess_req_t *ds_req = &msg->rx_msg.dsr;
 	uint64_t ebi_index = ds_req->lbi.ebi_ebi - 5;
     uint32_t sequence;
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
@@ -333,7 +337,7 @@ process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *ms
 	ue_context_t *context = (ue_context_t *)msg->ue_context;
 	pdn_connection_t *pdn =  (pdn_connection_t *)msg->pdn_context;
 	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
-    del_sess_req_t *del_req = &msg->gtpc_msg.dsr;
+    del_sess_req_t *del_req = &msg->rx_msg.dsr;
 
 	fill_pfcp_sess_mod_req_delete(&pfcp_sess_mod_req, &del_req->header, context, pdn);
 

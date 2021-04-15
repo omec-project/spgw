@@ -10,7 +10,7 @@
 #include "pfcp_messages.h"
 #include "sm_struct.h"
 #include "upf_struct.h"
-#include "cp_proc.h"
+#include "proc_struct.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -29,7 +29,7 @@ process_pgw_rstrt_notif_ack(void *data, void *unused_param)
 #ifdef USE_CSID
 	msg_info_t *msg = (msg_info_t *)data;
 
-	if (msg->gtpc_msg.pgw_rstrt_notif_ack.cause.cause_value ==
+	if (msg->rx_msg.pgw_rstrt_notif_ack.cause.cause_value ==
 			GTPV2C_CAUSE_REQUEST_ACCEPTED) {
 		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
@@ -42,7 +42,7 @@ process_pgw_rstrt_notif_ack(void *data, void *unused_param)
 int
 handle_pgw_restart_notf_ack(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 {
-    if ((ret = decode_pgw_rstrt_notif_ack((uint8_t *) gtpv2c_rx, &msg->gtpc_msg.pgw_rstrt_notif_ack) == 0))
+    if ((ret = decode_pgw_rstrt_notif_ack((uint8_t *) gtpv2c_rx, &msg->rx_msg.pgw_rstrt_notif_ack) == 0))
         return -1;
 
 }

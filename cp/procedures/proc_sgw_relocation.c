@@ -1,13 +1,14 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "proc_sgw_relocation.h"
 #include "spgwStatsPromEnum.h"
 #include "sm_struct.h"
-#include "cp_proc.h"
+#include "proc_struct.h"
 #include "spgw_cpp_wrapper.h"
-#include "sm_enum.h"
 #include "gtpv2_interface.h"
 #include "ipc_api.h"
 #include "cp_log.h"
@@ -71,7 +72,7 @@ alloc_sgw_relocation_proc(msg_info_t *msg)
 {
     proc_context_t *sgw_reloc_proc;
     sgw_reloc_proc = (proc_context_t *)calloc(1, sizeof(proc_context_t));
-    sgw_reloc_proc->proc_type = msg->proc; 
+    sgw_reloc_proc->proc_type = SGW_RELOCATION_PROC; 
     sgw_reloc_proc->handler = sgw_relocation_event_handler;
     strcpy(sgw_reloc_proc->proc_name, "SGW_RELOC_PROC");
     msg->proc_context = sgw_reloc_proc;
@@ -125,17 +126,19 @@ process_sess_est_resp_sgw_reloc_handler(void *data, void *unused_param)
 	uint16_t payload_length = 0;
     int ret = 0;
 
-	msg_info_t *msg = (msg_info_t *)data;
 
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
+#ifdef SGW_RELOC
+	msg_info_t *msg = (msg_info_t *)data;
 	ret = process_pfcp_sess_est_resp(msg,
-			&msg->pfcp_msg.pfcp_sess_est_resp, gtpv2c_tx);
+			&msg->rx_msg.pfcp_sess_est_resp, gtpv2c_tx);
+#endif
 	//ret = process_pfcp_sess_est_resp(
-	//		msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid,
+	//		msg->rx_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid,
 	//		gtpv2c_tx,
-	//		msg->pfcp_msg.pfcp_sess_est_resp.up_fseid.seid);
+	//		msg->rx_msg.pfcp_sess_est_resp.up_fseid.seid);
 
 	if (ret) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
@@ -155,9 +158,9 @@ process_sess_est_resp_sgw_reloc_handler(void *data, void *unused_param)
 	if (SGWC == cp_config->cp_type) {
 #if 0
 		add_gtpv2c_if_timer_entry(
-			UE_SESS_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid),
+			UE_SESS_ID(msg->rx_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid),
 			&my_sock.s5s8_recv_sockaddr, gtp_tx_buf, payload_length,
-			UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid) - 5,
+			UE_BEAR_ID(msg->rx_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid) - 5,
 			S5S8_IFACE);
 #endif
 	}
@@ -176,7 +179,7 @@ process_mb_req_sgw_reloc_handler(void *data, void *unused_param)
 	*/
 	msg_info_t *msg = (msg_info_t *)data;
     int ret = 0;
-	ret = process_pfcp_sess_mod_req_handover(&msg->gtpc_msg.mbr);
+	ret = process_pfcp_sess_mod_req_handover(&msg->rx_msg.mbr);
 	if (ret) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return ret;
@@ -338,7 +341,7 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
 	ret = process_pfcp_sess_mod_resp_handover(
-			msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
+			msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
 			gtpv2c_tx);
 	if (ret) {
 		if(ret != -1)
@@ -359,9 +362,9 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 	if (SGWC == cp_config->cp_type) {
 #if 0
 		add_gtpv2c_if_timer_entry(
-			UE_SESS_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
+			UE_SESS_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
 			&my_sock.s5s8_recv_sockaddr, gtp_tx_buf, payload_length,
-			UE_BEAR_ID(msg->pfcp_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
+			UE_BEAR_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
 			S5S8_IFACE);
 #endif
 	}
@@ -484,7 +487,7 @@ int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
-	ret = process_sgwc_s5s8_modify_bearer_response(&(msg->gtpc_msg.mb_rsp) ,gtpv2c_tx);
+	ret = process_sgwc_s5s8_modify_bearer_response(&(msg->rx_msg.mb_rsp) ,gtpv2c_tx);
 
 	if (ret) {
 		mbr_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);

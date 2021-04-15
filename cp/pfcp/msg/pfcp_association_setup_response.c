@@ -1,5 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 
@@ -21,7 +23,7 @@ handle_pfcp_association_setup_response_msg(msg_info_t **msg_p, pfcp_header_t *pf
  
     /*Decode the received msg and stored into the struct. */
     int decoded = decode_pfcp_assn_setup_rsp_t((uint8_t *)pfcp_rx,
-            &msg->pfcp_msg.pfcp_ass_resp);
+            &msg->rx_msg.pfcp_ass_resp);
 
     if(decoded <= 0) 
     {
@@ -31,11 +33,11 @@ handle_pfcp_association_setup_response_msg(msg_info_t **msg_p, pfcp_header_t *pf
     }
     increment_userplane_stats(MSG_RX_PFCP_SXASXB_ASSOCSETUPRSP, peer_addr.sin_addr.s_addr);
 
-    pfcp_up_func_feat_ie_t *up_feat = &msg->pfcp_msg.pfcp_ass_resp.up_func_feat;
+    pfcp_up_func_feat_ie_t *up_feat = &msg->rx_msg.pfcp_ass_resp.up_func_feat;
     LOG_MSG(LOG_DEBUG,"supported features = %x, Additional Supported Feature1 = %x, Additional Supported Feature2 %x",
              up_feat->sup_feat, up_feat->add_sup_feat1, up_feat->add_sup_feat2);
 
-    uint32_t seq_num = msg->pfcp_msg.pfcp_ass_resp.header.seid_seqno.no_seid.seq_no; 
+    uint32_t seq_num = msg->rx_msg.pfcp_ass_resp.header.seid_seqno.no_seid.seq_no; 
     uint32_t local_addr = my_sock.pfcp_sockaddr.sin_addr.s_addr;
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
 

@@ -15,13 +15,13 @@ int handle_delete_bearer_cmd_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
     int ret;
 
     if((ret = decode_del_bearer_cmd((uint8_t *) gtpv2c_rx,
-                    &msg->gtpc_msg.del_ber_cmd) == 0)) {
+                    &msg->rx_msg.del_ber_cmd) == 0)) {
         return -1;
     }
 
 	gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
 
-	ebi_index = msg->gtpc_msg.del_ber_cmd.bearer_contexts[0].eps_bearer_id.ebi_ebi - 5;
+	ebi_index = msg->rx_msg.del_ber_cmd.bearer_contexts[0].eps_bearer_id.ebi_ebi - 5;
 
 	context = (ue_context_t *)get_ue_context(gtpv2c_rx->teid.has_teid.teid);
     if(context == NULL) {
@@ -37,8 +37,6 @@ int handle_delete_bearer_cmd_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 #endif
 	context->eps_bearers[ebi_index]->pdn->proc =  msg->proc;
 
-//		msg->state = context->eps_bearers[ebi_index]->pdn->state;
-	msg->state = CONNECTED_STATE;
 	msg->event = DELETE_BER_CMD_RCVD_EVNT;
     return 0;
 }
@@ -148,7 +146,7 @@ process_delete_bearer_command_handler(void *data, void *unused_param)
 	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
 
-	ret = process_delete_bearer_cmd_request(&msg->gtpc_msg.del_ber_cmd, gtpv2c_tx);
+	ret = process_delete_bearer_cmd_request(&msg->rx_msg.del_ber_cmd, gtpv2c_tx);
 
 	if(ret != 0) {
 	/* TODO:set error response*/

@@ -12,7 +12,7 @@
 #include "gtpv2_msg_struct.h"
 #include "ue.h"
 #include "sm_struct.h"
-#include "cp_proc.h"
+#include "proc_struct.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -413,6 +413,7 @@ void process_pgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
 void process_sgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
 void process_sgwc_s5s8_create_sess_rsp_pfcp_timeout(void *data);
 int handle_create_bearer_response_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx);
+int handle_delete_bearer_response_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx);
 
 void process_gtp_msg(void *data, uint16_t event);
 
@@ -432,7 +433,6 @@ int handle_update_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg
 int handle_update_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_create_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_delete_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_delete_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_delete_bearer_cmd_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_delete_pdn_conn_set_req(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_delete_pdn_conn_set_rsp(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
@@ -440,6 +440,25 @@ int handle_update_pdn_conn_set_req(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_update_pdn_conn_set_rsp(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_pgw_restart_notf_ack(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 #endif
+/**
+ * @brief  : Handles processing of create session response
+ * @param  : arg1, data contained in message
+ * @param  : arg2, optional parameter
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+int process_cs_resp_handler(void *arg1, void *arg2);
+
+/**
+ * @brief  : Fill Create Sess Request
+ * @param  : cs_req, request structure to be filled
+ * @param  : context, ue context info
+ * @param  : ebi_index, index of bearer in bearer array
+ * @return : Returns 0 in case of success , -1 otherwise
+ */
+int
+fill_cs_request(create_sess_req_t *cs_req, ue_context_t *context,
+		uint8_t ebi_index);
+
 
 #ifdef __cplusplus
 }

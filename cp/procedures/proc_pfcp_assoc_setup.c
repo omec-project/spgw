@@ -1,14 +1,15 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright (c) 2019 Sprint
 //
+// SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#include "cp_proc.h"
+#include "proc_struct.h"
 #include "ue.h"
 #include "upf_struct.h"
 #include <stdio.h>
 #include "pfcp.h"
 #include "gx_interface.h"
-#include "sm_enum.h"
 #include "sm_hand.h"
 #include "pfcp_cp_util.h"
 #include "sm_struct.h"
@@ -41,6 +42,8 @@
 #include "proc_initial_attach.h"
 #include "assert.h"
 #include "upf_apis.h"
+#include "proc_struct.h"
+#include "proc.h"
 
 static int
 assoication_setup_request(proc_context_t *proc);
@@ -128,13 +131,13 @@ handle_pfcp_association_setup_response(proc_context_t *proc, void *msg_t)
 
 #ifdef IMMEDIATE_NEED
     memcpy(&msg->upf_ipv4.s_addr,
-           &msg->pfcp_msg.pfcp_ass_resp.node_id.node_id_value,
+           &msg->rx_msg.pfcp_ass_resp.node_id.node_id_value,
             IPV4_SIZE);
 #endif
 
-	if(msg->pfcp_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED) {
+	if(msg->rx_msg.pfcp_ass_resp.cause.cause_value != REQUESTACCEPTED) {
 		LOG_MSG(LOG_ERROR, "Cause received  Association response is %d",
-				msg->pfcp_msg.pfcp_ass_resp.cause.cause_value);
+				msg->rx_msg.pfcp_ass_resp.cause.cause_value);
 
 		/* TODO: Add handling to send association to next upf
 		 * for each buffered CSR 
@@ -147,53 +150,53 @@ handle_pfcp_association_setup_response(proc_context_t *proc, void *msg_t)
 		return 0;
 	}
 
-	msg->state = upf_context->state;
+	//msg->state = upf_context->state;
 	/* Set Hard code value for temporary purpose as assoc is only in initial pdn */
 	msg->proc = INITIAL_PDN_ATTACH_PROC;
 	msg->event = PFCP_ASSOC_SETUP_RESP_RCVD_EVNT;
 
 	LOG_MSG(LOG_DEBUG, "Callback called for "
 			"Msg_Type:PFCP_ASSOCIATION_SETUP_RESPONSE[%u], UPF_IP:%u, "
-			"Procedure:%s, State:%s, Event:%s",
+			"Procedure:%s, Event:%s",
 			msg->msg_type, GET_UPF_ADDR(upf_context),
 			get_proc_string(msg->proc),
-			get_state_string(msg->state), get_event_string(msg->event));
+			get_event_string(msg->event));
 
     upf_context->state = PFCP_ASSOC_RESP_RCVD_STATE;
-    upf_context->up_supp_features = msg->pfcp_msg.pfcp_ass_resp.up_func_feat.sup_feat;
-    upf_context->add_up_supp_features1 = msg->pfcp_msg.pfcp_ass_resp.up_func_feat.add_sup_feat1;
-    upf_context->add_up_supp_features2 = msg->pfcp_msg.pfcp_ass_resp.up_func_feat.add_sup_feat2;
+    upf_context->up_supp_features = msg->rx_msg.pfcp_ass_resp.up_func_feat.sup_feat;
+    upf_context->add_up_supp_features1 = msg->rx_msg.pfcp_ass_resp.up_func_feat.add_sup_feat1;
+    upf_context->add_up_supp_features2 = msg->rx_msg.pfcp_ass_resp.up_func_feat.add_sup_feat2;
 
     switch (cp_config->cp_type)
     {
         case SGWC :
-            if (msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
-                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
+            if (msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
+                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
                     SOURCE_INTERFACE_VALUE_ACCESS )
                 upf_context->s1u_ip =
-                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
+                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
 
-            if( msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].assosi == 1 &&
-                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].src_intfc ==
+            if( msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].assosi == 1 &&
+                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].src_intfc ==
                     SOURCE_INTERFACE_VALUE_CORE )
                 upf_context->s5s8_sgwu_ip =
-                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].ipv4_address;
+                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].ipv4_address;
             break;
 
         case PGWC :
-            if (msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
-                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
+            if (msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
+                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
                     SOURCE_INTERFACE_VALUE_ACCESS )
                 upf_context->s5s8_pgwu_ip =
-                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
+                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
             break;
 
         case SAEGWC :
-            if( msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
-                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
+            if( msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
+                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
                     SOURCE_INTERFACE_VALUE_ACCESS )
                 upf_context->s1u_ip =
-                    msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
+                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
             break;
 
     }
@@ -201,15 +204,15 @@ handle_pfcp_association_setup_response(proc_context_t *proc, void *msg_t)
     /* teid_range from first user plane ip IE is used since, for same CP ,
      * DP will assigne single teid_range , So all IE's will have same value for teid_range*/
     /* Change teid base address here */
-    if(msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].teidri != 0){
+    if(msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].teidri != 0){
         /* Requirement : This data should go in the upf context */
-        set_base_teid(msg->pfcp_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].teid_range);
+        set_base_teid(msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].teid_range);
     }
 
 
     /* Adding ip to cp  heartbeat when dp returns the association response*/
     add_ip_to_heartbeat_hash(peer_addr,
-            msg->pfcp_msg.pfcp_ass_resp.rcvry_time_stmp.rcvry_time_stmp_val);
+            msg->rx_msg.pfcp_ass_resp.rcvry_time_stmp.rcvry_time_stmp_val);
 
     if ((add_node_conn_entry((uint32_t)peer_addr->sin_addr.s_addr,
                     SX_PORT_ID)) != 0) {
