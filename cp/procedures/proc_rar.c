@@ -186,7 +186,23 @@ process_rar_request_handler(void *data)
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return -1;
 	}
-    LOG_MSG(LOG_DEBUG,"Lets process RAR rule now");
+    LOG_MSG(LOG_DEBUG,"Lets process RAR request");
+    
+    GxRAR *rar = &msg->rx_msg.rar;
+    if(rar->presence.session_release_cause == PRESENT) {
+        msg_info_t *msg1 = (msg_info_t*)calloc(1, sizeof(msg_info_t));
+        msg1->event = SEND_PFCP_DEL_SESSION_REQ; 
+        msg1->ue_context = proc_rar->ue_context;
+        msg1->pdn_context = proc_rar->pdn_context;
+        proc_context_t *proc = alloc_nw_init_detach_proc(msg1);
+        if(proc != NULL) {
+            LOG_MSG(LOG_DEBUG,"started rar triggered pdn delete");
+            proc->parent_proc = proc_rar; 
+            proc_rar->child_proc_add(proc_rar, proc);
+            start_procedure(proc);
+            return 0;
+        }
+    }
 	// Now we may have  one/more of the following action,
 	// 1. Create dedicated bearer to install rules
 	// 1. Delete PDN if all the rules are deleted for default bearer
