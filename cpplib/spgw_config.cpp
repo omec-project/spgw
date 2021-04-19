@@ -320,11 +320,11 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
             } else {
                 qos_profile->qci = 9;
             }
-            if(qosSection.HasMember("arp")) {
-                qos_profile->arp = qosSection["arp"].GetUint();
-            } else {
+//            if(qosSection.HasMember("arp")) {
+//                qos_profile->arp = qosSection["arp"].GetUint();
+//            } else {
                 qos_profile->arp = 1;
-            }
+//            }
 
             LOG_MSG(LOG_INIT,"\t\tQoS apn ambr uplink - %u, downlink %u ",qos_profile->apn_ambr_ul, qos_profile->apn_ambr_dl);
             config_store->qos_profile_list.push_back(qos_profile);
