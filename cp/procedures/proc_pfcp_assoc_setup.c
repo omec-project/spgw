@@ -100,7 +100,7 @@ association_setup_handler(proc_context_t *proc_context, msg_info_t *msg)
     ret = assoication_setup_request(proc_context);
 	if(ret) {
 		LOG_MSG(LOG_ERROR, "Error in setting up Association error: %d, msg = %p ", ret, msg);
-        upf_context->state = UPF_SETUP_FAILED; 
+        upf_context->state = 0; 
         queue_stack_unwind_event(UPF_CONNECTION_SETUP_FAILED, (void *)upf_context, upf_pfcp_setup_failure);
 	    return -1;
 	}
@@ -145,7 +145,7 @@ handle_pfcp_association_setup_response(proc_context_t *proc, void *msg_t)
          *   1. Cleanup GTPv2
          *   2. Cleanup IP-CAN if GX is enabled. 
          */
-        upf_context->state = UPF_SETUP_FAILED; 
+        upf_context->state = 0; 
         queue_stack_unwind_event(UPF_CONNECTION_SETUP_FAILED, (void *)upf_context, upf_pfcp_setup_failure);
 		return 0;
 	}
