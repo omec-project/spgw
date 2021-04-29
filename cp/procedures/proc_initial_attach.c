@@ -668,6 +668,7 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
         proc_initial_attach_failure(proc_context, GTPV2C_CAUSE_REQUEST_REJECTED);
         if(msg->rx_msg.pfcp_sess_est_resp.cause.cause_value == NOESTABLISHEDPFCPASSOCIATION) {
 		    LOG_MSG(LOG_INFO, "Initiate pfcp associations ");
+            upf_ctxt->state = 0;
             schedule_pfcp_association(1,upf_ctxt); 
         }
 		return -1;
