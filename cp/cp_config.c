@@ -64,11 +64,18 @@ void init_config(void)
     /* Parse initial configuration file */
     cp_config->subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
 
+    /* If this env var is defined, monitoring subscriber_mapping.json will be disabled */
+    char *disable_config_watcher = getenv("DISABLE_CONFIG_WATCHER");
+
     char file[128] = {'\0'};
     strcat(file, config_update_base_folder);
     strcat(file, "subscriber_mapping.json");
-    LOG_MSG(LOG_INIT,"Config file to monitor %s ", file);
-    watch_config_change(file, config_change_cbk);
+    if(disable_config_watcher == NULL) {
+        LOG_MSG(LOG_INIT,"Config file to monitor %s ", file);
+        watch_config_change(file, config_change_cbk);
+    } else {
+        LOG_MSG(LOG_INIT,"Monitoring %s is disabled ", file);
+    }
 
     char cfgfile[128] = {'\0'};
     strcat(cfgfile, config_update_base_folder);
