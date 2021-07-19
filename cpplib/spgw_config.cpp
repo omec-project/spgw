@@ -479,7 +479,7 @@ spgwConfig::get_user_plane_profiles(profile_names_t *ptr, int max)
     {
         user_plane_profile_t *up=*it;
         strcpy(ptr->profile_name, up->user_plane_profile_name);
-        ptr = ptr++;
+        ptr = ptr + 1;
         max--;
         count++;
     }
