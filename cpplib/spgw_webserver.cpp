@@ -51,6 +51,7 @@ public:
     HTTP_PROTOTYPE(httpHandler)
 
     void onRequest(const Pistache::Http::Request& request, Pistache::Http::ResponseWriter response) override{
+        static bool needConfig = true;
         if(request.resource() == "/liveness") {
             switch(request.method()) {
                 case Http::Method::Get: {
@@ -105,6 +106,7 @@ public:
                             } else {
                                 response.send(Pistache::Http::Code::Ok);
                                 send_msg((void *)config);
+                                needConfig = false;
                             }
                         } else {
                             response.send(Pistache::Http::Code::Bad_Request);
@@ -117,6 +119,14 @@ public:
                     LOG_MSG(LOG_ERROR,"Unhandled method %d ",int(request.method()));
                     break;
                 }
+            }
+        } else if (request.resource() == "/v1/config-check") {
+            if (needConfig == true) {
+                // respond back with NOT_FOUND 404 if we need config to be pushed again 
+                response.send(Pistache::Http::Code::Not_Found);
+            } else {
+                // respond back with 200 OK if we dont need config
+                response.send(Pistache::Http::Code::Ok);
             }
         } else {
             LOG_MSG(LOG_ERROR, "Unhandled Request resource %s ",request.resource().c_str());

@@ -146,6 +146,11 @@ void init_pfcp(void)
 	pfcp_sockaddr.sin_port = htons(cp_config->pfcp_port);
 	pfcp_sockaddr.sin_addr = cp_config->pfcp_ip;
 
+	int flag = 1;
+	if (-1 == setsockopt(pfcp_fd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag))) {
+		LOG_MSG(LOG_ERROR,"setsockopt fail");
+	}
+
 	ret = bind(pfcp_fd, (struct sockaddr *) &pfcp_sockaddr,
 			sizeof(struct sockaddr_in));
 
