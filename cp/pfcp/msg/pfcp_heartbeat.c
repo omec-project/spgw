@@ -98,12 +98,15 @@ process_heartbeat_response(uint8_t *buf_rx, struct sockaddr_in *peer_addr)
 		uint32_t update_recov_time = 0;
 		update_recov_time =  (pfcp_hearbeat_resp.rcvry_time_stmp.rcvry_time_stmp_val);
 		LOG_MSG(LOG_DEBUG1, "heartbeat response has recovery time %u, old recovery time %u ", update_recov_time, recov_time);
-		if(update_recov_time > recov_time) {
-            LOG_MSG(LOG_ERROR,"UPF Peer down event detected %s ", inet_ntoa(peer_addr->sin_addr));
+		if(recov_time == 0) {
+			LOG_MSG(LOG_INFO,"Received first UPF heartbeat response %s ", inet_ntoa(peer_addr->sin_addr));
 			add_ip_to_heartbeat_hash(peer_addr, update_recov_time);
-            if(cp_config->pfcp_hb_ts_fail == true) {
-                upf_down_event(peer_addr->sin_addr.s_addr);
-            }
+		} else if(update_recov_time != recov_time) {
+			LOG_MSG(LOG_ERROR,"UPF Peer down event detected %s ", inet_ntoa(peer_addr->sin_addr));
+			add_ip_to_heartbeat_hash(peer_addr, update_recov_time);
+			if(cp_config->pfcp_hb_ts_fail == true) {
+				upf_down_event(peer_addr->sin_addr.s_addr);
+			}
 		}
 	}
 	return 0;

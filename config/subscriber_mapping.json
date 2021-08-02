@@ -51,6 +51,7 @@
       }
     }
   },
+
   "qos-profiles": {
     "mobile": {
       "qci": 9,

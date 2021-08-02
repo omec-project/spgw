@@ -92,6 +92,11 @@ static void init_s11(void)
 	s11_sockaddr.sin_port = htons(cp_config->s11_port);
 	s11_sockaddr.sin_addr = cp_config->s11_ip;
 
+	int flag = 1;
+	if (-1 == setsockopt(s11_fd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag))) {
+		LOG_MSG(LOG_ERROR,"setsockopt fail");
+	}
+
 	ret = bind(s11_fd, (struct sockaddr *) &s11_sockaddr,
 			    sizeof(struct sockaddr_in));
 
