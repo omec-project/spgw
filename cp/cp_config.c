@@ -66,15 +66,16 @@ void init_config(void)
 
     /* If this env var is defined, monitoring subscriber_mapping.json will be disabled */
     char *disable_config_watcher = getenv("DISABLE_CONFIG_WATCHER");
+    char *managed_by_config_pod = getenv("MANAGED_BY_CONFIG_POD");
 
     char file[128] = {'\0'};
     strcat(file, config_update_base_folder);
     strcat(file, "subscriber_mapping.json");
-    if(disable_config_watcher == NULL) {
+    if ((disable_config_watcher != NULL) || (managed_by_config_pod != NULL && !strcmp(managed_by_config_pod, "true"))) {
+        LOG_MSG(LOG_INIT,"Monitoring %s is disabled. Configpod managing config ", file);
+    } else {
         LOG_MSG(LOG_INIT,"Config file to monitor %s ", file);
         watch_config_change(file, config_change_cbk);
-    } else {
-        LOG_MSG(LOG_INIT,"Monitoring %s is disabled ", file);
     }
 
     char cfgfile[128] = {'\0'};
