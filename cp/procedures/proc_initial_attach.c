@@ -284,6 +284,9 @@ process_create_sess_req(create_sess_req_t *csr,
     dpkey.plmn.tac = csr->uli.tai2.tai_tac;
     memcpy((void *)(&dpkey.plmn.plmn[0]), (void *)(&csr->uli.tai2), 3);
 
+    dpkey.apn.is_valid = true;
+    memcpy((void *)(&dpkey.apn.requested_apn[0]), (void *)(&csr->apn.apn), csr->apn.header.len);
+
     LOG_MSG(LOG_DEBUG, "Create Session Request ULI mcc %d %d %d " 
                 " mnc %d %d %d ", csr->uli.tai2.tai_mcc_digit_1, csr->uli.tai2.tai_mcc_digit_2, 
                 csr->uli.tai2.tai_mcc_digit_3, csr->uli.tai2.tai_mnc_digit_1, 
