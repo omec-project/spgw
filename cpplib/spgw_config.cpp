@@ -152,8 +152,25 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
                     const char *temp = ruleKeys["requested-apn"].GetString();
                     LOG_MSG(LOG_INIT,"\t\t\tkeys has requested-apn %s",temp);
                     key->apn.is_valid = true;
-                    strcpy(key->apn.requested_apn,temp);
-                    
+                    strcpy(&key->apn.requested_apn[1], temp);
+                    char *ptr, *size;
+                    size = &key->apn.requested_apn[0];
+                    *size = 0;
+                    // since we have added space at the start ptr will point to last char
+                    ptr = key->apn.requested_apn + strlen(temp); 
+                    do {
+                        if (ptr == size)
+                            break;
+                        if (*ptr == '.') {
+                            *ptr = *size;
+                            *size = 0;
+                        } else {
+                            (*size)++;
+                        }
+                        --ptr;
+                    } while (ptr != key->apn.requested_apn);
+                    LOG_MSG(LOG_INIT,"\t\tAPN name after encode [%s] and length %d ",key->apn.requested_apn, strlen(key->apn.requested_apn));
+
                 }
             }
             LOG_MSG(LOG_INIT,"\t\tSelected Profiles ");
