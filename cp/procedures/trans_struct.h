@@ -42,7 +42,7 @@ struct transData
     uint8_t     itr_cnt;
     uint32_t    sequence;
 	uint16_t    buf_len;
-	uint8_t     buf[1024];
+	uint8_t     buf[4096];
     void        *cb_data; /* UE context or upf context */ 
     void        *proc_context;
 	gstimerinfo_t  rt;

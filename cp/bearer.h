@@ -31,9 +31,6 @@
 #include "sess_const.h"
 #include "policy.h"
 
-#ifdef USE_CSID
-#include "csid_struct.h"
-#endif /* USE_CSID */
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,9 +38,10 @@ extern "C" {
 /* Need to handle case of multiple charging rule for signle bearer
  * this count will change once added handling
  * */
-#define NUMBER_OF_PDR_PER_BEARER 2
-#define NUMBER_OF_QER_PER_BEARER 2
-#define NUMBER_OF_URR_PER_BEARER 2
+//AJAY: FIXME we need to have higher limit or dynamic allocations
+#define NUMBER_OF_PDR_PER_BEARER 16
+#define NUMBER_OF_QER_PER_BEARER 16
+#define NUMBER_OF_URR_PER_BEARER 16
 
 struct pdn_connection;
 /**
@@ -88,6 +86,7 @@ struct eps_bearer {
 
 	uint8_t num_dynamic_filters;
 	struct dynamic_rule *dynamic_rules[16];
+    bool ambr_qer_flag;
 };
 
 typedef struct eps_bearer  eps_bearer_t;

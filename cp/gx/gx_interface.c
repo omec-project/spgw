@@ -212,8 +212,6 @@ int
 fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 		uint8_t ebi_index, char *sess_id)
 {
-	uint16_t len = 0;
-	char apn[MAX_APN_LEN] = {0};
 
 	eps_bearer_t *bearer = NULL;
 	pdn_connection_t *pdn = NULL;
@@ -278,27 +276,31 @@ fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 	/* TODO: Need to Discuss with Varun and Himanshu for make following AVP's are generic or
 	 * to be based on MSG TYPE OR condition basis */
 
-	/* VS: Fill the APN Vaule */
-	if ((pdn->apn_in_use)->apn_name_length != 0) {
-		ccr->presence.called_station_id = PRESENT;
+    if (ccr->cc_request_type == INITIAL_REQUEST ||  ccr->cc_request_type == UPDATE_REQUEST) {
+	  uint16_t len = 0;
+	  char apn[MAX_APN_LEN] = {0};
+	  /* VS: Fill the APN Vaule */
+	  if ((pdn->apn_in_use)->apn_name_length != 0) {
+	  	ccr->presence.called_station_id = PRESENT;
 
-		for(int i=0; i < MAX_APN_LEN; ){
+	  	for(int i=0; i < MAX_APN_LEN; ){
 
-			len = (pdn->apn_in_use)->apn_name[i];
-			if((pdn->apn_in_use)->apn_name[i] != '\0'){
-				strncat(apn,(const char *) &((pdn->apn_in_use)->apn_name[i + 1]), len);
-				apn[len] = '.';
-				i += len+1;
-			} else {
-				apn[i-1] = '\0';
-				break;
-			}
-		}
+	  		len = (pdn->apn_in_use)->apn_name[i];
+	  		if((pdn->apn_in_use)->apn_name[i] != '\0'){
+	  			strncat(apn,(const char *) &((pdn->apn_in_use)->apn_name[i + 1]), len);
+	  			apn[len] = '.';
+	  			i += len+1;
+	  		} else {
+	  			apn[i-1] = '\0';
+	  			break;
+	  		}
+	  	}
 
-		ccr->called_station_id.len = strlen(apn);
-		memcpy(ccr->called_station_id.val, apn, ccr->called_station_id.len);
+	  	ccr->called_station_id.len = strlen(apn);
+	  	memcpy(ccr->called_station_id.val, apn, ccr->called_station_id.len);
 
-	}
+	  }
+    }
 
 	/* VS: Fill the RAT type in CCR */
 	if( context->rat_type.len != 0 ){
@@ -788,7 +790,7 @@ generate_call_id(void)
 void 
 gx_send(int fd, char *buf, uint16_t len)
 {
-    LOG_MSG(LOG_DEBUG,"queuing message in gx out channel ");
+    //LOG_MSG(LOG_DEBUG,"queuing message in gx out channel ");
     queue_gx_out_event(fd, (uint8_t *)buf, len);
 	return;
 }

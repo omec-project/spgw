@@ -15,7 +15,6 @@
 #include "pfcp_cp_set_ie.h"
 #include "spgw_config_struct.h"
 #include "cp_config_apis.h"  /* fetch APIs to build PCO */
-#include "csid_api.h"
 #include "stdint.h"
 #include "stdbool.h"
 #include "gtpv2_interface.h"
@@ -294,29 +293,6 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 			+ sizeof(ie_header_t);
 	}
 
-#ifdef USE_CSID
-	fqcsid_t *csid = NULL;
-	/* Get peer CSID associated with node */
-	csid = get_peer_addr_csids_entry(context->s11_mme_gtpc_ipv4.s_addr,
-			MOD);
-	if ((csid != NULL) && (csid->num_csid)) {
-		/* Set the SGW FQ-CSID */
-		if ((context->sgw_fqcsid)->num_csid) {
-			set_gtpc_fqcsid_t(&cs_resp.sgw_fqcsid, IE_INSTANCE_ONE,
-					context->sgw_fqcsid);
-		}
-
-		/* Set the PGW FQ-CSID */
-		if (cp_config->cp_type != SAEGWC) {
-			if ((context->pgw_fqcsid)->num_csid) {
-				set_gtpc_fqcsid_t(&cs_resp.pgw_fqcsid, IE_INSTANCE_ZERO,
-						context->pgw_fqcsid);
-				cs_resp.pgw_fqcsid.node_address = ntohl((context->pgw_fqcsid)->node_addr);
-			}
-		}
-	}
-
-#endif /* USE_CSID */
     if(context->pco != NULL)
     {
         char *pco_buf = (char *)calloc(1, 260);

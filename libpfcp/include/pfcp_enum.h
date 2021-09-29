@@ -48,6 +48,7 @@ enum source_interface_value {
 	SOURCE_INTERFACE_VALUE_CORE =1,
 	SOURCE_INTERFACE_VALUE_SGI_LAN_N6_LAN =2,
 	SOURCE_INTERFACE_VALUE_CP_FUNCTION =3,
+	SOURCE_INTERFACE_VALUE_UNKNOWN=3,
 };
 
 enum destination_interface_value {

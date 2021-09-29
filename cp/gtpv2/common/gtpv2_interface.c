@@ -219,7 +219,7 @@ gtpv2c_send(int gtpv2c_if_fd, uint8_t *gtpv2c_tx_buf,
 		dump_pcap(gtpv2c_pyld_len, gtpv2c_tx_buf);
 	} 
 #endif
-    LOG_MSG(LOG_DEBUG, "queuing message in gtp out channel %u", dest_addr_len);
+    //LOG_MSG(LOG_DEBUG, "queuing message in gtp out channel %u", dest_addr_len);
     queue_gtp_out_event(gtpv2c_if_fd, gtpv2c_tx_buf, gtpv2c_pyld_len, dest_addr);
 }
 

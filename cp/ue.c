@@ -325,75 +325,9 @@ cleanup_ue_context(ue_context_t **context_t)
             assert(0);
         }
 
-#ifdef USE_CSID
-        
-        uint64_t sess_id = pdn->seid;
-        fqcsid_t *csids
-        int ret;
-
-        if (cp_config->cp_type == PGWC) {
-            csids  = context->pgw_fqcsid;
-        } else {
-            csids  = context->sgw_fqcsid;
-        }
-
-        /* Get the session ID by csid */
-        for (uint16_t itr = 0; itr < csids->num_csid; itr++) {
-            sess_csid *tmp = NULL;
-
-            tmp = get_sess_csid_entry(csids->local_csid[itr]);
-            if (tmp == NULL)
-                continue;
-
-            /* VS: Delete sess id from csid table */
-            for(uint16_t cnt = 0; cnt < tmp->seid_cnt; cnt++) {
-                if (sess_id == tmp->cp_seid[cnt]) {
-                    for(uint16_t pos = cnt; pos < (tmp->seid_cnt - 1); pos++ )
-                        tmp->cp_seid[pos] = tmp->cp_seid[pos + 1];
-
-                    tmp->seid_cnt--;
-                    LOG_MSG(LOG_DEBUG, "Session Deleted from csid table sid:%lu",
-                            sess_id);
-                }
-            }
-
-            if (tmp->seid_cnt == 0) {
-                /* Cleanup Internal data structures */
-                ret = del_peer_csid_entry(&csids->local_csid[itr], S5S8_PGWC_PORT_ID);
-                if (ret) {
-                    LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-                    return -1;
-                }
-
-                /* Clean MME FQ-CSID */
-                if (context->mme_fqcsid != 0) {
-                    ret = del_peer_csid_entry(&(context->mme_fqcsid)->local_csid[itr], S5S8_PGWC_PORT_ID);
-                    if (ret) {
-                        LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-                        return -1;
-                    }
-                    if (!(context->mme_fqcsid)->num_csid)
-                        free(context->mme_fqcsid);
-                }
-
-                /* Clean UP FQ-CSID */
-                if (context->up_fqcsid != 0) {
-                    ret = del_peer_csid_entry(&(context->up_fqcsid)->local_csid[itr],
-                            SX_PORT_ID);
-                    if (ret) {
-                        LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-                        return -1;
-                    }
-                    if (!(context->up_fqcsid)->num_csid)
-                        free(context->up_fqcsid);
-                }
-            }
-
-        }
-
-#endif /* USE_CSID */
         //Free UE context
         free(context);
+        LOG_MSG(LOG_DEBUG,"Released UE context = %p",context);
         *context_t = NULL;
     }
 

@@ -131,7 +131,6 @@ int
 process_mb_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     mod_bearer_req_t *mb_req = &msg->rx_msg.mbr;
-    uint8_t ebi_index = 0;
     ue_context_t *context;
     eps_bearer_t *bearer;
     pdn_connection_t *pdn;
@@ -175,9 +174,9 @@ process_mb_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 
     pfcp_update_far_ie_t update_far[MAX_LIST_SIZE];
     pfcp_sess_mod_req.update_far_count = 0;
-    uint8_t x2_handover = 0;
 
-    if (mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.header.len  != 0){
+    uint8_t x2_handover = 0;
+    if (mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.header.len  != 0) {
         if(bearer->s1u_enb_gtpu_ipv4.s_addr != 0) {
             if((mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.teid_gre_key)
                     != bearer->s1u_enb_gtpu_teid  ||
@@ -194,45 +193,52 @@ process_mb_req_handler(proc_context_t *proc_context, msg_info_t *msg)
             x2_handover = 0;
         }
 #endif
-
-        bearer->s1u_enb_gtpu_ipv4.s_addr =
-            mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.ipv4_address;
-        bearer->s1u_enb_gtpu_teid =
-            mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.teid_gre_key;
-        update_far[pfcp_sess_mod_req.update_far_count].upd_frwdng_parms.outer_hdr_creation.teid =
-            bearer->s1u_enb_gtpu_teid;
-        update_far[pfcp_sess_mod_req.update_far_count].upd_frwdng_parms.outer_hdr_creation.ipv4_address =
-            bearer->s1u_enb_gtpu_ipv4.s_addr;
-        update_far[pfcp_sess_mod_req.update_far_count].upd_frwdng_parms.dst_intfc.interface_value =
-            check_interface_type(mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.interface_type);
-        update_far[pfcp_sess_mod_req.update_far_count].apply_action.forw = PRESENT;
-        pfcp_sess_mod_req.update_far_count++;
-
     }
 
-    if (mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.header.len  != 0){
-        bearer->s5s8_sgw_gtpu_ipv4.s_addr =
-            mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.ipv4_address;
-        bearer->s5s8_sgw_gtpu_teid =
-            mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.teid_gre_key;
-        update_far[pfcp_sess_mod_req.update_far_count].upd_frwdng_parms.outer_hdr_creation.teid =
-            bearer->s5s8_sgw_gtpu_teid;
-        update_far[pfcp_sess_mod_req.update_far_count].upd_frwdng_parms.outer_hdr_creation.ipv4_address =
-            bearer->s5s8_sgw_gtpu_ipv4.s_addr;
-        update_far[pfcp_sess_mod_req.update_far_count].upd_frwdng_parms.dst_intfc.interface_value =
-            check_interface_type(mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.interface_type);
-        if ( cp_config->cp_type != PGWC) {
-            update_far[pfcp_sess_mod_req.update_far_count].apply_action.forw = PRESENT;
+    if (mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.header.len  != 0) {
+        for(int far_count = 0; far_count < bearer->pdr_count; far_count++) {
+		    if (SOURCE_INTERFACE_VALUE_ACCESS == bearer->pdrs[far_count]->pdi.src_intfc.interface_value) {
+                continue;
+            }
+            bearer->s1u_enb_gtpu_ipv4.s_addr = mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.ipv4_address;
+            bearer->s1u_enb_gtpu_teid = mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.teid_gre_key;
+            LOG_MSG(LOG_DEBUG, "bearer far %d, TEID = %d ",far_count, bearer->s1u_enb_gtpu_teid);
+
+            update_far[far_count].upd_frwdng_parms.outer_hdr_creation.teid =
+                bearer->s1u_enb_gtpu_teid;
+            update_far[far_count].upd_frwdng_parms.outer_hdr_creation.ipv4_address =
+                bearer->s1u_enb_gtpu_ipv4.s_addr;
+            update_far[far_count].upd_frwdng_parms.dst_intfc.interface_value =
+                check_interface_type(mb_req->bearer_contexts_to_be_modified.s1_enodeb_fteid.interface_type);
+            update_far[far_count].apply_action.forw = PRESENT;
+            pfcp_sess_mod_req.update_far_count++;
         }
-        pfcp_sess_mod_req.update_far_count++;
     }
 
-    // MUST CLEAN - why we are updating seid on the fly ?
-    context->pdns[ebi_index]->seid = SESS_ID(context->s11_sgw_gtpc_teid, bearer->eps_bearer_id);
+    if (mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.header.len  != 0) {
+        for(int far_count = 0; far_count < bearer->pdr_count; far_count++) {
+		    if (SOURCE_INTERFACE_VALUE_ACCESS == bearer->pdrs[far_count]->pdi.src_intfc.interface_value) {
+                continue;
+            }
+            bearer->s5s8_sgw_gtpu_ipv4.s_addr = mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.ipv4_address;
+            bearer->s5s8_sgw_gtpu_teid = mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.teid_gre_key;
+
+            update_far[far_count].upd_frwdng_parms.outer_hdr_creation.teid =
+                bearer->s5s8_sgw_gtpu_teid;
+            update_far[far_count].upd_frwdng_parms.outer_hdr_creation.ipv4_address =
+                bearer->s5s8_sgw_gtpu_ipv4.s_addr;
+            update_far[far_count].upd_frwdng_parms.dst_intfc.interface_value =
+                check_interface_type(mb_req->bearer_contexts_to_be_modified.s58_u_sgw_fteid.interface_type);
+            if ( cp_config->cp_type != PGWC) {
+                update_far[far_count].apply_action.forw = PRESENT;
+            }
+            pfcp_sess_mod_req.update_far_count++;
+        }
+    }
 
     sequence = fill_pfcp_sess_mod_req(&pfcp_sess_mod_req, &mb_req->header, bearer, pdn, update_far, x2_handover);
 
-    uint8_t pfcp_msg[sizeof(pfcp_sess_mod_req_t)] = {0};
+    uint8_t pfcp_msg[4096] = {0};
     int encoded = encode_pfcp_sess_mod_req_t(&pfcp_sess_mod_req, pfcp_msg);
     pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
     header->message_len = htons(encoded - 4);

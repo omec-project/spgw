@@ -39,7 +39,7 @@ handle_events(int fd, int *wd, struct entry *config)
 	char *ptr;
 
 	/* Loop while events can be read from inotify file descriptor. */
-	LOG_MSG(LOG_DEBUG, "Received file event for %s ", config->config_file);
+	//LOG_MSG(LOG_DEBUG, "Received file event for %s ", config->config_file);
 	/* Read some events. */
 	len = read(fd, buf, sizeof buf);
 	/* If the nonblocking read() found no events to read, then
@@ -59,50 +59,50 @@ handle_events(int fd, int *wd, struct entry *config)
 	     ptr += sizeof(struct inotify_event) + event->len) {
 
 		event = (const struct inotify_event *) ptr;
-		LOG_MSG(LOG_DEBUG, "event mask %x: ", event->mask);
+		//LOG_MSG(LOG_DEBUG, "event mask %x: ", event->mask);
 
 		/* Print event type */
 		if (event->mask & IN_ACCESS) {
-			LOG_MSG(LOG_DEBUG, "IN_ACCESS: ");
+			//LOG_MSG(LOG_DEBUG, "IN_ACCESS: ");
 			continue;
 		}
 		if (event->mask & IN_CLOSE_NOWRITE) {
-			LOG_MSG(LOG_DEBUG, "IN_CLOSE_NOWRITE: ");
+			//LOG_MSG(LOG_DEBUG, "IN_CLOSE_NOWRITE: ");
 			continue;
 		}
 		if (event->mask & IN_OPEN) {
-			LOG_MSG(LOG_DEBUG, "IN_OPEN: skip ");
+			// LOG_MSG(LOG_DEBUG, "IN_OPEN: skip ");
 			continue;
 		}
 		if (event->mask & IN_ATTRIB) {
-			LOG_MSG(LOG_DEBUG, "IN_ATTRIB: ");
+			//LOG_MSG(LOG_DEBUG, "IN_ATTRIB: ");
 		}
 		if (event->mask & IN_CLOSE_WRITE) {
-			LOG_MSG(LOG_DEBUG, "IN_CLOSE_WRITE: ");
+			//LOG_MSG(LOG_DEBUG, "IN_CLOSE_WRITE: ");
 		}
 		if (event->mask & IN_CREATE) {
-			LOG_MSG(LOG_DEBUG, "IN_CREATE: ");
+			//LOG_MSG(LOG_DEBUG, "IN_CREATE: ");
 		}
 		if (event->mask & IN_DELETE) {
-			LOG_MSG(LOG_DEBUG, "IN_DELETE: ");
+			//LOG_MSG(LOG_DEBUG, "IN_DELETE: ");
 		}
 		if (event->mask & IN_DELETE_SELF) {
-			LOG_MSG(LOG_DEBUG, "IN_DELETE_SELF: ");
+			//LOG_MSG(LOG_DEBUG, "IN_DELETE_SELF: ");
 		}
 		if (event->mask & IN_MODIFY) {
-			LOG_MSG(LOG_DEBUG, "IN_MODIFY: ");
+			//LOG_MSG(LOG_DEBUG, "IN_MODIFY: ");
 		}
 		if (event->mask & IN_MOVE_SELF) {
-			LOG_MSG(LOG_DEBUG, "IN_MOVE_SELF: ");
+			//LOG_MSG(LOG_DEBUG, "IN_MOVE_SELF: ");
 		}
 		if (event->mask & IN_MOVED_FROM)
-			LOG_MSG(LOG_DEBUG, "IN_MOVED_FROM: ");
+			//LOG_MSG(LOG_DEBUG, "IN_MOVED_FROM: ");
 
 		if (event->mask & IN_MOVED_TO) {
-				LOG_MSG(LOG_DEBUG, "IN_MOVED_TO: ");
+			//LOG_MSG(LOG_DEBUG, "IN_MOVED_TO: ");
 		}
 		if (event->mask & IN_IGNORED) {
-			LOG_MSG(LOG_DEBUG, "IN_IGNORE: file deleted ");
+			//LOG_MSG(LOG_DEBUG, "IN_IGNORE: file deleted ");
 		}
 
 		if (wd[0] == event->wd) {

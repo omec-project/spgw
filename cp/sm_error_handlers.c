@@ -18,7 +18,6 @@
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_session.h"
 #include "spgw_config_struct.h"
-#include "csid_cp_cleanup.h"
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
 #include "gen_utils.h"
@@ -190,9 +189,9 @@ process_error_occured_handler_new(void *data, void *unused_param)
             saddr_in.sin_family = AF_INET;
             inet_aton("127.0.0.1", &(saddr_in.sin_addr));
             increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_T, saddr_in.sin_addr.s_addr);
-			if(remove_gx_context((uint8_t*)pdn->gx_sess_id) < 0){
-				LOG_MSG(LOG_ERROR, " Error on gx_context_by_sess_id_hash deletion");
-			}
+            if(remove_gx_context((uint8_t*)pdn->gx_sess_id) < 0){
+	            LOG_MSG(LOG_ERROR, " Error on remove_gx_context for session Id %s",pdn->gx_sess_id);
+            }
             free(gx_context); 
             temp_context->gx_context = NULL;
             del_pdn_conn_entry(pdn->call_id);

@@ -20,7 +20,6 @@
 #include "gtpv2_session.h"
 #include "spgw_config_struct.h"
 #include "cp_log.h"
-#include "csid_cp_cleanup.h"
 #include "gtpv2_interface.h"
 #include "upf_struct.h"
 #include "gen_utils.h"
