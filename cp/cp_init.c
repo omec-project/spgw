@@ -65,6 +65,11 @@ init_thread_to_thread_socket(void)
 	local_sockaddr.sin_port = htons(9090); // any random port is good enough  
 	local_sockaddr.sin_addr = local_ip;
 
+    int flag = 1;
+    if (-1 == setsockopt(local_fd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag))) {
+        LOG_MSG(LOG_ERROR,"setsockopt fail");
+    }
+
 	ret = bind(local_fd, (struct sockaddr *) &local_sockaddr, sizeof(struct sockaddr_in));
 
 	LOG_MSG(LOG_INIT,"init local local thread to thread socket opened ");
