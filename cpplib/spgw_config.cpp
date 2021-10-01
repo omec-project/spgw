@@ -169,7 +169,7 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
                         }
                         --ptr;
                     } while (ptr != key->apn.requested_apn);
-                    LOG_MSG(LOG_INIT,"\t\tAPN name after encode [%s] and length %d ",key->apn.requested_apn, strlen(key->apn.requested_apn));
+                    LOG_MSG(LOG_INIT,"\t\tAPN name after encode [%s] and length %lu ",key->apn.requested_apn, strlen(key->apn.requested_apn));
 
                 }
             }

@@ -220,10 +220,25 @@ initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg)
     } else if (upf_context->state == PFCP_ASSOC_RESP_RCVD_STATE) {
         LOG_MSG(LOG_DEBUG, "UPF association already formed ");
         pdn_connection_t *pdn = (pdn_connection_t *)msg->pdn_context;
-        if(IF_PDN_ADDR_ALLOC_UPF(pdn) && (IS_UPF_SUPP_FEAT_UEIP(upf_context) == 0)) {
-            LOG_MSG(LOG_ERROR, "UPF does not support UE IP address allocation feature ");
-            proc_initial_attach_failure(csreq_proc, GTPV2C_CAUSE_REQUEST_REJECTED);
-            return;
+        if(!IS_UPF_SUPP_FEAT_UEIP(upf_context)) {
+            if(IF_PDN_ADDR_ALLOC_UPF(pdn)) {
+              LOG_MSG(LOG_ERROR, "UPF does not support UE IP address allocation feature ");
+              proc_initial_attach_failure(csreq_proc, GTPV2C_CAUSE_REQUEST_REJECTED);
+              return;
+            }
+        } else {
+            // UPF should allocate address..but if control plane has already allocated address
+            // then release address 
+            LOG_MSG(LOG_ERROR, "UPF supports UE IP address allocation feature ");
+            if(IF_PDN_ADDR_ALLOC_CONTROL(pdn)) {
+                LOG_MSG(LOG_ERROR, "PDN has address assigned from control plane. But UPF supports address allocation ");
+                struct in_addr ue_ip = pdn->ipv4;
+                release_ip(ue_ip); // api needs address in host order
+                pdn->ipv4.s_addr = 0;
+                RESET_PDN_ADDR_METHOD(pdn, PDN_ADDR_ALLOC_CONTROL);
+                SET_PDN_ADDR_METHOD(pdn, PDN_ADDR_ALLOC_UPF);
+                LOG_MSG(LOG_DEBUG, "PDN flags %x ",pdn->pdn_flags);
+            }
         }
         transData_t *pfcp_trans = process_pfcp_sess_est_request(csreq_proc, upf_context);
         if (pfcp_trans == NULL) {
@@ -343,15 +358,22 @@ process_create_sess_req(create_sess_req_t *csr,
             ue_ip = *paa_ipv4; // network order 
             static_addr_pdn = true;
         } else {
-            if(sub_profile->up_profile->global_address == true) {
+            if(IS_UPF_SUPP_FEAT_UEIP(upf_context)) {
+                addr_upf_alloc = PDN_ADDR_ALLOC_UPF;
+                LOG_MSG(LOG_DEBUG, "UPF supports UE IP address allocation feature ");
+            }
+            else if(sub_profile->up_profile->global_address == true) {
+              LOG_MSG(LOG_DEBUG, "Using control plane support of UE IP address allocation ");
               // if global address allocation required then pull 1 IP address from central control Plane 
-		      ret = acquire_ip(&ue_ip); // address in network order
+              addr_upf_alloc = PDN_ADDR_ALLOC_CONTROL;
+              ret = acquire_ip(&ue_ip); // address in network order
               if (ret) {
                       // caller sends out csrsp 
                       return GTPV2C_CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
               }
             } else {
-                // UPF allocates IP address. Control Plane does no validation
+                // UPF allocates IP address. Control Plane does validation
+                // at later stage to reject
                 addr_upf_alloc = PDN_ADDR_ALLOC_UPF;
             }
         }
