@@ -106,6 +106,7 @@ while(0);
 
 #define IF_PDN_ADDR_STATIC(pdn)   ((pdn->pdn_flags & PDN_STATIC_ADDR) == PDN_STATIC_ADDR)
 #define SET_PDN_ADDR_METHOD(pdn, flag) (pdn->pdn_flags = pdn->pdn_flags | flag)
+#define RESET_PDN_ADDR_METHOD(pdn, flag) (pdn->pdn_flags = pdn->pdn_flags & (~flag))
 #define IF_PDN_ADDR_ALLOC_CONTROL(pdn) (pdn->pdn_flags & PDN_ADDR_ALLOC_CONTROL)
 #define IF_PDN_ADDR_ALLOC_UPF(pdn) (pdn->pdn_flags & PDN_ADDR_ALLOC_UPF)
 

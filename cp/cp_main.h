@@ -24,15 +24,6 @@ extern uint16_t local_csid;
 extern int32_t conn_cnt;
 
 
-/**
- * @brief  : Functino to handle signals.
- * @param  : signo
- *           signal number signal to be handled
- * @return : Returns nothing
- */
-void sig_handler(int signo);
-
-
 #ifdef __cplusplus
 }
 #endif

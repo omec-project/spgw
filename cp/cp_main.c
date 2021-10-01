@@ -173,31 +173,9 @@ main(int argc, char **argv)
     init_fqcsid_hash_tables();
 #endif /* USE_CSID */
 
-	if (signal(SIGINT, sig_handler) == SIG_ERR)
-        assert(0);
-
-	if (signal(SIGSEGV, sig_handler) == SIG_ERR)
-        assert(0);
-
     while(1) {
 		incoming_event_handler(NULL);
     }
 
     return 0;
 }
-
-void sig_handler(int signo)
-{
-    if (signo == SIGINT) {
-        if (my_sock.gx_app_sock > 0)
-            close_ipc_channel(my_sock.gx_app_sock);
-
-        gst_deinit();
-
-        assert(0);
-    }
-    else if (signo == SIGSEGV)
-        assert(0);
-}
-
-
