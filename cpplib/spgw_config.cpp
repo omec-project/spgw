@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include "spgw_config.h"
+#include "spgw_cpp_wrapper.h"
 #include "spgw_config_struct.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
@@ -51,6 +52,38 @@ spgw_config_profile_t* spgwConfig::parse_subscriber_profiles_cpp(const char *jso
     }
     spgw_config_profile_t *config = spgwConfig::parse_json_doc(doc);
     return config;
+}
+
+void clearOldUpfProfiles(spgwConfigStore* oldCfg, spgwConfigStore* newCfg) {
+    LOG_MSG(LOG_DEBUG, "clearOldUpfProfiles");
+    bool found;
+    for (std::list<user_plane_profile_t*>::iterator it=oldCfg->user_plane_list.begin(); it!=oldCfg->user_plane_list.end(); ++it)
+    {
+        user_plane_profile_t *upOld=*it;
+        found = false;
+        for (std::list<user_plane_profile_t*>::iterator it2=newCfg->user_plane_list.begin(); it2!=newCfg->user_plane_list.end(); ++it2) {
+            user_plane_profile_t *upNew=*it2;
+            if (strcmp(upOld->user_plane_profile_name, upNew->user_plane_profile_name) == 0) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            LOG_MSG(LOG_DEBUG, "upf deleted in new config: %s", upOld->user_plane_profile_name);
+            cfg_func_ptr func = getConfigCallback();
+            if (func != NULL) {
+                config_callback_t *conf_struct = (config_callback_t *)calloc(1, sizeof(config_callback_t));
+                if (conf_struct == NULL) {
+                    LOG_MSG(LOG_ERROR, "Config callback struct allocation failed.");
+                    return;
+                }
+                conf_struct->action = DISABLE_UPF;
+                conf_struct->upf_addr = upOld->upf_addr;
+                func(conf_struct);
+            }
+        }
+    }
 }
 
 spgw_config_profile_t*
@@ -362,6 +395,9 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
     
     std::unique_lock<std::mutex> lock(config_mtx);
     spgwConfigStore *temp = sub_classifier_config;
+    if (temp != NULL) {
+        clearOldUpfProfiles(temp, config_store);
+    }
     sub_classifier_config = config_store; // move to new config
     delete temp;
     return temp_config;

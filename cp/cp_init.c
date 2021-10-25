@@ -13,6 +13,7 @@
 #include "cp_timer.h"
 #include "sm_struct.h"
 #include "cp_config_apis.h"
+#include "upf_apis.h"
 #include "spgw_config_struct.h"
 #include "cp_interface.h"
 #include "cp_transactions.h"
@@ -108,6 +109,24 @@ void* delayed_task_handler(void *data)
     return NULL;
 }
 
+void config_callback_func(config_callback_t *val) {
+    LOG_MSG(LOG_DEBUG, "config_callback_func");
+    if (val != NULL) {
+        switch (val->action) {
+            case DISABLE_UPF:
+                LOG_MSG(LOG_DEBUG, "DISABLE_UPF : upf_addr=%u",
+                        val->upf_addr);
+                config_disable_upf(val->upf_addr);
+                break;
+            default:
+                LOG_MSG(LOG_INIT,
+                         "Config action not supported=%u",
+                          val->action);
+        }
+        free(val);
+    }
+}
+
 /**
  * @brief  : Initializes Control Plane data structures, packet filters, and calls for the
  *           Data Plane to create required tables
@@ -132,7 +151,8 @@ void init_cp(void)
 
     setup_prometheus(cp_config->prom_port);
 
-    setup_webserver(cp_config->webserver_port);
+    setup_webserver(cp_config->webserver_port,
+                    &config_callback_func);
 
 	init_pfcp();
 	
