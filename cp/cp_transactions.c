@@ -241,6 +241,5 @@ void delayed_free(transData_t *trans)
         return;
     }
     SET_TRANS_DELAYED_DELETE(trans);
-    LOG_MSG(LOG_DEBUG,"Set transaction for delayed delete %p ",trans);
     add_delayed_free_memory_task(trans);
 }

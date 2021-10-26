@@ -325,6 +325,8 @@ cleanup_ue_context(ue_context_t **context_t)
             assert(0);
         }
 
+        free(context->sub_prof);
+
         //Free UE context
         free(context);
         *context_t = NULL;

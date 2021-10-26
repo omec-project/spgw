@@ -67,7 +67,6 @@ int
 pfcp_send(int fd, void *msg_payload, uint32_t size,
 		struct sockaddr_in *peer_addr)
 {
-    LOG_MSG(LOG_DEBUG,"queuing message in pfcp out channel for peer %s, port = %u ", inet_ntoa(peer_addr->sin_addr), peer_addr->sin_port);
     queue_pfcp_out_event(fd, (uint8_t*)msg_payload, size, (struct sockaddr *)peer_addr);
 	return 1;
 }

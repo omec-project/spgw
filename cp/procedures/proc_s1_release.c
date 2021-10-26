@@ -329,7 +329,6 @@ process_rab_pfcp_sess_mod_resp(proc_context_t *proc_context,
         return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
     }
 
-    LOG_MSG(LOG_DEBUG2, "Send RAB response");
     transData_t *gtpc_trans = proc_context->gtpc_trans;
     /* Fill the release bearer response */
     set_release_access_bearer_response(gtpv2c_tx,

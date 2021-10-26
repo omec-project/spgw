@@ -443,10 +443,7 @@ process_create_sess_req(create_sess_req_t *csr,
 		context->mapped_ue_usage_type = -1;
 
     
-#if 0
-	/* VS: Maintain the sequence number of CSR */
 	pdn->apn_in_use = apn_requested;
-#endif
 
     // DELETE THIS 
 	/* Store upf ipv4 in pdn structure */

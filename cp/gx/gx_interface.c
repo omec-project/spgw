@@ -212,9 +212,6 @@ int
 fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 		uint8_t ebi_index, char *sess_id)
 {
-	uint16_t len = 0;
-	char apn[MAX_APN_LEN] = {0};
-
 	eps_bearer_t *bearer = NULL;
 	pdn_connection_t *pdn = NULL;
 
@@ -277,7 +274,8 @@ fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 	/* VS: TODO */
 	/* TODO: Need to Discuss with Varun and Himanshu for make following AVP's are generic or
 	 * to be based on MSG TYPE OR condition basis */
-
+	uint16_t len = 0;
+	char apn[MAX_APN_LEN] = {0};
 	/* VS: Fill the APN Vaule */
 	if ((pdn->apn_in_use)->apn_name_length != 0) {
 		ccr->presence.called_station_id = PRESENT;
@@ -298,7 +296,7 @@ fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 		ccr->called_station_id.len = strlen(apn);
 		memcpy(ccr->called_station_id.val, apn, ccr->called_station_id.len);
 
-	}
+	 }
 
 	/* VS: Fill the RAT type in CCR */
 	if( context->rat_type.len != 0 ){
@@ -788,7 +786,6 @@ generate_call_id(void)
 void 
 gx_send(int fd, char *buf, uint16_t len)
 {
-    LOG_MSG(LOG_DEBUG,"queuing message in gx out channel ");
     queue_gx_out_event(fd, (uint8_t *)buf, len);
 	return;
 }
