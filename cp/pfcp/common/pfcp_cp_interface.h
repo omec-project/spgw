@@ -61,12 +61,6 @@ handle_session_report_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 int 
 handle_pfcp_pfd_management_response_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
 
-int 
-handle_pfcp_set_deletion_response_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
-
-int 
-handle_pfcp_session_delete_request_msg(msg_info_t **msg, pfcp_header_t *pfcp_rx);
-
 void
 process_pfcp_msg(void *data, uint16_t event);
 

@@ -13,18 +13,6 @@
 int
 process_upd_pdn_conn_set_req(void *data, void *unused_param)
 {
-#ifdef USE_CSID
-	//uint16_t payload_length = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-	int ret = 0;
-
-	ret = process_upd_pdn_conn_set_req_t(&msg->rx_msg.upd_pdn_req);
-	if (ret) {
-			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
-			return -1;
-	}
-#else
-#endif /* USE_CSID */
 
 	return 0;
 }
@@ -36,19 +24,6 @@ process_upd_pdn_conn_set_req(void *data, void *unused_param)
 int
 process_upd_pdn_conn_set_rsp(void *data, void *unused_param)
 {
-#ifdef USE_CSID
-	//uint16_t payload_length = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-	int ret = 0;
-
-	ret = process_upd_pdn_conn_set_rsp_t(&msg->rx_msg.upd_pdn_rsp);
-	if (ret) {
-			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
-			return -1;
-	}
-#else
-#endif /* USE_CSID */
-
 	return 0;
 }
 

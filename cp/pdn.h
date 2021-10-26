@@ -32,9 +32,6 @@
 #include "sess_const.h"
 #include "bearer.h"
 
-#ifdef USE_CSID
-#include "csid_struct.h"
-#endif /* USE_CSID */
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -155,14 +152,6 @@ struct pdn_connection {
 
 
 	/* VS: Support partial failure functionality of FQ-CSID */
-#ifdef USE_CSID
-	/*TODO: Need to think on it */
-	uint8_t peer_cnt;
-	/* Need to think on index can we use the ebi as index*/
-	csid_key *peer_info[MAX_BEARERS];
-	/* Collection of the associated peer node CSIDs*/
-	fq_csids *csids[MAX_BEARERS];
-#endif /* USE_CSID */
 
 	pdn_type_ie pdn_type;
 	/* See  3GPP TS 32.298 5.1.2.2.7 for Charging Characteristics fields*/

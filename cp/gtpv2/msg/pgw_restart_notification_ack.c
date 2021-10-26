@@ -26,16 +26,6 @@ int handle_pgw_restart_notf_ack(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx)
 int
 process_pgw_rstrt_notif_ack(void *data, void *unused_param)
 {
-#ifdef USE_CSID
-	msg_info_t *msg = (msg_info_t *)data;
-
-	if (msg->rx_msg.pgw_rstrt_notif_ack.cause.cause_value ==
-			GTPV2C_CAUSE_REQUEST_ACCEPTED) {
-		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-		return -1;
-	}
-#else
-#endif /* USE_CSID */
 	return 0;
 }
 

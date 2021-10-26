@@ -52,7 +52,6 @@ SOURCES += procedures/proc_service_request.o
 SOURCES += procedures/proc_bearer_create.o
 SOURCES += procedures/proc_bearer_update.o
 SOURCES += procedures/proc_bearer_delete.o
-SOURCES += procedures/pfcp_set_update_proc.o
 SOURCES += procedures/proc_pfd_mgmt.o
 SOURCES += procedures/proc_sgw_relocation.o
 SOURCES += procedures/proc_rar.o
@@ -99,8 +98,6 @@ SOURCES += pfcp/msg/pfcp_session_est_response.o
 SOURCES += pfcp/msg/pfcp_session_delete_response.o
 SOURCES += pfcp/msg/pfcp_session_mod_response.o
 SOURCES += pfcp/msg/pfcp_session_report.o
-SOURCES += pfcp/msg/pfcp_set_deletion_response.o
-SOURCES += pfcp/msg/pfcp_set_deletion_request.o
 SOURCES += pfcp/msg/pfd_management_response.o
 SOURCES += gx/gx_error_rsp.o
 SOURCES += gx/gx_interface.o
@@ -148,19 +145,6 @@ CFLAGS += -g -O0
 
 CFLAGS += $(WERROR_FLAGS)
 CFLAGS_config.o := -D_GNU_SOURCE
-
-#un-comment below line to enable FQ-CSID support in the control-plane
-#CFLAGS += -DUSE_CSID
-
-ifneq (,$(findstring USE_CSID, $(CFLAGS), $(EXTRA_CFLAGS)))
- #VS:Support partial failure FQ-CSID m/c
-
- SOURCES += $(SRCDIR)/../pfcp/common/csid_init.o
- SOURCES += $(SRCDIR)/../pfcp/common/csid_api.o
- SOURCES += $(SRCDIR)/../pfcp/common/csid_peer_init.o
- SOURCES += $(SRCDIR)/../pfcp/common/csid_cp_cleanup.o
-
-endif
 
 LDLIBS +=  -lstdc++
 
