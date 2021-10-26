@@ -63,8 +63,24 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
 
     increment_gx_peer_stats(MSG_RX_DIAMETER_GX_CCA_T, saddr_in.sin_addr.s_addr);
 
-    pdn_connection_t *pdn_cntxt = NULL;
     LOG_MSG(LOG_DEBUG, "find gx context ");
+
+    /* Extract the call id from session id */
+    uint32_t call_id;
+    ret = retrieve_call_id((char *)msg->rx_msg.cca.session_id.val, &call_id);
+    if (ret < 0) {
+        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s", 
+                msg->rx_msg.cca.session_id.val);
+        return -1;
+    }
+
+    /* Retrieve PDN context based on call id */
+    pdn_connection_t *pdn_cntxt = (pdn_connection_t *)get_pdn_conn_entry(call_id);
+    if (pdn_cntxt == NULL) {
+        LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);
+        return -1;
+    }
+
     /* Retrive Gx_context based on Sess ID. */
     ue_context_t *temp_ue_context  = (ue_context_t *)get_gx_context((uint8_t*)msg->rx_msg.cca.session_id.val);
     if (temp_ue_context == NULL) {
@@ -81,21 +97,6 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
         return -1;
     }
 
-    /* Extract the call id from session id */
-    uint32_t call_id;
-    ret = retrieve_call_id((char *)msg->rx_msg.cca.session_id.val, &call_id);
-    if (ret < 0) {
-        LOG_MSG(LOG_ERROR, "No Call Id found from session id:%s", 
-                msg->rx_msg.cca.session_id.val);
-        return -1;
-    }
-
-    /* Retrieve PDN context based on call id */
-    pdn_cntxt = (pdn_connection_t *)get_pdn_conn_entry(call_id);
-    if (pdn_cntxt == NULL) {
-        LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);
-        return -1;
-    }
     /* Retrive the Session state and set the event */
     msg->event = CCA_RCVD_EVNT;
     msg->proc = gx_context->proc;

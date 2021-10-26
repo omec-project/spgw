@@ -154,7 +154,7 @@ end_procedure(proc_context_t *proc_ctxt)
     pdn_connection_t *pdn = NULL;
 
     /* TODO : add procedure name */
-    LOG_MSG(LOG_DEBUG4, "end procedure  %p ",proc_ctxt);
+    LOG_MSG(LOG_DEBUG4, "end procedure  %s ",proc_ctxt->proc_name);
 
     assert(proc_ctxt != NULL);
 

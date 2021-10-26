@@ -437,7 +437,6 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 		GxChargingRuleRemoveList * charging_rule_remove, bool install_present, bool remove_present)
 {
 
-	int32_t idx = 0;
 	rule_name_key_t rule_name = {0};
 	GxChargingRuleDefinition *rule_definition = NULL;
 
@@ -451,10 +450,10 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
             // We dont support predefined rules as of now 
 			if (charging_rule_install->list[idx1].presence.charging_rule_definition == PRESENT)
 			{
-				for(int32_t idx2 = 0; idx2 < charging_rule_install->list[idx].charging_rule_definition.count; idx2++)
+				for(int32_t idx2 = 0; idx2 < charging_rule_install->list[idx1].charging_rule_definition.count; idx2++)
 				{
 					rule_definition =
-						&(charging_rule_install->list[idx].charging_rule_definition.list[idx2]);
+						&(charging_rule_install->list[idx1].charging_rule_definition.list[idx2]);
 					if (rule_definition->presence.charging_rule_name == PRESENT) {
                         pcc_rule_t *pcc_rule = (pcc_rule_t *)calloc(1, sizeof(pcc_rule_t)); 
                         pcc_rule->dyn_rule = (dynamic_rule_t *)calloc(1, sizeof(dynamic_rule_t)); 
@@ -471,12 +470,11 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
                         // GXFIX - looks like we are overriding pcc rules if we have multiple charging rule install
                         // We should implemtnet index..or keep policy as link list in pdn...
                         TAILQ_INSERT_TAIL(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
-                        LOG_MSG(LOG_DEBUG, "calling fill_charging_rule_definition");
+                        LOG_MSG(LOG_DEBUG, "calling fill_charging_rule_definition for rule %s",rule_name.rule_name);
 						fill_charging_rule_definition(pdn, pcc_rule->dyn_rule, rule_definition);
 					} else {
 						//TODO: Rule without name not possible; Log IT ?
-                        LOG_MSG(LOG_ERROR, "Rule without name not allowed");
-						return -1;
+                        LOG_MSG(LOG_ERROR, "Rule received without name. Skipping rule");
 					}
 				}
 			}
@@ -510,7 +508,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
                     // GXBUG : idx_offset is not incremented..it will keep overriding rules 
                     TAILQ_INSERT_TAIL(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
 				} else {
-                        LOG_MSG(LOG_ERROR, "Rule %s - Received in RAR and not found ", rule_name.rule_name);
+                        LOG_MSG(LOG_ERROR, "Rule %s - received from PCRF not found ", rule_name.rule_name);
                 }
 			}
 		}
