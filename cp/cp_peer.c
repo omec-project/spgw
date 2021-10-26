@@ -11,8 +11,6 @@
 #include "pfcp_cp_association.h"
 #include "spgw_config_struct.h"
 #include "sm_struct.h"
-#include "csid_cp_cleanup.h"
-#include "csid_api.h"
 #include "gtpv2_interface.h"
 #include "cp_peer.h"
 #include "cp_config_defs.h"
@@ -87,39 +85,24 @@ handle_timeout_event(void *data, uint16_t event)
 			LOG_MSG(LOG_ERROR, "Stopped Periodic/transmit timer, User Plane node %s is not reachable",
 				inet_ntoa(*(struct in_addr *)&md->dstIP));
             upf_down_event(dest_addr.sin_addr.s_addr);
-#ifdef USE_CSID
-			del_peer_node_sess(md->dstIP, SX_PORT_ID);
-#endif /* USE_CSID */
 		}
 
 		/* Flush sessions */
 		if (md->portId == S11_SGW_PORT_ID) {
 			LOG_MSG(LOG_ERROR, "Stopped Periodic/transmit timer, MME node %s is not reachable",
 				inet_ntoa(*(struct in_addr *)&md->dstIP));
-#ifdef USE_CSID
-			del_pfcp_peer_node_sess(md->dstIP, S11_SGW_PORT_ID);
-			del_peer_node_sess(ntohl(md->dstIP), S11_SGW_PORT_ID);
-#endif /* USE_CSID */
 		}
 
 		/* Flush sessions */
 		if (md->portId == S5S8_SGWC_PORT_ID) {
 			LOG_MSG(LOG_ERROR, "Stopped Periodic/transmit timer, PGWC node %s is not reachable",
 				inet_ntoa(*(struct in_addr *)&md->dstIP));
-#ifdef USE_CSID
-			del_pfcp_peer_node_sess(ntohl(md->dstIP), S5S8_SGWC_PORT_ID);
-			del_peer_node_sess(md->dstIP, S5S8_SGWC_PORT_ID);
-#endif /* USE_CSID */
 		}
 
 		/* Flush sessions */
 		if (md->portId == S5S8_PGWC_PORT_ID) {
 			LOG_MSG(LOG_ERROR, "Stopped Periodic/transmit timer, SGWC node %s is not reachable",
 				inet_ntoa(*(struct in_addr *)&md->dstIP));
-#ifdef USE_CSID
-			del_pfcp_peer_node_sess(ntohl(md->dstIP), S5S8_PGWC_PORT_ID);
-			del_peer_node_sess(md->dstIP, S5S8_PGWC_PORT_ID);
-#endif /* USE_CSID */
 		}
 
 		del_entry_from_hash(md->dstIP);

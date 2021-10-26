@@ -33,9 +33,6 @@
 #include "bearer.h"
 #include "sess_const.h"
 
-#ifdef USE_CSID
-#include "csid_struct.h"
-#endif /* USE_CSID */
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -302,13 +299,6 @@ struct ue_context {
 	rat_type_t rat_type;
 	indication_flag_t indication_flag;
 
-#ifdef USE_CSID
-	/* Temp cyclic linking of the MME and SGW FQ-CSID */
-	fqcsid_t *mme_fqcsid;
-	fqcsid_t *sgw_fqcsid;
-	fqcsid_t *pgw_fqcsid;
-	fqcsid_t *up_fqcsid;
-#endif /* USE_CSID */
 
 	int16_t mapped_ue_usage_type;
 

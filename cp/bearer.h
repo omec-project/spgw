@@ -31,9 +31,6 @@
 #include "sess_const.h"
 #include "policy.h"
 
-#ifdef USE_CSID
-#include "csid_struct.h"
-#endif /* USE_CSID */
 #ifdef __cplusplus
 extern "C" {
 #endif

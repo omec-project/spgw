@@ -16,11 +16,6 @@ extern "C" {
  */
 #define MAX_LEN 128
 
-#ifdef USE_CSID
-/* Configure the local csid */
-extern uint16_t local_csid;
-#endif /* USE_CSID */
-
 extern int32_t conn_cnt;
 
 

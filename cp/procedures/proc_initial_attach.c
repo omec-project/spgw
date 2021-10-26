@@ -498,130 +498,6 @@ process_create_sess_req(create_sess_req_t *csr,
 	}
 	context->pdns[ebi_index]->dp_seid = 0;
 
-#ifdef USE_CSID
-	/* Parse and stored MME and SGW FQ-CSID in the context */
-	fqcsid_t *tmp = NULL;
-
-	/* Allocate the memory for each session */
-	context->mme_fqcsid = (fqcsid_t *)calloc(1, sizeof(fqcsid_t));
-	context->sgw_fqcsid = (fqcsid_t *)calloc(1, sizeof(fqcsid_t));
-	if (cp_config->cp_type != SAEGWC) {
-		context->pgw_fqcsid = (fqcsid_t *)calloc(1, sizeof(fqcsid_t));
-		if (context->pgw_fqcsid == NULL) {
-			LOG_MSG(LOG_ERROR, "Failed to allocate the memory for fqcsids entry");
-			return -1;
-		}
-	}
-
-	if ((context->mme_fqcsid == NULL) ||
-			(context->sgw_fqcsid == NULL)) {
-		LOG_MSG(LOG_ERROR, "Failed to allocate the memory for fqcsids entry");
-		return -1;
-	}
-
-	/* MME FQ-CSID */
-	if (csr->mme_fqcsid.header.len) {
-		/* Stored the MME CSID by MME Node address */
-		tmp = get_peer_addr_csids_entry(csr->mme_fqcsid.node_address,
-				ADD);
-		if (tmp == NULL) {
-			LOG_MSG(LOG_ERROR, "Error: %s ",strerror(errno));
-			return -1;
-		}
-		/* check ntohl */
-		tmp->node_addr = csr->mme_fqcsid.node_address;
-
-		for(uint8_t itr = 0; itr < csr->mme_fqcsid.number_of_csids; itr++) {
-			uint8_t match = 0;
-			for (uint8_t itr1 = 0; itr1 < tmp->num_csid; itr1++) {
-				if (tmp->local_csid[itr1] == csr->mme_fqcsid.pdn_csid[itr])
-					match = 1;
-			}
-
-			if (!match) {
-				tmp->local_csid[tmp->num_csid++] =
-					csr->mme_fqcsid.pdn_csid[itr];
-			}
-		}
-		memcpy(context->mme_fqcsid, tmp, sizeof(fqcsid_t));
-	} else {
-		/* Stored the MME CSID by MME Node address */
-		tmp = get_peer_addr_csids_entry(context->s11_mme_gtpc_ipv4.s_addr,
-				ADD);
-		if (tmp == NULL) {
-			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-			return -1;
-		}
-		tmp->node_addr = context->s11_mme_gtpc_ipv4.s_addr;
-		memcpy(context->mme_fqcsid, tmp, sizeof(fqcsid_t));
-	}
-
-	/* SGW FQ-CSID */
-	if (csr->sgw_fqcsid.header.len) {
-		/* Stored the SGW CSID by SGW Node address */
-		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
-			tmp = get_peer_addr_csids_entry(csr->sgw_fqcsid.node_address,
-					ADD);
-		} else {
-			/* PGWC */
-			tmp = get_peer_addr_csids_entry(csr->sgw_fqcsid.node_address,
-					ADD);
-		}
-		if (tmp == NULL) {
-			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-			return -1;
-		}
-		tmp->node_addr = csr->sgw_fqcsid.node_address;
-
-		for(uint8_t itr = 0; itr < csr->sgw_fqcsid.number_of_csids; itr++) {
-			uint8_t match = 0;
-			for (uint8_t itr1 = 0; itr1 < tmp->num_csid; itr1++) {
-				if (tmp->local_csid[itr1] == csr->sgw_fqcsid.pdn_csid[itr])
-					match = 1;
-			}
-			if (!match) {
-				tmp->local_csid[tmp->num_csid++] =
-					csr->sgw_fqcsid.pdn_csid[itr];
-			}
-		}
-		memcpy(context->sgw_fqcsid, tmp, sizeof(fqcsid_t));
-	} else {
-		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
-			tmp = get_peer_addr_csids_entry(context->s11_sgw_gtpc_ipv4.s_addr,
-					ADD);
-			if (tmp == NULL) {
-				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-				return -1;
-			}
-			tmp->node_addr = ntohl(context->s11_sgw_gtpc_ipv4.s_addr);
-
-			for(uint8_t itr = 0; itr < csr->sgw_fqcsid.number_of_csids; itr++) {
-				uint8_t match = 0;
-				for (uint8_t itr1 = 0; itr1 < tmp->num_csid; itr1++) {
-					if (tmp->local_csid[itr1] == csr->sgw_fqcsid.pdn_csid[itr])
-						match = 1;
-				}
-				if (!match) {
-					tmp->local_csid[tmp->num_csid++] =
-						csr->sgw_fqcsid.pdn_csid[itr];
-				}
-			}
-			memcpy(context->sgw_fqcsid, tmp, sizeof(fqcsid_t));
-		}
-	}
-
-	/* PGW FQ-CSID */
-	if (cp_config->cp_type == PGWC) {
-		tmp = get_peer_addr_csids_entry(pdn->s5s8_pgw_gtpc_ipv4.s_addr,
-				ADD);
-		if (tmp == NULL) {
-			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-			return -1;
-		}
-		tmp->node_addr = pdn->s5s8_pgw_gtpc_ipv4.s_addr;
-		memcpy(context->pgw_fqcsid, tmp, sizeof(fqcsid_t));
-	}
-#endif /* USE_CSID */
 
 	/* VS: Store the context of ue in pdn*/
 	pdn->context = context;
@@ -790,136 +666,6 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
     assert(proc_context != NULL);
 	proc_context->state = PFCP_SESS_EST_RESP_RCVD_STATE;
 
-#ifdef USE_CSID
-	if (cp_config->cp_type == PGWC) {
-		memcpy(&pfcp_sess_est_rsp->pgw_u_fqcsid,
-			&pfcp_sess_est_rsp->sgw_u_fqcsid, sizeof(pfcp_fqcsid_ie_t));
-		memset(&pfcp_sess_est_rsp->sgw_u_fqcsid, 0, sizeof(pfcp_fqcsid_ie_t));
-	}
-
-	fqcsid_t *tmp = NULL;
-	fqcsid_t *fqcsid = NULL;
-	fqcsid = (fqcsid_t*)calloc(1, sizeof(fqcsid_t));
-	if (fqcsid == NULL) {
-		LOG_MSG(LOG_ERROR, "Failed to allocate the memory for fqcsids entry");
-		return -1;
-	}
-	/* SGW FQ-CSID */
-	if (pfcp_sess_est_rsp->sgw_u_fqcsid.header.len) {
-		/* Stored the SGW CSID by SGW Node address */
-		tmp = get_peer_addr_csids_entry(pfcp_sess_est_rsp->sgw_u_fqcsid.node_address,
-				ADD);
-
-		if (tmp == NULL) {
-			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-			return -1;
-		}
-		tmp->node_addr = pfcp_sess_est_rsp->sgw_u_fqcsid.node_address;
-
-		for(uint8_t itr = 0; itr < pfcp_sess_est_rsp->sgw_u_fqcsid.number_of_csids; itr++) {
-			uint8_t match = 0;
-			for (uint8_t itr1 = 0; itr1 < tmp->num_csid; itr1++) {
-				if (tmp->local_csid[itr1] == pfcp_sess_est_rsp->sgw_u_fqcsid.pdn_conn_set_ident[itr]) {
-					match = 1;
-				}
-			}
-			if (!match) {
-				tmp->local_csid[tmp->num_csid++] =
-					pfcp_sess_est_rsp->sgw_u_fqcsid.pdn_conn_set_ident[itr];
-			}
-		}
-		memcpy(fqcsid, tmp, sizeof(fqcsid_t));
-	} else {
-		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
-			tmp = get_peer_addr_csids_entry(pfcp_sess_est_rsp->up_fseid.ipv4_address,
-					ADD);
-			if (tmp == NULL) {
-				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-				return -1;
-			}
-			tmp->node_addr = pfcp_sess_est_rsp->sgw_u_fqcsid.node_address;
-			memcpy(fqcsid, tmp, sizeof(fqcsid_t));
-		}
-	}
-
-	/* PGW FQ-CSID */
-	if (pfcp_sess_est_rsp->pgw_u_fqcsid.header.len) {
-		/* Stored the PGW CSID by PGW Node address */
-		tmp = get_peer_addr_csids_entry(pfcp_sess_est_rsp->pgw_u_fqcsid.node_address,
-				ADD);
-
-		if (tmp == NULL) {
-			LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-			return -1;
-		}
-		tmp->node_addr = pfcp_sess_est_rsp->pgw_u_fqcsid.node_address;
-
-		for(uint8_t itr = 0; itr < pfcp_sess_est_rsp->pgw_u_fqcsid.number_of_csids; itr++) {
-			uint8_t match = 0;
-			for (uint8_t itr1 = 0; itr1 < tmp->num_csid; itr1++) {
-				if (tmp->local_csid[itr1] == pfcp_sess_est_rsp->pgw_u_fqcsid.pdn_conn_set_ident[itr]) {
-					match = 1;
-				}
-			}
-			if (!match) {
-				tmp->local_csid[tmp->num_csid++] =
-					pfcp_sess_est_rsp->pgw_u_fqcsid.pdn_conn_set_ident[itr];
-			}
-		}
-		memcpy(fqcsid, tmp, sizeof(fqcsid_t));
-	} else {
-		if (cp_config->cp_type == PGWC) {
-			tmp = get_peer_addr_csids_entry(pfcp_sess_est_rsp->up_fseid.ipv4_address,
-					ADD);
-			if (tmp == NULL) {
-				LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-				return -1;
-			}
-			tmp->node_addr = pfcp_sess_est_rsp->pgw_u_fqcsid.node_address;
-			memcpy(fqcsid, tmp, sizeof(fqcsid_t));
-		}
-	}
-
-	/* TODO: Add the handling if SGW or PGW not support Partial failure */
-	/* Link peer node SGW or PGW csid with local csid */
-	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
-		ret = update_peer_csid_link(fqcsid, context->sgw_fqcsid);
-	} else if (cp_config->cp_type == PGWC) {
-		ret = update_peer_csid_link(fqcsid, context->pgw_fqcsid);
-	}
-
-	if (ret) {
-		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-		return -1;
-	}
-
-	/* Update entry for up session id with link local csid */
-	sess_csid *sess_t = NULL;
-	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
-		if (context->sgw_fqcsid) {
-			sess_t = get_sess_csid_entry(
-					(context->sgw_fqcsid)->local_csid[(context->sgw_fqcsid)->num_csid - 1]);
-		}
-	} else {
-		/* PGWC */
-		if (context->pgw_fqcsid) {
-			sess_t = get_sess_csid_entry(
-					(context->pgw_fqcsid)->local_csid[(context->pgw_fqcsid)->num_csid - 1]);
-		}
-	}
-
-	if (sess_t == NULL) {
-		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-		return -1;
-	}
-
-	/* Link local csid with session id */
-	sess_t->up_seid[sess_t->seid_cnt - 1] = dp_sess_id;
-
-	/* Update the UP CSID in the context */
-	context->up_fqcsid = fqcsid;
-
-#endif /* USE_CSID */
 
     pdn = (pdn_connection_t *)proc_context->pdn_context;
     assert(pdn != NULL);
@@ -959,12 +705,6 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 		fill_pgwc_create_session_response(&cs_resp,
 			sequence, context, ebi_index);
 
-#ifdef USE_CSID
-		if ((context->pgw_fqcsid)->num_csid) {
-			set_gtpc_fqcsid_t(&cs_resp.pgw_fqcsid, IE_INSTANCE_ZERO,
-					context->pgw_fqcsid);
-		}
-#endif /* USE_CSID */
 
 		uint16_t msg_len = encode_create_sess_rsp(&cs_resp, (uint8_t*)gtpv2c_tx);
 		msg_len = msg_len - 4;
@@ -1014,20 +754,6 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 
 		ret = fill_cs_request(&cs_req, context, ebi_index);
 
-#ifdef USE_CSID
-		/* Set the SGW FQ-CSID */
-		if ((context->sgw_fqcsid)->num_csid) {
-			set_gtpc_fqcsid_t(&cs_req.sgw_fqcsid, IE_INSTANCE_ONE,
-					context->sgw_fqcsid);
-			cs_req.sgw_fqcsid.node_address = ntohl(cp_config->s5s8_ip.s_addr);
-		}
-
-		/* Set the MME FQ-CSID */
-		if ((context->mme_fqcsid)->num_csid) {
-			set_gtpc_fqcsid_t(&cs_req.mme_fqcsid, IE_INSTANCE_ZERO,
-					context->mme_fqcsid);
-		}
-#endif /* USE_CSID */
 		if (ret < 0) {
 			LOG_MSG(LOG_DEBUG, "Failed to create the CSR request ");
 			return 0;
@@ -2466,40 +2192,6 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
 	fill_pfcp_sess_est_req(&pfcp_sess_est_req, pdn, sequence);
 
 
-#ifdef USE_CSID
-	/* Add the entry for peer nodes */
-	if (fill_peer_node_info(pdn, bearer)) {
-		LOG_MSG(LOG_ERROR, "Failed to fill peer node info and assignment of the CSID Error: %s",
-				strerror(errno));
-		return NULL;
-	}
-
-	/* Add entry for cp session id with link local csid */
-	sess_csid *tmp = NULL;
-	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
-		tmp = get_sess_csid_entry(
-				(context->sgw_fqcsid)->local_csid[(context->sgw_fqcsid)->num_csid - 1]);
-	} else {
-		/* PGWC */
-		tmp = get_sess_csid_entry(
-				(context->pgw_fqcsid)->local_csid[(context->pgw_fqcsid)->num_csid - 1]);
-	}
-
-	if (tmp == NULL) {
-		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
-		return NULL;
-	}
-
-	/* Link local csid with session id */
-	tmp->cp_seid[tmp->seid_cnt++] = pdn->seid;
-
-	/* Fill the fqcsid into the session est request */
-	if (fill_fqcsid_sess_est_req(&pfcp_sess_est_req, context)) {
-		LOG_MSG(LOG_ERROR, "Failed to fill FQ-CSID in Sess EST Req ERROR: %s",
-				strerror(errno));
-		return NULL;
-	}
-#endif /* USE_CSID */
 
 	/* Update PDN State */
 	pdn->state = PFCP_SESS_EST_REQ_SNT_STATE;

@@ -30,8 +30,6 @@ void init_pfcp_msg_handlers(void)
     pfcp_msg_handler[PFCP_SESSION_DELETION_RESPONSE] = handle_pfcp_session_delete_response_msg; 
     pfcp_msg_handler[PFCP_SESSION_REPORT_REQUEST] = handle_session_report_msg;
     pfcp_msg_handler[PFCP_PFD_MANAGEMENT_RESPONSE] = handle_pfcp_pfd_management_response_msg;
-    pfcp_msg_handler[PFCP_SESSION_SET_DELETION_REQUEST] = handle_pfcp_session_delete_request_msg; 
-    pfcp_msg_handler[PFCP_SESSION_SET_DELETION_RESPONSE] = handle_pfcp_set_deletion_response_msg; 
     return;
 }
 

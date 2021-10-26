@@ -32,10 +32,6 @@
 #include "cp_log.h"
 #include "assert.h"
 
-#ifdef USE_CSID
-#include "csid_struct.h"
-#endif /* USE_CSID */
-
 #define LOG_LEVEL_SET      (0x0001)
 #define IP_POOL_IP_SET     (0x0080)
 #define IP_POOL_MASK_SET   (0x0100)
@@ -47,9 +43,6 @@ pcap_dumper_t *pcap_dumper;
 char *config_update_base_folder = NULL;
 bool native_config_folder = false;
 
-#ifdef USE_CSID
-uint16_t local_csid = 0;
-#endif /* USE_CSID */
 
 struct cp_params cp_params;
 // _timer_t st_time; DELETE_CODE
@@ -168,10 +161,6 @@ main(int argc, char **argv)
     }
 
     init_cp();
-
-#ifdef USE_CSID
-    init_fqcsid_hash_tables();
-#endif /* USE_CSID */
 
     while(1) {
 		incoming_event_handler(NULL);
