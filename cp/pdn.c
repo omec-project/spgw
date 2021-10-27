@@ -12,6 +12,7 @@
 eps_bearer_t* 
 get_default_bearer(pdn_connection_t *pdn)
 {
+    // FIXME : isnt it like we need eps_bearers only 11 ?? why 15 
 	return pdn->eps_bearers[pdn->default_bearer_id - 5];
 
 }

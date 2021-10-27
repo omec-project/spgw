@@ -68,7 +68,7 @@ detach_event_handler(void *proc, void *msg_info)
         case CCA_RCVD_EVNT: {
         }
         case PFCP_SESS_DEL_RESP_RCVD_EVNT: {
-            process_sess_del_resp_handler(proc_context, msg);
+            process_pfcp_sess_del_resp_handler(proc_context, msg);
             break;
         }
         default:
@@ -115,7 +115,7 @@ process_ds_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 }
 
 int
-process_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
+process_pfcp_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 {
     int ret = 0;
 	uint16_t payload_length = 0;

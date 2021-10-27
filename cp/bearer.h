@@ -38,9 +38,10 @@ extern "C" {
 /* Need to handle case of multiple charging rule for signle bearer
  * this count will change once added handling
  * */
-#define NUMBER_OF_PDR_PER_BEARER 2
-#define NUMBER_OF_QER_PER_BEARER 2
-#define NUMBER_OF_URR_PER_BEARER 2
+//FIXME we need to have higher limit or dynamic allocations
+#define NUMBER_OF_PDR_PER_BEARER 16
+#define NUMBER_OF_QER_PER_BEARER 16
+#define NUMBER_OF_URR_PER_BEARER 16
 
 struct pdn_connection;
 /**
@@ -83,8 +84,9 @@ struct eps_bearer {
 	uint8_t num_packet_filters;
 	int packet_filter_map[MAX_FILTERS_PER_UE];
 
-	uint8_t num_dynamic_filters;
+	uint8_t num_dynamic_filters; // FIXME : change variable name 
 	struct dynamic_rule *dynamic_rules[16];
+    bool ambr_qer_flag;
 };
 
 typedef struct eps_bearer  eps_bearer_t;

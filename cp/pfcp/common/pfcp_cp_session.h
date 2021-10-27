@@ -147,7 +147,7 @@ process_delete_bearer_cmd_request(del_bearer_cmd_t *del_bearer_cmd, gtpv2c_heade
 
 pdr_t*
 fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
-		eps_bearer_t *bearer, uint8_t iface, uint8_t itr);
+		eps_bearer_t *bearer, uint8_t iface, uint8_t itr, uint32_t qer_id, uint32_t urr_id);
 
 /**
  * @brief  : Fill qer entry
@@ -157,7 +157,7 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
  * @retrun : Returns 0 in case of success , -1 otherwise
  */
 int
-fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer,uint8_t itr);
+fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer,uint8_t itr, bool apnAmbr);
 
 /**
  * @brief  : Process pfcp delete session response

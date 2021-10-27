@@ -173,6 +173,7 @@ struct pdn_connection {
 	struct dynamic_rule *dynamic_rules[16];
 
 	/* need to maintain reqs ptr for RAA*/
+    // FIXME : this should be just pointer..
 	policy_t policy;
 
 	/* timer entry data for stop timer session */

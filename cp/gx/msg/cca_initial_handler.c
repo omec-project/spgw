@@ -52,6 +52,7 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", msg->rx_msg.cca.session_id.val);
         return -1;
     }
+    // FIXME : no need to have gx_context in the subscriber context  
     gx_context = (gx_context_t *)temp_ue_context->gx_context;
     proc_context_t *proc_context = (proc_context_t *)gx_context->proc_context;
 

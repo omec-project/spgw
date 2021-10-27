@@ -66,7 +66,8 @@ struct proc_context {
 };
 typedef struct proc_context proc_context_t;
 
-// BUG : Should i check refCnt ?
+// FIXME - BUG : Should i check refCnt ?
+// read code and analyze why would proc have the msg_info 
 #define SET_PROC_MSG(proc, msg) { \
     if(proc->msg_info != NULL) { \
        msg_info_t *_tmp = (msg_info_t *)proc->msg_info;\

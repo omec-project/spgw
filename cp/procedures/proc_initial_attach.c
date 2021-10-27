@@ -38,6 +38,7 @@
 #include "upf_apis.h"
 #include "proc.h"
 #include "ue.h"
+#include "cp_common.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
 static uint32_t s5s8_sgw_gtpc_teid_offset;
@@ -83,6 +84,7 @@ initial_attach_event_handler(void *proc, void *msg_info)
     msg_info_t *msg = (msg_info_t *) msg_info;
     uint8_t event = msg->event;
 
+    // FIXME : event name instead of number 
     LOG_MSG(LOG_DEBUG4,"Received event %d ",event);
     switch(event) {
         case CS_REQ_RCVD_EVNT: {
@@ -227,6 +229,7 @@ initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg)
               return;
             }
         } else {
+            // FIXME : add proper comments 
             // UPF should allocate address..but if control plane has already allocated address
             // then release address 
             LOG_MSG(LOG_ERROR, "UPF supports UE IP address allocation feature ");
@@ -1107,10 +1110,12 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 		for(uint8_t itr=0; itr < bearer->pdr_count; itr++){
 			switch(itr){
 				case SOURCE_INTERFACE_VALUE_ACCESS:
-					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, itr);
+                    //FIXME : spgwc support, pass correct IDs to fill_pdr_entry 
+					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, itr, 1, 1);
 					break;
 				case SOURCE_INTERFACE_VALUE_CORE:
-					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, itr);
+                    //FIXME : spgwc support, pass correct IDs to fill_pdr_entry 
+					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, itr, 1, 1);
 					break;
 				default:
 					break;
@@ -1173,7 +1178,7 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
 	dynamic_rule->qos.arp.priority_level = GX_PRIORITY_LEVEL;
 	dynamic_rule->qos.arp.preemption_capability = PREEMPTION_CAPABILITY_DISABLED;
 	dynamic_rule->qos.arp.preemption_vulnerability = PREEMPTION_VALNERABILITY_ENABLED;
-	dynamic_rule->qos.ul_mbr =  REQUESTED_BANDWIDTH_UL;
+	dynamic_rule->qos.ul_mbr =  REQUESTED_BANDWIDTH_UL; // FIXME : we need bearer rate from profile
 	dynamic_rule->qos.dl_mbr =  REQUESTED_BANDWIDTH_DL;
 	dynamic_rule->qos.ul_gbr =  GURATEED_BITRATE_UL;
 	dynamic_rule->qos.dl_gbr =  GURATEED_BITRATE_DL;
@@ -1660,15 +1665,12 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	*/
 	sequence = get_pfcp_sequence_number(PFCP_SESSION_ESTABLISHMENT_REQUEST, sequence);
 	fill_pfcp_sess_est_req(&pfcp_sess_est_req, context->pdns[ebi_index], sequence);
-
-	/*Filling sequence number */
-	//pfcp_sess_est_req.header.seid_seqno.has_seid.seq_no  = sequence;
+    LOG_MSG(LOG_DEBUG,"fill_pfcp_sess_est_req complete");
 
 	/* Filling PDN structure*/
 	pfcp_sess_est_req.pdn_type.header.type = PFCP_IE_PDN_TYPE;
 	pfcp_sess_est_req.pdn_type.header.len = sizeof(uint8_t);
 	pfcp_sess_est_req.pdn_type.pdn_type_spare = 0;
-	//pfcp_sess_est_req.pdn_type.pdn_type =  0;//Vikram TBD PFCP_PDN_IP_TYPE_IPV4; // create_s5s8_session_request.pdn_type_ie->type ;
 
 	if (pdn->pdn_type.ipv4 == PDN_IP_TYPE_IPV4 && pdn->pdn_type.ipv6 == PDN_IP_TYPE_IPV6 ) {
 		pfcp_sess_est_req.pdn_type.pdn_type = PDN_IP_TYPE_IPV4V6;
@@ -1678,17 +1680,9 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		pfcp_sess_est_req.pdn_type.pdn_type = PDN_IP_TYPE_IPV6;
 	}
 
-	if (pdn->pdn_type.ipv4 == PDN_IP_TYPE_IPV4 && pdn->pdn_type.ipv6 == PDN_IP_TYPE_IPV6 ) {
-		pfcp_sess_est_req.pdn_type.pdn_type = PDN_IP_TYPE_IPV4V6;
-	} else if (pdn->pdn_type.ipv4 == PDN_IP_TYPE_IPV4) {
-		pfcp_sess_est_req.pdn_type.pdn_type = PDN_IP_TYPE_IPV4 ;
-	} else if (pdn->pdn_type.ipv6 == PDN_IP_TYPE_IPV4V6) {
-		pfcp_sess_est_req.pdn_type.pdn_type = PDN_IP_TYPE_IPV6;
-	}
-
-
-	uint8_t pfcp_msg[512]={0};
+	uint8_t pfcp_msg[MAX_PFCP_MSG_SIZE]={0};
 	int encoded = encode_pfcp_sess_estab_req_t(&pfcp_sess_est_req, pfcp_msg);
+	LOG_MSG(LOG_ERROR, "encoded PFCP message has size %d ",encoded);
 
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
 	header->message_len = htons(encoded - 4);
@@ -1700,13 +1694,6 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
     transData_t *trans_entry;
 	trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_pgwc_s5s8_create_session_request_pfcp_timeout);
     pdn->trans_entry = trans_entry;
-
-#ifdef TEMP
-	if (add_sess_entry_seid(context->pdns[ebi_index]->seid, resp) != 0) {
-		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
-		return -1;
-	}
-#endif
 
 	return 0;
 }
@@ -2116,7 +2103,7 @@ cca_msg_handler(proc_context_t *proc_context, msg_info_t *msg)
     int ret = 0;
 	pdn_connection_t *pdn = NULL;
 
-	/* Handle the CCR-T Message */
+    //FIXME 
 	if (msg->rx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
 		LOG_MSG(LOG_ERROR, "Expected GX CCAI and received GX CCR-T Response..!! ");
         gx_msg_proc_failure(proc_context);
@@ -2188,15 +2175,13 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
 
 	fill_pfcp_sess_est_req(&pfcp_sess_est_req, pdn, sequence);
 
-
-
 	/* Update PDN State */
 	pdn->state = PFCP_SESS_EST_REQ_SNT_STATE;
 
 	proc_context->state = PFCP_SESS_EST_REQ_SNT_STATE;
 
     transData_t *trans_entry = NULL;
-	uint8_t pfcp_msg[1024]={0};
+	uint8_t pfcp_msg[MAX_PFCP_MSG_SIZE]={0};
 	int encoded = encode_pfcp_sess_estab_req_t(&pfcp_sess_est_req, pfcp_msg);
 
 	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
