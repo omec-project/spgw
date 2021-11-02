@@ -59,16 +59,6 @@ extern int g_app_sock;
 const char *
 gx_type_str(uint8_t type);
 
-/**
- * @brief  : Maintains the Context for Gx interface
- */
-typedef struct gx_context_t {
-	uint8_t state;
-	uint8_t proc;
-	char gx_sess_id[MAX_LEN];
-    void *proc_context;
-} gx_context_t;
- 
 #pragma pack()
 
 /**

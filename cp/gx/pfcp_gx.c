@@ -806,15 +806,12 @@ gx_update_bearer_req(pdn_connection_t *pdn)
         pcc_rule = next_pcc_rule;
 	}
 
-	gx_context_t *gx_context = NULL;
 	/* Retrive Gx_context based on Sess ID. */
-	ue_context_t *temp_ue_context = (ue_context_t *)get_gx_context((uint8_t*)pdn->gx_sess_id);
-	if (temp_ue_context == NULL) {
+	ue_context_t *ue_context = (ue_context_t *)get_ue_context_from_gxsessid((uint8_t*)pdn->gx_sess_id);
+	if (ue_context == NULL) {
 		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 		return DIAMETER_UNKNOWN_SESSION_ID;
 	}
-    gx_context = (gx_context_t *)temp_ue_context->gx_context;
-    assert(gx_context != NULL);
 
 	/* Update UE State */
 	pdn->state = UPDATE_BEARER_REQ_SNT_STATE;

@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include <arpa/inet.h>
+#include "cp_common.h"
 #include "gtpv2_ie.h"
 #include "cp_interface.h"
 #include "pfcp_cp_struct.h"
@@ -28,7 +29,6 @@
 #include "proc_struct.h"
 #include <sys/queue.h>
 #include "sm_struct.h"
-#include "sess_const.h"
 #include "policy.h"
 
 #ifdef __cplusplus

@@ -36,16 +36,16 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 				&& context->eps_bearers[ebi_index]->pdn != NULL ) {
 				pdn = context->eps_bearers[ebi_index]->pdn;
 			}
-			else { return; }
-			gx_context_t *gx_context = NULL;
+			else { 
+                return; 
+            }
 			uint16_t msglen = 0;
 			char *buffer = NULL;
 			/* Retrive Gx_context based on Sess ID. */
-			ue_context_t *temp_ue_context  = (ue_context_t *)get_gx_context((uint8_t *)pdn->gx_sess_id);
-			if (temp_ue_context == NULL) {
+			ue_context_t *ue_context  = (ue_context_t *)get_ue_context_from_gxsessid((uint8_t *)pdn->gx_sess_id);
+			if (ue_context == NULL) {
 				LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 			}else{
-                gx_context = (gx_context_t*)temp_ue_context->gx_context;
 				gx_msg ccr_request = {0};
 				/* VS: Set the Msg header type for CCR-T */
 				ccr_request.msg_type = GX_CCR_MSG ;
@@ -76,10 +76,9 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 
 				gx_send(my_sock.gx_app_sock, buffer, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 
-				if(remove_gx_context((uint8_t*)pdn->gx_sess_id) < 0){
+				if(remove_gxsessid_to_context((uint8_t*)pdn->gx_sess_id) < 0){
 					LOG_MSG(LOG_ERROR, " Error on gx_context_by_sess_id_hash deletion");
 				}
-				free(gx_context);
 			}
 		}else {
 			LOG_MSG(LOG_ERROR, "NO ENTRY FOUND FOR EBI VALUE [%d], msg = %p ", ebi, msg);
@@ -94,17 +93,10 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error, uint16_t se
 	uint16_t msg_len = 0;
 	char *buffer = NULL;
 	gx_msg raa = {0};
-	gx_context_t *gx_context = NULL;
 	uint16_t msg_type_ofs = 0;
 	uint16_t msg_body_ofs = 0;
 	uint16_t rqst_ptr_ofs = 0;
 	uint16_t msg_len_total = 0;
-
-
-	/* Allocate the memory for Gx Context */
-	gx_context = (gx_context_t *)calloc(1, sizeof(gx_context_t));
-
-	//strncpy(gx_context->gx_sess_id, context->pdns[ebi_index]->gx_sess_id, strlen(context->pdns[ebi_index]->gx_sess_id));
 
 
 	raa.data.cp_raa.session_id.len = strlen(pdn->gx_sess_id);
@@ -121,9 +113,6 @@ void gen_reauth_error_response(pdn_connection_t *pdn, int16_t error, uint16_t se
 
 	/* Update UE State */
 	pdn->state = RE_AUTH_ANS_SNT_STATE;
-
-	/* VS: Set the Gx State for events */
-	gx_context->state = RE_AUTH_ANS_SNT_STATE;
 
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_raa_calc_length(&raa.data.cp_raa);

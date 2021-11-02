@@ -853,15 +853,13 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 	uint16_t msg_len = 0;
 	char *buffer = NULL;
 	gx_msg ccr_request = {0};
-	gx_context_t *gx_context = NULL;
 
-	ue_context_t *temp_ue_context = (ue_context_t *)get_gx_context((uint8_t*)pdn->gx_sess_id);
-	if (temp_ue_context == NULL) 
+	ue_context_t *ue_context = (ue_context_t *)get_ue_context_from_gxsessid((uint8_t*)pdn->gx_sess_id);
+	if (ue_context == NULL) 
     {
 	    LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 	    return -1;
 	}
-    gx_context = (gx_context_t *)temp_ue_context->gx_context;
 
 	/* VS: Set the Msg header type for CCR */
 	ccr_request.msg_type = GX_CCR_MSG ;
@@ -1015,10 +1013,6 @@ gen_ccru_request(pdn_connection_t *pdn, eps_bearer_t *bearer , mod_bearer_req_t 
 
 	/* Update UE State */
 	pdn->state = CCRU_SNT_STATE;
-
-	/* VS: Set the Gx State for events */
-	gx_context->state = CCRU_SNT_STATE;
-	//gx_context->proc = pdn->proc;
 
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);

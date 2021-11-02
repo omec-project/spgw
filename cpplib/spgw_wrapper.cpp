@@ -539,17 +539,17 @@ extern "C"
     
     /* Gx context APIs start */
 
-    int gx_context_entry_add(const uint8_t *sess_id, void *context)
+    int gxsessid_context_entry_add(const uint8_t *sess_id, void *context)
     {
         return ue_table->add_gx_sessid_to_ue_mapping(sess_id, context);
     }
 
-    void* get_gx_context(const uint8_t *sess_id) 
+    void* get_ue_context_from_gxsessid(const uint8_t *sess_id) 
     {
         return ue_table->find_ue_from_gx_sessid(sess_id);
     }
 
-    int remove_gx_context(const uint8_t *sess_id)
+    int remove_gxsessid_to_context(const uint8_t *sess_id)
     {
         return ue_table->delete_gx_sessid_ue_mapping(sess_id);
     }

@@ -38,7 +38,6 @@ typedef struct qer_info_t {
 	/*VS: TODO: Remove qer id*/
 	uint32_t qer_id;							/* QER ID */
 	uint32_t qer_corr_id_val;					/* QER Correlation ID */
-	uint64_t session_id;						/* Session ID */
 	uint8_t qci;
 	gate_status_t gate_status;					/* Gate Status UL/DL */
 	mbr_t max_bitrate;							/* Maximum Bitrate */

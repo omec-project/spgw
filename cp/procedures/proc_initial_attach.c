@@ -1942,28 +1942,17 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 	uint16_t msg_len = 0;
 	char *buffer = NULL;
 	gx_msg ccr_request = {0};
-	gx_context_t *gx_context = NULL;
     ue_context_t *context = (ue_context_t *)proc_context->ue_context;
 
 	/* VS: Generate unique call id per PDN connection */
 	context->pdns[ebi_index]->call_id = generate_call_id();
 
-	/** Allocate the memory for Gx Context
-	 */
-	gx_context = (gx_context_t *)calloc(1, sizeof(gx_context_t));
-
-    context->gx_context = gx_context;
-    gx_context->proc_context = proc_context;
-	/* VS: Generate unique session id for communicate over the Gx interface */
-	if (gen_sess_id_for_ccr(gx_context->gx_sess_id,
+	/* Generate unique session id for communicate over the Gx interface */
+	if (gen_sess_id_for_ccr(context->pdns[ebi_index]->gx_sess_id,
 				context->pdns[ebi_index]->call_id)) {
 		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
-
-	/* Maintain the gx session id in context */
-	memcpy(context->pdns[ebi_index]->gx_sess_id,
-			gx_context->gx_sess_id , strlen(gx_context->gx_sess_id));
 
 	/* VS: Maintain the PDN mapping with call id */
 	if (add_pdn_conn_entry(context->pdns[ebi_index]->call_id,
@@ -2044,7 +2033,7 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 
 
 	/* VS: Fill the Credit Crontrol Request to send PCRF */
-	if(fill_ccr_request(&ccr_request.data.ccr, context, ebi_index, gx_context->gx_sess_id) != 0) {
+	if(fill_ccr_request(&ccr_request.data.ccr, context, ebi_index, context->pdns[ebi_index]->gx_sess_id) != 0) {
 		LOG_MSG(LOG_ERROR, "Failed CCR request filling process");
 		return -1;
 	}
@@ -2055,16 +2044,11 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
     increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_I, saddr_in.sin_addr.s_addr);
 
 
-    #ifdef TEMP
 	/* Update UE State */
 	context->pdns[ebi_index]->state = CCR_SNT_STATE;
-    #endif
-
-	/* VS: Set the Gx State for events */
-	gx_context->state = CCR_SNT_STATE;
 
 	/* VS: Maintain the Gx context mapping with Gx Session id */
-	if (gx_context_entry_add((uint8_t*)gx_context->gx_sess_id, context) < 0) {
+	if (gxsessid_context_entry_add((uint8_t*)context->pdns[ebi_index]->gx_sess_id, context) < 0) {
 		LOG_MSG(LOG_ERROR, "Error: %s ", strerror(errno));
 		return -1;
 	}
@@ -2103,8 +2087,7 @@ cca_msg_handler(proc_context_t *proc_context, msg_info_t *msg)
     int ret = 0;
 	pdn_connection_t *pdn = NULL;
 
-    //FIXME 
-	if (msg->rx_msg.cca.cc_request_type == TERMINATION_REQUEST) {
+	if (msg->rx_msg.cca.cc_request_type != INITIAL_REQUEST) {
 		LOG_MSG(LOG_ERROR, "Expected GX CCAI and received GX CCR-T Response..!! ");
         gx_msg_proc_failure(proc_context);
 		return 0;

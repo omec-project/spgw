@@ -72,7 +72,6 @@ void dispatch_cca(msg_info_t *msg)
 int handle_cca_update_msg(msg_info_t **msg_p)
 {
     msg_info_t *msg = *msg_p;
-    gx_context_t *gx_context = NULL;
     struct sockaddr_in saddr_in;
     saddr_in.sin_family = AF_INET;
     inet_aton("127.0.0.1", &(saddr_in.sin_addr));
@@ -80,13 +79,12 @@ int handle_cca_update_msg(msg_info_t **msg_p)
 
     pdn_connection_t *pdn_cntxt = NULL;
     /* Retrive Gx_context based on Sess ID. */
-    ue_context_t *temp_ue_context = (ue_context_t *) get_gx_context((uint8_t*)msg->rx_msg.cca.session_id.val);
-    if (temp_ue_context == NULL) {
+    ue_context_t *ue_context = (ue_context_t *) get_ue_context_from_gxsessid((uint8_t*)msg->rx_msg.cca.session_id.val);
+    if (ue_context == NULL) {
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]",
                 msg->rx_msg.cca.session_id.val);
         return -1;
     }
-    gx_context = (gx_context_t *)temp_ue_context->gx_context;
 
     if(msg->rx_msg.cca.presence.result_code &&
             msg->rx_msg.cca.result_code != 2001){
@@ -110,7 +108,7 @@ int handle_cca_update_msg(msg_info_t **msg_p)
         return -1;
     }
     /* Retrive the Session state and set the event */
-    proc_context_t *proc_context = (proc_context_t *)gx_context->proc_context;
+    proc_context_t *proc_context = (proc_context_t *)get_first_procedure(ue_context);
     msg->event = CCA_RCVD_EVNT;
     LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:%s[%u], Session Id:%s, "

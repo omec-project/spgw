@@ -561,3 +561,15 @@ const char * get_event_string(int value)
     }
     return "UNDEFINED_EVNT";
 }
+
+proc_context_t*
+get_first_procedure(void *context)
+{
+    ue_context_t *ue_context = (ue_context_t*)context;
+
+    if(ue_context != NULL) {
+        proc_context_t *proc_ctxt = TAILQ_FIRST(&ue_context->pending_sub_procs);
+        return proc_ctxt;
+    }
+    return NULL;
+}

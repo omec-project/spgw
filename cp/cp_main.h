@@ -11,13 +11,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/**
- * max length of name string.
- */
-#define MAX_LEN 128
 
 extern int32_t conn_cnt;
-
 
 #ifdef __cplusplus
 }

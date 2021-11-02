@@ -400,16 +400,13 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 	pdn->state = PFCP_SESS_DEL_RESP_RCVD_STATE;
 	if ((cp_config->gx_enabled) && (cp_config->cp_type != SGWC)) {
 
-		gx_context_t *gx_context = NULL;
-
 		/* Retrive Gx_context based on Sess ID. */
-		ue_context_t *temp_context  = (ue_context_t *)get_gx_context((uint8_t *)pdn->gx_sess_id); 
+		ue_context_t *temp_context  = (ue_context_t *)get_ue_context_from_gxsessid((uint8_t *)pdn->gx_sess_id); 
 		if (temp_context == NULL) {
 			LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 			return -1;
 		}
         assert(temp_context == context);
-        gx_context = (gx_context_t *)temp_context->gx_context;
 
 		/* VS: Set the Msg header type for CCR-T */
 		ccr_request->msg_type = GX_CCR_MSG ;
@@ -429,10 +426,6 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 		}
 		/* Update UE State */
 		pdn->state = CCR_SNT_STATE;
-
-		/* VS: Set the Gx State for events */
-		gx_context->state = CCR_SNT_STATE;
-		gx_context->proc = proc_context->proc_type;
 
 		/* VS: Calculate the max size of CCR msg to allocate the buffer */
 		*msglen = gx_ccr_calc_length(&ccr_request->data.ccr);

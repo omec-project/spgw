@@ -56,7 +56,6 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
 {
     msg_info_t *msg = *msg_p;
     int ret;
-    gx_context_t *gx_context = NULL;
     struct sockaddr_in saddr_in;
     saddr_in.sin_family = AF_INET;
     inet_aton("127.0.0.1", &(saddr_in.sin_addr));
@@ -82,12 +81,13 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
     }
 
     /* Retrive Gx_context based on Sess ID. */
-    ue_context_t *temp_ue_context  = (ue_context_t *)get_gx_context((uint8_t*)msg->rx_msg.cca.session_id.val);
-    if (temp_ue_context == NULL) {
+    ue_context_t *ue_context  = (ue_context_t *)get_ue_context_from_gxsessid((uint8_t*)msg->rx_msg.cca.session_id.val);
+    if (ue_context == NULL) {
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", msg->rx_msg.cca.session_id.val);
         return -1;
     }
-    gx_context = (gx_context_t*)temp_ue_context->gx_context;
+
+    proc_context_t *proc_context = get_first_procedure(ue_context);
 
     if(msg->rx_msg.cca.presence.result_code &&
             msg->rx_msg.cca.result_code != 2001){
@@ -99,7 +99,9 @@ int handle_ccr_terminate_msg(msg_info_t **msg_p)
 
     /* Retrive the Session state and set the event */
     msg->event = CCA_RCVD_EVNT;
-    msg->proc = gx_context->proc;
+    msg->proc = proc_context->proc_type;
+    msg->pdn_context = pdn_cntxt;
+    msg->ue_context = ue_context;
     LOG_MSG(LOG_DEBUG, "Callback called for "
             "Msg_Type:%s[%u], Session Id:%s, "
             "Event:%s",
@@ -121,23 +123,20 @@ int
 cca_t_msg_handler(void *data, void *unused_param)
 {
 	msg_info_t *msg = (msg_info_t *)data;
-	gx_context_t *gx_context = NULL;
 
     LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 
 	/* Retrive Gx_context based on Sess ID. */
-	ue_context_t *temp_ue_context = (ue_context_t *) get_gx_context(msg->rx_msg.cca.session_id.val);
-	if (temp_ue_context == NULL) {
+	ue_context_t *ue_context = (ue_context_t *) get_ue_context_from_gxsessid(msg->rx_msg.cca.session_id.val);
+	if (ue_context == NULL) {
 		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]",
 				msg->rx_msg.cca.session_id.val);
 		return -1;
 	}
 
-    gx_context = (gx_context_t *)temp_ue_context->gx_context;
-	if(remove_gx_context((uint8_t*)msg->rx_msg.cca.session_id.val) < 0) {
+	if(remove_gxsessid_to_context((uint8_t*)msg->rx_msg.cca.session_id.val) < 0) {
 		LOG_MSG(LOG_ERROR, "Error on gx_context_by_sess_id_hash deletion");
 	}
     LOG_MSG(LOG_DEBUG, "Cleanup - gx session ");
-	free(gx_context);
 	return 0;
 }

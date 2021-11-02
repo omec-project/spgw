@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <arpa/inet.h>
+#include "cp_common.h"
 #include "gtpv2_ie.h"
 #include "cp_interface.h"
 #include "pfcp_cp_struct.h"
@@ -29,7 +30,6 @@
 #include "proc_struct.h"
 #include <sys/queue.h>
 #include "sm_struct.h"
-#include "sess_const.h"
 #include "bearer.h"
 
 #ifdef __cplusplus
@@ -169,7 +169,7 @@ struct pdn_connection {
 
 	struct eps_bearer *packet_filter_map[MAX_FILTERS_PER_UE];
 
-	char gx_sess_id[MAX_LEN];
+	char gx_sess_id[MAX_SESS_ID_LEN];
 	struct dynamic_rule *dynamic_rules[16];
 
 	/* need to maintain reqs ptr for RAA*/

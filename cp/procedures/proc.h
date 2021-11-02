@@ -19,6 +19,9 @@ start_procedure(proc_context_t *proc);
 void 
 end_procedure(proc_context_t *proc);
 
+proc_context_t*
+get_first_procedure(void *ue_context);
+
 /**
  * @brief  : Get proc name from enum
  * @param  : value , enum value of procedure

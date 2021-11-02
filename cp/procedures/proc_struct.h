@@ -47,7 +47,6 @@ struct proc_context {
     transData_t*    gtpc_trans;
     event_handler_t handler;
     void            *msg_info;
-    void            *gx_context;
     uint32_t        call_id;
     uint16_t        rar_seq_num;
 	TAILQ_ENTRY(proc_context) next_sub_proc;

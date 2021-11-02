@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <arpa/inet.h>
+#include "cp_common.h"
 #include "gtpv2_ie.h"
 #include "cp_interface.h"
 #include "pfcp_cp_struct.h"
@@ -31,7 +32,6 @@
 #include "sm_struct.h"
 #include "pdn.h"
 #include "bearer.h"
-#include "sess_const.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -328,7 +328,6 @@ struct ue_context {
     upf_context_t  *upf_context;
     sub_profile_t  *sub_prof; /* Requirement. - Bug - free the sub */
     uint32_t       dns_enable;
-    void    *gx_context;
 
     /* Temp - need to find right place to put this */
     /* Received PCO from the UE during attach. Once CSRsp sent, release this ? or should

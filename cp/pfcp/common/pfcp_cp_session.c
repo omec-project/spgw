@@ -1157,7 +1157,7 @@ int fill_sdf_rules(pfcp_sess_estab_req_t* pfcp_sess_est_req,
     int ret = 0;
     int sdf_filter_count = 0;
     /*VG convert pkt_filter_strucutre to char string*/
-    pfcp_sess_est_req->create_pdr[pdr_counter].precedence.prcdnc_val = dynamic_rules->precedence;
+    //pfcp_sess_est_req->create_pdr[pdr_counter].precedence.prcdnc_val = dynamic_rules->precedence;
     // itr is for flow information counter
     // sdf_filter_count is for SDF information counter
     for(int itr = 0; itr < dynamic_rules->num_flw_desc; itr++) {
@@ -1204,7 +1204,6 @@ fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr, bool ap
 	}
 	qer_ctxt->qer_id = bearer->qer_id[itr].qer_id;
 	qer_ctxt->qci = bearer->qos.qci;
-	qer_ctxt->session_id = pdn->seid; // FIXME : why this exist?
     if(apnAmbr == true) {
         qer_ctxt->max_bitrate.ul_mbr = pdn->apn_ambr.ambr_uplink;
 	    qer_ctxt->max_bitrate.dl_mbr = pdn->apn_ambr.ambr_downlink;
@@ -1499,6 +1498,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 
             // Fill 1st PDR entry and corresponding rules  
             pdr_t *temp_pdr = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, bearer->pdr_count, qer_id, urr_id);
+            temp_pdr->prcdnc_val = pcc_rule->dyn_rule->precedence; 
 			pcc_rule->dyn_rule->pdr[0] = temp_pdr; 
             temp_pdr->dynamic_rule = pcc_rule->dyn_rule; 
 
@@ -1521,6 +1521,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			fill_qer_entry(pdn, bearer, bearer->qer_count, false, f_status);
 
 			temp_pdr = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, bearer->pdr_count, qer_id, urr_id);
+            temp_pdr->prcdnc_val = pcc_rule->dyn_rule->precedence; 
 			pcc_rule->dyn_rule->pdr[1] = temp_pdr; 
             temp_pdr->dynamic_rule = pcc_rule->dyn_rule; 
 
