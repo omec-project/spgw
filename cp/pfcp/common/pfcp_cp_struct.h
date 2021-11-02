@@ -38,7 +38,7 @@ typedef struct qer_info_t {
 	/*VS: TODO: Remove qer id*/
 	uint32_t qer_id;							/* QER ID */
 	uint32_t qer_corr_id_val;					/* QER Correlation ID */
-	uint64_t session_id;						/* Session ID */
+	uint8_t qci;
 	gate_status_t gate_status;					/* Gate Status UL/DL */
 	mbr_t max_bitrate;							/* Maximum Bitrate */
 	gbr_t guaranteed_bitrate;					/* Guaranteed Bitrate */
@@ -75,6 +75,7 @@ typedef struct pdr_info_t {
 	urr_id_t urr_id[MAX_LIST_SIZE];					/* Collection of URR IDs */
 	qer_id_t qer_id[MAX_LIST_SIZE];					/* Collection of QER IDs */
 	actvt_predef_rules rules[MAX_LIST_SIZE];	/* Collection of active predefined rules */
+	struct dynamic_rule *dynamic_rule;
 }pdr_t;
 
 /**

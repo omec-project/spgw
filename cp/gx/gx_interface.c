@@ -532,26 +532,24 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 	uint16_t msg_len = 0;
 	char *buffer = NULL;
 	gx_msg ccr_request = {0};
-	gx_context_t *gx_context = NULL;
 
-	ue_context_t *temp_ue_context = (ue_context_t *)get_gx_context((uint8_t *)pdn->gx_sess_id);
-	if (temp_ue_context == NULL) {
+	ue_context_t *ue_context = (ue_context_t *)get_ue_context_from_gxsessid((uint8_t *)pdn->gx_sess_id);
+	if (ue_context == NULL) {
 		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 	    return -1;
 	}
-    gx_context = (gx_context_t*)temp_ue_context->gx_context;
-	/* VS: Set the Msg header type for CCR */
+	/* Set the Msg header type for CCR */
 	ccr_request.msg_type = GX_CCR_MSG ;
 
-	/* VS: Set Credit Control Request type */
+	/* Set Credit Control Request type */
 	ccr_request.data.ccr.presence.cc_request_type = PRESENT;
 	ccr_request.data.ccr.cc_request_type = UPDATE_REQUEST ;
 
-	/* VG: Set Credit Control Bearer opertaion type */
+	/* Set Credit Control Bearer opertaion type */
 	ccr_request.data.ccr.presence.bearer_operation = PRESENT;
 	ccr_request.data.ccr.bearer_operation = TERMINATION;
 
-	/* VS:TODO: Need to check the bearer identifier value */
+	/* TODO: Need to check the bearer identifier value */
 	ccr_request.data.ccr.presence.bearer_identifier = PRESENT ;
 	ccr_request.data.ccr.bearer_identifier.len =
 		int_to_str((char *)ccr_request.data.ccr.bearer_identifier.val,
@@ -649,9 +647,6 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 	/* Update UE State */
 	pdn->state = CCRU_SNT_STATE;
 
-	/* VS: Set the Gx State for events */
-	gx_context->state = CCRU_SNT_STATE;
-	//gx_context->proc = pdn->proc;
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
 	buffer = (char *)calloc(1, msg_len + sizeof(ccr_request.msg_type));
@@ -686,7 +681,7 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 static int
 gen_sess_id_string(char *str_buf, char *timestamp , uint32_t value)
 {
-	char buf[MAX_LEN] = {0};
+	char buf[MAX_SESS_ID_LEN] = {0};
 	int len = 0;
 
 	if (timestamp == NULL)
@@ -720,7 +715,7 @@ get_timestamp(char *timestamp)
 	time_t t = time(NULL);
 	struct tm *tmp = localtime(&t);
 
-	strftime(timestamp, MAX_LEN, "%Y%m%d%H%M%S", tmp);
+	strftime(timestamp, MAX_SESS_ID_LEN, "%Y%m%d%H%M%S", tmp);
 	return 0;
 }
 
@@ -730,7 +725,7 @@ get_timestamp(char *timestamp)
 int8_t
 gen_sess_id_for_ccr(char *sess_id, uint32_t call_id)
 {
-	char timestamp[MAX_LEN] = {0};
+	char timestamp[MAX_SESS_ID_LEN] = {0};
 
 	get_timestamp(timestamp);
 
@@ -749,7 +744,7 @@ int
 retrieve_call_id(char *str, uint32_t *call_id)
 {
 	uint8_t idx = 0, index = 0;
-	char buf[MAX_LEN] = {0};
+	char buf[MAX_SESS_ID_LEN] = {0};
 
 	if(str == NULL)
 	{

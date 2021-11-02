@@ -146,7 +146,7 @@ int gx_cca_cb
 	/* retrieve the original query associated with the answer */
     struct msg_hdr *hdr=NULL;
     CHECK_FCT( fd_msg_hdr(ans, &hdr) );
-    LOG_MSG(LOG_DEBUG, "end to end id = %d n CCA message", hdr->msg_eteid);
+    LOG_MSG(LOG_DEBUG, "end to end id = %u n CCA message", hdr->msg_eteid);
 	CHECK_FCT(fd_msg_answ_getq (ans, &qry));
 	ret = gx_cca_parse(*msg, &(gx_resp.data.cp_cca));
 

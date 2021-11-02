@@ -3,7 +3,6 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
-
 #include "pfcp_cp_util.h"
 #include "pfcp_enum.h"
 #include "pfcp_cp_set_ie.h"
@@ -36,8 +35,10 @@
 #include "pfcp_cp_interface.h"
 #include "cp_log.h"
 
+#ifdef PDR_DEBUG
+static void print_pdr(pdn_connection_t *);
+#endif
 
-#define size sizeof(pfcp_sess_mod_req_t) /* ajay - clean this */
 /* Header Size of set_upd_forwarding_param ie */
 #define UPD_PARAM_HEADER_SIZE 4
 
@@ -119,7 +120,6 @@ fill_pfcp_sess_set_del_req( pfcp_sess_set_del_req_t *pfcp_sess_set_del_req)
 }
 
 
-#define MAX_PDR_PER_RULE 2
 int
 fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dyn_rule, eps_bearer_t *bearer)
 {
@@ -131,7 +131,7 @@ fill_create_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
     uint8_t urr_idx = 0;
     uint32_t ue_ip_flags = 0; // TODO : analyze why we need to send ue_ip_address in pdi in pfcp modify session
 
-	for(int i=0; i<MAX_PDR_PER_RULE; i++)
+	for(int i=0; i<bearer->pdr_count; i++)
 	{
 		pdr = &(pfcp_sess_mod_req->create_pdr[i]);
 		far = &(pfcp_sess_mod_req->create_far[i]);
@@ -280,7 +280,7 @@ fill_update_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, dynamic_rule_t *dy
 	pfcp_update_far_ie_t *far = NULL;
 	pfcp_update_qer_ie_t *qer = NULL;
 
-	for(int i=0; i<MAX_PDR_PER_RULE; i++)
+	for(int i=0; i< 2; i++) // FIXME : dedicated bearer
 	{
 		pdr = &(pfcp_sess_mod_req->update_pdr[pfcp_sess_mod_req->update_pdr_count+i]);
 		far = &(pfcp_sess_mod_req->update_far[pfcp_sess_mod_req->update_far_count+i]);
@@ -407,7 +407,7 @@ fill_remove_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer_t *bear
 {
 	pfcp_update_far_ie_t *far = NULL;
 
-	for(int i=0; i<MAX_PDR_PER_RULE; i++)
+	for(int i=0; i<bearer->pdr_count; i++)
 	{
 		far = &(pfcp_sess_mod_req->update_far[pfcp_sess_mod_req->update_far_count]);
 
@@ -635,7 +635,7 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 
 	/*SP: This depends on condition  if the CP function requests the UP function to create a new BAR
 	  Need to add condition to check if CP needs creation of BAR*/
-	for( int i = 0; i < pfcp_sess_mod_req->create_pdr_count ; i++){
+	for( int i = 0; i < pfcp_sess_mod_req->create_pdr_count ; i++) {
 		if((pfcp_sess_mod_req->create_pdr[i].header.len) &&
 				(pfcp_sess_mod_req->create_pdr[i].far_id.header.len)){
 			for( int j = 0; j < pfcp_sess_mod_req->create_far_count ; j++){
@@ -649,40 +649,38 @@ fill_pfcp_sess_mod_req( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 	}
 
 	/*SP: Adding FAR IE*/
-	for(uint8_t itr1 = 0; itr1 < pfcp_sess_mod_req->update_far_count ; itr1++) {
-		for(uint8_t itr = 0; itr < bearer->pdr_count ; itr++) {
-			if(bearer->pdrs[itr]->pdi.src_intfc.interface_value !=
-					update_far[itr1].upd_frwdng_parms.dst_intfc.interface_value){
-				pdr_ctxt = bearer->pdrs[itr];
-				updating_far(&(pfcp_sess_mod_req->update_far[itr1]));
-				pfcp_sess_mod_req->update_far[itr1].far_id.far_id_value =
-					pdr_ctxt->far.far_id_value;
-				pfcp_sess_mod_req->update_far[itr1].apply_action.forw = PRESENT;
-				if (pfcp_sess_mod_req->update_far[itr1].apply_action.forw == PRESENT) {
-					uint16_t len = 0;
-					len += set_upd_forwarding_param(&(pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms));
-					/* Currently take as hardcoded value */
-					len += UPD_PARAM_HEADER_SIZE;
-					pfcp_sess_mod_req->update_far[itr1].header.len += len;
-				}
-				pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.outer_hdr_creation.teid =
-					update_far[itr1].upd_frwdng_parms.outer_hdr_creation.teid;
-				pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.outer_hdr_creation.ipv4_address =
-					(update_far[itr1].upd_frwdng_parms.outer_hdr_creation.ipv4_address);
-				pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.dst_intfc.interface_value =
-					update_far[itr1].upd_frwdng_parms.dst_intfc.interface_value;
+    LOG_MSG(LOG_DEBUG,"pfcp sess mod req %d, bearer pdr count %d ", pfcp_sess_mod_req->update_far_count, bearer->pdr_count);
+	uint8_t itr1 = 0; 
+	for(uint8_t itr = 0; itr < bearer->pdr_count ; itr++) {
+		if (SOURCE_INTERFACE_VALUE_ACCESS == bearer->pdrs[itr]->pdi.src_intfc.interface_value) {
+            continue;
+        }
+		pdr_ctxt = bearer->pdrs[itr];
+		updating_far(&(pfcp_sess_mod_req->update_far[itr1]));
+        LOG_MSG(LOG_DEBUG,"updating FAR %d in modification message",itr1);
+		pfcp_sess_mod_req->update_far[itr1].far_id.far_id_value = pdr_ctxt->far.far_id_value;
+		pfcp_sess_mod_req->update_far[itr1].apply_action.forw = PRESENT;
+        /* below block should be logically part of updating far */
+		uint16_t len = 0;
+		len += set_upd_forwarding_param(&(pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms));
+		/* Currently take as hardcoded value */
+		len += UPD_PARAM_HEADER_SIZE;
+		pfcp_sess_mod_req->update_far[itr1].header.len += len;
 
-				if(x2_handover_flag) {
+		pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.outer_hdr_creation.teid =
+			update_far[itr].upd_frwdng_parms.outer_hdr_creation.teid;
+		pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.outer_hdr_creation.ipv4_address =
+			(update_far[itr].upd_frwdng_parms.outer_hdr_creation.ipv4_address);
+		pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.dst_intfc.interface_value =
+			update_far[itr].upd_frwdng_parms.dst_intfc.interface_value;
 
-					set_pfcpsmreqflags(&(pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.pfcpsmreq_flags));
-					pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.pfcpsmreq_flags.sndem = 1;
-					pfcp_sess_mod_req->update_far[itr1].header.len += sizeof(struct  pfcp_pfcpsmreq_flags_ie_t);
-					pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.header.len += sizeof(struct  pfcp_pfcpsmreq_flags_ie_t);
-
-				}
-			}
-
+		if(x2_handover_flag) {
+			set_pfcpsmreqflags(&(pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.pfcpsmreq_flags));
+			pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.pfcpsmreq_flags.sndem = 1;
+			pfcp_sess_mod_req->update_far[itr1].header.len += sizeof(struct  pfcp_pfcpsmreq_flags_ie_t);
+			pfcp_sess_mod_req->update_far[itr1].upd_frwdng_parms.header.len += sizeof(struct  pfcp_pfcpsmreq_flags_ie_t);
 		}
+        itr1++;
 	}
 
 	switch (cp_config->cp_type)
@@ -881,8 +879,7 @@ fill_pdr_far_qer_using_bearer(pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 				(char *)&bearer->pdrs[itr]->pdi.ntwk_inst.ntwk_inst, 32);
 		}
 
-		if (
-				((PGWC == cp_config->cp_type) || (SAEGWC == cp_config->cp_type)) &&
+		if ( ((PGWC == cp_config->cp_type) || (SAEGWC == cp_config->cp_type)) &&
 				(SOURCE_INTERFACE_VALUE_CORE ==
 				bearer->pdrs[itr]->pdi.src_intfc.interface_value)) {
 
@@ -1160,9 +1157,7 @@ int fill_sdf_rules(pfcp_sess_estab_req_t* pfcp_sess_est_req,
     int ret = 0;
     int sdf_filter_count = 0;
     /*VG convert pkt_filter_strucutre to char string*/
-    LOG_MSG(LOG_DEBUG, "filling sdf rules");
-
-    pfcp_sess_est_req->create_pdr[pdr_counter].precedence.prcdnc_val = dynamic_rules->precedence;
+    //pfcp_sess_est_req->create_pdr[pdr_counter].precedence.prcdnc_val = dynamic_rules->precedence;
     // itr is for flow information counter
     // sdf_filter_count is for SDF information counter
     for(int itr = 0; itr < dynamic_rules->num_flw_desc; itr++) {
@@ -1193,14 +1188,12 @@ int fill_sdf_rules(pfcp_sess_estab_req_t* pfcp_sess_est_req,
     }
 
     pfcp_sess_est_req->create_pdr[pdr_counter].pdi.sdf_filter_count = sdf_filter_count;
-    LOG_MSG(LOG_DEBUG,"Number of SDF filters %d, pdr_counter = %d ",sdf_filter_count, pdr_counter);
-
     return ret;
 }
 
 //Create qer and add it to global table 
 int
-fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr)
+fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr, bool apnAmbr, flow_status status)
 {
 	int ret = -1;
 	qer_t *qer_ctxt = NULL;
@@ -1209,13 +1202,13 @@ fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr)
 		LOG_MSG(LOG_ERROR, "Failure to allocate qer context ");
 		return ret;
 	}
-	qer_ctxt->qer_id = bearer->qer_id[itr].qer_id;;
-	qer_ctxt->session_id = pdn->seid;
-    if(pdn->default_bearer_id == bearer->eps_bearer_id) {
-		LOG_MSG(LOG_DEBUG, "Filling apn ambr values in qer %u %u ",bearer->dynamic_rules[0]->ul_ambr, bearer->dynamic_rules[0]->dl_ambr);
+	qer_ctxt->qer_id = bearer->qer_id[itr].qer_id;
+	qer_ctxt->qci = bearer->qos.qci;
+    if(apnAmbr == true) {
         qer_ctxt->max_bitrate.ul_mbr = pdn->apn_ambr.ambr_uplink;
 	    qer_ctxt->max_bitrate.dl_mbr = pdn->apn_ambr.ambr_downlink;
     } else {
+        // FIXME : use the value from RULE and not from bearer `
 	    qer_ctxt->max_bitrate.ul_mbr = bearer->qos.ul_mbr;
 	    qer_ctxt->max_bitrate.dl_mbr = bearer->qos.dl_mbr;
     }
@@ -1234,7 +1227,7 @@ fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr)
 
 pdr_t *
 fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
-		eps_bearer_t *bearer, uint8_t iface, uint8_t itr)
+		eps_bearer_t *bearer, uint8_t iface, uint8_t itr, uint32_t qer_id, uint32_t urr_id)
 {
 	char mnc[4] = {0};
 	char mcc[4] = {0};
@@ -1265,9 +1258,9 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 	memset(pdr_ctxt,0,sizeof(pdr_t));
 
 	pdr_ctxt->rule_id =  generate_pdr_id();
-	pdr_ctxt->prcdnc_val =  1;
+	pdr_ctxt->prcdnc_val =  1; // FIXME : why this is 1 here ?
 	pdr_ctxt->far.far_id_value = generate_far_id();
-	pdr_ctxt->session_id = pdn->seid;
+	pdr_ctxt->session_id = pdn->seid; // FIXME - why this ?
 	/*to be filled in fill_sdf_rule*/
 	pdr_ctxt->pdi.sdf_filter_cnt = 0;
 	pdr_ctxt->pdi.src_intfc.interface_value = iface;
@@ -1279,21 +1272,39 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 	 * }
 	 */
 
+    pdr_ctxt->qer_id_count = 0;
 	if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC) {
 		/* TODO Hardcode 1 set because one PDR contain only 1 QER entry
 		 * Revist again in case of multiple rule support
 		 */
-		pdr_ctxt->qer_id_count = 1;
-		if(cp_config->urr_enable == 1) {
-			pdr_ctxt->urr_id_count = 1;
-		}
+        LOG_MSG(LOG_DEBUG,"Bearer QER count = %d ", bearer->qer_count);
+        pdr_ctxt->qer_id[pdr_ctxt->qer_id_count].qer_id = qer_id; 
+        LOG_MSG(LOG_DEBUG,"PDR %d adding QER %x ", pdr_ctxt->rule_id, bearer->qer_id[pdr_ctxt->qer_id_count].qer_id);
+		pdr_ctxt->qer_id_count++;
+        for(int count=0; count < bearer->qer_count; count++)
+        {
+            if(isCommonQER(bearer->qer_id[count].qer_id)) {
+                LOG_MSG(LOG_DEBUG,"PDR %d adding common QER %x ", pdr_ctxt->rule_id, bearer->qer_id[count].qer_id);
+                pdr_ctxt->qer_id[pdr_ctxt->qer_id_count].qer_id = bearer->qer_id[count].qer_id;
+		        pdr_ctxt->qer_id_count++;
+            }
+        }
+        LOG_MSG(LOG_DEBUG,"PDR %d and QER added count = %d ", pdr_ctxt->rule_id, pdr_ctxt->qer_id_count);
+	}
 
-		if(iface == SOURCE_INTERFACE_VALUE_ACCESS) {
-            pdr_ctxt->qer_id[0].qer_id = bearer->qer_id[QER_INDEX_FOR_ACCESS_INTERFACE].qer_id;
-            pdr_ctxt->urr_id[0].urr_id = bearer->urr_id[URR_INDEX_FOR_ACCESS_INTERFACE].urr_id;
-        } else if(iface == SOURCE_INTERFACE_VALUE_CORE) {
-            pdr_ctxt->qer_id[0].qer_id = bearer->qer_id[QER_INDEX_FOR_CORE_INTERFACE].qer_id;
-            pdr_ctxt->urr_id[0].urr_id = bearer->urr_id[URR_INDEX_FOR_CORE_INTERFACE].urr_id;
+	pdr_ctxt->urr_id_count = 0;
+	if ((cp_config->urr_enable == 1) && (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC)) {
+		/* TODO Hardcode 1 set because one PDR contain only 1 QER entry
+		 * Revist again in case of multiple rule support
+		 */
+        pdr_ctxt->urr_id[pdr_ctxt->urr_id_count].urr_id = urr_id;
+		pdr_ctxt->urr_id_count++;
+        for(int count=0; count < bearer->urr_count; count++)
+        {
+            if(isCommonURR(bearer->urr_id[count].urr_id)) {
+                pdr_ctxt->urr_id[pdr_ctxt->urr_id_count].urr_id = bearer->urr_id[count].urr_id;
+			    pdr_ctxt->urr_id_count++;
+            }
         }
 	}
 
@@ -1322,7 +1333,7 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 			pdr_ctxt->far.dst_intfc.interface_value =
 				DESTINATION_INTERFACE_VALUE_CORE;
 		}
-	} else{
+	} else {
 		if(cp_config->cp_type == SGWC){
 			pdr_ctxt->pdi.local_fteid.teid = (bearer->s5s8_sgw_gtpu_teid);
 			pdr_ctxt->pdi.local_fteid.ipv4_address = 0;
@@ -1342,6 +1353,7 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
 		}
 	}
 
+    LOG_MSG(LOG_DEBUG,"PDR at bearer index %d - PDR Id = %d , pdr_ctx = %p, QER count = %d , URR count = %d ", itr, pdr_ctxt->rule_id, pdr_ctxt, pdr_ctxt->qer_id_count, pdr_ctxt->urr_id_count);
 	bearer->pdrs[itr] = pdr_ctxt;
 	ret = add_pdr_entry(bearer->pdrs[itr]->rule_id, bearer->pdrs[itr]);
 	if ( ret != 0) {
@@ -1362,15 +1374,14 @@ update_pdr_teid(eps_bearer_t *bearer, uint32_t teid, uint32_t ip, uint8_t iface)
 {
 	int ret = -1;
 
+    // FIXME : application filtering
     LOG_MSG(LOG_DEBUG, "update_pdr_teid bearer->pdr_count %d ", bearer->pdr_count);
 	for(uint8_t itr = 0; itr < bearer->pdr_count ; itr++) {
 		if(bearer->pdrs[itr]->pdi.src_intfc.interface_value == iface){
 			bearer->pdrs[itr]->pdi.local_fteid.teid = teid;
 			bearer->pdrs[itr]->pdi.local_fteid.ipv4_address = htonl(ip);
-			LOG_MSG(LOG_DEBUG, "Updated pdr entry Successfully for PDR_ID:%u",
-					bearer->pdrs[itr]->rule_id);
-			ret = 0;
-			break;
+			LOG_MSG(LOG_DEBUG, "Updated pdr entry successfully for bearer (%d) and PDR_ID:%u",
+					bearer->eps_bearer_id, bearer->pdrs[itr]->rule_id);
 		}
 	}
 	return ret;
@@ -1388,7 +1399,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	eps_bearer_t *bearer = NULL;
 	upf_context_t *upf_ctx = NULL;
 
-    // PERFORMANCE : why we are doing lookup ? Just use it from pdn  
+    // FIXME PERFORMANCE : why we are doing lookup ? Just use it from pdn  
 	upf_ctx = (upf_context_t *) upf_context_entry_lookup(pdn->upf_ipv4.s_addr);
     if(upf_ctx == NULL) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
@@ -1396,7 +1407,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	}
 	assert(upf_ctx != NULL);
 
-	memset(pfcp_sess_est_req,0,sizeof(pfcp_sess_estab_req_t));
+	memset(pfcp_sess_est_req, 0, sizeof(pfcp_sess_estab_req_t));
 
 	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_sess_est_req->header), PFCP_SESSION_ESTABLISHMENT_REQUEST,
 			HAS_SEID, seq);
@@ -1410,21 +1421,22 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 
 	set_fseid(&(pfcp_sess_est_req->cp_fseid), pdn->seid, node_value);
 
-	if ((cp_config->cp_type == PGWC) ||
-		(cp_config->cp_type == SAEGWC))
+	set_pdn_type(&(pfcp_sess_est_req->pdn_type), &(pdn->pdn_type));
+
+	if ((cp_config->cp_type == PGWC) || (cp_config->cp_type == SAEGWC))
 	{
         // 2 PDRs per rule 
-		pfcp_sess_est_req->create_pdr_count = 2;
 		/*
 		 * For pgw create pdr, far and qer while handling pfcp messages
 		 */
         pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
 
         while (pcc_rule != NULL) {
-            pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
-            LOG_MSG(LOG_DEBUG, "dynamic_rules->num_flw_desc -  %d ", pcc_rule->dyn_rule->num_flw_desc);
+            TAILQ_REMOVE(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
+            LOG_MSG(LOG_DEBUG, "Rule %s dynamic_rules->num_flw_desc -  %d ", pcc_rule->dyn_rule->rule_name, pcc_rule->dyn_rule->num_flw_desc);
 
 			bearer = NULL;
+            //FIXME : why this does not work..
 			if(compare_default_bearer_qos(&pdn->policy.default_bearer_qos, &pcc_rule->dyn_rule->qos) == 0)
 			{
 				LOG_MSG(LOG_DEBUG, "Found matching default bearer ");
@@ -1433,12 +1445,11 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			}
 			else
 			{
-				// dedicated bearer creation rules received in CCA-I
-				LOG_MSG(LOG_DEBUG, "Need to create dedicated bearer ");
 				uint8_t bearer_id = 0;
 				bearer = get_bearer(pdn, &pcc_rule->dyn_rule->qos);
 				if(bearer == NULL) {
 					// create dedicated bearer
+				    LOG_MSG(LOG_DEBUG, "Need to create dedicated bearer ");
 					bearer = (eps_bearer_t *)calloc(1, sizeof(eps_bearer_t));
 					if(bearer == NULL) {
 						LOG_MSG(LOG_ERROR, "Failure to allocate bearer ");
@@ -1454,53 +1465,73 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 					set_s5s8_pgw_gtpu_teid_using_pdn(bearer, pdn);
 					memcpy(&(bearer->qos), &(pcc_rule->dyn_rule->qos), sizeof(bearer_qos_ie));
 					fill_dedicated_bearer_info(bearer, pdn->context, pdn);
-				}
+				} else {
+				    LOG_MSG(LOG_DEBUG, "Use existing bearer %d to install pcc rules", bearer->eps_bearer_id);
+                }
 			}
-
-			if (cp_config->cp_type == SGWC) {
-				set_s1u_sgw_gtpu_teid(bearer, bearer->pdn->context);
-				update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, bearer->s1u_sgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
-				set_s5s8_sgw_gtpu_teid(bearer, bearer->pdn->context);
-				update_pdr_teid(bearer, bearer->s5s8_sgw_gtpu_teid, bearer->s5s8_sgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_CORE);
-			} else if (cp_config->cp_type == SAEGWC) {
-				set_s1u_sgw_gtpu_teid(bearer, bearer->pdn->context);
-				update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, bearer->s1u_sgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
-			} else if (cp_config->cp_type == PGWC){
-				set_s5s8_pgw_gtpu_teid(bearer, bearer->pdn->context);
-				update_pdr_teid(bearer, bearer->s5s8_pgw_gtpu_teid, bearer->s5s8_pgw_gtpu_ipv4.s_addr, SOURCE_INTERFACE_VALUE_ACCESS);
-			}
-
-            /* URR_SUPPORT : generate URR ids and keep it in the default bearer */
-			bearer->urr_id[bearer->urr_count].urr_id = generate_urr_id();
-            bearer->urr_count++;
-			bearer->urr_id[bearer->urr_count].urr_id = generate_urr_id();
-            bearer->urr_count++;
 
 			bearer->dynamic_rules[bearer->num_dynamic_filters] = pcc_rule->dyn_rule;
+            // Adding APN AMBR QER in the bearer only if filters are more than 1 
+            // FIXME : if Gx is enabled but only 1 rule then do we need common QER ?
+            if(cp_config->gx_enabled) {
+                eps_bearer_t *bearer = get_default_bearer(pdn);
+                if (bearer->ambr_qer_flag == false) {
+                    bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id(SOURCE_INTERFACE_VALUE_UNKNOWN);
+                    LOG_MSG(LOG_DEBUG,"Adding default APN AMBR QER. Current QER Count %d, New QER ID = %d  ", bearer->qer_count, bearer->qer_id[bearer->qer_count].qer_id);
+                    fill_qer_entry(pdn, bearer, bearer->qer_count, true, FL_ENABLED);
+                    bearer->qer_count++;
+                    bearer->ambr_qer_flag = true;
+                }
+            }
+
+            //FIXME : variable name 
+			enum flow_status f_status = (enum flow_status)bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
+
+            /* URR_SUPPORT : generate URR ids and keep it in the default bearer */
+			uint32_t urr_id = generate_urr_id(SOURCE_INTERFACE_VALUE_ACCESS);
+			bearer->urr_id[bearer->urr_count].urr_id = urr_id;
+
+			uint32_t qer_id  = generate_qer_id(SOURCE_INTERFACE_VALUE_ACCESS);
+			bearer->qer_id[bearer->qer_count].qer_id = qer_id; 
+			fill_qer_entry(pdn, bearer, bearer->qer_count, false, f_status);
+
 
             // Fill 1st PDR entry and corresponding rules  
-			bearer->dynamic_rules[bearer->num_dynamic_filters]->pdr[0] = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, bearer->pdr_count++);
+            pdr_t *temp_pdr = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, bearer->pdr_count, qer_id, urr_id);
+            temp_pdr->prcdnc_val = pcc_rule->dyn_rule->precedence; 
+			pcc_rule->dyn_rule->pdr[0] = temp_pdr; 
+            temp_pdr->dynamic_rule = pcc_rule->dyn_rule; 
 
-			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id();
-			fill_qer_entry(pdn, bearer, bearer->qer_count++);
 
-			enum flow_status f_status = (enum flow_status)bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
+
 			// assuming no of qer and pdr is same
-			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
-		    fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, 0);
+            bearer->urr_count++;
+            bearer->qer_count++;
+            bearer->pdr_count++;
+
+            LOG_MSG(LOG_DEBUG,"First URR count = %d QER count = %d PDR count= %d",bearer->urr_count, bearer->qer_count, bearer->pdr_count);
 
             // Fill 2nd PDR entry and corresponding rules  
-			bearer->dynamic_rules[bearer->num_dynamic_filters]->pdr[1] = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, bearer->pdr_count++);
 
-			bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id();
-			fill_qer_entry(pdn, bearer, bearer->qer_count++);
+			urr_id = generate_urr_id(SOURCE_INTERFACE_VALUE_CORE);
+			bearer->urr_id[bearer->urr_count].urr_id = urr_id; 
 
-			f_status = (enum flow_status)bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
-			// assuming no of qer and pdr is same /*TODO*/
-			fill_gate_status(pfcp_sess_est_req, bearer->qer_count, f_status);
-		    fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, 1);
+			qer_id = generate_qer_id(SOURCE_INTERFACE_VALUE_CORE);
+			bearer->qer_id[bearer->qer_count].qer_id = qer_id; 
+			fill_qer_entry(pdn, bearer, bearer->qer_count, false, f_status);
+
+			temp_pdr = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, bearer->pdr_count, qer_id, urr_id);
+            temp_pdr->prcdnc_val = pcc_rule->dyn_rule->precedence; 
+			pcc_rule->dyn_rule->pdr[1] = temp_pdr; 
+            temp_pdr->dynamic_rule = pcc_rule->dyn_rule; 
+
+            bearer->urr_count++;
+            bearer->qer_count++;
+            bearer->pdr_count++;
 
 			bearer->num_dynamic_filters++;
+
+            LOG_MSG(LOG_DEBUG,"Second URR count = %d QER count = %d PDR count = %d",bearer->urr_count, bearer->qer_count, bearer->pdr_count);
 
 			//Adding rule and bearer id to a hash
 			bearer_id_t *id;
@@ -1508,23 +1539,24 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			memset(id, 0 , sizeof(bearer_id_t));
 			rule_name_key_t key = {0};
 			id->bearer_id = bearer->eps_bearer_id;
-			strncpy(key.rule_name, pcc_rule->dyn_rule->rule_name,
-					strlen(pcc_rule->dyn_rule->rule_name));
+			strncpy(key.rule_name, pcc_rule->dyn_rule->rule_name, strlen(pcc_rule->dyn_rule->rule_name));
 			sprintf(key.rule_name, "%s%d", key.rule_name, pdn->call_id);
+            // FIXME : do we need to check rule presence 
 			if (add_rule_name_entry(key.rule_name, bearer->eps_bearer_id) != 0) {
 				LOG_MSG(LOG_ERROR,"Failed to add rule name %s ", key.rule_name);
 				return;
 			}
 
-            pcc_rule = next_pcc_rule;
+		    pfcp_sess_est_req->create_pdr_count += 2; // 1 for downlink, 1 for uplink
+            free(pcc_rule); // pcc rule was just container, actual rule is not moved to bearer.
+            pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
 		}
 
+        // FIXME : we should put it in above loops 
 		if (cp_config->cp_type == SAEGWC) {
-			update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid,
-					upf_ctx->s1u_ip, SOURCE_INTERFACE_VALUE_ACCESS);
+			update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, upf_ctx->s1u_ip, SOURCE_INTERFACE_VALUE_ACCESS);
 		} else if (cp_config->cp_type == PGWC) {
-			update_pdr_teid(bearer, bearer->s5s8_pgw_gtpu_teid,
-					upf_ctx->s5s8_pgwu_ip, SOURCE_INTERFACE_VALUE_ACCESS);
+			update_pdr_teid(bearer, bearer->s5s8_pgw_gtpu_teid, upf_ctx->s5s8_pgwu_ip, SOURCE_INTERFACE_VALUE_ACCESS);
 		}
 	} else {
 		bearer = get_default_bearer(pdn);
@@ -1533,230 +1565,124 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 		update_pdr_teid(bearer, bearer->s5s8_sgw_gtpu_teid, upf_ctx->s5s8_sgwu_ip, SOURCE_INTERFACE_VALUE_CORE);
 	}
 
-    {
-        uint8_t pdr_idx =0;
-        for(uint8_t i = 0; i < MAX_BEARERS; i++)
-        {
-            bearer = pdn->eps_bearers[i];
-            if(bearer != NULL)
-            {
-                assert(bearer->pdr_count != 0);
-                for(uint8_t idx = 0; idx < bearer->pdr_count; idx++)
-                {
-                    uint32_t ue_ip_flags = 0;
-                    // URR_SUPPORT : Fix number of URRs per PDR 
-                    pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = 0;
-                    if(cp_config->urr_enable == 1) {
-                        pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = 1;
-                    }
-                    pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count = 1;
-                    if(IF_PDN_ADDR_ALLOC_CONTROL(pdn)) {
-                      ue_ip_flags = PDN_ADDR_ALLOC_CONTROL;
-                    } else {
-                      ue_ip_flags = PDN_ADDR_ALLOC_UPF;
-                    }
-                    creating_pdr(&(pfcp_sess_est_req->create_pdr[pdr_idx]), bearer->pdrs[idx]->pdi.src_intfc.interface_value, ue_ip_flags);
-                    pfcp_sess_est_req->create_far_count++;
-                    creating_far(&(pfcp_sess_est_req->create_far[pdr_idx]));
-                    pdr_idx++;
-				}
-			}
-		}
-	}
-
-	/* SGW Relocation Case*/
-	/*SP: Need to think of this*/
-	//if(context->indication_flag.oi != 0) {
-	//pfcp_sess_est_req->create_far_count = 2;
-	//}
-
 	{
+        eps_bearer_t *bearer;
 		uint8_t pdr_idx =0;
 		for(uint8_t i = 0; i < MAX_BEARERS; i++)
 		{
 			bearer = pdn->eps_bearers[i];
-			if(bearer != NULL)
+			if(bearer == NULL)
+                continue;
+
+            for(uint8_t idx = 0; idx < bearer->pdr_count; idx++)
 			{
-				for(uint8_t idx = 0; idx < MAX_PDR_PER_RULE; idx++)
-				{
-					assert(bearer->pdrs[idx] != NULL);
-					pfcp_sess_est_req->create_pdr[pdr_idx].pdr_id.rule_id  =
-						bearer->pdrs[idx]->rule_id;
-					pfcp_sess_est_req->create_pdr[pdr_idx].precedence.prcdnc_val =
-						bearer->pdrs[idx]->prcdnc_val;
+                uint32_t ue_ip_flags = 0;
+                pdr_t *pdr = bearer->pdrs[idx];
+				assert(pdr != NULL);
+                struct dynamic_rule *dyn_rule = pdr->dynamic_rule;
 
-					if(((cp_config->cp_type == PGWC) || (SAEGWC == cp_config->cp_type)) &&
-							(bearer->pdrs[idx]->pdi.src_intfc.interface_value == SOURCE_INTERFACE_VALUE_CORE))
-					{
-						uint32_t size_teid = 0;
-						size_teid = pfcp_sess_est_req->create_pdr[pdr_idx].pdi.local_fteid.header.len +
-							sizeof(pfcp_ie_header_t);
-						// TODO : check twice reduce teid size needed ?
-						pfcp_sess_est_req->create_pdr[pdr_idx].pdi.header.len =
-							pfcp_sess_est_req->create_pdr[pdr_idx].pdi.header.len - size_teid;
-						pfcp_sess_est_req->create_pdr[pdr_idx].header.len =
-							pfcp_sess_est_req->create_pdr[pdr_idx].header.len - size_teid;
-						pfcp_sess_est_req->create_pdr[pdr_idx].pdi.local_fteid.header.len = 0;
+                // FIXME : move this code down to the place where we are filling IDs
+                pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = 0;
+                if(cp_config->urr_enable == 1) {
+                    pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = 1;
+                }
 
+                pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count = pdr->qer_id_count;
+
+                if(IF_PDN_ADDR_ALLOC_CONTROL(pdn)) {
+                  ue_ip_flags = PDN_ADDR_ALLOC_CONTROL;
+                } else {
+                  ue_ip_flags = PDN_ADDR_ALLOC_UPF;
+                }
+                creating_pdr(&(pfcp_sess_est_req->create_pdr[pdr_idx]), pdr->pdi.src_intfc.interface_value, ue_ip_flags);
+
+                pfcp_sess_est_req->create_far_count++;
+                creating_far(&(pfcp_sess_est_req->create_far[pdr_idx]));
+
+				pfcp_sess_est_req->create_pdr[pdr_idx].pdr_id.rule_id  = pdr->rule_id;
+				pfcp_sess_est_req->create_pdr[pdr_idx].precedence.prcdnc_val = pdr->prcdnc_val;
+
+                // FIXME : add comment why we are doing this 
+				if(((cp_config->cp_type == PGWC) || (SAEGWC == cp_config->cp_type)) &&
+						(pdr->pdi.src_intfc.interface_value == SOURCE_INTERFACE_VALUE_CORE)) {
+					uint32_t size_teid = 0;
+					size_teid = pfcp_sess_est_req->create_pdr[pdr_idx].pdi.local_fteid.header.len + sizeof(pfcp_ie_header_t);
+
+					pfcp_sess_est_req->create_pdr[pdr_idx].pdi.local_fteid.header.len = 0;
+
+					pfcp_sess_est_req->create_pdr[pdr_idx].pdi.header.len =
+					pfcp_sess_est_req->create_pdr[pdr_idx].pdi.header.len - size_teid;
+
+					pfcp_sess_est_req->create_pdr[pdr_idx].header.len =
+					pfcp_sess_est_req->create_pdr[pdr_idx].header.len - size_teid;
+
+
+				} else {
+					pfcp_sess_est_req->create_pdr[pdr_idx].pdi.local_fteid.teid = pdr->pdi.local_fteid.teid;
+					pfcp_sess_est_req->create_pdr[pdr_idx].pdi.local_fteid.ipv4_address = pdr->pdi.local_fteid.ipv4_address;
+				}
+
+				if((cp_config->cp_type == SGWC) || (pdr->pdi.src_intfc.interface_value == SOURCE_INTERFACE_VALUE_ACCESS)) {
+					/*No need to send ue ip and network instance for pgwc access interface or
+					 * for any sgwc interface */
+					uint32_t size_ie = 0;
+					size_ie = pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ue_ip_address.header.len +
+						sizeof(pfcp_ie_header_t);
+					size_ie = size_ie + pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ntwk_inst.header.len +
+						sizeof(pfcp_ie_header_t);
+					pfcp_sess_est_req->create_pdr[pdr_idx].pdi.header.len =
+						pfcp_sess_est_req->create_pdr[pdr_idx].pdi.header.len - size_ie;
+					pfcp_sess_est_req->create_pdr[pdr_idx].header.len =
+						pfcp_sess_est_req->create_pdr[pdr_idx].header.len - size_ie;
+					pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ue_ip_address.header.len = 0;
+					pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ntwk_inst.header.len = 0;
+				} else {
+					pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ue_ip_address.ipv4_address =
+						pdr->pdi.ue_addr.ipv4_address;
+					strncpy((char *)pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ntwk_inst.ntwk_inst,
+							(char *)&pdr->pdi.ntwk_inst.ntwk_inst, 32);
+				}
+
+				pfcp_sess_est_req->create_pdr[pdr_idx].pdi.src_intfc.interface_value =
+					pdr->pdi.src_intfc.interface_value;
+
+                //ADD FAR id in PDR, and FAR should be created with farid 
+                // FIXME : move this code where we are referring to FAR
+				pfcp_sess_est_req->create_far[pdr_idx].far_id.far_id_value =
+					pdr->far.far_id_value;
+				pfcp_sess_est_req->create_pdr[pdr_idx].far_id.far_id_value =
+					 pdr->far.far_id_value;
+
+		        fill_sdf_rules(pfcp_sess_est_req, dyn_rule, pdr_idx);
+
+                // filling qer id in PDR in the pdrpfcp_sess_est_req
+				if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC) {
+                    LOG_MSG(LOG_DEBUG, "Number of QERs on PDR %d are %d ", pdr->rule_id, pdr->qer_id_count);
+					pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count = pdr->qer_id_count;
+					for(int itr1 = 0; itr1 < pdr->qer_id_count; itr1++) {
+						pfcp_sess_est_req->create_pdr[pdr_idx].qer_id[itr1].qer_id_value = pdr->qer_id[itr1].qer_id;
+                        LOG_MSG(LOG_DEBUG,"\tAdding QER %d in PDR-ID %d ", pdr->qer_id[itr1].qer_id, pdr->rule_id);
 					}
-					else
-					{
-						pfcp_sess_est_req->create_pdr[pdr_idx].pdi.local_fteid.teid =
-							bearer->pdrs[idx]->pdi.local_fteid.teid;
-						pfcp_sess_est_req->create_pdr[pdr_idx].pdi.local_fteid.ipv4_address =
-							bearer->pdrs[idx]->pdi.local_fteid.ipv4_address;
-					}
-					if((cp_config->cp_type == SGWC) ||
-							(bearer->pdrs[idx]->pdi.src_intfc.interface_value == SOURCE_INTERFACE_VALUE_ACCESS)){
-						/*No need to send ue ip and network instance for pgwc access interface or
-						 * for any sgwc interface */
-						uint32_t size_ie = 0;
-						size_ie = pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ue_ip_address.header.len +
-							sizeof(pfcp_ie_header_t);
-						size_ie = size_ie + pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ntwk_inst.header.len +
-							sizeof(pfcp_ie_header_t);
-						pfcp_sess_est_req->create_pdr[pdr_idx].pdi.header.len =
-							pfcp_sess_est_req->create_pdr[pdr_idx].pdi.header.len - size_ie;
-						pfcp_sess_est_req->create_pdr[pdr_idx].header.len =
-							pfcp_sess_est_req->create_pdr[pdr_idx].header.len - size_ie;
-						pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ue_ip_address.header.len = 0;
-						pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ntwk_inst.header.len = 0;
-					}else{
-						pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ue_ip_address.ipv4_address =
-							bearer->pdrs[idx]->pdi.ue_addr.ipv4_address;
-						strncpy((char *)pfcp_sess_est_req->create_pdr[pdr_idx].pdi.ntwk_inst.ntwk_inst,
-								(char *)&bearer->pdrs[idx]->pdi.ntwk_inst.ntwk_inst, 32);
-					}
-
-					pfcp_sess_est_req->create_pdr[pdr_idx].pdi.src_intfc.interface_value =
-						bearer->pdrs[idx]->pdi.src_intfc.interface_value;
-
-                    //ADD FAR id in PDR, and FAR should be created with farid 
-					pfcp_sess_est_req->create_far[pdr_idx].far_id.far_id_value =
-						bearer->pdrs[idx]->far.far_id_value;
-					 pfcp_sess_est_req->create_pdr[pdr_idx].far_id.far_id_value =
-						 bearer->pdrs[idx]->far.far_id_value;
-
-					/* SGW Relocation*/
-					if(pdn->context->indication_flag.oi != 0) {
-						uint8_t len  = 0;
-						//if(itr == 1)
-						//TODO :: Betting on stars allignments to make below code works
-						if(pdr_idx%2)
-						{
-							pfcp_sess_est_req->create_far[pdr_idx].apply_action.forw = PRESENT;
-							len += set_forwarding_param(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms));
-							len += UPD_PARAM_HEADER_SIZE;
-							pfcp_sess_est_req->create_far[pdr_idx].header.len += len;
-
-							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.ipv4_address =
-								bearer->s1u_enb_gtpu_ipv4.s_addr;
-
-							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.teid =
-								bearer->s1u_enb_gtpu_teid;
-							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc.interface_value =
-								DESTINATION_INTERFACE_VALUE_ACCESS;
-						}
-						//else if(itr == 0)
-					    else
-						{
-							pfcp_sess_est_req->create_far[pdr_idx].apply_action.forw = PRESENT;
-							len += set_forwarding_param(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms));
-							len += UPD_PARAM_HEADER_SIZE;
-							pfcp_sess_est_req->create_far[pdr_idx].header.len += len;
-
-							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.ipv4_address =
-								bearer->s5s8_pgw_gtpu_ipv4.s_addr;
-							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.teid =
-								bearer->s5s8_pgw_gtpu_teid;
-							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc.interface_value =
-								DESTINATION_INTERFACE_VALUE_CORE;
-						}
-					}
-
-                    // filling qer id in PDR in the pdrpfcp_sess_est_req
-					if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC){
-                        LOG_MSG(LOG_DEBUG, "number of QERs on bearer = %d ", bearer->pdrs[idx]->qer_id_count);
-						pfcp_sess_est_req->create_pdr[pdr_idx].qer_id_count =
-							bearer->pdrs[idx]->qer_id_count;
-						for(int itr1 = 0; itr1 < bearer->pdrs[idx]->qer_id_count; itr1++) {
-							pfcp_sess_est_req->create_pdr[pdr_idx].qer_id[itr1].qer_id_value = bearer->qer_id[idx].qer_id;
-						}
-					}
-
-                    // URR_SUPPORT : filling urr id in PDR in the pdrpfcp_sess_est_req
-                    if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC) {
-                        if(cp_config->urr_enable == 1) {
-                            LOG_MSG(LOG_DEBUG,"Number of URRs on bearer (%d)  = %d ", bearer->eps_bearer_id, bearer->pdrs[idx]->urr_id_count);
-                            pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = bearer->pdrs[idx]->urr_id_count;
-                            for(int itr1 = 0; itr1 < bearer->pdrs[idx]->urr_id_count; itr1++) {
-                                pfcp_sess_est_req->create_pdr[pdr_idx].urr_id[itr1].urr_id_value = bearer->urr_id[idx].urr_id;
+		            uint8_t qer_idx = pfcp_sess_est_req->create_qer_count;
+                    for(uint8_t qer_itr = 0; qer_itr < pdr->qer_id_count; qer_itr++) {
+                        qer_t *qer_context = (qer_t*)get_qer_entry(pdr->qer_id[qer_itr].qer_id);
+                        //check if this QER is already added in Session Est 
+                        bool found = false;
+                        for(int id=0; id < qer_idx; id++) {
+                            if(pfcp_sess_est_req->create_qer[id].qer_id.qer_id_value == qer_context->qer_id) {
+                                found = true;
                             }
                         }
-                    }
 
-                    // Creating FAR @msg level which is referenced in PDR 
-					if ((cp_config->cp_type == PGWC) || (SAEGWC == cp_config->cp_type)) {
-						uint16_t len = 0;
+                        if (found == true) {
+                            continue;
+                        }
 
-						if (SOURCE_INTERFACE_VALUE_ACCESS == bearer->pdrs[idx]->pdi.src_intfc.interface_value) {
-						    pfcp_sess_est_req->create_far[pdr_idx].apply_action.forw = PRESENT;
-							set_destination_interface(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc));
-							pfcp_set_ie_header(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.header),
-									PFCP_IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
-
-							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.header.len = sizeof(pfcp_dst_intfc_ie_t);
-
-							len += sizeof(pfcp_dst_intfc_ie_t);
-							len += UPD_PARAM_HEADER_SIZE;
-
-							pfcp_sess_est_req->create_far[pdr_idx].header.len += len;
-							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc.interface_value =
-								bearer->pdrs[pdr_idx]->far.dst_intfc.interface_value;
-						} else {
-                            // destination access - need to drop initial packets. Forward when eNB teids available
-						    pfcp_sess_est_req->create_far[pdr_idx].apply_action.drop = PRESENT;
-							len += set_forwarding_param(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms));
-							/* Currently take as hardcoded value */
-							len += UPD_PARAM_HEADER_SIZE;
-							pfcp_sess_est_req->create_far[pdr_idx].header.len += len;
-
-							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.ipv4_address =
-								bearer->pdrs[pdr_idx]->far.outer_hdr_creation.ipv4_address;
-							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.teid =
-								bearer->pdrs[pdr_idx]->far.outer_hdr_creation.teid;
-							pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc.interface_value =
-								bearer->pdrs[pdr_idx]->far.dst_intfc.interface_value;
-						}
-					}
-
-					pdr_idx++;
-				}
-			}
-		}
-	} /*for loop*/
-
-	{
-        // fill QER details
-		uint8_t urr_idx = 0;
-		uint8_t qer_idx = 0;
-		qer_t *qer_context;
-		if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC)
-		{
-			for(uint8_t i = 0; i < MAX_BEARERS; i++)
-			{
-				bearer = pdn->eps_bearers[i];
-				if(bearer != NULL)
-                {
-                    pfcp_sess_est_req->create_qer_count += bearer->qer_count;
-                    for(uint8_t idx = 0; idx < bearer->qer_count; idx++)
-                    {
                         creating_qer(&(pfcp_sess_est_req->create_qer[qer_idx]));
-                        pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value  =
-                            bearer->qer_id[qer_idx].qer_id;
-                        qer_context = (qer_t *)get_qer_entry(pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value);
+			            fill_gate_status(pfcp_sess_est_req, qer_idx, (enum flow_status)dyn_rule->flow_status);
+                        pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value  = pdr->qer_id[qer_itr].qer_id;
                         /* Assign the value from the PDR */
-                        if(qer_context){
+                        if(qer_context) {
                             //pfcp_sess_est_req->create_pdr[qer_idx].qer_id[0].qer_id_value =
                             //	pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value;
                             pfcp_sess_est_req->create_qer[qer_idx].maximum_bitrate.ul_mbr  =
@@ -1767,58 +1693,83 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
                                 qer_context->guaranteed_bitrate.ul_gbr;
                             pfcp_sess_est_req->create_qer[qer_idx].guaranteed_bitrate.dl_gbr  =
                                 qer_context->guaranteed_bitrate.dl_gbr;
-                            pfcp_sess_est_req->create_qer[qer_idx].qos_flow_ident.qfi_value = 9;
+                            pfcp_sess_est_req->create_qer[qer_idx].qos_flow_ident.qfi_value = 
+                                qer_context->qci;
                         }
+                        pfcp_sess_est_req->create_qer_count++;
                         qer_idx++;
                     }
-					if(cp_config->urr_enable == 1) {
-						/* URR_SUPPORT : now fill the URRs in the PFCP Session EST Message. */
-						pfcp_sess_est_req->create_urr_count += bearer->urr_count;
-						LOG_MSG(LOG_DEBUG, "pfcp_sess_est_req->create_urr_count %d ", pfcp_sess_est_req->create_urr_count);
-						for(uint8_t idx = 0; idx < bearer->urr_count; idx++)
-						{
-								creating_urr(&pfcp_sess_est_req->create_urr[urr_idx]);
-								pfcp_sess_est_req->create_urr[urr_idx].urr_id.urr_id_value  = bearer->urr_id[urr_idx].urr_id;
-								pfcp_sess_est_req->create_urr[urr_idx].meas_mthd.volum = 1;
-								pfcp_sess_est_req->create_urr[urr_idx].rptng_triggers.volth = 1;
-								pfcp_sess_est_req->create_urr[urr_idx].rptng_triggers.volqu = 1;
-								pfcp_sess_est_req->create_urr[urr_idx].vol_thresh.tovol = 1;
-								pfcp_sess_est_req->create_urr[urr_idx].vol_thresh.total_volume = 1000000;
-								pfcp_sess_est_req->create_urr[urr_idx].volume_quota.tovol = 1;
-								pfcp_sess_est_req->create_urr[urr_idx].volume_quota.total_volume = 1000000000; // 1GB 
-								urr_idx++;
-						}
-					}
+				}
 
+                // URR_SUPPORT : filling urr id in PDR in the pdrpfcp_sess_est_req
+                if (cp_config->cp_type == PGWC || cp_config->cp_type == SAEGWC) {
+                    if(cp_config->urr_enable == 1) {
+                        LOG_MSG(LOG_DEBUG,"Number of URRs on PDR (%d)  are %d ", pdr->rule_id, pdr->urr_id_count);
+                        pfcp_sess_est_req->create_pdr[pdr_idx].urr_id_count = pdr->urr_id_count;
+                        for(int itr1 = 0; itr1 < pdr->urr_id_count; itr1++) {
+                            pfcp_sess_est_req->create_pdr[pdr_idx].urr_id[itr1].urr_id_value = pdr->urr_id[itr1].urr_id;
+                            LOG_MSG(LOG_DEBUG,"\tAdding URR %d in PDR-ID %d ", pdr->urr_id[itr1].urr_id, pdr->rule_id);
+                        }
+
+				        /* URR_SUPPORT : now fill the URRs in the PFCP Session EST Message. */
+		                uint8_t urr_idx = pfcp_sess_est_req->create_urr_count;
+				        for(uint8_t urr_itr = 0; urr_itr < pdr->urr_id_count; urr_itr++)
+				        {
+				        		creating_urr(&pfcp_sess_est_req->create_urr[urr_idx]);
+				        		pfcp_sess_est_req->create_urr[urr_idx].urr_id.urr_id_value  = pdr->urr_id[urr_itr].urr_id;
+				        		pfcp_sess_est_req->create_urr[urr_idx].meas_mthd.volum = 1;
+				        		pfcp_sess_est_req->create_urr[urr_idx].rptng_triggers.volth = 1;
+				        		pfcp_sess_est_req->create_urr[urr_idx].rptng_triggers.volqu = 1;
+				        		pfcp_sess_est_req->create_urr[urr_idx].vol_thresh.tovol = 1;
+				        		pfcp_sess_est_req->create_urr[urr_idx].vol_thresh.total_volume = 1000000;
+				        		pfcp_sess_est_req->create_urr[urr_idx].volume_quota.tovol = 1;
+				        		pfcp_sess_est_req->create_urr[urr_idx].volume_quota.total_volume = 1000000000; // 1GB 
+				                pfcp_sess_est_req->create_urr_count++;
+				        		urr_idx++;
+				        }
+				        LOG_MSG(LOG_DEBUG, "pfcp_sess_est_req->create_urr_count %d ", pfcp_sess_est_req->create_urr_count);
+                    }
                 }
+
+                // Creating FAR @msg level which is referenced in PDR 
+				if ((cp_config->cp_type == PGWC) || (SAEGWC == cp_config->cp_type)) {
+					uint16_t len = 0;
+
+					if (SOURCE_INTERFACE_VALUE_ACCESS == pdr->pdi.src_intfc.interface_value) {
+					    pfcp_sess_est_req->create_far[pdr_idx].apply_action.forw = PRESENT;
+						set_destination_interface(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc));
+						pfcp_set_ie_header(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.header),
+								PFCP_IE_FRWDNG_PARMS, sizeof(pfcp_dst_intfc_ie_t));
+
+						pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.header.len = sizeof(pfcp_dst_intfc_ie_t);
+
+						len += sizeof(pfcp_dst_intfc_ie_t);
+						len += UPD_PARAM_HEADER_SIZE;
+
+						pfcp_sess_est_req->create_far[pdr_idx].header.len += len;
+						pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc.interface_value =
+							pdr->far.dst_intfc.interface_value;
+					} else {
+                        // destination access - need to drop initial packets. Forward when eNB teids available
+					    pfcp_sess_est_req->create_far[pdr_idx].apply_action.drop = PRESENT;
+						len += set_forwarding_param(&(pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms));
+						/* Currently take as hardcoded value */
+						len += UPD_PARAM_HEADER_SIZE;
+						pfcp_sess_est_req->create_far[pdr_idx].header.len += len;
+
+						pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.ipv4_address =
+							pdr->far.outer_hdr_creation.ipv4_address;
+						pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.outer_hdr_creation.teid =
+							pdr->far.outer_hdr_creation.teid;
+						pfcp_sess_est_req->create_far[pdr_idx].frwdng_parms.dst_intfc.interface_value =
+							pdr->far.dst_intfc.interface_value;
+					}
+				}
+				pdr_idx++;
 			}
 		}
 	}
 
-	uint8_t pdr_idx = 0;
-    pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
-    while (pcc_rule != NULL) {
-        TAILQ_REMOVE(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
-		/*
-		 * call fill_sdf_rules twice because one rule create 2 PDRs
-		 */
-		enum flow_status f_status = (enum flow_status)pcc_rule->dyn_rule->flow_status;
-
-		fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, pdr_idx);
-		fill_gate_status(pfcp_sess_est_req, pdr_idx, f_status);
-		pdr_idx++;
-
-		fill_sdf_rules(pfcp_sess_est_req, pcc_rule->dyn_rule, pdr_idx);
-		fill_gate_status(pfcp_sess_est_req, pdr_idx, f_status);
-		pdr_idx++;
-
-        free(pcc_rule); // pcc rule was just container, actual rule is not moved to bearer.
-        pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
-	}
-
-
-	/* VS: Set the pdn connection type */
-	set_pdn_type(&(pfcp_sess_est_req->pdn_type), &(pdn->pdn_type));
 
 #if 0
 	creating_bar(&(pfcp_sess_est_req->create_bar));
@@ -1868,21 +1819,22 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
     /* BUG - how can we put default bearer teid for dedicated bearer ?*/
 	bearer->s5s8_sgw_gtpu_ipv4.s_addr = context->eps_bearers[pdn->default_bearer_id - 5]->s5s8_sgw_gtpu_ipv4.s_addr;
 
-	/* TODO: Revisit this for change in yang*/
     if(cp_config->gx_enabled) {
         if (cp_config->cp_type != SGWC){
-            bearer->qer_count = NUMBER_OF_QER_PER_BEARER;
+            bearer->qer_count = NUMBER_OF_QER_PER_BEARER; 
             for(uint8_t itr=0; itr < bearer->qer_count; itr++){
-                bearer->qer_id[itr].qer_id = generate_qer_id();
+                // FIXME : dedicated bearer - we need to pass on correct inerface Id to generate qer id. 
+                bearer->qer_id[itr].qer_id = generate_qer_id(SOURCE_INTERFACE_VALUE_CORE); 
                 LOG_MSG(LOG_DEBUG, "fill_dedicated_bearer_info - qer_id = %d ", bearer->qer_id[itr].qer_id);
                 /* GXCONFUSION - Where are we filling qos details in the bearer ?*/
-                fill_qer_entry(pdn, bearer, itr);
+                fill_qer_entry(pdn, bearer, itr, false, FL_ENABLED);
             }
 
 			/* URR_SUPPORT : generate urr ids for dedicated bearer */
             bearer->urr_count = NUMBER_OF_URR_PER_BEARER;
             for(uint8_t itr=0; itr < bearer->urr_count; itr++) {
-			    bearer->urr_id[itr].urr_id = generate_urr_id();
+                // FIXME : dedicated bearer we need to pass on correct inerface Id to generate urr id. 
+			    bearer->urr_id[itr].urr_id = generate_urr_id(SOURCE_INTERFACE_VALUE_CORE); 
             }
             LOG_MSG(LOG_DEBUG, "Bearer has %d URRs ", bearer->urr_count);
         }
@@ -1902,10 +1854,12 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
         for(uint8_t itr=0; itr < bearer->pdr_count; itr++){
             switch(itr) {
                 case SOURCE_INTERFACE_VALUE_ACCESS:
-                    fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, itr);
+                    // FIXME : dedicated bearer. Send correct URR ID, QER ID 
+                    fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, itr, 0, 0); 
                     break;
                 case SOURCE_INTERFACE_VALUE_CORE:
-                    fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, itr);
+                    // FIXME : dedicated bearer. Send correct URR ID, QER ID 
+                    fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, itr, 0, 0); 
                     break;
                 default:
                     break;
@@ -2342,4 +2296,25 @@ fill_pfcp_sess_mod_req_pgw_del_cmd_update_far(pfcp_sess_mod_req_t *pfcp_sess_mod
 
 }
 
-
+#ifdef PDR_DEBUG
+void print_pdr(pdn_connection_t *pdn)
+{
+        eps_bearer_t *bearer;
+        for(uint8_t i = 0; i < MAX_BEARERS; i++)
+        {
+                bearer = pdn->eps_bearers[i];
+                if(bearer == NULL)
+                        continue; 
+                LOG_MSG(LOG_DEBUG, "Bearer pdr count %d, bearer qer count = %d ", bearer->pdr_count, bearer->qer_count);
+                for(uint8_t idx = 0; idx < bearer->pdr_count; idx++)
+                {
+                        LOG_MSG(LOG_DEBUG, "\t\tIndex %d PDR_PTR = %p, PDR %d QER Count = %d ", idx, bearer->pdrs[idx], bearer->pdrs[idx]->rule_id, bearer->pdrs[idx]->qer_id_count);
+	                    pdr_t *pdr_ctxt = bearer->pdrs[idx];
+                        for (uint8_t i=0; i<pdr_ctxt->qer_id_count; i++) 
+                        {
+                            LOG_MSG(LOG_DEBUG, "\t\t\tIndex = %d PDR %d QER ID %d ", i, pdr_ctxt->rule_id, pdr_ctxt->qer_id[i].qer_id);
+                        }
+                }
+        }
+}
+#endif

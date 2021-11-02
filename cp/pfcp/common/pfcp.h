@@ -14,6 +14,7 @@
 #include "ue.h"
 #include "pdn.h"
 #include "bearer.h"
+#include "cp_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -105,7 +106,7 @@ generate_far_id(void);
  * @return : Returns qer id  on success , 0 otherwise
  */
 uint32_t
-generate_urr_id(void);
+generate_urr_id(uint32_t iface);
 
 /*
  * @brief  : Generate the QER ID
@@ -113,8 +114,10 @@ generate_urr_id(void);
  * @return : Returns qer id  on success , 0 otherwise
  */
 uint32_t
-generate_qer_id(void);
+generate_qer_id(uint32_t iface);
 
+bool isCommonURR(uint32_t id);
+bool isCommonQER(uint32_t id);
 
 /**
  * @brief  : Generate the Sequence

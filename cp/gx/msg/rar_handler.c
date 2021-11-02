@@ -23,7 +23,6 @@ int handle_rar_msg(msg_info_t **msg_p)
     msg_info_t *msg = *msg_p;
     int ret;
     uint32_t call_id;
-	gx_context_t *gx_context = NULL;
     struct sockaddr_in saddr_in;
     saddr_in.sin_family = AF_INET;
     inet_aton("127.0.0.1", &(saddr_in.sin_addr));
@@ -42,13 +41,12 @@ int handle_rar_msg(msg_info_t **msg_p)
         return -1;
     }
     /* Retrive Gx_context based on Sess ID. */
-    ue_context_t *temp_ue_context = (ue_context_t *)get_gx_context((uint8_t *)msg->rx_msg.rar.session_id.val);
-    if (temp_ue_context == NULL) {
+    ue_context_t *ue_context = (ue_context_t *)get_ue_context_from_gxsessid((uint8_t *)msg->rx_msg.rar.session_id.val);
+    if (ue_context == NULL) {
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", 
                 msg->rx_msg.rar.session_id.val);
         return -1;
     }
-    gx_context = (gx_context_t *)temp_ue_context->gx_context;
     msg->ue_context = pdn_cntxt->context;
     msg->pdn_context = pdn_cntxt;
     msg->event = RE_AUTH_REQ_RCVD_EVNT;
@@ -64,7 +62,6 @@ int handle_rar_msg(msg_info_t **msg_p)
     /* BUG ? Dont we need transaction ? */
     proc_context_t *rar_proc = alloc_rar_proc(msg);
     rar_proc->call_id = call_id;
-    rar_proc->gx_context = gx_context;
     start_procedure(rar_proc);
 
     return 0;

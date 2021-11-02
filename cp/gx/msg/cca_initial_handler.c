@@ -37,23 +37,21 @@ void gx_msg_proc_failure(proc_context_t *proc_ctxt)
 int handle_cca_initial_msg(msg_info_t **msg_p)
 {
     msg_info_t *msg = *msg_p;
-	gx_context_t *gx_context = NULL;
     struct sockaddr_in saddr_in;
     saddr_in.sin_family = AF_INET;
     inet_aton("127.0.0.1", &(saddr_in.sin_addr));
 
     increment_gx_peer_stats(MSG_RX_DIAMETER_GX_CCA_I, saddr_in.sin_addr.s_addr);
 
-    pdn_connection_t *pdn_cntxt = NULL;
     /* Retrive Gx_context based on Sess ID. */
     int ret;
-    ue_context_t *temp_ue_context  = (ue_context_t *)get_gx_context((uint8_t*)msg->rx_msg.cca.session_id.val);
-    if (temp_ue_context == NULL) {
+    ue_context_t *ue_context  = (ue_context_t *)get_ue_context_from_gxsessid((uint8_t*)msg->rx_msg.cca.session_id.val);
+    if (ue_context == NULL) {
         LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", msg->rx_msg.cca.session_id.val);
         return -1;
     }
-    gx_context = (gx_context_t *)temp_ue_context->gx_context;
-    proc_context_t *proc_context = (proc_context_t *)gx_context->proc_context;
+
+    proc_context_t *proc_context = get_first_procedure(ue_context);
 
     if(msg->rx_msg.cca.presence.result_code &&
             msg->rx_msg.cca.result_code != 2001){
@@ -72,7 +70,7 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
     }
 
     /* Retrieve PDN context based on call id */
-    pdn_cntxt = (pdn_connection_t *)get_pdn_conn_entry(call_id);
+    pdn_connection_t *pdn_cntxt = (pdn_connection_t *)get_pdn_conn_entry(call_id);
     if (pdn_cntxt == NULL) {
         LOG_MSG(LOG_ERROR, "No valid pdn cntxt found for CALL_ID:%u", call_id);
         gx_msg_proc_failure(proc_context); 
@@ -91,6 +89,7 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
     SET_PROC_MSG(proc_context, msg);
     msg->proc_context = proc_context;
     proc_context->handler(proc_context, msg);
+
     // NOTE : this is important so that caller does not free msg pointer 
     *msg_p = NULL;
     // if we wish to generate new test events based on CCA-I then enable following code. 

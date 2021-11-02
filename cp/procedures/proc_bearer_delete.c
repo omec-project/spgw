@@ -562,19 +562,12 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 	char *buffer = NULL;
 	gx_msg raa = {0};
 	pdn_connection_t *pdn = NULL;
-	gx_context_t *gx_context = NULL;
 	uint16_t msg_type_ofs = 0;
 	uint16_t msg_body_ofs = 0;
 	uint16_t rqst_ptr_ofs = 0;
 	uint16_t msg_len_total = 0;
 
 	pdn = context->eps_bearers[ebi_index]->pdn;
-
-	/* Allocate the memory for Gx Context */
-	gx_context = (gx_context_t *)calloc(1, sizeof(gx_context_t));
-
-	//strncpy(gx_context->gx_sess_id, context->pdns[ebi_index]->gx_sess_id, strlen(context->pdns[ebi_index]->gx_sess_id));
-
 
 	raa.data.cp_raa.session_id.len = strlen(pdn->gx_sess_id);
 	memcpy(raa.data.cp_raa.session_id.val, pdn->gx_sess_id, raa.data.cp_raa.session_id.len);
@@ -590,9 +583,6 @@ gen_reauth_response(ue_context_t *context, uint8_t ebi_index)
 
 	/* Update UE State */
 	pdn->state = RE_AUTH_ANS_SNT_STATE;
-
-	/* VS: Set the Gx State for events */
-	gx_context->state = RE_AUTH_ANS_SNT_STATE;
 
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_raa_calc_length(&raa.data.cp_raa);

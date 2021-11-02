@@ -50,7 +50,6 @@ test_event_handler(void *data, uint16_t evt_id)
     if(evt_id == TEST_EVENTS) {
         sleep(30);
         pdn_connection_t *pdn_ctxt = (pdn_connection_t *)data; 
-        gx_context_t *gx_ctxt = (gx_context_t *)pdn_ctxt->context->gx_context;
 
         msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t)); 
         msg->msg_type = GX_RAR_MSG;
@@ -58,10 +57,10 @@ test_event_handler(void *data, uint16_t evt_id)
 	    gx_msg rar_request = {0};
 		uint16_t msglen = 0;
 		char *rar_buffer = NULL;
-        LOG_MSG(LOG_INFO, "Received Test events for session Id = %s",gx_ctxt->gx_sess_id);
+        LOG_MSG(LOG_INFO, "Received Test events for session Id = %s",pdn_ctxt->gx_sess_id);
         rar_request.data.cp_rar.presence.session_id = PRESENT;
-        rar_request.data.cp_rar.session_id.len = strlen(gx_ctxt->gx_sess_id);
-        memcpy(rar_request.data.cp_rar.session_id.val, gx_ctxt->gx_sess_id, strlen(gx_ctxt->gx_sess_id));
+        rar_request.data.cp_rar.session_id.len = strlen(pdn_ctxt->gx_sess_id);
+        memcpy(rar_request.data.cp_rar.session_id.val, pdn_ctxt->gx_sess_id, strlen(pdn_ctxt->gx_sess_id));
         rar_request.data.cp_rar.presence.charging_rule_install = PRESENT;
         rar_request.data.cp_rar.charging_rule_install.count = 1;
         rar_request.data.cp_rar.charging_rule_install.list = (GxChargingRuleInstall *)calloc(1, sizeof(GxChargingRuleInstall));

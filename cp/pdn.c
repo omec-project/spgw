@@ -12,6 +12,7 @@
 eps_bearer_t* 
 get_default_bearer(pdn_connection_t *pdn)
 {
+    // FIXME : isnt it like we need eps_bearers only 11 ?? why 15 
 	return pdn->eps_bearers[pdn->default_bearer_id - 5];
 
 }
@@ -108,7 +109,7 @@ cleanup_pdn_context(pdn_connection_t *pdn_ctxt)
     }
 
     del_pdn_conn_entry(pdn_ctxt->call_id);
-    if(remove_gx_context((uint8_t*)pdn_ctxt->gx_sess_id) < 0) {
+    if(remove_gxsessid_to_context((uint8_t*)pdn_ctxt->gx_sess_id) < 0) {
         LOG_MSG(LOG_ERROR, " Error on remove_gx_context for session Id %s",pdn_ctxt->gx_sess_id);
     }
 

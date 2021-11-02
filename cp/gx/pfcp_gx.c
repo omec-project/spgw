@@ -65,7 +65,7 @@ store_default_bearer_qos_in_policy(pdn_connection_t *pdn, GxDefaultEpsBearerQos 
 {
     bearer_qos_ie *def_qos;
     eps_bearer_t *def_bearer = get_default_bearer(pdn); 
-    if(default_bearer) {
+    if(default_bearer) { // ajay : FIXME 
         def_qos = &def_bearer->qos;
     } else {
         pdn->policy.default_bearer_qos_valid = TRUE;
@@ -478,6 +478,7 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 					}
 				}
 			}
+            // if no rule definition then its static, predefined rule. 
 		}
 	}
 
@@ -545,9 +546,11 @@ store_dynamic_rules_in_policy(pdn_connection_t *pdn, GxChargingRuleInstallList *
 
 }
 
+// FIXME : why this fails..
 static int
 check_for_rules_on_default_bearer(pdn_connection_t *pdn)
 {
+    LOG_MSG(LOG_DEBUG,"check for rules on default bearer %p", pdn);
     pcc_rule_t *pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
     while (pcc_rule != NULL) {
         pcc_rule_t *next_pcc_rule = TAILQ_NEXT(pcc_rule, next_pcc_rule);
@@ -571,6 +574,7 @@ check_for_rules_on_default_bearer(pdn_connection_t *pdn)
                 return -1;
             }
             //GXFEATURE : we can have multiple rules on default bearer...
+            // FIXME
             return 0;
         }
         pcc_rule = next_pcc_rule;
@@ -634,6 +638,7 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 	uint32_t call_id = 0;
 	pdn_connection_t *pdn_cntxt = NULL;
 
+    // FIXME 
 	/* Extract the call id from session id */
 	ret = retrieve_call_id((char *)&cca->session_id.val, &call_id);
 	if (ret < 0) {
@@ -659,6 +664,8 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 		LOG_MSG(LOG_ERROR, "AVP:default_eps_bearer_qos is missing ");
 		return -1;
 	} 
+    // FIXME : check if we are sending these update values in CSRsp.
+    // we are ignoring the QCI  
 	if (cca->presence.qos_information == PRESENT) {
         eps_bearer_t *def_bearer = get_default_bearer(pdn_cntxt);
 		LOG_MSG(LOG_INFO, "AVP:received qos information from PCRF ");
@@ -666,7 +673,6 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
         if(qos->presence.apn_aggregate_max_bitrate_ul == PRESENT) {
             pdn_cntxt->apn_ambr.ambr_uplink = qos->apn_aggregate_max_bitrate_ul;
             def_bearer->qos.ul_mbr = qos->apn_aggregate_max_bitrate_ul;
-            
         }
         if(qos->presence.apn_aggregate_max_bitrate_dl == PRESENT) {
             pdn_cntxt->apn_ambr.ambr_downlink = qos->apn_aggregate_max_bitrate_dl;
@@ -800,15 +806,12 @@ gx_update_bearer_req(pdn_connection_t *pdn)
         pcc_rule = next_pcc_rule;
 	}
 
-	gx_context_t *gx_context = NULL;
 	/* Retrive Gx_context based on Sess ID. */
-	ue_context_t *temp_ue_context = (ue_context_t *)get_gx_context((uint8_t*)pdn->gx_sess_id);
-	if (temp_ue_context == NULL) {
+	ue_context_t *ue_context = (ue_context_t *)get_ue_context_from_gxsessid((uint8_t*)pdn->gx_sess_id);
+	if (ue_context == NULL) {
 		LOG_MSG(LOG_ERROR, "NO ENTRY FOUND IN Gx HASH [%s]", pdn->gx_sess_id);
 		return DIAMETER_UNKNOWN_SESSION_ID;
 	}
-    gx_context = (gx_context_t *)temp_ue_context->gx_context;
-    assert(gx_context != NULL);
 
 	/* Update UE State */
 	pdn->state = UPDATE_BEARER_REQ_SNT_STATE;

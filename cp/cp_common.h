@@ -1,16 +1,20 @@
 // Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
-// Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-#ifndef SESS_CONST_H
-#define SESS_CONST_H
+
+#ifndef CP_COMMON_H
+#define CP_COMMON_H
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define MAX_PFCP_MSG_SIZE 4096 
+#define MAX_SESS_ID_LEN 128
 
 #define MAX_BEARERS                     (15)
 #define MAX_FILTERS_PER_UE              (16)
@@ -21,4 +25,4 @@ extern "C" {
 }
 #endif
 
-#endif /* SESS_CONST_H */
+#endif /* CP_COMMON_H */

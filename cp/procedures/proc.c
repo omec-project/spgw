@@ -153,7 +153,6 @@ end_procedure(proc_context_t *proc_ctxt)
     ue_context_t *context = NULL;
     pdn_connection_t *pdn = NULL;
 
-    /* TODO : add procedure name */
     LOG_MSG(LOG_DEBUG4, "end procedure  %s ",proc_ctxt->proc_name);
 
     assert(proc_ctxt != NULL);
@@ -561,4 +560,16 @@ const char * get_event_string(int value)
             return "UNDEFINED_EVNT";
     }
     return "UNDEFINED_EVNT";
+}
+
+proc_context_t*
+get_first_procedure(void *context)
+{
+    ue_context_t *ue_context = (ue_context_t*)context;
+
+    if(ue_context != NULL) {
+        proc_context_t *proc_ctxt = TAILQ_FIRST(&ue_context->pending_sub_procs);
+        return proc_ctxt;
+    }
+    return NULL;
 }

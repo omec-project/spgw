@@ -224,13 +224,13 @@ del_rule_name_entry(const char *rule_name);
 /* Gx APIS */
 
 int 
-gx_context_entry_add(const uint8_t *sess_id, void *context);
+gxsessid_context_entry_add(const uint8_t *sess_id, void *context);
 
 void*
-get_gx_context(const uint8_t *sessid);
+get_ue_context_from_gxsessid(const uint8_t *sessid);
 
 int
-remove_gx_context(const uint8_t *sessid);
+remove_gxsessid_to_context(const uint8_t *sessid);
 
 uint32_t
 acquire_ip_cpp(const char *pool);

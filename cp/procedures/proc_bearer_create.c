@@ -825,7 +825,6 @@ add_qer_into_hash(qer_t *qer)
 	}
 
 	qer_ctxt->qer_id = qer->qer_id;
-	qer_ctxt->session_id = qer->session_id;
 	qer_ctxt->max_bitrate.ul_mbr = qer->max_bitrate.ul_mbr;
 	qer_ctxt->max_bitrate.dl_mbr = qer->max_bitrate.dl_mbr;
 	qer_ctxt->guaranteed_bitrate.ul_gbr = qer->guaranteed_bitrate.ul_gbr;
@@ -950,7 +949,6 @@ int fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 		strncpy((char * )pdr_ctxt->pdi.ntwk_inst.ntwk_inst, (char *)nwinst, 32);
 		pdr_ctxt->qer.qer_id = bearer->qer_id[i].qer_id;
 		pdr_ctxt->qer_id[0].qer_id = pdr_ctxt->qer.qer_id;
-		pdr_ctxt->qer.session_id = pdn->seid;
 		pdr_ctxt->qer.max_bitrate.ul_mbr = dyn_rule->qos.ul_mbr;
 		pdr_ctxt->qer.max_bitrate.dl_mbr = dyn_rule->qos.dl_mbr;
 		pdr_ctxt->qer.guaranteed_bitrate.ul_gbr = dyn_rule->qos.ul_gbr;
