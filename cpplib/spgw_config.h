@@ -115,4 +115,7 @@ class spgwConfig
     static int get_user_plane_profiles(profile_names_t *ptr, int max); 
     static int parse_cp_json_cpp(cp_config_t *cfg, const char *fileName);
 };
+
+void clearOldUpfProfiles(spgwConfigStore* oldCfg, spgwConfigStore* newCfg);
+
 #endif

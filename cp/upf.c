@@ -121,6 +121,32 @@ initiate_pfcp_association(upf_context_t *upf_context)
 
 }
 
+void config_disable_upf(uint32_t upf_addr) {
+    struct sockaddr_in upf_address = {0};
+    upf_address.sin_addr.s_addr = upf_addr;
+    /*FIXME :  peerData and upf context are not freed yet.*/
+    peerData_t *md = (peerData_t *)get_peer_entry(upf_addr);
+    del_entry_from_hash(upf_addr);
+    if(md != NULL) {
+        /* Stop transmit timer for specific Peer Node */
+        stopTimer( &md->tt );
+        /* Stop periodic timer for specific Peer Node */
+        stopTimer( &md->pt );
+        /* Deinit transmit timer for specific Peer Node */
+        deinitTimer( &md->tt );
+        /* Deinit transmit timer for specific Peer Node */
+        deinitTimer( &md->pt );
+    }
+
+    upf_context_t *upf_context = NULL;
+    upf_context = (upf_context_t *)upf_context_entry_lookup(upf_addr);
+    if(upf_context != NULL) {
+        upf_context->state = 0;
+    }
+
+    delete_entry_heartbeat_hash(&upf_address);
+}
+
 void
 initiate_all_pfcp_association(void)
 {
@@ -265,7 +291,10 @@ get_upf_context(user_plane_profile_t *upf_profile)
         upf_context_t *upf_context = NULL;
         upf_context = (upf_context_t*)upf_context_entry_lookup(upf_profile->upf_addr);
         if(upf_context == NULL) {
+            LOG_MSG(LOG_DEBUG, "upf ctx null : %s", upf_profile->user_plane_profile_name);
             create_upf_context(upf_profile->upf_addr, &upf_context);
+        } else {
+            LOG_MSG(LOG_DEBUG, "upf ctx found : %s", upf_profile->user_plane_profile_name);
         }
         return upf_context;
     }

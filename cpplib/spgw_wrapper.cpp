@@ -12,6 +12,7 @@
 #include "dns_upf_tables.h"
 #include "urr_tables.h"
 #include "qer_tables.h"
+#include "spgw_config_struct.h"
 #include "pdr_tables.h"
 #include "rule_tables.h"
 #include "spgwStatsPromClient.h"
@@ -31,7 +32,8 @@ dnsUpfTables    *dns_upf_table = nullptr;
 urrTables       *urr_table = nullptr; 
 qerTables       *qer_table = nullptr; 
 pdrTables       *pdr_table = nullptr; 
-ruleTables      *rule_table = nullptr; 
+ruleTables      *rule_table = nullptr;
+cfg_func_ptr    configCallback = nullptr;
 
 extern "C"
 {
@@ -80,6 +82,9 @@ extern "C"
         return spgwConfig::parse_cp_json_cpp(cfg, file);
     }
 
+    cfg_func_ptr getConfigCallback(void) {
+        return configCallback;
+    }
     void init_cpp_tables()
     {
         table = new spgwTables();
@@ -192,8 +197,9 @@ extern "C"
         prom.detach();
     }
 
-    void setup_webserver(uint16_t port)
+    void setup_webserver(uint16_t port, cfg_func_ptr val)
     {
+        configCallback = val;
         std::thread webserver(spgwWebserverThread, port);
         webserver.detach();
     }

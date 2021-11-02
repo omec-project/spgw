@@ -22,6 +22,19 @@ typedef struct imsi_selection
     uint64_t  to_imsi;
 }imsi_selection_t;
 
+enum cfg_action
+{
+       DISABLE_UPF = 01,
+};
+
+typedef struct config_callback
+{
+    enum cfg_action  action;
+    uint32_t         upf_addr;  
+}config_callback_t;
+
+typedef void (*cfg_func_ptr)(config_callback_t *);
+
 typedef struct serving_plmn
 {
     bool      is_valid;

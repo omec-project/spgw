@@ -17,6 +17,7 @@
 #include "spgw_config_struct.h"
 #include "sm_struct.h"
 #include "cp_config_apis.h"
+#include "upf_apis.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_events.h"
 #include "cp_log.h"
@@ -33,6 +34,7 @@ process_local_msg(void *data, uint16_t event)
         free(evt);
         evt  = (struct t2tMsg *)get_t2tMsg();
     }
+    schedule_pfcp_association(10, NULL);
     LOG_MSG(LOG_DEBUG,"Process local message event done");
     return;
 }

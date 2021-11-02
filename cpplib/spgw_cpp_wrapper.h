@@ -32,6 +32,7 @@ int
 get_user_plane_profiles(profile_names_t *profile, int max);
 
 void init_cpp_tables(void);
+cfg_func_ptr getConfigCallback(void);
 
 bool add_pfcp_transaction(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans);
 void* find_pfcp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq);
@@ -63,7 +64,7 @@ void decrement_stat(int stat_id);
 void increment_stat(int stat_id);
 void set_num_ue_stat(int stat_id, uint32_t val);
 void setup_prometheus(uint16_t port);
-void setup_webserver(uint16_t port);
+void setup_webserver(uint16_t port, cfg_func_ptr val);
 void increment_userplane_stats(int stat_id, uint32_t peer_addr);
 void increment_mme_peer_stats(int stat_id, uint32_t peer_addr);
 void increment_sgw_peer_stats(int stat_id, uint32_t peer_addr);
