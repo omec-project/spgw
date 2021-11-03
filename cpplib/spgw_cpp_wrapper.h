@@ -23,11 +23,6 @@ sub_config_t* match_sub_selection(sub_selection_keys_t *key);
 /* API to find matching profile */
 apn_profile_t * match_apn_profile(char *, uint16_t len);
 
-void invalidate_upf_dns_results(uint32_t ip);
-
-user_plane_profile_t* 
-get_user_plane_profile_ref(const char *name);
-
 int 
 get_user_plane_services(user_plane_service_names_t *profile, int max);
 

@@ -118,7 +118,7 @@ struct pdn_connection {
 	uint32_t call_id;
 
 
-	uint8_t apn[64];
+	uint8_t apn[MAX_APN_LEN];
 	uint8_t apn_len;
 
 	ambr_ie apn_ambr;
