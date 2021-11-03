@@ -21,7 +21,7 @@ int main()
             sub_selection_keys_t key = {0};
             key.imsi.is_valid = true;
             key.imsi.from_imsi = 208014567891201;
-            sub_profile_t *sub_profile;
+            sub_config_t *sub_profile;
             sub_profile = match_sub_selection(&key);
             printf("sub_profile = %p \n",sub_profile);
             if(sub_profile != NULL)
@@ -35,7 +35,7 @@ int main()
 #if TEST_FILTER
         {
             printf("****TEST 2 ****\n");
-            sub_profile_t *sub_profile;
+            sub_config_t *sub_profile;
             sub_selection_keys_t key = {0};
             key.imsi.is_valid = true;
             key.imsi.from_imsi = 301111111111111;
@@ -58,7 +58,7 @@ int main()
             sub_selection_keys_t key = {0};
             key.imsi.is_valid = true;
             key.imsi.from_imsi = 301111111111111;
-            sub_profile_t *sub_profile;
+            sub_config_t *sub_profile;
             sub_profile = match_sub_selection(&key);
             printf("sub_profile = %p \n",sub_profile);
             if(sub_profile != NULL)

@@ -34,15 +34,6 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn);
 
 
 /**
- * @brief  : This function processes incoming create session request
- * @param  : teid
- * @param  : eps_bearer_id indicates eps bearer id
- * @return : Returns 0 in case of success else negative value
- */
-int
-process_create_sess_request(uint32_t teid, uint8_t eps_bearer_id);
-
-/**
  * @brief  : This is a function to fill pfcp association update response
  * @param  : pfcp_asso_update_resp is pointer to structure of pfcp association update response
  * @return : This function dose not return anything

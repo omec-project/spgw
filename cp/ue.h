@@ -326,14 +326,8 @@ struct ue_context {
 
     /* UE association with UPF context */
     upf_context_t  *upf_context;
-    sub_profile_t  *sub_prof; /* Requirement. - Bug - free the sub */
-    uint32_t       dns_enable;
-
-    /* Temp - need to find right place to put this */
-    /* Received PCO from the UE during attach. Once CSRsp sent, release this ? or should
-     * we keep it forever, since PCO may get updated over the period of time  
-     */
-    void *pco; 
+//    uint32_t       dns_enable;
+    void    *gx_context;
 
     TAILQ_HEAD(proc_sub_head, proc_context) pending_sub_procs;
 };
@@ -414,8 +408,7 @@ set_s5s8_pgw_gtpc_teid(pdn_connection_t *pdn);
  */
 int
 create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
-		uint8_t ebi, ue_context_t **context, apn_profile_t *apn_requested,
-		uint32_t sequence);
+		uint8_t ebi, ue_context_t **context, uint8_t *apn, uint8_t apn_len);
 
 int
 del_rule_entries(ue_context_t *context, uint8_t ebi_index);

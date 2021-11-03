@@ -63,6 +63,8 @@ alloc_pfcp_association_setup_proc(void *upf_context)
     SET_PROC_MSG(pfcp_setup_proc, setup_msg);
     pfcp_setup_proc->upf_context = upf_context;
     setup_msg->proc_context = pfcp_setup_proc;
+    upf_context_t *upf = (upf_context_t*)upf_context;
+    upf->proc = pfcp_setup_proc;
     LOG_MSG(LOG_DEBUG,"Proc %p upf context %p ", pfcp_setup_proc, upf_context);
     return pfcp_setup_proc;
 }
@@ -95,6 +97,15 @@ association_setup_handler(proc_context_t *proc_context, msg_info_t *msg)
     int ret = 0;
 	upf_context_t *upf_context = (upf_context_t *)proc_context->upf_context;
     assert (upf_context->state != PFCP_ASSOC_RESP_RCVD_STATE); 
+    upf_context->upf_sockaddr.sin_addr.s_addr = 0;
+    upf_context = get_upf_context(upf_context->fqdn, upf_context->global_address);
+    if (upf_context->upf_sockaddr.sin_addr.s_addr == 0) {
+        //address is still not resolved 
+		LOG_MSG(LOG_ERROR, "Error in resolving UPF address [%s]", upf_context->fqdn);
+        upf_context->state = 0; 
+        queue_stack_unwind_event(UPF_CONNECTION_SETUP_FAILED, (void *)upf_context, upf_pfcp_setup_failure);
+	    return -1;
+    }
     LOG_MSG(LOG_DEBUG1,"Initiate PFCP association setup to UPF %s ", inet_ntoa(upf_context->upf_sockaddr.sin_addr));
     ret = assoication_setup_request(proc_context);
 	if(ret) {
@@ -320,7 +331,8 @@ upf_pfcp_setup_failure(void *data, uint16_t event)
         free(key);
         key = LIST_FIRST(&upf_context->pending_sub_procs);
     }
-    LOG_MSG(LOG_ERROR, "PFCP association setup failed for %s, event = %d ",inet_ntoa(upf_context->upf_sockaddr.sin_addr), event);
+    LOG_MSG(LOG_ERROR, "PFCP association setup failed for service [%s] address [%s], event = %d ",
+                        upf_context->fqdn, inet_ntoa(upf_context->upf_sockaddr.sin_addr), event);
     proc_context_t *upf_proc = (proc_context_t *)upf_context->proc;
     proc_pfcp_assoc_setup_failure(upf_proc, 0);
 }
@@ -370,8 +382,11 @@ proc_pfcp_assoc_setup_failure(proc_context_t *proc_context, int cause)
     }
     proc_context->result = PROC_RESULT_FAILURE;
     upf_context->state = 0;
+    upf_context_delete_entry(upf_context->upf_sockaddr.sin_addr.s_addr);
+    upf_context->upf_sockaddr.sin_addr.s_addr = 0;
     proc_pfcp_assoc_setup_complete(proc_context);
-    LOG_MSG(LOG_INFO, "Schedule PFCP association setup");
+    LOG_MSG(LOG_INFO, "Schedule PFCP association setup after 5 seconds");
+    //FIXME - add backoff 
     schedule_pfcp_association(5, upf_context);
 }
 

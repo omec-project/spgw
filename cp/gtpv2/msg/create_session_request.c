@@ -39,19 +39,16 @@ extern uint32_t adc_rule_id[];
  @ return : length of the PCO buf 
  */
 static int16_t 
-build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
+build_pco_response(proc_context_t *proc_ctxt, char *pco_buf, ue_context_t *context)
 {
 	uint16_t index = 0;
 	int i = 0;
 	uint8_t byte;
+	pco_ie_t *req_pco = (pco_ie_t *)proc_ctxt->req_pco;
 	byte = (req_pco->ext<<7) | (req_pco->config_proto & 0x03);
 	memcpy(&pco_buf[index], &byte, sizeof(byte));
 	index++;
 
-    sub_profile_t *sub_prof = context->sub_prof;
-    assert(sub_prof != NULL);
-    apn_profile_t *apn_prof = sub_prof->apn_profile;
-    assert(apn_prof != NULL);
     bool ipv4_link_mtu = false;
  
 	for (i = 0; i < req_pco->num_of_opt; i++) {
@@ -90,7 +87,8 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
 						memcpy(&pco_buf[index], &len, sizeof(len));
 						index += sizeof(len);
 
-						memcpy(&pco_buf[index], &apn_prof->dns_primary, 4);
+						sub_config_t *sub_conf = (sub_config_t *)proc_ctxt->sub_config;
+						memcpy(&pco_buf[index], &sub_conf->dns_primary, 4);
 						index += 4;
 					}
 
@@ -104,7 +102,8 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
 						memcpy(&pco_buf[index], &len, sizeof(len));
 						index += sizeof(len);
 
-						memcpy(&pco_buf[index], &apn_prof->dns_secondary, 4);
+  						sub_config_t *sub_conf = (sub_config_t *)proc_ctxt->sub_config;
+						memcpy(&pco_buf[index], &sub_conf->dns_secondary, 4);
 						index += 4;
 					}
 				}
@@ -119,7 +118,8 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
 					memcpy(&pco_buf[index], &len, sizeof(len));
 					index += sizeof(len);
 
-					memcpy(&pco_buf[index], &apn_prof->dns_primary, 4);
+					sub_config_t *sub_conf = (sub_config_t *)proc_ctxt->sub_config;
+					memcpy(&pco_buf[index], &sub_conf->dns_primary, 4);
 					index += 4;
 				}
 				break;
@@ -131,7 +131,8 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
                     ipv4_link_mtu=true;
                     memcpy(&pco_buf[index], &pco_type, sizeof(pco_type));
                     index += sizeof(pco_type);
-                    uint16_t mtu = htons(apn_prof->mtu);
+                    sub_config_t *sub_conf = (sub_config_t *)proc_ctxt->sub_config;
+                    uint16_t mtu = htons(sub_conf->mtu);
                     uint8_t len = 2;
                     memcpy(&pco_buf[index], &len, sizeof(len));
                     index += sizeof(len);
@@ -151,7 +152,8 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
             ipv4_link_mtu=true;
             memcpy(&pco_buf[index], &pco_type, sizeof(pco_type));
             index += sizeof(pco_type);
-            uint16_t mtu = htons(apn_prof->mtu);
+            sub_config_t *sub_conf = (sub_config_t *)proc_ctxt->sub_config;
+            uint16_t mtu = htons(sub_conf->mtu);
             uint8_t len = 2;
             memcpy(&pco_buf[index], &len, sizeof(len));
             index += sizeof(len);
@@ -163,7 +165,7 @@ build_pco_response(char *pco_buf, pco_ie_t *req_pco, ue_context_t *context)
 }
 
 void
-set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
+set_create_session_response(void *proc, gtpv2c_header_t *gtpv2c_tx,
 		uint32_t sequence, ue_context_t *context, pdn_connection_t *pdn,
 		eps_bearer_t *bearer)
 {
@@ -171,6 +173,7 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 	struct in_addr ip = {0};
 	upf_context_t *upf_ctx = context->upf_context;;
 	create_sess_rsp_t cs_resp = {0};
+	proc_context_t *proc_ctxt = (proc_context_t*) proc;
 
 	set_gtpv2c_teid_header((gtpv2c_header_t *)&cs_resp.header,
 			GTP_CREATE_SESSION_RSP, context->s11_mme_gtpc_teid,
@@ -293,13 +296,10 @@ set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 			+ sizeof(ie_header_t);
 	}
 
-    if(context->pco != NULL)
-    {
+    if(proc_ctxt->req_pco != NULL) {
         char *pco_buf = (char *)calloc(1, 260);
         if (pco_buf != NULL) {
-            //Should we even pass the CSReq in case of PCO not able to allocate ?
-            //TODO -  pass upf context to build PCO 
-            uint16_t len = build_pco_response(pco_buf, (pco_ie_t *)context->pco, context);
+            uint16_t len = build_pco_response(proc_ctxt, pco_buf, context);
             set_pco(&cs_resp.pco_new, IE_INSTANCE_ZERO, pco_buf, len);
         }
     } 
@@ -369,8 +369,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 	/* set s11_sgw_gtpc_teid= key->ue_context_by_fteid_hash */
 	ret = create_ue_context(&csr.imsi.imsi_number_digits, csr.imsi.header.len,
-			csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi, &context, apn_requested,
-			csr.header.teid.has_teid.seq);
+			csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi, &context, (uint8_t*)csr.apn.apn, csr.apn.header.len);
 	if (ret)
 		return ret;
 
@@ -387,7 +386,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 	pdn = context->eps_bearers[ebi_index]->pdn;
 	{
-		pdn->apn_in_use = apn_requested;
+		strcpy((char *)pdn->apn, (char *)csr.apn.apn);
 		pdn->apn_ambr.ambr_downlink = csr.apn_ambr.apn_ambr_dnlnk;
 		pdn->apn_ambr.ambr_uplink = csr.apn_ambr.apn_ambr_uplnk;
 		pdn->apn_restriction = csr.max_apn_rstrct.rstrct_type_val;
@@ -459,7 +458,7 @@ process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		return ret;
 	}
 
-	set_create_session_response(
+	set_create_session_response(NULL,
 			gtpv2c_s11_tx, csr.header.teid.has_teid.seq,
 			context, pdn, bearer);
 
@@ -864,9 +863,9 @@ fill_cs_request(create_sess_req_t *cs_req, ue_context_t *context,
 				context->pdns[ebi_index]->s5s8_sgw_gtpc_teid);
 
 	set_ie_header(&cs_req->apn.header, GTP_IE_ACC_PT_NAME, IE_INSTANCE_ZERO,
-		             context->pdns[ebi_index]->apn_in_use->apn_name_length);
-	memcpy(cs_req->apn.apn, &(context->pdns[ebi_index]->apn_in_use->apn_name[0]),
-			context->pdns[ebi_index]->apn_in_use->apn_name_length);
+		             context->pdns[ebi_index]->apn_len);
+	memcpy(cs_req->apn.apn, &(context->pdns[ebi_index]->apn[0]),
+			context->pdns[ebi_index]->apn_len);
 
 	if (context->selection_flag) {
 		cs_req->selection_mode.spare2 = context->select_mode.spare2;
