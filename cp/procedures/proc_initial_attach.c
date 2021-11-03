@@ -171,7 +171,8 @@ handle_csreq_msg(proc_context_t *csreq_proc, msg_info_t *msg)
                                   gtpc_trans->peer_sockaddr.sin_addr.s_addr,
                                   msg->rx_msg.csr.uli.tai2.tai_tac);
 
-	ret = process_create_sess_req(&msg->rx_msg.csr,
+	ret = process_create_sess_req(csreq_proc,
+                                  &msg->rx_msg.csr,
 			                      &context, &pdn, msg);
 	if (ret) {
         // > 0 cause - Send reject message out 
@@ -264,10 +265,11 @@ initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg)
 // -1 : context replacement, mis error 
 // 0 : success
 int
-process_create_sess_req(create_sess_req_t *csr,
-		ue_context_t **_context, 
-        pdn_connection_t **pdn_ctxt,
-        msg_info_t *msg)
+process_create_sess_req(proc_context_t *proc_ctxt,
+                        create_sess_req_t *csr,
+		                ue_context_t **_context,
+                        pdn_connection_t **pdn_ctxt,
+                        msg_info_t *msg)
 {
 	int ret = 0;
 	struct in_addr ue_ip = {0};
@@ -279,12 +281,11 @@ process_create_sess_req(create_sess_req_t *csr,
     struct in_addr upf_ipv4 = {0};
     /* ajay - Should we get default context ?*/
     upf_context_t *upf_context=NULL; 
-    sub_profile_t *sub_profile = NULL;
+    sub_config_t *sub_profile = NULL;
     sub_selection_keys_t dpkey = {0}; 
 
-	apn_profile_t *apn_requested = match_apn_profile((char *)csr->apn.apn, csr->apn.header.len);
 
-    if(apn_requested == NULL) {
+    if(match_apn_profile((char *)csr->apn.apn, csr->apn.header.len) == NULL) {
         // caller sends out csrsp 
         return GTPV2C_CAUSE_MISSING_UNKNOWN_APN; 
     }
@@ -314,6 +315,7 @@ process_create_sess_req(create_sess_req_t *csr,
         // caller sends out csrsp 
         return GTPV2C_CAUSE_REQUEST_REJECTED ; 
     }
+    proc_ctxt->sub_config = (sub_config_t *) sub_profile;
 #if 0
     if(cp_config->dns_enable) {
 		/* VS: Select the UPF based on DNS */
@@ -325,7 +327,8 @@ process_create_sess_req(create_sess_req_t *csr,
     } else 
 #endif
     {
-        upf_context = get_upf_context(sub_profile->up_profile); 
+        // FIXME - UPF profile may have been deleted by now
+        upf_context = get_upf_context(sub_profile->user_plane_service, sub_profile->global_address);
         if(upf_context == NULL) {
             return GTPV2C_CAUSE_REQUEST_REJECTED ; 
         }
@@ -333,9 +336,11 @@ process_create_sess_req(create_sess_req_t *csr,
     }
 
     LOG_MSG(LOG_DEBUG, "Selected UPF address  %s ", inet_ntoa(upf_ipv4));
+#if 0
 	if(csr->mapped_ue_usage_type.header.len > 0) {
 		apn_requested->apn_usage_type = csr->mapped_ue_usage_type.mapped_ue_usage_type;
 	}
+#endif
 
     /* Requirementss  Prio-5. New networks support all the 15 EBIs  */
 	uint8_t ebi_index = csr->bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
@@ -362,7 +367,7 @@ process_create_sess_req(create_sess_req_t *csr,
                 addr_upf_alloc = PDN_ADDR_ALLOC_UPF;
                 LOG_MSG(LOG_DEBUG, "UPF supports UE IP address allocation feature ");
             }
-            else if(sub_profile->up_profile->global_address == true) {
+            else if(upf_context->global_address == true) {
               LOG_MSG(LOG_DEBUG, "Using control plane support of UE IP address allocation ");
               // if global address allocation required then pull 1 IP address from central control Plane 
               addr_upf_alloc = PDN_ADDR_ALLOC_CONTROL;
@@ -383,8 +388,7 @@ process_create_sess_req(create_sess_req_t *csr,
 	LOG_MSG(LOG_INFO, "IMSI - %lu, Acquire ip = %s ",csr->imsi.imsi64, inet_ntoa(ue_ip));
 	/* set s11_sgw_gtpc_teid= key->ue_context_by_fteid_hash */
 	ret = create_ue_context(&csr->imsi.imsi_number_digits, csr->imsi.header.len,
-			csr->bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi, &context, apn_requested,
-			CSR_SEQUENCE(csr));
+			csr->bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi, &context, csr->apn.apn, csr->apn.header.len);
 	if (ret) {
         // Free allocated UE Ip address. ue_ip is in network order  
         if(static_addr_pdn == false) {
@@ -395,8 +399,7 @@ process_create_sess_req(create_sess_req_t *csr,
     }
 
     context->imsi64 = csr->imsi.imsi64;
-    context->dns_enable = cp_config->dns_enable;
-    context->sub_prof = sub_profile;
+    //context->dns_enable = cp_config->dns_enable;
 	if (csr->mei.header.len)
 		memcpy(&context->mei, &csr->mei.mei, csr->mei.header.len);
 
@@ -407,8 +410,8 @@ process_create_sess_req(create_sess_req_t *csr,
     }
 
     if(csr->pco_new.header.len != 0) {
-        context->pco = (pco_ie_t *)calloc(1, sizeof(pco_ie_t));
-        memcpy(context->pco, (void *)(&csr->pco_new), sizeof(pco_ie_t));
+        proc_ctxt->req_pco = (pco_ie_t *)calloc(1, sizeof(pco_ie_t));
+        memcpy(proc_ctxt->req_pco, (void *)(&csr->pco_new), sizeof(pco_ie_t));
     }
 
 	// TODOFIX - does not seem to be correct 
@@ -443,7 +446,8 @@ process_create_sess_req(create_sess_req_t *csr,
 		context->mapped_ue_usage_type = -1;
 
     
-	pdn->apn_in_use = apn_requested;
+	strcpy((char *)pdn->apn, (char *)csr->apn.apn);
+    pdn->apn_len = csr->apn.header.len;
 
     // DELETE THIS 
 	/* Store upf ipv4 in pdn structure */
@@ -685,7 +689,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 
 	if (cp_config->cp_type == SAEGWC) {
         transData_t *gtpc_trans = proc_context->gtpc_trans; 
-		set_create_session_response(
+		set_create_session_response(proc_context,
 				gtpv2c_tx, gtpc_trans->sequence, context, pdn, bearer);
 	}
     else if (cp_config->cp_type == PGWC) {
@@ -1533,10 +1537,11 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 	 * key->ue_context_by_fteid_hash */
 	uint64_t *imsi_val = (uint64_t *)IE_TYPE_PTR_FROM_GTPV2C_IE(uint64_t,
 			create_s5s8_session_request.imsi_ie);
+    uint8_t *apn_ie = (uint8_t *)(APN_PTR_FROM_APN_IE(create_s5s8_session_request.apn_ie));
+    uint8_t apn_len = ntohs(create_s5s8_session_request.apn_ie->length);
 	ret = create_ue_context(imsi_val,
 			ntohs(create_s5s8_session_request.imsi_ie->length),
-			*create_s5s8_session_request.bearer_context_to_be_created_ebi, &context, apn_requested,
-			0);
+			*create_s5s8_session_request.bearer_context_to_be_created_ebi, &context, apn_ie, apn_len);
 	if (ret)
 		return ret;
 
@@ -1553,7 +1558,9 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 
 	pdn = context->eps_bearers[ebi_index]->pdn;
 	{
-		pdn->apn_in_use = apn_requested;
+		strcpy((char *)pdn->apn, (char *)(APN_PTR_FROM_APN_IE(create_s5s8_session_request.apn_ie))); 
+        pdn->apn_len = ntohs(create_s5s8_session_request.apn_ie->length);
+
 		pdn->apn_ambr = *IE_TYPE_PTR_FROM_GTPV2C_IE(ambr_ie,
 		    create_s5s8_session_request.apn_ambr_ie);
 		pdn->apn_restriction = *IE_TYPE_PTR_FROM_GTPV2C_IE(uint8_t,

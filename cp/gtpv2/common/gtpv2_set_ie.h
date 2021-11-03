@@ -416,7 +416,7 @@ add_grouped_ie_length(gtpv2c_ie *group_ie, uint16_t grouped_ie_length);
  * @return : Returns nothing
  */
 void
-set_create_session_response(gtpv2c_header_t *gtpv2c_tx,
+set_create_session_response(void *proc, gtpv2c_header_t *gtpv2c_tx,
 		uint32_t sequence, ue_context_t *context, pdn_connection_t *pdn,
 		eps_bearer_t *bearer);
 

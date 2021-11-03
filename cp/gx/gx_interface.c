@@ -277,14 +277,14 @@ fill_ccr_request(GxCCR *ccr, ue_context_t *context,
 	uint16_t len = 0;
 	char apn[MAX_APN_LEN] = {0};
 	/* VS: Fill the APN Vaule */
-	if ((pdn->apn_in_use)->apn_name_length != 0) {
+	if (pdn->apn_len != 0) {
 		ccr->presence.called_station_id = PRESENT;
 
 		for(int i=0; i < MAX_APN_LEN; ){
 
-			len = (pdn->apn_in_use)->apn_name[i];
-			if((pdn->apn_in_use)->apn_name[i] != '\0'){
-				strncat(apn,(const char *) &((pdn->apn_in_use)->apn_name[i + 1]), len);
+			len = pdn->apn[i];
+			if(pdn->apn[i] != '\0'){
+				strncat(apn,(const char *) &(pdn->apn[i + 1]), len);
 				apn[len] = '.';
 				i += len+1;
 			} else {

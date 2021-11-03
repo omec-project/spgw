@@ -72,7 +72,9 @@ handle_pfcp_association_setup_request_msg(msg_info_t **msg_p, pfcp_header_t *pfc
     upf_context = (upf_context_t *)upf_context_entry_lookup(peer_addr->sin_addr.s_addr);
     if(upf_context == NULL) {
         LOG_MSG(LOG_ERROR, "Received PFCP association setup request from UPF %s ",inet_ntoa(peer_addr->sin_addr));
-        create_upf_context(peer_addr->sin_addr.s_addr, &upf_context);
+        //FIXME : what would be global_address flag in this case ?
+        // and what would be service name in this case ?
+        create_upf_context(peer_addr->sin_addr.s_addr, &upf_context, NULL);
     }
 
     upf_context->up_supp_features =

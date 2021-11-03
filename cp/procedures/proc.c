@@ -195,6 +195,12 @@ end_procedure(proc_context_t *proc_ctxt)
                     cleanup_ue_context(&context);
                 }
             }
+            if(proc_ctxt->req_pco != NULL) {
+                free(proc_ctxt->req_pco);
+            }
+            if(proc_ctxt->sub_config != NULL) {
+                free(proc_ctxt->sub_config);
+            }
             free(proc_ctxt);
             proc_ctxt = NULL;
             break;
