@@ -86,8 +86,6 @@ upf_down_event(uint32_t upf_ip)
 
 	delete_entry_heartbeat_hash(&upf_addr);
 
-    //invalidate_upf_dns_results(upf_ip);
-
     schedule_pfcp_association(1, upf_context);
 }
 
@@ -299,11 +297,13 @@ get_upf_context(const char *user_plane_service, bool global_address)
         upf_context->global_address = global_address;
         upf_addr = native_linux_name_resolve(user_plane_service);
         upf_context->upf_sockaddr.sin_addr.s_addr = upf_addr.s_addr;
-	    int ret = upf_context_entry_add(&upf_addr.s_addr, upf_context);
-    	if (ret) {
-		    LOG_MSG(LOG_ERROR, "Failed to add UPF addresss [%s] in UPF context map.Error: %d ", inet_ntoa(*((struct in_addr *)&upf_addr.s_addr)), ret);
-		    return NULL;
-	    }
+        if(upf_addr.s_addr != 0) {
+	        int ret = upf_context_entry_add(&upf_addr.s_addr, upf_context);
+    	    if (ret) {
+		        LOG_MSG(LOG_ERROR, "Failed to add UPF addresss [%s] in UPF context map.Error: %d ", inet_ntoa(*((struct in_addr *)&upf_addr.s_addr)), ret);
+		        return NULL;
+	        }
+        }
     }
     return upf_context;
 }

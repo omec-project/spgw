@@ -62,16 +62,6 @@ extern "C"
         return spgwConfig::match_apn_profile_cpp(apn, len);
     }
     
-    void invalidate_upf_dns_results(uint32_t ip) 
-    {
-        spgwConfig::invalidate_user_plane_address(ip);
-    }
-    
-    user_plane_profile_t* get_user_plane_profile_ref(const char *name)
-    {
-        return spgwConfig::get_user_plane_profile_ref(name);
-    }
-
     int get_user_plane_services(user_plane_service_names_t *ptr, int max_size)
     {
         return spgwConfig::get_user_plane_services(ptr, max_size);
