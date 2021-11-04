@@ -171,15 +171,6 @@ void
 creating_bar(pfcp_create_bar_ie_t *create_bar);
 
 /**
- * @brief  : Set values in fq csid ie
- * @param  : fq_csid, ie structure to be filled
- * @param  : nodeid_value
- * @return : Returns nothing
- */
-void
-set_fq_csid(pfcp_fqcsid_ie_t *fq_csid, uint32_t nodeid_value);
-
-/**
  * @brief  : Set values in trace info ie
  * @param  : trace_info, ie structure to be filled
  * @return : Returns nothing

@@ -44,7 +44,7 @@ set_base_teid(uint8_t val)
 
 	/* set base teid value */
 	/* teid will start from index 1 instead of index 0*/
-	if(cp_config->cp_type == SGWC || cp_config->cp_type == SAEGWC){
+	if(cp_config->cp_type == SAEGWC){
 		sgw_gtpc_base_teid = (teid_range << 24);
 		sgw_gtpc_base_teid++;
 	}else if(cp_config->cp_type == PGWC){
@@ -58,7 +58,7 @@ void
 set_s1u_sgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context)
 {
 	uint8_t index = __builtin_ffs(~(context->teid_bitmap)) - 1;
-	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
+	if (cp_config->cp_type == SAEGWC) {
 		sgw_gtpu_base_teid = sgw_gtpc_base_teid + sgw_gtpc_teid_offset;
 		++sgw_gtpc_teid_offset;
 	}
@@ -174,7 +174,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
         return GTPV2C_CAUSE_REQUEST_REJECTED ; 
 	}
 	if (if_ue_present == 0){
-		if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
+		if (cp_config->cp_type == SAEGWC) {
 			(*context)->s11_sgw_gtpc_teid = s11_sgw_gtpc_base_teid
 			    + s11_sgw_gtpc_teid_offset;
 			++s11_sgw_gtpc_teid_offset;

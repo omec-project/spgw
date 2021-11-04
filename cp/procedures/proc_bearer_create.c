@@ -485,7 +485,6 @@ process_pgwc_create_bearer_rsp(proc_context_t *proc, msg_info_t *msg)
     add_pfcp_transaction(local_addr, port_num, sequence, (void*)trans_entry);  
     trans_entry->sequence = sequence;
 
-	//context->sequence = seq_no;
 	bearer->pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
 
 	return 0;
@@ -501,22 +500,6 @@ process_cbresp_handler(void *data, void *unused_param)
 	if (ret) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 		return ret;
-	}
-
-    LOG_MSG(LOG_NEVER, "unused_param = %p",unused_parama);
-	return 0;
-}
-
-int
-process_create_bearer_request_handler(void *data, void *unused_param)
-{
-    int ret = 0;
-	msg_info_t *msg = (msg_info_t *)data;
-
-	ret = process_create_bearer_request(&msg->rx_msg.cb_req);
-	if (ret) {
-			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
-			return -1;
 	}
 
     LOG_MSG(LOG_NEVER, "unused_param = %p",unused_parama);

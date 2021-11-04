@@ -98,9 +98,6 @@ process_bearer_resource_command(gtpv2c_header_t *gtpv2c_rx,
 
 
 
-int
-process_delete_bearer_request(del_bearer_req_t *db_req , uint8_t flag);
-
 /**
  * @brief  : parses gtpv2c message and populates parse_sgwc_s5s8_create_session_response_t structure
  * @param  : gtpv2c_rx
@@ -158,24 +155,6 @@ int
 process_create_bearer_response(gtpv2c_header_t *gtpv2c_rx);
 
 /**
- * @brief  : Handles the processing of create session request messages received by the
- *           control plane
- * @param  : gtpv2c_rx
- *           gtpv2c message buffer containing the create session request message
- * @param  : gtpv2c_s11_tx
- *           gtpc2c message transmission buffer to contain s11 response message
- * @param  : gtpv2c_s5s8_tx
- *           gtpc2c message transmission buffer to contain s5s8 response message
- * @return : - 0 if successful
- *           - > 0 if error occurs during packet filter parsing corresponds to 3gpp
- *           specified cause error value
- *           - < 0 for all other errors
- */
-int
-process_create_session_request(gtpv2c_header_t *gtpv2c_rx,
-		gtpv2c_header_t *gtpv2c_s11_tx, gtpv2c_header_t *gtpv2c_s5s8_tx);
-
-/**
  * @brief  : Handles the processing of pgwc create session request messages
  *
  * @param  : gtpv2c_rx
@@ -230,24 +209,6 @@ int
 process_delete_bearer_response(gtpv2c_header_t *gtpv2c_rx);
 
 /**
- * @brief  : Handles the processing of delete session request messages received by the
- *           control plane.
- * @param  : gtpv2c_rx
- *           gtpv2c message buffer containing delete session request message
- * @param  : gtpv2c_s11_tx
- *           gtpc2c message transmission buffer to contain s11 response message
- * @param  : gtpv2c_s5s8_tx
- *           gtpc2c message transmission buffer to contain s5s8 response message
- * @return : - 0 if successful
- *           - > 0 if error occurs during packet filter parsing corresponds to 3gpp
- *           specified cause error value
- *           - < 0 for all other errors
- */
-int
-process_delete_session_request(gtpv2c_header_t *gtpv2c_rx,
-		gtpv2c_header_t *gtpv2c_s11_tx, gtpv2c_header_t *gtpv2c_s5s8_tx);
-
-/**
  * @brief  : Handles the generation of sgwc s5s8 delete session request messages
  * @param  : gtpv2c_rx
  *           gtpv2c message buffer containing delete session request message
@@ -268,21 +229,6 @@ int
 gen_sgwc_s5s8_delete_session_request(gtpv2c_header_t *gtpv2c_rx,
 		gtpv2c_header_t *gtpv2c_tx, uint32_t pgw_gtpc_del_teid,
 		uint32_t sequence, uint8_t del_ebi);
-
-/**
- * @brief  : Handles processing of sgwc s5s8 delete session response messages
- * @param  : gtpv2c_rx
- *           gtpc2c message reception  buffer containing the response message
- * @param  : gtpv2c_tx
- *           gtpc2c message transmission buffer to contain response message
- * @return : - 0 if successful
- *           - > 0 if error occurs during packet filter parsing corresponds to 3gpp
- *           specified cause error value
- *           - < 0 for all other errors
- */
-//int
-//process_sgwc_s5s8_delete_session_response(gtpv2c_header_t *gtpv2c_s5s8_rx,
-//			gtpv2c_header_t *gtpv2c_s11_tx);
 
 /**
  * @brief  : Handles the processing and reply of gtp echo requests received by the control plane
@@ -411,7 +357,6 @@ handle_unknown_msg(msg_info_t **msg, gtpv2c_header_t *gtpv2c_s11_rx);
 void process_s5s8_upd_bearer_response_pfcp_timeout(void *data);
 void process_pgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
 void process_sgwc_s5s8_delete_session_request_pfcp_timeout(void *data);
-void process_sgwc_s5s8_create_sess_rsp_pfcp_timeout(void *data);
 int handle_create_bearer_response_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx);
 int handle_delete_bearer_response_msg(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx);
 
@@ -419,34 +364,20 @@ void process_gtp_msg(void *data, uint16_t event);
 
 
 /* Slowly delete following block under if 1*/
-int handle_create_session_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_rx);
 int validate_gtpv2_message_content(msg_info_t *msg);
 
 void* out_handler_gtp(void *data);
 uint32_t get_gtp_sequence(void);
 
 #ifdef FUTURE_NEEDS
-int handle_modify_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_delete_session_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_ddn_ack_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_update_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_update_bearer_response_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_create_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_delete_bearer_request_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_delete_bearer_cmd_msg(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
-int handle_delete_pdn_conn_set_req(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_delete_pdn_conn_set_rsp(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_update_pdn_conn_set_req(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_update_pdn_conn_set_rsp(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 int handle_pgw_restart_notf_ack(gtpv2c_header_t *gtpv2c_rx, msg_info_t *msg);
 #endif
-/**
- * @brief  : Handles processing of create session response
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_cs_resp_handler(void *arg1, void *arg2);
 
 /**
  * @brief  : Fill Create Sess Request

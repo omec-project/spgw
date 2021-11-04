@@ -174,7 +174,9 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 
     // Sending CCR-T in case of failure
     /* we should check if subscriber has gx session..this does not look good */
-    if ((cp_config->gx_enabled) &&  (cp_config->cp_type != SGWC) && (msg->msg_type != GX_CCAI_FAILED)){
+    if ((cp_config->gx_enabled) &&  
+        ((cp_config->cp_type == SAEGWC) || (cp_config->cp_type == PGWC)) && 
+        (msg->msg_type != GX_CCAI_FAILED)){
         send_ccr_t_req(msg, rsp_info.ebi_index, rsp_info.teid);
         struct sockaddr_in saddr_in;
         saddr_in.sin_family = AF_INET;
@@ -204,10 +206,7 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
     cs_resp.cause.pce = 0;
     cs_resp.cause.bce = 0;
     cs_resp.cause.spareinstance = 0;
-    if(cp_config->cp_type != SGWC || cp_config->cp_type !=SAEGWC )
-        cs_resp.cause.cs = 1;
-    else
-        cs_resp.cause.cs = 0;
+    cs_resp.cause.cs = 1;
 
     set_ie_header(&cs_resp.bearer_contexts_created.header, GTP_IE_BEARER_CONTEXT,
             IE_INSTANCE_ZERO, 0);
@@ -453,10 +452,11 @@ ds_error_response(proc_context_t *ds_proc, msg_info_t *msg, uint8_t cause_value,
     assert(msg->peer_addr.sin_port != 0);
 
 #ifdef FUTURE_NEED
+    // FIXME : why we need to send CCRT while sending DSRsp ?
 	uint8_t eps_bearer_id = 0;
     /* we should check if subscriber has gx session..this does not look good */
     if ((cp_config->gx_enabled) &&  
-            (cp_config->cp_type != SGWC)){
+        ((cp_config->cp_type == SAEGWC) || (cp_config->cp_type == PGWC))){
         send_ccr_t_req(msg, eps_bearer_id, rsp_info.teid);
         struct sockaddr_in saddr_in;
 		saddr_in.sin_family = AF_INET;

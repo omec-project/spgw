@@ -97,12 +97,7 @@ process_ds_req_handler(proc_context_t *proc_context, msg_info_t *msg)
 					get_event_string(msg->event));
 
 
-	if (cp_config->cp_type == SGWC && msg->rx_msg.dsr.indctn_flgs.indication_oi == 1) {
-		/* Indication flag 1 mean dsr needs to be sent to PGW otherwise dont send it to PGW */
-		ret = process_sgwc_delete_session_request(proc_context, msg);
-	} else {
-		ret = process_pfcp_sess_del_request(proc_context, msg);
-	}
+	ret = process_pfcp_sess_del_request(proc_context, msg);
 
 	if (ret) {
 		if(ret != -1) {
@@ -159,7 +154,8 @@ process_pfcp_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg
 
 
     /* Lookup value in hash using session id and fill pfcp response and delete entry from hash*/
-    if((cp_config->cp_type != SGWC ) &&  (cp_config->gx_enabled)) {
+    // FIXME - need call level gx enable/disable 
+    if(cp_config->gx_enabled) {
         buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type));
         if (buffer == NULL) {
             LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
@@ -324,62 +320,6 @@ proc_detach_complete(proc_context_t *proc_context, msg_info_t *msg)
     return;
 }
 
-void process_spgwc_delete_session_request_timeout(void *data)
-{
-    LOG_MSG(LOG_NEVER, "data = %p", data);
-    return;
-}
-
-int
-process_sgwc_delete_session_request(proc_context_t *proc_context, msg_info_t *msg)
-{
-	ue_context_t *context = (ue_context_t *)msg->ue_context;
-	pdn_connection_t *pdn =  (pdn_connection_t *)msg->pdn_context;
-	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
-    del_sess_req_t *del_req = &msg->rx_msg.dsr;
-
-	fill_pfcp_sess_mod_req_delete(&pfcp_sess_mod_req, &del_req->header, context, pdn);
-
-	uint8_t pfcp_msg[512]={0};
-	int encoded = encode_pfcp_sess_mod_req_t(&pfcp_sess_mod_req, pfcp_msg);
-	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
-	header->message_len = htons(encoded - 4);
-
-	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
-
-    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSMODREQ, context->upf_context->upf_sockaddr.sin_addr.s_addr);
-    transData_t *trans_entry;
-	trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, process_spgwc_delete_session_request_timeout);
-    pdn->trans_entry = trans_entry;
-
-	/* Update UE State */
-	pdn->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-
-#ifdef TRANS_SUPPORT
-	uint8_t ebi_index = 0;
-	/* Update the sequence number */
-	 context->sequence = del_req->header.teid.has_teid.seq;
-
-
-	/*Retrive the session information based on session id. */
-	resp = get_sess_entry_seid(context->pdns[ebi_index]->seid);
-	if (resp == NULL){
-		LOG_MSG(LOG_ERROR, "NO Session Entry Found for sess ID:%lu", context->pdns[ebi_index]->seid);
-		return -1;
-	}
-
-	resp->gtpc_msg.dsr = *del_req;
-	resp->eps_bearer_id = del_req->lbi.ebi_ebi;
-	resp->s5s8_pgw_gtpc_ipv4 = htonl(pdn->s5s8_pgw_gtpc_ipv4.s_addr);
-	resp->msg_type = GTP_DELETE_SESSION_REQ;
-	resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-	resp->proc = pdn->proc;
-#endif
-
-    LOG_MSG(LOG_NEVER, "Proc context = %p ", proc_context);
-	return 0;
-}
-
 int8_t
 process_pfcp_sess_del_resp(uint64_t sess_id, 
                            gtpv2c_header_t *gtpv2c_tx,
@@ -398,7 +338,7 @@ process_pfcp_sess_del_resp(uint64_t sess_id,
 
 	/* Update the UE state */
 	pdn->state = PFCP_SESS_DEL_RESP_RCVD_STATE;
-	if ((cp_config->gx_enabled) && (cp_config->cp_type != SGWC)) {
+	if (cp_config->gx_enabled) {
 
 		/* Retrive Gx_context based on Sess ID. */
 		ue_context_t *temp_context  = (ue_context_t *)get_ue_context_from_gxsessid((uint8_t *)pdn->gx_sess_id); 
@@ -507,20 +447,6 @@ fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,
 			}
 		}
 	}
-		switch (cp_config->cp_type)
-		{
-			case SGWC :
-				if(pfcp_sess_mod_req->update_far_count){
-					for(uint8_t itr1 = 0; itr1 < pfcp_sess_mod_req->update_far_count; itr1++) {
-						pfcp_sess_mod_req->update_far[itr1].apply_action.drop = PRESENT;
-					}
-				}
-				break;
-
-			default :
-				LOG_MSG(LOG_DEBUG,"default pfcp sess mod req");
-				break;
-		}
 	set_pfcpsmreqflags(&(pfcp_sess_mod_req->pfcpsmreq_flags));
 	pfcp_sess_mod_req->pfcpsmreq_flags.drobu = PRESENT;
 

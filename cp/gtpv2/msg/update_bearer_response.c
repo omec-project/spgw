@@ -207,20 +207,14 @@ int process_update_bearer_response_handler(void *data, void *unused_param)
 {
 	int ret = 0;
 	msg_info_t *msg = (msg_info_t *)data;
-	if (SGWC == cp_config->cp_type) {
 
-		ret = process_s11_upd_bearer_response(&msg->rx_msg.ub_rsp);
-		if(ret && ret != -1)
-				ubr_error_response(msg, ret, S5S8_IFACE);
-	} else {
+	ret = process_s5s8_upd_bearer_response(&msg->rx_msg.ub_rsp);
+	if(ret && ret != -1)
+		ubr_error_response(msg, ret, GX_IFACE);
 
-		ret = process_s5s8_upd_bearer_response(&msg->rx_msg.ub_rsp);
-		if(ret && ret != -1)
-				ubr_error_response(msg, ret, GX_IFACE);
-	}
 	if (ret) {
-			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
-			return -1;
+		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+		return -1;
 	}
 
 	return 0;

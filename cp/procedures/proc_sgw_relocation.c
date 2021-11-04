@@ -147,23 +147,11 @@ process_sess_est_resp_sgw_reloc_handler(void *data, void *unused_param)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-//	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == PGWC)) 
-
 	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &(my_sock.s5s8_recv_sockaddr),
 		        sizeof(struct sockaddr_in));
 
     increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_MBRSP, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
-
-	if (SGWC == cp_config->cp_type) {
-#if 0
-		add_gtpv2c_if_timer_entry(
-			UE_SESS_ID(msg->rx_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid),
-			&my_sock.s5s8_recv_sockaddr, gtp_tx_buf, payload_length,
-			UE_BEAR_ID(msg->rx_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid) - 5,
-			S5S8_IFACE);
-#endif
-	}
 
     LOG_MSG(LOG_NEVER, "data = %p", data);
     LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
@@ -359,16 +347,6 @@ process_sess_mod_resp_sgw_reloc_handler(void *data, void *unused_param)
 
     increment_mme_peer_stats(MSG_TX_GTPV2_S5S8_MBRSP, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
 
-	if (SGWC == cp_config->cp_type) {
-#if 0
-		add_gtpv2c_if_timer_entry(
-			UE_SESS_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
-			&my_sock.s5s8_recv_sockaddr, gtp_tx_buf, payload_length,
-			UE_BEAR_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
-			S5S8_IFACE);
-#endif
-	}
-
     LOG_MSG(LOG_NEVER, "data = %p", data);
     LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
 	return 0;
@@ -505,8 +483,8 @@ int process_mbr_resp_handover_handler(void *data, void *rx_buf)
 			sizeof(struct sockaddr_in));
 
     increment_mme_peer_stats(MSG_TX_GTPV2_S11_CSRSP, s11_mme_sockaddr.sin_addr.s_addr);
-#endif
 	increment_stat(NUM_UE_SGW_ACTIVE_SUBSCRIBERS);
+#endif
 
     LOG_MSG(LOG_NEVER, "data = %p and rx_buf = %p ", data, rx_buf);
 

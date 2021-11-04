@@ -34,11 +34,6 @@ pfcp_context_t pfcp_ctxt;
 const uint32_t pfcp_base_seq_no = 0x00000000;
 static uint32_t pfcp_seq_no_offset;
 
-static uint32_t pfcp_sgwc_seid_offset;
-
-const uint64_t pfcp_sgwc_base_seid = 0xC0FFEE;
-
-
 void
 set_pfcp_header(pfcp_header_t *pfcp, uint8_t type, bool flag )
 {
@@ -97,16 +92,9 @@ set_pfcp_seid_header(pfcp_header_t *pfcp, uint8_t type, bool flag,uint32_t seq)
 	set_pfcp_header(pfcp, type, flag );
 
 	if(flag == HAS_SEID){
-
-		if (cp_config->cp_type == SGWC){
-			pfcp->seid_seqno.has_seid.seid  =
-						pfcp_sgwc_base_seid + pfcp_sgwc_seid_offset;
-			pfcp_sgwc_seid_offset++;
-		}
 		pfcp->seid_seqno.has_seid.seq_no = seq;
 		pfcp->seid_seqno.has_seid.spare  = 0;
 		pfcp->seid_seqno.has_seid.message_prio = 0;
-
 	}else if (flag == NO_SEID){
 		pfcp->seid_seqno.no_seid.seq_no = seq;
 		pfcp->seid_seqno.no_seid.spare  = 0;
@@ -421,13 +409,14 @@ creating_pdr(pfcp_create_pdr_ie_t *create_pdr, int source_iface_value, uint32_t 
 	size += set_pdr_id(&(create_pdr->pdr_id));
 	size += set_precedence(&(create_pdr->precedence));
 	size += set_pdi(&(create_pdr->pdi), ue_ip_flags);
-	if (cp_config->cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
+	if (((cp_config->cp_type == SAEGWC)  || (cp_config->cp_type = PGWC)) && 
+        (source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS))
 		size += set_outer_hdr_removal(&(create_pdr->outer_hdr_removal));
 
 	size += set_far_id(&(create_pdr->far_id));
 
 	/* TODO: Revisit this for change in yang*/
-    if (cp_config->cp_type != SGWC){
+	if ((cp_config->cp_type == SAEGWC)  || (cp_config->cp_type = PGWC)) {
         for(int i=0; i < create_pdr->qer_id_count; i++ ) {
             size += set_qer_id(&(create_pdr->qer_id[i]));
         }
@@ -471,11 +460,13 @@ updating_pdr(pfcp_update_pdr_ie_t *create_pdr, int source_iface_value)
 	size += set_pdr_id(&(create_pdr->pdr_id));
 	size += set_precedence(&(create_pdr->precedence));
 	size += set_pdi(&(create_pdr->pdi), ue_ip_flags);
-	if (cp_config->cp_type != SGWC && source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS)
+	if (((cp_config->cp_type == SAEGWC)  || (cp_config->cp_type = PGWC)) && 
+        (source_iface_value == SOURCE_INTERFACE_VALUE_ACCESS))
 		size += set_outer_hdr_removal(&(create_pdr->outer_hdr_removal));
 	size += set_far_id(&(create_pdr->far_id));
 	/*TODO : need to check this durinf UT */
-	if ((cp_config->gx_enabled) && (cp_config->cp_type != SGWC)){
+	if ((cp_config->gx_enabled) && 
+	    ((cp_config->cp_type == SAEGWC)  || (cp_config->cp_type = PGWC))) {
 		//for(int i=0; i < create_pdr->qer_id_count; i++ ) {
 		for(int i=0; i < 1; i++ ) {
 			size += set_qer_id(&(create_pdr->qer_id));
@@ -581,25 +572,6 @@ set_destination_interface(pfcp_dst_intfc_ie_t *dst_intfc)
 	dst_intfc->interface_value = 5;
 	pfcp_set_ie_header(&(dst_intfc->header), PFCP_IE_DEST_INTRFACE_ID, sizeof(uint8_t));
 	return sizeof(uint8_t);
-}
-
-void
-set_fq_csid(pfcp_fqcsid_ie_t *fq_csid,uint32_t nodeid_value)
-{
-	fq_csid->fqcsid_node_id_type = IPV4_GLOBAL_UNICAST;
-	//TODO identify the number of CSID
-	fq_csid->number_of_csids = 1;
-	memcpy(&(fq_csid->node_address), &nodeid_value, IPV4_SIZE);
-
-	for(int i = 0; i < fq_csid->number_of_csids ;i++) {
-		/*PDN CONN value is 0 when it is not used */
-		fq_csid->pdn_conn_set_ident[i] = 0;
-		/*fq_csid->pdn_conn_set_ident[i] = htons(pdn_conn_set_id++);*/
-	}
-
-	pfcp_set_ie_header(&(fq_csid->header),
-			PFCP_IE_FQCSID,2*(fq_csid->number_of_csids) + 5);
-
 }
 
 void
@@ -1470,61 +1442,6 @@ void cause_check_sess_estab(pfcp_sess_estab_req_t *pfcp_session_request,
 			}
 		}
 	}
-	/*if(!(pfcp_session_request->pgwc_fqcsid.header.len)) {
-
-		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_PFCP_FQ_CSID;
-
-	} else if(pfcp_session_request->pgwc_fqcsid.header.len != PGWC_FQCSID_LEN) {
-		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
-
-	}*/
-
-	/*if(!(pfcp_session_request->sgw_c_fqcsid.header.len)) {
-
-		*cause_id = CONDITIONALIEMISSING;
-		*offend_id =PFCP_IE_FQCSID;
-
-	} else if(pfcp_session_request->sgw_c_fqcsid.header.len != SGWC_FQCSID_LEN) {
-		*cause_id = INVALIDLENGTH;
-	}*/
-
-	/*if(!(pfcp_session_request->mme_fqcsid.header.len)) {
-
-		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_PFCP_FQ_CSID;
-	} else if(pfcp_session_request->mme_fqcsid.header.len != MME_FQCSID_LEN) {
-		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
-	}
-
-	if(!(pfcp_session_request->epdg_fqcsid.header.len)) {
-
-		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_PFCP_FQ_CSID;
-	} else if(pfcp_session_request->epdg_fqcsid.header.len != EPDG_FQCSID_LEN ) {
-		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
-	}
-
-
-	if(!(pfcp_session_request->twan_fqcsid.header.len)) {
-
-		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = IE_PFCP_FQ_CSID;
-	} else if (pfcp_session_request->twan_fqcsid.header.len != TWAN_FQCSID_LEN ) {
-		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
-	}
-
-	if (pfcp_session_request->sgwc_fqcsid.fq_csid_node_id_type == IPTYPE_IPV4 ) {
-		if(29 != (pfcp_session_request->sgwc_fqcsid.header.len)) {
-			*cause_id = CAUSE_VALUES_INVALIDLENGTH;
-		}
-	} else if (pfcp_session_request->sgwc_fqcsid.fq_csid_node_id_type == IPTYPE_IPV6 ) {
-		if(33 != (pfcp_session_request->sgwc_fqcsid.header.len)) {
-			*cause_id = CAUSE_VALUES_INVALIDLENGTH;
-		}
-	}*/
-
-
 }
 
 void
@@ -1629,44 +1546,6 @@ cause_check_sess_modification(pfcp_sess_mod_req_t *pfcp_session_mod_req,
 		*offend_id = PFCP_IE_QUERY_URR_REFERENCE ;
 	} else if(pfcp_session_mod_req->query_urr_reference.header.len != QUERY_URR_REFERENCE_LEN){
 
-		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
-	}
-	if(!(pfcp_session_mod_req->pgwc_fqcsid.header.len)) {
-
-		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = PFCP_IE_PFCP_FQ_CSID;
-	} else if(pfcp_session_mod_req->pgwc_fqcsid.header.len != PGWC_FQCSID_LEN) {
-		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
-	}
-
-	if(!(pfcp_session_mod_req->sgwc_fqcsid.header.len)) {
-
-		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id =PFCP_IE_PFCP_FQ_CSID;
-	} else if(pfcp_session_mod_req->sgwc_fqcsid.header.len != SGWC_FQCSID_LEN) {
-		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
-	}
-	if(!(pfcp_session_mod_req->mme_fqcsid.header.len)) {
-
-		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = PFCP_IE_PFCP_FQ_CSID;
-	} else if(pfcp_session_mod_req->mme_fqcsid.header.len != MME_FQCSID_LEN) {
-		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
-	}
-
-	if(!(pfcp_session_mod_req->epdg_fqcsid.header.len)) {
-
-		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = PFCP_IE_PFCP_FQ_CSID;
-	} else if(pfcp_session_mod_req->epdg_fqcsid.header.len != EPDG_FQCSID_LEN ) {
-		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
-	}
-
-	if(!(pfcp_session_mod_req->twan_fqcsid.header.len)) {
-
-		*cause_id = CAUSE_VALUES_CONDITIONALIEMISSING;
-		*offend_id = PFCP_IE_PFCP_FQ_CSID;
-	} else if (pfcp_session_mod_req->twan_fqcsid.header.len != TWAN_FQCSID_LEN ) {
 		*cause_id = CAUSE_VALUES_INVALIDLENGTH;
 	}
 

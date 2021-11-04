@@ -326,7 +326,6 @@ struct ue_context {
 
     /* UE association with UPF context */
     upf_context_t  *upf_context;
-    void    *gx_context;
 
     TAILQ_HEAD(proc_sub_head, proc_context) pending_sub_procs;
 };

@@ -41,14 +41,6 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 	uint32_t *s5s8_pgw_gtpc_ipv4);
 
 /**
- * @brief  : Process create session response received on s5s8 interface in sgwc
- * @param  : cs_rsp, holds info received in response
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp);
-
-/**
  * @brief  : Fill create session response on pgwc
  * @param  : cs_resp, response structure to be filled
  * @param  : sequence, sequence number
@@ -78,15 +70,6 @@ int
 process_pgwc_s5s8_delete_session_request(del_sess_req_t *ds_req);
 
 /**
- * @brief  : Process delete session response received on s5s8 interface , on sgwc
- * @param  : dsr, holds info from response
- * @param  : gtpv2c_tx, structure to be filled to send delete session response to mme
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *dsr, uint8_t *gtpv2c_tx);
-
-/**
  * @brief  : Handles the processing at sgwc after receiving delete
  *           session request messages
  * @param  : ds_resp, holds info from response
@@ -107,15 +90,6 @@ process_sgwc_s5s8_delete_session_request(del_sess_rsp_t *ds_resp);
  */
 int
 delete_sgwc_context(uint32_t gtpv2c_teid, ue_context_t **_context, uint64_t *seid);
-
-/**
- * @brief  : Proccesses create bearer response on sgwc
- * @param  : cb_rsp, holds data from response
- * @return : Returns 0 in case of success , -1 otherwise
- */
-
-int
-process_update_bearer_request(upd_bearer_req_t *ubr);
 
 int
 process_s11_upd_bearer_response(upd_bearer_rsp_t *ub_rsp);

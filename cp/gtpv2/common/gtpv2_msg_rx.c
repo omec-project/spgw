@@ -48,7 +48,7 @@ msg_handler_gtp(void *data)
                 &peer_sockaddr_len);
 
         if (bytes_rx == 0) {
-            LOG_MSG(LOG_ERROR, "SGWC|SAEGWC_s11 recvfrom error:"
+            LOG_MSG(LOG_ERROR, "SAEGW recvfrom error:"
                     "\ton %s:%u - %s",
                     inet_ntoa(peer_sockaddr.sin_addr),
                     peer_sockaddr.sin_port,
