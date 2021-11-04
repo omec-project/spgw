@@ -1392,6 +1392,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 	upf_ctx = (upf_context_t *) upf_context_entry_lookup(pdn->upf_ipv4.s_addr);
     if(upf_ctx == NULL) {
 		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+        //FIXME : return error 
 		return;
 	}
 	assert(upf_ctx != NULL);

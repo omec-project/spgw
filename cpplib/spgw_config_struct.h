@@ -60,13 +60,13 @@ typedef struct user_plane_profile
 {
     char user_plane_profile_name[64];
     char user_plane_service[64];
-    uint32_t upf_addr; /* run time information */
     bool     global_address; /* true : control plane allocates address, false : upf allocates address */
 }user_plane_profile_t;
 
-typedef struct profile_names {
-    char profile_name[64];
-}profile_names_t;
+typedef struct user_plane_service_names {
+    char user_plane_service[64];
+    bool global_address;
+}user_plane_service_names_t;
 
 #define MAX_NETCAP_LEN               (64)
 typedef struct apn_profile 
@@ -94,14 +94,19 @@ struct sub_selection_rule
 };
 typedef struct sub_selection_rule sub_selection_rule_t;
 
-/* return structrue for subscriber profile search */
-typedef struct sub_profile
+/* return structrue for subscriber config. No pointers, only values */
+typedef struct sub_config
 {
-    user_plane_profile_t    *up_profile;
-    apn_profile_t           *apn_profile;
-    access_profile_t        *access_profile;
-    qos_profile_t           *qos_profile;
-}sub_profile_t;
+    uint32_t                dns_primary;
+    uint32_t                dns_secondary;
+    uint16_t                mtu;
+    bool                    global_address; /* true : control plane allocates address, false : upf allocates address */
+    char                    user_plane_service[64];
+    uint32_t                apn_ambr_ul;
+    uint32_t                apn_ambr_dl;
+    uint8_t                 qci;
+    uint8_t                 arp;
+}sub_config_t;
 
 /* return value to parse config */
 typedef struct spgw_config_profile

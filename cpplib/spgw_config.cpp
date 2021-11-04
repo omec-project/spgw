@@ -19,8 +19,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-static struct in_addr native_linux_name_resolve(const char *name);
-
 spgwConfigStore *sub_classifier_config;
 std::mutex config_mtx; 
 
@@ -293,7 +291,6 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
             std::string key = itr->name.GetString();
             user_plane_profile_t *user_plane = new (user_plane_profile_t);
             user_plane->global_address = true; // default global addressing mode
-            user_plane->upf_addr = 0;
             const rapidjson::Value& userPlaneSection = itr->value; 
             strcpy(user_plane->user_plane_profile_name, key.c_str());
             if(userPlaneSection.HasMember("user-plane"))
@@ -301,8 +298,6 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
                 const char *temp = userPlaneSection["user-plane"].GetString();
                 LOG_MSG(LOG_INIT,"\tUser Plane - %s ",temp);
                 strcpy(user_plane->user_plane_service, temp);
-                struct in_addr ip = native_linux_name_resolve(temp); 
-                user_plane->upf_addr = ip.s_addr;
             }
             if(userPlaneSection.HasMember("global-address"))
             {
@@ -367,7 +362,7 @@ spgwConfig::parse_json_doc(rapidjson::Document &doc)
     return temp_config;
 }
 
-sub_profile_t* 
+sub_config_t *
 spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
 {
     std::unique_lock<std::mutex> lock(config_mtx);
@@ -425,11 +420,22 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
     if(it != sub_classifier_config->sub_sel_rules.end())
     {
         // We reached here means we have matching rule 
-        sub_profile_t *temp = new (sub_profile_t);
-        temp->apn_profile = sub_classifier_config->get_apn_profile(rule->selected_apn_profile);
-        temp->qos_profile = sub_classifier_config->get_qos_profile(rule->selected_qos_profile);
-        temp->up_profile =  sub_classifier_config->get_user_plane_profile(rule->selected_user_plane_profile);
-        temp->access_profile = sub_classifier_config->get_access_profile(rule->selected_access_profile[0]);
+        sub_config_t *temp = (sub_config_t *) calloc (1, sizeof(sub_config_t));
+        apn_profile_t *apn_profile = sub_classifier_config->get_apn_profile(rule->selected_apn_profile);
+        temp->dns_primary = apn_profile->dns_primary;
+        temp->dns_secondary = apn_profile->dns_secondary;
+        temp->mtu = apn_profile->mtu;
+
+        user_plane_profile_t *up_profile =  sub_classifier_config->get_user_plane_profile(rule->selected_user_plane_profile);
+        strcpy(temp->user_plane_service, up_profile->user_plane_service);
+        temp->global_address = up_profile->global_address;
+        qos_profile_t *qos_profile = sub_classifier_config->get_qos_profile(rule->selected_qos_profile);
+
+        temp->apn_ambr_ul = qos_profile->apn_ambr_ul;
+        temp->apn_ambr_dl = qos_profile->apn_ambr_dl;
+        temp->arp = qos_profile->arp;
+        temp->qci = qos_profile->qci;
+
         LOG_MSG(LOG_DEBUG,"matching subscriber rule found ");
         return temp;
     }
@@ -464,38 +470,17 @@ spgwConfig::match_apn_profile_cpp(const char *name, uint16_t len)
     return nullptr;
 }
 
-user_plane_profile_t*
-spgwConfig::get_user_plane_profile_ref(const char *name)
-{
-    return sub_classifier_config->get_user_plane_profile(name);
-}
-
-void 
-spgwConfig::invalidate_user_plane_address(uint32_t addr) 
-{
-    std::unique_lock<std::mutex> lock(config_mtx);
-    for (std::list<user_plane_profile_t*>::iterator it=sub_classifier_config->user_plane_list.begin(); it!=sub_classifier_config->user_plane_list.end(); ++it)
-    {
-        user_plane_profile_t *up=*it;
-        if(up->upf_addr == addr)
-        {
-            LOG_MSG(LOG_INIT, "invalidating upf address");
-            up->upf_addr = 0;
-        }
-    }
-    return ;
-}
-
 // return lit of user plane profiles 
 int
-spgwConfig::get_user_plane_profiles(profile_names_t *ptr, int max) 
+spgwConfig::get_user_plane_services(user_plane_service_names_t *ptr, int max)
 {
     int count=0;
     std::unique_lock<std::mutex> lock(config_mtx);
     for (std::list<user_plane_profile_t*>::iterator it=sub_classifier_config->user_plane_list.begin(); max && it!=sub_classifier_config->user_plane_list.end(); ++it)
     {
         user_plane_profile_t *up=*it;
-        strcpy(ptr->profile_name, up->user_plane_profile_name);
+        strcpy(ptr->user_plane_service , up->user_plane_service);
+        ptr->global_address = up->global_address;
         ptr = ptr + 1;
         max--;
         count++;
@@ -537,6 +522,8 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
             bool heartbeat_fail = global["heartbeatFailure"].GetBool();
             LOG_MSG(LOG_INIT, "heartbeat failure set to %d ",heartbeat_fail);
             cfg->pfcp_hb_ts_fail = heartbeat_fail;
+        } else {
+            cfg->pfcp_hb_ts_fail = true;
         }
         if(global.HasMember("periodicTimerSec")) {
             cfg->periodic_timer = global["periodicTimerSec"].GetInt();
@@ -712,42 +699,3 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
 
     return 0;
 }
-
-/* Requirement: 
- * For now I am using linux system call to do the service name dns resolution...
- * 3gpp based DNS lookup of NRF support would be required to locate UPF. 
- */
-static struct in_addr 
-native_linux_name_resolve(const char *name)
-{
-    struct in_addr ip = {0};
-    LOG_MSG(LOG_INFO, "DNS Query - %s ",name);
-    struct addrinfo hints;
-    struct addrinfo *result=NULL, *rp=NULL;
-    int err;
-
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-    hints.ai_protocol = 0;          /* Any protocol */
-    hints.ai_canonname = NULL;
-    hints.ai_addr = NULL;
-    hints.ai_next = NULL;
-    err = getaddrinfo(name, NULL, &hints, &result);
-    if (err == 0)
-    {
-        for (rp = result; rp != NULL; rp = rp->ai_next)
-        {
-            if(rp->ai_family == AF_INET)
-            {
-                struct sockaddr_in *addrV4 = (struct sockaddr_in *)rp->ai_addr;
-                LOG_MSG(LOG_DEBUG, "Received DNS response. name %s mapped to  %s", name, inet_ntoa(addrV4->sin_addr));
-                return addrV4->sin_addr;
-            }
-        }
-    }
-    LOG_MSG(LOG_ERROR, "DNS Query for %s failed with error %s", name, gai_strerror(err));
-    return ip;
-}
-

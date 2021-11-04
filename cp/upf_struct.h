@@ -50,6 +50,7 @@ typedef struct upf_context {
     gstimerinfo_t  upf_pt;
     LIST_HEAD(pending_sub_procs_head, pending_proc_key) pending_sub_procs;
     TAILQ_HEAD(upf_procs_head, proc_context) pending_node_procs;
+    bool     global_address; /* true : control plane allocates address, false : upf allocates address */
 } upf_context_t;
 
 #ifdef __cplusplus

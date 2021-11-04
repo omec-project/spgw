@@ -36,10 +36,11 @@
 
 
 int 
-create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt) 
+create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt, const char *service_name) 
 {
     int ret;
-    upf_context_t *upf_context = NULL;
+    upf_context_t *upf_context;
+
 	upf_context  = (upf_context_t *)calloc(1, sizeof(upf_context_t));
 
 	if (upf_context == NULL) {
@@ -54,10 +55,14 @@ create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt)
 
 	ret = upf_context_entry_add(&upf_ip, upf_context);
 	if (ret) {
-		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
+		LOG_MSG(LOG_ERROR, "Failed to add UPF addresss [%s] in UPF context map.Error: %d ", inet_ntoa(*((struct in_addr *)&upf_ip)), ret);
 		return -1;
 	}
-
+	ret = upf_context_entry_add_service(service_name, upf_context);
+	if (ret) {
+		LOG_MSG(LOG_ERROR, "Failed to add service name [%s] in UPF context map.Error: %d ", service_name, ret);
+		return -1;
+	}
     LIST_INIT(&upf_context->pending_sub_procs);
     TAILQ_INIT(&upf_context->pending_node_procs);
     return 0;
@@ -74,13 +79,12 @@ upf_down_event(uint32_t upf_ip)
 
     if(upf_context != NULL) {
         upf_context->state = 0;
+        upf_context->upf_sockaddr.sin_addr.s_addr = 0;
     }
     struct sockaddr_in upf_addr = {0};
     upf_addr.sin_addr.s_addr = upf_ip;
 
 	delete_entry_heartbeat_hash(&upf_addr);
-
-    invalidate_upf_dns_results(upf_ip);
 
     schedule_pfcp_association(1, upf_context);
 }
@@ -116,7 +120,7 @@ initiate_pfcp_association(upf_context_t *upf_context)
         proc_context_t *proc = alloc_pfcp_association_setup_proc(upf_context);
         start_upf_procedure(proc, (msg_info_t *)proc->msg_info);
     } else {
-        LOG_MSG(LOG_INFO, "Dont Initiate association setup with UPF %s, state = %d ", inet_ntoa(peer), upf_context->state);
+        LOG_MSG(LOG_INFO, "Don't Initiate association setup with UPF %s, state = %d ", inet_ntoa(peer), upf_context->state);
     }
 
 }
@@ -127,30 +131,23 @@ initiate_all_pfcp_association(void)
     bool schedule_association = false;
 
     #define MAX_UPF 100
-    profile_names_t prof[MAX_UPF]; // max  
+    user_plane_service_names_t services[MAX_UPF]; // max
+    memset(&services[0], 0, sizeof(services));
 
-    memset(&prof[0], 0, sizeof(prof));
-
-    int num = get_user_plane_profiles(&prof[0],MAX_UPF);
+    int num = get_user_plane_services(&services[0], MAX_UPF);
 
     for(int i=0; i<num; i++) {
-        LOG_MSG(LOG_DEBUG, "User plane profile %s", prof[i].profile_name);
-        user_plane_profile_t *up_profile = get_user_plane_profile_ref(prof[i].profile_name);
+        LOG_MSG(LOG_DEBUG, "User plane service %s", services[i].user_plane_service);
 
-        if(up_profile == NULL) {
-            schedule_association = true;
-            continue;
-        }
-
-        upf_context_t *upf_context = get_upf_context(up_profile); 
+        upf_context_t *upf_context = get_upf_context(services[i].user_plane_service, services[i].global_address);
         if(upf_context == NULL) {
             schedule_association = true;
-            LOG_MSG(LOG_DEBUG, "Failed to create UPF Context %s", prof[i].profile_name);
+            LOG_MSG(LOG_DEBUG, "Failed to create UPF Context %s", services[i].user_plane_service);
             continue;
         }
 
         if(upf_context->state == 0) {
-            LOG_MSG(LOG_INFO, "Initiate association setup with UPF %s", prof[i].profile_name);
+            LOG_MSG(LOG_INFO, "Initiate association setup with UPF %s", services[i].user_plane_service);
             proc_context_t *proc = alloc_pfcp_association_setup_proc(upf_context);
             start_upf_procedure(proc, (msg_info_t *)proc->msg_info);
         }
@@ -185,6 +182,7 @@ end_upf_procedure(proc_context_t *proc_ctxt)
 {
     upf_context_t *upf_context = (upf_context_t*)proc_ctxt->upf_context;
 
+    LOG_MSG(LOG_DEBUG,"End procedure %s ", proc_ctxt->proc_name);
     if(proc_ctxt->pfcp_trans != NULL) {
         cleanup_pfcp_trans(proc_ctxt->pfcp_trans);
     }
@@ -249,69 +247,50 @@ native_linux_name_resolve(const char *name)
 }
 
 upf_context_t*
-get_upf_context(user_plane_profile_t *upf_profile) 
+get_upf_context(const char *user_plane_service, bool global_address)
 {
-    struct in_addr ip = {0};
-    if(upf_profile == NULL) {
-        return NULL;
-    }
+    struct in_addr upf_addr = {0};
 
-    if(upf_profile->upf_addr == 0) {
-        ip = native_linux_name_resolve(upf_profile->user_plane_service); 
-        upf_profile->upf_addr = ip.s_addr; 
-    }
+    // Search UPF with name context
+    upf_context_t *upf_context = NULL;
+    upf_context = (upf_context_t*)upf_context_entry_lookup_service(user_plane_service);
 
-    if(upf_profile->upf_addr != 0) {
-        upf_context_t *upf_context = NULL;
-        upf_context = (upf_context_t*)upf_context_entry_lookup(upf_profile->upf_addr);
-        if(upf_context == NULL) {
-            create_upf_context(upf_profile->upf_addr, &upf_context);
+    // if UPF not found, create context
+    if(upf_context == NULL) {
+        LOG_MSG(LOG_DEBUG, "UPF context for upf [%s] not found. Resolve address ", user_plane_service);
+        upf_addr = native_linux_name_resolve(user_plane_service);
+        if (upf_addr.s_addr != 0) {
+            // found name to address mapping. Create context and update details.
+            LOG_MSG(LOG_DEBUG, "UPF context for upf [%s] - address resolved to %s ", user_plane_service, inet_ntoa(upf_addr));
+            create_upf_context(upf_addr.s_addr, &upf_context, user_plane_service);
+            strcpy(upf_context->fqdn, user_plane_service);
+            upf_context->global_address = global_address;
         }
-        return upf_context;
-    }
-	return NULL; 
-}
-
-upf_context_t*
-get_upf_context_from_name(char *upf_name) 
-{
-    struct in_addr ip = {0};
-
-    user_plane_profile_t *upf_profile = NULL;
-
-    upf_profile = get_user_plane_profile_ref(upf_name);
-    if(upf_profile == NULL) {
-        LOG_MSG(LOG_ERROR,"User Plane profile %s not found ", upf_name);
-        return NULL;
-    }
-
-    if(upf_profile->upf_addr == 0) {
-        ip = native_linux_name_resolve(upf_profile->user_plane_service); 
-        upf_profile->upf_addr = ip.s_addr; 
-    }
-
-    if(upf_profile->upf_addr != 0) {
-        upf_context_t *upf_context = NULL;
-        upf_context = (upf_context_t*)upf_context_entry_lookup(upf_profile->upf_addr);
-        if(upf_context == NULL) {
-            create_upf_context(upf_profile->upf_addr, &upf_context);
+    } else if (upf_context->upf_sockaddr.sin_addr.s_addr == 0) {
+        upf_context->global_address = global_address;
+        upf_addr = native_linux_name_resolve(user_plane_service);
+        upf_context->upf_sockaddr.sin_addr.s_addr = upf_addr.s_addr;
+        if(upf_addr.s_addr != 0) {
+	        int ret = upf_context_entry_add(&upf_addr.s_addr, upf_context);
+    	    if (ret) {
+		        LOG_MSG(LOG_ERROR, "Failed to add UPF addresss [%s] in UPF context map.Error: %d ", inet_ntoa(*((struct in_addr *)&upf_addr.s_addr)), ret);
+		        return NULL;
+	        }
         }
-        return upf_context;
     }
-	return NULL; 
+    return upf_context;
 }
 
 void 
 handleUpfAssociationTimeoutEvent(void *data, uint16_t event)
 {
     upf_context_t *upf = (upf_context_t *)data;
-    LOG_MSG(LOG_DEBUG,"Event received to establish pfcp association %p %d",data, event);
     if(upf == NULL) {
         LOG_MSG(LOG_DEBUG,"Initiate association with all UPFs");
         initiate_all_pfcp_association();
     } else {
         // default schedule timeout of 10 seconds
-        LOG_MSG(LOG_DEBUG,"Initiate association with specific UPF %p", data);
+        LOG_MSG(LOG_DEBUG,"Initiate association with specific UPF [%s]", upf->fqdn);
         initiate_pfcp_association(upf);
     }
     return;
@@ -320,7 +299,8 @@ handleUpfAssociationTimeoutEvent(void *data, uint16_t event)
 void 
 upfAssociationTimerCallback( gstimerinfo_t *ti, const void *data_t )
 {
-    LOG_MSG(LOG_INFO,"Upf Association Timeout event %p %p", ti, data_t);
+    upf_context_t *upf = (upf_context_t*)data_t;
+    LOG_MSG(LOG_INFO,"Upf Association Timeout event for UPF [%s] %p", (upf != NULL) ? upf->fqdn:"all UPFs", ti);
     queue_stack_unwind_event(UPF_ASSOCIATION_SETUP, (void *)data_t, handleUpfAssociationTimeoutEvent); 
     return;
 }

@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 int 
-create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt); 
+create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt, const char *service); 
 
 void
 upf_down_event(uint32_t upf_ip);
@@ -41,7 +41,7 @@ struct in_addr
 native_linux_name_resolve(const char *name);
 
 upf_context_t*
-get_upf_context(user_plane_profile_t *upf_profile); 
+get_upf_context(const char *user_plane_service, bool global_address);
 
 void
 handleUpfAssociationTimeoutEvent(void *data, uint16_t event);

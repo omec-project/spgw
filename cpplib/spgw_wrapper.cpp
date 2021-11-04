@@ -50,7 +50,7 @@ extern "C"
         return new_config;
     }
 
-    sub_profile_t *match_sub_selection(sub_selection_keys_t *key)
+    sub_config_t *match_sub_selection(sub_selection_keys_t *key)
     {
         return spgwConfig::match_sub_selection_cpp(key);
     }
@@ -60,19 +60,9 @@ extern "C"
         return spgwConfig::match_apn_profile_cpp(apn, len);
     }
     
-    void invalidate_upf_dns_results(uint32_t ip) 
+    int get_user_plane_services(user_plane_service_names_t *ptr, int max_size)
     {
-        spgwConfig::invalidate_user_plane_address(ip);
-    }
-    
-    user_plane_profile_t* get_user_plane_profile_ref(const char *name)
-    {
-        return spgwConfig::get_user_plane_profile_ref(name);
-    }
-
-    int get_user_plane_profiles(profile_names_t *ptr, int max_size) 
-    {
-        return spgwConfig::get_user_plane_profiles(ptr, max_size);
+        return spgwConfig::get_user_plane_services(ptr, max_size);
     }
     
     int parse_cp_json(cp_config_t *cfg, const char *file)
@@ -304,6 +294,21 @@ extern "C"
     }
 
     /* UPF APIS... Start */
+    int upf_context_entry_add_service(const char *upf_service, void *entry)
+    {
+        return upf_table->add_upf_service(upf_service, entry);
+    }
+
+    void* upf_context_entry_lookup_service(const char *upf_service)
+    {
+        return upf_table->find_upf_service(upf_service);
+    }
+
+    int upf_context_delete_entry_service(const char *upf_service)
+    {
+        return upf_table->delete_upf_service(upf_service);
+    }
+
     int upf_context_entry_add(uint32_t *upf_ip, void *entry)
     {
         return upf_table->add_upf(upf_ip, entry);

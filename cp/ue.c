@@ -116,8 +116,7 @@ set_s5s8_pgw_gtpu_teid_using_pdn(eps_bearer_t *bearer, pdn_connection_t *pdn)
 
 int
 create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
-		uint8_t ebi, ue_context_t **context, apn_profile_t *apn_requested,
-	  	uint32_t sequence)
+		uint8_t ebi, ue_context_t **context, uint8_t *apn, uint8_t  apn_len)
 {
 	int ret;
 	int i;
@@ -162,7 +161,7 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 			}
 		}
 		/*if ((strncmp(apn_requested->apn_name,
-					(((*context)->pdns[ebi - 5])->apn_in_use)->apn_name,
+					(((*context)->pdns[ebi - 5]))->apn,
 					sizeof(apn_requested->apn_name_length))) == 0) {
 			LOG_MSG(LOG_ERROR,
 				"Discarding re-transmitted csr received for IMSI:%lu ", imsi);
@@ -295,9 +294,9 @@ create_ue_context(uint64_t *imsi_val, uint16_t imsi_len,
 		free((*context));
 		return GTPV2C_CAUSE_SYSTEM_FAILURE;
 	}
-	pdn->apn_in_use = apn_requested;
-    LOG_MSG(LOG_NEVER, "sequence = %u ", sequence);
-
+	strcpy((char *)pdn->apn, (char *)apn);
+	pdn->apn_len = apn_len;
+    LOG_MSG(LOG_DEBUG,"Subscriber PDN created for apn = %s, length = %d ", pdn->apn, pdn->apn_len);
 	return 0;
 }
 
@@ -319,13 +318,13 @@ cleanup_ue_context(ue_context_t **context_t)
         ue_context_delete_entry_teidKey(temp_teid);
 
 
+#if 0 // DNS
         /* Delete UPFList entry from UPF Hash */
         if ((context->dns_enable) && (upflist_by_ue_hash_entry_delete(context->imsi) < 0)){
             LOG_MSG(LOG_ERROR, "Error on upflist_by_ue_hash deletion of IMSI ");
             assert(0);
         }
-
-        free(context->sub_prof);
+#endif
 
         //Free UE context
         free(context);

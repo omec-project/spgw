@@ -470,7 +470,7 @@ process_sgwc_s5s8_modify_bearer_response(mod_bearer_rsp_t *mb_rsp, gtpv2c_header
 	bearer = context->eps_bearers[ebi_index];
 	pdn = bearer->pdn;
 
-	set_create_session_response(
+	set_create_session_response(NULL,
 			gtpv2c_s11_tx, mb_rsp->header.teid.has_teid.seq,
 			context, pdn, bearer);
 
