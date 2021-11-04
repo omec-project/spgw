@@ -23,7 +23,6 @@
 #include "cp_init.h"
 #include "util.h"
 #include "cp_io_poll.h"
-//#include "cdnshelper.h"
 #include "cp_events.h"
 #include "cp_test.h"
 #include "cp_log.h"

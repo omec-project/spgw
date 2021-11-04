@@ -317,15 +317,6 @@ cleanup_ue_context(ue_context_t **context_t)
         uint32_t temp_teid = context->s11_sgw_gtpc_teid;
         ue_context_delete_entry_teidKey(temp_teid);
 
-
-#if 0 // DNS
-        /* Delete UPFList entry from UPF Hash */
-        if ((context->dns_enable) && (upflist_by_ue_hash_entry_delete(context->imsi) < 0)){
-            LOG_MSG(LOG_ERROR, "Error on upflist_by_ue_hash deletion of IMSI ");
-            assert(0);
-        }
-#endif
-
         //Free UE context
         free(context);
         *context_t = NULL;

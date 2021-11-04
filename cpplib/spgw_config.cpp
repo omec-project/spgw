@@ -679,59 +679,5 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
         // we may have other pool as well.. 
     }
 
-    if(doc.HasMember("dns")) {
-        LOG_MSG(LOG_INIT, "dns config present");
-        const rapidjson::Value& dns = doc["dns"];
-        if(dns.HasMember("app")) {
-            LOG_MSG(LOG_INIT, "dns app config present");
-            const rapidjson::Value& app = dns["app"];
-            if(app.HasMember("frequencySec")) {
-              cfg->app_dns.freq_sec = app["frequencySec"].GetInt();
-            }
-            if(app.HasMember("filename")) {
-              std::string temp = app["filename"].GetString();
-              strcpy(cfg->app_dns.filename, temp.c_str());
-            }
-            if(app.HasMember("nameserver")) {
-              std::string temp = app["nameserver"].GetString();
-              strcpy(cfg->app_dns.nameserver_ip[0], temp.c_str());
-            }
-        }
-        if(dns.HasMember("cache")) {
-            LOG_MSG(LOG_INIT, "dns cache config present");
-            const rapidjson::Value& cache = dns["cache"];
-            if(cache.HasMember("concurrent")) {
-              cfg->dns_cache.concurrent = cache["concurrent"].GetInt();
-            }
-            if(cache.HasMember("intervalSec")) {
-              cfg->dns_cache.sec = cache["intervalSec"].GetInt();
-            }
-            if(cache.HasMember("percentage")) {
-              cfg->dns_cache.percent = cache["percentage"].GetInt();
-            }
-            if(cache.HasMember("queryTimeoutMilliSec")) {
-              cfg->dns_cache.timeoutms= cache["queryTimeoutMilliSec"].GetInt();
-            }
-            if(cache.HasMember("queryTries")) {
-              cfg->dns_cache.tries = cache["queryTries"].GetInt();
-            }
-        }
-        if(dns.HasMember("ops")) {
-            LOG_MSG(LOG_INIT, "dns ops config present");
-            const rapidjson::Value& ops = dns["ops"];
-            if(ops.HasMember("filename")) {
-              std::string temp = ops["filename"].GetString();
-              strcpy(cfg->ops_dns.filename, temp.c_str());
-            }
-            if(ops.HasMember("nameserver")) {
-              std::string temp = ops["nameserver"].GetString();
-              strcpy(cfg->ops_dns.nameserver_ip[0], temp.c_str());
-            }
-            if(ops.HasMember("frequencySec")) {
-              cfg->ops_dns.freq_sec = ops["frequencySec"].GetInt();
-            }
-        }
-    }
-
     return 0;
 }

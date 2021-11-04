@@ -319,16 +319,6 @@ process_create_sess_req(proc_context_t *proc_ctxt,
         return GTPV2C_CAUSE_REQUEST_REJECTED ; 
     }
     proc_ctxt->sub_config = (sub_config_t *) sub_profile;
-#if 0
-    if(cp_config->dns_enable) {
-		/* VS: Select the UPF based on DNS */
-		ret = dns_query_lookup(pdn, &upf_ipv4.s_addr);
-		if (ret) {
-			LOG_MSG(LOG_ERROR, "Error: %d ", ret);
-			return ret;
-		}
-    } else 
-#endif
     {
         // FIXME - UPF profile may have been deleted by now
         upf_context = get_upf_context(sub_profile->user_plane_service, sub_profile->global_address);
@@ -402,7 +392,6 @@ process_create_sess_req(proc_context_t *proc_ctxt,
     }
 
     context->imsi64 = csr->imsi.imsi64;
-    //context->dns_enable = cp_config->dns_enable;
 	if (csr->mei.header.len)
 		memcpy(&context->mei, &csr->mei.mei, csr->mei.header.len);
 

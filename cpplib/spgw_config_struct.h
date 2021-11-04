@@ -138,30 +138,6 @@ typedef struct ue_pool_dynamic
     void *dynamic_pool;
 }ue_pool_dynamic_t;
 
-/**
- * @brief  : Maintains dns cache information
- */
-typedef struct dns_cache_params
-{
-	uint32_t concurrent;
-	uint32_t sec;
-	uint8_t percent;
-
-	unsigned long timeoutms;
-	uint32_t tries;
-} dns_cache_params_t;
-
-/**
- * @brief  : Maintains dns configuration
- */
-typedef struct dns_config
-{
-	uint8_t freq_sec;
-	char filename[PATH_MAX];
-	uint8_t nameserver_cnt;
-	char nameserver_ip[MAX_NUM_NAMESERVER][INET_ADDRSTRLEN];
-} dns_config_t;
-
 /*
 - * Define type of Control Plane (CP)
 - * SGWC - Serving GW Control Plane
@@ -215,12 +191,6 @@ typedef struct cp_config
 	/* STATIC_IP_POOL_CONFIG Params */
 	struct in_addr static_ip_pool_ip;
 	struct in_addr static_ip_pool_mask;
-
-    uint32_t dns_enable;
-
-	dns_cache_params_t dns_cache;
-	dns_config_t ops_dns;
-	dns_config_t app_dns;
 
     uint32_t  gx_enabled;
     uint32_t  urr_enable;

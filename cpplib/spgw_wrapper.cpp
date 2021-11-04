@@ -9,7 +9,6 @@
 #include "pdn_tables.h"
 #include "ue_tables.h"
 #include "peer_tables.h"
-#include "dns_upf_tables.h"
 #include "urr_tables.h"
 #include "qer_tables.h"
 #include "spgw_config_struct.h"
@@ -28,7 +27,6 @@ bearerTables    *bearer_table = nullptr;
 pdnTables       *pdn_table = nullptr;
 ueTables        *ue_table  = nullptr;
 peerTables      *peer_table = nullptr;
-dnsUpfTables    *dns_upf_table = nullptr;
 urrTables       *urr_table = nullptr; 
 qerTables       *qer_table = nullptr; 
 pdrTables       *pdr_table = nullptr; 
@@ -83,7 +81,6 @@ extern "C"
         pdn_table = new pdnTables();
         ue_table  = new ueTables();
         peer_table = new peerTables();
-        dns_upf_table = new dnsUpfTables();
         urr_table     = new urrTables();
         qer_table     = new qerTables();
         pdr_table     = new pdrTables();
@@ -462,24 +459,6 @@ extern "C"
 
     /* Peer APIs end */
     
-    /* IMSI to DNS_UPF APIs end */
-
-    int upflist_by_ue_hash_entry_add(uint64_t imsi, void *entry)
-    {
-        return dns_upf_table->add_imsi_to_upfdns_mapping(imsi, entry);
-    }
-    
-    void* upflist_by_ue_hash_entry_lookup(uint64_t imsi)
-    {
-        return dns_upf_table->find_upfdns_from_imsi(imsi);
-    }
-
-    int upflist_by_ue_hash_entry_delete(uint64_t imsi)
-    {
-        return dns_upf_table->delete_imsi_upfdns_mapping(imsi);
-    }
-    /* IMSI to DNS_UPF APIs end*/
-
     /* URR APIs */
     int add_urr_entry(uint32_t urr_id, void *cntxt) 
     {

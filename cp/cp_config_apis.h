@@ -14,7 +14,6 @@ extern "C" {
 
 void init_config(void); 
 
-void set_dns_config(void);
 /**
  * @brief  : parse the SGWU/PGWU/SAEGWU IP from config file
  * @param  : cp_config, config file path
