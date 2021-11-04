@@ -114,9 +114,9 @@ void config_callback_func(config_callback_t *val) {
     if (val != NULL) {
         switch (val->action) {
             case DISABLE_UPF:
-                LOG_MSG(LOG_DEBUG, "DISABLE_UPF : upf_addr=%u",
-                        val->upf_addr);
-                config_disable_upf(val->upf_addr);
+                LOG_MSG(LOG_DEBUG, "DISABLE_UPF : upf_addr=%s",
+                        val->upf_service_name);
+                config_disable_upf(val->upf_service_name);
                 break;
             default:
                 LOG_MSG(LOG_INIT,

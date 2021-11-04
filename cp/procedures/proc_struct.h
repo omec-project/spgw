@@ -62,6 +62,10 @@ struct proc_context {
 
     // printing purpise
     uint64_t         imsi64;
+
+    //init proc
+    void*            sub_config;
+    void*            req_pco;
 };
 typedef struct proc_context proc_context_t;
 

@@ -36,10 +36,11 @@ handle_csreq_msg(proc_context_t *proc_context, msg_info_t *msg);
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
-process_create_sess_req(create_sess_req_t *csr,
-					ue_context_t **context, 
-                    pdn_connection_t **pdn_ctxt,
-                    msg_info_t *msg);
+process_create_sess_req(proc_context_t *proc,
+                        create_sess_req_t *csr,
+					    ue_context_t **context,
+                        pdn_connection_t **pdn_ctxt,
+                        msg_info_t *msg);
 
 int
 process_sess_est_resp_handler(proc_context_t *p, msg_info_t *d);

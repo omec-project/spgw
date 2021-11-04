@@ -117,7 +117,10 @@ struct pdn_connection {
 	/*VS : Call ID ref. to session id of CCR */
 	uint32_t call_id;
 
-	apn_profile_t *apn_in_use;
+
+	uint8_t apn[MAX_APN_LEN];
+	uint8_t apn_len;
+
 	ambr_ie apn_ambr;
 	uint32_t apn_restriction;
 

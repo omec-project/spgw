@@ -18,18 +18,13 @@ extern "C" {
 spgw_config_profile_t* parse_subscriber_profiles_c(const char *);
 
 /* API to be called by application to get the profiles */
-sub_profile_t* match_sub_selection(sub_selection_keys_t *key); 
+sub_config_t* match_sub_selection(sub_selection_keys_t *key);
 
 /* API to find matching profile */
 apn_profile_t * match_apn_profile(char *, uint16_t len);
 
-void invalidate_upf_dns_results(uint32_t ip);
-
-user_plane_profile_t* 
-get_user_plane_profile_ref(const char *name);
-
 int 
-get_user_plane_profiles(profile_names_t *profile, int max);
+get_user_plane_services(user_plane_service_names_t *profile, int max);
 
 void init_cpp_tables(void);
 cfg_func_ptr getConfigCallback(void);
@@ -88,6 +83,16 @@ upf_context_entry_lookup(uint32_t upf_ip);
 
 int
 upf_context_delete_entry(uint32_t upf_ip);
+
+int
+upf_context_entry_add_service(const char *upf, void *entry);
+
+void*
+upf_context_entry_lookup_service(const char *upf);
+
+int
+upf_context_delete_entry_service(const char *upf);
+
 /*****************UPF Table end *******************************/
 
 /**************Bearer Table **********************************/
