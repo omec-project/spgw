@@ -77,7 +77,7 @@ void clearOldUpfProfiles(spgwConfigStore* oldCfg, spgwConfigStore* newCfg) {
                     return;
                 }
                 conf_struct->action = DISABLE_UPF;
-                conf_struct->upf_addr = upOld->upf_addr;
+                strcpy(conf_struct->upf_service_name, upOld->user_plane_service);
                 func(conf_struct);
             }
         }

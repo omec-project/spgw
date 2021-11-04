@@ -30,7 +30,7 @@ enum cfg_action
 typedef struct config_callback
 {
     enum cfg_action  action;
-    uint32_t         upf_addr;  
+    char             upf_service_name[64]; 
 }config_callback_t;
 
 typedef void (*cfg_func_ptr)(config_callback_t *);

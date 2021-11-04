@@ -16,9 +16,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int 
-create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt); 
-void config_disable_upf(uint32_t upf_addr);
+
+void config_disable_upf(char *upf_service);
 
 int
 create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt, const char *service); 

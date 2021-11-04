@@ -125,10 +125,21 @@ initiate_pfcp_association(upf_context_t *upf_context)
 
 }
 
-void config_disable_upf(uint32_t upf_addr) 
+void config_disable_upf(char* upf_service_name) 
 {
+
+    upf_context_t *upf_context = NULL;
+    upf_context = (upf_context_t *)upf_context_entry_lookup_service(upf_service_name);
+    if (upf_context == NULL) {
+        LOG_MSG(LOG_ERROR,"NO UPF context found for service name - %s ", upf_service_name);
+        return;
+    }
+
+
+    uint32_t upf_addr = upf_context->upf_sockaddr.sin_addr.s_addr;
     struct sockaddr_in upf_address = {0};
     upf_address.sin_addr.s_addr = upf_addr;
+
     /*FIXME :  peerData and upf context are not freed yet.*/
     peerData_t *md = (peerData_t *)get_peer_entry(upf_addr);
     del_entry_from_hash(upf_addr);
@@ -143,12 +154,8 @@ void config_disable_upf(uint32_t upf_addr)
         deinitTimer( &md->pt );
     }
 
-    upf_context_t *upf_context = NULL;
-    upf_context = (upf_context_t *)upf_context_entry_lookup(upf_addr);
-    if(upf_context != NULL) {
-        upf_context->state = 0;
-    }
-
+    upf_context->state = 0;
+    upf_context_delete_entry(upf_addr);
     delete_entry_heartbeat_hash(&upf_address);
 }
 
