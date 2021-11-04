@@ -13,7 +13,6 @@
 
 
 #define MAX_NUM_APN   16
-#define MAX_NUM_NAMESERVER 8
 
 // default PFCP Ports 
 #define SGWU_PFCP_PORT      (8805)

@@ -172,17 +172,6 @@ add_ip_to_heartbeat_hash(struct sockaddr_in *peer_addr, uint32_t recovery_time);
 void 
 delete_entry_heartbeat_hash(struct sockaddr_in *peer_addr);
 
-// UPF DNS 
-
-int
-upflist_by_ue_hash_entry_add(uint64_t imsi_val, void *data);
-
-void*
-upflist_by_ue_hash_entry_lookup(uint64_t imsi_val);
-
-int
-upflist_by_ue_hash_entry_delete(uint64_t imsi_val);
-
 /* URR APIS */
 
 int

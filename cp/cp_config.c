@@ -18,7 +18,6 @@
 #include "cp_config_defs.h"
 #include "monitor_config.h"
 #include "spgw_cpp_wrapper.h"
-#include "dns_config.h"
 #include "cp_log.h"
 #include "cp_events.h"
 #include "cp_io_poll.h"
@@ -54,12 +53,6 @@ void init_config(void)
 
     config_cp_ip_port(cp_config);
 
-
-#if 0
-    if(cp_config->dns_enable) {
-        set_dns_config();
-    }
-#endif
 
     /* Parse initial configuration file */
     cp_config->subscriber_rulebase = parse_subscriber_profiles_c(CP_CONFIG_SUB_RULES);
@@ -123,7 +116,6 @@ config_cp_ip_port(cp_config_t *cp_config)
 
     /* default valueas */
     cp_config->cp_type = SAEGWC; 
-    cp_config->dns_enable = 0;  // disabled by default
     cp_config->gx_enabled = 0;  // disabled by default
     cp_config->urr_enable = 0;  // disabled by default
     cp_config->prom_port = PROMETHEUS_HTTP_PORT;
@@ -134,45 +126,6 @@ config_cp_ip_port(cp_config_t *cp_config)
 
     return;
 }
-
-#if 0
-/**
- * @brief  : Set dns configurations parameters
- * @param  : void
- * @return : void
- */
-void
-set_dns_config(void)
-{
-	set_dnscache_refresh_params(cp_config->dns_cache.concurrent,
-			cp_config->dns_cache.percent, cp_config->dns_cache.sec);
-
-	set_dns_retry_params(cp_config->dns_cache.timeoutms,
-			cp_config->dns_cache.tries);
-
-	/* set OPS dns config */
-	for (uint32_t i = 0; i < cp_config->ops_dns.nameserver_cnt; i++)
-	{
-		set_nameserver_config(cp_config->ops_dns.nameserver_ip[i],
-				DNS_PORT, DNS_PORT, NS_OPS);
-	}
-
-	apply_nameserver_config(NS_OPS);
-	init_save_dns_queries(NS_OPS, cp_config->ops_dns.filename,
-			cp_config->ops_dns.freq_sec);
-	load_dns_queries(NS_OPS, cp_config->ops_dns.filename);
-
-	/* set APP dns config */
-	for (uint32_t i = 0; i < cp_config->app_dns.nameserver_cnt; i++)
-		set_nameserver_config(cp_config->app_dns.nameserver_ip[i],
-				DNS_PORT, DNS_PORT, NS_APP);
-
-	apply_nameserver_config(NS_APP);
-	init_save_dns_queries(NS_APP, cp_config->app_dns.filename,
-			cp_config->app_dns.freq_sec);
-	load_dns_queries(NS_APP, cp_config->app_dns.filename);
-}
-#endif
 
 void
 config_change_cbk(char *config_file, uint32_t flags)

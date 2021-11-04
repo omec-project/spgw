@@ -26,7 +26,6 @@
 #include "spgw_cpp_wrapper.h"
 #include "assert.h"
 #include "cp_io_poll.h"
-//#include "cdnsutil.h"
 #include "pfcp_cp_interface.h"
 
 void
@@ -281,29 +280,6 @@ fill_pfcp_pfd_mgmt_req(pfcp_pfd_mgmt_req_t *pfcp_pfd_req, uint16_t len)
 	for(int i=0; i < pfcp_pfd_req->app_ids_pfds_count; ++i){
 		set_app_ids_pfds(&pfcp_pfd_req->app_ids_pfds[i], len);
 	}
-}
-
-int
-get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
-		uint32_t **upf_ip)
-{
-	upfs_dnsres_t *entry = NULL;
-
-	entry = (upfs_dnsres_t *)upflist_by_ue_hash_entry_lookup(ctxt->imsi);
-	if (entry == NULL)  {
-		return -1;
-    }
-
-	if (entry->current_upf > entry->upf_count) {
-		/* TODO: Add error log : Tried sending
-		 * association request to all upf.*/
-		/* Remove entry from hash ?? */
-		return -1;
-	}
-
-	*upf_ip = &(entry->upf_ip[entry->current_upf].s_addr);
-	*_entry = entry;
-	return 0;
 }
 
 void

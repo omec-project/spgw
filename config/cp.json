@@ -1,23 +1,4 @@
 {
-  "dns": {
-    "app": {
-      "filename": "appqueries.json",
-      "frequencySec": 3,
-      "nameserver": "127.0.0.1"
-    },
-    "cache": {
-      "concurrent": 25,
-      "intervalSec": 60,
-      "percentage": 80,
-      "queryTimeoutMilliSec": 1000,
-      "queryTries": 1
-    },
-    "ops": {
-      "filename": "opsqueries.json",
-      "frequencySec": 3,
-      "nameserver": "127.0.0.1"
-    }
-  },
   "global": {
     "gxConfig": 0,
     "loggingLevel": "LOG_DEBUG",

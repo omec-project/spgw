@@ -59,7 +59,6 @@ extern "C" {
 #define PFCP_IE_HDR_SIZE sizeof(pfcp_ie_header_t)
 #define BITRATE_SIZE 10
 
-#define UPF_ENTRIES_DEFAULT (1 << 16)
 #define BUFFERED_ENTRIES_DEFAULT (1024)
 #define SWGC_S5S8_HANDOVER_ENTRIES_DEFAULT     (50)
 
@@ -81,17 +80,6 @@ typedef struct pfcp_context_t{
 
 } pfcp_context_t;
 
-
-// TODO : CLEANUP. Move this to separate file.
-/**
- * @brief  : Maintains results returnd via dns for upf
- */
-typedef struct upfs_dnsres_t {
-	uint8_t upf_count;
-	uint8_t current_upf;
-	struct in_addr upf_ip[UPF_ENTRIES_DEFAULT];
-	char upf_fqdn[UPF_ENTRIES_DEFAULT][MAX_HOSTNAME_LENGTH];
-} upfs_dnsres_t;
 
 #pragma pack()
 

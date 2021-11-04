@@ -118,18 +118,6 @@ fill_pfcp_heartbeat_req(pfcp_hrtbeat_req_t *pfcp_heartbeat_req, uint32_t seq);
 int
 process_pfcp_heartbeat_req(struct sockaddr_in *peer_addr, uint32_t seq);
 
-/**
- * @brief  : Retrive upf entry from hash
- * @param  : ctxt, ue context
- * @param  : entry, variable to store retrived dns entry
- * @param  : upf_ip, variable to store retrived ip
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int
-get_upf_ip(ue_context_t *ctxt, upfs_dnsres_t **_entry,
-		uint32_t **upf_ip);
-
-
 #ifdef __cplusplus
 }
 #endif

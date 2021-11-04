@@ -21,7 +21,6 @@
 #include "cp_io_poll.h"
 #include "gtpv2_interface.h"
 #include "pfcp_cp_interface.h"
-//#include "cdnshelper.h"
 #include "cp_log.h"
 #include "cp_test.h"
 #include "cp_timer.h"
