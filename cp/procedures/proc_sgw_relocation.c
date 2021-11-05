@@ -383,6 +383,7 @@ process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx
 
 #if 0
 	/* Update the UE state */
+    // move PDN or PROC state 
 	ret = update_ue_state(context->pdns[ebi_index]->s5s8_pgw_gtpc_teid,
 			PFCP_SESS_MOD_RESP_RCVD_STATE ,ebi_index);
 	if (ret < 0) {
@@ -409,6 +410,7 @@ process_pfcp_sess_mod_resp_handover(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx
 	/* Update the session state */
 	resp->state = CONNECTED_STATE;
 	/* Update the UE state */
+    // move PDN state 
 	ret = update_ue_state(context->s11_sgw_gtpc_teid,
 			CONNECTED_STATE,ebi_index);
 	if (ret < 0) {

@@ -171,4 +171,3 @@ close_ipc_channel(int sock)
 	/* Closed unix socket */
 	close(sock);
 }
-

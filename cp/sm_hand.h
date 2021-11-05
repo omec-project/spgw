@@ -35,14 +35,6 @@ int pfd_management_handler(void *arg1, void *arg2);
 
 /* Function */
 
-/**
- * @brief  : Handles processing of pfcp session delete response in handover scenario
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_sess_del_resp_handover_handler(void *arg1, void *arg2);
-
 /* Function */
 /**
  * @brief  : Handles processing of cca-t message
@@ -74,22 +66,7 @@ int del_bearer_cmd_ccau_handler(void *arg1, void *arg2);
 int del_bearer_cmd_mbr_resp_handler(void *arg1, void *arg2);
 
 /* Function */
-int process_delete_bearer_req_handler(void *arg1, void *arg2);
-
-/* Function */
 int process_pfcp_sess_mod_resp_ubr_handler(void *arg1, void *arg2);
-
-/* Function */
-int process_s5s8_del_pdn_conn_set_req(void *arg1, void *arg2);
-
-/* Function */
-int process_upd_pdn_conn_set_req(void *arg1, void *arg2);
-
-/* Function */
-int process_upd_pdn_conn_set_rsp(void *arg1, void *arg2);
-
-/* Function */
-int process_pgw_rstrt_notif_ack(void *arg1, void *arg2);
 
 /* Function */
 int cca_u_msg_handler_handover(void *arg1, void *argu2);

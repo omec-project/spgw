@@ -62,15 +62,6 @@ extern "C" {
 #define DEFAULT_DN_NUM 512
 
 /**
- * Gate closed
- */
-#define CLOSE 1
-/**
- * Gate opened
- */
-#define OPEN 0
-
-/**
  * Maximum rating groups per bearer session.
  */
 #define MAX_RATING_GRP 6
@@ -79,10 +70,6 @@ extern "C" {
  * Get pdn from context and bearer id.
  */
 #define GET_PDN(x, i) (x->eps_bearers[i]->pdn)
-/**
- * default bearer session.
- */
-#define DEFAULT_BEARER 5
 
 /**
  * get UE session id
@@ -313,16 +300,6 @@ struct ul_s1_info {
 } __attribute__((packed));
 
 /**
- * @brief  : DownLink S1u interface config structure.
- */
-struct dl_s1_info {
-	uint32_t enb_teid;		/* eNodeB teid*/
-	struct ip_addr enb_addr;	/* eNodeB address*/
-	struct ip_addr sgw_addr;	/* Serving Gateway address*/
-	struct ip_addr s5s8_sgwu_addr;	/* S5S8_SGWU address*/
-} __attribute__((packed));
-
-/**
  * @brief  : Policy and Charging Control structure for DP
  */
 struct pcc_rules {
@@ -410,7 +387,6 @@ struct ipcan_dp_bearer_cdr {
 struct session_info {
 	struct ip_addr ue_addr;						/* UE ip address*/
 	struct ul_s1_info ul_s1_info;					/* UpLink S1u info*/
-	struct dl_s1_info dl_s1_info;					/* DownLink S1u info*/
 	uint8_t bearer_id;						/* Bearer ID*/
 
 	/* PCC rules related params*/

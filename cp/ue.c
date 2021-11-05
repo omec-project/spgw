@@ -18,7 +18,6 @@
 /* base value and offset for seid generation */
 const uint32_t s11_sgw_gtpc_base_teid = 0xC0FFEE;
 static uint32_t s11_sgw_gtpc_teid_offset;
-const uint32_t s5s8_sgw_gtpc_base_teid = 0xE0FFEE;
 static uint32_t s5s8_pgw_gtpc_teid_offset;
 
 /* base value and offset for teid generation */
@@ -68,17 +67,6 @@ set_s1u_sgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context)
 	context->teid_bitmap |= (0x01 << index);
 }
 
-void
-set_s5s8_sgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context)
-{
-	uint8_t index = __builtin_ffs(~(context->teid_bitmap)) - 1;
-	/* Note: s5s8_sgw_gtpu_teid based s11_sgw_gtpc_teid
-	 * Computation same as s1u_sgw_gtpu_teid
-	 */
-	bearer->s5s8_sgw_gtpu_teid = (sgw_gtpu_base_teid & 0x00ffffff)
-	    | ((teid_range + index) << 24);
-	context->teid_bitmap |= (0x01 << index);
-}
 
 void
 set_s5s8_pgw_gtpc_teid(pdn_connection_t *pdn)

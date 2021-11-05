@@ -13,7 +13,6 @@
 #include "gtp_messages.h"
 #include <sys/queue.h>
 #include "gx_struct.h"
-#include "gtpv2_msg_struct.h"
 
 #ifdef __cplusplus
 extern "C" {

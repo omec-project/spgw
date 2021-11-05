@@ -13,7 +13,6 @@
 #include "pfcp_messages_decoder.h"
 #include "sm_structs_api.h"
 #include "ue.h"
-#include "cp_main.h"
 #include "pfcp.h"
 #include "ipc_api.h"
 #include "spgw_config_struct.h"

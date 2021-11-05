@@ -25,12 +25,19 @@ int handle_update_bearer_response_msg(msg_info_t *msg, gtpv2c_header_t *gtpv2c_r
 	gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
 
 	uint8_t ebi_index = msg->rx_msg.ub_rsp.bearer_contexts[0].eps_bearer_id.ebi_ebi - 5;
-	//Vikrant Which ebi to be selected as multiple bearer in request
-	if((ret = get_ue_state(gtpv2c_rx->teid.has_teid.teid ,ebi_index)) > 0){
-			msg->state = ret;
-	}else{
+
+	ue_context_t *context = NULL;
+	pdn_connection_t *pdn = NULL;
+	context  = (ue_context_t *)get_ue_context(teid_key);
+
+	if ( context == NULL) {
+		LOG_MSG(LOG_ERROR, "Entry not found for teid:%x...", teid_key);
 		return -1;
 	}
+	pdn = GET_PDN(context , ebi_index);
+	LOG_MSG(LOG_DEBUG, "Teid:%u, State:%s",
+			teid_key, get_state_string(pdn->state));
+
 	msg->proc = UPDATE_BEARER_PROC;
 	msg->event = UPDATE_BEARER_RSP_RCVD_EVNT;
 

@@ -55,22 +55,6 @@ typedef struct packet_filter {
 
 
 /**
- * @brief  : Adds packet filter entry
- * @param  : index, index of array where packet filter needs to be added
- * @return : Returns nothing
- */
-void
-push_packet_filter(uint16_t index);
-
-/**
- * @brief  : Adds sdf rule entry
- * @param  : index, index of array where sdf rule needs to be added
- * @return : Returns nothing
- */
-void
-push_sdf_rules(uint16_t index);
-
-/**
  * @brief  : Installs a packet filter in the CP & DP.
  * @param  : new_packet_filter
  *           A packet filter yet to be installed
@@ -116,15 +100,6 @@ get_packet_filter_direction(uint16_t index);
  */
 packet_filter_t *
 get_packet_filter(uint16_t index);
-
-/**
- * @brief  : Packet filter initialization function. Reads static file and populates
- *           packet filters accordingly.
- * @param  : No Param
- * @return : Returns nothing
- */
-void
-init_packet_filters(void);
 
 #ifdef __cplusplus
 }

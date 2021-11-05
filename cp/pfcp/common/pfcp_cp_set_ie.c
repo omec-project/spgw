@@ -10,8 +10,6 @@
 #include "pfcp_cp_set_ie.h"
 #include "pfcp_enum.h"
 #include "cp_log.h"
-
-#include "cp_main.h"
 #include "pfcp.h"
 #include "upf_struct.h"
 #include "gen_utils.h"
@@ -139,7 +137,7 @@ set_recovery_time_stamp(pfcp_rcvry_time_stmp_ie_t *rec_time_stamp)
 	pfcp_set_ie_header(&(rec_time_stamp->header),
 						PFCP_IE_RCVRY_TIME_STMP,sizeof(uint32_t));
 
-	rec_time_stamp->rcvry_time_stmp_val = start_time; //uptime();
+	rec_time_stamp->rcvry_time_stmp_val = start_time;
 
 }
 

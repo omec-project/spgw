@@ -6,7 +6,6 @@
 
 #ifndef GTPC_SESSION_H
 #define GTPC_SESSION_H
-#include "cp_main.h"
 #include "ue.h"
 #include "gtp_messages.h"
 #include "gtpv2_set_ie.h"
@@ -52,34 +51,12 @@ void
 fill_pgwc_create_session_response(create_sess_rsp_t *cs_resp,
 		uint32_t sequence, ue_context_t *context, uint8_t ebi_index);
 /**
- * @brief  : Fill delete session request
- * @param  : ds_req, request structure to be filled
- * @param  : context, ue context info
- * @param  : ebi_index, index of bearer in bearer array
- * @return : Returns nothing
- */
-void
-fill_ds_request(del_sess_req_t *ds_req, ue_context_t *context,
-		 uint8_t ebi_index);
-/**
  * @brief  : Process delete session request received on s5s8 interface , on pgwc
  * @param  : ds_req, holds info from request
  * @return : Returns 0 in case of success , -1 otherwise
  */
 int
 process_pgwc_s5s8_delete_session_request(del_sess_req_t *ds_req);
-
-/**
- * @brief  : Handles the processing at sgwc after receiving delete
- *           session request messages
- * @param  : ds_resp, holds info from response
- * @return : - 0 if successful
- *           - > 0 if error occurs during packet filter parsing corresponds to 3gpp
- *           specified cause error value
- *           - < 0 for all other errors
- */
-int
-process_sgwc_s5s8_delete_session_request(del_sess_rsp_t *ds_resp);
 
 /**
  * @brief  : Delete ue context on sgwc

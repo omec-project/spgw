@@ -24,7 +24,6 @@
 #include "upf_struct.h"
 #include "gen_utils.h"
 #include "gx_error_rsp.h"
-#include "cp_main.h"
 #include "trans_struct.h"
 #include "spgw_cpp_wrapper.h"
 #include "pfcp_messages_encoder.h"

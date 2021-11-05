@@ -132,14 +132,9 @@ void config_callback_func(config_callback_t *val) {
  */
 void init_cp(void)
 {
-
     start_time = current_ntp_timestamp();
 
-    recovery_time_into_file(start_time);
-
     rstCnt = update_rstCnt();
-
-
 
     init_timer_thread();
 

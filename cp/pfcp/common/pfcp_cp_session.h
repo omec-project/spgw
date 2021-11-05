@@ -184,23 +184,6 @@ fill_pgwc_create_session_response(create_sess_rsp_t *cs_resp,
 				uint32_t sequence, ue_context_t *context, uint8_t ebi_index);
 
 /**
- * @brief  : function to proces delete session response on SGWC received from PGWC
- * @param  : ds_rsp, holds information in delete session response
- * @param  : gtpv2c_tx, holds info in gtpv2c header
- * @retrun : Returns 0 in case of success , -1 otherwise
- */
-int
-process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_rsp, uint8_t *gtpv2c_tx);
-
-/**
- * @brief  : function to proces delete session request on SGWC
- * @param  : ds_rsp, holds information in delete session request
- * @retrun : Returns 0 in case of success , -1 otherwise
- */
-int
-process_sgwc_s5s8_delete_session_request(del_sess_rsp_t *ds_rsp);
-
-/**
  * @brief  : function to proces delete session request on PGWC
  * @param  : ds_req, holds information in delete session request
  * @retrun : Returns 0 in case of success , -1 otherwise

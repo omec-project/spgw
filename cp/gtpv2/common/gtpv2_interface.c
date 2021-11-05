@@ -45,10 +45,6 @@ void init_gtp_msg_handlers(void)
 #ifdef FUTURE_NEED
     gtp_msg_handler[GTP_UPDATE_BEARER_RSP] = handle_update_bearer_response_msg;
 	gtp_msg_handler[GTP_DELETE_BEARER_CMD] = handle_delete_bearer_cmd_msg;
-	gtp_msg_handler[GTP_DELETE_PDN_CONNECTION_SET_RSP] =  handle_delete_pdn_conn_set_rsp;
-	gtp_msg_handler[GTP_UPDATE_PDN_CONNECTION_SET_REQ] =  handle_update_pdn_conn_set_req;
-	gtp_msg_handler[GTP_UPDATE_PDN_CONNECTION_SET_RSP] = handle_update_pdn_conn_set_rsp;
-	gtp_msg_handler[GTP_PGW_RESTART_NOTIFICATION_ACK]  =  handle_pgw_restart_notf_ack;
 #endif
 }
 

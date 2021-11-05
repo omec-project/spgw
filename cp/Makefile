@@ -73,7 +73,6 @@ SOURCES += gtpv2/msg/downlink_data_notification.o
 SOURCES += gtpv2/msg/release_access_bearer.o
 SOURCES += gtpv2/msg/bearer_resource_cmd.o
 SOURCES += gtpv2/msg/delete_bearer_command.o
-SOURCES += gtpv2/msg/pgw_restart_notification_ack.o
 SOURCES += pfcp/common/pfcp_error_rsp.o
 SOURCES += pfcp/common/pfcp_cp_association.o
 SOURCES += pfcp/common/pfcp_cp_msg_rx.o

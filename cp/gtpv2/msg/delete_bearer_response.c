@@ -6,7 +6,6 @@
 
 #include "cp_log.h"
 #include "gtpv2_ie.h"
-#include "gtpv2_msg_struct.h"
 #include "ue.h"
 #include "sm_struct.h"
 #include "proc_struct.h"
