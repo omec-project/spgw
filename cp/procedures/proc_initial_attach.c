@@ -230,7 +230,7 @@ initiate_upf_session(proc_context_t *csreq_proc, msg_info_t *msg)
         } else {
             // UPF should allocate address..but if control plane has already allocated address
             // then release address 
-            LOG_MSG(LOG_ERROR, "UPF supports UE IP address allocation feature ");
+            LOG_MSG(LOG_DEBUG, "UPF supports UE IP address allocation feature ");
             if(IF_PDN_ADDR_ALLOC_CONTROL(pdn)) {
                 LOG_MSG(LOG_ERROR, "PDN has address assigned from control plane. But UPF supports address allocation ");
                 struct in_addr ue_ip = pdn->ipv4;
