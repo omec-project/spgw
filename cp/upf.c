@@ -300,6 +300,8 @@ void
 upfAssociationTimerCallback( gstimerinfo_t *ti, const void *data_t )
 {
     upf_context_t *upf = (upf_context_t*)data_t;
+    stopTimer(ti);
+    deinitTimer(ti);
     LOG_MSG(LOG_INFO,"Upf Association Timeout event for UPF [%s] %p", (upf != NULL) ? upf->fqdn:"all UPFs", ti);
     queue_stack_unwind_event(UPF_ASSOCIATION_SETUP, (void *)data_t, handleUpfAssociationTimeoutEvent); 
     return;
