@@ -160,7 +160,7 @@ process_pfcp_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg
 
     /* Lookup value in hash using session id and fill pfcp response and delete entry from hash*/
     if((cp_config->cp_type != SGWC ) &&  (cp_config->gx_enabled)) {
-        buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type));
+        buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type)+sizeof(ccr_request.seq_num));
         if (buffer == NULL) {
             LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
             return -1;

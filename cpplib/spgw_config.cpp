@@ -472,7 +472,7 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
         temp->arp = qos_profile->arp;
         temp->qci = qos_profile->qci;
 
-        LOG_MSG(LOG_DEBUG,"matching subscriber rule found ");
+        LOG_MSG(LOG_DEBUG,"matching subscriber rule found - User plane profile %s, UPF service %s ", rule->selected_user_plane_profile, up_profile->user_plane_service);
         return temp;
     }
     LOG_MSG(LOG_INIT,"No matching rule found ");
