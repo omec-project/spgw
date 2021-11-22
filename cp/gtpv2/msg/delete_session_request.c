@@ -89,7 +89,7 @@ delete_context(gtp_eps_bearer_id_ie_t lbi, uint32_t teid,
 		return GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
 	}
 
-	if (IF_PDN_ADDR_STATIC(pdn)) {
+	if (IF_PDN_ADDR_STATIC(pdn)) { /* BUG : dup release ?*/
 		struct in_addr host = {0};
 		host.s_addr = pdn->ipv4.s_addr;
 		release_ip_node(host); 

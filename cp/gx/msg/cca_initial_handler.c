@@ -22,6 +22,7 @@
 #include "cp_io_poll.h"
 #include "cp_test.h"
 #include "proc.h"
+#include "cp_transactions.h"
 
 void gx_msg_proc_failure(proc_context_t *proc_ctxt)
 {
@@ -52,6 +53,16 @@ int handle_cca_initial_msg(msg_info_t **msg_p)
     }
 
     proc_context_t *proc_context = get_first_procedure(ue_context);
+    transData_t *gx_trans = proc_context->gx_trans;
+
+    /* Retrive the session information based on session id. */
+    if(gx_trans == NULL) {
+        LOG_MSG(LOG_ERROR, "Received GX response and transaction not found ");
+        return -1;
+    }
+    proc_context->gx_trans = NULL;
+    stop_transaction_timer(gx_trans);
+    delayed_free(gx_trans);
 
     if(msg->rx_msg.cca.presence.result_code &&
             msg->rx_msg.cca.result_code != 2001){

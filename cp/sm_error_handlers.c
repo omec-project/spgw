@@ -232,12 +232,16 @@ process_error_occured_handler_new(void *data, void *unused_param)
 
       if(proc != NULL) {
           if(proc->gtpc_trans != NULL) {
-              LOG_MSG(LOG_DEBUG, "Delete gtpc procs ");
+              LOG_MSG(LOG_DEBUG, "Delete gtpc transaction ");
               cleanup_gtpc_trans(proc->gtpc_trans);
           }
           if(proc->pfcp_trans != NULL) {
-              LOG_MSG(LOG_DEBUG, "Delete pfcp procs ");
+              LOG_MSG(LOG_DEBUG, "Delete pfcp transaction ");
               cleanup_pfcp_trans(proc->pfcp_trans);
+          }
+          if(proc->gx_trans != NULL) {
+              LOG_MSG(LOG_DEBUG, "Delete gx transaction");
+              cleanup_gx_trans(proc->gx_trans);
           }
           free(proc);
       }

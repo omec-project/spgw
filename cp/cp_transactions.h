@@ -43,6 +43,9 @@ void
 cleanup_pfcp_trans(transData_t *pfcp_trans);
 
 void 
+cleanup_gx_trans(transData_t *pfcp_trans);
+
+void 
 delayed_free(transData_t *trans);
 
 #ifdef __cplusplus

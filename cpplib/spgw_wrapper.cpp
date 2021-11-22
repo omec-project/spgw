@@ -87,6 +87,25 @@ extern "C"
         rule_table    = new ruleTables();
     }
 
+    bool add_gx_transaction(uint32_t msg_seq, void *trans)
+    {
+        LOG_MSG(LOG_DEBUG5,"Sequence = %d ", msg_seq);
+        return table->add_gx_trans(msg_seq, trans);
+    }
+
+    void* find_gx_transaction(uint32_t msg_seq)
+    {
+        LOG_MSG(LOG_DEBUG5,"Sequence = %d ", msg_seq);
+        return table->find_gx_trans(msg_seq);
+    }
+
+    void* delete_gx_transaction(uint32_t msg_seq)
+    {
+        LOG_MSG(LOG_DEBUG5, "Sequence = %d ", msg_seq);
+        return table->delete_gx_trans(msg_seq);
+    }
+
+
     bool add_pfcp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq, void *trans)
     {
         LOG_MSG(LOG_DEBUG5,"Addr -  %s, Port - %d, Sequence = %d ",inet_ntoa(*((struct in_addr *)&addr)), htons(port), msg_seq); 

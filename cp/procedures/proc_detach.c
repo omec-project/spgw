@@ -174,7 +174,7 @@ process_pfcp_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t *msg
             return -1;
         }
 		gx_send(my_sock.gx_app_sock, buffer,
-				msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
+		        msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
         struct sockaddr_in saddr_in;
         saddr_in.sin_family = AF_INET;
         inet_aton("127.0.0.1", &(saddr_in.sin_addr));

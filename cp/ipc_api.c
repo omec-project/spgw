@@ -162,7 +162,6 @@ send_to_ipc_channel(int sock, char *buf, int len)
 			exit(0);
 		}
 	}
-
 }
 
 void

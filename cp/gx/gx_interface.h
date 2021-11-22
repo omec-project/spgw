@@ -179,7 +179,7 @@ process_gx_msg(void *data, uint16_t event);
 void*
 out_handler_gx(void *data);
 
-void 
+uint32_t
 gx_send(int fd, char *buf, uint16_t len);
 
 void init_gx(void);

@@ -103,6 +103,48 @@ spgwTables::delete_gtp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_
     }
 }
 
+bool
+spgwTables::add_gx_trans(uint32_t msg_seq, void *trans)
+{
+    std::pair <uint32_t,void*> foo;
+    foo = std::make_pair(msg_seq, trans);
+    spgw_gx_transaction_map.insert(foo);
+    return true;
+}
+
+void*
+spgwTables::find_gx_trans(uint32_t msg_seq)
+{
+    std::map<uint32_t, void*>::iterator it;
+    it = spgw_gx_transaction_map.find(msg_seq);
+    if(it == spgw_gx_transaction_map.end())
+    {
+        return NULL;
+    }
+    else
+    {
+        void *temp = it->second;
+        return temp;
+    }
+}
+
+void*
+spgwTables::delete_gx_trans(uint32_t msg_seq)
+{
+    std::map<uint32_t, void*>::iterator it;
+    it = spgw_gx_transaction_map.find(msg_seq);
+    if(it == spgw_gx_transaction_map.end())
+    {
+        return NULL;
+    }
+    else
+    {
+        void *temp = it->second;
+        spgw_gx_transaction_map.erase(it);
+        return temp;
+    }
+}
+
 void spgwTables::queue_event(void *context)
 {
     event_queue_mtx.lock();
