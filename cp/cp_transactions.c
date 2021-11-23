@@ -233,6 +233,25 @@ cleanup_pfcp_trans(transData_t *pfcp_trans)
     }
 }
 
+/* Unlink transaction from procedure, remote transacton from table */
+void 
+cleanup_gx_trans(transData_t *gx_trans)
+{
+    LOG_MSG(LOG_DEBUG,"Cleanup transaction gx ");
+    proc_context_t *proc = (proc_context_t *)gx_trans->proc_context;
+    uint32_t seq_num = gx_trans->sequence; 
+    transData_t *trans = (transData_t *)delete_gx_transaction(seq_num);
+    if(trans != NULL) {
+        assert(gx_trans == trans);
+    }
+    stop_transaction_timer(gx_trans);
+    delayed_free(gx_trans);
+
+    if(proc != NULL) {
+        proc->gx_trans = NULL;
+    }
+}
+
 void delayed_free(transData_t *trans)
 {
 

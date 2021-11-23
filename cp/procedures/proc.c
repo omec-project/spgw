@@ -165,6 +165,9 @@ end_procedure(proc_context_t *proc_ctxt)
         cleanup_pfcp_trans(proc_ctxt->pfcp_trans);
     }
 
+    if(proc_ctxt->gx_trans != NULL) {
+        cleanup_gx_trans(proc_ctxt->gx_trans);
+    }
     msg_info_t *msg = (msg_info_t *)proc_ctxt->msg_info;
     if(msg != NULL) {
         msg->refCnt--;

@@ -37,6 +37,11 @@ bool add_gtp_transaction(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq,
 void* find_gtp_transaction(uint32_t addr, uint16_t port, uint32_t msg_seq);
 void* delete_gtp_transaction(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq);
 
+bool add_gx_transaction(uint32_t msg_seq, void *trans);
+void* find_gx_transaction(uint32_t msg_seq);
+void* delete_gx_transaction(uint32_t msg_seq);
+
+
 void queue_stack_unwind_event_cpp(void *context); 
 void *get_stack_unwind_event_cpp(void);
 

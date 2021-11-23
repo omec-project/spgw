@@ -56,6 +56,7 @@ class spgwTables
 
      std::map<transKey_t, void *, comp> spgw_pfcp_transaction_map; 
      std::map<transKey_t, void *, comp> spgw_gtp_transaction_map; 
+     std::map<uint32_t, void *> spgw_gx_transaction_map;
      std::queue<void *> stack_events_queue;
      std::queue<void *> stack_test_events_queue;
      std::queue<void *> gtp_out_queue;
@@ -66,9 +67,16 @@ class spgwTables
      bool add_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans); 
      void *find_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq); 
      void *delete_pfcp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq); 
+
      bool add_gtp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq, void *trans); 
      void *find_gtp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq); 
      void *delete_gtp_trans(uint32_t src_addr, uint16_t src_port, uint32_t msg_seq); 
+
+     bool add_gx_trans(uint32_t msg_seq, void *trans);
+     void *find_gx_trans(uint32_t msg_seq);
+     void *delete_gx_trans(uint32_t msg_seq);
+
+
      void  queue_event(void *context); 
      void  *pop_event(void); 
 

@@ -778,11 +778,16 @@ generate_call_id(void)
 
 	return call_id;
 }
-void 
+
+uint32_t
 gx_send(int fd, char *buf, uint16_t len)
 {
-    queue_gx_out_event(fd, (uint8_t *)buf, len);
-	return;
+    static uint32_t seq_num;
+    seq_num++;
+    if (fd != 0) {
+       queue_gx_out_event(fd, (uint8_t *)buf, len);
+    }
+	return seq_num;
 }
 
 /* PERFORAMANCE : Should use conditional variable ?*/

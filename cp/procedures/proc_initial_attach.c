@@ -95,6 +95,7 @@ initial_attach_event_handler(void *proc, void *msg_info)
             cca_msg_handler(proc_context, msg); 
             break;
         }
+        case GX_CCRI_TIMEOUT_EVNT: 
         case GX_CCAI_FAILED: {
             process_gx_ccai_reject_handler(proc_context, msg);
             break; 
@@ -1931,6 +1932,19 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 //	return 0;
 //}
 
+void
+process_gx_ccri_timeout(void *data)
+{
+    LOG_MSG(LOG_ERROR, "Gx CCRI timeout");
+    proc_context_t *proc_context = (proc_context_t *)data;
+    msg_info_t *msg = (msg_info_t *)calloc(1, sizeof(msg_info_t));
+    SET_PROC_MSG(proc_context,msg);
+    msg->proc_context = proc_context;
+    msg->event = GX_CCRI_TIMEOUT_EVNT;
+    proc_context->handler(proc_context, msg); 
+    return;
+}
+
 int
 gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req_t *csr)
 {
@@ -2069,8 +2083,17 @@ gen_ccr_request(proc_context_t *proc_context, uint8_t ebi_index, create_sess_req
 	}
 
 	/* VS: Write or Send CCR msg to Gx_App */
-	gx_send(my_sock.gx_app_sock, buffer,
-			msg_len + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
+	uint32_t seq_num = gx_send(my_sock.gx_app_sock, buffer,
+			           msg_len + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
+
+	transData_t *trans_entry = start_response_wait_timer(proc_context, NULL, 0, process_gx_ccri_timeout);
+    SET_TRANS_SELF_INITIATED(trans_entry);
+    trans_entry->sequence = seq_num;
+    // trans_entry->peer_sockaddr = 0; no retransmission support
+    add_gx_transaction(seq_num, (void*)trans_entry);  
+    proc_context->gx_trans = trans_entry;
+    trans_entry->proc_context = (void *)proc_context;
+
 	return 0;
 }
 

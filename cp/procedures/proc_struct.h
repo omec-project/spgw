@@ -45,6 +45,7 @@ struct proc_context {
     void*           upf_context;
     transData_t*    pfcp_trans;
     transData_t*    gtpc_trans;
+    transData_t*    gx_trans;
     event_handler_t handler;
     void            *msg_info;
     uint32_t        call_id;
@@ -205,6 +206,7 @@ typedef enum
     DEFAULT_BEARER_DELETE,
     NW_DETACH_DBREQ_TIMEOUT,
     RCVD_GTP_DEL_BEARER_RSP,
+	GX_CCRI_TIMEOUT_EVNT,
 	END_EVNT
 }sm_event;
 
