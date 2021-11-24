@@ -383,7 +383,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -434,7 +434,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -485,7 +485,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -536,7 +536,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -587,7 +587,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -638,7 +638,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -689,7 +689,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -740,7 +740,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -791,7 +791,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -842,7 +842,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -893,7 +893,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -944,7 +944,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
@@ -995,7 +995,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    data_usage_DynamicMetricObject2 *obj = static_cast<data_usage_DynamicMetricObject2 *>(itf->second);
@@ -1046,7 +1046,7 @@ void spgwStats::increment(spgwStatsCounter name,std::map<std::string,std::string
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
 		auto it2 = it1++;
-		struct Node s1 = {name, it1->first+it2->first, it2->second+it2->second};
+		struct Node s1 = {name, it1->first+it2->first, it1->second+it2->second};
 		auto itf = metrics_map.find(s1);
 		if(itf != metrics_map.end()) {
 		    subscribers_info_DynamicMetricObject2 *obj = static_cast<subscribers_info_DynamicMetricObject2 *>(itf->second);

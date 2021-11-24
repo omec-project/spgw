@@ -167,7 +167,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
 	    	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	    	msglen = gx_ccr_calc_length(&ccr_request.data.ccr);
 
-            char *buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type));
+            char *buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
             if (buffer == NULL) {
                 LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
                 break;

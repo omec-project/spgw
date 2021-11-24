@@ -667,6 +667,11 @@ handle_create_session_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         msg->msg_type = GTP_RESERVED; 
         msg->ue_context = context;
         decrement_stat(NUM_UE_SPGW_ACTIVE_SUBSCRIBERS);
+        uint8_t ebi = msg->rx_msg.csr.bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
+        pdn_connection_t *pdn_old = GET_PDN(context, ebi);
+        if (pdn_old && pdn_old->ipv4.s_addr != 0) {
+          decrement_ue_info_stats(SUBSCRIBERS_INFO_SPGW_PDN, context->imsi64, pdn_old->ipv4.s_addr);
+        }
         process_error_occured_handler_new((void *)msg, NULL);
         LOG_MSG(LOG_DEBUG0, "[IMSI - %lu] Deleted old call due to context replacement ", context->imsi64);
         msg->msg_type = GTP_CREATE_SESSION_REQ; 

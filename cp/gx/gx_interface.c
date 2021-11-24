@@ -649,7 +649,7 @@ ccru_req_for_bear_termination(pdn_connection_t *pdn, eps_bearer_t *bearer)
 
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msg_len = gx_ccr_calc_length(&ccr_request.data.ccr);
-	buffer = (char *)calloc(1, msg_len + sizeof(ccr_request.msg_type));
+	buffer = (char *)calloc(1, msg_len + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
 	if (buffer == NULL) {
 		LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
 		return -1;

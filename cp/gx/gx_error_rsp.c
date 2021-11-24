@@ -60,7 +60,7 @@ void send_ccr_t_req(msg_info_t *msg, uint8_t ebi, uint32_t teid)
 					return;
 				}
 				msglen = gx_ccr_calc_length(&ccr_request.data.ccr);
-				buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type));
+				buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type) +  sizeof(ccr_request.seq_num));
 				if (buffer == NULL) {
 				    LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
 					return;
