@@ -327,7 +327,7 @@ generate_ccrt(proc_context_t *proc_context)
 	/* VS: Calculate the max size of CCR msg to allocate the buffer */
 	msglen = gx_ccr_calc_length(&ccr_request.data.ccr);
 
-    buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type));
+    buffer = (char *)calloc(1, msglen + sizeof(ccr_request.msg_type) + sizeof(ccr_request.seq_num));
     if (buffer == NULL) {
         LOG_MSG(LOG_ERROR, "Failure to allocate CCR Buffer memory");
         return -1;
