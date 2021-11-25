@@ -370,10 +370,10 @@ fill_charging_rule_definition(pdn_connection_t *pdn,
         dynamic_rule->qos.arp.priority_level = qos->allocation_retention_priority.priority_level;
         dynamic_rule->qos.arp.preemption_capability = qos->allocation_retention_priority.pre_emption_capability;
         dynamic_rule->qos.arp.preemption_vulnerability = qos->allocation_retention_priority.pre_emption_vulnerability;
-        dynamic_rule->qos.ul_mbr =  qos->max_requested_bandwidth_ul;
-        dynamic_rule->qos.dl_mbr =  qos->max_requested_bandwidth_dl;
-        dynamic_rule->qos.ul_gbr =  qos->guaranteed_bitrate_ul;
-        dynamic_rule->qos.dl_gbr =  qos->guaranteed_bitrate_dl;
+        dynamic_rule->qos.ul_mbr =  qos->max_requested_bandwidth_ul/1000;
+        dynamic_rule->qos.dl_mbr =  qos->max_requested_bandwidth_dl/1000;
+        dynamic_rule->qos.ul_gbr =  qos->guaranteed_bitrate_ul/1000;
+        dynamic_rule->qos.dl_gbr =  qos->guaranteed_bitrate_dl/1000;
     }
 
     if (rule_definition->presence.charging_rule_name == PRESENT) {
@@ -671,12 +671,12 @@ parse_gx_cca_msg(GxCCA *cca, pdn_connection_t **_pdn)
 		LOG_MSG(LOG_INFO, "AVP:received qos information from PCRF ");
         GxQosInformation *qos = &(cca->qos_information.list[0]);
         if(qos->presence.apn_aggregate_max_bitrate_ul == PRESENT) {
-            pdn_cntxt->apn_ambr.ambr_uplink = qos->apn_aggregate_max_bitrate_ul;
-            def_bearer->qos.ul_mbr = qos->apn_aggregate_max_bitrate_ul;
+            pdn_cntxt->apn_ambr.ambr_uplink = qos->apn_aggregate_max_bitrate_ul/1000;
+            def_bearer->qos.ul_mbr = qos->apn_aggregate_max_bitrate_ul/1000;
         }
         if(qos->presence.apn_aggregate_max_bitrate_dl == PRESENT) {
-            pdn_cntxt->apn_ambr.ambr_downlink = qos->apn_aggregate_max_bitrate_dl;
-            def_bearer->qos.dl_mbr = qos->apn_aggregate_max_bitrate_dl;
+            pdn_cntxt->apn_ambr.ambr_downlink = qos->apn_aggregate_max_bitrate_dl/1000;
+            def_bearer->qos.dl_mbr = qos->apn_aggregate_max_bitrate_dl/1000;
         }
 	}
 
