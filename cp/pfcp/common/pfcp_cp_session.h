@@ -157,7 +157,7 @@ fill_pdr_entry(ue_context_t *context, pdn_connection_t *pdn,
  * @retrun : Returns 0 in case of success , -1 otherwise
  */
 int
-fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer,uint8_t itr, bool apnAmbr);
+fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint32_t qer_id, bool apnAmbr);
 
 /**
  * @brief  : Process pfcp delete session response
