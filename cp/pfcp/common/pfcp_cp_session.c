@@ -1193,7 +1193,7 @@ int fill_sdf_rules(pfcp_sess_estab_req_t* pfcp_sess_est_req,
 
 //Create qer and add it to global table 
 int
-fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr, bool apnAmbr, flow_status status)
+fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint32_t qer_id, bool apnAmbr, dynamic_rule_t *dyn_rule)
 {
 	int ret = -1;
 	qer_t *qer_ctxt = NULL;
@@ -1202,18 +1202,17 @@ fill_qer_entry(pdn_connection_t *pdn, eps_bearer_t *bearer, uint8_t itr, bool ap
 		LOG_MSG(LOG_ERROR, "Failure to allocate qer context ");
 		return ret;
 	}
-	qer_ctxt->qer_id = bearer->qer_id[itr].qer_id;
+	qer_ctxt->qer_id = qer_id;
 	qer_ctxt->qci = bearer->qos.qci;
     if(apnAmbr == true) {
         qer_ctxt->max_bitrate.ul_mbr = pdn->apn_ambr.ambr_uplink;
 	    qer_ctxt->max_bitrate.dl_mbr = pdn->apn_ambr.ambr_downlink;
     } else {
-        // FIXME : use the value from RULE and not from bearer `
-	    qer_ctxt->max_bitrate.ul_mbr = bearer->qos.ul_mbr;
-	    qer_ctxt->max_bitrate.dl_mbr = bearer->qos.dl_mbr;
+	    qer_ctxt->max_bitrate.ul_mbr = dyn_rule->qos.ul_mbr;
+	    qer_ctxt->max_bitrate.dl_mbr = dyn_rule->qos.dl_mbr;
+	    qer_ctxt->guaranteed_bitrate.ul_gbr = dyn_rule->qos.ul_gbr;
+	    qer_ctxt->guaranteed_bitrate.dl_gbr = dyn_rule->qos.dl_gbr;
     }
-	qer_ctxt->guaranteed_bitrate.ul_gbr = bearer->qos.ul_gbr;
-	qer_ctxt->guaranteed_bitrate.dl_gbr = bearer->qos.dl_gbr;
 
 	ret = add_qer_entry(qer_ctxt->qer_id,qer_ctxt);
 	if(ret != 0) {
@@ -1477,16 +1476,14 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
             if(cp_config->gx_enabled) {
                 eps_bearer_t *bearer = get_default_bearer(pdn);
                 if (bearer->ambr_qer_flag == false) {
-                    bearer->qer_id[bearer->qer_count].qer_id = generate_qer_id(SOURCE_INTERFACE_VALUE_UNKNOWN);
+                    uint32_t qer_id = generate_qer_id(SOURCE_INTERFACE_VALUE_UNKNOWN);
+                    bearer->qer_id[bearer->qer_count].qer_id = qer_id; 
                     LOG_MSG(LOG_DEBUG,"Adding default APN AMBR QER. Current QER Count %d, New QER ID = %d  ", bearer->qer_count, bearer->qer_id[bearer->qer_count].qer_id);
-                    fill_qer_entry(pdn, bearer, bearer->qer_count, true, FL_ENABLED);
+                    fill_qer_entry(pdn, bearer, qer_id, true, NULL);
                     bearer->qer_count++;
                     bearer->ambr_qer_flag = true;
                 }
             }
-
-            //FIXME : variable name 
-			enum flow_status f_status = (enum flow_status)bearer->dynamic_rules[bearer->num_dynamic_filters]->flow_status; // consider dynamic rule is 1 only /*TODO*/
 
             /* URR_SUPPORT : generate URR ids and keep it in the default bearer */
 			uint32_t urr_id = generate_urr_id(SOURCE_INTERFACE_VALUE_ACCESS);
@@ -1494,7 +1491,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 
 			uint32_t qer_id  = generate_qer_id(SOURCE_INTERFACE_VALUE_ACCESS);
 			bearer->qer_id[bearer->qer_count].qer_id = qer_id; 
-			fill_qer_entry(pdn, bearer, bearer->qer_count, false, f_status);
+			fill_qer_entry(pdn, bearer, qer_id, false, pcc_rule->dyn_rule);
 
 
             // Fill 1st PDR entry and corresponding rules  
@@ -1519,7 +1516,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 
 			qer_id = generate_qer_id(SOURCE_INTERFACE_VALUE_CORE);
 			bearer->qer_id[bearer->qer_count].qer_id = qer_id; 
-			fill_qer_entry(pdn, bearer, bearer->qer_count, false, f_status);
+			fill_qer_entry(pdn, bearer, qer_id, false, pcc_rule->dyn_rule);
 
 			temp_pdr = fill_pdr_entry(pdn->context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, bearer->pdr_count, qer_id, urr_id);
             temp_pdr->prcdnc_val = pcc_rule->dyn_rule->precedence; 
@@ -1825,10 +1822,11 @@ fill_dedicated_bearer_info(eps_bearer_t *bearer,
             bearer->qer_count = NUMBER_OF_QER_PER_BEARER; 
             for(uint8_t itr=0; itr < bearer->qer_count; itr++){
                 // FIXME : dedicated bearer - we need to pass on correct inerface Id to generate qer id. 
-                bearer->qer_id[itr].qer_id = generate_qer_id(SOURCE_INTERFACE_VALUE_CORE); 
+                uint32_t qer_id = generate_qer_id(SOURCE_INTERFACE_VALUE_CORE); 
+                bearer->qer_id[itr].qer_id = qer_id; 
                 LOG_MSG(LOG_DEBUG, "fill_dedicated_bearer_info - qer_id = %d ", bearer->qer_id[itr].qer_id);
                 /* GXCONFUSION - Where are we filling qos details in the bearer ?*/
-                fill_qer_entry(pdn, bearer, itr, false, FL_ENABLED);
+                fill_qer_entry(pdn, bearer, qer_id, false, NULL); // TODO - pass correct rule pointer
             }
 
 			/* URR_SUPPORT : generate urr ids for dedicated bearer */
