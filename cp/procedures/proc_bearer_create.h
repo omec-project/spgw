@@ -82,14 +82,6 @@ fill_pfcp_entry(eps_bearer_t *bearer, dynamic_rule_t *dyn_rule,
 		enum rule_action_t rule_action);
 
 /**
- * @brief  : Handles processing of create bearer request
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_create_bearer_request_handler(void *arg1, void *arg2);
-
-/**
  * @brief  : Handles processing of create bearer response for pgwc
  * @param  : arg1, data contained in message
  * @param  : arg2, optional parameter

@@ -205,26 +205,6 @@ int8_t
 compare_default_bearer_qos(bearer_qos_ie *default_bearer_qos,
 		bearer_qos_ie *rule_qos);
 
-/**
- * @brief  : Update UE state in UE Context.
- * @param  : teid_key, key to search context
- * @param  : state, new state to be updated
- * @param  : ebi_index, index of bearer id stored in array
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-update_ue_state(uint32_t teid_key, uint8_t state, uint8_t ebi_index);
-
-/**
- * @brief  : Retrive UE state from UE Context.
- * @param  : teid_key, key for search
- * @param  : ebi_index, index of bearer id stored in array
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint8_t
-get_ue_state(uint32_t teid_key ,uint8_t ebi_index);
-
-
 #ifdef __cplusplus
 }
 #endif

@@ -129,7 +129,7 @@ int handle_cca_update_msg(msg_info_t **msg_p)
  * This function handles the message received
  * from PCEF in case of handover.
  * This handler comes when MBR is received
- * from the new SGWC on the PGWC.
+ * from the new SGW on the PGWC.
  * */
 int cca_u_msg_handler_handover(void *data, void *unused)
 {

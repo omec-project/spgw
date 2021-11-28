@@ -100,7 +100,6 @@ extern "C" {
 #define NOT_PRESENT 0
 #define PRESENT 1
 
-#define DEFAULT_BEARER_ID 5
 
 /*rfc4006  8.3*/
 enum cc_request_type_value{

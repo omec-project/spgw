@@ -22,7 +22,6 @@
 #include "upf_struct.h"
 #include "gen_utils.h"
 #include "gx_error_rsp.h"
-#include "cp_main.h"
 #include "upf_struct.h"
 #include "cp_events.h"
 #include "spgw_cpp_wrapper.h"

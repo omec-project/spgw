@@ -407,16 +407,7 @@ set_create_bearer_request(gtpv2c_header_t *gtpv2c_tx, uint32_t sequence,
 	cb_req.bearer_contexts.header.len += sizeof(gtp_bearer_qlty_of_svc_ie_t);
 
 	/* TODO TFT is pending */
-	if (SGWC == cp_config->cp_type) {
-		memset(cb_req.bearer_contexts.tft.eps_bearer_lvl_tft, 0, 257);
-		memcpy(cb_req.bearer_contexts.tft.eps_bearer_lvl_tft, eps_bearer_lvl_tft, 257);
-
-		set_ie_header(&cb_req.bearer_contexts.tft.header,
-			GTP_IE_EPS_BEARER_LVL_TRAFFIC_FLOW_TMPL, IE_INSTANCE_ZERO, tft_len);
-		len = tft_len + IE_HEADER_SIZE;
-	} else {
-		len = set_bearer_tft(&cb_req.bearer_contexts.tft, IE_INSTANCE_ZERO, bearer->dynamic_rules[bearer->num_dynamic_filters - 1]->num_flw_desc, bearer);
-	}
+	len = set_bearer_tft(&cb_req.bearer_contexts.tft, IE_INSTANCE_ZERO, bearer->dynamic_rules[bearer->num_dynamic_filters - 1]->num_flw_desc, bearer);
 
 	cb_req.bearer_contexts.header.len += len;//sizeof(gtp_eps_bearer_lvl_traffic_flow_tmpl_ie_t);
 
@@ -433,15 +424,6 @@ set_create_bearer_request(gtpv2c_header_t *gtpv2c_tx, uint32_t sequence,
 		set_ipv4_fteid(&cb_req.bearer_contexts.s1u_sgw_fteid,
 			GTPV2C_IFTYPE_S1U_SGW_GTPU, IE_INSTANCE_ZERO, bearer->s1u_sgw_gtpu_ipv4,
 			bearer->s1u_sgw_gtpu_teid);
-
-		if (SGWC == cp_config->cp_type) {
-			set_ipv4_fteid(&cb_req.bearer_contexts.s58_u_pgw_fteid,
-				GTPV2C_IFTYPE_S5S8_PGW_GTPU, IE_INSTANCE_ONE, bearer->s5s8_pgw_gtpu_ipv4,
-				bearer->s5s8_pgw_gtpu_teid);
-
-			cb_req.bearer_contexts.header.len += sizeof(struct fteid_ie_hdr_t) +
-				sizeof(struct in_addr) + IE_HEADER_SIZE;
-		}
 	}
 
 	cb_req.bearer_contexts.header.len += sizeof(struct fteid_ie_hdr_t) +

@@ -101,7 +101,7 @@ set_modify_bearer_response(gtpv2c_header_t *gtpv2c_tx,
 	msg_len = encode_mod_bearer_rsp(&mb_resp, (uint8_t *)gtpv2c_tx);
 	gtpv2c_tx->gtpc.message_len = htons(msg_len - 4);
 }
-/*MODIFY RESPONSE FUNCTION WHEN PGWC returns MBR RESPONSE to SGWC
+/* MODIFY RESPONSE FUNCTION WHEN PGW returns MBR RESPONSE to SGW
  * in HANDOVER SCENARIO*/
 
 void
@@ -205,49 +205,6 @@ process_modify_bearer_request(gtpv2c_header_t *gtpv2c_rx,
 	set_modify_bearer_response(gtpv2c_tx, mb_req.header.teid.has_teid.seq,
 	    context, bearer);
 
-#ifdef OBSELETE_APIS
-	/* using the s1u_sgw_gtpu_teid as unique identifier to the session */
-	struct session_info session;
-	memset(&session, 0, sizeof(session));
-	 session.ue_addr.iptype = IPTYPE_IPV4;
-	 session.ue_addr.u.ipv4_addr =
-		 pdn->ipv4.s_addr;
-	 session.ul_s1_info.sgw_teid =
-		htonl(bearer->s1u_sgw_gtpu_teid);
-	 session.ul_s1_info.sgw_addr.iptype = IPTYPE_IPV4;
-	 session.ul_s1_info.sgw_addr.u.ipv4_addr =
-		 htonl(bearer->s1u_sgw_gtpu_ipv4.s_addr);
-	 session.ul_s1_info.enb_addr.iptype = IPTYPE_IPV4;
-	 session.ul_s1_info.enb_addr.u.ipv4_addr =
-		 bearer->s1u_enb_gtpu_ipv4.s_addr;
-	 session.dl_s1_info.enb_teid =
-		 bearer->s1u_enb_gtpu_teid;
-	 session.dl_s1_info.enb_addr.iptype = IPTYPE_IPV4;
-	 session.dl_s1_info.enb_addr.u.ipv4_addr =
-		 bearer->s1u_enb_gtpu_ipv4.s_addr;
-	 session.dl_s1_info.sgw_addr.iptype = IPTYPE_IPV4;
-	 session.dl_s1_info.sgw_addr.u.ipv4_addr =
-		 htonl(bearer->s1u_sgw_gtpu_ipv4.s_addr);
-	 session.ul_apn_mtr_idx = 0;
-	 session.dl_apn_mtr_idx = 0;
-	 session.num_ul_pcc_rules = 1;
-	 session.ul_pcc_rule_id[0] = FIRST_FILTER_ID;
-	 session.num_dl_pcc_rules = 1;
-	 session.dl_pcc_rule_id[0] = FIRST_FILTER_ID;
-
-	 session.num_adc_rules = num_adc_rules;
-	 uint32_t i;
-	 for (i = 0; i < num_adc_rules; ++i)
-			 session.adc_rule_id[i] = adc_rule_id[i];
-
-	 session.sess_id = SESS_ID(
-			context->s11_sgw_gtpc_teid,
-			bearer->eps_bearer_id);
-
-	struct dp_id dp_id = { .id = DPN_ID };
-	if (session_modify(dp_id, session) < 0)
-        assert(0);
-#endif
 	return 0;
 }
 

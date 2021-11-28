@@ -182,30 +182,6 @@ process_pfcp_sess_del_resp(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx,
 void
 fill_pgwc_create_session_response(create_sess_rsp_t *cs_resp,
 				uint32_t sequence, ue_context_t *context, uint8_t ebi_index);
-/**
- * @brief  : function to proces create session response on SGWC received from PGWC
- * @param  : cs_rsp, holds information in create session response
- * @retrun : Returns 0 in case of success , -1 otherwise
- */
-int
-process_sgwc_s5s8_create_sess_rsp(create_sess_rsp_t *cs_rsp);
-
-/**
- * @brief  : function to proces delete session response on SGWC received from PGWC
- * @param  : ds_rsp, holds information in delete session response
- * @param  : gtpv2c_tx, holds info in gtpv2c header
- * @retrun : Returns 0 in case of success , -1 otherwise
- */
-int
-process_sgwc_s5s8_delete_session_response(del_sess_rsp_t *ds_rsp, uint8_t *gtpv2c_tx);
-
-/**
- * @brief  : function to proces delete session request on SGWC
- * @param  : ds_rsp, holds information in delete session request
- * @retrun : Returns 0 in case of success , -1 otherwise
- */
-int
-process_sgwc_s5s8_delete_session_request(del_sess_rsp_t *ds_rsp);
 
 /**
  * @brief  : function to proces delete session request on PGWC
@@ -338,13 +314,6 @@ fill_remove_pfcp_info(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer_t *bear
  */
 uint32_t
 fill_pfcp_sess_del_req( pfcp_sess_del_req_t *pfcp_sess_del_req);
-/**
- * @brief  : Fill pfcp session set delete request
- * @param  : pfcp_sess_set_del_req , structure to be filled
- * @return : Returns nothing
- */
-void
-fill_pfcp_sess_set_del_req( pfcp_sess_set_del_req_t *pfcp_sess_set_del_req);
 
 void
 fill_update_pdr(pfcp_sess_mod_req_t *pfcp_sess_mod_req, eps_bearer_t *bearer);

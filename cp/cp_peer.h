@@ -12,10 +12,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-struct peer_data {
-    gstimerinfo_t *ti;
-    struct sockaddr_in dest_addr;
-};
 
 /**
  * @brief  : Timer callback

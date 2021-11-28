@@ -14,14 +14,6 @@
 extern "C" {
 #endif
 
-/**
- * @brief  : Handles processing of modification response received in case of delete request
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_mod_resp_delete_handler(void *arg1, void *arg2);
-
 /* Function */
 int process_delete_bearer_response_handler(void *arg1, void *arg2);
 

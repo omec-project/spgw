@@ -38,6 +38,8 @@ void cleanup_bearer_context(eps_bearer_t *bearer)
     return;
 }
 
+//FIXME : trace the code to see who is deleting rules 
+// function above is already cleaning the rules for the bearer
 int
 del_rule_entries(ue_context_t *context, uint8_t ebi_index)
 {

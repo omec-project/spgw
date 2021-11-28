@@ -74,16 +74,6 @@ build_fd_gxapp()
 	build_gxapp
 }
 
-build_c3po_util()
-{
-	echo "Building c3po util ..."
-	pushd $SPGW_DIR/$C3PO_OSS_DIR/$OSS_UTIL_DIR
-	make clean
-	make
-	$SUDO make install
-	popd
-}
-
 build_cpputil_lib()
 {
 	echo "Building cpp util ..."
@@ -100,10 +90,7 @@ build_spgw()
 	pushd $SPGW_DIR
 	source setenv.sh
 	build_cpputil_lib
-	#build_c3po_util
 	build_pfcp_lib
-
-	#make build-lib || { echo -e "\nmake lib failed\n"; }
 
 	echo "Building libgtpv2c..."
 	pushd $SPGW_DIR/libgtpv2c
