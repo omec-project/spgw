@@ -13,7 +13,6 @@
 #include "gtp_messages.h"
 #include <sys/queue.h>
 #include "gx_struct.h"
-#include "gtpv2_msg_struct.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,8 +64,6 @@ typedef struct msg_info {
 		pfcp_sess_mod_rsp_t pfcp_sess_mod_resp;
 		pfcp_sess_del_rsp_t pfcp_sess_del_resp;
 		pfcp_sess_rpt_req_t pfcp_sess_rep_req;
-		pfcp_sess_set_del_req_t pfcp_sess_set_del_req;
-		pfcp_sess_set_del_rsp_t pfcp_sess_set_del_rsp;
 		GxCCA cca;
 		GxRAR rar;
 	}rx_msg;

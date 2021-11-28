@@ -171,15 +171,6 @@ void
 creating_bar(pfcp_create_bar_ie_t *create_bar);
 
 /**
- * @brief  : Set values in fq csid ie
- * @param  : fq_csid, ie structure to be filled
- * @param  : nodeid_value
- * @return : Returns nothing
- */
-void
-set_fq_csid(pfcp_fqcsid_ie_t *fq_csid, uint32_t nodeid_value);
-
-/**
  * @brief  : Set values in trace info ie
  * @param  : trace_info, ie structure to be filled
  * @return : Returns nothing
@@ -634,14 +625,6 @@ void
 set_remote_gtpu_peer_ip(pfcp_rmt_gtpu_peer_ie_t *remote_gtpu_peer);
 
 /**
- * @brief  : Calculates system  Seconds since boot
- * @param  : no param
- * @return : Returns uptime in case of success
- */
-long
-uptime(void);
-
-/**
  * @brief  : valiadates pfcp session association setup request and set cause and offending ie accordingly
  * @param  : pfcp_ass_setup_req, hold information from pfcp session association setup request
  * @param  : cause_id , param to set cause id
@@ -821,15 +804,6 @@ void
 set_activate_predefined_rules(pfcp_actvt_predef_rules_ie_t *act_predef_rule);
 
 /**
- * @brief  : Set values in pfd contents ie
- * @param  : pfd_conts, ie structure to be filled
- * @param  : cstm_buf, data to be filled
- * @return : Returns 0 in case of success , -1 otherwise
- */
-uint16_t
-set_pfd_contents(pfcp_pfd_contents_ie_t *pfd_conts, struct msgbuf1 *cstm_buf);
-
-/**
  * @brief  : Fill pfcp pfd management request
  * @param  : pfcp_pfd_req, pointer to structure to be filled
  * @param  : len, Total len
@@ -845,22 +819,6 @@ fill_pfcp_pfd_mgmt_req(pfcp_pfd_mgmt_req_t *pfcp_pfd_req, uint16_t len);
  */
 int
 process_pfcp_pfd_mgmt_request(void);
-
-/**
- * @brief  : Create s5s8 hash table in sgwc
- * @param  : No param
- * @return : Returns nothing
- */
-void
-create_s5s8_sgwc_hash_table(void);
-
-/**
- * @brief  : Remove s5s8 hash table in sgwc
- * @param  : No param
- * @return : Returns nothing
- */
-void
-clear_s5s8_sgwc_hash_table(void);
 
 /**
  * @brief  : Generate and Send CCRU message

@@ -26,7 +26,6 @@
 #include "upf_struct.h"
 #include "gen_utils.h"
 #include "gx_error_rsp.h"
-#include "cp_main.h"
 #include "upf_struct.h"
 #include "cp_events.h"
 #include "spgw_cpp_wrapper.h"
@@ -179,20 +178,6 @@ handle_pfcp_association_setup_response(proc_context_t *proc, void *msg_t)
 
     switch (cp_config->cp_type)
     {
-        case SGWC :
-            if (msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
-                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
-                    SOURCE_INTERFACE_VALUE_ACCESS )
-                upf_context->s1u_ip =
-                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
-
-            if( msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].assosi == 1 &&
-                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].src_intfc ==
-                    SOURCE_INTERFACE_VALUE_CORE )
-                upf_context->s5s8_sgwu_ip =
-                    msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[1].ipv4_address;
-            break;
-
         case PGWC :
             if (msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].assosi == 1 &&
                     msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].src_intfc ==
@@ -208,6 +193,8 @@ handle_pfcp_association_setup_response(proc_context_t *proc, void *msg_t)
                 upf_context->s1u_ip =
                     msg->rx_msg.pfcp_ass_resp.user_plane_ip_rsrc_info[0].ipv4_address;
             break;
+        default:
+            assert(0);
 
     }
 

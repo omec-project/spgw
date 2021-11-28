@@ -13,13 +13,10 @@
 #include <sys/queue.h>
 #include <netinet/in.h>
 #include "cp_timer.h"
-#include "cp_peer_struct.h"
-#include "trans_struct.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-struct dp_info;
 
 #define MAX_HOSTNAME_LENGTH							(256)
 

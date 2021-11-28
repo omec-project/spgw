@@ -49,6 +49,11 @@ typedef struct peerData {
 	uint8_t buf[1024];
 } peerData_t;
 
+struct peer_data {
+    gstimerinfo_t *ti;
+    struct sockaddr_in dest_addr;
+};
+
 
 #ifdef __cplusplus
 }

@@ -193,11 +193,7 @@ set_cause_error_value(gtp_cause_ie_t *cause,
 	cause->pce = 0;
 	cause->bce = 0;
 	cause->spareinstance = 0;
-	if(cp_config->cp_type != SGWC)
-	   cause->cs = 1;
-	else
-	   cause->cs = 0;
-
+	cause->cs = 1;
 }
 
 void

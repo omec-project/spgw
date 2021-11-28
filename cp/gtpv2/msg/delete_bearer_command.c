@@ -149,18 +149,8 @@ process_delete_bearer_command_handler(void *data, void *unused_param)
 	ret = process_delete_bearer_cmd_request(&msg->rx_msg.del_ber_cmd, gtpv2c_tx);
 
 	if(ret != 0) {
-	/* TODO:set error response*/
-	LOG_MSG(LOG_ERROR, "Error: %d ", ret);
-	}
-
-	if (SGWC == cp_config->cp_type ) {
-	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
-		+ sizeof(gtpv2c_tx->gtpc);
-
-
-	gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
-			(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-            sizeof(struct sockaddr_in));
+	    /* TODO:set error response*/
+	    LOG_MSG(LOG_ERROR, "Error: %d ", ret);
 	}
 
     LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
@@ -196,13 +186,7 @@ process_delete_bearer_cmd_request(del_bearer_cmd_t *del_bearer_cmd, gtpv2c_heade
                 return -1;
             }
         }
-    } else if(SGWC == cp_config->cp_type) {
-
-		set_delete_bearer_command(del_bearer_cmd, pdn, gtpv2c_tx);
-		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
-			               htonl(pdn->s5s8_pgw_gtpc_ipv4.s_addr);
-
-	}
+    }
     pdn->state = CONNECTED_STATE;
     resp = get_sess_entry_seid(pdn->seid);
     if (resp == NULL){

@@ -337,7 +337,7 @@ msg_handler_gx(void *data)
     LOG_MSG(LOG_INIT,"Starting gx message handler thread ");
 
     /* Make a connection between control-plane and gx_app */
-    if(cp_config->cp_type != SGWC) {
+    if ((cp_config->cp_type = SAEGWC) || (cp_config->cp_type == PGWC)) {
         LOG_MSG(LOG_INIT, "Opening up gx-app socket ");
         start_cp_app();
     }
