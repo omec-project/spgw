@@ -142,8 +142,6 @@ handle_echo_response(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
         increment_mme_peer_stats(MSG_RX_GTPV2_S11_ECHORSP, peer_addr->sin_addr.s_addr);
     } else if (iface == S5S8_IFACE && cp_config->cp_type == PGWC) {
         increment_sgw_peer_stats(MSG_RX_GTPV2_S5S8_ECHORSP, peer_addr->sin_addr.s_addr);
-    } else if (iface == S5S8_IFACE && cp_config->cp_type == SGWC) {
-        increment_pgw_peer_stats(MSG_RX_GTPV2_S5S8_ECHORSP, peer_addr->sin_addr.s_addr);
     } else { 
 		LOG_MSG(LOG_ERROR, "Invalid interface %d ",iface);
 		return -1;

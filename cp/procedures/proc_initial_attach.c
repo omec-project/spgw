@@ -41,7 +41,6 @@
 #include "cp_common.h"
 
 extern uint8_t gtp_tx_buf[MAX_GTPV2C_UDP_LEN];
-static uint32_t s5s8_sgw_gtpc_teid_offset;
 
 /* local functions. Need to find suitable place for declarations  */
 
@@ -340,7 +339,7 @@ process_create_sess_req(proc_context_t *proc_ctxt,
 	uint8_t ebi_index = csr->bearer_contexts_to_be_created.eps_bearer_id.ebi_ebi - 5;
 
     ret = 0;
-    if (cp_config->cp_type != SGWC) {
+    {
         struct in_addr *paa_ipv4 = (struct in_addr *) &csr->paa.pdn_addr_and_pfx[0];
         if (csr->paa.pdn_type == PDN_IP_TYPE_IPV4 && paa_ipv4->s_addr != 0) {
             bool found = false;
@@ -451,18 +450,7 @@ process_create_sess_req(proc_context_t *proc_ctxt,
 
 	bearer = context->eps_bearers[ebi_index];
 
-	if (cp_config->cp_type == SGWC) {
-		pdn->ipv4.s_addr = ntohl(ue_ip.s_addr);
-		/* Note: s5s8_sgw_gtpc_teid =
-		 *                  * s11_sgw_gtpc_teid
-		 *                                   */
-		//pdn->s5s8_sgw_gtpc_teid = context->s11_sgw_gtpc_teid;
-		/* SGWC s55s8 TEID is unique for each PDN or PGWC */
-		pdn->s5s8_sgw_gtpc_teid = s5s8_sgw_gtpc_base_teid + s5s8_sgw_gtpc_teid_offset;
-		++s5s8_sgw_gtpc_teid_offset;
-
-		context->pdns[ebi_index]->seid = SESS_ID(context->s11_sgw_gtpc_teid, bearer->eps_bearer_id);
-	} else if (cp_config->cp_type == PGWC) {
+    if (cp_config->cp_type == PGWC) {
 		/* VS: Maitain the fqdn into table */
 		memcpy(pdn->fqdn, (char *)csr->sgw_u_node_name.fqdn,
 				csr->sgw_u_node_name.header.len);
@@ -584,37 +572,15 @@ process_sess_est_resp_handler(proc_context_t *proc_context, msg_info_t *msg)
 	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
 		+ sizeof(gtpv2c_tx->gtpc);
 
-	if (cp_config->cp_type == SGWC) {
+	if (cp_config->cp_type == PGWC) {
         transData_t *trans_rec = proc_context->gtpc_trans;
 		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
 				(struct sockaddr *) &trans_rec->peer_sockaddr,
 		        sizeof(struct sockaddr_in));
-
-
-//        increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_CSREQ, trans_rec->s5s8_recv_sockaddr.sin_addr.s_addr);
-
-		if (SGWC == cp_config->cp_type) {
-#if 0
-			add_gtpv2c_if_timer_entry(
-				UE_SESS_ID(msg->rx_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid),
-				&s5s8_recv_sockaddr, gtp_tx_buf, payload_length,
-				UE_BEAR_ID(msg->rx_msg.pfcp_sess_est_resp.header.seid_seqno.has_seid.seid) - 5,
-				S5S8_IFACE);
-#endif
-		}
-
-		//s5s8_sgwc_msgcnt++;
-	} else if (cp_config->cp_type == PGWC) {
-        transData_t *trans_rec = proc_context->gtpc_trans;
-		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
-				(struct sockaddr *) &trans_rec->peer_sockaddr,
-		        sizeof(struct sockaddr_in));
-
-
 //        increment_pgw_peer_stats(MSG_TX_GTPV2_S5S8_CSRSP, trans_rec->s5s8_recv_sockaddr.sin_addr.s_addr);
 
 		//s5s8_sgwc_msgcnt++;
-	} else {
+	} else if (cp_config->cp_type == SAEGWC) {
         transData_t *trans_rec = proc_context->gtpc_trans;
 		/* Send response on s11 interface */
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,
@@ -639,7 +605,6 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
                            pfcp_sess_estab_rsp_t *pfcp_sess_est_rsp, 
                            gtpv2c_header_t *gtpv2c_tx)
 {
-	int ret = 0;
 	eps_bearer_t *bearer = NULL;
 	ue_context_t *context = NULL;
 	pdn_connection_t *pdn = NULL;
@@ -684,8 +649,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
         transData_t *gtpc_trans = proc_context->gtpc_trans; 
 		set_create_session_response(proc_context,
 				gtpv2c_tx, gtpc_trans->sequence, context, pdn, bearer);
-	}
-    else if (cp_config->cp_type == PGWC) {
+	} else if (cp_config->cp_type == PGWC) {
 		/*TODO: This needs to be change after support libgtpv2 on S5S8*/
 		/* set_pgwc_s5s8_create_session_response(gtpv2c_tx,
 				(htonl(context->sequence) >> 8), pdn, bearer); */
@@ -708,78 +672,7 @@ process_pfcp_sess_est_resp(msg_info_t *msg,
 
 		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
 						htonl(pdn->s5s8_sgw_gtpc_ipv4.s_addr);
-	} else if (cp_config->cp_type == SGWC) {
-		uint16_t msg_len = 0;
-		upf_context_t *upf_context = NULL;
-
-		upf_context  = (upf_context_t *)upf_context_entry_lookup((context->pdns[ebi_index])->upf_ipv4.s_addr);
-
-		if (upf_context == NULL) {
-			LOG_MSG(LOG_DEBUG, "NO ENTRY FOUND IN UPF HASH [%u]", 
-					(context->pdns[ebi_index])->upf_ipv4.s_addr);
-			return GTPV2C_CAUSE_INVALID_PEER;
-		}
-
-		ret = add_bearer_entry_by_sgw_s5s8_tied(pdn->s5s8_sgw_gtpc_teid, &context->eps_bearers[ebi_index]);
-		if(ret) {
-			return ret;
-		}
-
-		if(context->indication_flag.oi == 1) {
-
-			memset(gtpv2c_tx, 0, MAX_GTPV2C_UDP_LEN);
-			set_modify_bearer_request(gtpv2c_tx, pdn, bearer);
-
-			my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
-				htonl(pdn->s5s8_pgw_gtpc_ipv4.s_addr);
-
-			//resp->state = MBR_REQ_SNT_STATE;
-			//pdn->state = resp->state;
-			//pdn->proc = SGW_RELOCATION_PROC;
-			return 0;
-		}
-
-		/*Add procedure based call here
-		 * for pdn -> CSR
-		 * for sgw relocation -> MBR
-		 */
-
-		create_sess_req_t cs_req = {0};
-
-		ret = fill_cs_request(&cs_req, context, ebi_index);
-
-		if (ret < 0) {
-			LOG_MSG(LOG_DEBUG, "Failed to create the CSR request ");
-			return 0;
-		}
-
-		msg_len = encode_create_sess_req(
-				&cs_req,
-				(uint8_t*)gtpv2c_tx);
-
-		msg_len = msg_len - 4;
-		gtpv2c_header_t *header;
-		header = (gtpv2c_header_t*) gtpv2c_tx;
-		header->gtpc.message_len = htons(msg_len);
-
-		if (ret < 0)
-			LOG_MSG(LOG_ERROR, "Failed to generate S5S8 SGWC CSR.");
-
-		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
-				htonl(context->pdns[ebi_index]->s5s8_pgw_gtpc_ipv4.s_addr);
-
-#ifdef TEMP
-		/* Update the session state */
-		resp->state = CS_REQ_SNT_STATE;
-		/* stored teid in csr header for clean up */
-		resp->gtpc_msg.csr.header.teid.has_teid.teid = context->pdns[ebi_index]->s5s8_sgw_gtpc_teid;
-#endif
-
-		/* Update the UE state */
-		pdn->state = CS_REQ_SNT_STATE;
-		return 0;
 	}
-
 
 	/* Update the UE state */
 	pdn->state = CONNECTED_STATE;
@@ -922,7 +815,7 @@ fill_uli_info(gtp_user_loc_info_ie_t *uli, ue_context_t *context)
 int
 fill_context_info(create_sess_req_t *csr, ue_context_t *context)
 {
- 	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
+ 	if (cp_config->cp_type == SAEGWC) {
 	    /* Check ntohl case */
 	    //context->s11_sgw_gtpc_ipv4.s_addr = ntohl(cp_config->s11_ip.s_addr);
 	    context->s11_sgw_gtpc_ipv4.s_addr = cp_config->s11_ip.s_addr;
@@ -939,7 +832,7 @@ fill_context_info(create_sess_req_t *csr, ue_context_t *context)
 	context->serving_nw.mcc_digit_2 = csr->serving_network.mcc_digit_2;
 	context->serving_nw.mcc_digit_3 = csr->serving_network.mcc_digit_3;
 
-    if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
+    if (cp_config->cp_type == SAEGWC) {
         if(csr->indctn_flgs.header.len != 0) {
             context->indication_flag.oi = csr->indctn_flgs.indication_oi;
         }
@@ -988,7 +881,7 @@ fill_pdn_info(create_sess_req_t *csr, pdn_connection_t *pdn)
 		pdn->rat_type = csr->rat_type.rat_type;
 	}
 
-	if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
+	if (cp_config->cp_type == SAEGWC) {
 		pdn->s5s8_sgw_gtpc_ipv4 = cp_config->s5s8_ip;
 		pdn->s5s8_sgw_gtpc_ipv4.s_addr = ntohl(pdn->s5s8_sgw_gtpc_ipv4.s_addr);
 		pdn->s5s8_pgw_gtpc_ipv4.s_addr = csr->pgw_s5s8_addr_ctl_plane_or_pmip.ipv4_address;
@@ -1012,15 +905,6 @@ fill_pdn_info(create_sess_req_t *csr, pdn_connection_t *pdn)
 
 	}
 
-	/*VS:TODO*/
-	if (cp_config->cp_type == SGWC) {
-		my_sock.s5s8_recv_sockaddr.sin_addr.s_addr =
-				htonl(csr->pgw_s5s8_addr_ctl_plane_or_pmip.ipv4_address);
-	}
-
-	/* Note: s5s8_pgw_gtpc_teid updated by
-	 *                  * process_sgwc_s5s8_create_session_response (...)
-	 *                                   */
 	//pdn->s5s8_pgw_gtpc_teid = csr->s5s8pgw_pmip.teid_gre;
 
 	return 0;
@@ -1099,24 +983,6 @@ fill_bearer_info(create_sess_req_t *csr, eps_bearer_t *bearer,
 	 SAEGWC       2      s1u SAEGWU         NA
 	 ************************************************/
 
-	if (cp_config->cp_type == SGWC) {
-		bearer->pdr_count = NUMBER_OF_PDR_PER_BEARER;
-		for(uint8_t itr=0; itr < bearer->pdr_count; itr++){
-			switch(itr){
-				case SOURCE_INTERFACE_VALUE_ACCESS:
-                    //FIXME : spgwc support, pass correct IDs to fill_pdr_entry 
-					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_ACCESS, itr, 1, 1);
-					break;
-				case SOURCE_INTERFACE_VALUE_CORE:
-                    //FIXME : spgwc support, pass correct IDs to fill_pdr_entry 
-					fill_pdr_entry(context, pdn, bearer, SOURCE_INTERFACE_VALUE_CORE, itr, 1, 1);
-					break;
-				default:
-					break;
-			}
-		}
-	}
-
 	bearer->pdn = pdn;
 
 	return 0;
@@ -1182,172 +1048,6 @@ fill_rule_and_qos_inform_in_pdn(pdn_connection_t *pdn)
     TAILQ_INSERT_TAIL(&pdn->policy.pending_pcc_rules, pcc_rule, next_pcc_rule);
 }
 
-
-
-
-/**
- * @brief  : parses gtpv2c message and populates parse_sgwc_s5s8_create_session_response_t structure
- * @param  : gtpv2c_rx
- *           buffer containing create bearer response message
- * @param  : csr
- *           data structure to contain required information elements from create
- *           create session response message
- * @return : - 0 if successful
- *           - > 0 if error occurs during packet filter parsing corresponds to 3gpp
- *             specified cause error value
- *           - < 0 for all other errors
- */
-
-int
-parse_sgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_rx,
-		struct parse_sgwc_s5s8_create_session_response_t *csr)
-{
-	gtpv2c_ie *current_ie;
-	gtpv2c_ie *current_group_ie;
-	gtpv2c_ie *limit_ie;
-	gtpv2c_ie *limit_group_ie;
-
-	FOR_EACH_GTPV2C_IE(gtpv2c_rx, current_ie, limit_ie)
-	{
-		if (current_ie->type == GTP_IE_BEARER_CONTEXT &&
-				current_ie->instance == IE_INSTANCE_ZERO) {
-			FOR_EACH_GROUPED_IE(current_ie, current_group_ie,
-					limit_group_ie)
-			{
-				if (current_group_ie->type == GTP_IE_EPS_BEARER_ID &&
-					current_group_ie->instance ==
-							IE_INSTANCE_ZERO) {
-					csr->bearer_context_to_be_created_ebi =
-					    IE_TYPE_PTR_FROM_GTPV2C_IE(uint8_t,
-							    current_group_ie);
-				} else if (current_group_ie->type ==
-						GTP_IE_BEARER_QLTY_OF_SVC &&
-						current_group_ie->instance ==
-							IE_INSTANCE_ZERO) {
-					csr->bearer_qos_ie = current_group_ie;
-				} else if (current_group_ie->type == GTP_IE_EPS_BEARER_LVL_TRAFFIC_FLOW_TMPL &&
-						current_group_ie->instance ==
-							IE_INSTANCE_ZERO) {
-					csr->bearer_tft_ie = current_group_ie;
-				} else if (current_group_ie->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT &&
-						current_group_ie->instance ==
-						IE_INSTANCE_ZERO) {
-					csr->s5s8_pgw_gtpu_fteid = current_group_ie;
-				}
-			}
-
-		} else if (current_ie->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT &&
-				current_ie->instance == IE_INSTANCE_ONE) {
-			csr->pgw_s5s8_gtpc_fteid =
-				IE_TYPE_PTR_FROM_GTPV2C_IE(fteid_ie, current_ie);
-		} else if (current_ie->type == GTP_IE_PDN_ADDR_ALLOC &&
-				current_ie->instance == IE_INSTANCE_ZERO) {
-			csr->pdn_addr_alloc_ie = current_ie;
-		} else if (current_ie->type == GTP_IE_APN_RESTRICTION &&
-				current_ie->instance == IE_INSTANCE_ZERO) {
-			csr->apn_restriction_ie = current_ie;
-		}
-	}
-
-	if (!csr->apn_restriction_ie
-		|| !csr->bearer_context_to_be_created_ebi
-		|| !csr->pgw_s5s8_gtpc_fteid) {
-		LOG_MSG(LOG_ERROR, "Dropping packet");
-		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-	}
-	return 0;
-}
-
-int
-gen_sgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
-		gtpv2c_header_t *gtpv2c_tx,
-		uint32_t sequence, pdn_connection_t *pdn,
-		eps_bearer_t *bearer, char *sgwu_fqdn)
-{
-
-	gtpv2c_ie *current_rx_ie;
-	gtpv2c_ie *limit_rx_ie;
-
-	set_gtpv2c_teid_header(gtpv2c_tx, GTP_CREATE_SESSION_REQ,
-		    0, sequence);
-
-	FOR_EACH_GTPV2C_IE(gtpv2c_rx, current_rx_ie, limit_rx_ie)
-	{
-		if (current_rx_ie->type == GTP_IE_BEARER_CONTEXT &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			gtpv2c_ie *bearer_context_group =
-				create_bearer_context_ie(gtpv2c_tx,
-			    IE_INSTANCE_ZERO);
-			add_grouped_ie_length(bearer_context_group,
-			    set_ebi_ie(gtpv2c_tx, IE_INSTANCE_ZERO,
-			    bearer->eps_bearer_id));
-			add_grouped_ie_length(bearer_context_group,
-				set_bearer_qos_ie(gtpv2c_tx, IE_INSTANCE_ZERO,
-				bearer));
-			add_grouped_ie_length(bearer_context_group,
-			    set_ipv4_fteid_ie(gtpv2c_tx, GTPV2C_IFTYPE_S5S8_SGW_GTPU,
-			    IE_INSTANCE_TWO, bearer->s5s8_sgw_gtpu_ipv4,
-			    htonl(bearer->s5s8_sgw_gtpu_teid)));
-		} else if (current_rx_ie->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT &&
-				current_rx_ie->instance == IE_INSTANCE_ONE) {
-			continue;
-		} else if (current_rx_ie->type == GTP_IE_FULLY_QUAL_TUNN_ENDPT_IDNT &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ipv4_fteid_ie(gtpv2c_tx, GTPV2C_IFTYPE_S5S8_SGW_GTPC,
-				IE_INSTANCE_ZERO,
-				pdn->s5s8_sgw_gtpc_ipv4, htonl(pdn->s5s8_sgw_gtpc_teid));
-		} else if (current_rx_ie->type == GTP_IE_ACC_PT_NAME &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_APN_RESTRICTION &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_IMSI &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_AGG_MAX_BIT_RATE &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_PDN_TYPE &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_CHRGNG_CHAR &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_INDICATION &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			continue;
-		} else if (current_rx_ie->type == GTP_IE_MBL_EQUIP_IDNTY &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			continue;
-		} else if (current_rx_ie->type == GTP_IE_MSISDN &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_USER_LOC_INFO &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_SERVING_NETWORK &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_RAT_TYPE &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_SELECTION_MODE &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_PDN_ADDR_ALLOC &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		} else if (current_rx_ie->type == GTP_IE_PROT_CFG_OPTS &&
-				current_rx_ie->instance == IE_INSTANCE_ZERO) {
-			set_ie_copy(gtpv2c_tx, current_rx_ie);
-		}
-	}
-
-	set_fqdn_ie(gtpv2c_tx, sgwu_fqdn);
-
-	return 0;
-}
 /**
  * @brief  : Table 7.2.1-1: Information Elements in a Create Session Request -
  *           incomplete list
@@ -1614,11 +1314,6 @@ process_pgwc_s5s8_create_session_request(gtpv2c_header_t *gtpv2c_rx,
 		bearer->pdn = pdn;
 	}
 
-#ifdef TEMP
-	/* Update the sequence number */
-	context->sequence = gtpv2c_rx->teid.has_teid.seq;
-#endif
-
 	/* Update UE State */
 	pdn->state = PFCP_SESS_EST_REQ_SNT_STATE;
 #ifdef TEMP
@@ -1747,190 +1442,6 @@ set_pgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_tx,
 			    htonl(bearer->s5s8_pgw_gtpu_teid)));
 	}
 }
-
-//int
-//process_sgwc_s5s8_create_session_response(gtpv2c_header_t *gtpv2c_rx)
-//{
-//	int ret;
-//	ue_context *context = NULL;
-//	pdn_connection_t *pdn = NULL;
-//	eps_bearer_t *bearer = NULL;
-//	static uint32_t process_sgwc_s5s8_cs_rsp_cnt;
-//	static uint32_t process_spgwc_s11_cs_res_cnt;
-//
-//	struct resp_info *resp = NULL;
-//	pfcp_sess_mod_req_t pfcp_sess_mod_req = {0};
-//	//struct parse_sgwc_s5s8_create_session_response_t create_s5s8_session_response = {0};
-//	//ret = parse_sgwc_s5s8_create_session_response(gtpv2c_rx,
-//	//		&create_s5s8_session_response);
-//
-//	create_sess_rsp_t cs_rsp = {0};
-//	ret = decode_create_sess_rsp((uint8_t *)gtpv2c_rx, &cs_rsp);
-//	if (!ret)
-//		return ret;
-//
-//	uint8_t ebi_index =
-//		/**create_s5s8_session_response.bearer_context_to_be_created_ebi - 5;*/
-//		cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi - 5;
-//	//gtpv2c_rx->teid.has_teid.teid = ntohl(gtpv2c_rx->teid.has_teid.teid);
-//
-//	/* s11_sgw_gtpc_teid= s5s8_sgw_gtpc_teid =
-//	 * key->ue_context_by_fteid_hash */
-//	ret = r_t_e_hash_lookup_data(ue_context_by_fteid_hash,
-//	    (const void *) &gtpv2c_rx->teid.has_teid.teid,
-//	    (void **) &context);
-//
-//	LOG_MSG(LOG_DEBUG, "NGIC- create_s5s8_session.c::"
-//			"\n\tprocess_sgwc_s5s8_create_session_response"
-//			"\n\tprocess_sgwc_s5s8_cs_rsp_cnt= %u;"
-//			"\n\tgtpv2c_rx->teid.has_teid.teid= %X",
-//			process_sgwc_s5s8_cs_rsp_cnt,
-//			gtpv2c_rx->teid.has_teid.teid);
-//	if (ret < 0 || !context)
-//		return GTPV2C_CAUSE_CONTEXT_NOT_FOUND;
-//
-//	pdn = context->pdns[ebi_index];
-//	{
-//		pdn->apn_restriction =/* *IE_TYPE_PTR_FROM_GTPV2C_IE(uint8_t,
-//		    //create_s5s8_session_response.apn_restriction_ie);*/
-//			cs_rsp.apn_restriction.rstrct_type_val;
-//		struct in_addr ip;
-//		/*ip = get_ipv4_paa_ipv4(
-//					create_s5s8_session_response.pdn_addr_alloc_ie);*/
-//		ip =*(struct in_addr *) cs_rsp.paa.pdn_addr_and_pfx;
-//
-//		pdn->ipv4.s_addr = htonl(ip.s_addr);
-//
-//	//	pdn->s5s8_pgw_gtpc_ipv4.s_addr =
-//	//			htonl(create_s5s8_session_response.
-//	//			pgw_s5s8_gtpc_fteid->ip_u.ipv4.s_addr);
-//		pdn->s5s8_pgw_gtpc_ipv4.s_addr =
-//			cs_rsp.pgw_s5s8_s2as2b_fteid_pmip_based_intfc_or_gtp_based_ctl_plane_intfc.ipv4_address;
-//		/* Note: s5s8_pgw_gtpc_teid updated by
-//		 * create_s5s8_session_response.pgw_s5s8_gtpc_fteid...
-//		 */
-//	//	pdn->s5s8_pgw_gtpc_teid =
-//	//			htonl(create_s5s8_session_response.
-//	//			pgw_s5s8_gtpc_fteid->fteid_ie_hdr.teid_or_gre);
-//
-//		pdn->s5s8_pgw_gtpc_teid =
-//			htonl(cs_rsp.pgw_s5s8_s2as2b_fteid_pmip_based_intfc_or_gtp_based_ctl_plane_intfc.teid_gre_key);
-//
-//	}
-//	bearer = context->eps_bearers[ebi_index];
-//	{
-//		/* TODO: Implement TFTs on default bearers
-//		if (create_s5s8_session_response.bearer_tft_ie) {
-//		}
-//		*/
-//		/* TODO: Implement PGWC S5S8 bearer QoS */
-//		if (cs_rsp.bearer_contexts_created.bearer_lvl_qos.header.len) {
-//			//bearer->qos = *IE_TYPE_PTR_FROM_GTPV2C_IE(bearer_qos_ie,
-//				//create_s5s8_session_response.bearer_qos_ie);
-//				bearer->qos.qci = cs_rsp.bearer_contexts_created.bearer_lvl_qos.qci;
-//				bearer->qos.ul_mbr = cs_rsp.bearer_contexts_created.bearer_lvl_qos.max_bit_rate_uplnk;
-//				bearer->qos.dl_mbr = cs_rsp.bearer_contexts_created.bearer_lvl_qos.max_bit_rate_dnlnk;
-//				bearer->qos.ul_gbr = cs_rsp.bearer_contexts_created.bearer_lvl_qos.guarntd_bit_rate_uplnk;
-//				bearer->qos.dl_gbr = cs_rsp.bearer_contexts_created.bearer_lvl_qos.guarntd_bit_rate_dnlnk;
-//				bearer->qos.arp.preemption_vulnerability = cs_rsp.bearer_contexts_created.bearer_lvl_qos.pvi;
-//				bearer->qos.arp.spare1 = cs_rsp.bearer_contexts_created.bearer_lvl_qos.spare2;
-//				bearer->qos.arp.priority_level = cs_rsp.bearer_contexts_created.bearer_lvl_qos.pl;
-//				bearer->qos.arp.preemption_capability =cs_rsp.bearer_contexts_created.bearer_lvl_qos.pci;
-//				bearer->qos.arp.spare2 = cs_rsp.bearer_contexts_created.bearer_lvl_qos.spare3;
-//		}
-//	//	bearer->s5s8_pgw_gtpu_ipv4.s_addr =
-//	//			htonl(IE_TYPE_PTR_FROM_GTPV2C_IE(fteid_ie,
-//	//					create_s5s8_session_response.s5s8_pgw_gtpu_fteid)->
-//	//						ip_u.ipv4.s_addr);
-//	//	bearer->s5s8_pgw_gtpu_teid =
-//	//			IE_TYPE_PTR_FROM_GTPV2C_IE(fteid_ie,
-//	//					create_s5s8_session_response.s5s8_pgw_gtpu_fteid)->
-//	//						fteid_ie_hdr.teid_or_gre;
-//
-//	//	bearer->s5s8_pgw_gtpu_ipv4.s_addr = cs_rsp.bearer_contexts_created.s5s8_u_pgw_fteid.ipv4_address;
-//		bearer->s5s8_pgw_gtpu_ipv4.s_addr = cs_rsp.bearer_contexts_created.s1u_sgw_fteid.ipv4_address;
-//	//	bearer->s5s8_pgw_gtpu_teid = cs_rsp.bearer_contexts_created.s5s8_u_pgw_fteid.teid_gre_key;
-//		bearer->s5s8_pgw_gtpu_teid = cs_rsp.bearer_contexts_created.s1u_sgw_fteid.teid_gre_key;
-//		bearer->pdn = pdn;
-//	}
-//
-//	s11_mme_sockaddr.sin_addr.s_addr =
-//					htonl(context->s11_mme_gtpc_ipv4.s_addr);
-//
-//	LOG_MSG(LOG_DEBUG, "NGIC- create_s5s8_session.c::"
-//			"\n\tprocess_sgwc_s5s8_cs_rsp_cnt= %u;"
-//			"\n\tprocess_spgwc_s11_cs_res_cnt= %u;"
-//			"\n\tue_ip= pdn->ipv4= %s;"
-//			"\n\tpdn->s5s8_sgw_gtpc_ipv4= %s;"
-//			"\n\tpdn->s5s8_sgw_gtpc_teid= %X;"
-//			"\n\tbearer->s5s8_sgw_gtpu_ipv4= %s;"
-//			"\n\tbearer->s5s8_sgw_gtpu_teid= %X;"
-//			"\n\tpdn->s5s8_pgw_gtpc_ipv4= %s;"
-//			"\n\tpdn->s5s8_pgw_gtpc_teid= %X;"
-//			"\n\tbearer->s5s8_pgw_gtpu_ipv4= %s;"
-//			"\n\tbearer->s5s8_pgw_gtpu_teid= %X",
-//			process_sgwc_s5s8_cs_rsp_cnt++,
-//			process_spgwc_s11_cs_res_cnt++,
-//			inet_ntoa(pdn->ipv4),
-//			inet_ntoa(pdn->s5s8_sgw_gtpc_ipv4),
-//			pdn->s5s8_sgw_gtpc_teid,
-//			inet_ntoa(bearer->s5s8_sgw_gtpu_ipv4),
-//			bearer->s5s8_sgw_gtpu_teid,
-//			inet_ntoa(pdn->s5s8_pgw_gtpc_ipv4),
-//			pdn->s5s8_pgw_gtpc_teid,
-//			inet_ntoa(bearer->s5s8_pgw_gtpu_ipv4),
-//			bearer->s5s8_pgw_gtpu_teid);
-//
-//	uint32_t  seq_no = 0;
-//	seq_no = bswap_32(gtpv2c_rx->teid.has_teid.seq) ;
-//	seq_no = seq_no >> 8;
-//
-//	fill_pfcp_sess_mod_req(&pfcp_sess_mod_req, NULL, context, bearer, pdn);
-//	if(pfcp_sess_mod_req.create_pdr_count){
-//		pfcp_sess_mod_req.create_pdr[0].pdi.local_fteid.teid = htonl(bearer->s5s8_pgw_gtpu_teid) ;
-//		pfcp_sess_mod_req.create_pdr[0].pdi.local_fteid.ipv4_address = htonl(bearer->s5s8_pgw_gtpu_ipv4.s_addr) ;
-//		pfcp_sess_mod_req.create_pdr[0].pdi.ue_ip_address.ipv4_address = (pdn->ipv4.s_addr);
-//		pfcp_sess_mod_req.create_pdr[0].pdi.src_intfc.interface_value = SOURCE_INTERFACE_VALUE_ACCESS;
-//	}else if(pfcp_sess_mod_req.update_far_count){
-//		pfcp_sess_mod_req.update_far[0].upd_frwdng_parms.outer_hdr_creation.teid = bearer->s5s8_pgw_gtpu_teid;
-//		pfcp_sess_mod_req.update_far[0].upd_frwdng_parms.outer_hdr_creation.ipv4_address  = htonl(bearer->s5s8_pgw_gtpu_ipv4.s_addr) ;
-//		pfcp_sess_mod_req.update_far[0].upd_frwdng_parms.dst_intfc.interface_value = SOURCE_INTERFACE_VALUE_CORE;
-//	}
-//	pfcp_sess_mod_req.header.seid_seqno.has_seid.seq_no = gtpv2c_rx->teid.has_teid.seq ;
-//
-//	uint8_t pfcp_msg[512]={0};
-//	int encoded = encode_pfcp_sess_mod_req_t(&pfcp_sess_mod_req, pfcp_msg);
-//	pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
-//	header->message_len = htons(encoded - 4);
-//
-//
-//	if (pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr) < 0)
-//		LOG_MSG(LOG_ERROR, "Error in sending MBR to SGW-U. err_no: %i", errno);
-//	else
-//	{
-//	}
-//	/* Update UE State */
-//	context->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-//
-//	/* Lookup Stored the session information. */
-//	resp = get_sess_entry_seid(context->pdns[ebi_index]->seid);
-//	if (resp == NULL) {
-//		LOG_MSG(LOG_ERROR, "Failed to add response in entry in SM_HASH");
-//		return -1;
-//	}
-//
-//	/* Set create session response */
-//	resp->sequence = seq_no;
-//	//resp->eps_bearer_id =
-//	//		*create_s5s8_session_response.bearer_context_to_be_created_ebi;
-//	resp->eps_bearer_id = cs_rsp.bearer_contexts_created.eps_bearer_id.ebi_ebi;
-//	resp->s11_sgw_gtpc_teid = context->s11_sgw_gtpc_teid;
-//	resp->context = context;
-//	resp->msg_type = GTP_CREATE_SESSION_RSP;
-//	resp->state = PFCP_SESS_MOD_REQ_SNT_STATE;
-//
-//	return 0;
-//}
 
 void
 process_gx_ccri_timeout(void *data)
@@ -2145,12 +1656,7 @@ process_pfcp_sess_est_request(proc_context_t *proc_context, upf_context_t *upf_c
     uint16_t port_num = my_sock.pfcp_sockaddr.sin_port;
 
 	bearer = pdn->eps_bearers[pdn->default_bearer_id - 5];
-	if (cp_config->cp_type == SGWC) {
-		set_s1u_sgw_gtpu_teid(bearer, context);
-		update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, upf_ctx->s1u_ip, SOURCE_INTERFACE_VALUE_ACCESS);
-		set_s5s8_sgw_gtpu_teid(bearer, context);
-		update_pdr_teid(bearer, bearer->s5s8_sgw_gtpu_teid, upf_ctx->s5s8_sgwu_ip, SOURCE_INTERFACE_VALUE_CORE);
-	} else if (cp_config->cp_type == SAEGWC) {
+	if (cp_config->cp_type == SAEGWC) {
 		set_s1u_sgw_gtpu_teid(bearer, context);
 		update_pdr_teid(bearer, bearer->s1u_sgw_gtpu_teid, upf_ctx->s1u_ip, SOURCE_INTERFACE_VALUE_ACCESS);
 	} else if (cp_config->cp_type == PGWC){
@@ -2223,4 +1729,3 @@ process_pfcp_sess_est_request_timeout(void *data)
     proc_context->handler(proc_context, msg); 
     return;
 }
-

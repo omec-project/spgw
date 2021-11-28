@@ -23,14 +23,11 @@ enum class spgwStatsCounter {
 	NUM_UE_SPGW_IDLE_SUBSCRIBERS,
 	NUM_UE_PGW_ACTIVE_SUBSCRIBERS,
 	NUM_UE_PGW_IDLE_SUBSCRIBERS,
-	NUM_UE_SGW_ACTIVE_SUBSCRIBERS,
-	NUM_UE_SGW_IDLE_SUBSCRIBERS,
 	NUM_UE_SPGW_ACTIVE_PDNS,
 	NUM_UE_SPGW_IDLE_PDNS,
 	NUM_UE_PGW_ACTIVE_PDNS,
 	NUM_UE_PGW_IDLE_PDNS,
-	NUM_UE_SGW_ACTIVE_PDNS,
-	NUM_UE_SGW_IDLE_PDNS,
+	DATA_USAGE_PGW_PDN,
 	DATA_USAGE_SPGW_PDN,
 	SUBSCRIBERS_INFO_SPGW_PDN,
 	MSG_RX_GTPV2_S11_CSREQ,
@@ -185,25 +182,16 @@ enum class spgwStatsCounter {
 	MSG_TX_DIAMETER_GX_CCR_T,
 	MSG_TX_DIAMETER_GX_RAA,
 	MSG_TX_DIAMETER_GX_RAA_REJ,
-	PROCEDURES_SGW_INITIAL_ATTACH,
 	PROCEDURES_PGW_INITIAL_ATTACH,
 	PROCEDURES_SPGW_INITIAL_ATTACH,
-	PROCEDURES_SGW_INITIAL_ATTACH_SUCCESS,
-	PROCEDURES_SGW_INITIAL_ATTACH_FAILURE,
 	PROCEDURES_PGW_INITIAL_ATTACH_SUCCESS,
 	PROCEDURES_PGW_INITIAL_ATTACH_FAILURE,
 	PROCEDURES_SPGW_INITIAL_ATTACH_SUCCESS,
 	PROCEDURES_SPGW_INITIAL_ATTACH_FAILURE,
-	PROCEDURES_SGW_MME_INIT_DETACH,
-	PROCEDURES_SGW_NW_INIT_DETACH,
 	PROCEDURES_PGW_MME_INIT_DETACH,
 	PROCEDURES_PGW_NW_INIT_DETACH,
 	PROCEDURES_SPGW_MME_INIT_DETACH,
 	PROCEDURES_SPGW_NW_INIT_DETACH,
-	PROCEDURES_SGW_MME_INIT_DETACH_SUCCESS,
-	PROCEDURES_SGW_MME_INIT_DETACH_FAILURE,
-	PROCEDURES_SGW_NW_INIT_DETACH_SUCCESS,
-	PROCEDURES_SGW_NW_INIT_DETACH_FAILURE,
 	PROCEDURES_PGW_MME_INIT_DETACH_SUCCESS,
 	PROCEDURES_PGW_MME_INIT_DETACH_FAILURE,
 	PROCEDURES_PGW_NW_INIT_DETACH_SUCCESS,
@@ -212,46 +200,40 @@ enum class spgwStatsCounter {
 	PROCEDURES_SPGW_MME_INIT_DETACH_FAILURE,
 	PROCEDURES_SPGW_NW_INIT_DETACH_SUCCESS,
 	PROCEDURES_SPGW_NW_INIT_DETACH_FAILURE,
-	PROCEDURES_SGW_S1_RELEASE,
 	PROCEDURES_SPGW_S1_RELEASE,
-	PROCEDURES_SGW_S1_RELEASE_SUCCESS,
-	PROCEDURES_SGW_S1_RELEASE_FAILURE,
 	PROCEDURES_SPGW_S1_RELEASE_SUCCESS,
 	PROCEDURES_SPGW_S1_RELEASE_FAILURE,
-	PROCEDURES_SGW_SERVICE_REQUEST_PROC,
 	PROCEDURES_SPGW_SERVICE_REQUEST_PROC,
-	PROCEDURES_SGW_SERVICE_REQUEST_PROC_SUCCESS,
-	PROCEDURES_SGW_SERVICE_REQUEST_PROC_FAILURE,
 	PROCEDURES_SPGW_SERVICE_REQUEST_PROC_SUCCESS,
 	PROCEDURES_SPGW_SERVICE_REQUEST_PROC_FAILURE,
-	PROCEDURES_SGW_DEDICATED_BEARER_ACTIVATION_PROC,
+	PROCEDURES_PGW_DEDICATED_BEARER_ACTIVATION_PROC,
 	PROCEDURES_SPGW_DEDICATED_BEARER_ACTIVATION_PROC,
-	PROCEDURES_SGW_DEDICATED_BEARER_ACTIVATION_PROC_SUCCESS,
-	PROCEDURES_SGW_DEDICATED_BEARER_ACTIVATION_PROC_FAILURE,
+	PROCEDURES_PGW_DEDICATED_BEARER_ACTIVATION_PROC_SUCCESS,
+	PROCEDURES_PGW_DEDICATED_BEARER_ACTIVATION_PROC_FAILURE,
 	PROCEDURES_SPGW_DEDICATED_BEARER_ACTIVATION_PROC_SUCCESS,
 	PROCEDURES_SPGW_DEDICATED_BEARER_ACTIVATION_PROC_FAILURE,
-	PROCEDURES_SGW_BEARER_UPDATE_PROC,
+	PROCEDURES_PGW_BEARER_UPDATE_PROC,
 	PROCEDURES_SPGW_BEARER_UPDATE_PROC,
-	PROCEDURES_SGW_BEARER_UPDATE_PROC_SUCCESS,
-	PROCEDURES_SGW_BEARER_UPDATE_PROC_FAILURE,
+	PROCEDURES_PGW_BEARER_UPDATE_PROC_SUCCESS,
+	PROCEDURES_PGW_BEARER_UPDATE_PROC_FAILURE,
 	PROCEDURES_SPGW_BEARER_UPDATE_PROC_SUCCESS,
 	PROCEDURES_SPGW_BEARER_UPDATE_PROC_FAILURE,
-	PROCEDURES_SGW_BEARER_DELETE_PROC,
+	PROCEDURES_PGW_BEARER_DELETE_PROC,
 	PROCEDURES_SPGW_BEARER_DELETE_PROC,
-	PROCEDURES_SGW_BEARER_DELETE_PROC_SUCCESS,
-	PROCEDURES_SGW_BEARER_DELETE_PROC_FAILURE,
+	PROCEDURES_PGW_BEARER_DELETE_PROC_SUCCESS,
+	PROCEDURES_PGW_BEARER_DELETE_PROC_FAILURE,
 	PROCEDURES_SPGW_BEARER_DELETE_PROC_SUCCESS,
 	PROCEDURES_SPGW_BEARER_DELETE_PROC_FAILURE,
-	PROCEDURES_SGW_NW_INIT_PDN_DELETE_PROC,
+	PROCEDURES_PGW_NW_INIT_PDN_DELETE_PROC,
 	PROCEDURES_SPGW_NW_INIT_PDN_DELETE_PROC,
-	PROCEDURES_SGW_NW_INIT_PDN_DELETE_PROC_SUCCESS,
-	PROCEDURES_SGW_NW_INIT_PDN_DELETE_PROC_FAILURE,
+	PROCEDURES_PGW_NW_INIT_PDN_DELETE_PROC_SUCCESS,
+	PROCEDURES_PGW_NW_INIT_PDN_DELETE_PROC_FAILURE,
 	PROCEDURES_SPGW_NW_INIT_PDN_DELETE_PROC_SUCCESS,
 	PROCEDURES_SPGW_NW_INIT_PDN_DELETE_PROC_FAILURE,
-	PROCEDURES_SGW_RAR_PROC,
+	PROCEDURES_PGW_RAR_PROC,
 	PROCEDURES_SPGW_RAR_PROC,
-	PROCEDURES_SGW_RAR_PROC_SUCCESS,
-	PROCEDURES_SGW_RAR_PROC_FAILURE,
+	PROCEDURES_PGW_RAR_PROC_SUCCESS,
+	PROCEDURES_PGW_RAR_PROC_FAILURE,
 	PROCEDURES_SPGW_RAR_PROC_SUCCESS,
 	PROCEDURES_SPGW_RAR_PROC_FAILURE
 };
@@ -346,14 +328,10 @@ class num_ue_gauges {
 	Gauge &current__spgw_idle_subscribers;
 	Gauge &current__pgw_active_subscribers;
 	Gauge &current__pgw_idle_subscribers;
-	Gauge &current__sgw_active_subscribers;
-	Gauge &current__sgw_idle_subscribers;
 	Gauge &current__spgw_active_pdns;
 	Gauge &current__spgw_idle_pdns;
 	Gauge &current__pgw_active_pdns;
 	Gauge &current__pgw_idle_pdns;
-	Gauge &current__sgw_active_pdns;
-	Gauge &current__sgw_idle_pdns;
 
 	num_ue_DynamicMetricObject1* add_dynamic1(std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string label_k2, std::string label_v2,std::string dlabel_k0, std::string dlabel_v0) {
 		return new num_ue_DynamicMetricObject1(num_ue_family,label_k0, label_v0,label_k1, label_v1,label_k2, label_v2,dlabel_k0, dlabel_v0);
@@ -420,6 +398,7 @@ class data_usage_gauges {
 	data_usage_gauges();
 	~data_usage_gauges();
 	Family<Gauge> &data_usage_family;
+	Gauge &current__pgw_pdn;
 	Gauge &current__spgw_pdn;
 
 	data_usage_DynamicMetricObject1* add_dynamic1(std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0) {
@@ -839,25 +818,16 @@ class procedures_counters {
 	procedures_counters();
 	~procedures_counters();
 	Family<Counter> &procedures_family;
-	Counter &procedures_sgw_initial_attach;
 	Counter &procedures_pgw_initial_attach;
 	Counter &procedures_spgw_initial_attach;
-	Counter &procedures_sgw_initial_attach_success;
-	Counter &procedures_sgw_initial_attach_failure;
 	Counter &procedures_pgw_initial_attach_success;
 	Counter &procedures_pgw_initial_attach_failure;
 	Counter &procedures_spgw_initial_attach_success;
 	Counter &procedures_spgw_initial_attach_failure;
-	Counter &procedures_sgw_mme_init_detach;
-	Counter &procedures_sgw_nw_init_detach;
 	Counter &procedures_pgw_mme_init_detach;
 	Counter &procedures_pgw_nw_init_detach;
 	Counter &procedures_spgw_mme_init_detach;
 	Counter &procedures_spgw_nw_init_detach;
-	Counter &procedures_sgw_mme_init_detach_success;
-	Counter &procedures_sgw_mme_init_detach_failure;
-	Counter &procedures_sgw_nw_init_detach_success;
-	Counter &procedures_sgw_nw_init_detach_failure;
 	Counter &procedures_pgw_mme_init_detach_success;
 	Counter &procedures_pgw_mme_init_detach_failure;
 	Counter &procedures_pgw_nw_init_detach_success;
@@ -866,46 +836,40 @@ class procedures_counters {
 	Counter &procedures_spgw_mme_init_detach_failure;
 	Counter &procedures_spgw_nw_init_detach_success;
 	Counter &procedures_spgw_nw_init_detach_failure;
-	Counter &procedures_sgw_s1_release;
 	Counter &procedures_spgw_s1_release;
-	Counter &procedures_sgw_s1_release_success;
-	Counter &procedures_sgw_s1_release_failure;
 	Counter &procedures_spgw_s1_release_success;
 	Counter &procedures_spgw_s1_release_failure;
-	Counter &procedures_sgw_service_request_proc;
 	Counter &procedures_spgw_service_request_proc;
-	Counter &procedures_sgw_service_request_proc_success;
-	Counter &procedures_sgw_service_request_proc_failure;
 	Counter &procedures_spgw_service_request_proc_success;
 	Counter &procedures_spgw_service_request_proc_failure;
-	Counter &procedures_sgw_dedicated_bearer_activation_proc;
+	Counter &procedures_pgw_dedicated_bearer_activation_proc;
 	Counter &procedures_spgw_dedicated_bearer_activation_proc;
-	Counter &procedures_sgw_dedicated_bearer_activation_proc_success;
-	Counter &procedures_sgw_dedicated_bearer_activation_proc_failure;
+	Counter &procedures_pgw_dedicated_bearer_activation_proc_success;
+	Counter &procedures_pgw_dedicated_bearer_activation_proc_failure;
 	Counter &procedures_spgw_dedicated_bearer_activation_proc_success;
 	Counter &procedures_spgw_dedicated_bearer_activation_proc_failure;
-	Counter &procedures_sgw_bearer_update_proc;
+	Counter &procedures_pgw_bearer_update_proc;
 	Counter &procedures_spgw_bearer_update_proc;
-	Counter &procedures_sgw_bearer_update_proc_success;
-	Counter &procedures_sgw_bearer_update_proc_failure;
+	Counter &procedures_pgw_bearer_update_proc_success;
+	Counter &procedures_pgw_bearer_update_proc_failure;
 	Counter &procedures_spgw_bearer_update_proc_success;
 	Counter &procedures_spgw_bearer_update_proc_failure;
-	Counter &procedures_sgw_bearer_delete_proc;
+	Counter &procedures_pgw_bearer_delete_proc;
 	Counter &procedures_spgw_bearer_delete_proc;
-	Counter &procedures_sgw_bearer_delete_proc_success;
-	Counter &procedures_sgw_bearer_delete_proc_failure;
+	Counter &procedures_pgw_bearer_delete_proc_success;
+	Counter &procedures_pgw_bearer_delete_proc_failure;
 	Counter &procedures_spgw_bearer_delete_proc_success;
 	Counter &procedures_spgw_bearer_delete_proc_failure;
-	Counter &procedures_sgw_nw_init_pdn_delete_proc;
+	Counter &procedures_pgw_nw_init_pdn_delete_proc;
 	Counter &procedures_spgw_nw_init_pdn_delete_proc;
-	Counter &procedures_sgw_nw_init_pdn_delete_proc_success;
-	Counter &procedures_sgw_nw_init_pdn_delete_proc_failure;
+	Counter &procedures_pgw_nw_init_pdn_delete_proc_success;
+	Counter &procedures_pgw_nw_init_pdn_delete_proc_failure;
 	Counter &procedures_spgw_nw_init_pdn_delete_proc_success;
 	Counter &procedures_spgw_nw_init_pdn_delete_proc_failure;
-	Counter &procedures_sgw_rar_proc;
+	Counter &procedures_pgw_rar_proc;
 	Counter &procedures_spgw_rar_proc;
-	Counter &procedures_sgw_rar_proc_success;
-	Counter &procedures_sgw_rar_proc_failure;
+	Counter &procedures_pgw_rar_proc_success;
+	Counter &procedures_pgw_rar_proc_failure;
 	Counter &procedures_spgw_rar_proc_success;
 	Counter &procedures_spgw_rar_proc_failure;
 

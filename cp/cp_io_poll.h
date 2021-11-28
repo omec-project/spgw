@@ -12,8 +12,6 @@
  * prototypes of Interface message parsing.
  */
 #include "cp_interface.h"
-#include "cp_main.h"
-#include "gtpv2_msg_struct.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,9 +38,6 @@ enum dp_msg_type {
 	/* Session Bearer Map Hash Table*/
 	MSG_SESS_TBL_CRE,
 	MSG_SESS_TBL_DES,
-	MSG_SESS_CRE,
-	MSG_SESS_MOD,
-	MSG_SESS_DEL,
 	/* ADC Rule Table*/
 	MSG_ADC_TBL_CRE,
 	MSG_ADC_TBL_DES,
@@ -65,9 +60,6 @@ enum dp_msg_type {
 	MSG_SDF_ADD,
 	MSG_SDF_DEL,
 	MSG_EXP_CDR,
-	/* DDN from DP to CP*/
-	MSG_DDN,
-	MSG_DDN_ACK,
 
 	MSG_END,
 };

@@ -17,13 +17,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/**
- * @brief  : Returns system seconds since boot
- * @param  : No param
- * @return : Returns number of system seconds since boot
- */
-long
-uptime(void);
 
 /**
  * @brief  : Checks current ntp timestamp
@@ -32,7 +25,7 @@ uptime(void);
  */
 uint32_t
 current_ntp_timestamp(void);
-
+ 
 /**
  * @brief  : Converts timeval to ntp format
  * @param  : tv, input timeval

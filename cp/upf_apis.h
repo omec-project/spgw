@@ -8,7 +8,6 @@
 #define __UPF_APIS__
 
 #include "upf_struct.h"
-#include "spgw_config_struct.h"
 #include "cp_timer.h"
 #include "proc_struct.h"
 #include "sm_struct.h"

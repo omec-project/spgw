@@ -22,7 +22,6 @@
 #include "upf_struct.h"
 #include "gen_utils.h"
 #include "gx_error_rsp.h"
-#include "cp_main.h"
 #include "upf_struct.h"
 #include "spgw_cpp_wrapper.h"
 #include "cp_transactions.h"
@@ -133,7 +132,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
     }
 
     do {
-	    if ((cp_config->gx_enabled) && (cp_config->cp_type != SGWC)) {
+	    if ((cp_config->gx_enabled)) {
 	        gx_msg ccr_request = {0};
             uint16_t msglen;
 
@@ -344,27 +343,8 @@ clean_up_while_error(uint8_t ebi, uint32_t teid, uint64_t *imsi_val, uint16_t im
 				if (pdn){
 					resp = get_sess_entry_seid(pdn->seid);
 					if (resp != NULL) {
-						if (cp_config->cp_type == SGWC){
-							if(resp->state == PFCP_SESS_DEL_REQ_SNT_STATE) {
-								goto del_ue_cntx_imsi;
-							}
-							pfcp_sess_del_req_t pfcp_sess_del_req = {0};
-							fill_pfcp_sess_del_req(&pfcp_sess_del_req);
-
-							pfcp_sess_del_req.header.seid_seqno.has_seid.seid = pdn->dp_seid;
-							uint8_t pfcp_msg[512]={0};
-							int encoded = encode_pfcp_sess_del_req_t(&pfcp_sess_del_req, pfcp_msg);
-							pfcp_header_t *header = (pfcp_header_t *) pfcp_msg;
-							header->message_len = htons(encoded - 4);
-
-							pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg,encoded, &context->upf_context->upf_sockaddr);
-                            transData_t *trans_entry;
-							trans_entry = start_response_wait_timer(context, pfcp_msg, encoded, clean_up_while_error_pfcp_timeout);
-                            pdn->trans_entry = trans_entry;
-						} else {
-							if(resp->state == PFCP_SESS_DEL_REQ_SNT_STATE) {
-								goto del_ue_cntx_imsi;
-							}
+						if(resp->state == PFCP_SESS_DEL_REQ_SNT_STATE) {
+							goto del_ue_cntx_imsi;
 						}
 						resp->state = ERROR_OCCURED_STATE;
 						resp->msg_type = GTP_CREATE_SESSION_RSP;

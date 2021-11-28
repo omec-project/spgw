@@ -33,7 +33,7 @@ check_interface_type(uint8_t iface)
 {
 	switch(iface){
 		case GTPV2C_IFTYPE_S1U_ENODEB_GTPU:
-			if ((cp_config->cp_type == SGWC) || (cp_config->cp_type == SAEGWC)) {
+			if (cp_config->cp_type == SAEGWC) {
 				return DESTINATION_INTERFACE_VALUE_ACCESS;
 			}
 			break;
@@ -43,10 +43,6 @@ check_interface_type(uint8_t iface)
 			}
 			break;
 		case GTPV2C_IFTYPE_S5S8_PGW_GTPU:
-			if (cp_config->cp_type == SGWC){
-				return DESTINATION_INTERFACE_VALUE_CORE;
-			}
-			break;
 		case GTPV2C_IFTYPE_S1U_SGW_GTPU:
 		case GTPV2C_IFTYPE_S11_MME_GTPC:
 		case GTPV2C_IFTYPE_S11S4_SGW_GTPC:

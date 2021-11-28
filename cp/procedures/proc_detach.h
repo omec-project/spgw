@@ -33,14 +33,6 @@ int process_pfcp_sess_del_resp_handler(proc_context_t *proc_context, msg_info_t 
 
 /* Function */
 /**
- * @brief  : Handles processing of delete session response
- * @param  : arg1, data contained in message
- * @param  : arg2, optional parameter
- * @return : Returns 0 in case of success , -1 otherwise
- */
-int process_ds_resp_handler(void *arg1, void *arg2);
-
-/**
  * @brief  : Process pfcp session deletion request
  * @param  : ds_req, holds information in session deletion request
  * @return : Returns 0 in case of success , -1 otherwise
@@ -49,11 +41,6 @@ int
 process_pfcp_sess_del_request(proc_context_t *proc_context, msg_info_t *msg);
 
 void process_pfcp_sess_del_request_timeout(void *data);
-
-int
-process_sgwc_delete_session_request(proc_context_t *p, msg_info_t *msg);
-
-void process_spgwc_delete_session_request_timeout(void *data);
 
 void
 fill_pfcp_sess_mod_req_delete( pfcp_sess_mod_req_t *pfcp_sess_mod_req,

@@ -326,7 +326,6 @@ struct ue_context {
 
     /* UE association with UPF context */
     upf_context_t  *upf_context;
-    void    *gx_context;
 
     TAILQ_HEAD(proc_sub_head, proc_context) pending_sub_procs;
 };
@@ -352,18 +351,6 @@ set_base_teid(uint8_t val);
  */
 void
 set_s1u_sgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context);
-
-
-/**
- * @brief  : sets the s5s8_sgw gtpu teid given the bearer
- * @param  : bearer
- *           bearer whose tied is to be set
- * @param  : context
- *           ue context of bearer, whose teid is to be set
- * @return : Returns nothing
- */
-void
-set_s5s8_sgw_gtpu_teid(eps_bearer_t *bearer, ue_context_t *context);
 
 
 /**
@@ -414,8 +401,6 @@ del_rule_entries(ue_context_t *context, uint8_t ebi_index);
 
 int
 cleanup_ue_context(ue_context_t **context_t);
-
-extern const uint32_t s5s8_sgw_gtpc_base_teid; /* 0xE0FFEE */
 
 /**
  * Retrive ue context entry from Bearer table,using sgwc s5s8 teid.

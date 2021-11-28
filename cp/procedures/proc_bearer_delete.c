@@ -6,50 +6,6 @@
 
 #ifdef FUTURE_NEED
 #include "gx_interface.h"
-int
-process_mod_resp_delete_handler(void *data, void *unused_param)
-{
-    int ret = 0;
-	uint16_t payload_length = 0;
-
-	msg_info_t *msg = (msg_info_t *)data;
-
-	bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
-	gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *)gtp_tx_buf;
-
-	ret = process_pfcp_sess_mod_resp(
-			msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid,
-			gtpv2c_tx);
-	if (ret) {
-		mbr_error_response(msg, ret, cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE);
-		LOG_MSG(LOG_ERROR, "Error: %d ", ret);
-		return ret;
-	}
-
-	payload_length = ntohs(gtpv2c_tx->gtpc.message_len)
-		+ sizeof(gtpv2c_tx->gtpc);
-
-	if (cp_config->cp_type == SGWC) {
-		/* Forward s11 delete_session_request on s5s8 */
-		gtpv2c_send(my_sock.sock_fd_s5s8, gtp_tx_buf, payload_length,
-				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
-		        sizeof(struct sockaddr_in));
-
-        increment_pgw_peer_stats(MSG_TX_GTPV2_DBRSP, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
-		add_gtpv2c_if_timer_entry(
-			UE_SESS_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid),
-			&my_sock.s5s8_recv_sockaddr, gtp_tx_buf, payload_length,
-			UE_BEAR_ID(msg->rx_msg.pfcp_sess_mod_resp.header.seid_seqno.has_seid.seid) - 5,
-			S5S8_IFACE);
-
-	} else {
-		/*Code should not reach here since this handler is only for SGWC*/
-		return -1;
-	}
-
-    LOG_MSG(LOG_NEVER, "unused_param = %p", unused_param);
-	return 0;
-}
 
 uint8_t
 process_delete_bearer_pfcp_sess_response(uint64_t sess_id, gtpv2c_header_t *gtpv2c_tx)
@@ -352,8 +308,7 @@ del_bearer_cmd_mbr_resp_handler(void *data, void *unused_param)
 				(struct sockaddr *) &my_sock.s5s8_recv_sockaddr,
 		        sizeof(struct sockaddr_in));
         increment_sgw_peer_stats(MSG_TX_GTPV2_DBREQ, my_sock.s5s8_recv_sockaddr.sin_addr.s_addr);
-	} else if ((SGWC == cp_config->cp_type) ||
-				(SAEGWC == cp_config->cp_type)) {
+	} else if (SAEGWC == cp_config->cp_type) {
 
         increment_mme_peer_stats(MSG_TX_GTPV2_DBREQ, s11_mme_sockaddr.sin_addr.s_addr);
 		gtpv2c_send(my_sock.sock_fd_s11, gtp_tx_buf, payload_length,

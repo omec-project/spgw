@@ -9,7 +9,6 @@
 #include <pthread.h>
 #include <getopt.h>
 #include "cp_init.h"
-#include "cp_main.h"
 #include "sm_struct.h"
 #include "cp_io_poll.h"
 #include "pfcp_cp_util.h"
@@ -42,9 +41,6 @@ pcap_dumper_t *pcap_dumper;
 char *config_update_base_folder = NULL;
 bool native_config_folder = false;
 
-
-struct cp_params cp_params;
-// _timer_t st_time; DELETE_CODE
 
 /**
  *
@@ -137,27 +133,7 @@ main(int argc, char **argv)
 	set_logging_level("LOG_ERROR");
     LOG_MSG(LOG_INIT, "Starting main thread %d ",argc);
 
-    // skipping eal argument
-    int i=0;
-    for(i=1; i<argc; i++) {
-        if(strcmp(argv[i],"--")==0) {
-            break;
-        }
-    }
-    if(i == argc) {
-        i = 0 ;
-        LOG_MSG(LOG_INIT, "Starting main thread . Did not receive extra command line arguments ");
-    }
-
-    char name[] = "ngic_controlplane";
-    argv[i] = name;
-    LOG_MSG(LOG_INIT, "Starting main thread argv[0] %s ",argv[i]);
-    parse_arg(argc-i, argv+i);
-
-    int state = mkdir(DEFAULT_STATS_PATH, S_IRWXU);
-    if (state && errno != EEXIST) {
-        assert(0);
-    }
+    parse_arg(argc, argv);
 
     init_cp();
 
