@@ -27,6 +27,7 @@ start_procedure(proc_context_t *new_proc_ctxt)
     ue_context_t *context = NULL;
     context = (ue_context_t *)new_proc_ctxt->ue_context;
 
+    LOG_MSG(LOG_DEBUG4, "Start procedure %s ",new_proc_ctxt->proc_name);
     if(context != NULL) {
         TAILQ_INSERT_TAIL(&context->pending_sub_procs, new_proc_ctxt, next_sub_proc); 
         assert(!TAILQ_EMPTY(&context->pending_sub_procs)); // not empty
@@ -39,7 +40,6 @@ start_procedure(proc_context_t *new_proc_ctxt)
             TAILQ_FOREACH(temp, &context->pending_sub_procs, next_sub_proc) {
                 if(temp == new_proc_ctxt)
                     continue;
-                LOG_MSG(LOG_DEBUG4, "outstanding procedures in queue %s ",temp->proc_name);
                 if(temp->proc_type == RAR_PROC) {
                     LOG_MSG(LOG_DEBUG4, "current procedure in queue RAR");
                     if((new_proc_ctxt->proc_type == DED_BER_ACTIVATION_PROC) && (new_proc_ctxt->parent_proc == temp)) {
@@ -51,7 +51,7 @@ start_procedure(proc_context_t *new_proc_ctxt)
                         allowed_parellel = true;
                     }
                 } else {
-                    LOG_MSG(LOG_DEBUG4,"Other proecudure is running %s ", temp->proc_name);
+                    LOG_MSG(LOG_DEBUG4,"Other proecudure %s is already running ", temp->proc_name);
                     // even if one running proc does not want new proc to run in parellel then we need to wait
                     allowed_parellel = false; 
                 }
@@ -292,6 +292,7 @@ end_procedure(proc_context_t *proc_ctxt)
             }
             // TODO: can we run this procedure ???
             start_procedure_direct(temp);
+            break;
         }
     } else {
         LOG_MSG(LOG_DEBUG3, "Released subscriber %lu ", imsi64);

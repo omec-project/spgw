@@ -305,6 +305,27 @@ cleanup_ue_context(ue_context_t **context_t)
         uint32_t temp_teid = context->s11_sgw_gtpc_teid;
         ue_context_delete_entry_teidKey(temp_teid);
 
+        proc_context_t *proc = TAILQ_FIRST(&context->pending_sub_procs);
+        while(proc != NULL) {
+          TAILQ_REMOVE(&context->pending_sub_procs, proc, next_sub_proc);
+          if(proc != NULL) {
+              if(proc->gtpc_trans != NULL) {
+                  LOG_MSG(LOG_DEBUG, "Delete gtpc procs ");
+                  cleanup_gtpc_trans(proc->gtpc_trans);
+              }
+              if(proc->pfcp_trans != NULL) {
+                  LOG_MSG(LOG_DEBUG, "Delete pfcp procs ");
+                  cleanup_pfcp_trans(proc->pfcp_trans);
+              }
+              if(proc->gx_trans != NULL) {
+                  LOG_MSG(LOG_DEBUG, "Delete gx procs ");
+                  cleanup_pfcp_trans(proc->gx_trans);
+              }
+              free(proc);
+          }
+          proc = TAILQ_FIRST(&context->pending_sub_procs);
+        }
+ 
         //Free UE context
         free(context);
         *context_t = NULL;

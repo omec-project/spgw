@@ -321,7 +321,11 @@ upf_pfcp_setup_failure(void *data, uint16_t event)
     LOG_MSG(LOG_ERROR, "PFCP association setup failed for service [%s] address [%s], event = %d ",
                         upf_context->fqdn, inet_ntoa(upf_context->upf_sockaddr.sin_addr), event);
     proc_context_t *upf_proc = (proc_context_t *)upf_context->proc;
-    proc_pfcp_assoc_setup_failure(upf_proc, 0);
+    if(upf_proc != NULL) {
+        proc_pfcp_assoc_setup_failure(upf_proc, 0);
+    } else {
+	    LOG_MSG(LOG_ERROR, "Looks like pfcp association is already scheduled for UPF %s (%s)",upf_context->fqdn, inet_ntoa(upf_context->upf_sockaddr.sin_addr));
+    }
 }
 
 
