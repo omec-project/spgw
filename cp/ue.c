@@ -325,6 +325,22 @@ cleanup_ue_context(ue_context_t **context_t)
             assert(0);
         }
 #endif
+        proc_context_t *proc = TAILQ_FIRST(&context->pending_sub_procs);
+        while(proc != NULL) {
+          TAILQ_REMOVE(&context->pending_sub_procs, proc, next_sub_proc);
+          if(proc != NULL) {
+              if(proc->gtpc_trans != NULL) {
+                  LOG_MSG(LOG_DEBUG, "Delete gtpc procs ");
+                  cleanup_gtpc_trans(proc->gtpc_trans);
+              }
+              if(proc->pfcp_trans != NULL) {
+                  LOG_MSG(LOG_DEBUG, "Delete pfcp procs ");
+                  cleanup_pfcp_trans(proc->pfcp_trans);
+              }
+              free(proc);
+          }
+          proc = TAILQ_FIRST(&context->pending_sub_procs);
+        }
 
         //Free UE context
         free(context);
