@@ -133,8 +133,6 @@ process_error_occured_handler_new(void *data, void *unused_param)
 
     do {
 	    if ((cp_config->gx_enabled)) {
-	        gx_msg ccr_request = {0};
-            uint16_t msglen;
 
 	    	/* Retrive Gx_context based on Sess ID. */
 	    	ue_context_t *temp_context  = (ue_context_t *)get_ue_context_from_gxsessid((uint8_t *)pdn->gx_sess_id); 
@@ -143,6 +141,10 @@ process_error_occured_handler_new(void *data, void *unused_param)
                 break;
 	    	}
             assert(temp_context == context);
+
+#ifdef SEND_CCRT_CONTEXT_RELEASE
+            gx_msg ccr_request = {0};
+            uint16_t msglen;
 
 	    	/* VS: Set the Msg header type for CCR-T */
 	    	ccr_request.msg_type = GX_CCR_MSG ;
@@ -185,6 +187,7 @@ process_error_occured_handler_new(void *data, void *unused_param)
             saddr_in.sin_family = AF_INET;
             inet_aton("127.0.0.1", &(saddr_in.sin_addr));
             increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_T, saddr_in.sin_addr.s_addr);
+#endif
 			if(remove_gxsessid_to_context((uint8_t*)pdn->gx_sess_id) < 0){
  	            LOG_MSG(LOG_ERROR, " Error on remove_gx_context for session Id %s",pdn->gx_sess_id);
 			}

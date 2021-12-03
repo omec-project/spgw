@@ -172,6 +172,7 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
 
     assert(msg->peer_addr.sin_port != 0);
 
+#ifdef SEND_CCRT_CONTEXT_RELEASE
     // Sending CCR-T in case of failure
     /* we should check if subscriber has gx session..this does not look good */
     if ((cp_config->gx_enabled) &&  
@@ -183,6 +184,7 @@ void cs_error_response(msg_info_t *msg, uint8_t cause_value, int iface)
         inet_aton("127.0.0.1", &(saddr_in.sin_addr));
         increment_gx_peer_stats(MSG_TX_DIAMETER_GX_CCR_T,saddr_in.sin_addr.s_addr);
     }
+#endif
     bzero(&gtp_tx_buf, sizeof(gtp_tx_buf));
 
     gtpv2c_header_t *gtpv2c_tx = (gtpv2c_header_t *) gtp_tx_buf;
@@ -451,7 +453,7 @@ ds_error_response(proc_context_t *ds_proc, msg_info_t *msg, uint8_t cause_value,
 
     assert(msg->peer_addr.sin_port != 0);
 
-#ifdef FUTURE_NEED
+#ifdef SEND_CCRT_CONTEXT_RELEASE
     // FIXME : why we need to send CCRT while sending DSRsp ?
 	uint8_t eps_bearer_id = 0;
     /* we should check if subscriber has gx session..this does not look good */
