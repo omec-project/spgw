@@ -1536,7 +1536,11 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
                         }
 
                         creating_qer(&(pfcp_sess_est_req->create_qer[qer_idx]));
-			            fill_gate_status(pfcp_sess_est_req, qer_idx, (enum flow_status)dyn_rule->flow_status);
+                        if(isCommonQER(qer_context->qer_id) == true) {
+			              fill_gate_status(pfcp_sess_est_req, qer_idx, FL_ENABLED);
+                        } else {
+			              fill_gate_status(pfcp_sess_est_req, qer_idx, (enum flow_status)dyn_rule->flow_status);
+                        }
                         pfcp_sess_est_req->create_qer[qer_idx].qer_id.qer_id_value  = pdr->qer_id[qer_itr].qer_id;
                         /* Assign the value from the PDR */
                         if(qer_context) {
