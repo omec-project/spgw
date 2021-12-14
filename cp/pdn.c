@@ -120,7 +120,7 @@ cleanup_pdn_context(pdn_connection_t *pdn_ctxt)
 	pdn_ctxt->context->teid_bitmap = 0;
     if(IF_PDN_ADDR_STATIC(pdn_ctxt)) {
         release_ip_node(pdn_ctxt->ipv4);
-    } else {
+    } else if (IF_PDN_ADDR_ALLOC_CONTROL(pdn_ctxt)){
         release_ip(pdn_ctxt->ipv4);
     }
 	free(pdn_ctxt);

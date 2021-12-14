@@ -170,8 +170,6 @@ initiate_all_pfcp_association(void)
     int num = get_user_plane_services(&services[0], MAX_UPF);
 
     for(int i=0; i<num; i++) {
-        LOG_MSG(LOG_DEBUG, "User plane service %s", services[i].user_plane_service);
-
         upf_context_t *upf_context = get_upf_context(services[i].user_plane_service, services[i].global_address);
         if(upf_context == NULL) {
             schedule_association = true;
@@ -249,7 +247,6 @@ struct in_addr
 native_linux_name_resolve(const char *name)
 {
     struct in_addr ip = {0};
-    LOG_MSG(LOG_INFO, "DNS Query - %s ",name);
     struct addrinfo hints;
     struct addrinfo *result=NULL, *rp=NULL;
     int err;
@@ -271,6 +268,7 @@ native_linux_name_resolve(const char *name)
             {
                 struct sockaddr_in *addrV4 = (struct sockaddr_in *)rp->ai_addr;
                 LOG_MSG(LOG_DEBUG, "Received DNS response. name %s mapped to  %s", name, inet_ntoa(addrV4->sin_addr));
+                freeaddrinfo(result);
                 return addrV4->sin_addr;
             }
         }
@@ -290,7 +288,6 @@ get_upf_context(const char *user_plane_service, bool global_address)
 
     // if UPF not found, create context
     if(upf_context == NULL) {
-        LOG_MSG(LOG_DEBUG, "UPF context for upf [%s] not found. Resolve address ", user_plane_service);
         upf_addr = native_linux_name_resolve(user_plane_service);
         if (upf_addr.s_addr != 0) {
             // found name to address mapping. Create context and update details.
@@ -319,7 +316,7 @@ handleUpfAssociationTimeoutEvent(void *data, uint16_t event)
 {
     upf_context_t *upf = (upf_context_t *)data;
     if(upf == NULL) {
-        LOG_MSG(LOG_DEBUG,"Initiate association with all UPFs");
+        //LOG_MSG(LOG_DEBUG,"Initiate association with all UPFs");
         initiate_all_pfcp_association();
     } else {
         // default schedule timeout of 10 seconds
