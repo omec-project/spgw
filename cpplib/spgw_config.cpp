@@ -375,7 +375,6 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
     for (it = sub_classifier_config->sub_sel_rules.begin(); it != sub_classifier_config->sub_sel_rules.end(); ++it)
     {
         rule = *it;
-        LOG_MSG(LOG_DEBUG,"Searching rule %d ", rule->rule_priority);
         sub_selection_keys_t *key_l = rule->keys;
         if((key_l != nullptr) && (key_l->imsi.is_valid))
         {
@@ -385,11 +384,9 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
             }
             if(!((key->imsi.from_imsi >= key_l->imsi.from_imsi) && (key->imsi.from_imsi <= key_l->imsi.to_imsi)))
             {
-               LOG_MSG(LOG_DEBUG, "IMSI range not matched");
                continue; // no match continue for next rule  
             }
         }
-        LOG_MSG(LOG_DEBUG, "IMSI range matched for %lu", key->imsi.from_imsi);
         if((key_l != nullptr) && (key_l->plmn.is_valid))
         {
             if(key->plmn.is_valid == false)
@@ -398,22 +395,18 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
                 continue; // no match 
             if(key_l->plmn.tac != key->plmn.tac)
             {
-                LOG_MSG(LOG_DEBUG, "Subscriber not matched with PLMN ");
                 continue; // no match 
             }
         } 
-        LOG_MSG(LOG_DEBUG, "Subscriber matched with PLMN ");
         if((key_l != nullptr) && (key_l->apn.is_valid))
         {
             if(key->apn.is_valid == false)
                 continue;
             if(strcmp(key->apn.requested_apn, key_l->apn.requested_apn))
             {
-                LOG_MSG(LOG_DEBUG, "Subscriber not matched with APN");
                 continue;
             }
         }
-        LOG_MSG(LOG_DEBUG, "Subscriber matched with APN");
         break;
     }
 
@@ -439,7 +432,7 @@ spgwConfig::match_sub_selection_cpp(sub_selection_keys_t *key)
         LOG_MSG(LOG_DEBUG,"matching subscriber rule found - User plane profile %s, UPF service %s ", rule->selected_user_plane_profile, up_profile->user_plane_service);
         return temp;
     }
-    LOG_MSG(LOG_INIT,"No matching rule found ");
+    LOG_MSG(LOG_INIT,"No matching rule found for subscriber %lu ",key->imsi.from_imsi);
     return nullptr;
 }
 
