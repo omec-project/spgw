@@ -39,9 +39,6 @@ start_upf_procedure(proc_context_t *proc, msg_info_t *msg);
 void 
 end_upf_procedure(proc_context_t *proc_ctxt);
 
-struct in_addr 
-native_linux_name_resolve(const char *name);
-
 upf_context_t*
 get_upf_context(const char *user_plane_service, bool global_address);
 
