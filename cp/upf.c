@@ -32,7 +32,29 @@
 #include "proc_pfcp_assoc_setup.h"
 #include "cp_timer.h"
 #include "upf_apis.h"
+#include "poll.h"
 
+struct threadData {
+    int fd;
+};
+
+struct dnsMsg {
+    pthread_mutex_t msg_mutex;
+    bool req_valid;
+    bool rsp_sent;
+    char name[64];
+    struct in_addr ip_addr;
+};
+typedef struct dnsMsg dnsMsg_t;
+
+struct msgDataEnv {
+    dnsMsg_t *data;
+};
+typedef struct msgDataEnv msgDataEnv_t;
+
+void* dns_handler(void *data);
+
+static struct in_addr native_linux_name_resolve(const char *name);
 
 int 
 create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt, const char *service_name) 
@@ -52,14 +74,22 @@ create_upf_context(uint32_t upf_ip, upf_context_t **upf_ctxt, const char *servic
 	upf_context->upf_sockaddr.sin_port = htons(cp_config->pfcp_port);
 	upf_context->upf_sockaddr.sin_addr.s_addr = upf_ip; 
 
-	ret = upf_context_entry_add(&upf_ip, upf_context);
-	if (ret) {
-		LOG_MSG(LOG_ERROR, "Failed to add UPF addresss [%s] in UPF context map.Error: %d ", inet_ntoa(*((struct in_addr *)&upf_ip)), ret);
-		return -1;
+	// ADD only if IP address not zero
+	if(upf_ip != 0) {
+		ret = upf_context_entry_add(&upf_ip, upf_context);
+		if (ret) {
+			LOG_MSG(LOG_ERROR, "Failed to add UPF addresss [%s] in UPF context map.Error: %d ", inet_ntoa(*((struct in_addr *)&upf_ip)), ret);
+			free(upf_context);
+			return -1;
+		}
 	}
 	ret = upf_context_entry_add_service(service_name, upf_context);
 	if (ret) {
 		LOG_MSG(LOG_ERROR, "Failed to add service name [%s] in UPF context map.Error: %d ", service_name, ret);
+		if(upf_ip != 0) {
+			upf_context_delete_entry(upf_ip);
+		}
+		free(upf_context);
 		return -1;
 	}
     LIST_INIT(&upf_context->pending_sub_procs);
@@ -85,7 +115,8 @@ upf_down_event(uint32_t upf_ip)
 
 	delete_entry_heartbeat_hash(&upf_addr);
 
-    schedule_pfcp_association(1, upf_context);
+    uint16_t timeout = rand() % 30;
+    schedule_pfcp_association(timeout, upf_context);
 }
 
 void
@@ -171,22 +202,28 @@ initiate_all_pfcp_association(void)
 
     for(int i=0; i<num; i++) {
         upf_context_t *upf_context = get_upf_context(services[i].user_plane_service, services[i].global_address);
-        if(upf_context == NULL) {
-            schedule_association = true;
-            LOG_MSG(LOG_DEBUG, "Failed to create UPF Context %s", services[i].user_plane_service);
+		if(upf_context == NULL) {
+			schedule_association = true;
+			continue;
+		}
+        if(upf_context->upf_sockaddr.sin_addr.s_addr == 0) {
+            uint16_t timeout = rand() % 30;
+            schedule_pfcp_association(timeout, upf_context); 
+            LOG_MSG(LOG_DEBUG, "Failed to create UPF Context %s. Try after %d seconds", services[i].user_plane_service, timeout);
             continue;
         }
 
-        if(upf_context->state == 0) {
-            LOG_MSG(LOG_INFO, "Initiate association setup with UPF %s", services[i].user_plane_service);
-            proc_context_t *proc = alloc_pfcp_association_setup_proc(upf_context);
-            start_upf_procedure(proc, (msg_info_t *)proc->msg_info);
-        }
+		if(upf_context->state == 0) {
+		    LOG_MSG(LOG_INFO, "Initiate association setup with UPF %s", services[i].user_plane_service);
+		    proc_context_t *proc = alloc_pfcp_association_setup_proc(upf_context);
+		    start_upf_procedure(proc, (msg_info_t *)proc->msg_info);
+		}
     }
-
     if(schedule_association == true) {
-        schedule_pfcp_association(10, NULL); // default schedule timeout of 10 seconds
+        uint16_t timeout = rand() % 30;
+        schedule_pfcp_association(timeout, NULL);
     }
+  
 }
 
 /* We should queue the event if required */
@@ -243,7 +280,7 @@ end_upf_procedure(proc_context_t *proc_ctxt)
  * For now I am using linux system call to do the service name dns resolution...
  * 3gpp based DNS lookup of NRF support would be required to locate UPF. 
  */
-struct in_addr 
+static struct in_addr 
 native_linux_name_resolve(const char *name)
 {
     struct in_addr ip = {0};
@@ -277,6 +314,109 @@ native_linux_name_resolve(const char *name)
     return ip;
 }
 
+void*
+dns_handler(void *data)
+{
+    struct threadData *inp = (struct threadData *)data;
+    int n;
+
+    LOG_MSG(LOG_INFO,"Name resolution thread fd %d", inp->fd);
+    while(1) {
+        msgDataEnv_t control = {0};
+        //printf("waiting for message read\n");
+        n = read(inp->fd, &control, sizeof(msgDataEnv_t));
+        dnsMsg_t *rsp = control.data;
+
+        LOG_MSG(LOG_DEBUG, "DNS Request received for %s", rsp->name);
+        rsp->ip_addr = native_linux_name_resolve(rsp->name);
+        pthread_mutex_lock(&rsp->msg_mutex);
+        if(rsp->req_valid == false) {
+            LOG_MSG(LOG_ERROR,"DNS Request is not valid. Client timed out. Don't send response %s",rsp->name);
+            pthread_mutex_unlock(&rsp->msg_mutex);
+            free(rsp);
+            continue; // client is not waiting for response so dont write response
+        }
+        // req is still valid so we need to write response
+        n = write(inp->fd, rsp, sizeof(dnsMsg_t));
+        LOG_MSG(LOG_DEBUG,"Sending DNS Response to query thread bytes write %d for %s", n, rsp->name);
+        rsp->rsp_sent = true;
+        pthread_mutex_unlock(&rsp->msg_mutex);
+    }
+}
+
+static struct in_addr 
+upf_name_resolve(const char *name)
+{
+    struct in_addr upf_addr = {0};
+    static bool thread_started = false;
+    static int fd[2];
+    if (thread_started == false) {
+      if(socketpair(AF_LOCAL, SOCK_DGRAM, 0, fd) == -1) {
+          assert(0);
+      }
+      struct threadData *td;
+      td = (struct threadData *) calloc(1, sizeof(struct threadData));
+      td->fd = fd[1];
+      pthread_t readerLocal_t;
+      pthread_attr_t localattr;
+      pthread_attr_init(&localattr);
+      pthread_attr_setdetachstate(&localattr, PTHREAD_CREATE_DETACHED);
+      pthread_create(&readerLocal_t, &localattr, &dns_handler, (void*)td);
+      pthread_attr_destroy(&localattr);
+      thread_started = true;
+    }
+    LOG_MSG(LOG_DEBUG, "Resolve UPF name %s", name);
+
+    dnsMsg_t *req = (dnsMsg_t *) calloc(1, sizeof(dnsMsg_t));
+    strncpy(&req->name[0], name, strlen(name)+1);
+    req->ip_addr.s_addr = 0;
+    req->req_valid = true;
+    req->rsp_sent = false;
+
+    msgDataEnv_t msg = {0};
+    msg.data = req;
+    int n = write(fd[0], &msg, sizeof(msgDataEnv_t));
+
+    if(n < 0) {
+        LOG_MSG(LOG_ERROR,"Failed to write request message to peer socket = %d, UPF %s ", n, name);
+        free(req);
+        return upf_addr;
+    }
+
+    // Wait for response
+    do {
+        struct pollfd pfds[1];
+        pfds[0].fd = fd[0];
+        pfds[0].events = POLLIN;
+        int event_count = poll(pfds, 1, 100); // Wait for max 100ms
+        //printf("event_count = %d \n", event_count);
+        pthread_mutex_lock(&req->msg_mutex);
+        if(event_count <=0) {
+            LOG_MSG(LOG_ERROR,"DNS Request timeout for %s", name);
+            // dont' free request
+            if(req->rsp_sent == false) {
+                req->req_valid = false;
+                // req will be freed by dns thread
+                LOG_MSG(LOG_ERROR, "timeout socket event. Mark req invalid %s", name);
+                pthread_mutex_unlock(&req->msg_mutex);
+                return upf_addr;
+            } else {
+                // this can happen if peer send response and same time poll timeout happened.
+                LOG_MSG(LOG_ERROR,"Go ahead read message from socket for UPF %s ", name);
+                break;
+            }
+        }
+    }while(0);
+
+    dnsMsg_t rsp = {0};
+    n = read(fd[0], &rsp, sizeof(dnsMsg_t));
+    LOG_MSG(LOG_INFO,"Read DNS response %s -> %s", rsp.name, inet_ntoa(rsp.ip_addr));
+    pthread_mutex_unlock(&req->msg_mutex);
+    upf_addr = rsp.ip_addr;
+    free(req);
+    return upf_addr;
+}
+
 upf_context_t*
 get_upf_context(const char *user_plane_service, bool global_address)
 {
@@ -288,17 +428,17 @@ get_upf_context(const char *user_plane_service, bool global_address)
 
     // if UPF not found, create context
     if(upf_context == NULL) {
-        upf_addr = native_linux_name_resolve(user_plane_service);
-        if (upf_addr.s_addr != 0) {
-            // found name to address mapping. Create context and update details.
-            LOG_MSG(LOG_DEBUG, "UPF context for upf [%s] - address resolved to %s ", user_plane_service, inet_ntoa(upf_addr));
-            create_upf_context(upf_addr.s_addr, &upf_context, user_plane_service);
+        upf_addr = upf_name_resolve(user_plane_service);
+        // found name to address mapping. Create context and update details.
+        LOG_MSG(LOG_DEBUG, "UPF context for upf [%s] - address resolved to %s ", user_plane_service, inet_ntoa(upf_addr));
+        create_upf_context(upf_addr.s_addr, &upf_context, user_plane_service);
+        if (upf_context != NULL) {
             strcpy(upf_context->fqdn, user_plane_service);
             upf_context->global_address = global_address;
         }
     } else if (upf_context->upf_sockaddr.sin_addr.s_addr == 0) {
         upf_context->global_address = global_address;
-        upf_addr = native_linux_name_resolve(user_plane_service);
+        upf_addr = upf_name_resolve(user_plane_service);
         upf_context->upf_sockaddr.sin_addr.s_addr = upf_addr.s_addr;
         if(upf_addr.s_addr != 0) {
 	        int ret = upf_context_entry_add(&upf_addr.s_addr, upf_context);

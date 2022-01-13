@@ -376,9 +376,9 @@ proc_pfcp_assoc_setup_failure(proc_context_t *proc_context, int cause)
     upf_context_delete_entry(upf_context->upf_sockaddr.sin_addr.s_addr);
     upf_context->upf_sockaddr.sin_addr.s_addr = 0;
     proc_pfcp_assoc_setup_complete(proc_context);
-    LOG_MSG(LOG_INFO, "Schedule PFCP association setup after 5 seconds");
-    //FIXME - add backoff 
-    schedule_pfcp_association(5, upf_context);
+    uint16_t timeout = rand() % 30;
+    LOG_MSG(LOG_INFO, "Schedule PFCP association setup after %d seconds", timeout);
+    schedule_pfcp_association(timeout, upf_context);
 }
 
 void

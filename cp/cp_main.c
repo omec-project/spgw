@@ -132,6 +132,7 @@ main(int argc, char **argv)
 {
 	set_logging_level("LOG_ERROR");
     LOG_MSG(LOG_INIT, "Starting main thread %d ",argc);
+    srand(time(NULL));
 
     parse_arg(argc, argv);
 

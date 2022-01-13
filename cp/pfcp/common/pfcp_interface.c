@@ -97,6 +97,7 @@ out_handler_pfcp(void *data)
             }
             free(event->payload);
             free(event);
+            continue;
         }
         //PERFORAMANCE ISSUE - use conditional variable 
         usleep(100); // every pkt 0.1 ms default scheduling delay 

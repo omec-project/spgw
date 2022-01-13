@@ -322,7 +322,7 @@ process_create_sess_req(proc_context_t *proc_ctxt,
     {
         // FIXME - UPF profile may have been deleted by now
         upf_context = get_upf_context(sub_profile->user_plane_service, sub_profile->global_address);
-        if(upf_context == NULL) {
+        if((upf_context == NULL) ||  (upf_context->upf_sockaddr.sin_addr.s_addr == 0)) {
             return GTPV2C_CAUSE_REQUEST_REJECTED ; 
         }
         upf_ipv4 = upf_context->upf_sockaddr.sin_addr;
