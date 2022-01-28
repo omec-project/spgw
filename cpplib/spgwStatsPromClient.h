@@ -279,13 +279,16 @@ class num_ue_DynamicMetricObject1 : public DynamicMetricObject {
 	public:
 		num_ue_DynamicMetricObject1(Family<Gauge> &num_ue_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string label_k2, std::string label_v2,std::string dlabel_k0, std::string dlabel_v0):
 		 DynamicMetricObject(),
-		 gauge(num_ue_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}}))
+		 gauge(num_ue_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}})),
+		 num_ue_family(&num_ue_family)
 		{
 		}
 		~num_ue_DynamicMetricObject1()
 		{
+		 num_ue_family->Remove(&gauge);
 		}
 		Gauge &gauge;
+		Family<Gauge> *num_ue_family;
 };
 
 
@@ -295,13 +298,16 @@ class num_ue_DynamicMetricObject2 : public DynamicMetricObject {
 	public:
 		num_ue_DynamicMetricObject2(Family<Gauge> &num_ue_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string label_k2, std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1):
 		 DynamicMetricObject(),
-		 gauge(num_ue_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}}))
+		 gauge(num_ue_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}})),
+		 num_ue_family(&num_ue_family)
 		{
 		}
 		~num_ue_DynamicMetricObject2()
 		{
+		 num_ue_family->Remove(&gauge);
 		}
 		Gauge &gauge;
+		Family<Gauge> *num_ue_family;
 };
 
 
@@ -311,13 +317,16 @@ class num_ue_DynamicMetricObject3 : public DynamicMetricObject {
 
 		num_ue_DynamicMetricObject3(Family<Gauge> &num_ue_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string label_k2, std::string label_v2,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1, std::string dlabel_k2, std::string dlabel_v2):
 		 DynamicMetricObject(),
-		 gauge(num_ue_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}, {dlabel_k2, dlabel_v2}}))
+		 gauge(num_ue_family.Add({{label_k0, label_v0},{label_k1, label_v1},{label_k2, label_v2},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}, {dlabel_k2, dlabel_v2}})),
+		 num_ue_family(&num_ue_family)
 		{
 		}
 		~num_ue_DynamicMetricObject3()
 		{
+		 num_ue_family->Remove(&gauge);
 		}
 		Gauge &gauge;
+		Family<Gauge> *num_ue_family;
 };
 class num_ue_gauges {
 	public:
@@ -353,13 +362,16 @@ class data_usage_DynamicMetricObject1 : public DynamicMetricObject {
 	public:
 		data_usage_DynamicMetricObject1(Family<Gauge> &data_usage_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0):
 		 DynamicMetricObject(),
-		 gauge(data_usage_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}}))
+		 gauge(data_usage_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}})),
+		 data_usage_family(&data_usage_family)
 		{
 		}
 		~data_usage_DynamicMetricObject1()
 		{
+		 data_usage_family->Remove(&gauge);
 		}
 		Gauge &gauge;
+		Family<Gauge> *data_usage_family;
 };
 
 
@@ -369,13 +381,16 @@ class data_usage_DynamicMetricObject2 : public DynamicMetricObject {
 	public:
 		data_usage_DynamicMetricObject2(Family<Gauge> &data_usage_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1):
 		 DynamicMetricObject(),
-		 gauge(data_usage_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}}))
+		 gauge(data_usage_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}})),
+		 data_usage_family(&data_usage_family)
 		{
 		}
 		~data_usage_DynamicMetricObject2()
 		{
+		 data_usage_family->Remove(&gauge);
 		}
 		Gauge &gauge;
+		Family<Gauge> *data_usage_family;
 };
 
 
@@ -385,13 +400,16 @@ class data_usage_DynamicMetricObject3 : public DynamicMetricObject {
 
 		data_usage_DynamicMetricObject3(Family<Gauge> &data_usage_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1, std::string dlabel_k2, std::string dlabel_v2):
 		 DynamicMetricObject(),
-		 gauge(data_usage_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}, {dlabel_k2, dlabel_v2}}))
+		 gauge(data_usage_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}, {dlabel_k2, dlabel_v2}})),
+		 data_usage_family(&data_usage_family)
 		{
 		}
 		~data_usage_DynamicMetricObject3()
 		{
+		 data_usage_family->Remove(&gauge);
 		}
 		Gauge &gauge;
+		Family<Gauge> *data_usage_family;
 };
 class data_usage_gauges {
 	public:
@@ -421,13 +439,16 @@ class subscribers_info_DynamicMetricObject1 : public DynamicMetricObject {
 	public:
 		subscribers_info_DynamicMetricObject1(Family<Gauge> &subscribers_info_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0):
 		 DynamicMetricObject(),
-		 gauge(subscribers_info_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}}))
+		 gauge(subscribers_info_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}})),
+		 subscribers_info_family(&subscribers_info_family)
 		{
 		}
 		~subscribers_info_DynamicMetricObject1()
 		{
+		 subscribers_info_family->Remove(&gauge);
 		}
 		Gauge &gauge;
+		Family<Gauge> *subscribers_info_family;
 };
 
 
@@ -437,13 +458,16 @@ class subscribers_info_DynamicMetricObject2 : public DynamicMetricObject {
 	public:
 		subscribers_info_DynamicMetricObject2(Family<Gauge> &subscribers_info_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1):
 		 DynamicMetricObject(),
-		 gauge(subscribers_info_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}}))
+		 gauge(subscribers_info_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}})),
+		 subscribers_info_family(&subscribers_info_family)
 		{
 		}
 		~subscribers_info_DynamicMetricObject2()
 		{
+		 subscribers_info_family->Remove(&gauge);
 		}
 		Gauge &gauge;
+		Family<Gauge> *subscribers_info_family;
 };
 
 
@@ -453,13 +477,16 @@ class subscribers_info_DynamicMetricObject3 : public DynamicMetricObject {
 
 		subscribers_info_DynamicMetricObject3(Family<Gauge> &subscribers_info_family,std::string label_k0, std::string label_v0,std::string label_k1, std::string label_v1,std::string dlabel_k0, std::string dlabel_v0, std::string dlabel_k1, std::string dlabel_v1, std::string dlabel_k2, std::string dlabel_v2):
 		 DynamicMetricObject(),
-		 gauge(subscribers_info_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}, {dlabel_k2, dlabel_v2}}))
+		 gauge(subscribers_info_family.Add({{label_k0, label_v0},{label_k1, label_v1},{dlabel_k0, dlabel_v0}, {dlabel_k1, dlabel_v1}, {dlabel_k2, dlabel_v2}})),
+		 subscribers_info_family(&subscribers_info_family)
 		{
 		}
 		~subscribers_info_DynamicMetricObject3()
 		{
+		 subscribers_info_family->Remove(&gauge);
 		}
 		Gauge &gauge;
+		Family<Gauge> *subscribers_info_family;
 };
 class subscribers_info_gauges {
 	public:
