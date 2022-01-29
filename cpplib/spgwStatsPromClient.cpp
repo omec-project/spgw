@@ -11434,6 +11434,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(it1 != metrics_map.end()) {
 		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(it1);
+		      delete obj;
+		     }
 		}
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
@@ -11443,6 +11447,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		     }
 		} 
 		} else if (labels.size() == 3) {
 		auto it1 = labels. begin();
@@ -11453,6 +11461,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		    }
 		}
 		}
 		break;
@@ -11470,6 +11482,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(it1 != metrics_map.end()) {
 		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(it1);
+		      delete obj;
+		     }
 		}
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
@@ -11479,6 +11495,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		     }
 		} 
 		} else if (labels.size() == 3) {
 		auto it1 = labels. begin();
@@ -11489,6 +11509,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		    }
 		}
 		}
 		break;
@@ -11506,6 +11530,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(it1 != metrics_map.end()) {
 		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(it1);
+		      delete obj;
+		     }
 		}
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
@@ -11515,6 +11543,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		     }
 		} 
 		} else if (labels.size() == 3) {
 		auto it1 = labels. begin();
@@ -11525,6 +11557,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		    }
 		}
 		}
 		break;
@@ -11542,6 +11578,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(it1 != metrics_map.end()) {
 		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(it1);
+		      delete obj;
+		     }
 		}
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
@@ -11551,6 +11591,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		     }
 		} 
 		} else if (labels.size() == 3) {
 		auto it1 = labels. begin();
@@ -11561,6 +11605,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		    }
 		}
 		}
 		break;
@@ -11578,6 +11626,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(it1 != metrics_map.end()) {
 		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(it1);
+		      delete obj;
+		     }
 		}
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
@@ -11587,6 +11639,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		     }
 		} 
 		} else if (labels.size() == 3) {
 		auto it1 = labels. begin();
@@ -11597,6 +11653,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		    }
 		}
 		}
 		break;
@@ -11614,6 +11674,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(it1 != metrics_map.end()) {
 		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(it1);
+		      delete obj;
+		     }
 		}
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
@@ -11623,6 +11687,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		     }
 		} 
 		} else if (labels.size() == 3) {
 		auto it1 = labels. begin();
@@ -11633,6 +11701,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		    }
 		}
 		}
 		break;
@@ -11650,6 +11722,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(it1 != metrics_map.end()) {
 		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(it1);
+		      delete obj;
+		     }
 		}
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
@@ -11659,6 +11735,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		     }
 		} 
 		} else if (labels.size() == 3) {
 		auto it1 = labels. begin();
@@ -11669,6 +11749,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		    }
 		}
 		}
 		break;
@@ -11686,6 +11770,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(it1 != metrics_map.end()) {
 		    num_ue_DynamicMetricObject1 *obj = static_cast<num_ue_DynamicMetricObject1 *>(it1->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(it1);
+		      delete obj;
+		     }
 		}
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
@@ -11695,6 +11783,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject2 *obj = static_cast<num_ue_DynamicMetricObject2 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		     }
 		} 
 		} else if (labels.size() == 3) {
 		auto it1 = labels. begin();
@@ -11705,6 +11797,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    num_ue_DynamicMetricObject3 *obj = static_cast<num_ue_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		    }
 		}
 		}
 		break;
@@ -11722,6 +11818,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(it1 != metrics_map.end()) {
 		    data_usage_DynamicMetricObject1 *obj = static_cast<data_usage_DynamicMetricObject1 *>(it1->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(it1);
+		      delete obj;
+		     }
 		}
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
@@ -11731,6 +11831,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    data_usage_DynamicMetricObject2 *obj = static_cast<data_usage_DynamicMetricObject2 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		     }
 		} 
 		} else if (labels.size() == 3) {
 		auto it1 = labels. begin();
@@ -11741,6 +11845,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    data_usage_DynamicMetricObject3 *obj = static_cast<data_usage_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		    }
 		}
 		}
 		break;
@@ -11758,6 +11866,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(it1 != metrics_map.end()) {
 		    data_usage_DynamicMetricObject1 *obj = static_cast<data_usage_DynamicMetricObject1 *>(it1->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(it1);
+		      delete obj;
+		     }
 		}
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
@@ -11767,6 +11879,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    data_usage_DynamicMetricObject2 *obj = static_cast<data_usage_DynamicMetricObject2 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		     }
 		} 
 		} else if (labels.size() == 3) {
 		auto it1 = labels. begin();
@@ -11777,6 +11893,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    data_usage_DynamicMetricObject3 *obj = static_cast<data_usage_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		    }
 		}
 		}
 		break;
@@ -11794,6 +11914,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(it1 != metrics_map.end()) {
 		    subscribers_info_DynamicMetricObject1 *obj = static_cast<subscribers_info_DynamicMetricObject1 *>(it1->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(it1);
+		      delete obj;
+		     }
 		}
 		} else if (labels.size() == 2) {
 		auto it1 = labels. begin();
@@ -11803,6 +11927,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    subscribers_info_DynamicMetricObject2 *obj = static_cast<subscribers_info_DynamicMetricObject2 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		     }
 		} 
 		} else if (labels.size() == 3) {
 		auto it1 = labels. begin();
@@ -11813,6 +11941,10 @@ void spgwStats::decrement(spgwStatsCounter name,std::map<std::string,std::string
 		if(itf != metrics_map.end()) {
 		    subscribers_info_DynamicMetricObject3 *obj = static_cast<subscribers_info_DynamicMetricObject3 *>(itf->second);
 		    obj->gauge.Decrement();
+		    if(obj->gauge.Value() == 0) {
+		      metrics_map.erase(itf);
+		      delete obj;
+		    }
 		}
 		}
 		break;

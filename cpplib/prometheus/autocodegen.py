@@ -361,15 +361,18 @@ def add_gauge_classes(fh):
         dynamic_function_call_args = f[2]
         fh.write("\t\t" + gauge.family + "_DynamicMetricObject1(Family<Gauge> &" + gauge.promfamily + "," + constructor_args +"):\n")
         fh.write("\t\t DynamicMetricObject(),\n")
-        fh.write("\t\t gauge(" + gauge.promfamily + ".Add(" + gauge_create_labels + "))\n") 
+        fh.write("\t\t gauge(" + gauge.promfamily + ".Add(" + gauge_create_labels + ")),\n") 
+        fh.write("\t\t " + gauge.promfamily + "(&" + gauge.promfamily + ")\n") 
         fh.write("\t\t{\n")
         fh.write("\t\t}\n")
 
  
       fh.write("\t\t~" + gauge.family + "_DynamicMetricObject1" + "()\n")
       fh.write("\t\t{\n")
+      fh.write("\t\t " + gauge.promfamily + "->Remove(&gauge);\n")
       fh.write("\t\t}\n")
       fh.write("\t\tGauge &gauge;\n")
+      fh.write("\t\tFamily<Gauge> *"+gauge.promfamily + ";\n")
       fh.write("};\n")
       #end of 1 dynamic arg 
 
@@ -403,14 +406,17 @@ def add_gauge_classes(fh):
         dynamic_function_call_args = f[2]
         fh.write("\t\t" + gauge.family + "_DynamicMetricObject2(Family<Gauge> &" + gauge.promfamily + "," + constructor_args +"):\n")
         fh.write("\t\t DynamicMetricObject(),\n")
-        fh.write("\t\t gauge(" + gauge.promfamily + ".Add(" + gauge_create_labels + "))\n") 
+        fh.write("\t\t gauge(" + gauge.promfamily + ".Add(" + gauge_create_labels + ")),\n") 
+        fh.write("\t\t " + gauge.promfamily + "(&" + gauge.promfamily + ")\n") 
         fh.write("\t\t{\n")
         fh.write("\t\t}\n")
 
       fh.write("\t\t~" + gauge.family + "_DynamicMetricObject2" + "()\n")
       fh.write("\t\t{\n")
+      fh.write("\t\t " + gauge.promfamily + "->Remove(&gauge);\n")
       fh.write("\t\t}\n")
       fh.write("\t\tGauge &gauge;\n")
+      fh.write("\t\tFamily<Gauge> *"+gauge.promfamily + ";\n")
       fh.write("};\n")
       #end of 2 dynamic arg 
       #3 dynamic label 
@@ -443,14 +449,17 @@ def add_gauge_classes(fh):
         dynamic_function_call_args = f[2]
         fh.write("\t\t" + gauge.family + "_DynamicMetricObject3(Family<Gauge> &" + gauge.promfamily + "," + constructor_args +"):\n")
         fh.write("\t\t DynamicMetricObject(),\n")
-        fh.write("\t\t gauge(" + gauge.promfamily + ".Add(" + gauge_create_labels + "))\n") 
+        fh.write("\t\t gauge(" + gauge.promfamily + ".Add(" + gauge_create_labels + ")),\n") 
+        fh.write("\t\t " + gauge.promfamily + "(&" + gauge.promfamily + ")\n") 
         fh.write("\t\t{\n")
         fh.write("\t\t}\n")
 
       fh.write("\t\t~" + gauge.family + "_DynamicMetricObject3" + "()\n")
       fh.write("\t\t{\n")
+      fh.write("\t\t " + gauge.promfamily + "->Remove(&gauge);\n")
       fh.write("\t\t}\n")
       fh.write("\t\tGauge &gauge;\n")
+      fh.write("\t\tFamily<Gauge> *"+gauge.promfamily + ";\n")
       fh.write("};\n")
       #end of 3 dynamic arg 
 
@@ -941,6 +950,10 @@ def add_decrement_api(fh):
         fh.write("\t\tif(it1 != metrics_map.end()) {\n")
         fh.write("\t\t    "+gauge.family +"_DynamicMetricObject1 *obj = static_cast<"+gauge.family+"_DynamicMetricObject1 *>(it1->second);\n")
         fh.write("\t\t    obj->gauge.Decrement();\n")
+        fh.write("\t\t    if(obj->gauge.Value() == 0) {\n")
+        fh.write("\t\t      metrics_map.erase(it1);\n")
+        fh.write("\t\t      delete obj;\n")
+        fh.write("\t\t     }\n")
         fh.write("\t\t}\n")
         fh.write("\t\t} else if (labels.size() == 2) {\n")
         fh.write("\t\tauto it1 = labels. begin();\n")
@@ -950,6 +963,10 @@ def add_decrement_api(fh):
         fh.write("\t\tif(itf != metrics_map.end()) {\n")
         fh.write("\t\t    "+gauge.family +"_DynamicMetricObject2 *obj = static_cast<"+gauge.family+"_DynamicMetricObject2 *>(itf->second);\n")
         fh.write("\t\t    obj->gauge.Decrement();\n")
+        fh.write("\t\t    if(obj->gauge.Value() == 0) {\n")
+        fh.write("\t\t      metrics_map.erase(itf);\n")
+        fh.write("\t\t      delete obj;\n")
+        fh.write("\t\t     }\n")
         fh.write("\t\t} \n")
         fh.write("\t\t} else if (labels.size() == 3) {\n")
         fh.write("\t\tauto it1 = labels. begin();\n")
@@ -960,6 +977,10 @@ def add_decrement_api(fh):
         fh.write("\t\tif(itf != metrics_map.end()) {\n")
         fh.write("\t\t    "+gauge.family +"_DynamicMetricObject3 *obj = static_cast<"+gauge.family+"_DynamicMetricObject3 *>(itf->second);\n")
         fh.write("\t\t    obj->gauge.Decrement();\n")
+        fh.write("\t\t    if(obj->gauge.Value() == 0) {\n")
+        fh.write("\t\t      metrics_map.erase(itf);\n")
+        fh.write("\t\t      delete obj;\n")
+        fh.write("\t\t    }\n")
         fh.write("\t\t}\n")
         fh.write("\t\t}\n")
         fh.write("\t\tbreak;\n")
