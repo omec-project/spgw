@@ -67,7 +67,3 @@ clean:
 	-@rm -rf $(OBJDIR)/
 	-@rm -f $(SPGW_STATIC_LIBNAME)
 	-@rm -f $(TARGET_DIR)/lib/$(SPGW_STATIC_LIBNAME)
-
-test: 
-	gcc -g test_main.c -L/users/ajayonf/spgw.ajay/cpplib -lspgwcpputil
-

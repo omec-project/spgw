@@ -3,7 +3,6 @@
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: Apache-2.0
 
 #ifndef PDN_H
 #define PDN_H
@@ -180,7 +179,7 @@ struct pdn_connection {
 	policy_t policy;
 
 	/* timer entry data for stop timer session */
-	peerData_t *timer_entry; // ajay - is this GTP peer or pfcp peer ?
+	peerData_t *timer_entry;
     transData_t *trans_entry;
 
     uint32_t pdn_flags; 

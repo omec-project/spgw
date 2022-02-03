@@ -5,8 +5,6 @@
 
 #SPDX-License-Identifier: Apache-2.0
 
-#SPDX-License-Identifier: Apache-2.0
-
 # DNS Server Setup for UPF selection
 
 ## Basic DNS Server Installation

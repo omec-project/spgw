@@ -3,7 +3,6 @@
 # SPDX-FileCopyrightText: 2020-present Open Networking Foundation <info@opennetworking.org>
 #
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-License-Identifier: Apache-2.0
 
 #Script to perform mandatory checks while executing run.sh.
 #Input: CFLAG values of CP Makefile which denotes whether CP runs in an optimized manner or on debug mode.

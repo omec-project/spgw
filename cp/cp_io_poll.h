@@ -2,7 +2,6 @@
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: Apache-2.0
 
 #ifndef _CP_IO_POLL_H_
 #define _CP_IO_POLL_H_ 

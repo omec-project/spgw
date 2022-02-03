@@ -2,7 +2,6 @@
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: Apache-2.0
 
 #ifndef PFCP_CP_SET_IE_H
 #define PFCP_CP_SET_IE_H
@@ -35,7 +34,7 @@ extern "C" {
 
 #define MAX_HOSTNAME_LENGTH							(256)
 
-#define MAX_GTPV2C_LENGTH (MAX_GTPV2C_UDP_LEN-12) // ajay sizeof(struct gtpc_t))
+#define MAX_GTPV2C_LENGTH (MAX_GTPV2C_UDP_LEN-12) // sizeof(struct gtpc_t))
 
 #define ALL_CPF_FEATURES_SUPPORTED  (CP_LOAD | CP_OVRL)
 

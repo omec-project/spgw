@@ -2,7 +2,6 @@
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: Apache-2.0
 #ifndef __GTPV2_INTERNAL_H__
 #define __GTPV2_INTERNAL_H__
 

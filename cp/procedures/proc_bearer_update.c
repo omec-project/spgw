@@ -2,7 +2,6 @@
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: Apache-2.0
 
 #ifdef FUTURE_NEED
 int process_pfcp_sess_mod_resp_ubr_handler(void *data, void *unused_param)

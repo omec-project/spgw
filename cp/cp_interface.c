@@ -2,7 +2,6 @@
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: Apache-2.0
 
 #include <stdint.h>
 #include <arpa/inet.h>
@@ -87,7 +86,7 @@ dump_pcap(uint16_t payload_length, uint8_t *tx_buf)
 
 	struct ipHdr *ih = (struct ipHdr *) &eh[1];
 
-	ih->daddr = cp_config->s11_mme_ip.s_addr; /* ajay correct this */
+	ih->daddr = cp_config->s11_mme_ip.s_addr; 
 	ih->saddr = cp_config->s11_ip.s_addr;
 	ih->protocol = IPPROTO_UDP;
 	ih->ihl = PCAP_VIHL;

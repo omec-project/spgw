@@ -2,7 +2,6 @@
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: Apache-2.0
 
 
 #include "gx_interface.h"
@@ -10,7 +9,7 @@
 #include "spgw_config_struct.h"
 #include "sm_struct.h"
 #include "sm_hand.h"
-#include "pfcp_cp_set_ie.h" // ajay - included for Gx context. need cleanup  
+#include "pfcp_cp_set_ie.h"
 #include "pfcp.h"
 #include "sm_structs_api.h"
 #include "spgw_cpp_wrapper.h"

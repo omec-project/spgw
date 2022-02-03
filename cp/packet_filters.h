@@ -3,7 +3,6 @@
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: Apache-2.0
 
 #ifndef PACKET_FILTERS_H
 #define PACKET_FILTERS_H
