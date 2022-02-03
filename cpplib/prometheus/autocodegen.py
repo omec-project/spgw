@@ -1,7 +1,7 @@
 #
 # Copyright 2020-present Open Networking Foundation
 #
-# SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+# SPDX-License-Identifier: Apache-2.0
 #
 
 #TODO Points
@@ -1132,7 +1132,7 @@ def create_markdown_file():
     fh = open(fname, 'w')
     fh.write("#License & Copyright\n\n")
     fh.write("#SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>\n\n")
-    fh.write("#SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0\n\n")
+    fh.write("#SPDX-License-Identifier: Apache-2.0\n\n")
     print("sys.argv {}".format(sys.argv))
     file = None
     if(len(sys.argv) == 2):

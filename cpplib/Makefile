@@ -1,6 +1,6 @@
 # Copyright 2020-present Open Networking Foundation
 #
-# SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+# SPDX-License-Identifier: Apache-2.0
 
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 TOPDIR = $(patsubst %/,%,$(dir $(MAKEFILE_PATH)))

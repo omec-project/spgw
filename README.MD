@@ -1,9 +1,7 @@
 License & Copyright
 ----
 
-SPDX-License-Identifier: Apache-2.0 
-
-SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+SPDX-License-Identifier: Apache-2.0
 
 Copyright (c) 2017 Intel Corporation
 
@@ -37,14 +35,7 @@ The SPGW-C currently supports the following SAE-GW features:
 * PFCP - session create,modify,delete
 * S1 Release procedure
 * Service Request procedure
-* Dedicated bearer create/modify/delete
-* Bearer Update 
-* SGW relocation
 * WIP - Gx interface. Testing in progress. CCR-I,CCR-U,CCR-T,RAR support
-* Restoration procedure support
-* GTPC, PFCP Echo support
-
-
 
 
 
