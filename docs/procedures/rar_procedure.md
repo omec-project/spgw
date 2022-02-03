@@ -2,7 +2,7 @@ License & Copyright
 ----
 
 #SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>
-#SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+#SPDX-License-Identifier: Apache-2.0
 
 # RAR Procedure 
 # testing 

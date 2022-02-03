@@ -2,7 +2,6 @@
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifndef IPC_API_H
 #define IPC_API_H

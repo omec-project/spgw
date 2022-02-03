@@ -2,7 +2,6 @@
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #ifndef _PFCP_ERROR_RSP_H_
 #define _PFCP_ERROR_RSP_H_

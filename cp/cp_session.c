@@ -2,17 +2,16 @@
 // Copyright 2020-present Open Networking Foundation
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "gtp_messages_encoder.h"
 #include "gtpv2_session.h"
 #include "gtpv2_error_rsp.h"
 #include "gtpv2_internal.h"
 #include "gtpv2_interface.h"
-#include "pfcp_cp_session.h" // ajay - check_interface_type - this should be part of pfcp interface 
+#include "pfcp_cp_session.h" 
 #include "pfcp_enum.h"
 #include "pfcp_messages_encoder.h"
-#include "pfcp_cp_util.h" // ajay should be part of interface 
+#include "pfcp_cp_util.h"
 #include "pfcp_cp_session.h"
 #include "gtpv2_set_ie.h"
 #include "cp_peer.h"

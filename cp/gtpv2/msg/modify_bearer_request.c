@@ -2,7 +2,6 @@
 // Copyright (c) 2017 Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "gtp_messages_decoder.h"
 #include "ue.h"
@@ -604,7 +603,7 @@ handle_modify_bearer_request(msg_info_t **msg_p, gtpv2c_header_t *gtpv2c_rx)
 		add_node_conn_entry(ntohl(msg->rx_msg.mbr.sender_fteid_ctl_plane.ipv4_address),
 									S5S8_PGWC_PORT_ID);
 
-        assert(NULL); /* ajay - add function */ 
+        assert(NULL); 
 	} else {
 		/*Set the appropriate event type.*/
 		msg->event = MB_REQ_RCVD_EVNT;

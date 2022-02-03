@@ -2,7 +2,6 @@
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "sm_struct.h"
 #include "gtp_messages.h"
@@ -282,7 +281,7 @@ process_create_sess_req(proc_context_t *proc_ctxt,
     bool static_addr_pdn = false;
     uint32_t addr_upf_alloc = PDN_ADDR_ALLOC_CONTROL; /* default allocation is by control Plane */
     struct in_addr upf_ipv4 = {0};
-    /* ajay - Should we get default context ?*/
+    /* Should we get default context ?*/
     upf_context_t *upf_context=NULL; 
     sub_config_t *sub_profile = NULL;
     sub_selection_keys_t dpkey = {0}; 

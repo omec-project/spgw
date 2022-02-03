@@ -2,7 +2,6 @@
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "../include/pfcp_ies_encoder.h"
 #include "../include/pfcp_messages_encoder.h"

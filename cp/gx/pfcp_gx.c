@@ -2,7 +2,6 @@
 // Copyright (c) 2019 Sprint
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 #include "spgw_config_struct.h"
 #include "cp_log.h"
@@ -65,7 +64,7 @@ store_default_bearer_qos_in_policy(pdn_connection_t *pdn, GxDefaultEpsBearerQos 
 {
     bearer_qos_ie *def_qos;
     eps_bearer_t *def_bearer = get_default_bearer(pdn); 
-    if(default_bearer) { // ajay : FIXME 
+    if(default_bearer) { // FIXME 
         def_qos = &def_bearer->qos;
     } else {
         pdn->policy.default_bearer_qos_valid = TRUE;

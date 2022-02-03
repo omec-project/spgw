@@ -1,7 +1,7 @@
 // Copyright 2020-present Open Networking Foundation
 // Copyright (c) 2019 Sprint
 //
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+// SPDX-License-Identifier: Apache-2.0
 #include "pdn.h"
 #include "ue.h"
 #include "spgw_cpp_wrapper.h"

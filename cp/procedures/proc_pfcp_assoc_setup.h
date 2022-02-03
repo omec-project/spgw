@@ -1,6 +1,6 @@
 // Copyright 2020-present Open Networking Foundation
 //
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+// SPDX-License-Identifier: Apache-2.0
 
 #ifndef __PFCP_ASSOCIATION_SETUP_PROC_H 
 #define __PFCP_ASSOCIATION_SETUP_PROC_H

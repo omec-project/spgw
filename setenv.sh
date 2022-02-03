@@ -4,7 +4,6 @@
 # Copyright (c) 2017 Intel Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 NG_CORE=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
