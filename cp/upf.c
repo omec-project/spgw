@@ -387,7 +387,8 @@ upf_name_resolve(const char *name)
         struct pollfd pfds[1];
         pfds[0].fd = fd[0];
         pfds[0].events = POLLIN;
-        int event_count = poll(pfds, 1, 100); // Wait for max 100ms
+        uint32_t timeout = cp_config->upfdnstimeout ? cp_config->upfdnstimeout:100;
+        int event_count = poll(pfds, 1, timeout); // Wait for max 100ms
         //printf("event_count = %d \n", event_count);
         pthread_mutex_lock(&req->msg_mutex);
         if(event_count <=0) {

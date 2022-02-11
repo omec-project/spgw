@@ -611,6 +611,12 @@ spgwConfig::parse_cp_json_cpp(cp_config_t *cfg, const char *jsonFile)
         } else {
             cfg->webserver_port = HTTP_SERVER_PORT;
         }
+        if(global.HasMember("upfdnstimeout")) {
+            cfg->upfdnstimeout = global["upfdnstimeout"].GetInt();
+            LOG_MSG(LOG_INIT, "upfdnstimeout = %d ", cfg->upfdnstimeout);
+        } else {
+            cfg->upfdnstimeout = 100;
+        }
     }
 
     if(doc.HasMember("ip_pool_config")) {
