@@ -195,6 +195,7 @@ typedef struct cp_config
     uint32_t  gx_enabled;
     uint32_t  urr_enable;
     bool      pfcp_hb_ts_fail;
+    uint32_t  upfdnstimeout;
 }cp_config_t;
 
 extern cp_config_t *cp_config;
