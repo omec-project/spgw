@@ -32,10 +32,10 @@ void
 proc_session_report_complete(proc_context_t *proc_context);
 
 void
-process_ddn_ack_rsp(proc_context_t *proc_context, msg_info_t *msg);
+process_ddn_ack_rsp(proc_context_t *proc_context, msg_info_t *msg, uint8_t cause);
 
 void
-send_session_report_response(proc_context_t *proc_ctxt, msg_info_t *msg);
+send_session_report_response(proc_context_t *proc_ctxt, msg_info_t *msg, uint8_t cause);
 
 void ddn_indication_timeout(void *);
 
