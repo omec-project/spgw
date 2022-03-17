@@ -53,8 +53,11 @@ session_report_event_handler(void *proc, void *msg_info)
             process_rpt_req_handler(proc_context, msg);
             break;
         } 
+        case DDN_TIMEOUT:
+            process_ddn_ack_rsp(proc_context, msg, REQUESTREJECTED);
+            break;
         case DDN_ACK_RESP_RCVD_EVNT: {
-            process_ddn_ack_rsp(proc_context, msg);
+            process_ddn_ack_rsp(proc_context, msg, REQUESTACCEPTED);
             break;
         }
         default: {
@@ -73,7 +76,7 @@ proc_session_report_failure(msg_info_t *msg, uint8_t cause)
     // send PFCP session report response with cause 
 
     proc_session_report_complete(proc_context);
-    LOG_MSG(LOG_NEVER, "session report failed cause = %d ", cause);
+    LOG_MSG(LOG_DEBUG, "session report failed cause = %d ", cause);
     return;
 }
 
@@ -112,21 +115,20 @@ process_rpt_req_handler(proc_context_t *proc_ctxt, msg_info_t *msg)
 		/* Update the Session state */
 		proc_ctxt->state = DDN_REQ_SNT_STATE;
 	} else {
-        send_session_report_response(proc_ctxt, msg);
+        send_session_report_response(proc_ctxt, msg, REQUESTACCEPTED);
     }
 	return 0;
 }
 
 static void
-fill_pfcp_sess_report_resp(pfcp_sess_rpt_rsp_t *pfcp_sess_rep_resp,
-		 uint32_t seq)
+fill_pfcp_sess_report_resp(pfcp_sess_rpt_rsp_t *pfcp_sess_rep_resp, uint32_t seq, uint8_t cause)
 {
 	memset(pfcp_sess_rep_resp, 0, sizeof(pfcp_sess_rpt_rsp_t));
 
 	set_pfcp_seid_header((pfcp_header_t *) &(pfcp_sess_rep_resp->header),
 		PFCP_SESSION_REPORT_RESPONSE, HAS_SEID, seq);
 
-	set_cause(&(pfcp_sess_rep_resp->cause), REQUESTACCEPTED);
+	set_cause(&(pfcp_sess_rep_resp->cause), cause);
 
 	//pfcp_sess_rep_resp->header.message_len = pfcp_sess_rep_resp->cause.header.len + 4;
 
@@ -134,13 +136,13 @@ fill_pfcp_sess_report_resp(pfcp_sess_rpt_rsp_t *pfcp_sess_rep_resp,
 }
 
 void
-process_ddn_ack_rsp(proc_context_t *proc_ctxt, msg_info_t *msg)
+process_ddn_ack_rsp(proc_context_t *proc_ctxt, msg_info_t *msg, uint8_t cause)
 {
-    send_session_report_response(proc_ctxt, msg);
+    send_session_report_response(proc_ctxt, msg, cause);
 }
 
 void
-send_session_report_response(proc_context_t *proc_ctxt, msg_info_t *msg)
+send_session_report_response(proc_context_t *proc_ctxt, msg_info_t *msg, uint8_t cause)
 {
 	uint8_t pfcp_msg[250] = {0};
 	int encoded = 0;
@@ -150,7 +152,7 @@ send_session_report_response(proc_context_t *proc_ctxt, msg_info_t *msg)
     pdn_connection_t *pdn = (pdn_connection_t *)proc_ctxt->pdn_context;
 
 	/*Fill and send pfcp session report response. */
-	fill_pfcp_sess_report_resp(&pfcp_sess_rep_resp, pfcp_trans->sequence);
+	fill_pfcp_sess_report_resp(&pfcp_sess_rep_resp, pfcp_trans->sequence, cause);
 
 	pfcp_sess_rep_resp.header.seid_seqno.has_seid.seid = pdn->dp_seid;
 
@@ -159,8 +161,13 @@ send_session_report_response(proc_context_t *proc_ctxt, msg_info_t *msg)
 	pfcp_hdr->message_len = htons(encoded - 4);
 
 	pfcp_send(my_sock.sock_fd_pfcp, pfcp_msg, encoded, &context->upf_context->upf_sockaddr);
-    increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSREPORTRSP, GET_UPF_ADDR(context->upf_context));
-    proc_session_report_success(msg);
+    if(cause == REQUESTACCEPTED) {
+      increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSREPORTRSP, GET_UPF_ADDR(context->upf_context));
+      proc_session_report_success(msg);
+    } else {
+      increment_userplane_stats(MSG_TX_PFCP_SXASXB_SESSREPORTRSP_REJ, GET_UPF_ADDR(context->upf_context));
+      proc_session_report_failure(msg, cause);
+    }
     return;
 }
 
