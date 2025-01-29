@@ -172,7 +172,8 @@ process_gtp_msg(void *data, uint16_t event)
                 cp_config->cp_type != PGWC ? S11_IFACE : S5S8_IFACE,
                 gtpv2c_rx->teid.has_teid.seq);
         LOG_MSG(LOG_ERROR, "Discarding packet due to gtp version is not supported..");
-        // TODO : memory leak ?
+        free(msg->raw_buf);
+        free(msg);
         return;
     }
     gtp_msg_handler[gtpv2c_rx->gtpc.message_type](&msg, gtpv2c_rx);

@@ -55,8 +55,8 @@ process_pfcp_msg(void *data, uint16_t event)
     if(msg != NULL) {
         assert(msg->magic_head == MSG_MAGIC);
         assert(msg->magic_tail == MSG_MAGIC);
-        free(msg->raw_buf);
         if(msg->refCnt == 0) // no one claimed ownership of this msg 
+            free(msg->raw_buf);
             free(msg);
     }
     return;
