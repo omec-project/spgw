@@ -44,6 +44,7 @@ msg_handler_pfcp(void *data)
 
         if ((bytes_pfcp_rx < 0) && (errno == EAGAIN  || errno == EWOULDBLOCK)) {
             LOG_MSG(LOG_ERROR, "SAEGWC pfcp recvfrom error: %s", strerror(errno));
+            free(msg);
             continue;
         }
 

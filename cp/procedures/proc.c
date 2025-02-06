@@ -169,8 +169,7 @@ end_procedure(proc_context_t *proc_ctxt)
     }
     msg_info_t *msg = (msg_info_t *)proc_ctxt->msg_info;
     if(msg != NULL) {
-        msg->refCnt--;
-        if(msg->refCnt == 1) { // i m the only one using this 
+        if(msg->refCnt == 1) { // i'm the only one using this 
             free(msg->raw_buf);
             free(msg); 
         }

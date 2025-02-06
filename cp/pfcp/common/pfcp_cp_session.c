@@ -1405,7 +1405,7 @@ fill_pfcp_sess_est_req( pfcp_sess_estab_req_t *pfcp_sess_est_req,
 			}
 
 		    pfcp_sess_est_req->create_pdr_count += 2; // 1 for downlink, 1 for uplink
-            free(pcc_rule); // pcc rule was just container, actual rule is not moved to bearer.
+            free(pcc_rule); // pcc rule was just container, actual rule is moved to bearer.
             pcc_rule = TAILQ_FIRST(&pdn->policy.pending_pcc_rules);
 		}
 
