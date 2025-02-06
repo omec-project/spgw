@@ -178,7 +178,7 @@ err:
 fini1:
 
 fini2:
-    gx_cca_free(&(gx_resp.data.cp_cca));
+	gx_cca_free(&(gx_resp.data.cp_cca));
 	free(send_buf);
 	FDCHECK_MSG_FREE(*msg);
 	*msg = NULL;
